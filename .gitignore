@@ -3,4 +3,13 @@ out/
 *.vsix
 *.tsbuildinfo
 
-test/REAL/*
+test/REAL/
+
+# Auto Claude data directory
+.auto-claude/
+
+.claude_settings.json
+
+.worktrees/
+
+.vscode/
