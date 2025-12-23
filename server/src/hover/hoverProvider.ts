@@ -350,9 +350,10 @@ export class HoverProvider {
       }
     }
 
-    // Check for symbol in symbol table
+    // Check for symbol in symbol table using position-aware lookup
+    // This ensures correct symbol resolution when variables are shadowed in nested scopes
     if (symbolTable) {
-      const symbol = symbolTable.getSymbol(word);
+      const symbol = symbolTable.getSymbolAtOffset(word, wordInfo.start);
       if (symbol) {
         return this.buildSymbolHover(symbol);
       }

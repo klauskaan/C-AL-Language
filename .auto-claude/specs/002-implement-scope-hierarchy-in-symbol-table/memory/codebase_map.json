@@ -4,7 +4,12 @@
       "description": "Scope class now has getSymbol() and hasSymbol() methods with parent chain traversal. These implement variable shadowing - inner scope symbols take precedence over outer scope symbols. Both methods use normalizeIdentifier() for case-insensitive lookup.",
       "category": "implementation",
       "discovered_at": "2025-12-23T18:49:58.374331+00:00"
+    },
+    "server/src/definition/definitionProvider.ts": {
+      "description": "DefinitionProvider.getDefinition() now uses getSymbolAtOffset(word, wordInfo.start) for position-aware symbol lookup. The offset parameter comes from wordInfo.start which is the start position of the word being looked up.",
+      "category": "navigation-providers",
+      "discovered_at": "2025-12-23T18:57:57.488462+00:00"
     }
   },
-  "last_updated": "2025-12-23T18:49:58.374361+00:00"
+  "last_updated": "2025-12-23T18:57:57.488487+00:00"
 }
