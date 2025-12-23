@@ -224,6 +224,414 @@ describe('Parser - Deeply Nested Expressions', () => {
       expect(() => parser.parse()).not.toThrow();
     });
   });
+
+  describe('Nested loops', () => {
+    it('should handle deeply nested REPEAT-UNTIL loops', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            REPEAT
+              REPEAT
+                REPEAT
+                  REPEAT
+                    REPEAT
+                      x := x + 1;
+                    UNTIL x > 5;
+                  UNTIL x > 10;
+                UNTIL x > 15;
+              UNTIL x > 20;
+            UNTIL x > 25;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle deeply nested WHILE-DO loops', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            WHILE a DO
+              WHILE b DO
+                WHILE c DO
+                  WHILE d DO
+                    WHILE e DO
+                      x := x + 1;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle deeply nested FOR loops', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            FOR i := 1 TO 10 DO
+              FOR j := 1 TO 10 DO
+                FOR k := 1 TO 10 DO
+                  FOR l := 1 TO 10 DO
+                    FOR m := 1 TO 10 DO
+                      x := i + j + k + l + m;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle mixed nested loop types', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            FOR i := 1 TO 10 DO
+              WHILE condition DO
+                REPEAT
+                  FOR j := 1 TO 5 DO
+                    WHILE inner DO
+                      x := x + 1;
+                UNTIL done;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Nested CASE statements', () => {
+    it('should handle deeply nested CASE statements', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            CASE a OF
+              1:
+                CASE b OF
+                  1:
+                    CASE c OF
+                      1:
+                        CASE d OF
+                          1: x := 1;
+                          2: x := 2;
+                        END;
+                      2: x := 3;
+                    END;
+                  2: x := 4;
+                END;
+              2: x := 5;
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle CASE with nested IF and loops', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            CASE type OF
+              1:
+                IF condition THEN
+                  WHILE active DO
+                    CASE subtype OF
+                      1: x := 1;
+                      2: x := 2;
+                    END;
+              2:
+                REPEAT
+                  IF flag THEN
+                    x := x + 1;
+                UNTIL done;
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Nested BEGIN-END blocks', () => {
+    it('should handle deeply nested BEGIN-END blocks', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            BEGIN
+              BEGIN
+                BEGIN
+                  BEGIN
+                    BEGIN
+                      BEGIN
+                        BEGIN
+                          x := 1;
+                        END;
+                      END;
+                    END;
+                  END;
+                END;
+              END;
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle 20 levels of nested BEGIN-END blocks', () => {
+      const depth = 20;
+      let beginBlocks = 'BEGIN\n'.repeat(depth);
+      let endBlocks = 'END;\n'.repeat(depth);
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            ${beginBlocks}
+              x := 1;
+            ${endBlocks}
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Nested WITH statements', () => {
+    it('should handle deeply nested WITH statements', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            WITH Customer DO
+              WITH "Sales Header" DO
+                WITH "Sales Line" DO
+                  WITH Item DO
+                    WITH "Item Ledger Entry" DO
+                      Quantity := 10;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Nested array and member access', () => {
+    it('should handle deeply nested array indexers', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := arr[arr[arr[arr[arr[0]]]]];
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle deeply nested member access', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := Obj.Prop1.Prop2.Prop3.Prop4.Prop5.Value;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle combination of nested arrays, members, and function calls', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := Obj.GetArray()[GetIndex(arr[i].Value)].Prop.Method(x);
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Deeply nested binary expressions', () => {
+    it('should handle 20 levels of nested AND expressions', () => {
+      const conditions = Array.from({ length: 20 }, (_, i) => `cond${i}`).join(' AND ');
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF ${conditions} THEN
+              x := 1;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle 20 levels of nested OR expressions', () => {
+      const conditions = Array.from({ length: 20 }, (_, i) => `cond${i}`).join(' OR ');
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF ${conditions} THEN
+              x := 1;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle mixed AND/OR with parentheses nesting', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF ((a AND b) OR ((c AND d) OR ((e AND f) OR ((g AND h) OR (i AND j))))) THEN
+              x := 1;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle deeply nested arithmetic expressions', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := a + b * c - d / e + f * g - h / i + j * k - l / m + n * o - p / q + r;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Nested string concatenation', () => {
+    it('should handle deeply nested string concatenations', () => {
+      const parts = Array.from({ length: 20 }, (_, i) => `'part${i}'`).join(' + ');
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := ${parts};
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Complex nested real-world patterns', () => {
+    it('should handle NAV-style complex nested filtering', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Customer.FIND('-') THEN
+              REPEAT
+                IF Customer.Blocked = Customer.Blocked::" " THEN
+                  IF SalesHeader.FIND('-') THEN
+                    REPEAT
+                      IF SalesHeader.Status = SalesHeader.Status::Released THEN
+                        IF SalesLine.FIND('-') THEN
+                          REPEAT
+                            TotalAmount := TotalAmount + SalesLine.Amount;
+                          UNTIL SalesLine.NEXT = 0;
+                    UNTIL SalesHeader.NEXT = 0;
+              UNTIL Customer.NEXT = 0;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle deeply nested TRY-CATCH pattern (IF with error handling)', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF CODEUNIT.RUN(CODEUNIT::"Process 1") THEN
+              IF CODEUNIT.RUN(CODEUNIT::"Process 2") THEN
+                IF CODEUNIT.RUN(CODEUNIT::"Process 3") THEN
+                  IF CODEUNIT.RUN(CODEUNIT::"Process 4") THEN
+                    MESSAGE('All succeeded')
+                  ELSE
+                    ERROR('Process 4 failed')
+                ELSE
+                  ERROR('Process 3 failed')
+              ELSE
+                ERROR('Process 2 failed')
+            ELSE
+              ERROR('Process 1 failed');
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
 });
 
 describe('Parser - Maximum Field Numbers', () => {
