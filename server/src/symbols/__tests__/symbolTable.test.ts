@@ -1394,6 +1394,468 @@ describe('SymbolTable', () => {
   });
 
   describe('Edge Cases', () => {
-    // Edge case tests will be added in subtask 1.6
+    describe('empty AST', () => {
+      it('should handle empty string input (no object)', () => {
+        const code = '';
+        const ast = parseCode(code);
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        expect(symbolTable.getAllSymbols()).toEqual([]);
+        expect(symbolTable.getAllSymbols().length).toBe(0);
+      });
+
+      it('should handle whitespace-only input', () => {
+        const code = '   \n\n\t\t  \n  ';
+        const ast = parseCode(code);
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        expect(symbolTable.getAllSymbols()).toEqual([]);
+        expect(symbolTable.hasSymbol('anything')).toBe(false);
+      });
+
+      it('should return false for hasSymbol when AST is empty', () => {
+        const code = '';
+        const ast = parseCode(code);
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        expect(symbolTable.hasSymbol('Field')).toBe(false);
+        expect(symbolTable.hasSymbol('Variable')).toBe(false);
+        expect(symbolTable.hasSymbol('Procedure')).toBe(false);
+      });
+
+      it('should return undefined for getSymbol when AST is empty', () => {
+        const code = '';
+        const ast = parseCode(code);
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        expect(symbolTable.getSymbol('Field')).toBeUndefined();
+        expect(symbolTable.getSymbol('Variable')).toBeUndefined();
+        expect(symbolTable.getSymbol('Procedure')).toBeUndefined();
+      });
+    });
+
+    describe('AST with no fields section', () => {
+      it('should handle table object with empty FIELDS section', () => {
+        const code = `OBJECT Table 50000 EmptyTable
+{
+  FIELDS
+  {
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.getAllSymbols()).toEqual([]);
+        expect(symbolTable.getAllSymbols().length).toBe(0);
+      });
+
+      it('should handle codeunit object with only procedures (no variables)', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            PROCEDURE DoSomething();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.getAllSymbols().length).toBe(1);
+        expect(symbolTable.hasSymbol('DoSomething')).toBe(true);
+        expect(symbolTable.getSymbol('DoSomething')?.kind).toBe('procedure');
+      });
+    });
+
+    describe('AST with no code section', () => {
+      it('should handle table object with only fields (no code section)', () => {
+        const code = `OBJECT Table 50000 FieldsOnlyTable
+{
+  FIELDS
+  {
+    { 1   ;   ;MyField         ;Integer       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.getAllSymbols().length).toBe(1);
+        expect(symbolTable.hasSymbol('MyField')).toBe(true);
+        expect(symbolTable.getSymbol('MyField')?.kind).toBe('field');
+      });
+    });
+
+    describe('looking up non-existent symbols', () => {
+      it('should return false for hasSymbol with typo in name', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('CustmerNo')).toBe(false); // typo
+        expect(symbolTable.hasSymbol('CustomerNumber')).toBe(false);
+        expect(symbolTable.hasSymbol('No')).toBe(false);
+      });
+
+      it('should return undefined for getSymbol with empty string', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.getSymbol('')).toBeUndefined();
+        expect(symbolTable.hasSymbol('')).toBe(false);
+      });
+
+      it('should return undefined for getSymbol with only spaces', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.getSymbol('   ')).toBeUndefined();
+        expect(symbolTable.hasSymbol('   ')).toBe(false);
+      });
+
+      it('should not find symbol that was never added', () => {
+        const symbolTable = new SymbolTable();
+
+        expect(symbolTable.hasSymbol('NeverAdded')).toBe(false);
+        expect(symbolTable.getSymbol('NeverAdded')).toBeUndefined();
+      });
+
+      it('should distinguish between similar names', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;Customer        ;Text100       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('Customer')).toBe(true);
+        expect(symbolTable.hasSymbol('Customers')).toBe(false);
+        expect(symbolTable.hasSymbol('CustomerList')).toBe(false);
+        expect(symbolTable.hasSymbol('Cust')).toBe(false);
+      });
+    });
+
+    describe('re-building symbol table (clear functionality)', () => {
+      it('should clear previous symbols when buildFromAST is called again', () => {
+        const symbolTable = new SymbolTable();
+
+        // First build with some fields
+        const code1 = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;OldField        ;Code20        }
+    { 2   ;   ;AnotherOld      ;Text100       }
+  }
+}`;
+        const ast1 = parseCode(code1);
+        symbolTable.buildFromAST(ast1);
+
+        expect(symbolTable.hasSymbol('OldField')).toBe(true);
+        expect(symbolTable.hasSymbol('AnotherOld')).toBe(true);
+        expect(symbolTable.getAllSymbols().length).toBe(2);
+
+        // Second build with different fields
+        const code2 = `OBJECT Table 50000 NewTable
+{
+  FIELDS
+  {
+    { 1   ;   ;NewField        ;Integer       }
+  }
+}`;
+        const ast2 = parseCode(code2);
+        symbolTable.buildFromAST(ast2);
+
+        // Old symbols should be gone
+        expect(symbolTable.hasSymbol('OldField')).toBe(false);
+        expect(symbolTable.hasSymbol('AnotherOld')).toBe(false);
+        // New symbol should exist
+        expect(symbolTable.hasSymbol('NewField')).toBe(true);
+        expect(symbolTable.getAllSymbols().length).toBe(1);
+      });
+
+      it('should clear symbols when rebuilding from empty AST', () => {
+        const symbolTable = new SymbolTable();
+
+        // First build with some fields
+        const code1 = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+  }
+}`;
+        const ast1 = parseCode(code1);
+        symbolTable.buildFromAST(ast1);
+
+        expect(symbolTable.hasSymbol('CustomerNo')).toBe(true);
+        expect(symbolTable.getAllSymbols().length).toBe(1);
+
+        // Second build with empty AST
+        const ast2 = parseCode('');
+        symbolTable.buildFromAST(ast2);
+
+        // All symbols should be cleared
+        expect(symbolTable.hasSymbol('CustomerNo')).toBe(false);
+        expect(symbolTable.getAllSymbols().length).toBe(0);
+      });
+
+      it('should handle multiple rebuilds correctly', () => {
+        const symbolTable = new SymbolTable();
+
+        const codes = [
+          `OBJECT Table 1 T1 { FIELDS { { 1;;Field1;Integer } } }`,
+          `OBJECT Table 2 T2 { FIELDS { { 1;;Field2;Text100 } } }`,
+          `OBJECT Table 3 T3 { FIELDS { { 1;;Field3;Decimal } } }`
+        ];
+
+        for (const code of codes) {
+          const ast = parseCode(code);
+          symbolTable.buildFromAST(ast);
+        }
+
+        // Only the last build's symbols should exist
+        expect(symbolTable.hasSymbol('Field1')).toBe(false);
+        expect(symbolTable.hasSymbol('Field2')).toBe(false);
+        expect(symbolTable.hasSymbol('Field3')).toBe(true);
+        expect(symbolTable.getAllSymbols().length).toBe(1);
+      });
+    });
+
+    describe('quoted field names edge cases', () => {
+      it('should handle quoted field names with special characters', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."           ;Code20        }
+    { 2   ;   ;"Balance (LCY)" ;Decimal       }
+    { 3   ;   ;"Gen. Bus. Posting Group";Code20 }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('No.')).toBe(true);
+        expect(symbolTable.hasSymbol('Balance (LCY)')).toBe(true);
+        expect(symbolTable.hasSymbol('Gen. Bus. Posting Group')).toBe(true);
+      });
+
+      it('should handle quoted field names with percent sign', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"VAT %"         ;Decimal       }
+    { 2   ;   ;"Discount %"    ;Decimal       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('VAT %')).toBe(true);
+        expect(symbolTable.hasSymbol('Discount %')).toBe(true);
+
+        // Case insensitive with special characters
+        expect(symbolTable.hasSymbol('vat %')).toBe(true);
+        expect(symbolTable.hasSymbol('DISCOUNT %')).toBe(true);
+      });
+
+      it('should handle quoted field names with numbers', () => {
+        const code = `OBJECT Table 50000 TestTable
+{
+  FIELDS
+  {
+    { 1   ;   ;"Address 2"     ;Text100       }
+    { 2   ;   ;"Phone No. 2"   ;Text30        }
+    { 3   ;   ;"E-Mail 1"      ;Text80        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('Address 2')).toBe(true);
+        expect(symbolTable.hasSymbol('Phone No. 2')).toBe(true);
+        expect(symbolTable.hasSymbol('E-Mail 1')).toBe(true);
+      });
+
+      it('should handle quoted field names that look like keywords', () => {
+        const code = `OBJECT Table 50000 TestTable
+{
+  FIELDS
+  {
+    { 1   ;   ;"Begin Date"    ;Date          }
+    { 2   ;   ;"End Date"      ;Date          }
+    { 3   ;   ;"If Condition"  ;Boolean       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('Begin Date')).toBe(true);
+        expect(symbolTable.hasSymbol('End Date')).toBe(true);
+        expect(symbolTable.hasSymbol('If Condition')).toBe(true);
+      });
+
+      it('should preserve spaces in quoted field names', () => {
+        const code = `OBJECT Table 50000 TestTable
+{
+  FIELDS
+  {
+    { 1   ;   ;"First Name"    ;Text50        }
+    { 2   ;   ;"Last Name"     ;Text50        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        // Exact match with spaces
+        expect(symbolTable.hasSymbol('First Name')).toBe(true);
+        expect(symbolTable.hasSymbol('Last Name')).toBe(true);
+
+        // Without spaces should NOT match
+        expect(symbolTable.hasSymbol('FirstName')).toBe(false);
+        expect(symbolTable.hasSymbol('LastName')).toBe(false);
+      });
+
+      it('should handle case-insensitive lookup for quoted identifiers with mixed case', () => {
+        const code = `OBJECT Table 50000 TestTable
+{
+  FIELDS
+  {
+    { 1   ;   ;"Customer Name" ;Text100       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        // All case variations should work
+        expect(symbolTable.hasSymbol('Customer Name')).toBe(true);
+        expect(symbolTable.hasSymbol('customer name')).toBe(true);
+        expect(symbolTable.hasSymbol('CUSTOMER NAME')).toBe(true);
+        expect(symbolTable.hasSymbol('Customer name')).toBe(true);
+        expect(symbolTable.hasSymbol('customer Name')).toBe(true);
+      });
+    });
+
+    describe('quoted variable names edge cases', () => {
+      it('should handle quoted variable names with spaces', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            VAR
+              "Temp Customer Entry" : Integer;
+              "Sales Line Buffer" : Record 37;
+
+            PROCEDURE TestProc();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('Temp Customer Entry')).toBe(true);
+        expect(symbolTable.hasSymbol('Sales Line Buffer')).toBe(true);
+      });
+
+      it('should handle case-insensitive lookup for quoted variable names', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            VAR
+              "My Variable" : Integer;
+
+            PROCEDURE TestProc();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('My Variable')).toBe(true);
+        expect(symbolTable.hasSymbol('my variable')).toBe(true);
+        expect(symbolTable.hasSymbol('MY VARIABLE')).toBe(true);
+      });
+    });
+
+    describe('symbol table instantiation', () => {
+      it('should start empty when newly instantiated', () => {
+        const symbolTable = new SymbolTable();
+
+        expect(symbolTable.getAllSymbols()).toEqual([]);
+        expect(symbolTable.getAllSymbols().length).toBe(0);
+      });
+
+      it('should return false for hasSymbol on new instance', () => {
+        const symbolTable = new SymbolTable();
+
+        expect(symbolTable.hasSymbol('Anything')).toBe(false);
+        expect(symbolTable.hasSymbol('')).toBe(false);
+      });
+
+      it('should return undefined for getSymbol on new instance', () => {
+        const symbolTable = new SymbolTable();
+
+        expect(symbolTable.getSymbol('Anything')).toBeUndefined();
+        expect(symbolTable.getSymbol('')).toBeUndefined();
+      });
+    });
+
+    describe('mixed symbol types', () => {
+      it('should correctly distinguish between fields, variables, and procedures with same name prefix', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            VAR
+              Counter : Integer;
+              CounterMax : Integer;
+
+            PROCEDURE CounterReset();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.getSymbol('Counter')?.kind).toBe('variable');
+        expect(symbolTable.getSymbol('CounterMax')?.kind).toBe('variable');
+        expect(symbolTable.getSymbol('CounterReset')?.kind).toBe('procedure');
+
+        // All three should be present
+        expect(symbolTable.getAllSymbols().length).toBe(3);
+      });
+
+      it('should handle symbols of different types independently', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            VAR
+              Data : Text;
+
+            PROCEDURE Process();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+
+        const dataSymbol = symbolTable.getSymbol('Data');
+        const processSymbol = symbolTable.getSymbol('Process');
+
+        expect(dataSymbol?.kind).toBe('variable');
+        expect(dataSymbol?.type).toBe('Text');
+
+        expect(processSymbol?.kind).toBe('procedure');
+        expect(processSymbol?.type).toBeUndefined();
+      });
+    });
   });
 });
