@@ -965,7 +965,432 @@ describe('SymbolTable', () => {
   });
 
   describe('getAllSymbols', () => {
-    // Tests for getting all symbols will be added in subtask 1.5
+    describe('return value behavior', () => {
+      it('should return an empty array for an empty symbol table', () => {
+        const symbolTable = new SymbolTable();
+        const allSymbols = symbolTable.getAllSymbols();
+
+        expect(allSymbols).toEqual([]);
+        expect(allSymbols.length).toBe(0);
+      });
+
+      it('should return an empty array when AST has no object', () => {
+        const code = '';
+        const ast = parseCode(code);
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const allSymbols = symbolTable.getAllSymbols();
+        expect(allSymbols).toEqual([]);
+      });
+
+      it('should return an array, not a Map or other iterable', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."           ;Code20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        expect(Array.isArray(allSymbols)).toBe(true);
+      });
+    });
+
+    describe('count verification', () => {
+      it('should return correct count for a single field', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."           ;Code20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        expect(allSymbols.length).toBe(1);
+      });
+
+      it('should return correct count for multiple fields', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."           ;Code20        }
+    { 2   ;   ;Name            ;Text100       }
+    { 3   ;   ;Balance         ;Decimal       }
+    { 4   ;   ;DateCreated     ;Date          }
+    { 5   ;   ;Active          ;Boolean       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        expect(allSymbols.length).toBe(5);
+      });
+
+      it('should return correct count for variables only', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            VAR
+              Counter : Integer;
+              Name : Text;
+              Amount : Decimal;
+
+            PROCEDURE TestProc();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+        const variableSymbols = allSymbols.filter(s => s.kind === 'variable');
+
+        expect(variableSymbols.length).toBe(3);
+      });
+
+      it('should return correct count for procedures only', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            PROCEDURE Proc1();
+            BEGIN
+            END;
+
+            PROCEDURE Proc2();
+            BEGIN
+            END;
+
+            LOCAL PROCEDURE Proc3();
+            BEGIN
+            END;
+
+            PROCEDURE Proc4();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+        const procedureSymbols = allSymbols.filter(s => s.kind === 'procedure');
+
+        expect(procedureSymbols.length).toBe(4);
+      });
+
+      it('should return correct count for mixed symbol types', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            VAR
+              Var1 : Integer;
+              Var2 : Text;
+              Var3 : Decimal;
+
+            PROCEDURE Proc1();
+            BEGIN
+            END;
+
+            PROCEDURE Proc2();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        expect(allSymbols.length).toBe(5);
+        expect(allSymbols.filter(s => s.kind === 'variable').length).toBe(3);
+        expect(allSymbols.filter(s => s.kind === 'procedure').length).toBe(2);
+      });
+    });
+
+    describe('content verification', () => {
+      it('should include all field symbols with correct data', () => {
+        const code = `OBJECT Table 50000 TestTable
+{
+  FIELDS
+  {
+    { 1   ;   ;FieldOne        ;Integer       }
+    { 2   ;   ;FieldTwo        ;Text50        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        const fieldOneSymbol = allSymbols.find(s => s.name === 'fieldone');
+        const fieldTwoSymbol = allSymbols.find(s => s.name === 'fieldtwo');
+
+        expect(fieldOneSymbol).toBeDefined();
+        expect(fieldOneSymbol?.kind).toBe('field');
+        expect(fieldOneSymbol?.type).toBe('Integer');
+        expect(fieldOneSymbol?.token).toBeDefined();
+
+        expect(fieldTwoSymbol).toBeDefined();
+        expect(fieldTwoSymbol?.kind).toBe('field');
+        expect(fieldTwoSymbol?.type).toBe('Text50');
+        expect(fieldTwoSymbol?.token).toBeDefined();
+      });
+
+      it('should include all variable symbols with correct data', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            VAR
+              Counter : Integer;
+              Message : Text;
+
+            PROCEDURE TestProc();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        const counterSymbol = allSymbols.find(s => s.name === 'counter');
+        const messageSymbol = allSymbols.find(s => s.name === 'message');
+
+        expect(counterSymbol).toBeDefined();
+        expect(counterSymbol?.kind).toBe('variable');
+        expect(counterSymbol?.type).toBe('Integer');
+        expect(counterSymbol?.token).toBeDefined();
+
+        expect(messageSymbol).toBeDefined();
+        expect(messageSymbol?.kind).toBe('variable');
+        expect(messageSymbol?.type).toBe('Text');
+        expect(messageSymbol?.token).toBeDefined();
+      });
+
+      it('should include all procedure symbols with correct data', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            PROCEDURE PublicProc();
+            BEGIN
+            END;
+
+            LOCAL PROCEDURE PrivateProc();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        const publicProcSymbol = allSymbols.find(s => s.name === 'publicproc');
+        const privateProcSymbol = allSymbols.find(s => s.name === 'privateproc');
+
+        expect(publicProcSymbol).toBeDefined();
+        expect(publicProcSymbol?.kind).toBe('procedure');
+        expect(publicProcSymbol?.token).toBeDefined();
+
+        expect(privateProcSymbol).toBeDefined();
+        expect(privateProcSymbol?.kind).toBe('procedure');
+        expect(privateProcSymbol?.token).toBeDefined();
+      });
+
+      it('should include symbols of all types in mixed codeunit', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            VAR
+              GlobalCounter : Integer;
+
+            PROCEDURE MainProcess();
+            BEGIN
+            END;
+
+            LOCAL PROCEDURE Helper();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        const symbolNames = allSymbols.map(s => s.name);
+
+        expect(symbolNames).toContain('globalcounter');
+        expect(symbolNames).toContain('mainprocess');
+        expect(symbolNames).toContain('helper');
+      });
+
+      it('should return symbols with normalized (lowercase) names', () => {
+        const code = `OBJECT Table 50000 TestTable
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+    { 2   ;   ;NAME            ;Text100       }
+    { 3   ;   ;MixedCase       ;Integer       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        allSymbols.forEach(symbol => {
+          expect(symbol.name).toBe(symbol.name.toLowerCase());
+        });
+      });
+
+      it('should return symbols with token references', () => {
+        const code = `OBJECT Table 50000 TestTable
+{
+  FIELDS
+  {
+    { 1   ;   ;FieldOne        ;Integer       }
+    { 2   ;   ;FieldTwo        ;Text50        }
+    { 3   ;   ;FieldThree      ;Decimal       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        allSymbols.forEach(symbol => {
+          expect(symbol.token).toBeDefined();
+          expect(symbol.token.value).toBeDefined();
+        });
+      });
+
+      it('should return symbols with quoted identifiers correctly', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."           ;Code20        }
+    { 2   ;   ;"Customer Name" ;Text100       }
+    { 3   ;   ;"VAT %"         ;Decimal       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        const symbolNames = allSymbols.map(s => s.name);
+
+        expect(symbolNames).toContain('no.');
+        expect(symbolNames).toContain('customer name');
+        expect(symbolNames).toContain('vat %');
+      });
+    });
+
+    describe('multiple calls behavior', () => {
+      it('should return consistent results across multiple calls', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."           ;Code20        }
+    { 2   ;   ;Name            ;Text100       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        const firstCall = symbolTable.getAllSymbols();
+        const secondCall = symbolTable.getAllSymbols();
+
+        expect(firstCall.length).toBe(secondCall.length);
+        expect(firstCall.map(s => s.name).sort()).toEqual(secondCall.map(s => s.name).sort());
+      });
+
+      it('should return symbols that match getSymbol results', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            VAR
+              TestVar : Integer;
+
+            PROCEDURE TestProc();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        allSymbols.forEach(symbol => {
+          const lookedUp = symbolTable.getSymbol(symbol.name);
+          expect(lookedUp).toBe(symbol);
+        });
+      });
+
+      it('should return symbols that pass hasSymbol check', () => {
+        const code = `OBJECT Table 50000 TestTable
+{
+  FIELDS
+  {
+    { 1   ;   ;Field1          ;Code20        }
+    { 2   ;   ;Field2          ;Integer       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        allSymbols.forEach(symbol => {
+          expect(symbolTable.hasSymbol(symbol.name)).toBe(true);
+        });
+      });
+    });
+
+    describe('large symbol table', () => {
+      it('should return all symbols from table with many fields', () => {
+        const code = `OBJECT Table 50000 TestTable
+{
+  FIELDS
+  {
+    { 1   ;   ;Field1          ;Code20        }
+    { 2   ;   ;Field2          ;Text100       }
+    { 3   ;   ;Field3          ;Integer       }
+    { 4   ;   ;Field4          ;Decimal       }
+    { 5   ;   ;Field5          ;Boolean       }
+    { 6   ;   ;Field6          ;Date          }
+    { 7   ;   ;Field7          ;Time          }
+    { 8   ;   ;Field8          ;DateTime      }
+    { 9   ;   ;Field9          ;Option        }
+    { 10  ;   ;Field10         ;GUID          }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        expect(allSymbols.length).toBe(10);
+      });
+
+      it('should return all symbols from codeunit with many variables and procedures', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            VAR
+              Var1 : Integer;
+              Var2 : Text;
+              Var3 : Decimal;
+              Var4 : Boolean;
+              Var5 : Date;
+
+            PROCEDURE Proc1();
+            BEGIN
+            END;
+
+            PROCEDURE Proc2();
+            BEGIN
+            END;
+
+            PROCEDURE Proc3();
+            BEGIN
+            END;
+
+            PROCEDURE Proc4();
+            BEGIN
+            END;
+
+            PROCEDURE Proc5();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        expect(allSymbols.length).toBe(10);
+        expect(allSymbols.filter(s => s.kind === 'variable').length).toBe(5);
+        expect(allSymbols.filter(s => s.kind === 'procedure').length).toBe(5);
+      });
+    });
   });
 
   describe('Edge Cases', () => {
