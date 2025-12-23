@@ -15,6 +15,20 @@ function createDocument(content: string): TextDocument {
 }
 
 /**
+ * Helper to create a mock token for tests
+ */
+function mockToken(): any {
+  return {
+    type: 'IDENTIFIER',
+    value: 'test',
+    line: 1,
+    column: 1,
+    startOffset: 0,
+    endOffset: 4
+  };
+}
+
+/**
  * Helper to get documentation content from signature help
  */
 function getDocumentation(signatureHelp: any): string {
@@ -227,9 +241,7 @@ describe('SignatureHelpProvider', () => {
       const doc = createDocument('MyProcedure(');
 
       const symbolTable = new SymbolTable();
-      (symbolTable as any).symbols = new Map([
-        ['myprocedure', { name: 'MyProcedure', kind: 'procedure', token: {} as any }]
-      ]);
+      symbolTable.getRootScope().addSymbol({ name: 'MyProcedure', kind: 'procedure', token: mockToken() });
 
       const help = provider.getSignatureHelp(doc, Position.create(0, 12), undefined, symbolTable);
 

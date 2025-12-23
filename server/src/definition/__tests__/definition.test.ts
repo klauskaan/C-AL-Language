@@ -17,6 +17,20 @@ function createDocument(content: string, uri: string = 'file:///test.cal'): Text
 }
 
 /**
+ * Helper to create a mock token for tests with required properties
+ */
+function mockToken(overrides: { line?: number; column?: number; value?: string } = {}): any {
+  return {
+    type: 'IDENTIFIER',
+    value: overrides.value || 'test',
+    line: overrides.line || 1,
+    column: overrides.column || 1,
+    startOffset: 0,
+    endOffset: 4
+  };
+}
+
+/**
  * Helper to parse content and build symbol table
  */
 function parseAndBuildSymbols(content: string): { ast: any; symbolTable: SymbolTable } {
@@ -41,14 +55,12 @@ describe('DefinitionProvider', () => {
       const doc = createDocument('MyVar');
 
       const symbolTable = new SymbolTable();
-      (symbolTable as any).symbols = new Map([
-        ['myvar', {
-          name: 'MyVar',
-          kind: 'variable',
-          token: { line: 5, column: 3, value: 'MyVar', type: 'identifier' as any },
-          type: 'Integer'
-        }]
-      ]);
+      symbolTable.getRootScope().addSymbol({
+        name: 'MyVar',
+        kind: 'variable',
+        token: mockToken({ line: 5, column: 3, value: 'MyVar' }),
+        type: 'Integer'
+      });
 
       const result = provider.getDefinition(doc, Position.create(0, 2), undefined, symbolTable);
 
@@ -62,13 +74,11 @@ describe('DefinitionProvider', () => {
       const doc = createDocument('MyProcedure');
 
       const symbolTable = new SymbolTable();
-      (symbolTable as any).symbols = new Map([
-        ['myprocedure', {
-          name: 'MyProcedure',
-          kind: 'procedure',
-          token: { line: 10, column: 1, value: 'MyProcedure', type: 'identifier' as any }
-        }]
-      ]);
+      symbolTable.getRootScope().addSymbol({
+        name: 'MyProcedure',
+        kind: 'procedure',
+        token: mockToken({ line: 10, column: 1, value: 'MyProcedure' })
+      });
 
       const result = provider.getDefinition(doc, Position.create(0, 5), undefined, symbolTable);
 
@@ -81,14 +91,12 @@ describe('DefinitionProvider', () => {
       const doc = createDocument('Name');
 
       const symbolTable = new SymbolTable();
-      (symbolTable as any).symbols = new Map([
-        ['name', {
-          name: 'Name',
-          kind: 'field',
-          token: { line: 3, column: 5, value: 'Name', type: 'identifier' as any },
-          type: 'Text100'
-        }]
-      ]);
+      symbolTable.getRootScope().addSymbol({
+        name: 'Name',
+        kind: 'field',
+        token: mockToken({ line: 3, column: 5, value: 'Name' }),
+        type: 'Text100'
+      });
 
       const result = provider.getDefinition(doc, Position.create(0, 2), undefined, symbolTable);
 
@@ -101,7 +109,7 @@ describe('DefinitionProvider', () => {
       const doc = createDocument('UnknownSymbol');
 
       const symbolTable = new SymbolTable();
-      (symbolTable as any).symbols = new Map();
+      // Empty symbol table - no symbols added
 
       const result = provider.getDefinition(doc, Position.create(0, 5), undefined, symbolTable);
 
@@ -123,14 +131,12 @@ describe('DefinitionProvider', () => {
       const doc = createDocument('myvar');
 
       const symbolTable = new SymbolTable();
-      (symbolTable as any).symbols = new Map([
-        ['myvar', {
-          name: 'MyVar',
-          kind: 'variable',
-          token: { line: 1, column: 1, value: 'MyVar', type: 'identifier' as any },
-          type: 'Integer'
-        }]
-      ]);
+      symbolTable.getRootScope().addSymbol({
+        name: 'MyVar',
+        kind: 'variable',
+        token: mockToken({ value: 'MyVar' }),
+        type: 'Integer'
+      });
 
       const result = provider.getDefinition(doc, Position.create(0, 2), undefined, symbolTable);
 
@@ -141,14 +147,12 @@ describe('DefinitionProvider', () => {
       const doc = createDocument('MYVAR');
 
       const symbolTable = new SymbolTable();
-      (symbolTable as any).symbols = new Map([
-        ['myvar', {
-          name: 'myvar',
-          kind: 'variable',
-          token: { line: 1, column: 1, value: 'myvar', type: 'identifier' as any },
-          type: 'Integer'
-        }]
-      ]);
+      symbolTable.getRootScope().addSymbol({
+        name: 'myvar',
+        kind: 'variable',
+        token: mockToken({ value: 'myvar' }),
+        type: 'Integer'
+      });
 
       const result = provider.getDefinition(doc, Position.create(0, 2), undefined, symbolTable);
 
@@ -309,14 +313,12 @@ CODE
       const doc = createDocument('CustomerName');
 
       const symbolTable = new SymbolTable();
-      (symbolTable as any).symbols = new Map([
-        ['customername', {
-          name: 'CustomerName',
-          kind: 'field',
-          token: { line: 5, column: 10, value: 'CustomerName', type: 'identifier' as any },
-          type: 'Text100'
-        }]
-      ]);
+      symbolTable.getRootScope().addSymbol({
+        name: 'CustomerName',
+        kind: 'field',
+        token: mockToken({ line: 5, column: 10, value: 'CustomerName' }),
+        type: 'Text100'
+      });
 
       const result = provider.getDefinition(doc, Position.create(0, 5), undefined, symbolTable);
 
@@ -330,14 +332,12 @@ CODE
       const doc = createDocument('TestSymbol');
 
       const symbolTable = new SymbolTable();
-      (symbolTable as any).symbols = new Map([
-        ['testsymbol', {
-          name: 'TestSymbol',
-          kind: 'variable',
-          token: { line: 10, column: 5, value: 'TestSymbol', type: 'identifier' as any },
-          type: 'Integer'
-        }]
-      ]);
+      symbolTable.getRootScope().addSymbol({
+        name: 'TestSymbol',
+        kind: 'variable',
+        token: mockToken({ line: 10, column: 5, value: 'TestSymbol' }),
+        type: 'Integer'
+      });
 
       const result = provider.getDefinition(doc, Position.create(0, 5), undefined, symbolTable);
 
@@ -356,14 +356,12 @@ CODE
       const doc = createDocument('MyVar', uri);
 
       const symbolTable = new SymbolTable();
-      (symbolTable as any).symbols = new Map([
-        ['myvar', {
-          name: 'MyVar',
-          kind: 'variable',
-          token: { line: 1, column: 1, value: 'MyVar', type: 'identifier' as any },
-          type: 'Integer'
-        }]
-      ]);
+      symbolTable.getRootScope().addSymbol({
+        name: 'MyVar',
+        kind: 'variable',
+        token: mockToken({ value: 'MyVar' }),
+        type: 'Integer'
+      });
 
       const result = provider.getDefinition(doc, Position.create(0, 2), undefined, symbolTable);
 
@@ -386,13 +384,11 @@ CODE
       const doc = createDocument('MyVar');
 
       const symbolTable = new SymbolTable();
-      (symbolTable as any).symbols = new Map([
-        ['myvar', {
-          name: 'MyVar',
-          kind: 'variable',
-          token: { line: 1, column: 1, value: 'MyVar', type: 'identifier' as any }
-        }]
-      ]);
+      symbolTable.getRootScope().addSymbol({
+        name: 'MyVar',
+        kind: 'variable',
+        token: mockToken({ value: 'MyVar' })
+      });
 
       const result = provider.getDefinition(doc, Position.create(0, 0), undefined, symbolTable);
 
@@ -403,13 +399,11 @@ CODE
       const doc = createDocument('MyVar');
 
       const symbolTable = new SymbolTable();
-      (symbolTable as any).symbols = new Map([
-        ['myvar', {
-          name: 'MyVar',
-          kind: 'variable',
-          token: { line: 1, column: 1, value: 'MyVar', type: 'identifier' as any }
-        }]
-      ]);
+      symbolTable.getRootScope().addSymbol({
+        name: 'MyVar',
+        kind: 'variable',
+        token: mockToken({ value: 'MyVar' })
+      });
 
       const result = provider.getDefinition(doc, Position.create(0, 5), undefined, symbolTable);
 
@@ -421,13 +415,11 @@ CODE
       const doc = createDocument('My_Var_Name');
 
       const symbolTable = new SymbolTable();
-      (symbolTable as any).symbols = new Map([
-        ['my_var_name', {
-          name: 'My_Var_Name',
-          kind: 'variable',
-          token: { line: 1, column: 1, value: 'My_Var_Name', type: 'identifier' as any }
-        }]
-      ]);
+      symbolTable.getRootScope().addSymbol({
+        name: 'My_Var_Name',
+        kind: 'variable',
+        token: mockToken({ value: 'My_Var_Name' })
+      });
 
       const result = provider.getDefinition(doc, Position.create(0, 5), undefined, symbolTable);
 
@@ -438,13 +430,11 @@ CODE
       const doc = createDocument('Var123');
 
       const symbolTable = new SymbolTable();
-      (symbolTable as any).symbols = new Map([
-        ['var123', {
-          name: 'Var123',
-          kind: 'variable',
-          token: { line: 1, column: 1, value: 'Var123', type: 'identifier' as any }
-        }]
-      ]);
+      symbolTable.getRootScope().addSymbol({
+        name: 'Var123',
+        kind: 'variable',
+        token: mockToken({ value: 'Var123' })
+      });
 
       const result = provider.getDefinition(doc, Position.create(0, 3), undefined, symbolTable);
 
@@ -455,7 +445,7 @@ CODE
       // Keywords like BEGIN, END, IF should not be treated as symbol definitions
       const doc = createDocument('BEGIN');
       const symbolTable = new SymbolTable();
-      (symbolTable as any).symbols = new Map(); // Empty - no BEGIN defined
+      // Empty - no BEGIN defined
 
       const result = provider.getDefinition(doc, Position.create(0, 2), undefined, symbolTable);
 
