@@ -86,6 +86,50 @@ export class Scope {
   public getOwnSymbols(): Symbol[] {
     return Array.from(this.symbols.values());
   }
+
+  /**
+   * Get a symbol by name, traversing parent chain if not found in this scope.
+   * This implements variable shadowing: inner scope symbols take precedence.
+   * @param name - Symbol name (case-insensitive)
+   * @returns The symbol if found, undefined otherwise
+   */
+  public getSymbol(name: string): Symbol | undefined {
+    const normalized = normalizeIdentifier(name);
+
+    // First check this scope
+    const symbol = this.symbols.get(normalized);
+    if (symbol) {
+      return symbol;
+    }
+
+    // Then check parent scope (recursive traversal up the chain)
+    if (this.parent) {
+      return this.parent.getSymbol(name);
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Check if a symbol exists in this scope or any parent scope.
+   * @param name - Symbol name (case-insensitive)
+   * @returns true if the symbol is found anywhere in the scope chain
+   */
+  public hasSymbol(name: string): boolean {
+    const normalized = normalizeIdentifier(name);
+
+    // First check this scope
+    if (this.symbols.has(normalized)) {
+      return true;
+    }
+
+    // Then check parent scope
+    if (this.parent) {
+      return this.parent.hasSymbol(name);
+    }
+
+    return false;
+  }
 }
 
 export class SymbolTable {
