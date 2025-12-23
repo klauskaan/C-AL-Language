@@ -273,6 +273,47 @@ export class SymbolTable {
     }
     return symbols;
   }
+
+  /**
+   * Find the scope that contains a given document offset.
+   * Returns the most specific (innermost) scope containing the offset.
+   * @param offset - Document offset (character position)
+   * @returns The scope containing the offset, or root scope if no child scope matches
+   */
+  public getScopeAtOffset(offset: number): Scope {
+    return this.findScopeAtOffset(this.rootScope, offset);
+  }
+
+  /**
+   * Recursively find the deepest scope containing the given offset.
+   * @param scope - Current scope to search
+   * @param offset - Document offset to find
+   * @returns The deepest scope containing the offset
+   */
+  private findScopeAtOffset(scope: Scope, offset: number): Scope {
+    // Check each child scope to see if the offset falls within it
+    for (const child of scope.children) {
+      if (offset >= child.startOffset && offset <= child.endOffset) {
+        // Recursively search within this child scope for deeper matches
+        return this.findScopeAtOffset(child, offset);
+      }
+    }
+    // No child scope contains the offset, return current scope
+    return scope;
+  }
+
+  /**
+   * Get a symbol by name at a specific document offset.
+   * Uses position-aware scope lookup to find the correct symbol
+   * when variables are shadowed in nested scopes.
+   * @param name - Symbol name (case-insensitive)
+   * @param offset - Document offset where the symbol is referenced
+   * @returns The symbol if found in the scope chain, undefined otherwise
+   */
+  public getSymbolAtOffset(name: string, offset: number): Symbol | undefined {
+    const scope = this.getScopeAtOffset(offset);
+    return scope.getSymbol(name);
+  }
 }
 
 /**
