@@ -192,7 +192,358 @@ describe('SemanticTokensProvider', () => {
   });
 
   describe('Keyword Token Mapping', () => {
-    // Tests will be added in subtask 2.2
+    describe('Object Type Keywords', () => {
+      it('should map OBJECT keyword to Keyword type', () => {
+        const code = 'OBJECT Table 18 Customer { }';
+        const semanticType = findSemanticType(code, 'OBJECT');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map TABLE keyword to Keyword type', () => {
+        const code = 'OBJECT Table 18 Customer { }';
+        const semanticType = findSemanticType(code, 'Table');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map PAGE keyword to Keyword type', () => {
+        const code = 'OBJECT Page 50000 MyPage { }';
+        const semanticType = findSemanticType(code, 'Page');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map REPORT keyword to Keyword type', () => {
+        const code = 'OBJECT Report 50000 MyReport { }';
+        const semanticType = findSemanticType(code, 'Report');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map CODEUNIT keyword to Keyword type', () => {
+        const code = 'OBJECT Codeunit 50000 MyCodeunit { }';
+        const semanticType = findSemanticType(code, 'Codeunit');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map QUERY keyword to Keyword type', () => {
+        const code = 'OBJECT Query 50000 MyQuery { }';
+        const semanticType = findSemanticType(code, 'Query');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map XMLPORT keyword to Keyword type', () => {
+        const code = 'OBJECT XMLport 50000 MyXMLport { }';
+        const semanticType = findSemanticType(code, 'XMLport');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map MENUSUITE keyword to Keyword type', () => {
+        const code = 'OBJECT MenuSuite 50000 MyMenuSuite { }';
+        const semanticType = findSemanticType(code, 'MenuSuite');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+    });
+
+    describe('Section Keywords', () => {
+      it('should map PROPERTIES keyword to Keyword type', () => {
+        const code = 'OBJECT Table 18 Customer { PROPERTIES { } }';
+        const semanticType = findSemanticType(code, 'PROPERTIES');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map FIELDS keyword to Keyword type', () => {
+        const code = 'OBJECT Table 18 Customer { FIELDS { } }';
+        const semanticType = findSemanticType(code, 'FIELDS');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map KEYS keyword to Keyword type', () => {
+        const code = 'OBJECT Table 18 Customer { KEYS { } }';
+        const semanticType = findSemanticType(code, 'KEYS');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map FIELDGROUPS keyword to Keyword type', () => {
+        const code = 'OBJECT Table 18 Customer { FIELDGROUPS { } }';
+        const semanticType = findSemanticType(code, 'FIELDGROUPS');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map CODE keyword to Keyword type', () => {
+        const code = 'OBJECT Table 18 Customer { CODE { } }';
+        const semanticType = findSemanticType(code, 'CODE');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+    });
+
+    describe('Control Flow Keywords', () => {
+      it('should map IF keyword to Keyword type', () => {
+        const code = 'IF x THEN y';
+        const semanticType = findSemanticType(code, 'IF');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map THEN keyword to Keyword type', () => {
+        const code = 'IF x THEN y';
+        const semanticType = findSemanticType(code, 'THEN');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map ELSE keyword to Keyword type', () => {
+        const code = 'IF x THEN y ELSE z';
+        const semanticType = findSemanticType(code, 'ELSE');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map CASE keyword to Keyword type', () => {
+        const code = 'CASE x OF END';
+        const semanticType = findSemanticType(code, 'CASE');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map OF keyword to Keyword type', () => {
+        const code = 'CASE x OF END';
+        const semanticType = findSemanticType(code, 'OF');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map WHILE keyword to Keyword type', () => {
+        const code = 'WHILE x DO y';
+        const semanticType = findSemanticType(code, 'WHILE');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map DO keyword to Keyword type', () => {
+        const code = 'WHILE x DO y';
+        const semanticType = findSemanticType(code, 'DO');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map REPEAT keyword to Keyword type', () => {
+        const code = 'REPEAT x UNTIL y';
+        const semanticType = findSemanticType(code, 'REPEAT');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map UNTIL keyword to Keyword type', () => {
+        const code = 'REPEAT x UNTIL y';
+        const semanticType = findSemanticType(code, 'UNTIL');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map FOR keyword to Keyword type', () => {
+        const code = 'FOR i := 1 TO 10 DO x';
+        const semanticType = findSemanticType(code, 'FOR');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map TO keyword to Keyword type', () => {
+        const code = 'FOR i := 1 TO 10 DO x';
+        const semanticType = findSemanticType(code, 'TO');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map DOWNTO keyword to Keyword type', () => {
+        const code = 'FOR i := 10 DOWNTO 1 DO x';
+        const semanticType = findSemanticType(code, 'DOWNTO');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map EXIT keyword to Keyword type', () => {
+        const code = 'EXIT';
+        const semanticType = findSemanticType(code, 'EXIT');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map BREAK keyword to Keyword type', () => {
+        const code = 'BREAK';
+        const semanticType = findSemanticType(code, 'BREAK');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+    });
+
+    describe('Procedure/Function Keywords', () => {
+      it('should map PROCEDURE keyword to Keyword type', () => {
+        const code = 'PROCEDURE MyProc() BEGIN END';
+        const semanticType = findSemanticType(code, 'PROCEDURE');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map FUNCTION keyword to Keyword type', () => {
+        const code = 'FUNCTION MyFunc()';
+        const semanticType = findSemanticType(code, 'FUNCTION');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map LOCAL keyword to Keyword type', () => {
+        const code = 'LOCAL PROCEDURE MyProc() BEGIN END';
+        const semanticType = findSemanticType(code, 'LOCAL');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map VAR keyword to Keyword type', () => {
+        const code = 'VAR x : Integer';
+        const semanticType = findSemanticType(code, 'VAR');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map TRIGGER keyword to Keyword type', () => {
+        const code = 'TRIGGER OnValidate() BEGIN END';
+        const semanticType = findSemanticType(code, 'TRIGGER');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+    });
+
+    describe('Block Keywords', () => {
+      it('should map BEGIN keyword to Keyword type', () => {
+        const code = 'BEGIN END';
+        const semanticType = findSemanticType(code, 'BEGIN');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map END keyword to Keyword type', () => {
+        const code = 'BEGIN END';
+        const semanticType = findSemanticType(code, 'END');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+    });
+
+    describe('Boolean Keywords', () => {
+      it('should map TRUE keyword to Keyword type', () => {
+        const code = 'x := TRUE';
+        const semanticType = findSemanticType(code, 'TRUE');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map FALSE keyword to Keyword type', () => {
+        const code = 'x := FALSE';
+        const semanticType = findSemanticType(code, 'FALSE');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+    });
+
+    describe('Operator Keywords', () => {
+      it('should map DIV keyword to Keyword type', () => {
+        const code = 'x DIV y';
+        const semanticType = findSemanticType(code, 'DIV');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map MOD keyword to Keyword type', () => {
+        const code = 'x MOD y';
+        const semanticType = findSemanticType(code, 'MOD');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map AND keyword to Keyword type', () => {
+        const code = 'x AND y';
+        const semanticType = findSemanticType(code, 'AND');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map OR keyword to Keyword type', () => {
+        const code = 'x OR y';
+        const semanticType = findSemanticType(code, 'OR');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map NOT keyword to Keyword type', () => {
+        const code = 'NOT x';
+        const semanticType = findSemanticType(code, 'NOT');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map XOR keyword to Keyword type', () => {
+        const code = 'x XOR y';
+        const semanticType = findSemanticType(code, 'XOR');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map IN keyword to Keyword type', () => {
+        const code = 'x IN [1, 2, 3]';
+        const semanticType = findSemanticType(code, 'IN');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+    });
+
+    describe('Other Keywords', () => {
+      it('should map WITH keyword to Keyword type', () => {
+        const code = 'WITH Customer DO';
+        const semanticType = findSemanticType(code, 'WITH');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map ARRAY keyword to Keyword type', () => {
+        const code = 'x : ARRAY [1..10] OF Integer';
+        const semanticType = findSemanticType(code, 'ARRAY');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map TEMPORARY keyword to Keyword type', () => {
+        const code = 'Customer : Record Customer TEMPORARY';
+        const semanticType = findSemanticType(code, 'TEMPORARY');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+    });
+
+    describe('Case Insensitivity', () => {
+      it('should map lowercase begin to Keyword type', () => {
+        const code = 'begin end';
+        const semanticType = findSemanticType(code, 'begin');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map mixed case BeGiN to Keyword type', () => {
+        const code = 'BeGiN EnD';
+        const semanticType = findSemanticType(code, 'BeGiN');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map lowercase if to Keyword type', () => {
+        const code = 'if x then y';
+        const semanticType = findSemanticType(code, 'if');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map lowercase procedure to Keyword type', () => {
+        const code = 'procedure MyProc()';
+        const semanticType = findSemanticType(code, 'procedure');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+    });
+
+    describe('Multiple Keywords in Code', () => {
+      it('should correctly map multiple keywords in a single line', () => {
+        const code = 'IF x THEN BEGIN y END';
+
+        expect(findSemanticType(code, 'IF')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'THEN')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'BEGIN')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'END')).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should correctly map all keywords in a procedure', () => {
+        const code = 'PROCEDURE MyProc() VAR x : Integer; BEGIN IF TRUE THEN EXIT; END';
+
+        expect(findSemanticType(code, 'PROCEDURE')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'VAR')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'BEGIN')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'IF')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'TRUE')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'THEN')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'EXIT')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'END')).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should correctly map all keywords in a FOR loop', () => {
+        const code = 'FOR i := 1 TO 10 DO BEGIN BREAK; END';
+
+        expect(findSemanticType(code, 'FOR')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'TO')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'DO')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'BEGIN')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'BREAK')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'END')).toBe(SemanticTokenTypes.Keyword);
+      });
+    });
   });
 
   describe('Type Token Mapping', () => {
