@@ -164,6 +164,12 @@ export class Lexer {
       return;
     }
 
+    // Preprocessor directives (# at line start)
+    if (ch === '#') {
+      this.scanPreprocessorDirective(startPos, startLine, startColumn);
+      return;
+    }
+
     // Operators and punctuation
     this.scanOperatorOrPunctuation(startPos, startLine, startColumn);
   }
@@ -452,6 +458,10 @@ export class Lexer {
       case ']':
         this.addToken(TokenType.RightBracket, ch, startPos, this.position, startLine, startColumn);
         break;
+      case '?':
+        // Ternary operator is not supported in C/AL
+        this.addToken(TokenType.TernaryOperator, ch, startPos, this.position, startLine, startColumn);
+        break;
       default:
         this.addToken(TokenType.Unknown, ch, startPos, this.position, startLine, startColumn);
         break;
@@ -499,6 +509,26 @@ export class Lexer {
         this.advance();
       }
     }
+  }
+
+  /**
+   * Scan preprocessor directive (# followed by directive name)
+   * Preprocessor directives are not supported in C/AL
+   */
+  private scanPreprocessorDirective(startPos: number, startLine: number, startColumn: number): void {
+    let value = '';
+    value += this.currentChar(); // include #
+    this.advance();
+
+    // Read the directive name (alphabetic characters only)
+    while (this.isIdentifierPart(this.currentChar())) {
+      value += this.currentChar();
+      this.advance();
+    }
+
+    // Emit PreprocessorDirective token for any #directive pattern
+    // Common AL preprocessor directives: #if, #else, #endif, #elif, #region, #endregion, #pragma
+    this.addToken(TokenType.PreprocessorDirective, value, startPos, this.position, startLine, startColumn);
   }
 
   private skipWhitespace(): void {

@@ -135,7 +135,9 @@ export enum TokenType {
 
   // AL-Only Features (not supported in C/AL)
   ALOnlyKeyword = 'AL_ONLY_KEYWORD',
-  ALOnlyAccessModifier = 'AL_ONLY_ACCESS_MODIFIER'
+  ALOnlyAccessModifier = 'AL_ONLY_ACCESS_MODIFIER',
+  TernaryOperator = 'TERNARY_OPERATOR',       // ? (ternary operator not supported in C/AL)
+  PreprocessorDirective = 'PREPROCESSOR_DIRECTIVE'  // #if, #else, #endif not supported in C/AL
 }
 
 export interface Token {
