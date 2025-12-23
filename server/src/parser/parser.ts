@@ -1564,7 +1564,7 @@ export class Parser {
 
       case TokenType.TernaryOperator:
         this.recordError(
-          `Ternary operator (? :) is not supported in C/AL. Use IF-THEN-ELSE instead.`,
+          `AL-only ternary operator (? :) is not supported in C/AL. Use IF-THEN-ELSE instead.`,
           token
         );
         this.advance(); // Consume the token to continue parsing
@@ -1572,7 +1572,7 @@ export class Parser {
 
       case TokenType.PreprocessorDirective:
         this.recordError(
-          `Preprocessor directive '${token.value}' is not supported in C/AL`,
+          `AL-only preprocessor directive '${token.value}' is not supported in C/AL`,
           token
         );
         this.advance(); // Consume the token to continue parsing
