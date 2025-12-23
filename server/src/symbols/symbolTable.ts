@@ -188,8 +188,8 @@ export class SymbolTable {
 
         // Create child scope for procedure body
         const procScope = new Scope(this.rootScope);
-        procScope.startOffset = procedure.startToken.offset;
-        procScope.endOffset = procedure.endToken.offset;
+        procScope.startOffset = procedure.startToken.startOffset;
+        procScope.endOffset = procedure.endToken.endOffset;
 
         // Add parameters to procedure scope
         for (const param of procedure.parameters) {
@@ -216,8 +216,8 @@ export class SymbolTable {
       for (const trigger of obj.code.triggers) {
         // Create child scope for trigger body
         const triggerScope = new Scope(this.rootScope);
-        triggerScope.startOffset = trigger.startToken.offset;
-        triggerScope.endOffset = trigger.endToken.offset;
+        triggerScope.startOffset = trigger.startToken.startOffset;
+        triggerScope.endOffset = trigger.endToken.endOffset;
 
         // Add local variables to trigger scope
         for (const variable of trigger.variables) {
