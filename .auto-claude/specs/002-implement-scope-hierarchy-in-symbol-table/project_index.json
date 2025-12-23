@@ -1,0 +1,72 @@
+{
+  "project_root": "/home/klaus/Source/C-AL-Language",
+  "project_type": "single",
+  "services": {
+    "server": {
+      "name": "server",
+      "path": "server",
+      "language": "TypeScript",
+      "framework": "vscode-languageserver",
+      "type": "language-server",
+      "package_manager": "npm",
+      "key_directories": {
+        "src": {
+          "path": "server/src",
+          "purpose": "Language server source code"
+        },
+        "symbols": {
+          "path": "server/src/symbols",
+          "purpose": "Symbol table implementation"
+        },
+        "definition": {
+          "path": "server/src/definition",
+          "purpose": "Go to Definition provider"
+        },
+        "hover": {
+          "path": "server/src/hover",
+          "purpose": "Hover information provider"
+        },
+        "completion": {
+          "path": "server/src/completion",
+          "purpose": "Code completion provider"
+        },
+        "signatureHelp": {
+          "path": "server/src/signatureHelp",
+          "purpose": "Signature help provider"
+        },
+        "parser": {
+          "path": "server/src/parser",
+          "purpose": "AST definitions and parser"
+        },
+        "tests": {
+          "path": "server/src/__tests__",
+          "purpose": "Unit and integration tests"
+        }
+      },
+      "dependencies": [
+        "vscode-languageserver",
+        "vscode-languageserver-textdocument"
+      ],
+      "dev_dependencies": [
+        "@types/jest",
+        "@types/node",
+        "jest",
+        "ts-jest",
+        "typescript"
+      ],
+      "test_directory": "server/src/__tests__",
+      "test_command": "cd server && npm test",
+      "compile_command": "npm run compile"
+    }
+  },
+  "infrastructure": {
+    "docker": false,
+    "database": null
+  },
+  "conventions": {
+    "typescript": true,
+    "testing": "jest",
+    "linter": null,
+    "formatter": null
+  }
+}

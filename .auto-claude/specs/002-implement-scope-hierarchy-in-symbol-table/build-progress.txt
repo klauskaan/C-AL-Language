@@ -1,0 +1,68 @@
+=== AUTO-BUILD PROGRESS ===
+
+Project: Implement Scope Hierarchy in Symbol Table
+Spec: 002-implement-scope-hierarchy-in-symbol-table
+Started: 2025-12-23
+
+Workflow Type: feature
+Rationale: This is a new feature that fundamentally changes the architecture of the
+symbol table from a flat structure to a hierarchical tree. While it involves replacing
+existing code, the core change is adding new capability (scope-aware resolution) that
+didn't exist before.
+
+Session 1 (Planner):
+- Created implementation_plan.json
+- Phases: 4
+- Total subtasks: 11
+- Created init.sh
+- Updated context.json
+- Updated project_index.json
+
+Phase Summary:
+- Phase 1 (Core Scope Data Structure): 5 subtasks, depends on []
+  * Create Scope class with parent/child relationships
+  * Implement scope-aware getSymbol() with parent chain traversal
+  * Update buildFromAST to create child scopes for procedures/triggers
+  * Add getSymbolAtOffset() and getScopeAtOffset() methods
+  * Ensure getAllSymbols() returns symbols from all scopes
+
+- Phase 2 (Update Navigation Providers): 4 subtasks, depends on [phase-1-core-scope]
+  * Update DefinitionProvider
+  * Update HoverProvider
+  * Update CompletionProvider
+  * Update SignatureHelpProvider
+
+- Phase 3 (Unit Tests): 1 subtask, depends on [phase-1-core-scope]
+  * Create unit tests for Scope class and SymbolTable
+
+- Phase 4 (Integration Testing): 2 subtasks, depends on [phase-2-providers, phase-3-unit-tests]
+  * Run existing test suite
+  * Compile entire project
+
+Services Involved:
+- server: Language server containing symbol table and all navigation providers
+
+Parallelism Analysis:
+- Max parallel phases: 2
+- Recommended workers: 1
+- Parallel groups: [phase-2-providers, phase-3-unit-tests] can run together
+
+Key Files:
+- server/src/symbols/symbolTable.ts (PRIMARY - Scope class and hierarchy)
+- server/src/definition/definitionProvider.ts
+- server/src/hover/hoverProvider.ts
+- server/src/completion/completionProvider.ts
+- server/src/signatureHelp/signatureHelpProvider.ts
+
+Reference Files:
+- server/src/parser/ast.ts (AST node structure)
+- server/src/references/referenceProvider.ts (AST traversal pattern)
+- server/src/lexer/tokens.ts (Token offsets)
+
+=== STARTUP COMMAND ===
+
+To continue building this spec, run:
+
+  source auto-claude/.venv/bin/activate && python auto-claude/run.py --spec 002 --parallel 1
+
+=== END SESSION 1 ===

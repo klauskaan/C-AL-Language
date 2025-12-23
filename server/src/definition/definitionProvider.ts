@@ -151,9 +151,10 @@ export class DefinitionProvider {
       }
     }
 
-    // Look up symbol in symbol table
+    // Look up symbol in symbol table using position-aware scope lookup
+    // This ensures proper resolution when variables are shadowed in nested scopes
     if (symbolTable) {
-      const symbol = symbolTable.getSymbol(word);
+      const symbol = symbolTable.getSymbolAtOffset(word, wordInfo.start);
       if (symbol) {
         return this.symbolToLocation(symbol, document.uri);
       }

@@ -1,0 +1,41 @@
+{
+  "task_description": "Implement hierarchical scope structure in symbol table to fix incorrect navigation features. Replace flat Map<string, Symbol> with Scope class hierarchy supporting parent-child relationships and scope chain traversal.",
+  "scoped_services": ["server"],
+  "files_to_modify": {
+    "server": [
+      "server/src/symbols/symbolTable.ts",
+      "server/src/definition/definitionProvider.ts",
+      "server/src/hover/hoverProvider.ts",
+      "server/src/completion/completionProvider.ts",
+      "server/src/signatureHelp/signatureHelpProvider.ts"
+    ]
+  },
+  "files_to_reference": [
+    "server/src/parser/ast.ts",
+    "server/src/references/referenceProvider.ts",
+    "server/src/lexer/tokens.ts"
+  ],
+  "patterns": {
+    "case_insensitive_lookup": "All identifiers normalized via normalizeIdentifier() for C/AL case-insensitivity",
+    "token_offsets": "Token interface has startOffset/endOffset fields for position tracking",
+    "ast_traversal": "referenceProvider.ts shows pattern for traversing procedures/triggers and their local vars",
+    "symbol_kinds": "variable, parameter, field, procedure, function",
+    "offset_conversion": "document.offsetAt(position) converts Position to offset for scope lookup"
+  },
+  "existing_implementations": {
+    "description": "Flat Map<string, Symbol> at symbolTable.ts:17 with TODO at line 63 mentioning nested scope need",
+    "relevant_files": [
+      "server/src/symbols/symbolTable.ts",
+      "server/src/parser/ast.ts"
+    ]
+  },
+  "key_observations": [
+    "Token already has startOffset and endOffset - use for scope range tracking",
+    "ProcedureDeclaration has parameters[] and variables[] for local symbols",
+    "TriggerDeclaration has variables[] for local symbols",
+    "All providers use symbolTable.getSymbol() - need position-aware getSymbolAtOffset()",
+    "getAllSymbols() must return symbols from all scopes for backward compatibility",
+    "Only procedures and triggers create new scopes (NOT BEGIN/END blocks)"
+  ],
+  "created_at": "2025-12-23T19:32:58.109219"
+}

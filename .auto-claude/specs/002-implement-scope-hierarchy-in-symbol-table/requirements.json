@@ -1,0 +1,4 @@
+{
+  "task_description": "### #21. ⏳ Implement Scope Hierarchy in Symbol Table\n**Priority:** P0 - Critical\n**Complexity:** Medium\n**Estimated Effort:** 8-12 hours\n\n**Description:**\nThe symbol table uses a flat `Map<string, Symbol>` structure that doesn't support local scopes.\n\n**Location:** [symbolTable.ts:62-64](c-al-extension/server/src/symbols/symbolTable.ts#L62-L64)\n\n**Why Critical:** Affects correctness of ALL navigation features:\n- Go to Definition might jump to wrong variable\n- Hover shows wrong type for shadowed variables\n- Completion suggests variables that aren't in scope\n- Find All References may return false positives\n\n**Implementation:**\n```typescript\nclass Scope {\n  symbols: Map<string, Symbol>;\n  parent: Scope | null;\n  children: Scope[];\n}\n```\n\n---",
+  "workflow_type": "feature"
+}

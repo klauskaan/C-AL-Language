@@ -1,0 +1,81 @@
+{
+  "complexity": "standard",
+  "workflow_type": "refactor",
+  "confidence": 0.85,
+  "reasoning": "This is a core refactor replacing a flat Map<string, Symbol> with a hierarchical Scope tree. Affects 5-6 files across the LSP server but involves no external integrations, infrastructure changes, or new dependencies. The scope chain pattern is well-understood and the codebase already has clear patterns for symbol resolution.",
+
+  "analysis": {
+    "scope": {
+      "estimated_files": 6,
+      "estimated_services": 1,
+      "is_cross_cutting": true,
+      "notes": "Primary change in symbolTable.ts (~100 lines). Secondary changes needed in definitionProvider.ts, hoverProvider.ts, completionProvider.ts (all use symbolTable.getSymbol). Tests will need updates. referenceProvider.ts may need scope-aware updates."
+    },
+    "integrations": {
+      "external_services": [],
+      "new_dependencies": [],
+      "research_needed": false,
+      "notes": "Purely internal refactoring. No external APIs or new packages required. Standard scope chain data structure is well-documented."
+    },
+    "infrastructure": {
+      "docker_changes": false,
+      "database_changes": false,
+      "config_changes": false,
+      "notes": "No infrastructure impact. This is an in-memory data structure change within the LSP server."
+    },
+    "knowledge": {
+      "patterns_exist": true,
+      "research_required": false,
+      "unfamiliar_tech": [],
+      "notes": "Scope chains are a fundamental compiler/interpreter pattern. TypeScript patterns exist in codebase. The TODO at line 63 confirms this was planned but not implemented."
+    },
+    "risk": {
+      "level": "medium",
+      "concerns": [
+        "Core component - affects all symbol resolution",
+        "Must maintain backward compatibility with existing getSymbol() API",
+        "All navigation features depend on correct implementation",
+        "Need to handle nested scopes (procedures within procedures, if exists)"
+      ],
+      "notes": "P0 Critical issue per the requirements. Bugs here affect Go to Definition, Hover, Completion, and Find All References. Thorough testing required."
+    }
+  },
+
+  "recommended_phases": [
+    "discovery",
+    "requirements",
+    "context",
+    "spec_writing",
+    "planning",
+    "validation"
+  ],
+
+  "flags": {
+    "needs_research": false,
+    "needs_self_critique": false,
+    "needs_infrastructure_setup": false
+  },
+
+  "validation_recommendations": {
+    "risk_level": "medium",
+    "skip_validation": false,
+    "minimal_mode": false,
+    "test_types_required": ["unit", "integration"],
+    "security_scan_required": false,
+    "staging_deployment_required": false,
+    "reasoning": "Core symbol table refactor affects all navigation features (Go to Definition, Hover, Completion, References). Requires unit tests for the new Scope class and integration tests to verify LSP features work correctly with nested scopes. No security implications as this is an internal data structure."
+  },
+
+  "key_implementation_points": {
+    "primary_file": "server/src/symbols/symbolTable.ts",
+    "current_issue": "Line 17: flat Map<string, Symbol>, Line 63: TODO confirming missing nested scope support",
+    "affected_providers": [
+      "server/src/definition/definitionProvider.ts (line 156: symbolTable.getSymbol)",
+      "server/src/hover/hoverProvider.ts (line 355: symbolTable.getSymbol)",
+      "server/src/completion/completionProvider.ts (lines 330, 369: getAllSymbols, getSymbol)"
+    ],
+    "api_changes_needed": "May need new method like getSymbolAtPosition(position) or pass scope context to existing getSymbol"
+  },
+
+  "created_at": "2025-12-23T12:00:00.000Z"
+}
