@@ -131,7 +131,11 @@ export enum TokenType {
   Whitespace = 'WHITESPACE',
   NewLine = 'NEWLINE',
   EOF = 'EOF',
-  Unknown = 'UNKNOWN'
+  Unknown = 'UNKNOWN',
+
+  // AL-Only Features (not supported in C/AL)
+  ALOnlyKeyword = 'AL_ONLY_KEYWORD',
+  ALOnlyAccessModifier = 'AL_ONLY_ACCESS_MODIFIER'
 }
 
 export interface Token {
@@ -228,4 +232,26 @@ export const KEYWORDS: Map<string, TokenType> = new Map([
   ['with', TokenType.With],
   ['array', TokenType.Array],
   ['temporary', TokenType.Temporary]
+]);
+
+/**
+ * AL-only keywords that are NOT supported in C/AL (case-insensitive)
+ * These keywords exist in modern AL (Business Central) but not in C/AL (NAV)
+ */
+export const AL_ONLY_KEYWORDS: Map<string, TokenType> = new Map([
+  ['enum', TokenType.ALOnlyKeyword],
+  ['interface', TokenType.ALOnlyKeyword],
+  ['extends', TokenType.ALOnlyKeyword],
+  ['modify', TokenType.ALOnlyKeyword],
+  ['implements', TokenType.ALOnlyKeyword]
+]);
+
+/**
+ * AL-only access modifiers that are NOT supported in C/AL (case-insensitive)
+ * In C/AL, only LOCAL is valid for procedure visibility
+ */
+export const AL_ONLY_ACCESS_MODIFIERS: Map<string, TokenType> = new Map([
+  ['internal', TokenType.ALOnlyAccessModifier],
+  ['protected', TokenType.ALOnlyAccessModifier],
+  ['public', TokenType.ALOnlyAccessModifier]
 ]);
