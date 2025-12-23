@@ -684,6 +684,54 @@ describe('Parser - Maximum Field Numbers', () => {
 
       expect(() => parser.parse()).not.toThrow();
     });
+
+    it('should handle field number approaching 2 billion limit (1999999999)', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1999999999 ; ; "NearTwoBillion" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field number at 2 billion (2000000000)', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 2000000000 ; ; "TwoBillionField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field number at common NAV extension range (50000)', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 50000 ; ; "ExtensionField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field number at partner range boundary (99999999)', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 99999999 ; ; "PartnerField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
   });
 
   describe('Large object IDs', () => {
@@ -726,6 +774,99 @@ describe('Parser - Maximum Field Numbers', () => {
           { 1 ; ; "First" ; Code20 }
           { 1000000 ; ; "Million" ; Code20 }
           { 2147483647 ; ; "MaxInt" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field numbers at various power-of-10 boundaries', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 10 ; ; "Ten" ; Code20 }
+          { 100 ; ; "Hundred" ; Code20 }
+          { 1000 ; ; "Thousand" ; Code20 }
+          { 10000 ; ; "TenThousand" ; Code20 }
+          { 100000 ; ; "HundredThousand" ; Code20 }
+          { 1000000 ; ; "Million" ; Code20 }
+          { 10000000 ; ; "TenMillion" ; Code20 }
+          { 100000000 ; ; "HundredMillion" ; Code20 }
+          { 1000000000 ; ; "Billion" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle consecutive large field numbers', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 2147483645 ; ; "MaxMinus2" ; Code20 }
+          { 2147483646 ; ; "MaxMinus1" ; Code20 }
+          { 2147483647 ; ; "Max" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle mix of small and large field numbers', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Small" ; Code20 }
+          { 2147483647 ; ; "Large" ; Code20 }
+          { 2 ; ; "SmallAgain" ; Code20 }
+          { 1999999999 ; ; "LargeAgain" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Field number edge cases in context', () => {
+    it('should handle large field number in table with PROPERTIES', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+          CaptionML=ENU=Test Table;
+        }
+        FIELDS {
+          { 2147483647 ; ; "MaxField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle large field number with field properties', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 2147483647 ; ; "MaxField" ; Code20 ;
+            CaptionML=ENU=Maximum Field }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle large field number followed by KEYS section', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 2147483647 ; ; "MaxField" ; Code20 }
+        }
+        KEYS {
         }
       }`;
       const lexer = new Lexer(code);
