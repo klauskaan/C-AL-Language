@@ -1269,11 +1269,572 @@ describe('SemanticTokensProvider', () => {
   });
 
   describe('Operator Token Mapping', () => {
-    // Tests will be added in subtask 2.5
+    describe('Arithmetic Operators', () => {
+      it('should map + operator to Operator type', () => {
+        const code = 'x := 1 + 2';
+        const semanticType = findSemanticType(code, '+');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should map - operator to Operator type', () => {
+        const code = 'x := 5 - 3';
+        const semanticType = findSemanticType(code, '-');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should map * operator to Operator type', () => {
+        const code = 'x := 2 * 4';
+        const semanticType = findSemanticType(code, '*');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should map / operator to Operator type', () => {
+        const code = 'x := 8 / 2';
+        const semanticType = findSemanticType(code, '/');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should map multiple arithmetic operators in expression', () => {
+        const code = 'x := 1 + 2 - 3 * 4 / 5';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Count operator tokens
+        const operatorTokens = builder.getTokensOfType(SemanticTokenTypes.Operator);
+        // Should have: :=, +, -, *, / (5 operators total)
+        expect(operatorTokens.length).toBe(5);
+      });
+    });
+
+    describe('Assignment Operators', () => {
+      it('should map := operator to Operator type', () => {
+        const code = 'x := 1';
+        const semanticType = findSemanticType(code, ':=');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should map = operator to Operator type', () => {
+        const code = 'IF x = 1 THEN';
+        const semanticType = findSemanticType(code, '=');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should distinguish := (assignment) from = (comparison)', () => {
+        const code = 'IF x = 1 THEN y := 2';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Find both operators
+        const equalToken = tokens.find(t => t.value === '=');
+        const assignToken = tokens.find(t => t.value === ':=');
+
+        expect(equalToken).toBeDefined();
+        expect(assignToken).toBeDefined();
+
+        // Both should be Operator type
+        const equalSemantic = builder.getTokenAt(equalToken!.line - 1, equalToken!.column - 1);
+        const assignSemantic = builder.getTokenAt(assignToken!.line - 1, assignToken!.column - 1);
+
+        expect(equalSemantic?.tokenType).toBe(SemanticTokenTypes.Operator);
+        expect(assignSemantic?.tokenType).toBe(SemanticTokenTypes.Operator);
+      });
+    });
+
+    describe('Comparison Operators', () => {
+      it('should map <> operator to Operator type', () => {
+        const code = 'IF x <> 1 THEN';
+        const semanticType = findSemanticType(code, '<>');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should map < operator to Operator type', () => {
+        const code = 'IF x < 10 THEN';
+        const semanticType = findSemanticType(code, '<');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should map <= operator to Operator type', () => {
+        const code = 'IF x <= 10 THEN';
+        const semanticType = findSemanticType(code, '<=');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should map > operator to Operator type', () => {
+        const code = 'IF x > 10 THEN';
+        const semanticType = findSemanticType(code, '>');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should map >= operator to Operator type', () => {
+        const code = 'IF x >= 10 THEN';
+        const semanticType = findSemanticType(code, '>=');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should map all comparison operators in complex expression', () => {
+        const code = 'IF (a < b) AND (c >= d) AND (e <> f) AND (g = h) THEN';
+        const { builder } = buildSemanticTokens(code);
+
+        const operatorTokens = builder.getTokensOfType(SemanticTokenTypes.Operator);
+        // Should have: <, >=, <>, = (4 comparison operators)
+        expect(operatorTokens.length).toBe(4);
+      });
+    });
+
+    describe('Dot and Range Operators', () => {
+      it('should map . operator to Operator type', () => {
+        const code = 'Customer.Name';
+        const semanticType = findSemanticType(code, '.');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should map .. operator to Operator type', () => {
+        const code = 'x := MyArray[1..10]';
+        const semanticType = findSemanticType(code, '..');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should correctly map dots in chained access', () => {
+        const code = 'Customer.Address.City';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Find all dot tokens
+        const dotTokens = tokens.filter(t => t.value === '.');
+        expect(dotTokens.length).toBe(2);
+
+        // All dots should be Operator type
+        for (const dotToken of dotTokens) {
+          const semanticToken = builder.getTokenAt(dotToken.line - 1, dotToken.column - 1);
+          expect(semanticToken?.tokenType).toBe(SemanticTokenTypes.Operator);
+        }
+      });
+
+      it('should map :: operator to Operator type', () => {
+        const code = 'Customer::State';
+        const semanticType = findSemanticType(code, '::');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+    });
+
+    describe('Operators in Context', () => {
+      it('should correctly map operators in FOR loop', () => {
+        const code = 'FOR i := 1 TO 10 DO';
+        const semanticType = findSemanticType(code, ':=');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should correctly map operators in array indexing with range', () => {
+        const code = 'x : ARRAY [1..10] OF Integer';
+        const semanticType = findSemanticType(code, '..');
+        expect(semanticType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should correctly map operators in compound expression', () => {
+        const code = 'Result := (a + b) * (c - d) / e';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Find operators
+        const plusType = findSemanticType(code, '+');
+        const minusType = findSemanticType(code, '-');
+        const multiplyType = findSemanticType(code, '*');
+        const divideType = findSemanticType(code, '/');
+        const assignType = findSemanticType(code, ':=');
+
+        expect(plusType).toBe(SemanticTokenTypes.Operator);
+        expect(minusType).toBe(SemanticTokenTypes.Operator);
+        expect(multiplyType).toBe(SemanticTokenTypes.Operator);
+        expect(divideType).toBe(SemanticTokenTypes.Operator);
+        expect(assignType).toBe(SemanticTokenTypes.Operator);
+      });
+
+      it('should correctly map operators in IF with AND conditions', () => {
+        const code = 'IF (x > 0) AND (y < 100) THEN';
+
+        // > and < should be operators
+        expect(findSemanticType(code, '>')).toBe(SemanticTokenTypes.Operator);
+        expect(findSemanticType(code, '<')).toBe(SemanticTokenTypes.Operator);
+        // AND is a keyword, not an operator
+        expect(findSemanticType(code, 'AND')).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should distinguish operators from identifiers', () => {
+        const code = 'Total := Quantity * UnitPrice';
+
+        // Operators
+        expect(findSemanticType(code, ':=')).toBe(SemanticTokenTypes.Operator);
+        expect(findSemanticType(code, '*')).toBe(SemanticTokenTypes.Operator);
+
+        // Identifiers
+        expect(findSemanticType(code, 'Total')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'Quantity')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'UnitPrice')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should correctly map negative number (minus is operator)', () => {
+        const code = 'x := -42';
+
+        // The minus sign should be an operator
+        expect(findSemanticType(code, '-')).toBe(SemanticTokenTypes.Operator);
+        // The number should be a number
+        expect(findSemanticType(code, '42')).toBe(SemanticTokenTypes.Number);
+      });
+    });
+
+    describe('Multiple Operators of Same Type', () => {
+      it('should correctly map multiple plus operators', () => {
+        const code = 'x := 1 + 2 + 3 + 4';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Find all plus tokens
+        const plusTokens = tokens.filter(t => t.value === '+');
+        expect(plusTokens.length).toBe(3);
+
+        // All should be Operator type
+        for (const plusToken of plusTokens) {
+          const semanticToken = builder.getTokenAt(plusToken.line - 1, plusToken.column - 1);
+          expect(semanticToken?.tokenType).toBe(SemanticTokenTypes.Operator);
+        }
+      });
+
+      it('should correctly map multiple comparison operators', () => {
+        const code = 'IF (a > b) AND (c > d) AND (e > f) THEN';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Find all greater than tokens
+        const gtTokens = tokens.filter(t => t.value === '>');
+        expect(gtTokens.length).toBe(3);
+
+        // All should be Operator type
+        for (const gtToken of gtTokens) {
+          const semanticToken = builder.getTokenAt(gtToken.line - 1, gtToken.column - 1);
+          expect(semanticToken?.tokenType).toBe(SemanticTokenTypes.Operator);
+        }
+      });
+
+      it('should correctly map multiple assignments', () => {
+        const code = 'a := 1; b := 2; c := 3';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Find all assignment tokens
+        const assignTokens = tokens.filter(t => t.value === ':=');
+        expect(assignTokens.length).toBe(3);
+
+        // All should be Operator type
+        for (const assignToken of assignTokens) {
+          const semanticToken = builder.getTokenAt(assignToken.line - 1, assignToken.column - 1);
+          expect(semanticToken?.tokenType).toBe(SemanticTokenTypes.Operator);
+        }
+      });
+    });
+
+    describe('Operators vs Keywords Distinction', () => {
+      it('should map DIV keyword to Keyword type (not Operator)', () => {
+        const code = 'x := 10 DIV 3';
+        expect(findSemanticType(code, 'DIV')).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map MOD keyword to Keyword type (not Operator)', () => {
+        const code = 'x := 10 MOD 3';
+        expect(findSemanticType(code, 'MOD')).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map AND keyword to Keyword type (not Operator)', () => {
+        const code = 'x AND y';
+        expect(findSemanticType(code, 'AND')).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map OR keyword to Keyword type (not Operator)', () => {
+        const code = 'x OR y';
+        expect(findSemanticType(code, 'OR')).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map NOT keyword to Keyword type (not Operator)', () => {
+        const code = 'NOT x';
+        expect(findSemanticType(code, 'NOT')).toBe(SemanticTokenTypes.Keyword);
+      });
+    });
   });
 
   describe('Comment Token Mapping', () => {
-    // Tests will be added in subtask 2.5
+    /**
+     * NOTE: The lexer currently skips comments without emitting tokens.
+     * This means the semantic tokens provider's comment mapping code (TokenType.Comment)
+     * is ready to handle comments but won't receive any from the current lexer implementation.
+     *
+     * These tests verify:
+     * 1. The semantic mapping for Comment tokens is correctly configured
+     * 2. Comments are properly skipped by the lexer (don't appear as other token types)
+     * 3. The provider would map Comment tokens correctly if they were emitted
+     */
+
+    describe('Comment Type in Semantic Legend', () => {
+      it('should have Comment type in the semantic token legend', () => {
+        const legend = getSemanticTokensLegend();
+        expect(legend.tokenTypes).toContain('comment');
+        expect(legend.tokenTypes[SemanticTokenTypes.Comment]).toBe('comment');
+      });
+
+      it('should have SemanticTokenTypes.Comment enum value defined', () => {
+        expect(SemanticTokenTypes.Comment).toBe(9);
+      });
+    });
+
+    describe('Comment Token Handling (Direct Provider Test)', () => {
+      /**
+       * Test that the SemanticTokensProvider correctly maps Comment tokens
+       * by directly passing a mock Comment token through the provider.
+       */
+      it('should map TokenType.Comment to SemanticTokenTypes.Comment when token is provided', () => {
+        const provider = new SemanticTokensProvider();
+        const builder = new MockSemanticTokensBuilder();
+
+        // Create a mock Comment token
+        const commentToken: Token = {
+          type: TokenType.Comment,
+          value: '// This is a comment',
+          line: 1,
+          column: 1,
+          startOffset: 0,
+          endOffset: 20
+        };
+
+        // Parse empty AST
+        const ast = parseCode('');
+
+        // Build semantic tokens with just the comment token
+        provider.buildSemanticTokens([commentToken], ast, builder as any);
+
+        // Verify the comment token was mapped correctly
+        expect(builder.tokens.length).toBe(1);
+        expect(builder.tokens[0].tokenType).toBe(SemanticTokenTypes.Comment);
+        expect(builder.tokens[0].line).toBe(0); // 0-indexed
+        expect(builder.tokens[0].char).toBe(0); // 0-indexed
+        expect(builder.tokens[0].length).toBe(20);
+      });
+
+      it('should map block comment token to Comment type when provided', () => {
+        const provider = new SemanticTokensProvider();
+        const builder = new MockSemanticTokensBuilder();
+
+        const commentToken: Token = {
+          type: TokenType.Comment,
+          value: '/* Block comment */',
+          line: 1,
+          column: 1,
+          startOffset: 0,
+          endOffset: 19
+        };
+
+        const ast = parseCode('');
+        provider.buildSemanticTokens([commentToken], ast, builder as any);
+
+        expect(builder.tokens.length).toBe(1);
+        expect(builder.tokens[0].tokenType).toBe(SemanticTokenTypes.Comment);
+      });
+
+      it('should correctly calculate comment length from token value', () => {
+        const provider = new SemanticTokensProvider();
+        const builder = new MockSemanticTokensBuilder();
+
+        const commentToken: Token = {
+          type: TokenType.Comment,
+          value: '// Short',
+          line: 3,
+          column: 5,
+          startOffset: 20,
+          endOffset: 28
+        };
+
+        const ast = parseCode('');
+        provider.buildSemanticTokens([commentToken], ast, builder as any);
+
+        expect(builder.tokens[0].length).toBe(8); // length of '// Short'
+        expect(builder.tokens[0].line).toBe(2);   // 0-indexed from line 3
+        expect(builder.tokens[0].char).toBe(4);   // 0-indexed from column 5
+      });
+    });
+
+    describe('Comments Skipped by Lexer (Current Behavior)', () => {
+      /**
+       * The lexer currently skips comments without emitting tokens.
+       * These tests document this behavior.
+       */
+      it('should skip // comments - no comment tokens in output', () => {
+        const code = '// This is a comment';
+        const { builder } = buildSemanticTokens(code);
+
+        // Lexer skips comments, so no semantic tokens should be produced
+        const commentTokens = builder.getTokensOfType(SemanticTokenTypes.Comment);
+        expect(commentTokens.length).toBe(0);
+      });
+
+      it('should skip /* */ comments - no comment tokens in output', () => {
+        const code = '/* Block comment */';
+        const { builder } = buildSemanticTokens(code);
+
+        const commentTokens = builder.getTokensOfType(SemanticTokenTypes.Comment);
+        expect(commentTokens.length).toBe(0);
+      });
+
+      it('should skip inline comments after code', () => {
+        const code = 'x := 1; // Comment after code';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Comment is skipped, but code tokens should still be present
+        const commentTokens = builder.getTokensOfType(SemanticTokenTypes.Comment);
+        expect(commentTokens.length).toBe(0);
+
+        // Verify code is still tokenized correctly
+        const operatorTokens = builder.getTokensOfType(SemanticTokenTypes.Operator);
+        expect(operatorTokens.length).toBeGreaterThan(0);
+      });
+
+      it('should not tokenize content inside comments as keywords', () => {
+        const code = '// IF THEN ELSE BEGIN END';
+        const { builder } = buildSemanticTokens(code);
+
+        // Keywords inside comment should NOT be tokenized
+        const keywordTokens = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        expect(keywordTokens.length).toBe(0);
+      });
+
+      it('should not tokenize content inside comments as operators', () => {
+        const code = '// x := 1 + 2 * 3';
+        const { builder } = buildSemanticTokens(code);
+
+        // Operators inside comment should NOT be tokenized
+        const operatorTokens = builder.getTokensOfType(SemanticTokenTypes.Operator);
+        expect(operatorTokens.length).toBe(0);
+      });
+    });
+
+    describe('Comments vs Other Token Types', () => {
+      it('should not treat // inside string literal as comment', () => {
+        const code = "x := '// Not a comment'";
+        const { builder } = buildSemanticTokens(code);
+
+        // The // inside the string should NOT be a comment
+        const commentTokens = builder.getTokensOfType(SemanticTokenTypes.Comment);
+        expect(commentTokens.length).toBe(0);
+
+        // Should have a string token containing the // text
+        const stringTokens = builder.getTokensOfType(SemanticTokenTypes.String);
+        expect(stringTokens.length).toBe(1);
+      });
+
+      it('should not treat // inside quoted identifier as comment', () => {
+        const code = '"// Field Name" := 1';
+        const { builder } = buildSemanticTokens(code);
+
+        // The // inside the quoted identifier should NOT cause a comment
+        const commentTokens = builder.getTokensOfType(SemanticTokenTypes.Comment);
+        expect(commentTokens.length).toBe(0);
+
+        // Should have a variable token for the quoted identifier
+        const variableTokens = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        expect(variableTokens.length).toBeGreaterThan(0);
+      });
+
+      it('should correctly tokenize code with comments in between', () => {
+        const code = 'x := 1;\n// Comment\ny := 2;';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Both assignments should be tokenized (comments are skipped)
+        const operatorTokens = builder.getTokensOfType(SemanticTokenTypes.Operator);
+        // Should have 2 := operators
+        expect(operatorTokens.length).toBe(2);
+
+        // Should have 2 number tokens
+        const numberTokens = builder.getTokensOfType(SemanticTokenTypes.Number);
+        expect(numberTokens.length).toBe(2);
+      });
+
+      it('should correctly tokenize code after block comment', () => {
+        const code = '/* Comment */ x := 1';
+        const { builder } = buildSemanticTokens(code);
+
+        // Code after comment should be tokenized
+        const operatorTokens = builder.getTokensOfType(SemanticTokenTypes.Operator);
+        expect(operatorTokens.length).toBe(1);
+
+        const variableTokens = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        expect(variableTokens.length).toBe(1);
+
+        const numberTokens = builder.getTokensOfType(SemanticTokenTypes.Number);
+        expect(numberTokens.length).toBe(1);
+      });
+
+      it('should correctly tokenize code before block comment', () => {
+        const code = 'x := 1 /* Comment */';
+        const { builder } = buildSemanticTokens(code);
+
+        // Code before comment should be tokenized
+        const operatorTokens = builder.getTokensOfType(SemanticTokenTypes.Operator);
+        expect(operatorTokens.length).toBe(1);
+
+        const variableTokens = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        expect(variableTokens.length).toBe(1);
+
+        const numberTokens = builder.getTokensOfType(SemanticTokenTypes.Number);
+        expect(numberTokens.length).toBe(1);
+      });
+    });
+
+    describe('Multi-line Comments', () => {
+      it('should skip multi-line block comment', () => {
+        const code = '/* This is a\n   multi-line\n   comment */';
+        const { builder } = buildSemanticTokens(code);
+
+        // Multi-line comment should be skipped
+        const commentTokens = builder.getTokensOfType(SemanticTokenTypes.Comment);
+        expect(commentTokens.length).toBe(0);
+      });
+
+      it('should correctly tokenize code after multi-line comment', () => {
+        const code = '/* Multi\nline\ncomment */\nx := 1';
+        const { builder } = buildSemanticTokens(code);
+
+        // Code after multi-line comment should be tokenized
+        const operatorTokens = builder.getTokensOfType(SemanticTokenTypes.Operator);
+        expect(operatorTokens.length).toBe(1);
+
+        const variableTokens = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        expect(variableTokens.length).toBe(1);
+      });
+    });
+
+    describe('Comment and Code Interleaving', () => {
+      it('should correctly handle alternating code and comments', () => {
+        const code = 'a := 1;\n// Comment 1\nb := 2;\n// Comment 2\nc := 3;';
+        const { builder } = buildSemanticTokens(code);
+
+        // All three assignments should be tokenized
+        const operatorTokens = builder.getTokensOfType(SemanticTokenTypes.Operator);
+        expect(operatorTokens.length).toBe(3); // 3 := operators
+
+        const numberTokens = builder.getTokensOfType(SemanticTokenTypes.Number);
+        expect(numberTokens.length).toBe(3);
+
+        // Comments should be skipped
+        const commentTokens = builder.getTokensOfType(SemanticTokenTypes.Comment);
+        expect(commentTokens.length).toBe(0);
+      });
+
+      it('should correctly handle code with inline comments', () => {
+        const code = 'IF x > 0 THEN // positive\n  y := 1; // set value';
+        const { builder } = buildSemanticTokens(code);
+
+        // Keywords should be tokenized
+        const keywordTokens = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        expect(keywordTokens.length).toBe(2); // IF, THEN
+
+        // Operators should be tokenized (>, :=)
+        const operatorTokens = builder.getTokensOfType(SemanticTokenTypes.Operator);
+        expect(operatorTokens.length).toBe(2);
+
+        // Comments should be skipped
+        const commentTokens = builder.getTokensOfType(SemanticTokenTypes.Comment);
+        expect(commentTokens.length).toBe(0);
+      });
+    });
   });
 
   describe('Position Calculation', () => {
