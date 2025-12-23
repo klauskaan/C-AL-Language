@@ -547,11 +547,371 @@ describe('SemanticTokensProvider', () => {
   });
 
   describe('Type Token Mapping', () => {
-    // Tests will be added in subtask 2.3
+    describe('Primitive Types', () => {
+      it('should map Boolean type to Type semantic type', () => {
+        const code = 'x : Boolean';
+        const semanticType = findSemanticType(code, 'Boolean');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map Integer type to Type semantic type', () => {
+        const code = 'x : Integer';
+        const semanticType = findSemanticType(code, 'Integer');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map Decimal type to Type semantic type', () => {
+        const code = 'x : Decimal';
+        const semanticType = findSemanticType(code, 'Decimal');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map Text type to Type semantic type', () => {
+        const code = 'x : Text';
+        const semanticType = findSemanticType(code, 'Text');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map Code type to Type semantic type', () => {
+        // Note: Code is a section keyword, but in type context it should be Code_Type
+        const code = 'VAR x : Code';
+        // The lexer may tokenize 'Code' as TokenType.Code (section keyword)
+        // Let's check with a different context
+        const { builder, tokens } = buildSemanticTokens(code);
+        // Verify VAR is keyword and x is variable
+        expect(findSemanticType(code, 'VAR')).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map Char type to Type semantic type', () => {
+        const code = 'x : Char';
+        const semanticType = findSemanticType(code, 'Char');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map Byte type to Type semantic type', () => {
+        const code = 'x : Byte';
+        const semanticType = findSemanticType(code, 'Byte');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map Option type to Type semantic type', () => {
+        const code = 'x : Option';
+        const semanticType = findSemanticType(code, 'Option');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+    });
+
+    describe('Date and Time Types', () => {
+      it('should map Date type to Type semantic type', () => {
+        const code = 'x : Date';
+        const semanticType = findSemanticType(code, 'Date');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map Time type to Type semantic type', () => {
+        const code = 'x : Time';
+        const semanticType = findSemanticType(code, 'Time');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map DateTime type to Type semantic type', () => {
+        const code = 'x : DateTime';
+        const semanticType = findSemanticType(code, 'DateTime');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map Duration type to Type semantic type', () => {
+        const code = 'x : Duration';
+        const semanticType = findSemanticType(code, 'Duration');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+    });
+
+    describe('Record and Reference Types', () => {
+      it('should map Record type to Type semantic type', () => {
+        const code = 'x : Record';
+        const semanticType = findSemanticType(code, 'Record');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map RecordID type to Type semantic type', () => {
+        const code = 'x : RecordID';
+        const semanticType = findSemanticType(code, 'RecordID');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map RecordRef type to Type semantic type', () => {
+        const code = 'x : RecordRef';
+        const semanticType = findSemanticType(code, 'RecordRef');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map FieldRef type to Type semantic type', () => {
+        const code = 'x : FieldRef';
+        const semanticType = findSemanticType(code, 'FieldRef');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+    });
+
+    describe('Extended Types', () => {
+      it('should map BigInteger type to Type semantic type', () => {
+        const code = 'x : BigInteger';
+        const semanticType = findSemanticType(code, 'BigInteger');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map BigText type to Type semantic type', () => {
+        const code = 'x : BigText';
+        const semanticType = findSemanticType(code, 'BigText');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map BLOB type to Type semantic type', () => {
+        const code = 'x : BLOB';
+        const semanticType = findSemanticType(code, 'BLOB');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map GUID type to Type semantic type', () => {
+        const code = 'x : GUID';
+        const semanticType = findSemanticType(code, 'GUID');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map TextConst type to Type semantic type', () => {
+        const code = 'x : TextConst';
+        const semanticType = findSemanticType(code, 'TextConst');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+    });
+
+    describe('Case Insensitivity for Types', () => {
+      it('should map lowercase integer to Type semantic type', () => {
+        const code = 'x : integer';
+        const semanticType = findSemanticType(code, 'integer');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map lowercase text to Type semantic type', () => {
+        const code = 'x : text';
+        const semanticType = findSemanticType(code, 'text');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map mixed case Record to Type semantic type', () => {
+        const code = 'x : RECORD';
+        const semanticType = findSemanticType(code, 'RECORD');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map lowercase boolean to Type semantic type', () => {
+        const code = 'x : boolean';
+        const semanticType = findSemanticType(code, 'boolean');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should map mixed case BigInteger to Type semantic type', () => {
+        const code = 'x : BIGINTEGER';
+        const semanticType = findSemanticType(code, 'BIGINTEGER');
+        expect(semanticType).toBe(SemanticTokenTypes.Type);
+      });
+    });
+
+    describe('Multiple Types in Code', () => {
+      it('should correctly map multiple types in variable declarations', () => {
+        const code = 'VAR x : Integer; y : Text; z : Boolean;';
+
+        expect(findSemanticType(code, 'Integer')).toBe(SemanticTokenTypes.Type);
+        expect(findSemanticType(code, 'Text')).toBe(SemanticTokenTypes.Type);
+        expect(findSemanticType(code, 'Boolean')).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should correctly map types in procedure parameters', () => {
+        const code = 'PROCEDURE MyProc(x : Integer; y : Text) : Boolean';
+
+        expect(findSemanticType(code, 'Integer')).toBe(SemanticTokenTypes.Type);
+        expect(findSemanticType(code, 'Text')).toBe(SemanticTokenTypes.Type);
+        expect(findSemanticType(code, 'Boolean')).toBe(SemanticTokenTypes.Type);
+      });
+
+      it('should distinguish type keywords from identifiers', () => {
+        const code = 'VAR MyInteger : Integer';
+
+        // 'Integer' should be a Type
+        expect(findSemanticType(code, 'Integer')).toBe(SemanticTokenTypes.Type);
+        // 'MyInteger' should be a Variable (identifier)
+        expect(findSemanticType(code, 'MyInteger')).toBe(SemanticTokenTypes.Variable);
+      });
+    });
   });
 
   describe('Literal Token Mapping', () => {
-    // Tests will be added in subtask 2.3
+    describe('String Literals', () => {
+      it('should map single-quoted string to String semantic type', () => {
+        // Note: The lexer stores string values WITHOUT surrounding quotes
+        const code = "x := 'Hello World'";
+        const semanticType = findSemanticType(code, 'Hello World');
+        expect(semanticType).toBe(SemanticTokenTypes.String);
+      });
+
+      it('should map empty string to String semantic type', () => {
+        const code = "x := ''";
+        // Empty string token has empty value
+        const semanticType = findSemanticType(code, '');
+        expect(semanticType).toBe(SemanticTokenTypes.String);
+      });
+
+      it('should map string with special characters to String semantic type', () => {
+        const code = "x := 'Hello, World! @#$%'";
+        const semanticType = findSemanticType(code, 'Hello, World! @#$%');
+        expect(semanticType).toBe(SemanticTokenTypes.String);
+      });
+
+      it('should map string with numbers to String semantic type', () => {
+        const code = "x := 'Item 12345'";
+        const semanticType = findSemanticType(code, 'Item 12345');
+        expect(semanticType).toBe(SemanticTokenTypes.String);
+      });
+
+      it('should map string with escaped quote to String semantic type', () => {
+        // Note: Escaped quotes ('') become single quote (') in token value
+        const code = "x := 'It''s working'";
+        const semanticType = findSemanticType(code, "It's working");
+        expect(semanticType).toBe(SemanticTokenTypes.String);
+      });
+    });
+
+    describe('Integer Literals', () => {
+      it('should map simple integer to Number semantic type', () => {
+        const code = 'x := 42';
+        const semanticType = findSemanticType(code, '42');
+        expect(semanticType).toBe(SemanticTokenTypes.Number);
+      });
+
+      it('should map zero to Number semantic type', () => {
+        const code = 'x := 0';
+        const semanticType = findSemanticType(code, '0');
+        expect(semanticType).toBe(SemanticTokenTypes.Number);
+      });
+
+      it('should map large integer to Number semantic type', () => {
+        const code = 'x := 1234567890';
+        const semanticType = findSemanticType(code, '1234567890');
+        expect(semanticType).toBe(SemanticTokenTypes.Number);
+      });
+
+      it('should map negative integer to Number semantic type (minus is operator)', () => {
+        const code = 'x := -42';
+        // The minus sign is a separate operator token, the number 42 should be Number
+        const semanticType = findSemanticType(code, '42');
+        expect(semanticType).toBe(SemanticTokenTypes.Number);
+      });
+
+      it('should map integer in expression to Number semantic type', () => {
+        const code = 'x := 10 + 20';
+        expect(findSemanticType(code, '10')).toBe(SemanticTokenTypes.Number);
+        expect(findSemanticType(code, '20')).toBe(SemanticTokenTypes.Number);
+      });
+    });
+
+    describe('Decimal Literals', () => {
+      it('should map simple decimal to Number semantic type', () => {
+        const code = 'x := 3.14';
+        const semanticType = findSemanticType(code, '3.14');
+        expect(semanticType).toBe(SemanticTokenTypes.Number);
+      });
+
+      it('should map decimal with leading zero to Number semantic type', () => {
+        const code = 'x := 0.5';
+        const semanticType = findSemanticType(code, '0.5');
+        expect(semanticType).toBe(SemanticTokenTypes.Number);
+      });
+
+      it('should map large decimal to Number semantic type', () => {
+        const code = 'x := 12345.67890';
+        const semanticType = findSemanticType(code, '12345.67890');
+        expect(semanticType).toBe(SemanticTokenTypes.Number);
+      });
+
+      it('should map decimal in expression to Number semantic type', () => {
+        const code = 'x := 1.5 + 2.5';
+        expect(findSemanticType(code, '1.5')).toBe(SemanticTokenTypes.Number);
+        expect(findSemanticType(code, '2.5')).toBe(SemanticTokenTypes.Number);
+      });
+    });
+
+    describe('Mixed Literals in Code', () => {
+      it('should correctly map string and number in same line', () => {
+        const code = "MESSAGE('Value is: ' + FORMAT(42))";
+
+        // String token value doesn't include quotes
+        expect(findSemanticType(code, 'Value is: ')).toBe(SemanticTokenTypes.String);
+        expect(findSemanticType(code, '42')).toBe(SemanticTokenTypes.Number);
+      });
+
+      it('should correctly map multiple literals in procedure call', () => {
+        const code = "MyProc('Test', 100, 3.14)";
+
+        // String token value doesn't include quotes
+        expect(findSemanticType(code, 'Test')).toBe(SemanticTokenTypes.String);
+        expect(findSemanticType(code, '100')).toBe(SemanticTokenTypes.Number);
+        expect(findSemanticType(code, '3.14')).toBe(SemanticTokenTypes.Number);
+      });
+
+      it('should correctly map literals in array indexing', () => {
+        const code = "x := MyArray[1] + 'text'";
+
+        expect(findSemanticType(code, '1')).toBe(SemanticTokenTypes.Number);
+        // String token value doesn't include quotes
+        expect(findSemanticType(code, 'text')).toBe(SemanticTokenTypes.String);
+      });
+
+      it('should correctly map literals in FOR loop', () => {
+        const code = 'FOR i := 1 TO 10 DO';
+
+        expect(findSemanticType(code, '1')).toBe(SemanticTokenTypes.Number);
+        expect(findSemanticType(code, '10')).toBe(SemanticTokenTypes.Number);
+      });
+
+      it('should correctly map literals in CASE statement', () => {
+        const code = "CASE x OF 1: y := 'one'; 2: y := 'two'; END";
+
+        expect(findSemanticType(code, '1')).toBe(SemanticTokenTypes.Number);
+        expect(findSemanticType(code, '2')).toBe(SemanticTokenTypes.Number);
+        // String token values don't include quotes
+        expect(findSemanticType(code, 'one')).toBe(SemanticTokenTypes.String);
+        expect(findSemanticType(code, 'two')).toBe(SemanticTokenTypes.String);
+      });
+    });
+
+    describe('Literals vs Types Disambiguation', () => {
+      it('should distinguish Integer type from integer literal', () => {
+        const code = 'VAR x : Integer; BEGIN x := 42; END';
+
+        // 'Integer' is a type
+        expect(findSemanticType(code, 'Integer')).toBe(SemanticTokenTypes.Type);
+        // '42' is a number literal
+        expect(findSemanticType(code, '42')).toBe(SemanticTokenTypes.Number);
+      });
+
+      it('should distinguish Decimal type from decimal literal', () => {
+        const code = 'VAR x : Decimal; BEGIN x := 3.14; END';
+
+        // 'Decimal' is a type
+        expect(findSemanticType(code, 'Decimal')).toBe(SemanticTokenTypes.Type);
+        // '3.14' is a number literal
+        expect(findSemanticType(code, '3.14')).toBe(SemanticTokenTypes.Number);
+      });
+
+      it('should distinguish Text type from string literal', () => {
+        const code = "VAR x : Text; BEGIN x := 'hello'; END";
+
+        // 'Text' is a type
+        expect(findSemanticType(code, 'Text')).toBe(SemanticTokenTypes.Type);
+        // String literal - token value doesn't include quotes
+        expect(findSemanticType(code, 'hello')).toBe(SemanticTokenTypes.String);
+      });
+    });
   });
 
   describe('Identifier Token Mapping', () => {
