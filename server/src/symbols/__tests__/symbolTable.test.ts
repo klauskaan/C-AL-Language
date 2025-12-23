@@ -585,11 +585,383 @@ describe('SymbolTable', () => {
   });
 
   describe('hasSymbol', () => {
-    // Tests for case-insensitive symbol lookup will be added in subtask 1.4
+    describe('case-insensitive lookup', () => {
+      it('should return true for symbol lookup with original case', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('CustomerNo')).toBe(true);
+      });
+
+      it('should return true for symbol lookup with lowercase', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('customerno')).toBe(true);
+      });
+
+      it('should return true for symbol lookup with uppercase', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('CUSTOMERNO')).toBe(true);
+      });
+
+      it('should return true for symbol lookup with mixed case', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('cUsToMeRnO')).toBe(true);
+        expect(symbolTable.hasSymbol('CuStOmErNo')).toBe(true);
+      });
+
+      it('should handle Customer, CUSTOMER, customer all matching the same symbol', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            VAR
+              Customer : Record 18;
+
+            PROCEDURE TestProc();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('Customer')).toBe(true);
+        expect(symbolTable.hasSymbol('CUSTOMER')).toBe(true);
+        expect(symbolTable.hasSymbol('customer')).toBe(true);
+      });
+
+      it('should return false for non-existent symbol', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('NonExistent')).toBe(false);
+        expect(symbolTable.hasSymbol('NONEXISTENT')).toBe(false);
+        expect(symbolTable.hasSymbol('nonexistent')).toBe(false);
+      });
+
+      it('should handle case-insensitive lookup for variables', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            VAR
+              TotalAmount : Decimal;
+
+            PROCEDURE TestProc();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('TotalAmount')).toBe(true);
+        expect(symbolTable.hasSymbol('totalamount')).toBe(true);
+        expect(symbolTable.hasSymbol('TOTALAMOUNT')).toBe(true);
+        expect(symbolTable.hasSymbol('totalAmount')).toBe(true);
+      });
+
+      it('should handle case-insensitive lookup for procedures', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            PROCEDURE CalculateTotal();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('CalculateTotal')).toBe(true);
+        expect(symbolTable.hasSymbol('calculatetotal')).toBe(true);
+        expect(symbolTable.hasSymbol('CALCULATETOTAL')).toBe(true);
+        expect(symbolTable.hasSymbol('calculateTotal')).toBe(true);
+      });
+
+      it('should handle case-insensitive lookup for quoted identifiers', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."           ;Code20        }
+    { 2   ;   ;"Customer Name" ;Text100       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('No.')).toBe(true);
+        expect(symbolTable.hasSymbol('no.')).toBe(true);
+        expect(symbolTable.hasSymbol('NO.')).toBe(true);
+        expect(symbolTable.hasSymbol('Customer Name')).toBe(true);
+        expect(symbolTable.hasSymbol('customer name')).toBe(true);
+        expect(symbolTable.hasSymbol('CUSTOMER NAME')).toBe(true);
+      });
+    });
   });
 
   describe('getSymbol', () => {
-    // Tests for symbol retrieval will be added in subtask 1.4
+    describe('case-insensitive retrieval', () => {
+      it('should return the same symbol regardless of case used in lookup', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        const symbol1 = symbolTable.getSymbol('CustomerNo');
+        const symbol2 = symbolTable.getSymbol('customerno');
+        const symbol3 = symbolTable.getSymbol('CUSTOMERNO');
+
+        expect(symbol1).toBeDefined();
+        expect(symbol2).toBeDefined();
+        expect(symbol3).toBeDefined();
+        expect(symbol1).toBe(symbol2);
+        expect(symbol2).toBe(symbol3);
+      });
+
+      it('should return undefined for non-existent symbol', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.getSymbol('NonExistent')).toBeUndefined();
+        expect(symbolTable.getSymbol('nonexistent')).toBeUndefined();
+        expect(symbolTable.getSymbol('NONEXISTENT')).toBeUndefined();
+      });
+    });
+
+    describe('symbol data correctness', () => {
+      it('should return correct kind for field symbols', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+    { 2   ;   ;Name            ;Text100       }
+    { 3   ;   ;Balance         ;Decimal       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.getSymbol('CustomerNo')?.kind).toBe('field');
+        expect(symbolTable.getSymbol('Name')?.kind).toBe('field');
+        expect(symbolTable.getSymbol('Balance')?.kind).toBe('field');
+      });
+
+      it('should return correct kind for variable symbols', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            VAR
+              Counter : Integer;
+              Total : Decimal;
+              Name : Text;
+
+            PROCEDURE TestProc();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.getSymbol('Counter')?.kind).toBe('variable');
+        expect(symbolTable.getSymbol('Total')?.kind).toBe('variable');
+        expect(symbolTable.getSymbol('Name')?.kind).toBe('variable');
+      });
+
+      it('should return correct kind for procedure symbols', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            PROCEDURE ProcessOrder();
+            BEGIN
+            END;
+
+            LOCAL PROCEDURE ValidateData();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.getSymbol('ProcessOrder')?.kind).toBe('procedure');
+        expect(symbolTable.getSymbol('ValidateData')?.kind).toBe('procedure');
+      });
+
+      it('should return correct type for field symbols', () => {
+        const code = `OBJECT Table 50000 TestTable
+{
+  FIELDS
+  {
+    { 1   ;   ;CodeField       ;Code20        }
+    { 2   ;   ;TextField       ;Text50        }
+    { 3   ;   ;IntField        ;Integer       }
+    { 4   ;   ;DecimalField    ;Decimal       }
+    { 5   ;   ;BoolField       ;Boolean       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.getSymbol('CodeField')?.type).toBe('Code20');
+        expect(symbolTable.getSymbol('TextField')?.type).toBe('Text50');
+        expect(symbolTable.getSymbol('IntField')?.type).toBe('Integer');
+        expect(symbolTable.getSymbol('DecimalField')?.type).toBe('Decimal');
+        expect(symbolTable.getSymbol('BoolField')?.type).toBe('Boolean');
+      });
+
+      it('should return correct type for variable symbols', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            VAR
+              IntVar : Integer;
+              DecVar : Decimal;
+              TextVar : Text;
+              BoolVar : Boolean;
+              DateVar : Date;
+
+            PROCEDURE TestProc();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.getSymbol('IntVar')?.type).toBe('Integer');
+        expect(symbolTable.getSymbol('DecVar')?.type).toBe('Decimal');
+        expect(symbolTable.getSymbol('TextVar')?.type).toBe('Text');
+        expect(symbolTable.getSymbol('BoolVar')?.type).toBe('Boolean');
+        expect(symbolTable.getSymbol('DateVar')?.type).toBe('Date');
+      });
+
+      it('should return normalized (lowercase) name in symbol data', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+    { 2   ;   ;NAME            ;Text100       }
+    { 3   ;   ;mixedCASE       ;Integer       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.getSymbol('CustomerNo')?.name).toBe('customerno');
+        expect(symbolTable.getSymbol('NAME')?.name).toBe('name');
+        expect(symbolTable.getSymbol('mixedCASE')?.name).toBe('mixedcase');
+      });
+
+      it('should include token reference in symbol data', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const symbol = symbolTable.getSymbol('CustomerNo');
+
+        expect(symbol?.token).toBeDefined();
+        expect(symbol?.token.value).toBeDefined();
+      });
+
+      it('should return complete symbol data for fields with case-insensitive lookup', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;CustomerNo      ;Code20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        // Use different case for lookup
+        const symbol = symbolTable.getSymbol('CUSTOMERNO');
+
+        expect(symbol).toBeDefined();
+        expect(symbol?.name).toBe('customerno');
+        expect(symbol?.kind).toBe('field');
+        expect(symbol?.type).toBe('Code20');
+        expect(symbol?.token).toBeDefined();
+      });
+
+      it('should return complete symbol data for variables with case-insensitive lookup', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            VAR
+              TotalAmount : Decimal;
+
+            PROCEDURE TestProc();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+
+        // Use different case for lookup
+        const symbol = symbolTable.getSymbol('totalamount');
+
+        expect(symbol).toBeDefined();
+        expect(symbol?.name).toBe('totalamount');
+        expect(symbol?.kind).toBe('variable');
+        expect(symbol?.type).toBe('Decimal');
+        expect(symbol?.token).toBeDefined();
+      });
+
+      it('should return complete symbol data for procedures with case-insensitive lookup', () => {
+        const code = `OBJECT Codeunit 50000 Test {
+          CODE {
+            PROCEDURE CalculateTotal();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+
+        // Use different case for lookup
+        const symbol = symbolTable.getSymbol('CALCULATETOTAL');
+
+        expect(symbol).toBeDefined();
+        expect(symbol?.name).toBe('calculatetotal');
+        expect(symbol?.kind).toBe('procedure');
+        expect(symbol?.token).toBeDefined();
+      });
+    });
   });
 
   describe('getAllSymbols', () => {
