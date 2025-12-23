@@ -231,57 +231,371 @@ describe('Lexer - Edge Cases', () => {
     });
 
     it('should handle German umlauts', () => {
-      const code = '"Betr\u00e4g"';
+      const code = '"Beträg"';
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
       expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
-      expect(tokens[0].value).toBe('Betr\u00e4g');
+      expect(tokens[0].value).toBe('Beträg');
     });
 
     it('should handle accented characters', () => {
-      const code = '"Caf\u00e9 Name"';
+      const code = '"Café Name"';
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
       expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
-      expect(tokens[0].value).toBe('Caf\u00e9 Name');
+      expect(tokens[0].value).toBe('Café Name');
     });
 
     it('should handle mixed Unicode and ASCII', () => {
-      const code = '"Order \u00d8rder 123"';
+      const code = '"Order Ørder 123"';
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
       expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
-      expect(tokens[0].value).toBe('Order \u00d8rder 123');
+      expect(tokens[0].value).toBe('Order Ørder 123');
     });
 
     it('should handle Unicode in string literals', () => {
-      const code = "'Caf\u00e9 au lait'";
+      const code = "'Café au lait'";
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
       expect(tokens[0].type).toBe(TokenType.String);
-      expect(tokens[0].value).toBe('Caf\u00e9 au lait');
+      expect(tokens[0].value).toBe('Café au lait');
     });
 
     it('should handle extended Latin characters', () => {
-      const code = '"\u0141\u00f3d\u017a"';
+      const code = '"Łódź"';
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
       expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
-      expect(tokens[0].value).toBe('\u0141\u00f3d\u017a');
+      expect(tokens[0].value).toBe('Łódź');
     });
 
     it('should handle unquoted identifiers with Unicode', () => {
-      const code = 'Kund\u00f8r';
+      const code = 'Kundør';
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
       // Behavior depends on lexer implementation - should not crash
       expect(tokens.length).toBeGreaterThan(0);
+    });
+
+    // Additional comprehensive Unicode tests
+
+    it('should handle Danish/Norwegian specific characters (æøå)', () => {
+      const code = '"Køb Æble Ålborg"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Køb Æble Ålborg');
+    });
+
+    it('should handle Swedish specific characters (åäö)', () => {
+      const code = '"Försäljning Årsredovisning"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Försäljning Årsredovisning');
+    });
+
+    it('should handle Spanish characters (ñ, ¿, ¡)', () => {
+      const code = '"Año España"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Año España');
+    });
+
+    it('should handle French characters (ç, œ, ê)', () => {
+      const code = '"Français Cœur Fenêtre"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Français Cœur Fenêtre');
+    });
+
+    it('should handle German sharp S (ß)', () => {
+      const code = '"Straße Größe"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Straße Größe');
+    });
+
+    it('should handle Icelandic characters (þ, ð)', () => {
+      const code = '"Þetta Maður"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Þetta Maður');
+    });
+
+    it('should handle Greek characters', () => {
+      const code = '"Αλφα Βήτα Γάμα"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Αλφα Βήτα Γάμα');
+    });
+
+    it('should handle Cyrillic characters', () => {
+      const code = '"Привет Мир"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Привет Мир');
+    });
+
+    it('should handle Chinese characters', () => {
+      const code = '"客户名称"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('客户名称');
+    });
+
+    it('should handle Japanese characters (hiragana)', () => {
+      const code = '"こんにちは"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('こんにちは');
+    });
+
+    it('should handle Japanese characters (katakana)', () => {
+      const code = '"カタカナ"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('カタカナ');
+    });
+
+    it('should handle Korean characters', () => {
+      const code = '"안녕하세요"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('안녕하세요');
+    });
+
+    it('should handle Arabic characters', () => {
+      const code = '"مرحبا"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('مرحبا');
+    });
+
+    it('should handle Hebrew characters', () => {
+      const code = '"שלום"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('שלום');
+    });
+
+    it('should handle Thai characters', () => {
+      const code = '"สวัสดี"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('สวัสดี');
+    });
+
+    it('should handle currency symbols', () => {
+      const code = '"Price € Amount £ Value ¥"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Price € Amount £ Value ¥');
+    });
+
+    it('should handle mathematical symbols', () => {
+      const code = '"Formula ∑ ∏ ∞"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Formula ∑ ∏ ∞');
+    });
+
+    it('should handle superscript and subscript characters', () => {
+      const code = '"Value² H₂O"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Value² H₂O');
+    });
+
+    it('should handle Unicode in realistic NAV field context', () => {
+      const code = '"Beløb (DKK)"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Beløb (DKK)');
+    });
+
+    it('should handle Unicode with escaped quotes', () => {
+      const code = '"Café ""au lait"""';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Café "au lait"');
+    });
+
+    it('should handle multiple Unicode identifiers in expression', () => {
+      const code = '"Beløb" + "Mængde" - "Pris"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Beløb');
+      expect(tokens[1].type).toBe(TokenType.Plus);
+      expect(tokens[2].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[2].value).toBe('Mængde');
+      expect(tokens[3].type).toBe(TokenType.Minus);
+      expect(tokens[4].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[4].value).toBe('Pris');
+    });
+
+    it('should handle Unicode in assignment with string literal', () => {
+      const code = '"Kundenavn" := \'Müller & Søn\';';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Kundenavn');
+      expect(tokens[1].type).toBe(TokenType.Assign);
+      expect(tokens[2].type).toBe(TokenType.String);
+      expect(tokens[2].value).toBe('Müller & Søn');
+    });
+
+    it('should handle Unicode in CALCFIELDS context', () => {
+      const code = 'CALCFIELDS("Beløb");';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.Identifier);
+      expect(tokens[0].value).toBe('CALCFIELDS');
+      expect(tokens[1].type).toBe(TokenType.LeftParen);
+      expect(tokens[2].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[2].value).toBe('Beløb');
+      expect(tokens[3].type).toBe(TokenType.RightParen);
+      expect(tokens[4].type).toBe(TokenType.Semicolon);
+    });
+
+    it('should handle Unicode in IF statement context', () => {
+      const code = 'IF "Beløb" > 0 THEN';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.If);
+      expect(tokens[1].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[1].value).toBe('Beløb');
+      expect(tokens[2].type).toBe(TokenType.Greater);
+      expect(tokens[3].type).toBe(TokenType.Integer);
+      expect(tokens[3].value).toBe('0');
+      expect(tokens[4].type).toBe(TokenType.Then);
+    });
+
+    it('should handle emojis in quoted identifiers', () => {
+      const code = '"Status 🔵"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Status 🔵');
+    });
+
+    it('should handle emojis in string literals', () => {
+      const code = "'Hello 👋 World 🌍'";
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.String);
+      expect(tokens[0].value).toBe('Hello 👋 World 🌍');
+    });
+
+    it('should handle zero-width characters gracefully', () => {
+      // Zero-width space (U+200B) between A and B
+      const code = '"A\u200BB"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      // The zero-width space should be preserved
+      expect(tokens[0].value).toBe('A\u200BB');
+    });
+
+    it('should handle right-to-left override characters', () => {
+      // Contains RTL override character
+      const code = '"Field\u202EValue"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Field\u202EValue');
+    });
+
+    it('should handle combining diacritical marks', () => {
+      // e followed by combining acute accent (é constructed differently)
+      const code = '"Cafe\u0301"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Cafe\u0301');
+    });
+
+    it('should handle Unicode string with escaped quotes', () => {
+      const code = "'Müller''s Café'";
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.String);
+      expect(tokens[0].value).toBe("Müller's Café");
+    });
+
+    it('should preserve Unicode character integrity in long identifiers', () => {
+      const code = '"ÆØÅ Længere Identifier Med Mange Danske Tegn ÆØÅ"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('ÆØÅ Længere Identifier Med Mange Danske Tegn ÆØÅ');
+    });
+
+    it('should handle mixed scripts in single identifier', () => {
+      // Mix of Latin, Cyrillic, and Greek
+      const code = '"Field Поле Πεδίο"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Field Поле Πεδίο');
     });
   });
 
