@@ -13,6 +13,81 @@ export interface Symbol {
   type?: string;
 }
 
+/**
+ * Normalize identifier for case-insensitive lookup.
+ * C/AL identifiers are case-insensitive.
+ */
+function normalizeIdentifier(name: string): string {
+  return name.toLowerCase();
+}
+
+/**
+ * Represents a lexical scope in C/AL code.
+ * Scopes form a tree structure with parent/child relationships.
+ *
+ * - Root scope contains global symbols (fields, global variables, procedures)
+ * - Child scopes are created for procedures and triggers
+ * - Symbol lookup traverses from current scope up through parent chain
+ */
+export class Scope {
+  /** Symbols defined in this scope, keyed by normalized name */
+  private symbols: Map<string, Symbol> = new Map();
+
+  /** Parent scope, null for root scope */
+  public parent: Scope | null = null;
+
+  /** Child scopes (procedures, triggers) */
+  public children: Scope[] = [];
+
+  /** Start offset of this scope in the document */
+  public startOffset: number = 0;
+
+  /** End offset of this scope in the document */
+  public endOffset: number = Number.MAX_SAFE_INTEGER;
+
+  /**
+   * Create a new scope
+   * @param parent - Parent scope, or null for root scope
+   */
+  constructor(parent: Scope | null = null) {
+    this.parent = parent;
+    if (parent) {
+      parent.children.push(this);
+    }
+  }
+
+  /**
+   * Add a symbol to this scope
+   * @param symbol - The symbol to add
+   */
+  public addSymbol(symbol: Symbol): void {
+    this.symbols.set(normalizeIdentifier(symbol.name), symbol);
+  }
+
+  /**
+   * Check if a symbol exists in this scope only (not parent scopes)
+   * @param name - Symbol name (case-insensitive)
+   */
+  public hasOwnSymbol(name: string): boolean {
+    return this.symbols.has(normalizeIdentifier(name));
+  }
+
+  /**
+   * Get a symbol from this scope only (not parent scopes)
+   * @param name - Symbol name (case-insensitive)
+   */
+  public getOwnSymbol(name: string): Symbol | undefined {
+    return this.symbols.get(normalizeIdentifier(name));
+  }
+
+  /**
+   * Get all symbols defined directly in this scope
+   */
+  public getOwnSymbols(): Symbol[] {
+    return Array.from(this.symbols.values());
+  }
+}
+
 export class SymbolTable {
   private symbols: Map<string, Symbol> = new Map();
 
