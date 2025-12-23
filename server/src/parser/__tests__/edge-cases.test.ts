@@ -913,6 +913,114 @@ describe('Parser - Empty Sections', () => {
 
       expect(() => parser.parse()).not.toThrow();
     });
+
+    it('should return valid AST for empty PROPERTIES', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+      expect(ast.object).toBeDefined();
+      expect(ast.object?.objectKind).toBe(ObjectKind.Table);
+      expect(ast.object?.objectId).toBe(1);
+      expect(ast.object?.objectName).toBe('Test');
+    });
+
+    it('should handle PROPERTIES with only newlines', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+
+
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle PROPERTIES with only tabs and spaces', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty PROPERTIES in Codeunit', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        PROPERTIES {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.objectKind).toBe(ObjectKind.Codeunit);
+    });
+
+    it('should handle empty PROPERTIES in Page', () => {
+      const code = `OBJECT Page 1 Test {
+        PROPERTIES {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.objectKind).toBe(ObjectKind.Page);
+    });
+
+    it('should handle empty PROPERTIES in Report', () => {
+      const code = `OBJECT Report 1 Test {
+        PROPERTIES {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.objectKind).toBe(ObjectKind.Report);
+    });
+
+    it('should handle empty PROPERTIES in XMLport', () => {
+      const code = `OBJECT XMLport 1 Test {
+        PROPERTIES {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.objectKind).toBe(ObjectKind.XMLport);
+    });
+
+    it('should handle empty PROPERTIES in Query', () => {
+      const code = `OBJECT Query 1 Test {
+        PROPERTIES {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.objectKind).toBe(ObjectKind.Query);
+    });
   });
 
   describe('Empty FIELDS blocks', () => {
@@ -934,11 +1042,89 @@ describe('Parser - Empty Sections', () => {
 
       expect(() => parser.parse()).not.toThrow();
     });
+
+    it('should return valid AST for empty FIELDS', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+      expect(ast.object).toBeDefined();
+      expect(ast.object?.objectKind).toBe(ObjectKind.Table);
+    });
+
+    it('should handle FIELDS with only whitespace', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle FIELDS followed by empty KEYS', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+        }
+        KEYS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
   });
 
   describe('Empty KEYS blocks', () => {
     it('should handle empty KEYS section', () => {
       const code = `OBJECT Table 1 Test {
+        KEYS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should return valid AST for empty KEYS', () => {
+      const code = `OBJECT Table 1 Test {
+        KEYS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+      expect(ast.object?.objectKind).toBe(ObjectKind.Table);
+    });
+
+    it('should handle inline empty KEYS section', () => {
+      const code = `OBJECT Table 1 Test { KEYS { } }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty KEYS after FIELDS with data', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Field1" ; Code20 }
+        }
         KEYS {
         }
       }`;
@@ -966,6 +1152,165 @@ describe('Parser - Empty Sections', () => {
         CODE {
           VAR
             x : Integer;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should return valid AST for empty CODE', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+      expect(ast.object?.objectKind).toBe(ObjectKind.Codeunit);
+    });
+
+    it('should handle inline empty CODE section', () => {
+      const code = `OBJECT Codeunit 1 Test { CODE { } }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty CODE in Table', () => {
+      const code = `OBJECT Table 1 Test {
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty CODE in Page', () => {
+      const code = `OBJECT Page 1 Test {
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty CODE in Report', () => {
+      const code = `OBJECT Report 1 Test {
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Empty CONTROLS blocks', () => {
+    it('should handle empty CONTROLS section in Page', () => {
+      const code = `OBJECT Page 1 Test {
+        CONTROLS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should return valid AST for empty CONTROLS', () => {
+      const code = `OBJECT Page 1 Test {
+        CONTROLS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+      expect(ast.object?.objectKind).toBe(ObjectKind.Page);
+    });
+
+    it('should handle inline empty CONTROLS section', () => {
+      const code = `OBJECT Page 1 Test { CONTROLS { } }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Empty DATAITEMS blocks', () => {
+    it('should handle empty DATAITEMS section in Report', () => {
+      const code = `OBJECT Report 1 Test {
+        DATAITEMS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should return valid AST for empty DATAITEMS', () => {
+      const code = `OBJECT Report 1 Test {
+        DATAITEMS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.object?.objectKind).toBe(ObjectKind.Report);
+    });
+  });
+
+  describe('Empty ELEMENTS blocks', () => {
+    it('should handle empty ELEMENTS section in XMLport', () => {
+      const code = `OBJECT XMLport 1 Test {
+        ELEMENTS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should return valid AST for empty ELEMENTS', () => {
+      const code = `OBJECT XMLport 1 Test {
+        ELEMENTS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.object?.objectKind).toBe(ObjectKind.XMLport);
+    });
+  });
+
+  describe('Empty REQUESTFORM blocks', () => {
+    it('should handle empty REQUESTFORM section in Report', () => {
+      const code = `OBJECT Report 1 Test {
+        REQUESTFORM {
         }
       }`;
       const lexer = new Lexer(code);
@@ -1007,6 +1352,88 @@ describe('Parser - Empty Sections', () => {
 
       expect(() => parser.parse()).not.toThrow();
     });
+
+    it('should handle Report with all empty sections', () => {
+      const code = `OBJECT Report 1 TestReport {
+        PROPERTIES {
+        }
+        DATAITEMS {
+        }
+        REQUESTFORM {
+        }
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+
+      const ast = parser.parse();
+      expect(ast.object?.objectKind).toBe(ObjectKind.Report);
+    });
+
+    it('should handle XMLport with all empty sections', () => {
+      const code = `OBJECT XMLport 1 TestXML {
+        PROPERTIES {
+        }
+        ELEMENTS {
+        }
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+
+      const ast = parser.parse();
+      expect(ast.object?.objectKind).toBe(ObjectKind.XMLport);
+    });
+
+    it('should handle Query with empty sections', () => {
+      const code = `OBJECT Query 1 TestQuery {
+        PROPERTIES {
+        }
+        ELEMENTS {
+        }
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+
+      const ast = parser.parse();
+      expect(ast.object?.objectKind).toBe(ObjectKind.Query);
+    });
+
+    it('should handle inline object with multiple empty sections', () => {
+      const code = `OBJECT Table 1 Test { PROPERTIES { } FIELDS { } KEYS { } CODE { } }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty sections with varying whitespace', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+
+        }
+        FIELDS {
+
+
+        }
+        KEYS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
   });
 
   describe('Empty procedure body', () => {
@@ -1030,6 +1457,163 @@ describe('Parser - Empty Sections', () => {
           FUNCTION EmptyFunc() : Boolean;
           BEGIN
           END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle multiple empty procedures', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Proc1();
+          BEGIN
+          END;
+
+          PROCEDURE Proc2();
+          BEGIN
+          END;
+
+          PROCEDURE Proc3();
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty local procedure', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          LOCAL PROCEDURE LocalEmpty();
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty trigger', () => {
+      const code = `OBJECT Table 1 Test {
+        CODE {
+          OnInsert=
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle inline empty BEGIN-END', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE EmptyInline();
+          BEGIN END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Empty VAR blocks', () => {
+    it('should handle empty VAR section in procedure', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+          BEGIN
+            x := 1;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty global VAR section', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+
+          PROCEDURE Test();
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Empty sections with comments only', () => {
+    it('should handle PROPERTIES with only line comment', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+          // This section intentionally left empty
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle FIELDS with only block comment', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { No fields defined yet }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle CODE with only comments', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          // TODO: Add procedures here
+          { Future implementation }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle multiple empty sections with comments', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+          // Empty properties
+        }
+        FIELDS {
+          { No fields }
+        }
+        KEYS {
+          // No keys
+        }
+        CODE {
+          // No code
         }
       }`;
       const lexer = new Lexer(code);
