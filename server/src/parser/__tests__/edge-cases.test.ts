@@ -1625,6 +1625,257 @@ describe('Parser - Empty Sections', () => {
 });
 
 describe('Parser - Comments in Structural Sections', () => {
+  describe('Comments within field definitions', () => {
+    it('should handle line comment before field definition', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // This is a field comment
+          { 1 ; ; "Field1" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle line comment after field definition', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Field1" ; Code20 } // Field comment
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle line comments between multiple fields', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Field1" ; Code20 }
+          // Comment between fields
+          { 2 ; ; "Field2" ; Text50 }
+          // Another comment
+          { 3 ; ; "Field3" ; Integer }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle C-style comment before field', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          /* This is a C-style comment */
+          { 1 ; ; "Field1" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle C-style comment after field', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Field1" ; Code20 } /* End of field */
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle multi-line C-style comment between fields', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Field1" ; Code20 }
+          /*
+           * Multi-line comment
+           * between fields
+           */
+          { 2 ; ; "Field2" ; Text50 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle mixed comment types in FIELDS section', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // Line comment
+          { 1 ; ; "Field1" ; Code20 }
+          /* Block comment */
+          { 2 ; ; "Field2" ; Text50 }
+          // Another line comment
+          /* Another block comment */
+          { 3 ; ; "Field3" ; Integer }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle comment with C/AL keywords inside field section', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // IF THEN ELSE BEGIN END - this is just a comment
+          { 1 ; ; "Field1" ; Code20 }
+          /* PROCEDURE FUNCTION TRIGGER */
+          { 2 ; ; "Field2" ; Text50 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field with properties and preceding comment', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // Important field
+          { 1 ; ; "Field1" ; Code20 ;
+            CaptionML=ENU=Field One }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field with properties and trailing comment', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Field1" ; Code20 ;
+            CaptionML=ENU=Field One } // Field with caption
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle multiple consecutive comments before field', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // Comment 1
+          // Comment 2
+          // Comment 3
+          { 1 ; ; "Field1" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty line comment in FIELDS section', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          //
+          { 1 ; ; "Field1" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle comment with special characters in FIELDS section', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // TODO: @author #123 $$$
+          { 1 ; ; "Field1" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle comment containing field-like syntax', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // { 99 ; ; "Commented Field" ; Code20 }
+          { 1 ; ; "RealField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle C-style comment containing field-like syntax', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          /* { 99 ; ; "Commented Field" ; Code20 } */
+          { 1 ; ; "RealField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle large field number with comment', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // Maximum field ID
+          { 2147483647 ; ; "MaxField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should return valid AST when fields have comments', () => {
+      const code = `OBJECT Table 50000 TestTable {
+        FIELDS {
+          // Primary key field
+          { 1 ; ; "No." ; Code20 }
+          /* Description field */
+          { 2 ; ; "Description" ; Text100 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+      expect(ast.object).toBeDefined();
+      expect(ast.object?.objectKind).toBe(ObjectKind.Table);
+      expect(ast.object?.objectId).toBe(50000);
+      expect(ast.object?.objectName).toBe('TestTable');
+    });
+  });
+
   describe('Comments in FIELDS section', () => {
     it('should handle line comment before field definition', () => {
       const code = `OBJECT Table 1 Test {
