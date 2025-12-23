@@ -14,7 +14,7 @@ import {
 } from 'vscode-languageserver';
 
 import { KEYWORDS, TokenType } from '../lexer/tokens';
-import { SymbolTable, Symbol } from '../symbols/symbolTable';
+import { SymbolTable, Symbol, Scope } from '../symbols/symbolTable';
 import { CALDocument } from '../parser/ast';
 import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from './builtins';
 
@@ -138,6 +138,34 @@ function buildBuiltinItem(func: BuiltinFunction): CompletionItem {
 
 /** Regex pattern for valid C/AL identifier characters */
 const IDENTIFIER_PATTERN = /[a-zA-Z0-9_]/;
+
+/**
+ * Collect all symbols visible from a scope by walking up the parent chain.
+ * Inner scope symbols take precedence over outer scope symbols (shadowing).
+ * @param scope - The starting scope
+ * @returns Array of visible symbols
+ */
+function getVisibleSymbols(scope: Scope): Symbol[] {
+  const seenNames = new Set<string>();
+  const symbols: Symbol[] = [];
+  let currentScope: Scope | null = scope;
+
+  // Walk up the scope chain, collecting symbols
+  // Inner scope symbols are added first, so they take precedence (shadowing)
+  while (currentScope !== null) {
+    for (const symbol of currentScope.getOwnSymbols()) {
+      const normalizedName = symbol.name.toLowerCase();
+      // Only add if not already seen (respects shadowing)
+      if (!seenNames.has(normalizedName)) {
+        seenNames.add(normalizedName);
+        symbols.push(symbol);
+      }
+    }
+    currentScope = currentScope.parent;
+  }
+
+  return symbols;
+}
 
 /**
  * Main completion provider class
@@ -325,10 +353,15 @@ export class CompletionProvider {
       }
     }
 
-    // Phase 2: Symbol completion
+    // Phase 2: Symbol completion - scope-aware
     if (symbolTable) {
-      const symbols = symbolTable.getAllSymbols();
-      for (const symbol of symbols) {
+      // Get the offset from cursor position for scope-aware lookup
+      const offset = document.offsetAt(position);
+      const scope = symbolTable.getScopeAtOffset(offset);
+      // Get only symbols visible from the current scope (respects shadowing)
+      const visibleSymbols = getVisibleSymbols(scope);
+
+      for (const symbol of visibleSymbols) {
         if (!prefix || symbol.name.toLowerCase().startsWith(prefix)) {
           items.push({
             label: symbol.name,
@@ -366,7 +399,9 @@ export class CompletionProvider {
     const varName = this.getIdentifierBeforeDot(document, position);
 
     if (varName && symbolTable) {
-      const symbol = symbolTable.getSymbol(varName);
+      // Use scope-aware lookup to find the symbol
+      const offset = document.offsetAt(position);
+      const symbol = symbolTable.getSymbolAtOffset(varName, offset);
 
       if (symbol) {
         // We found the symbol - check its type
