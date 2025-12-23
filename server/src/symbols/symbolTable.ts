@@ -3,6 +3,7 @@ import {
   CALDocument,
   VariableDeclaration,
   ProcedureDeclaration,
+  TriggerDeclaration,
   FieldDeclaration
 } from '../parser/ast';
 
@@ -133,13 +134,18 @@ export class Scope {
 }
 
 export class SymbolTable {
-  private symbols: Map<string, Symbol> = new Map();
+  /** Root scope containing global symbols (fields, global variables, procedures) */
+  private rootScope: Scope = new Scope(null);
 
   /**
-   * Build symbol table from AST
+   * Build symbol table from AST.
+   * Creates a hierarchical scope structure:
+   * - Root scope: fields, global variables, procedure/trigger names
+   * - Child scopes: procedure parameters and local variables, trigger local variables
    */
   public buildFromAST(ast: CALDocument): void {
-    this.symbols.clear();
+    // Create fresh root scope
+    this.rootScope = new Scope(null);
 
     if (!ast.object) {
       return;
@@ -147,11 +153,11 @@ export class SymbolTable {
 
     const obj = ast.object;
 
-    // Add fields
+    // Add fields to root scope
     if (obj.fields) {
       for (const field of obj.fields.fields) {
-        this.addSymbol({
-          name: this.normalizeIdentifier(field.fieldName),
+        this.rootScope.addSymbol({
+          name: field.fieldName,
           kind: 'field',
           token: field.startToken,
           type: field.dataType.typeName
@@ -161,62 +167,111 @@ export class SymbolTable {
 
     // Add code section symbols
     if (obj.code) {
-      // Global variables
+      // Global variables go to root scope
       for (const variable of obj.code.variables) {
-        this.addSymbol({
-          name: this.normalizeIdentifier(variable.name),
+        this.rootScope.addSymbol({
+          name: variable.name,
           kind: 'variable',
           token: variable.startToken,
           type: variable.dataType.typeName
         });
       }
 
-      // Procedures
+      // Procedures get their own child scope
       for (const procedure of obj.code.procedures) {
-        this.addSymbol({
-          name: this.normalizeIdentifier(procedure.name),
+        // Add procedure name to root scope (so it can be called from anywhere)
+        this.rootScope.addSymbol({
+          name: procedure.name,
           kind: 'procedure',
           token: procedure.startToken
         });
 
-        // TODO: Add local variables and parameters in nested scope
+        // Create child scope for procedure body
+        const procScope = new Scope(this.rootScope);
+        procScope.startOffset = procedure.startToken.offset;
+        procScope.endOffset = procedure.endToken.offset;
+
+        // Add parameters to procedure scope
+        for (const param of procedure.parameters) {
+          procScope.addSymbol({
+            name: param.name,
+            kind: 'parameter',
+            token: param.startToken,
+            type: param.dataType.typeName
+          });
+        }
+
+        // Add local variables to procedure scope
+        for (const variable of procedure.variables) {
+          procScope.addSymbol({
+            name: variable.name,
+            kind: 'variable',
+            token: variable.startToken,
+            type: variable.dataType.typeName
+          });
+        }
+      }
+
+      // Triggers also get their own child scope
+      for (const trigger of obj.code.triggers) {
+        // Create child scope for trigger body
+        const triggerScope = new Scope(this.rootScope);
+        triggerScope.startOffset = trigger.startToken.offset;
+        triggerScope.endOffset = trigger.endToken.offset;
+
+        // Add local variables to trigger scope
+        for (const variable of trigger.variables) {
+          triggerScope.addSymbol({
+            name: variable.name,
+            kind: 'variable',
+            token: variable.startToken,
+            type: variable.dataType.typeName
+          });
+        }
       }
     }
   }
 
   /**
-   * Check if a symbol exists (case-insensitive)
+   * Get the root scope
+   */
+  public getRootScope(): Scope {
+    return this.rootScope;
+  }
+
+  /**
+   * Check if a symbol exists in the root scope (case-insensitive).
+   * For position-aware lookup, use getScopeAtOffset() then scope.hasSymbol().
    */
   public hasSymbol(name: string): boolean {
-    return this.symbols.has(this.normalizeIdentifier(name));
+    return this.rootScope.hasSymbol(name);
   }
 
   /**
-   * Get a symbol by name (case-insensitive)
+   * Get a symbol by name from the root scope (case-insensitive).
+   * For position-aware lookup, use getScopeAtOffset() then scope.getSymbol().
    */
   public getSymbol(name: string): Symbol | undefined {
-    return this.symbols.get(this.normalizeIdentifier(name));
+    return this.rootScope.getSymbol(name);
   }
 
   /**
-   * Add a symbol to the table
-   */
-  private addSymbol(symbol: Symbol): void {
-    this.symbols.set(this.normalizeIdentifier(symbol.name), symbol);
-  }
-
-  /**
-   * Normalize identifier for case-insensitive lookup
-   */
-  private normalizeIdentifier(name: string): string {
-    return name.toLowerCase();
-  }
-
-  /**
-   * Get all symbols
+   * Get all symbols from all scopes (root and children).
+   * Useful for features that need to show all available symbols.
    */
   public getAllSymbols(): Symbol[] {
-    return Array.from(this.symbols.values());
+    return this.collectAllSymbols(this.rootScope);
+  }
+
+  /**
+   * Recursively collect all symbols from a scope and its children
+   */
+  private collectAllSymbols(scope: Scope): Symbol[] {
+    const symbols: Symbol[] = [...scope.getOwnSymbols()];
+    for (const child of scope.children) {
+      symbols.push(...this.collectAllSymbols(child));
+    }
+    return symbols;
   }
 }
 
