@@ -977,4 +977,496 @@ code2
       });
     });
   });
+
+  describe('edge cases', () => {
+    describe('case insensitivity', () => {
+      const alOnlyKeywords = ['ENUM', 'INTERFACE', 'EXTENDS', 'MODIFY', 'IMPLEMENTS'];
+
+      it.each(alOnlyKeywords)('should recognize %s in any case variation', (keyword) => {
+        const variants = [
+          keyword.toUpperCase(),
+          keyword.toLowerCase(),
+          keyword.charAt(0).toUpperCase() + keyword.slice(1).toLowerCase(),
+          keyword.split('').map((c, i) => i % 2 === 0 ? c.toLowerCase() : c.toUpperCase()).join('')
+        ];
+
+        for (const variant of variants) {
+          const lexer = new Lexer(variant);
+          const tokens = lexer.tokenize();
+          expect(tokens[0].type).toBe(TokenType.ALOnlyKeyword);
+        }
+      });
+
+      it('should preserve original case in token value for AL-only keywords', () => {
+        const variants = ['eNuM', 'InTeRfAcE', 'ExTeNdS', 'MoDiFy', 'ImPlEmEnTs'];
+
+        for (const variant of variants) {
+          const lexer = new Lexer(variant);
+          const tokens = lexer.tokenize();
+          expect(tokens[0].type).toBe(TokenType.ALOnlyKeyword);
+          expect(tokens[0].value).toBe(variant); // Original case preserved
+        }
+      });
+
+      it('should preserve original case in error messages', () => {
+        const code = 'eNuM Test { }';
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain("'eNuM'");
+      });
+    });
+
+    describe('AL keywords in comments not rejected', () => {
+      it('should not reject ENUM inside line comment', () => {
+        const code = `// This is ENUM comment
+x := 5;`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        // Should have: identifier, :=, integer, semicolon, EOF
+        // No ALOnlyKeyword token should exist
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should not reject INTERFACE inside line comment', () => {
+        const code = `// TODO: INTERFACE definition needed
+MyProc();`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should not reject EXTENDS inside line comment', () => {
+        const code = `// This EXTENDS the base class
+someVar := 1;`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should not reject MODIFY inside line comment', () => {
+        const code = `// MODIFY this later
+result := 42;`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should not reject IMPLEMENTS inside line comment', () => {
+        const code = `// This IMPLEMENTS the interface
+DoSomething();`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should not reject AL-only keywords inside block comment in CODE block', () => {
+        const code = `BEGIN { ENUM INTERFACE EXTENDS MODIFY IMPLEMENTS } END`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should not reject multiple AL-only keywords in comments', () => {
+        const code = `// ENUM values: INTERFACE, EXTENDS, MODIFY, IMPLEMENTS
+x := 1;
+// More ENUM stuff
+y := 2;`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should not reject preprocessor directives inside comments', () => {
+        const code = `// #if CLEAN23 - this is commented out
+x := 1;`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const preprocessorTokens = tokens.filter(t => t.type === TokenType.PreprocessorDirective);
+        expect(preprocessorTokens.length).toBe(0);
+      });
+
+      it('should not reject access modifiers inside comments', () => {
+        const code = `// INTERNAL PROTECTED PUBLIC access modifiers
+LOCAL PROCEDURE Test@1();
+BEGIN
+END;`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const accessModifierTokens = tokens.filter(t => t.type === TokenType.ALOnlyAccessModifier);
+        expect(accessModifierTokens.length).toBe(0);
+      });
+    });
+
+    describe('AL keywords in strings not rejected', () => {
+      it('should not reject ENUM inside string literal', () => {
+        const code = `MESSAGE('This is an ENUM value');`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should not reject INTERFACE inside string literal', () => {
+        const code = `MyText := 'INTERFACE definition';`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should not reject EXTENDS inside string literal', () => {
+        const code = `ERROR('Class EXTENDS base');`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should not reject MODIFY inside string literal', () => {
+        const code = `Description := 'MODIFY record';`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should not reject IMPLEMENTS inside string literal', () => {
+        const code = `Label := 'IMPLEMENTS interface';`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should not reject all AL-only keywords inside single string', () => {
+        const code = `MESSAGE('ENUM INTERFACE EXTENDS MODIFY IMPLEMENTS');`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should not reject preprocessor directives inside strings', () => {
+        const code = `Text := '#if #else #endif';`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const preprocessorTokens = tokens.filter(t => t.type === TokenType.PreprocessorDirective);
+        expect(preprocessorTokens.length).toBe(0);
+      });
+
+      it('should not reject access modifiers inside strings', () => {
+        const code = `Label := 'INTERNAL PROTECTED PUBLIC';`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const accessModifierTokens = tokens.filter(t => t.type === TokenType.ALOnlyAccessModifier);
+        expect(accessModifierTokens.length).toBe(0);
+      });
+
+      it('should not reject ternary operator characters inside strings', () => {
+        const code = `Text := 'condition ? true : false';`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const ternaryTokens = tokens.filter(t => t.type === TokenType.TernaryOperator);
+        expect(ternaryTokens.length).toBe(0);
+      });
+    });
+
+    describe('quoted identifiers allowed', () => {
+      it('should allow "ENUM" as quoted identifier', () => {
+        const code = `"ENUM" := 'value';`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+        expect(tokens[0].value).toBe('ENUM');
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should allow "INTERFACE" as quoted identifier', () => {
+        const code = `"INTERFACE" := 'value';`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+        expect(tokens[0].value).toBe('INTERFACE');
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should allow "EXTENDS" as quoted identifier', () => {
+        const code = `"EXTENDS" := 'value';`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+        expect(tokens[0].value).toBe('EXTENDS');
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should allow "MODIFY" as quoted identifier', () => {
+        const code = `"MODIFY" := 'value';`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+        expect(tokens[0].value).toBe('MODIFY');
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should allow "IMPLEMENTS" as quoted identifier', () => {
+        const code = `"IMPLEMENTS" := 'value';`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+        expect(tokens[0].value).toBe('IMPLEMENTS');
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should allow "INTERNAL" as quoted identifier', () => {
+        const code = `"INTERNAL" := TRUE;`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+        expect(tokens[0].value).toBe('INTERNAL');
+
+        const accessModifierTokens = tokens.filter(t => t.type === TokenType.ALOnlyAccessModifier);
+        expect(accessModifierTokens.length).toBe(0);
+      });
+
+      it('should allow "PROTECTED" as quoted identifier', () => {
+        const code = `"PROTECTED" := FALSE;`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+        expect(tokens[0].value).toBe('PROTECTED');
+
+        const accessModifierTokens = tokens.filter(t => t.type === TokenType.ALOnlyAccessModifier);
+        expect(accessModifierTokens.length).toBe(0);
+      });
+
+      it('should allow "PUBLIC" as quoted identifier', () => {
+        const code = `"PUBLIC" := 1;`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+        expect(tokens[0].value).toBe('PUBLIC');
+
+        const accessModifierTokens = tokens.filter(t => t.type === TokenType.ALOnlyAccessModifier);
+        expect(accessModifierTokens.length).toBe(0);
+      });
+
+      it('should allow quoted identifiers with AL-only keywords in field context', () => {
+        const code = `CALCFIELDS("ENUM Value", "INTERFACE Name");`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const quotedIdentifiers = tokens.filter(t => t.type === TokenType.QuotedIdentifier);
+        expect(quotedIdentifiers.length).toBe(2);
+        expect(quotedIdentifiers[0].value).toBe('ENUM Value');
+        expect(quotedIdentifiers[1].value).toBe('INTERFACE Name');
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+
+      it('should allow mixed case AL-only keywords in quoted identifiers', () => {
+        const code = `"Enum" + "interface" + "Extends"`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const quotedIdentifiers = tokens.filter(t => t.type === TokenType.QuotedIdentifier);
+        expect(quotedIdentifiers.length).toBe(3);
+
+        const alOnlyTokens = tokens.filter(t => t.type === TokenType.ALOnlyKeyword);
+        expect(alOnlyTokens.length).toBe(0);
+      });
+    });
+
+    describe('partial matches not rejected', () => {
+      it('should not reject ENUMERATE (contains ENUM)', () => {
+        const code = `ENUMERATE`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[0].type).not.toBe(TokenType.ALOnlyKeyword);
+      });
+
+      it('should not reject ENUMERATION (contains ENUM)', () => {
+        const code = `ENUMERATION`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[0].type).not.toBe(TokenType.ALOnlyKeyword);
+      });
+
+      it('should not reject INTERFACING (contains INTERFACE)', () => {
+        const code = `INTERFACING`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[0].type).not.toBe(TokenType.ALOnlyKeyword);
+      });
+
+      it('should not reject EXTENDABLE (contains EXTEND)', () => {
+        const code = `EXTENDABLE`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[0].type).not.toBe(TokenType.ALOnlyKeyword);
+      });
+
+      it('should not reject MODIFIER (contains MODIFY)', () => {
+        const code = `MODIFIER`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[0].type).not.toBe(TokenType.ALOnlyKeyword);
+      });
+
+      it('should not reject MODIFYING (contains MODIFY)', () => {
+        const code = `MODIFYING`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[0].type).not.toBe(TokenType.ALOnlyKeyword);
+      });
+
+      it('should not reject IMPLEMENTATION (contains IMPLEMENT)', () => {
+        const code = `IMPLEMENTATION`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[0].type).not.toBe(TokenType.ALOnlyKeyword);
+      });
+
+      it('should not reject IMPLEMENTING (contains IMPLEMENT)', () => {
+        const code = `IMPLEMENTING`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[0].type).not.toBe(TokenType.ALOnlyKeyword);
+      });
+
+      it('should not reject INTERNALLY (contains INTERNAL)', () => {
+        const code = `INTERNALLY`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[0].type).not.toBe(TokenType.ALOnlyAccessModifier);
+      });
+
+      it('should not reject PROTECTED_FLAG (contains PROTECTED)', () => {
+        const code = `PROTECTED_FLAG`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[0].type).not.toBe(TokenType.ALOnlyAccessModifier);
+      });
+
+      it('should not reject PUBLICITY (contains PUBLIC)', () => {
+        const code = `PUBLICITY`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[0].type).not.toBe(TokenType.ALOnlyAccessModifier);
+      });
+
+      it('should not reject prefixed keywords like MYENUM', () => {
+        const code = `MYENUM`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[0].type).not.toBe(TokenType.ALOnlyKeyword);
+      });
+
+      it('should not reject suffixed keywords like ENUM123', () => {
+        const code = `ENUM123`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[0].type).not.toBe(TokenType.ALOnlyKeyword);
+      });
+
+      it('should not reject underscored keywords like ENUM_VALUE', () => {
+        const code = `ENUM_VALUE`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[0].type).not.toBe(TokenType.ALOnlyKeyword);
+      });
+
+      it('should still reject exact matches with surrounding whitespace', () => {
+        const code = `  ENUM  `;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.ALOnlyKeyword);
+        expect(tokens[0].value).toBe('ENUM');
+      });
+
+      it('should reject exact match even if followed by operators', () => {
+        const code = `ENUM+INTERFACE`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens[0].type).toBe(TokenType.ALOnlyKeyword);
+        expect(tokens[0].value).toBe('ENUM');
+        expect(tokens[1].type).toBe(TokenType.Plus);
+        expect(tokens[2].type).toBe(TokenType.ALOnlyKeyword);
+        expect(tokens[2].value).toBe('INTERFACE');
+      });
+    });
+  });
 });
