@@ -72,6 +72,8 @@ export class Lexer {
   private popContext(): void {
     if (this.contextStack.length > 1) {
       this.contextStack.pop();
+    } else {
+      console.warn(`Lexer: Attempted to pop context at stack depth 1 (underflow prevented) at line ${this.line}, column ${this.column}`);
     }
   }
 
