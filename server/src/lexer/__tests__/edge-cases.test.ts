@@ -69,6 +69,155 @@ describe('Lexer - Edge Cases', () => {
       expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
       expect(tokens[0].value).toBe('""');
     });
+
+    // Additional comprehensive tests for nested quoted identifiers
+
+    it('should handle single escaped quote (just two double-quotes)', () => {
+      // Four quotes: opening, two for escaped quote, closing
+      const code = '""""';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('"');
+    });
+
+    it('should handle escaped quotes in C/AL field expression context', () => {
+      const code = 'CALCFIELDS("Field ""Name""");';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // CALCFIELDS ( "Field ""Name""" ) ;
+      expect(tokens[0].type).toBe(TokenType.Identifier);
+      expect(tokens[0].value).toBe('CALCFIELDS');
+      expect(tokens[1].type).toBe(TokenType.LeftParen);
+      expect(tokens[2].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[2].value).toBe('Field "Name"');
+      expect(tokens[3].type).toBe(TokenType.RightParen);
+      expect(tokens[4].type).toBe(TokenType.Semicolon);
+    });
+
+    it('should handle escaped quotes in assignment context', () => {
+      const code = '"Field ""Value""" := \'Text\';';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Field "Value"');
+      expect(tokens[1].type).toBe(TokenType.Assign);
+      expect(tokens[2].type).toBe(TokenType.String);
+      expect(tokens[2].value).toBe('Text');
+    });
+
+    it('should handle multiple identifiers with escaped quotes in same expression', () => {
+      const code = '"A ""B""" + "C ""D"""';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('A "B"');
+      expect(tokens[1].type).toBe(TokenType.Plus);
+      expect(tokens[2].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[2].value).toBe('C "D"');
+    });
+
+    it('should handle escaped quotes combined with special characters', () => {
+      const code = '"Field-""Name"" (LCY)"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Field-"Name" (LCY)');
+    });
+
+    it('should handle escaped quotes with spaces around them', () => {
+      const code = '"Before "" After"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Before " After');
+    });
+
+    it('should handle consecutive escaped quote pairs', () => {
+      // Six quotes inside: three escaped quotes
+      const code = '"A""""""B"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('A"""B');
+    });
+
+    it('should correctly track position for identifier with escaped quotes', () => {
+      const code = '"A""B"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].startOffset).toBe(0);
+      expect(tokens[0].endOffset).toBe(6);
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+    });
+
+    it('should correctly track position when escaped quotes affect length', () => {
+      const code = '"X""Y" "Z"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // First token: "X""Y" (6 characters in source, but value is X"Y which is 3 chars)
+      expect(tokens[0].startOffset).toBe(0);
+      expect(tokens[0].endOffset).toBe(6);
+      expect(tokens[0].value).toBe('X"Y');
+
+      // Second token: "Z" starts at position 7
+      expect(tokens[1].startOffset).toBe(7);
+      expect(tokens[1].endOffset).toBe(10);
+      expect(tokens[1].value).toBe('Z');
+    });
+
+    it('should handle escaped quotes in realistic NAV field name', () => {
+      // Realistic example: a field that references another field with quotes
+      const code = '"Sales ""Line No."""';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Sales "Line No."');
+    });
+
+    it('should handle complex nested pattern with mixed content', () => {
+      const code = '"Field ""A"" - ""B"" Test"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Field "A" - "B" Test');
+    });
+
+    it('should handle escaped quotes followed by regular identifier', () => {
+      const code = '"Quoted""" SimpleField';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Quoted"');
+      expect(tokens[1].type).toBe(TokenType.Identifier);
+      expect(tokens[1].value).toBe('SimpleField');
+    });
+
+    it('should handle escaped quotes in IF statement context', () => {
+      const code = 'IF "Field ""Name""" > 0 THEN';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.If);
+      expect(tokens[1].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[1].value).toBe('Field "Name"');
+      expect(tokens[2].type).toBe(TokenType.Greater);
+      expect(tokens[3].type).toBe(TokenType.Integer);
+      expect(tokens[3].value).toBe('0');
+      expect(tokens[4].type).toBe(TokenType.Then);
+    });
   });
 
   describe('Unicode characters in identifiers', () => {
