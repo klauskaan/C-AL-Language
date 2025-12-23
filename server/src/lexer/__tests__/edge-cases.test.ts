@@ -657,6 +657,226 @@ describe('Lexer - Edge Cases', () => {
       expect(tokens[0].startOffset).toBe(0);
       expect(tokens[0].endOffset).toBe(code.length);
     });
+
+    // Additional comprehensive tests for very long identifiers
+
+    it('should handle identifiers with exactly 30 characters', () => {
+      const code = '"ABCDEFGHIJKLMNOPQRSTUVWXYZabcd"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('ABCDEFGHIJKLMNOPQRSTUVWXYZabcd');
+      expect(tokens[0].value.length).toBe(30);
+    });
+
+    it('should handle identifiers with exactly 31 characters', () => {
+      const code = '"ABCDEFGHIJKLMNOPQRSTUVWXYZabcde"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('ABCDEFGHIJKLMNOPQRSTUVWXYZabcde');
+      expect(tokens[0].value.length).toBe(31);
+    });
+
+    it('should handle identifiers with 500+ characters', () => {
+      const longName = 'X'.repeat(500);
+      const code = `"${longName}"`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe(longName);
+      expect(tokens[0].value.length).toBe(500);
+    });
+
+    it('should handle identifiers with 1000+ characters', () => {
+      const longName = 'Y'.repeat(1000);
+      const code = `"${longName}"`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe(longName);
+      expect(tokens[0].value.length).toBe(1000);
+    });
+
+    it('should handle realistic long NAV field name', () => {
+      const code = '"Outstanding Purchase Order Line Amount Including VAT (LCY)"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Outstanding Purchase Order Line Amount Including VAT (LCY)');
+    });
+
+    it('should handle long identifier with special characters', () => {
+      const code = '"Very-Long_Field.Name (With Special) Characters % In It!"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Very-Long_Field.Name (With Special) Characters % In It!');
+    });
+
+    it('should handle long identifier with Unicode characters', () => {
+      const code = '"Sehr Langer Feldname Mit Vielen Umlauten äöü Und Anderen Zeichen ÆØÅ"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Sehr Langer Feldname Mit Vielen Umlauten äöü Und Anderen Zeichen ÆØÅ');
+    });
+
+    it('should handle long identifier with escaped quotes', () => {
+      const code = '"Very Long Field Name With ""Escaped Quotes"" That Exceeds Thirty Characters"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Very Long Field Name With "Escaped Quotes" That Exceeds Thirty Characters');
+    });
+
+    it('should handle long identifier in assignment context', () => {
+      const code = '"ThisIsAVeryLongIdentifierNameThatExceedsThirtyCharacters" := 0;';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('ThisIsAVeryLongIdentifierNameThatExceedsThirtyCharacters');
+      expect(tokens[1].type).toBe(TokenType.Assign);
+      expect(tokens[2].type).toBe(TokenType.Integer);
+      expect(tokens[3].type).toBe(TokenType.Semicolon);
+    });
+
+    it('should handle long identifier in CALCFIELDS context', () => {
+      const code = 'CALCFIELDS("Outstanding Purchase Order Line Amount Including VAT");';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.Identifier);
+      expect(tokens[0].value).toBe('CALCFIELDS');
+      expect(tokens[1].type).toBe(TokenType.LeftParen);
+      expect(tokens[2].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[2].value).toBe('Outstanding Purchase Order Line Amount Including VAT');
+      expect(tokens[3].type).toBe(TokenType.RightParen);
+      expect(tokens[4].type).toBe(TokenType.Semicolon);
+    });
+
+    it('should handle long identifier in IF statement context', () => {
+      const code = 'IF "ThisIsAVeryLongIdentifierNameExceedingThirtyCharacters" > 0 THEN';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.If);
+      expect(tokens[1].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[1].value).toBe('ThisIsAVeryLongIdentifierNameExceedingThirtyCharacters');
+      expect(tokens[2].type).toBe(TokenType.Greater);
+      expect(tokens[3].type).toBe(TokenType.Integer);
+      expect(tokens[4].type).toBe(TokenType.Then);
+    });
+
+    it('should handle multiple long identifiers in expression', () => {
+      const code = '"FirstVeryLongIdentifierOverThirtyCharacters" + "SecondVeryLongIdentifierOverThirtyCharacters"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('FirstVeryLongIdentifierOverThirtyCharacters');
+      expect(tokens[1].type).toBe(TokenType.Plus);
+      expect(tokens[2].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[2].value).toBe('SecondVeryLongIdentifierOverThirtyCharacters');
+    });
+
+    it('should handle long string literals with 500+ characters', () => {
+      const longString = 'S'.repeat(500);
+      const code = `'${longString}'`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.String);
+      expect(tokens[0].value).toBe(longString);
+      expect(tokens[0].value.length).toBe(500);
+    });
+
+    it('should handle long string literals with escaped quotes', () => {
+      const code = "'This is a very long string literal that has ''escaped quotes'' and exceeds thirty characters easily'";
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.String);
+      expect(tokens[0].value).toBe("This is a very long string literal that has 'escaped quotes' and exceeds thirty characters easily");
+    });
+
+    it('should correctly track position for very long identifiers with escaped quotes', () => {
+      const code = '"Long ""Escaped"" Identifier With Many Characters And Double Quotes Inside"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].startOffset).toBe(0);
+      expect(tokens[0].endOffset).toBe(code.length);
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+    });
+
+    it('should handle long unquoted identifier followed by operators', () => {
+      const longName = 'VeryLongIdentifierWithoutAnySpacesOrSpecialCharacters';
+      const code = `${longName} := 100;`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.Identifier);
+      expect(tokens[0].value).toBe(longName);
+      expect(tokens[1].type).toBe(TokenType.Assign);
+      expect(tokens[2].type).toBe(TokenType.Integer);
+      expect(tokens[2].value).toBe('100');
+    });
+
+    it('should handle long identifier at end of file without newline', () => {
+      const longName = 'LongIdentifierAtEndOfFileWithNoNewline'.repeat(2);
+      const code = `"${longName}"`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe(longName);
+      // Should have EOF token
+      expect(tokens[tokens.length - 1].type).toBe(TokenType.EOF);
+    });
+
+    it('should handle repeating pattern in long identifier', () => {
+      const pattern = 'ABC123';
+      const longName = pattern.repeat(20);
+      const code = `"${longName}"`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe(longName);
+      expect(tokens[0].value.length).toBe(120);
+    });
+
+    it('should handle long identifier with numbers throughout', () => {
+      const code = '"Field123Name456With789Numbers012Throughout345ThisLongIdentifier"';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[0].value).toBe('Field123Name456With789Numbers012Throughout345ThisLongIdentifier');
+    });
+
+    it('should handle long identifier in realistic table field context', () => {
+      const code = 'Rec."Prepayment Invoice Line Amount Including VAT Excl. Discount (LCY)" := 0;';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.Identifier);
+      expect(tokens[0].value).toBe('Rec');
+      expect(tokens[1].type).toBe(TokenType.Dot);
+      expect(tokens[2].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[2].value).toBe('Prepayment Invoice Line Amount Including VAT Excl. Discount (LCY)');
+      expect(tokens[3].type).toBe(TokenType.Assign);
+    });
   });
 
   describe('Zero-length and whitespace identifiers', () => {
