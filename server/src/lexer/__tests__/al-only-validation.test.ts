@@ -588,4 +588,393 @@ END;`;
       });
     });
   });
+
+  describe('Ternary operator rejection', () => {
+    describe('Ternary operator (? :) tokenization', () => {
+      it('should tokenize ? as TernaryOperator', () => {
+        const lexer = new Lexer('?');
+        const tokens = lexer.tokenize();
+        expect(tokens[0].type).toBe(TokenType.TernaryOperator);
+        expect(tokens[0].value).toBe('?');
+      });
+
+      it('should tokenize ? in expression context', () => {
+        const code = 'x ? y : z';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const questionToken = tokens.find(t => t.value === '?');
+        expect(questionToken).toBeDefined();
+        expect(questionToken!.type).toBe(TokenType.TernaryOperator);
+      });
+
+      it('should tokenize conditional-like ternary expression', () => {
+        const code = 'condition ? trueValue : falseValue';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const questionToken = tokens.find(t => t.value === '?');
+        expect(questionToken).toBeDefined();
+        expect(questionToken!.type).toBe(TokenType.TernaryOperator);
+      });
+    });
+
+    describe('Ternary operator parser rejection', () => {
+      it('should reject ternary operator with clear error', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Result@1 : Integer;
+      Condition@2 : Boolean;
+    BEGIN
+      Result := Condition ? 1 : 0;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+        const ternaryError = errors.find(e => e.message.includes('ternary') || e.message.includes('?'));
+        expect(ternaryError).toBeDefined();
+        expect(ternaryError!.message).toContain('not supported in C/AL');
+      });
+
+      it('should indicate ternary is AL-only', () => {
+        const code = 'x ? y : z';
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+        const ternaryError = errors.find(e => e.message.includes('ternary') || e.message.includes("'?'"));
+        expect(ternaryError).toBeDefined();
+        expect(ternaryError!.message).toContain('AL-only');
+      });
+
+      it('should suggest using IF-THEN-ELSE instead', () => {
+        const code = 'x ? y : z';
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+        const ternaryError = errors.find(e => e.message.includes('ternary') || e.message.includes("'?'"));
+        expect(ternaryError).toBeDefined();
+        expect(ternaryError!.message).toContain('IF-THEN-ELSE');
+      });
+    });
+
+    describe('Ternary operator in various contexts', () => {
+      it('should reject ternary in assignment', () => {
+        const code = 'result := a > b ? a : b;';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const questionToken = tokens.find(t => t.value === '?');
+        expect(questionToken).toBeDefined();
+        expect(questionToken!.type).toBe(TokenType.TernaryOperator);
+      });
+
+      it('should reject ternary in function call argument', () => {
+        const code = 'MyFunc(x > 0 ? x : -x);';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const questionToken = tokens.find(t => t.value === '?');
+        expect(questionToken).toBeDefined();
+        expect(questionToken!.type).toBe(TokenType.TernaryOperator);
+      });
+
+      it('should reject nested ternary operators', () => {
+        const code = 'a ? b ? c : d : e';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const questionTokens = tokens.filter(t => t.value === '?');
+        expect(questionTokens.length).toBe(2);
+        questionTokens.forEach(token => {
+          expect(token.type).toBe(TokenType.TernaryOperator);
+        });
+      });
+    });
+
+    describe('Error recovery for ternary operator', () => {
+      it('should continue parsing after ternary operator error', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    BEGIN
+      x := a ? b : c;
+    END;
+
+    PROCEDURE AnotherProc@2();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        // Parser should not crash
+        expect(() => getParseErrors(code)).not.toThrow();
+      });
+
+      it('should report multiple ternary operator errors', () => {
+        const code = `x := a ? b : c;
+y := d ? e : f;
+z := g ? h : i;`;
+        const errors = getParseErrors(code);
+
+        // Should have multiple ternary errors
+        const ternaryErrors = errors.filter(e => e.message.includes('ternary') || e.message.includes("'?'"));
+        expect(ternaryErrors.length).toBeGreaterThanOrEqual(3);
+      });
+    });
+  });
+
+  describe('Preprocessor directive rejection', () => {
+    describe('#if directive tokenization', () => {
+      it('should tokenize #if as PreprocessorDirective', () => {
+        const lexer = new Lexer('#if');
+        const tokens = lexer.tokenize();
+        expect(tokens[0].type).toBe(TokenType.PreprocessorDirective);
+        expect(tokens[0].value).toBe('#if');
+      });
+
+      it('should tokenize #if with condition', () => {
+        const code = '#if CLEAN23';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        expect(tokens[0].type).toBe(TokenType.PreprocessorDirective);
+        expect(tokens[0].value).toBe('#if');
+      });
+    });
+
+    describe('#else directive tokenization', () => {
+      it('should tokenize #else as PreprocessorDirective', () => {
+        const lexer = new Lexer('#else');
+        const tokens = lexer.tokenize();
+        expect(tokens[0].type).toBe(TokenType.PreprocessorDirective);
+        expect(tokens[0].value).toBe('#else');
+      });
+    });
+
+    describe('#endif directive tokenization', () => {
+      it('should tokenize #endif as PreprocessorDirective', () => {
+        const lexer = new Lexer('#endif');
+        const tokens = lexer.tokenize();
+        expect(tokens[0].type).toBe(TokenType.PreprocessorDirective);
+        expect(tokens[0].value).toBe('#endif');
+      });
+    });
+
+    describe('Preprocessor directive parser rejection', () => {
+      it('should reject #if directive with clear error', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    BEGIN
+      #if CLEAN23
+        DoSomething;
+      #endif
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+        const preprocessorError = errors.find(e => e.message.includes('#if') || e.message.includes('preprocessor'));
+        expect(preprocessorError).toBeDefined();
+        expect(preprocessorError!.message).toContain('not supported in C/AL');
+      });
+
+      it('should reject #else directive with clear error', () => {
+        const code = `#if CONDITION
+code1
+#else
+code2
+#endif`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+        const elseError = errors.find(e => e.message.includes('#else') || e.message.includes('preprocessor'));
+        expect(elseError).toBeDefined();
+      });
+
+      it('should reject #endif directive with clear error', () => {
+        const code = `#if CONDITION
+code
+#endif`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+        const endifError = errors.find(e => e.message.includes('#endif') || e.message.includes('preprocessor'));
+        expect(endifError).toBeDefined();
+      });
+
+      it('should indicate preprocessor directives are AL-only', () => {
+        const code = '#if CLEAN23';
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+        const preprocessorError = errors.find(e => e.message.includes('preprocessor') || e.message.includes('#if'));
+        expect(preprocessorError).toBeDefined();
+        expect(preprocessorError!.message).toContain('AL-only');
+      });
+    });
+
+    describe('All preprocessor directives recognition', () => {
+      const preprocessorDirectives = ['#if', '#else', '#endif'];
+
+      it.each(preprocessorDirectives)('should recognize %s as preprocessor directive', (directive) => {
+        const lexer = new Lexer(directive);
+        const tokens = lexer.tokenize();
+        expect(tokens[0].type).toBe(TokenType.PreprocessorDirective);
+        expect(tokens[0].value).toBe(directive);
+      });
+
+      it.each(preprocessorDirectives)('should reject %s with appropriate error', (directive) => {
+        const code = `${directive} CONDITION`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+        const directiveError = errors.find(e =>
+          e.message.includes(`'${directive}'`) ||
+          e.message.includes('preprocessor')
+        );
+        expect(directiveError).toBeDefined();
+        expect(directiveError!.message).toContain('AL-only');
+        expect(directiveError!.message).toContain('not supported in C/AL');
+      });
+    });
+
+    describe('Case sensitivity for preprocessor directives', () => {
+      it('should recognize #IF regardless of case', () => {
+        const variants = ['#if', '#IF', '#If', '#iF'];
+
+        for (const variant of variants) {
+          const lexer = new Lexer(variant);
+          const tokens = lexer.tokenize();
+          expect(tokens[0].type).toBe(TokenType.PreprocessorDirective);
+        }
+      });
+
+      it('should recognize #ELSE regardless of case', () => {
+        const variants = ['#else', '#ELSE', '#Else', '#eLsE'];
+
+        for (const variant of variants) {
+          const lexer = new Lexer(variant);
+          const tokens = lexer.tokenize();
+          expect(tokens[0].type).toBe(TokenType.PreprocessorDirective);
+        }
+      });
+
+      it('should recognize #ENDIF regardless of case', () => {
+        const variants = ['#endif', '#ENDIF', '#Endif', '#eNdIf'];
+
+        for (const variant of variants) {
+          const lexer = new Lexer(variant);
+          const tokens = lexer.tokenize();
+          expect(tokens[0].type).toBe(TokenType.PreprocessorDirective);
+        }
+      });
+
+      it('should preserve original case in token value', () => {
+        const code = '#eLsE';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        expect(tokens[0].type).toBe(TokenType.PreprocessorDirective);
+        expect(tokens[0].value).toBe('#eLsE'); // Original case preserved
+      });
+    });
+
+    describe('Preprocessor block detection', () => {
+      it('should detect complete #if/#endif block', () => {
+        const code = `#if CLEAN23
+// some code
+#endif`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const preprocessorTokens = tokens.filter(t => t.type === TokenType.PreprocessorDirective);
+        expect(preprocessorTokens.length).toBe(2);
+        expect(preprocessorTokens[0].value.toLowerCase()).toBe('#if');
+        expect(preprocessorTokens[1].value.toLowerCase()).toBe('#endif');
+      });
+
+      it('should detect complete #if/#else/#endif block', () => {
+        const code = `#if CLEAN23
+// some code
+#else
+// other code
+#endif`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const preprocessorTokens = tokens.filter(t => t.type === TokenType.PreprocessorDirective);
+        expect(preprocessorTokens.length).toBe(3);
+        expect(preprocessorTokens[0].value.toLowerCase()).toBe('#if');
+        expect(preprocessorTokens[1].value.toLowerCase()).toBe('#else');
+        expect(preprocessorTokens[2].value.toLowerCase()).toBe('#endif');
+      });
+
+      it('should detect nested preprocessor blocks', () => {
+        const code = `#if OUTER
+  #if INNER
+    code
+  #endif
+#endif`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const preprocessorTokens = tokens.filter(t => t.type === TokenType.PreprocessorDirective);
+        expect(preprocessorTokens.length).toBe(4);
+      });
+    });
+
+    describe('Error recovery for preprocessor directives', () => {
+      it('should continue parsing after preprocessor directive error', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    BEGIN
+      #if CLEAN23
+        DoSomething;
+      #endif
+    END;
+
+    PROCEDURE AnotherProc@2();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        // Parser should not crash
+        expect(() => getParseErrors(code)).not.toThrow();
+      });
+
+      it('should report multiple preprocessor directive errors', () => {
+        const code = `#if CONDITION1
+code1
+#endif
+#if CONDITION2
+code2
+#endif`;
+        const errors = getParseErrors(code);
+
+        // Should have multiple preprocessor errors
+        const preprocessorErrors = errors.filter(e =>
+          e.message.includes('preprocessor') ||
+          e.message.includes('#if') ||
+          e.message.includes('#endif')
+        );
+        expect(preprocessorErrors.length).toBeGreaterThanOrEqual(4);
+      });
+    });
+  });
 });
