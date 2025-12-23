@@ -915,9 +915,357 @@ describe('SemanticTokensProvider', () => {
   });
 
   describe('Identifier Token Mapping', () => {
-    // Tests will be added in subtask 2.4
-    // This is the CRITICAL feature - quoted identifiers should have the same
-    // semantic type as regular identifiers
+    /**
+     * CRITICAL FEATURE: Both regular and quoted identifiers are mapped to Variable type
+     * This makes "Line No." appear the same as Description in the editor,
+     * despite having different TextMate grammar scopes.
+     */
+
+    describe('Regular Identifiers', () => {
+      it('should map simple identifier to Variable type', () => {
+        const code = 'x := 1';
+        const semanticType = findSemanticType(code, 'x');
+        expect(semanticType).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map multi-character identifier to Variable type', () => {
+        const code = 'CustomerName := value';
+        const semanticType = findSemanticType(code, 'CustomerName');
+        expect(semanticType).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map identifier with numbers to Variable type', () => {
+        const code = 'Line1 := x';
+        const semanticType = findSemanticType(code, 'Line1');
+        expect(semanticType).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map identifier with underscore to Variable type', () => {
+        const code = 'Customer_Name := x';
+        const semanticType = findSemanticType(code, 'Customer_Name');
+        expect(semanticType).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map procedure name to Variable type', () => {
+        const code = 'MyProc()';
+        const semanticType = findSemanticType(code, 'MyProc');
+        expect(semanticType).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map function argument to Variable type', () => {
+        const code = 'MESSAGE(Description)';
+        // MESSAGE is an identifier, Description is an identifier
+        expect(findSemanticType(code, 'MESSAGE')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'Description')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map record variable to Variable type', () => {
+        const code = 'Customer.Name';
+        expect(findSemanticType(code, 'Customer')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'Name')).toBe(SemanticTokenTypes.Variable);
+      });
+    });
+
+    describe('Quoted Identifiers', () => {
+      it('should map quoted identifier to Variable type', () => {
+        const code = '"Line No." := 1';
+        // Note: Quoted identifier tokens have value without quotes
+        const semanticType = findSemanticType(code, 'Line No.');
+        expect(semanticType).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map quoted identifier with spaces to Variable type', () => {
+        const code = '"First Name" := x';
+        const semanticType = findSemanticType(code, 'First Name');
+        expect(semanticType).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map quoted identifier with special characters to Variable type', () => {
+        const code = '"End-Point" := x';
+        const semanticType = findSemanticType(code, 'End-Point');
+        expect(semanticType).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map quoted identifier with period to Variable type', () => {
+        const code = '"Inv. Amount" := x';
+        const semanticType = findSemanticType(code, 'Inv. Amount');
+        expect(semanticType).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map quoted identifier with numbers to Variable type', () => {
+        const code = '"Sales Line 2" := x';
+        const semanticType = findSemanticType(code, 'Sales Line 2');
+        expect(semanticType).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map quoted identifier in function call to Variable type', () => {
+        const code = 'CALCFIELDS("End-Point")';
+        expect(findSemanticType(code, 'CALCFIELDS')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'End-Point')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map quoted identifier with percent to Variable type', () => {
+        const code = '"VAT %" := x';
+        const semanticType = findSemanticType(code, 'VAT %');
+        expect(semanticType).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map quoted identifier with parentheses to Variable type', () => {
+        const code = '"Amount (LCY)" := x';
+        const semanticType = findSemanticType(code, 'Amount (LCY)');
+        expect(semanticType).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map empty quoted identifier to Variable type', () => {
+        const code = '"" := x';
+        const semanticType = findSemanticType(code, '');
+        // Empty identifier might get matched - this tests edge case handling
+        expect(semanticType).toBe(SemanticTokenTypes.Variable);
+      });
+    });
+
+    describe('Same Semantic Type (Critical Feature)', () => {
+      it('should map both regular and quoted identifiers to same type in assignment', () => {
+        const code = '"Line No." := Description';
+
+        const quotedType = findSemanticType(code, 'Line No.');
+        const regularType = findSemanticType(code, 'Description');
+
+        // CRITICAL: Both should be Variable type
+        expect(quotedType).toBe(SemanticTokenTypes.Variable);
+        expect(regularType).toBe(SemanticTokenTypes.Variable);
+        expect(quotedType).toBe(regularType);
+      });
+
+      it('should map both types to same semantic type in expression', () => {
+        const code = 'Result := "Field Name" + NormalField';
+
+        const quotedType = findSemanticType(code, 'Field Name');
+        const regularType = findSemanticType(code, 'NormalField');
+
+        expect(quotedType).toBe(SemanticTokenTypes.Variable);
+        expect(regularType).toBe(SemanticTokenTypes.Variable);
+        expect(quotedType).toBe(regularType);
+      });
+
+      it('should map both types to same semantic type in function arguments', () => {
+        const code = 'MyFunc("Quoted Arg", RegularArg)';
+
+        const quotedType = findSemanticType(code, 'Quoted Arg');
+        const regularType = findSemanticType(code, 'RegularArg');
+
+        expect(quotedType).toBe(SemanticTokenTypes.Variable);
+        expect(regularType).toBe(SemanticTokenTypes.Variable);
+        expect(quotedType).toBe(regularType);
+      });
+
+      it('should map both types to same semantic type in comparison', () => {
+        const code = 'IF "Balance" > Amount THEN';
+
+        const quotedType = findSemanticType(code, 'Balance');
+        const regularType = findSemanticType(code, 'Amount');
+
+        expect(quotedType).toBe(SemanticTokenTypes.Variable);
+        expect(regularType).toBe(SemanticTokenTypes.Variable);
+        expect(quotedType).toBe(regularType);
+      });
+
+      it('should map multiple quoted identifiers to same type as regular identifiers', () => {
+        const code = '"First Name" + "Last Name" + FullName';
+
+        const quoted1 = findSemanticType(code, 'First Name');
+        const quoted2 = findSemanticType(code, 'Last Name');
+        const regular = findSemanticType(code, 'FullName');
+
+        expect(quoted1).toBe(SemanticTokenTypes.Variable);
+        expect(quoted2).toBe(SemanticTokenTypes.Variable);
+        expect(regular).toBe(SemanticTokenTypes.Variable);
+        expect(quoted1).toBe(quoted2);
+        expect(quoted2).toBe(regular);
+      });
+    });
+
+    describe('Identifiers vs Strings Distinction', () => {
+      it('should distinguish quoted identifier from string literal', () => {
+        const code = '"Line No." := \'Customer Name\'';
+
+        // Quoted identifier should be Variable
+        const quotedIdentType = findSemanticType(code, 'Line No.');
+        expect(quotedIdentType).toBe(SemanticTokenTypes.Variable);
+
+        // String literal should be String
+        const stringType = findSemanticType(code, 'Customer Name');
+        expect(stringType).toBe(SemanticTokenTypes.String);
+
+        // They should NOT be the same type
+        expect(quotedIdentType).not.toBe(stringType);
+      });
+
+      it('should correctly type mixed identifiers and strings in expression', () => {
+        const code = '"Field Name" = \'Value\' + "Other Field"';
+
+        expect(findSemanticType(code, 'Field Name')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'Value')).toBe(SemanticTokenTypes.String);
+        expect(findSemanticType(code, 'Other Field')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should distinguish identifier from string in MESSAGE statement', () => {
+        const code = "MESSAGE('Hello ' + CustomerName)";
+
+        // String should be String type
+        expect(findSemanticType(code, 'Hello ')).toBe(SemanticTokenTypes.String);
+        // Identifier should be Variable type
+        expect(findSemanticType(code, 'CustomerName')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should correctly type quoted identifier with string-like content', () => {
+        // A quoted identifier that looks like a string value
+        const code = '"Hello World" := x';
+        // It's still a quoted identifier, not a string
+        expect(findSemanticType(code, 'Hello World')).toBe(SemanticTokenTypes.Variable);
+      });
+    });
+
+    describe('Identifiers vs Keywords Distinction', () => {
+      it('should not confuse identifier with keyword that contains same text', () => {
+        const code = 'IF BeginTime > EndTime THEN';
+
+        // IF and THEN are keywords
+        expect(findSemanticType(code, 'IF')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'THEN')).toBe(SemanticTokenTypes.Keyword);
+
+        // BeginTime and EndTime are identifiers (contain "Begin" and "End" but aren't keywords)
+        expect(findSemanticType(code, 'BeginTime')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'EndTime')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should not confuse quoted identifier with keyword', () => {
+        // A quoted identifier can look like a keyword
+        const code = '"Begin" := x';
+        // But it's still an identifier because it's quoted
+        expect(findSemanticType(code, 'Begin')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should distinguish identifier from type name', () => {
+        const code = 'VAR MyInteger : Integer';
+
+        // VAR is keyword
+        expect(findSemanticType(code, 'VAR')).toBe(SemanticTokenTypes.Keyword);
+        // Integer is type
+        expect(findSemanticType(code, 'Integer')).toBe(SemanticTokenTypes.Type);
+        // MyInteger is identifier/variable
+        expect(findSemanticType(code, 'MyInteger')).toBe(SemanticTokenTypes.Variable);
+      });
+    });
+
+    describe('Identifiers in Various Contexts', () => {
+      it('should map identifier in variable declaration', () => {
+        const code = 'VAR CustomerRec : Record';
+
+        expect(findSemanticType(code, 'CustomerRec')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map quoted identifier in field access', () => {
+        const code = 'Customer."Line No."';
+
+        expect(findSemanticType(code, 'Customer')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'Line No.')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map identifier in array index', () => {
+        const code = 'MyArray[Index]';
+
+        expect(findSemanticType(code, 'MyArray')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'Index')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map identifier in FOR loop', () => {
+        const code = 'FOR Counter := 1 TO MaxCount DO';
+
+        expect(findSemanticType(code, 'Counter')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'MaxCount')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map identifier in WITH statement', () => {
+        const code = 'WITH CustomerRec DO';
+
+        expect(findSemanticType(code, 'CustomerRec')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map quoted identifier in CALCFIELDS', () => {
+        const code = 'CustomerRec.CALCFIELDS("Balance (LCY)")';
+
+        expect(findSemanticType(code, 'CustomerRec')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'CALCFIELDS')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'Balance (LCY)')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map identifiers in complex C/AL expression', () => {
+        const code = 'IF "Balance" > 0 THEN "Status" := \'Active\';';
+
+        // Keywords
+        expect(findSemanticType(code, 'IF')).toBe(SemanticTokenTypes.Keyword);
+        expect(findSemanticType(code, 'THEN')).toBe(SemanticTokenTypes.Keyword);
+
+        // Quoted identifiers
+        expect(findSemanticType(code, 'Balance')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'Status')).toBe(SemanticTokenTypes.Variable);
+
+        // Number and string literals
+        expect(findSemanticType(code, '0')).toBe(SemanticTokenTypes.Number);
+        expect(findSemanticType(code, 'Active')).toBe(SemanticTokenTypes.String);
+      });
+    });
+
+    describe('Multiple Identifiers in Code', () => {
+      it('should correctly map all identifiers in procedure call', () => {
+        const code = 'ProcessCustomer(CustomerRec, "Field Name", Result)';
+
+        expect(findSemanticType(code, 'ProcessCustomer')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'CustomerRec')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'Field Name')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'Result')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should correctly map identifiers in chained method calls', () => {
+        const code = 'Customer.Name.ToUpper';
+
+        expect(findSemanticType(code, 'Customer')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'Name')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'ToUpper')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should correctly map identifiers and quoted identifiers in record filter', () => {
+        const code = 'Customer.SETFILTER("Line No.", FilterValue)';
+
+        expect(findSemanticType(code, 'Customer')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'SETFILTER')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'Line No.')).toBe(SemanticTokenTypes.Variable);
+        expect(findSemanticType(code, 'FilterValue')).toBe(SemanticTokenTypes.Variable);
+      });
+    });
+
+    describe('Case Sensitivity for Identifiers', () => {
+      it('should map lowercase identifier to Variable type', () => {
+        const code = 'customername := x';
+        expect(findSemanticType(code, 'customername')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map UPPERCASE identifier to Variable type', () => {
+        const code = 'CUSTOMERNAME := x';
+        expect(findSemanticType(code, 'CUSTOMERNAME')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should map MixedCase identifier to Variable type', () => {
+        const code = 'CustomerName := x';
+        expect(findSemanticType(code, 'CustomerName')).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should preserve case in quoted identifiers', () => {
+        const code = '"Customer Name" := x';
+        expect(findSemanticType(code, 'Customer Name')).toBe(SemanticTokenTypes.Variable);
+      });
+    });
   });
 
   describe('Operator Token Mapping', () => {

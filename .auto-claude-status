@@ -3,23 +3,23 @@
   "spec": "014-improve-test-coverage-and-add-missing-tests",
   "state": "building",
   "subtasks": {
-    "completed": 5,
+    "completed": 9,
     "total": 17,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "SymbolTable Test Suite",
+    "current": "SemanticTokens Test Suite",
     "id": null,
-    "total": 6
+    "total": 7
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 5,
+    "number": 9,
     "started_at": "2025-12-24T00:24:42.921059"
   },
-  "last_update": "2025-12-24T00:35:53.371536"
+  "last_update": "2025-12-24T00:48:57.641128"
 }
