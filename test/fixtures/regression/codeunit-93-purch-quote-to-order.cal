@@ -1,0 +1,49 @@
+OBJECT Codeunit 93 Purch.-Quote to Order (Yes/No)
+{
+  OBJECT-PROPERTIES
+  {
+    Date=24-03-19;
+    Time=12:00:00;
+    Version List=NAVW114.00;
+  }
+  PROPERTIES
+  {
+    TableNo=38;
+    OnRun=VAR
+            ConfirmManagement@1001 : Codeunit 27;
+            IsHandled@1000 : Boolean;
+          BEGIN
+            TESTFIELD("Document Type","Document Type"::Quote);
+            IF NOT ConfirmManagement.ConfirmProcess(Text000,TRUE) THEN
+              EXIT;
+
+            IsHandled := FALSE;
+            OnBeforePurchQuoteToOrder(Rec,IsHandled);
+            IF IsHandled THEN
+              EXIT;
+
+            PurchQuoteToOrder.RUN(Rec);
+            PurchQuoteToOrder.GetPurchOrderHeader(PurchOrderHeader);
+
+            MESSAGE(Text001,"No.",PurchOrderHeader."No.");
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      Text000@1000 : TextConst 'DAN=Skal rekvisitionen �ndres til en ordre?;ENU=Do you want to convert the quote to an order?';
+      Text001@1001 : TextConst 'DAN=Rekvisition %1 er �ndret til ordre %2;ENU=Quote number %1 has been converted to order number %2.';
+      PurchOrderHeader@1002 : Record 38;
+      PurchQuoteToOrder@1003 : Codeunit 96;
+
+    [Integration]
+    LOCAL PROCEDURE OnBeforePurchQuoteToOrder@1(VAR PurchaseHeader@1000 : Record 38;VAR IsHandled@1001 : Boolean);
+    BEGIN
+      "Purch.-Quote to Order (Yes/No)".RUN(Rec);
+    END;
+
+    BEGIN
+    END.
+  }
+}

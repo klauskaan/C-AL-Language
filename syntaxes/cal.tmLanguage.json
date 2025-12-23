@@ -1,0 +1,647 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "C/AL",
+  "scopeName": "source.cal",
+  "patterns": [
+    { "include": "#object-declaration" },
+    { "include": "#field-definitions" },
+    { "include": "#section-blocks" },
+    { "include": "#object-properties" },
+    { "include": "#variable-declarations" },
+    { "include": "#procedure-declarations" },
+    { "include": "#comments" },
+    { "include": "#constants" },
+    { "include": "#strings" },
+    { "include": "#identifiers" },
+    { "include": "#textconst-languages" },
+    { "include": "#at-numbering" },
+    { "include": "#numbers" },
+    { "include": "#keywords" },
+    { "include": "#types" },
+    { "include": "#operators" },
+    { "include": "#punctuation" },
+    { "include": "#functions" },
+    { "include": "#variables" }
+  ],
+  "repository": {
+    "object-declaration": {
+      "comment": "Top-level OBJECT declaration wrapping the entire object structure",
+      "patterns": [
+        {
+          "name": "meta.object.cal",
+          "begin": "^\\s*(OBJECT)\\s+(Table|Page|Report|Codeunit|XMLport|Query|Form|Dataport|MenuSuite)\\s+(\\d+)\\s+(.*)$",
+          "end": "^\\}\\s*$",
+          "beginCaptures": {
+            "1": { "name": "keyword.other.object.cal" },
+            "2": { "name": "storage.type.object-type.cal" },
+            "3": { "name": "constant.numeric.object-id.cal" },
+            "4": { "name": "entity.name.type.object.string.unquoted.cal" }
+          },
+          "endCaptures": {
+            "0": { "name": "punctuation.section.object.end.cal" }
+          },
+          "patterns": [
+            {
+              "comment": "Opening brace for object - structural, not comment",
+              "name": "punctuation.section.object.begin.cal",
+              "match": "^\\s*\\{\\s*$"
+            },
+            { "include": "#section-blocks" },
+            { "include": "#non-curly-comments" }
+          ]
+        }
+      ]
+    },
+    "begin-end-block": {
+      "comment": "BEGIN/END code blocks where curly brace comments are allowed",
+      "patterns": [
+        {
+          "name": "meta.block.begin-end.cal",
+          "begin": "\\b(BEGIN)\\b",
+          "end": "\\b(END)(\\.)?",
+          "beginCaptures": {
+            "1": { "name": "keyword.control.cal" }
+          },
+          "endCaptures": {
+            "1": { "name": "keyword.control.cal" },
+            "2": { "name": "punctuation.terminator.cal" }
+          },
+          "patterns": [
+            { "include": "#curly-brace-comments" },
+            { "include": "#non-curly-comments" },
+            { "include": "#begin-end-block" },
+            { "include": "#strings" },
+            { "include": "#identifiers" },
+            { "include": "#numbers" },
+            { "include": "#keywords" },
+            { "include": "#types" },
+            { "include": "#operators" },
+            { "include": "#punctuation" },
+            { "include": "#functions" },
+            { "include": "#constants" },
+            { "include": "#variables" },
+            { "include": "#variable-declarations" },
+            { "include": "#at-numbering" }
+          ]
+        }
+      ]
+    },
+    "curly-brace-comments": {
+      "comment": "Curly brace comments - ONLY allowed inside BEGIN/END blocks",
+      "patterns": [
+        {
+          "name": "comment.block.curly.cal",
+          "begin": "\\{",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.comment.begin.cal" }
+          },
+          "end": "\\}",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.comment.end.cal" }
+          }
+        }
+      ]
+    },
+    "field-definitions": {
+      "comment": "Heuristic to detect field/key/control definitions to prevent treating them as comments",
+      "patterns": [
+        {
+          "name": "meta.field-definition.cal",
+          "begin": "\\{\\s*\\d+\\s*;",
+          "end": "\\}",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.field.begin.cal" }
+          },
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.field.end.cal" }
+          },
+          "patterns": [
+            { "include": "#begin-end-block" },
+            { "include": "#strings" },
+            { "include": "#identifiers" },
+            { "include": "#numbers" },
+            { "include": "#keywords" },
+            { "include": "#types" },
+            {
+              "name": "constant.numeric.field-number.cal",
+              "match": "\\b\\d+\\b"
+            },
+            {
+              "name": "punctuation.separator.field.cal",
+              "match": ";"
+            }
+          ]
+        }
+      ]
+    },
+    "section-blocks": {
+      "comment": "Section blocks with curly braces - simpler pattern matching from keyword to closing brace",
+      "patterns": [
+        {
+          "name": "meta.section.object-properties.cal",
+          "begin": "^\\s*(OBJECT-PROPERTIES)\\s*$",
+          "end": "^\\s*\\}\\s*$",
+          "beginCaptures": {
+            "1": { "name": "storage.modifier.cal" }
+          },
+          "endCaptures": {
+            "0": { "name": "punctuation.section.block.end.cal" }
+          },
+          "patterns": [
+            {
+              "name": "punctuation.section.block.begin.cal",
+              "begin": "^\\s*\\{\\s*$",
+              "end": "(?=^\\s*\\}\\s*$)",
+              "patterns": [
+                { "include": "#object-properties" },
+                { "include": "#non-curly-comments" }
+              ]
+            },
+            { "include": "#non-curly-comments" }
+          ]
+        },
+        {
+          "name": "meta.section.properties.cal",
+          "begin": "^\\s*(PROPERTIES)\\s*$",
+          "end": "^\\s*\\}\\s*$",
+          "beginCaptures": {
+            "1": { "name": "storage.modifier.cal" }
+          },
+          "endCaptures": {
+            "0": { "name": "punctuation.section.block.end.cal" }
+          },
+          "patterns": [
+            {
+              "name": "punctuation.section.block.begin.cal",
+              "begin": "^\\s*\\{\\s*$",
+              "end": "(?=^\\s*\\}\\s*$)",
+              "patterns": [
+                { "include": "#object-properties" },
+                { "include": "#variable-declarations" },
+                { "include": "#begin-end-block" },
+                { "include": "#non-curly-comments" },
+                { "include": "#keywords" },
+                { "include": "#numbers" },
+                { "include": "#strings" },
+                { "include": "#identifiers" },
+                { "include": "#types" },
+                { "include": "#operators" },
+                { "include": "#punctuation" },
+                { "include": "#functions" },
+                { "include": "#constants" },
+                { "include": "#variables" }
+              ]
+            },
+            { "include": "#non-curly-comments" }
+          ]
+        },
+        {
+          "name": "meta.section.code.cal",
+          "begin": "^\\s*(CODE)\\s*$",
+          "end": "^\\s*\\}\\s*$",
+          "beginCaptures": {
+            "1": { "name": "storage.modifier.cal" }
+          },
+          "endCaptures": {
+            "0": { "name": "punctuation.section.block.end.cal" }
+          },
+          "patterns": [
+            {
+              "name": "punctuation.section.block.begin.cal",
+              "begin": "^\\s*\\{\\s*$",
+              "end": "(?=^\\s*\\}\\s*$)",
+              "patterns": [
+                { "include": "#variable-declarations" },
+                { "include": "#procedure-declarations" },
+                { "include": "#begin-end-block" },
+                { "include": "#non-curly-comments" },
+                { "include": "#strings" },
+                { "include": "#identifiers" },
+                { "include": "#numbers" },
+                { "include": "#keywords" },
+                { "include": "#types" },
+                { "include": "#operators" },
+                { "include": "#punctuation" },
+                { "include": "#functions" },
+                { "include": "#constants" },
+                { "include": "#variables" }
+              ]
+            },
+            { "include": "#non-curly-comments" }
+          ]
+        },
+        {
+          "name": "meta.section.generic.cal",
+          "begin": "^\\s*(FIELDS|KEYS|FIELDGROUPS|CONTROLS|ELEMENTS|DATASET|REQUESTPAGE|LABELS|SECTIONS)\\s*$",
+          "end": "^\\s*\\}\\s*$",
+          "beginCaptures": {
+            "1": { "name": "storage.modifier.cal" }
+          },
+          "endCaptures": {
+            "0": { "name": "punctuation.section.block.end.cal" }
+          },
+          "patterns": [
+            {
+              "name": "punctuation.section.block.begin.cal",
+              "begin": "^\\s*\\{\\s*$",
+              "end": "(?=^\\s*\\}\\s*$)",
+              "patterns": [
+                { "include": "#field-definitions" },
+                { "include": "#begin-end-block" },
+                { "include": "#non-curly-comments" },
+                { "include": "#strings" },
+                { "include": "#identifiers" },
+                { "include": "#numbers" },
+                { "include": "#keywords" },
+                { "include": "#types" },
+                { "include": "#operators" },
+                { "include": "#punctuation" }
+              ]
+            },
+            { "include": "#non-curly-comments" }
+          ]
+        }
+      ]
+    },
+    "object-properties": {
+      "comment": "Property assignments in PROPERTIES and OBJECT-PROPERTIES sections",
+      "patterns": [
+        {
+          "comment": "OBJECT-PROPERTIES with simple values (Date, Time, etc.)",
+          "match": "\\b(Date|Time|Modified|Version List)\\s*(=)\\s*([^;]+)(;)",
+          "captures": {
+            "1": { "name": "variable.parameter.property-name.cal" },
+            "2": { "name": "keyword.operator.assignment.cal" },
+            "3": { "name": "string.unquoted.property-value.cal" },
+            "4": { "name": "punctuation.terminator.cal" }
+          }
+        },
+        {
+          "comment": "General property assignments (TableNo, OnRun, Permissions, etc.)",
+          "match": "\\b([A-Za-z][A-Za-z0-9]*)\\s*(=)",
+          "captures": {
+            "1": { "name": "variable.parameter.property-name.cal" },
+            "2": { "name": "keyword.operator.assignment.cal" }
+          }
+        }
+      ]
+    },
+    "variable-declarations": {
+      "comment": "Variable and parameter declarations with @ numbering: VarName@Number : Type",
+      "patterns": [
+        {
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)(@\\d+)\\s*(:)",
+          "captures": {
+            "1": { "name": "variable.other.declaration.cal" },
+            "2": { "name": "constant.numeric.at-number.cal" },
+            "3": { "name": "punctuation.separator.type.cal" }
+          }
+        }
+      ]
+    },
+    "procedure-declarations": {
+      "comment": "PROCEDURE and TRIGGER declarations with enhanced name capture",
+      "patterns": [
+        {
+          "match": "\\b(PROCEDURE|TRIGGER)\\s+([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)?)(@\\d+)?\\s*(?=\\()",
+          "captures": {
+            "1": { "name": "keyword.other.cal" },
+            "2": { "name": "entity.name.function.cal" },
+            "3": { "name": "constant.numeric.at-number.cal" }
+          }
+        }
+      ]
+    },
+    "at-numbering": {
+      "comment": "C/AL @ numbering system for variables and procedures",
+      "patterns": [
+        {
+          "name": "constant.numeric.at-number.cal",
+          "match": "@\\d+"
+        }
+      ]
+    },
+    "textconst-languages": {
+      "comment": "Language codes in TextConst strings",
+      "patterns": [
+        {
+          "name": "entity.name.tag.language-code.cal",
+          "match": "\\b(ENU|FRA|DEU|ESP|ITA|NLD|DAN|SVE|NOR|FIN|RUS|POL|CZE|HUN|PTG|CHN|JPN|KOR)(?==)"
+        }
+      ]
+    },
+    "non-curly-comments": {
+      "comment": "Comments excluding curly brace style - for use inside section blocks",
+      "patterns": [
+        {
+          "comment": "Single-line comment with leading whitespace capture",
+          "begin": "(^[ \\t]+)?(?=//)",
+          "beginCaptures": {
+            "1": { "name": "punctuation.whitespace.comment.leading.cal" }
+          },
+          "end": "(?!\\G)",
+          "patterns": [
+            {
+              "name": "comment.line.double-slash.cal",
+              "begin": "//",
+              "beginCaptures": {
+                "0": { "name": "punctuation.definition.comment.cal" }
+              },
+              "end": "$"
+            }
+          ]
+        },
+        {
+          "name": "comment.block.c-style.cal",
+          "begin": "/\\*",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.comment.begin.cal" }
+          },
+          "end": "\\*/",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.comment.end.cal" }
+          }
+        }
+      ]
+    },
+    "comments": {
+      "comment": "Top-level comments - curly brace comments removed, only allowed in BEGIN/END blocks",
+      "patterns": [
+        {
+          "comment": "Single-line comment with leading whitespace capture",
+          "begin": "(^[ \\t]+)?(?=//)",
+          "beginCaptures": {
+            "1": { "name": "punctuation.whitespace.comment.leading.cal" }
+          },
+          "end": "(?!\\G)",
+          "patterns": [
+            {
+              "name": "comment.line.double-slash.cal",
+              "begin": "//",
+              "beginCaptures": {
+                "0": { "name": "punctuation.definition.comment.cal" }
+              },
+              "end": "$"
+            }
+          ]
+        },
+        {
+          "name": "comment.block.c-style.cal",
+          "begin": "/\\*",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.comment.begin.cal" }
+          },
+          "end": "\\*/",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.comment.end.cal" }
+          }
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "comment": "Single-quoted strings with improved escape handling",
+          "name": "string.quoted.single.cal",
+          "applyEndPatternLast": 1,
+          "begin": "'",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.cal" }
+          },
+          "end": "'",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.cal" }
+          },
+          "patterns": [
+            {
+              "name": "constant.character.escape.apostrophe.cal",
+              "match": "''"
+            },
+            { "include": "#textconst-languages" }
+          ]
+        }
+      ]
+    },
+    "identifiers": {
+      "comment": "Double-quoted identifiers with spaces - separate from strings to prevent BEGIN/END matching",
+      "patterns": [
+        {
+          "name": "identifier.quoted.double.cal",
+          "applyEndPatternLast": 1,
+          "begin": "\"",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.identifier.begin.cal" }
+          },
+          "end": "\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.identifier.end.cal" }
+          }
+        }
+      ]
+    },
+    "numbers": {
+      "comment": "Enhanced number patterns: hex, scientific notation, decimals, BigInteger, date/time literals",
+      "patterns": [
+        {
+          "name": "constant.numeric.hex.cal",
+          "match": "\\b0[xX][0-9a-fA-F]+\\b"
+        },
+        {
+          "comment": "Date literals: MMDDYY[YY]D (e.g., 010125D, 01012025D, 0D)",
+          "name": "constant.numeric.date.cal",
+          "match": "\\b\\d{0,8}D\\b"
+        },
+        {
+          "comment": "DateTime literals: MMDDYY[YY]DT",
+          "name": "constant.numeric.datetime.cal",
+          "match": "\\b\\d{6,8}DT\\b"
+        },
+        {
+          "comment": "Time literals: HHMMSS[ms]T",
+          "name": "constant.numeric.time.cal",
+          "match": "\\b\\d{6,9}T\\b"
+        },
+        {
+          "name": "constant.numeric.biginteger.cal",
+          "match": "\\b\\d+[Ll]\\b"
+        },
+        {
+          "name": "constant.numeric.scientific.cal",
+          "match": "\\b\\d+\\.?\\d*[eE][+-]?\\d+\\b"
+        },
+        {
+          "name": "constant.numeric.decimal.cal",
+          "match": "\\b\\d*\\.\\d+\\b"
+        },
+        {
+          "name": "constant.numeric.decimal.cal",
+          "match": "\\b\\d+\\.\\d*\\b"
+        },
+        {
+          "name": "constant.numeric.integer.cal",
+          "match": "\\b\\d+\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "comment": "Control keywords - negative lookahead prevents matching in hyphenated identifiers like 'End-Total'",
+          "name": "keyword.control.cal",
+          "match": "\\b(IF|THEN|ELSE|BEGIN|END|CASE|OF|REPEAT|UNTIL|WHILE|DO|FOR|TO|DOWNTO|FOREACH|WITH|EXIT|BREAK|QUIT)(?!-|[A-Za-z0-9_])\\b"
+        },
+        {
+          "comment": "Other keywords - negative lookahead prevents matching in hyphenated identifiers",
+          "name": "keyword.other.cal",
+          "match": "\\b(PROCEDURE|FUNCTION|TRIGGER|LOCAL|GLOBAL|VAR|CONST|ARRAY|TEMPORARY|SECURITYFILTERING|INTERNALEVENT|INTEGRATIONEVENT|BUSINESSEVENT|EVENT|WITHEVENTS)(?!-|[A-Za-z0-9_])\\b"
+        },
+        {
+          "comment": "Logical operators - negative lookahead prevents matching in hyphenated identifiers",
+          "name": "keyword.operator.logical.cal",
+          "match": "\\b(AND|OR|NOT|XOR|IN)(?!-|[A-Za-z0-9_])\\b"
+        },
+        {
+          "comment": "Object type keywords - negative lookahead prevents matching in hyphenated identifiers",
+          "name": "keyword.other.object.cal",
+          "match": "\\b(OBJECT|TABLE|FORM|REPORT|DATAPORT|CODEUNIT|XMLPORT|MENUSUITES|PAGE|QUERY)(?!-|[A-Za-z0-9_])\\b"
+        },
+        {
+          "comment": "Section keywords - only match at line start to avoid highlighting identifiers/functions with same name",
+          "name": "storage.modifier.section.cal",
+          "match": "^\\s*(PROPERTIES|FIELDS|KEYS|FIELDGROUPS|CODE|ELEMENTS|CONTROLS|SECTIONS|DATASET|REQUESTPAGE|LABELS)(?=\\s*$)"
+        },
+        {
+          "comment": "OBJECT-PROPERTIES section keyword - special case with hyphen",
+          "name": "storage.modifier.section.cal",
+          "match": "^\\s*(OBJECT-PROPERTIES)(?=\\s*$)"
+        },
+        {
+          "comment": "Procedure attributes",
+          "name": "storage.modifier.attribute.cal",
+          "match": "\\[(External|Internal|Integration|IntegrationEvent|BusinessEvent)\\]"
+        },
+        {
+          "comment": "CalcFormula and Query property keywords - negative lookahead prevents matching in hyphenated identifiers",
+          "name": "keyword.other.property.cal",
+          "match": "\\b(FIELD|FILTER|CONST|WHERE|TABLEDATA|SUM|AVERAGE|COUNT|MIN|MAX|LOOKUP|EXIST|ASCENDING|DESCENDING|ORDER|SORTING|UPPERLIMIT)(?!-|[A-Za-z0-9_])\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "comment": "Data types - includes both Code20 and Text[250] style formats",
+          "name": "storage.type.cal",
+          "match": "\\b(Action|BigInteger|BigText|Byte|Boolean|Char|ClientType|Code\\d*|Codeunit|DataClassification|DataScope|Date|DateFormula|DateTime|Decimal|DefaultLayout|Dialog|Duration|EXECUTIONMODE|File|FieldRef|FILTERPAGEBUILDER|GUID|InStream|OutStream|Integer|KeyRef|LogLevel|Notification|NotificationScope|Option|OCX|Page|Query|Record|RecordID|RecordRef|Report|SessionSettings|System|TableConnectionType|TableFilter|TestPage|Text\\d*|Text\\[\\d+\\]|Code\\[\\d+\\]|Time|TransactionType|Variant|Verbosity|Automation|BLOB|DotNet|WebServiceActionContext)\\b"
+        },
+        {
+          "comment": "TextConst type declaration",
+          "name": "storage.type.textconst.cal",
+          "match": "\\bTextConst\\b"
+        },
+        {
+          "comment": "Special field classes",
+          "name": "storage.type.fieldclass.cal",
+          "match": "\\b(FlowField|FlowFilter|Normal)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.arithmetic.cal",
+          "match": "\\+|-|\\*|/|\\b(DIV|MOD)\\b"
+        },
+        {
+          "name": "keyword.operator.comparison.cal",
+          "match": "=|<>|<|>|<=|>="
+        },
+        {
+          "comment": "Compound assignment operators (NAV 2018+)",
+          "name": "keyword.operator.assignment.cal",
+          "match": "\\+=|-=|\\*=|/=|:="
+        },
+        {
+          "name": "keyword.operator.range.cal",
+          "match": "\\.\\."
+        },
+        {
+          "comment": "Text concatenation operator in C/AL",
+          "name": "keyword.operator.concatenation.cal",
+          "match": "\\&"
+        },
+        {
+          "comment": "Option value scope operator (::)",
+          "name": "keyword.operator.scope.cal",
+          "match": "::"
+        },
+        {
+          "comment": "Pipe operator for Option type definitions",
+          "name": "keyword.operator.option.cal",
+          "match": "\\|"
+        }
+      ]
+    },
+    "punctuation": {
+      "comment": "Punctuation marks for better visual separation",
+      "patterns": [
+        {
+          "name": "punctuation.terminator.cal",
+          "match": ";"
+        },
+        {
+          "name": "punctuation.separator.cal",
+          "match": ","
+        },
+        {
+          "name": "punctuation.separator.type.cal",
+          "match": ":"
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "comment": "Built-in C/AL functions organized by category",
+          "name": "support.function.cal",
+          "match": "\\b(MESSAGE|ERROR|CONFIRM|STRMENU|DIALOG|OPEN|CLOSE|UPDATE|CLEAR|COPYSTR|DELCHR|INCSTR|LOWERCASE|UPPERCASE|MAXSTRLEN|PADSTR|SELECTSTR|STRCHECKSUM|STRLEN|STRPOS|STRSUBSTNO|INSERT|FIND|FINDFIRST|FINDLAST|FINDSET|GET|INIT|MODIFY|MODIFYALL|DELETE|DELETEALL|RESET|SETRANGE|SETFILTER|SETCURRENTKEY|SETVIEW|GETVIEW|GETRANGEMIN|GETRANGEMAX|GETFILTER|GETFILTERS|COUNT|ISEMPTY|NEXT|CALCSUMS|CALCFIELDS|TESTFIELD|VALIDATE|ARRAYLEN|COMPRESSARRAY|COPYARRAY|ROUND|POWER|ABS|RANDOM|RANDOMIZE|DATE2DMY|DATE2DWY|DMY2DATE|DWY2DATE|TODAY|TIME|CREATEDATE|CREATETIME|CREATEDATETIME|DT2DATE|DT2TIME|CURRENTDATETIME|WORKDATE|CLOSINGDATE|NORMALDATE|CALCDATE|FORMAT|EVALUATE|RUN|RUNMODAL|LOOKUPMODE|EDITABLE|SETTABLEVIEW|GETRECORD|SETRECORD|LOOKUPOK|COMMIT|LOCKTABLE|USERID|COMPANYNAME|SERIALNUMBER|GUIALLOWED|APPLICATIONPATH|TEMPORARYPATH|HYPERLINK|YIELD|SLEEP|STARTSESSION|STOPSESSION|DEBUGGER|BREAKONERROR|FIELDERROR|FIELDNAME|FIELDCAPTION|TABLENAME|TABLECAPTION|TRANSFERFIELDS|CHANGECOMPANY|CONSISTENCY|FILTERGROUP|HASFILTER|ASCENDING|MARK|MARKEDONLY|COPY|RENAME|DUPLICATE|COPYFILTERS|COPYLINKS|DELETELINKS|HASLINKS|SETAUTOCALCFIELDS|SETLOADFIELDS|SETPERMISSIONFILTER|GETPOSITION|SETPOSITION|RECORDLEVELLOCKING|RECORDID|CAPTION)\\b"
+        },
+        {
+          "comment": "Method calls after dot operator (member functions) - simplified pattern",
+          "match": "\\.([A-Za-z_][A-Za-z0-9_]*)\\s*\\(",
+          "captures": {
+            "1": { "name": "entity.name.function.cal" }
+          }
+        },
+        {
+          "comment": "Regular function calls - simplified pattern using actual match",
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*\\(",
+          "captures": {
+            "1": { "name": "entity.name.function.cal" }
+          }
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.cal",
+          "match": "\\b(TRUE|FALSE|NULL)\\b"
+        },
+        {
+          "comment": "Option value references using :: operator - captures both simple and quoted identifiers",
+          "name": "constant.other.option-value.cal",
+          "match": "(?:\"[^\"]+\"|\\b[A-Za-z_][A-Za-z0-9_]*)\\s*::\\s*(?:\"[^\"]+\"|[A-Za-z_][A-Za-z0-9_\\-]+)\\b"
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "name": "variable.language.cal",
+          "match": "\\b(Rec|xRec|CurrPage|CurrReport|CurrFieldNo|RequestOptionsPage)\\b"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,30 @@
+OBJECT Codeunit 999 Test Malformed
+{
+  OBJECT-PROPERTIES
+
+
+  {
+    Date=24-03-19;
+    Time=12:00:00;
+  }
+  PROPERTIES
+
+
+
+  {
+    TableNo=38;
+    OnRun=BEGIN
+            MESSAGE('Test');
+          END;
+  }
+  CODE
+
+
+  {
+    VAR
+      TestVar@1000 : Integer;
+
+    BEGIN
+    END;
+  }
+}

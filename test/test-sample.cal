@@ -1,0 +1,59 @@
+OBJECT Table 18 Customer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/01/20;
+    Time=12:00:00;
+    Modified=Yes;
+  }
+  PROPERTIES
+  {
+    DataCaptionFields=No.,"Name";
+    LookupPageID=Page22;
+  }
+  FIELDS
+  {
+    { 1   ;"No."           ;Code20        }
+    { 2   ;"Name"          ;Text50        }
+    { 3   ;Address        ;Text50        }
+    { 4   ;"Address 2"    ;Text50        }
+    { 5   ;City           ;Text30        }
+    { 6   ;"Phone No."    ;Text30        }
+    { 7   ;"Credit Limit" ;Decimal       }
+    { 8   ;Balance        ;Decimal       }
+  }
+  KEYS
+  {
+    {    ;"No."                           ;Clustered=Yes }
+    {    ;"Name"                                        }
+  }
+  CODE
+  {
+    VAR
+      Text001@1000 : TextConst 'ENU=The customer %1 has been created.';
+      CustomerCount@1001 : Integer;
+
+    PROCEDURE GetBalance@1() : Decimal;
+    VAR
+      CustLedgerEntry@1000 : Record 21;
+      TotalBalance@1001 : Decimal;
+    BEGIN
+      TotalBalance := 0;
+      CustLedgerEntry.SETRANGE("Customer No.","No.");
+      IF CustLedgerEntry.FINDSET THEN BEGIN
+        REPEAT
+          TotalBalance := TotalBalance + CustLedgerEntry.Amount;
+        UNTIL CustLedgerEntry.NEXT = 0;
+      END;
+      EXIT(TotalBalance);
+    END;
+
+    PROCEDURE ShowMessage@2();
+    BEGIN
+      MESSAGE(Text001, "Name");
+    END;
+
+    BEGIN
+    END.
+  }
+}

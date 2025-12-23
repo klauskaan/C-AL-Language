@@ -1,0 +1,132 @@
+OBJECT Codeunit 416 Release Service Document
+{
+  OBJECT-PROPERTIES
+  {
+    Date=19-09-18;
+    Time=12:00:00;
+    Version List=NAVW113.00;
+  }
+  PROPERTIES
+  {
+    TableNo=5900;
+    OnRun=BEGIN
+            ServiceHeader.COPY(Rec);
+            Code;
+            Rec := ServiceHeader;
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      Text001@1000 : TextConst '@@@=Example: There is nothing to release for Order 12345.;DAN=Der er ikke noget at frigive for %1 %2.;ENU=There is nothing to release for %1 %2.';
+      ServiceHeader@1001 : Record 5900;
+      InvtSetup@1006 : Record 313;
+      WhseServiceRelease@1007 : Codeunit 5770;
+
+    LOCAL PROCEDURE Code@10();
+    VAR
+      ServLine@1002 : Record 5902;
+      TempVATAmountLine0@1001 : TEMPORARY Record 290;
+      TempVATAmountLine1@1000 : TEMPORARY Record 290;
+    BEGIN
+      WITH ServiceHeader DO BEGIN
+        IF "Release Status" = "Release Status"::"Released to Ship" THEN
+          EXIT;
+
+        OnBeforeReleaseServiceDoc(ServiceHeader);
+
+        IF "Document Type" = "Document Type"::Quote THEN
+          TESTFIELD("Bill-to Customer No.");
+        ServLine.SETRANGE("Document Type","Document Type");
+        ServLine.SETRANGE("Document No.","No.");
+        ServLine.SETFILTER(Type,'<>%1',ServLine.Type::" ");
+        ServLine.SETFILTER(Quantity,'<>0');
+        IF ServLine.ISEMPTY THEN
+          ERROR(Text001,"Document Type","No.");
+        InvtSetup.GET;
+        IF InvtSetup."Location Mandatory" THEN BEGIN
+          ServLine.SETCURRENTKEY(Type);
+          ServLine.SETRANGE(Type,ServLine.Type::Item);
+          IF ServLine.FINDSET THEN
+            REPEAT
+              ServLine.TESTFIELD("Location Code");
+            UNTIL ServLine.NEXT = 0;
+          ServLine.SETFILTER(Type,'<>%1',ServLine.Type::" ");
+        END;
+
+        OnCodeOnAfterCheck(ServiceHeader,ServLine);
+
+        ServLine.RESET;
+        VALIDATE("Release Status","Release Status"::"Released to Ship");
+        ServLine.SetServHeader(ServiceHeader);
+        ServLine.CalcVATAmountLines(0,ServiceHeader,ServLine,TempVATAmountLine0,ServLine.IsShipment);
+        ServLine.CalcVATAmountLines(1,ServiceHeader,ServLine,TempVATAmountLine1,ServLine.IsShipment);
+        ServLine.UpdateVATOnLines(0,ServiceHeader,ServLine,TempVATAmountLine0);
+        ServLine.UpdateVATOnLines(1,ServiceHeader,ServLine,TempVATAmountLine1);
+        MODIFY(TRUE);
+
+        IF "Document Type" = "Document Type"::Order THEN
+          WhseServiceRelease.Release(ServiceHeader);
+
+        OnAfterReleaseServiceDoc(ServiceHeader);
+      END;
+    END;
+
+    [External]
+    PROCEDURE Reopen@3(VAR ServHeader@1000 : Record 5900);
+    BEGIN
+      WITH ServHeader DO BEGIN
+        IF "Release Status" = "Release Status"::Open THEN
+          EXIT;
+
+        OnBeforeReopenServiceDoc(ServHeader);
+        VALIDATE("Release Status","Release Status"::Open);
+        MODIFY(TRUE);
+        IF "Document Type" IN ["Document Type"::Order] THEN
+          WhseServiceRelease.Reopen(ServHeader);
+        OnAfterReopenServiceDoc(ServHeader);
+      END;
+    END;
+
+    [External]
+    PROCEDURE PerformManualRelease@1(VAR ServHeader@1000 : Record 5900);
+    BEGIN
+      CODEUNIT.RUN(CODEUNIT::"Release Service Document",ServHeader);
+    END;
+
+    [External]
+    PROCEDURE PerformManualReopen@6(VAR ServHeader@1000 : Record 5900);
+    BEGIN
+      Reopen(ServHeader);
+    END;
+
+    [Integration]
+    LOCAL PROCEDURE OnBeforeReleaseServiceDoc@5(VAR ServiceHeader@1000 : Record 5900);
+    BEGIN
+    END;
+
+    [Integration]
+    LOCAL PROCEDURE OnAfterReleaseServiceDoc@4(VAR ServiceHeader@1000 : Record 5900);
+    BEGIN
+    END;
+
+    [Integration]
+    LOCAL PROCEDURE OnBeforeReopenServiceDoc@2(VAR ServiceHeader@1000 : Record 5900);
+    BEGIN
+    END;
+
+    [Integration]
+    LOCAL PROCEDURE OnAfterReopenServiceDoc@7(VAR ServiceHeader@1000 : Record 5900);
+    BEGIN
+    END;
+
+    [Integration]
+    LOCAL PROCEDURE OnCodeOnAfterCheck@8(ServiceHeader@1000 : Record 5900;VAR ServiceLine@1001 : Record 5902);
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}

@@ -1,0 +1,1562 @@
+import { Token, TokenType } from '../lexer/tokens';
+import {
+  ASTNode,
+  CALDocument,
+  ObjectDeclaration,
+  ObjectKind,
+  PropertySection,
+  Property,
+  FieldSection,
+  FieldDeclaration,
+  DataType,
+  KeySection,
+  KeyDeclaration,
+  FieldGroupSection,
+  FieldGroup,
+  CodeSection,
+  VariableDeclaration,
+  ProcedureDeclaration,
+  ParameterDeclaration,
+  TriggerDeclaration,
+  Statement,
+  BlockStatement,
+  IfStatement,
+  WhileStatement,
+  RepeatStatement,
+  ForStatement,
+  CaseStatement,
+  CaseBranch,
+  ExitStatement,
+  AssignmentStatement,
+  CallStatement,
+  Expression,
+  Identifier,
+  Literal,
+  BinaryExpression,
+  UnaryExpression
+} from './ast';
+
+/**
+ * Parser for C/AL language
+ */
+export class Parser {
+  private tokens: Token[];
+  private current: number = 0;
+  private errors: ParseError[] = [];
+
+  constructor(tokens: Token[]) {
+    // Filter out EOF token for easier parsing
+    this.tokens = tokens.filter(t => t.type !== TokenType.EOF);
+  }
+
+  /**
+   * Safely parse an integer from a token, recording an error if invalid
+   */
+  private parseInteger(token: Token): number {
+    const value = parseInt(token.value, 10);
+    if (isNaN(value)) {
+      this.recordError(`Invalid integer value: ${token.value}`, token);
+      return 0;
+    }
+    return value;
+  }
+
+  /**
+   * Parse the token stream into an AST
+   */
+  public parse(): CALDocument {
+    const startToken = this.peek();
+    let object: ObjectDeclaration | null = null;
+
+    try {
+      if (!this.isAtEnd()) {
+        object = this.parseObject();
+      }
+    } catch (error) {
+      if (error instanceof ParseError) {
+        this.errors.push(error);
+      }
+    }
+
+    return {
+      type: 'CALDocument',
+      object,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  /**
+   * Parse OBJECT declaration
+   */
+  private parseObject(): ObjectDeclaration {
+    const startToken = this.consume(TokenType.Object, 'Expected OBJECT keyword');
+
+    // Object type (Table, Page, etc.)
+    const objectKindToken = this.advance();
+    const objectKind = this.tokenTypeToObjectKind(objectKindToken.type);
+
+    // Object ID
+    const idToken = this.consume(TokenType.Integer, 'Expected object ID');
+    const objectId = this.parseInteger(idToken);
+
+    // Object Name (can be quoted or unquoted)
+    const nameToken = this.advance();
+    const objectName = nameToken.type === TokenType.QuotedIdentifier || nameToken.type === TokenType.Identifier
+      ? nameToken.value
+      : nameToken.value;
+
+    // Consume opening brace of object body (if present)
+    // Note: Tests may have partial objects without braces
+    if (this.check(TokenType.LeftBrace)) {
+      this.advance(); // Consume {
+
+      // Skip OBJECT-PROPERTIES section if present (it's metadata, not code)
+      if (this.check(TokenType.Object) && this.checkNext(TokenType.Minus)) {
+        // Skip OBJECT-PROPERTIES { ... }
+        this.advance(); // OBJECT
+        this.advance(); // -
+        this.advance(); // PROPERTIES
+        if (this.check(TokenType.LeftBrace)) {
+          this.advance(); // {
+          // Skip until matching }
+          let depth = 1;
+          while (depth > 0 && !this.isAtEnd()) {
+            if (this.check(TokenType.LeftBrace)) depth++;
+            else if (this.check(TokenType.RightBrace)) depth--;
+            this.advance();
+          }
+        }
+      }
+    }
+
+    // Parse sections
+    let properties: PropertySection | null = null;
+    let fields: FieldSection | null = null;
+    let keys: KeySection | null = null;
+    let fieldGroups: FieldGroupSection | null = null;
+    let code: CodeSection | null = null;
+
+    while (!this.isAtEnd()) {
+      const token = this.peek();
+
+      try {
+        if (token.type === TokenType.Properties) {
+          properties = this.parsePropertySection();
+        } else if (token.type === TokenType.Fields) {
+          fields = this.parseFieldSection();
+        } else if (token.type === TokenType.Keys) {
+          keys = this.parseKeySection();
+        } else if (token.type === TokenType.FieldGroups) {
+          fieldGroups = this.parseFieldGroupSection();
+        } else if (token.type === TokenType.Code) {
+          code = this.parseCodeSection();
+        } else {
+          break;
+        }
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          this.synchronize();
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    return {
+      type: 'ObjectDeclaration',
+      objectKind,
+      objectId,
+      objectName,
+      properties,
+      fields,
+      keys,
+      fieldGroups,
+      code,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  /**
+   * Parse PROPERTIES section
+   */
+  private parsePropertySection(): PropertySection {
+    const startToken = this.consume(TokenType.Properties, 'Expected PROPERTIES');
+    this.consume(TokenType.LeftBrace, 'Expected {');
+
+    const properties: Property[] = [];
+
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      try {
+        properties.push(this.parseProperty());
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Skip to next semicolon or right brace
+          while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+            this.advance();
+          }
+          if (this.check(TokenType.Semicolon)) {
+            this.advance();
+          }
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+
+    return {
+      type: 'PropertySection',
+      properties,
+      startToken,
+      endToken
+    };
+  }
+
+  private parseProperty(): Property {
+    const startToken = this.peek();
+    const nameToken = this.advance(); // Property name
+    const name = nameToken.value;
+
+    this.consume(TokenType.Equal, 'Expected =');
+
+    // Property value - read until semicolon
+    let value = '';
+    while (!this.check(TokenType.Semicolon) && !this.isAtEnd()) {
+      value += this.advance().value;
+    }
+
+    const endToken = this.consume(TokenType.Semicolon, 'Expected ;');
+
+    return {
+      type: 'Property',
+      name,
+      value: value.trim(),
+      startToken,
+      endToken
+    };
+  }
+
+  /**
+   * Parse FIELDS section
+   */
+  private parseFieldSection(): FieldSection {
+    const startToken = this.consume(TokenType.Fields, 'Expected FIELDS');
+    this.consume(TokenType.LeftBrace, 'Expected {');
+
+    const fields: FieldDeclaration[] = [];
+
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      try {
+        fields.push(this.parseField());
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Skip to next field (left brace) or end of section (right brace)
+          while (!this.check(TokenType.LeftBrace) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+            this.advance();
+          }
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+
+    return {
+      type: 'FieldSection',
+      fields,
+      startToken,
+      endToken
+    };
+  }
+
+  private parseField(): FieldDeclaration {
+    const startToken = this.consume(TokenType.LeftBrace, 'Expected {');
+
+    // Field number
+    const fieldNoToken = this.consume(TokenType.Integer, 'Expected field number');
+    const fieldNo = this.parseInteger(fieldNoToken);
+
+    this.consume(TokenType.Semicolon, 'Expected ;');
+
+    // Reserved column (always empty in NAV exports)
+    // C/AL format: { FieldNo ; (reserved) ; FieldName ; DataType }
+    // Note: FlowField/FlowFilter designation appears as FieldClass property, not in this column
+    let fieldClass = '';
+    if (!this.check(TokenType.Semicolon)) {
+      const fieldClassToken = this.advance();
+      fieldClass = fieldClassToken.value;
+    }
+
+    this.consume(TokenType.Semicolon, 'Expected ;');
+
+    // Field name (can be quoted or unquoted)
+    const nameToken = this.advance();
+    const fieldName = nameToken.value;
+
+    this.consume(TokenType.Semicolon, 'Expected ;');
+
+    // Data type
+    const dataType = this.parseDataType();
+
+    // Optional properties
+    let properties: PropertySection | null = null;
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+
+    return {
+      type: 'FieldDeclaration',
+      fieldNo,
+      fieldClass,
+      fieldName,
+      dataType,
+      properties,
+      startToken,
+      endToken
+    };
+  }
+
+  private parseDataType(): DataType {
+    const startToken = this.peek();
+    const typeToken = this.advance();
+    let typeName = typeToken.value;
+
+    let length: number | undefined;
+    let tableId: number | undefined;
+
+    // Check for ARRAY[n] OF Type pattern
+    if (typeName.toUpperCase() === 'ARRAY' && this.check(TokenType.LeftBracket)) {
+      this.advance(); // consume '['
+      const sizeToken = this.consume(TokenType.Integer, 'Expected array size');
+      const arraySize = this.parseInteger(sizeToken);
+      this.consume(TokenType.RightBracket, 'Expected ]');
+
+      // Expect OF keyword
+      if (this.check(TokenType.Of)) {
+        this.advance();
+        const elementType = this.parseDataType();
+        typeName = `ARRAY[${arraySize}] OF ${elementType.typeName}`;
+      }
+
+      return {
+        type: 'DataType',
+        typeName,
+        length: arraySize,
+        tableId,
+        startToken,
+        endToken: this.previous()
+      };
+    }
+
+    // Check for Record <tableId> pattern
+    if (typeName.toUpperCase() === 'RECORD' && this.check(TokenType.Integer)) {
+      const tableIdToken = this.advance();
+      tableId = this.parseInteger(tableIdToken);
+      typeName = `Record ${tableId}`;
+    }
+
+    // Check for length specification [length]
+    if (this.check(TokenType.LeftBracket)) {
+      this.advance();
+      const lengthToken = this.consume(TokenType.Integer, 'Expected length');
+      length = this.parseInteger(lengthToken);
+      this.consume(TokenType.RightBracket, 'Expected ]');
+    }
+
+    // Handle TextConst with string value: TextConst 'ENU=...'
+    if (typeName.toUpperCase() === 'TEXTCONST' && this.check(TokenType.String)) {
+      this.advance(); // consume the string value
+    }
+
+    return {
+      type: 'DataType',
+      typeName,
+      length,
+      tableId,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  /**
+   * Parse KEYS section
+   */
+  private parseKeySection(): KeySection {
+    const startToken = this.consume(TokenType.Keys, 'Expected KEYS');
+    this.consume(TokenType.LeftBrace, 'Expected {');
+
+    const keys: KeyDeclaration[] = [];
+
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      try {
+        keys.push(this.parseKey());
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Skip to next key (left brace) or end of section (right brace)
+          while (!this.check(TokenType.LeftBrace) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+            this.advance();
+          }
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+
+    return {
+      type: 'KeySection',
+      keys,
+      startToken,
+      endToken
+    };
+  }
+
+  private parseKey(): KeyDeclaration {
+    const startToken = this.consume(TokenType.LeftBrace, 'Expected {');
+
+    const fields: string[] = [];
+
+    // Parse field list
+    while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      const fieldToken = this.advance();
+      fields.push(fieldToken.value);
+
+      if (this.check(TokenType.Comma)) {
+        this.advance();
+      }
+    }
+
+    // Skip any remaining content until }
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      this.advance();
+    }
+
+    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+
+    return {
+      type: 'KeyDeclaration',
+      fields,
+      properties: null,
+      startToken,
+      endToken
+    };
+  }
+
+  /**
+   * Parse FIELDGROUPS section
+   */
+  private parseFieldGroupSection(): FieldGroupSection {
+    const startToken = this.consume(TokenType.FieldGroups, 'Expected FIELDGROUPS');
+    this.consume(TokenType.LeftBrace, 'Expected {');
+
+    const fieldGroups: FieldGroup[] = [];
+
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      // Skip for now - simplified implementation
+      this.advance();
+    }
+
+    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+
+    return {
+      type: 'FieldGroupSection',
+      fieldGroups,
+      startToken,
+      endToken
+    };
+  }
+
+  /**
+   * Parse CODE section
+   */
+  private parseCodeSection(): CodeSection {
+    const startToken = this.consume(TokenType.Code, 'Expected CODE');
+
+    // Consume opening brace of CODE section (if present)
+    if (this.check(TokenType.LeftBrace)) {
+      this.advance();
+    }
+
+    const variables: VariableDeclaration[] = [];
+    const procedures: ProcedureDeclaration[] = [];
+    const triggers: TriggerDeclaration[] = [];
+
+    // Parse VAR section if present
+    if (this.check(TokenType.Var)) {
+      this.parseVariableDeclarations(variables);
+    }
+
+    // Parse procedures and triggers
+    while (!this.isAtEnd()) {
+      try {
+        // Check for LOCAL keyword before PROCEDURE/FUNCTION
+        let isLocal = false;
+        if (this.check(TokenType.Local)) {
+          isLocal = true;
+          this.advance(); // consume LOCAL
+        }
+
+        if (this.check(TokenType.Procedure) || this.check(TokenType.Function)) {
+          procedures.push(this.parseProcedure(isLocal));
+        } else if (this.check(TokenType.Trigger)) {
+          triggers.push(this.parseTrigger());
+        } else if (this.check(TokenType.Begin)) {
+          // Main code block (documentation trigger) - skip for now
+          break;
+        } else {
+          break;
+        }
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Skip to next procedure/trigger/end
+          while (!this.check(TokenType.Procedure) && !this.check(TokenType.Function) &&
+                 !this.check(TokenType.Trigger) && !this.check(TokenType.Begin) && !this.isAtEnd()) {
+            this.advance();
+          }
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    return {
+      type: 'CodeSection',
+      variables,
+      procedures,
+      triggers,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  private parseVariableDeclarations(variables: VariableDeclaration[]): void {
+    this.consume(TokenType.Var, 'Expected VAR');
+
+    while (!this.check(TokenType.Procedure) && !this.check(TokenType.Function) &&
+           !this.check(TokenType.Local) && !this.check(TokenType.Trigger) &&
+           !this.check(TokenType.Begin) && !this.isAtEnd()) {
+      const startToken = this.peek();
+      const nameToken = this.advance();
+
+      if (nameToken.type === TokenType.Identifier || nameToken.type === TokenType.QuotedIdentifier) {
+        // Skip @number if present (C/AL auto-numbering)
+        // The @ is tokenized as UNKNOWN
+        if (this.peek().value === '@') {
+          this.advance(); // @
+          if (this.check(TokenType.Integer)) {
+            this.advance(); // number
+          }
+        }
+
+        this.consume(TokenType.Colon, 'Expected :');
+
+        // Check for TEMPORARY keyword before data type
+        let isTemporary = false;
+        if (this.check(TokenType.Temporary)) {
+          isTemporary = true;
+          this.advance();
+        }
+
+        const dataType = this.parseDataType();
+        this.consume(TokenType.Semicolon, 'Expected ;');
+
+        variables.push({
+          type: 'VariableDeclaration',
+          name: nameToken.value,
+          dataType,
+          isTemporary,
+          startToken,
+          endToken: this.previous()
+        });
+      } else {
+        break;
+      }
+    }
+  }
+
+  private parseProcedure(isLocal: boolean = false): ProcedureDeclaration {
+    const startToken = this.advance(); // PROCEDURE or FUNCTION
+
+    const nameToken = this.advance();
+    const name = nameToken.value;
+
+    // Skip @number if present (C/AL auto-numbering)
+    if (this.peek().value === '@') {
+      this.advance(); // @
+      if (this.check(TokenType.Integer)) {
+        this.advance(); // number
+      }
+    }
+
+    const parameters: ParameterDeclaration[] = [];
+
+    // Parse parameters if present
+    if (this.check(TokenType.LeftParen)) {
+      this.advance(); // consume '('
+
+      // Parse parameter list
+      while (!this.check(TokenType.RightParen) && !this.isAtEnd()) {
+        // Check for VAR keyword (pass by reference)
+        let isVar = false;
+        if (this.check(TokenType.Var)) {
+          isVar = true;
+          this.advance();
+        }
+
+        // Parameter name
+        if (this.check(TokenType.Identifier)) {
+          const paramToken = this.advance();
+          const paramName = paramToken.value;
+
+          // Colon and type
+          let dataType: DataType | null = null;
+          if (this.check(TokenType.Colon)) {
+            this.advance();
+            dataType = this.parseDataType();
+          }
+
+          parameters.push({
+            type: 'ParameterDeclaration',
+            name: paramName,
+            dataType: dataType || { type: 'DataType', typeName: 'Variant', startToken: paramToken, endToken: paramToken },
+            isVar,
+            startToken: paramToken,
+            endToken: this.previous()
+          });
+        }
+
+        // Skip semicolon between parameters
+        if (this.check(TokenType.Semicolon)) {
+          this.advance();
+        } else if (!this.check(TokenType.RightParen)) {
+          // Skip unknown tokens
+          this.advance();
+        }
+      }
+
+      this.consume(TokenType.RightParen, 'Expected )');
+    }
+
+    // Skip semicolon after procedure declaration
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    // Parse return type if present (for functions)
+    let returnType: DataType | null = null;
+    if (this.check(TokenType.Colon)) {
+      this.advance();
+      returnType = this.parseDataType();
+    }
+
+    // Skip semicolon after return type
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    // Parse local variables
+    const variables: VariableDeclaration[] = [];
+    if (this.check(TokenType.Var)) {
+      this.parseVariableDeclarations(variables);
+    }
+
+    // Parse body
+    const body: Statement[] = [];
+    if (this.check(TokenType.Begin)) {
+      const block = this.parseBlock();
+      body.push(block);
+    }
+
+    // Skip semicolon after END
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    return {
+      type: 'ProcedureDeclaration',
+      name,
+      parameters,
+      returnType,
+      isLocal,
+      variables,
+      body,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  /**
+   * Parse a TRIGGER declaration (e.g., OnInsert, OnValidate, OnDelete)
+   */
+  private parseTrigger(): TriggerDeclaration {
+    const startToken = this.consume(TokenType.Trigger, 'Expected TRIGGER');
+
+    // Trigger name
+    const nameToken = this.advance();
+    const name = nameToken.value;
+
+    // Skip parentheses if present (e.g., OnInsert())
+    if (this.check(TokenType.LeftParen)) {
+      this.advance();
+      if (this.check(TokenType.RightParen)) {
+        this.advance();
+      }
+    }
+
+    // Skip semicolon after trigger declaration
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    // Parse local variables
+    const variables: VariableDeclaration[] = [];
+    if (this.check(TokenType.Var)) {
+      this.parseVariableDeclarations(variables);
+    }
+
+    // Parse trigger body
+    const body: Statement[] = [];
+    if (this.check(TokenType.Begin)) {
+      const block = this.parseBlock();
+      body.push(...block.statements);
+    }
+
+    // Skip semicolon after END
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    return {
+      type: 'TriggerDeclaration',
+      name,
+      variables,
+      body,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  private parseBlock(): BlockStatement {
+    const startToken = this.consume(TokenType.Begin, 'Expected BEGIN');
+    const statements: Statement[] = [];
+
+    while (!this.check(TokenType.End) && !this.isAtEnd()) {
+      try {
+        const stmt = this.parseStatement();
+        if (stmt) {
+          statements.push(stmt);
+        }
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Skip to next statement boundary (semicolon) or END
+          while (!this.check(TokenType.Semicolon) && !this.check(TokenType.End) && !this.isAtEnd()) {
+            this.advance();
+          }
+          if (this.check(TokenType.Semicolon)) {
+            this.advance();
+          }
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    const endToken = this.consume(TokenType.End, 'Expected END');
+
+    return {
+      type: 'BlockStatement',
+      statements,
+      startToken,
+      endToken
+    };
+  }
+
+  private parseStatement(): Statement | null {
+    const startToken = this.peek();
+
+    // IF statement
+    if (this.check(TokenType.If)) {
+      return this.parseIfStatement();
+    }
+
+    // WHILE statement
+    if (this.check(TokenType.While)) {
+      return this.parseWhileStatement();
+    }
+
+    // REPEAT statement
+    if (this.check(TokenType.Repeat)) {
+      return this.parseRepeatStatement();
+    }
+
+    // FOR statement
+    if (this.check(TokenType.For)) {
+      return this.parseForStatement();
+    }
+
+    // CASE statement
+    if (this.check(TokenType.Case)) {
+      return this.parseCaseStatement();
+    }
+
+    // EXIT statement
+    if (this.check(TokenType.Exit)) {
+      return this.parseExitStatement();
+    }
+
+    // BEGIN block
+    if (this.check(TokenType.Begin)) {
+      return this.parseBlock();
+    }
+
+    // Assignment or procedure call
+    return this.parseAssignmentOrCall();
+  }
+
+  private parseIfStatement(): IfStatement {
+    const startToken = this.consume(TokenType.If, 'Expected IF');
+
+    // Parse condition
+    const condition = this.parseExpression();
+
+    // THEN
+    this.consume(TokenType.Then, 'Expected THEN');
+
+    // Parse then branch
+    const thenBranch = this.check(TokenType.Begin)
+      ? this.parseBlock()
+      : this.parseStatement()!;
+
+    // Parse optional else branch
+    let elseBranch: Statement | null = null;
+    if (this.check(TokenType.Else)) {
+      this.advance();
+      elseBranch = this.check(TokenType.Begin)
+        ? this.parseBlock()
+        : this.parseStatement()!;
+    }
+
+    return {
+      type: 'IfStatement',
+      condition,
+      thenBranch,
+      elseBranch,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  private parseWhileStatement(): WhileStatement {
+    const startToken = this.consume(TokenType.While, 'Expected WHILE');
+
+    // Parse condition
+    const condition = this.parseExpression();
+
+    // DO
+    this.consume(TokenType.Do, 'Expected DO');
+
+    // Parse body
+    const body = this.check(TokenType.Begin)
+      ? this.parseBlock()
+      : this.parseStatement()!;
+
+    return {
+      type: 'WhileStatement',
+      condition,
+      body,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  private parseRepeatStatement(): RepeatStatement {
+    const startToken = this.consume(TokenType.Repeat, 'Expected REPEAT');
+
+    // Parse body statements
+    const body: Statement[] = [];
+    while (!this.check(TokenType.Until) && !this.isAtEnd()) {
+      const stmt = this.parseStatement();
+      if (stmt) {
+        body.push(stmt);
+      }
+    }
+
+    // UNTIL
+    this.consume(TokenType.Until, 'Expected UNTIL');
+
+    // Parse condition
+    const condition = this.parseExpression();
+
+    // Semicolon after UNTIL condition
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    return {
+      type: 'RepeatStatement',
+      body,
+      condition,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  private parseForStatement(): ForStatement {
+    const startToken = this.consume(TokenType.For, 'Expected FOR');
+
+    // Variable - create proper Identifier node
+    const varToken = this.advance();
+    const variable: Identifier = {
+      type: 'Identifier',
+      name: varToken.value,
+      isQuoted: varToken.type === TokenType.QuotedIdentifier,
+      startToken: varToken,
+      endToken: varToken
+    };
+
+    // :=
+    this.consume(TokenType.Assign, 'Expected :=');
+
+    // From expression
+    const from = this.parseExpression();
+
+    // TO or DOWNTO
+    let downto = false;
+    if (this.check(TokenType.DownTo)) {
+      this.advance();
+      downto = true;
+    } else {
+      this.consume(TokenType.To, 'Expected TO or DOWNTO');
+    }
+
+    // To expression
+    const to = this.parseExpression();
+
+    // DO
+    this.consume(TokenType.Do, 'Expected DO');
+
+    // Parse body
+    const body = this.check(TokenType.Begin)
+      ? this.parseBlock()
+      : this.parseStatement()!;
+
+    return {
+      type: 'ForStatement',
+      variable,
+      from,
+      to,
+      downto,
+      body,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  private parseCaseStatement(): CaseStatement {
+    const startToken = this.consume(TokenType.Case, 'Expected CASE');
+
+    // Parse expression
+    const expression = this.parseExpression();
+
+    // OF
+    this.consume(TokenType.Of, 'Expected OF');
+
+    // Parse branches
+    const branches: CaseBranch[] = [];
+    let elseBranch: Statement[] | null = null;
+
+    while (!this.check(TokenType.End) && !this.isAtEnd()) {
+      if (this.check(TokenType.Else)) {
+        this.advance();
+        elseBranch = [];
+        while (!this.check(TokenType.End) && !this.isAtEnd()) {
+          const stmt = this.parseStatement();
+          if (stmt) {
+            elseBranch.push(stmt);
+          }
+        }
+        break;
+      }
+
+      const branchStart = this.peek();
+      const values: Expression[] = [];
+
+      // Parse value(s)
+      values.push(this.parseExpression());
+      while (this.check(TokenType.Comma)) {
+        this.advance();
+        values.push(this.parseExpression());
+      }
+
+      // Colon
+      this.consume(TokenType.Colon, 'Expected :');
+
+      // Parse statement(s)
+      const statements: Statement[] = [];
+      if (this.check(TokenType.Begin)) {
+        const block = this.parseBlock();
+        statements.push(...block.statements);
+      } else {
+        const stmt = this.parseStatement();
+        if (stmt) {
+          statements.push(stmt);
+        }
+      }
+
+      branches.push({
+        type: 'CaseBranch',
+        values,
+        statements,
+        startToken: branchStart,
+        endToken: this.previous()
+      });
+    }
+
+    this.consume(TokenType.End, 'Expected END');
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    return {
+      type: 'CaseStatement',
+      expression,
+      branches,
+      elseBranch,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  private parseExitStatement(): ExitStatement {
+    const startToken = this.consume(TokenType.Exit, 'Expected EXIT');
+
+    let value: Expression | null = null;
+    if (this.check(TokenType.LeftParen)) {
+      this.advance();
+      if (!this.check(TokenType.RightParen)) {
+        value = this.parseExpression();
+      }
+      this.consume(TokenType.RightParen, 'Expected )');
+    }
+
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    return {
+      type: 'ExitStatement',
+      value,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  private parseAssignmentOrCall(): Statement | null {
+    const startToken = this.peek();
+
+    // Parse the left-hand side expression
+    const expr = this.parseExpression();
+
+    // Check for assignment
+    if (this.check(TokenType.Assign) ||
+        this.check(TokenType.PlusAssign) ||
+        this.check(TokenType.MinusAssign) ||
+        this.check(TokenType.MultiplyAssign) ||
+        this.check(TokenType.DivideAssign)) {
+      const opToken = this.advance();
+      const value = this.parseExpression();
+
+      if (this.check(TokenType.Semicolon)) {
+        this.advance();
+      }
+
+      // For compound assignments, transform to binary expression
+      let finalValue = value;
+      if (opToken.type !== TokenType.Assign) {
+        const op = opToken.type === TokenType.PlusAssign ? '+' :
+                   opToken.type === TokenType.MinusAssign ? '-' :
+                   opToken.type === TokenType.MultiplyAssign ? '*' : '/';
+        finalValue = {
+          type: 'BinaryExpression',
+          operator: op,
+          left: expr,
+          right: value,
+          startToken: expr.startToken,
+          endToken: value.endToken
+        } as BinaryExpression;
+      }
+
+      return {
+        type: 'AssignmentStatement',
+        target: expr,
+        value: finalValue,
+        startToken,
+        endToken: this.previous()
+      } as AssignmentStatement;
+    }
+
+    // Otherwise it's a procedure call
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    return {
+      type: 'CallStatement',
+      expression: expr,
+      startToken,
+      endToken: this.previous()
+    } as CallStatement;
+  }
+
+  /**
+   * Expression parsing using Pratt parsing / precedence climbing
+   */
+  private parseExpression(): Expression {
+    return this.parseOr();
+  }
+
+  private parseOr(): Expression {
+    let left = this.parseAnd();
+
+    while (this.check(TokenType.Or) || this.check(TokenType.Xor)) {
+      const operator = this.advance();
+      const right = this.parseAnd();
+      left = {
+        type: 'BinaryExpression',
+        operator: operator.value.toUpperCase(),
+        left,
+        right,
+        startToken: left.startToken,
+        endToken: right.endToken
+      } as BinaryExpression;
+    }
+
+    return left;
+  }
+
+  private parseAnd(): Expression {
+    let left = this.parseEquality();
+
+    while (this.check(TokenType.And)) {
+      const operator = this.advance();
+      const right = this.parseEquality();
+      left = {
+        type: 'BinaryExpression',
+        operator: operator.value.toUpperCase(),
+        left,
+        right,
+        startToken: left.startToken,
+        endToken: right.endToken
+      } as BinaryExpression;
+    }
+
+    return left;
+  }
+
+  private parseEquality(): Expression {
+    let left = this.parseComparison();
+
+    while (this.check(TokenType.Equal) || this.check(TokenType.NotEqual)) {
+      const operator = this.advance();
+      const right = this.parseComparison();
+      left = {
+        type: 'BinaryExpression',
+        operator: operator.value,
+        left,
+        right,
+        startToken: left.startToken,
+        endToken: right.endToken
+      } as BinaryExpression;
+    }
+
+    return left;
+  }
+
+  private parseComparison(): Expression {
+    let left = this.parseTerm();
+
+    while (this.check(TokenType.Less) || this.check(TokenType.LessEqual) ||
+           this.check(TokenType.Greater) || this.check(TokenType.GreaterEqual) ||
+           this.check(TokenType.In)) {
+      const operator = this.advance();
+      const right = this.parseTerm();
+      left = {
+        type: 'BinaryExpression',
+        operator: operator.value,
+        left,
+        right,
+        startToken: left.startToken,
+        endToken: right.endToken
+      } as BinaryExpression;
+    }
+
+    return left;
+  }
+
+  private parseTerm(): Expression {
+    let left = this.parseFactor();
+
+    while (this.check(TokenType.Plus) || this.check(TokenType.Minus)) {
+      const operator = this.advance();
+      const right = this.parseFactor();
+      left = {
+        type: 'BinaryExpression',
+        operator: operator.value,
+        left,
+        right,
+        startToken: left.startToken,
+        endToken: right.endToken
+      } as BinaryExpression;
+    }
+
+    return left;
+  }
+
+  private parseFactor(): Expression {
+    let left = this.parseUnary();
+
+    while (this.check(TokenType.Multiply) || this.check(TokenType.Divide) ||
+           this.check(TokenType.Div) || this.check(TokenType.Mod)) {
+      const operator = this.advance();
+      const right = this.parseUnary();
+      left = {
+        type: 'BinaryExpression',
+        operator: operator.value.toUpperCase(),
+        left,
+        right,
+        startToken: left.startToken,
+        endToken: right.endToken
+      } as BinaryExpression;
+    }
+
+    return left;
+  }
+
+  private parseUnary(): Expression {
+    if (this.check(TokenType.Not) || this.check(TokenType.Minus)) {
+      const operator = this.advance();
+      const operand = this.parseUnary();
+      return {
+        type: 'UnaryExpression',
+        operator: operator.value.toUpperCase(),
+        operand,
+        startToken: operator,
+        endToken: operand.endToken
+      } as UnaryExpression;
+    }
+
+    return this.parsePrimary();
+  }
+
+  private parsePrimary(): Expression {
+    const token = this.peek();
+
+    // Literals
+    if (this.check(TokenType.Integer)) {
+      this.advance();
+      return {
+        type: 'Literal',
+        value: parseInt(token.value, 10),
+        literalType: 'integer',
+        startToken: token,
+        endToken: token
+      } as Literal;
+    }
+
+    if (this.check(TokenType.Decimal)) {
+      this.advance();
+      return {
+        type: 'Literal',
+        value: parseFloat(token.value),
+        literalType: 'decimal',
+        startToken: token,
+        endToken: token
+      } as Literal;
+    }
+
+    if (this.check(TokenType.String)) {
+      this.advance();
+      return {
+        type: 'Literal',
+        value: token.value,
+        literalType: 'string',
+        startToken: token,
+        endToken: token
+      } as Literal;
+    }
+
+    if (this.check(TokenType.True) || this.check(TokenType.False)) {
+      this.advance();
+      return {
+        type: 'Literal',
+        value: token.type === TokenType.True,
+        literalType: 'boolean',
+        startToken: token,
+        endToken: token
+      } as Literal;
+    }
+
+    if (this.check(TokenType.Date)) {
+      this.advance();
+      return {
+        type: 'Literal',
+        value: token.value,
+        literalType: 'date',
+        startToken: token,
+        endToken: token
+      } as Literal;
+    }
+
+    if (this.check(TokenType.Time)) {
+      this.advance();
+      return {
+        type: 'Literal',
+        value: token.value,
+        literalType: 'time',
+        startToken: token,
+        endToken: token
+      } as Literal;
+    }
+
+    if (this.check(TokenType.DateTime)) {
+      this.advance();
+      return {
+        type: 'Literal',
+        value: token.value,
+        literalType: 'datetime',
+        startToken: token,
+        endToken: token
+      } as Literal;
+    }
+
+    // Parenthesized expression
+    if (this.check(TokenType.LeftParen)) {
+      this.advance();
+      const expr = this.parseExpression();
+      this.consume(TokenType.RightParen, 'Expected )');
+      return expr;
+    }
+
+    // Identifier (with optional member access and function calls)
+    if (this.check(TokenType.Identifier) || this.check(TokenType.QuotedIdentifier)) {
+      return this.parseIdentifierExpression();
+    }
+
+    // Fallback - consume token and return identifier
+    const fallbackToken = this.advance();
+    return {
+      type: 'Identifier',
+      name: fallbackToken.value,
+      isQuoted: false,
+      startToken: fallbackToken,
+      endToken: fallbackToken
+    } as Identifier;
+  }
+
+  private parseIdentifierExpression(): Expression {
+    const startToken = this.peek();
+    let expr: Expression = {
+      type: 'Identifier',
+      name: this.advance().value,
+      isQuoted: startToken.type === TokenType.QuotedIdentifier,
+      startToken,
+      endToken: startToken
+    } as Identifier;
+
+    // Handle member access (.) and function calls
+    while (true) {
+      if (this.check(TokenType.Dot)) {
+        this.advance();
+        const memberToken = this.advance();
+        const property: Identifier = {
+          type: 'Identifier',
+          name: memberToken.value,
+          isQuoted: memberToken.type === TokenType.QuotedIdentifier,
+          startToken: memberToken,
+          endToken: memberToken
+        };
+        expr = {
+          type: 'MemberExpression',
+          object: expr,
+          property,
+          startToken: expr.startToken,
+          endToken: memberToken
+        } as any;
+      } else if (this.check(TokenType.LeftParen)) {
+        // Function call - parse arguments into CallExpression
+        this.advance(); // consume '('
+        const args: Expression[] = [];
+        while (!this.check(TokenType.RightParen) && !this.isAtEnd()) {
+          args.push(this.parseExpression());
+          if (this.check(TokenType.Comma)) {
+            this.advance();
+          }
+        }
+        const endToken = this.check(TokenType.RightParen) ? this.advance() : this.previous();
+        expr = {
+          type: 'CallExpression',
+          callee: expr,
+          arguments: args,
+          startToken: expr.startToken,
+          endToken
+        } as any;
+      } else if (this.check(TokenType.LeftBracket)) {
+        // Array access - parse index into ArrayAccessExpression
+        this.advance(); // consume '['
+        const indexExpr = this.parseExpression();
+        const endToken = this.consume(TokenType.RightBracket, 'Expected ]');
+        expr = {
+          type: 'ArrayAccessExpression',
+          array: expr,
+          index: indexExpr,
+          startToken: expr.startToken,
+          endToken
+        } as any;
+      } else {
+        break;
+      }
+    }
+
+    return expr;
+  }
+
+  /**
+   * Helper methods
+   */
+  private tokenTypeToObjectKind(type: TokenType): ObjectKind {
+    switch (type) {
+      case TokenType.Table: return ObjectKind.Table;
+      case TokenType.Page: return ObjectKind.Page;
+      case TokenType.Report: return ObjectKind.Report;
+      case TokenType.Codeunit: return ObjectKind.Codeunit;
+      case TokenType.Query: return ObjectKind.Query;
+      case TokenType.XMLport: return ObjectKind.XMLport;
+      case TokenType.MenuSuite: return ObjectKind.MenuSuite;
+      default: throw new ParseError(`Invalid object type: ${type}`, this.peek());
+    }
+  }
+
+  private check(type: TokenType): boolean {
+    if (this.isAtEnd()) return false;
+    return this.peek().type === type;
+  }
+
+  private checkNext(type: TokenType): boolean {
+    if (this.current + 1 >= this.tokens.length) return false;
+    return this.tokens[this.current + 1].type === type;
+  }
+
+  private advance(): Token {
+    if (!this.isAtEnd()) this.current++;
+    return this.previous();
+  }
+
+  private isAtEnd(): boolean {
+    return this.current >= this.tokens.length;
+  }
+
+  private peek(): Token {
+    if (this.isAtEnd()) {
+      // Return EOF token with last real token's position for better error messages
+      if (this.tokens.length > 0) {
+        const lastToken = this.tokens[this.tokens.length - 1];
+        return {
+          type: TokenType.EOF,
+          value: '',
+          line: lastToken.line,
+          column: lastToken.column + lastToken.value.length,
+          startOffset: lastToken.endOffset,
+          endOffset: lastToken.endOffset
+        };
+      }
+      // Fallback for empty input
+      return {
+        type: TokenType.EOF,
+        value: '',
+        line: 1,
+        column: 1,
+        startOffset: 0,
+        endOffset: 0
+      };
+    }
+    return this.tokens[this.current];
+  }
+
+  private previous(): Token {
+    if (this.current === 0) {
+      return this.peek();
+    }
+    return this.tokens[this.current - 1];
+  }
+
+  private consume(type: TokenType, message: string): Token {
+    if (this.check(type)) return this.advance();
+    throw new ParseError(message, this.peek());
+  }
+
+  public getErrors(): ParseError[] {
+    return this.errors;
+  }
+
+  /**
+   * Record an error without throwing - used for error recovery
+   */
+  private recordError(message: string, token?: Token): void {
+    const errorToken = token || this.peek();
+    this.errors.push(new ParseError(message, errorToken));
+  }
+
+  /**
+   * Synchronize parser state after an error by advancing to a recovery point.
+   * Recovery points are: section keywords, END, or end of input.
+   */
+  private synchronize(): void {
+    this.advance();
+
+    while (!this.isAtEnd()) {
+      // Stop at statement boundaries
+      if (this.previous().type === TokenType.Semicolon) {
+        return;
+      }
+
+      // Stop at section keywords or structural tokens
+      switch (this.peek().type) {
+        case TokenType.Properties:
+        case TokenType.Fields:
+        case TokenType.Keys:
+        case TokenType.FieldGroups:
+        case TokenType.Code:
+        case TokenType.Procedure:
+        case TokenType.Function:
+        case TokenType.Trigger:
+        case TokenType.Begin:
+        case TokenType.End:
+        case TokenType.Var:
+        case TokenType.RightBrace:
+          return;
+      }
+
+      this.advance();
+    }
+  }
+}
+
+export class ParseError extends Error {
+  constructor(message: string, public token: Token) {
+    super(`${message} at line ${token.line}, column ${token.column}`);
+    this.name = 'ParseError';
+  }
+}

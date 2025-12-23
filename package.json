@@ -1,0 +1,102 @@
+{
+  "name": "cal-language",
+  "displayName": "C/AL Language Support",
+  "description": "Language support for Microsoft Dynamics NAV C/AL",
+  "version": "0.4.6",
+  "publisher": "cal-extension",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "activationEvents": [
+    "onLanguage:cal"
+  ],
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "C/AL",
+    "CAL",
+    "Dynamics NAV",
+    "Microsoft Dynamics",
+    "NAV"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/klauskaan/messing-around"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "cal",
+        "aliases": [
+          "C/AL",
+          "CAL",
+          "cal"
+        ],
+        "extensions": [
+          ".cal",
+          ".txt"
+        ],
+        "configuration": "./cal.language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "cal",
+        "scopeName": "source.cal",
+        "path": "./syntaxes/cal.tmLanguage.json",
+        "tokenTypes": {
+          "identifier.quoted.double.cal": "string"
+        }
+      }
+    ],
+    "semanticTokenTypes": [
+      {
+        "id": "keyword",
+        "description": "Keywords"
+      },
+      {
+        "id": "variable",
+        "description": "Variables and identifiers"
+      }
+    ],
+    "semanticTokenModifiers": [
+      {
+        "id": "declaration",
+        "description": "Symbol declarations"
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "scopes": {
+          "keyword": ["keyword.control.cal", "keyword.other.cal"],
+          "variable": ["variable.other.cal", "entity.name.variable.cal"],
+          "type": ["storage.type.cal", "entity.name.type.cal"],
+          "function": ["entity.name.function.cal"],
+          "string": ["string.quoted.single.cal"],
+          "number": ["constant.numeric.cal"],
+          "operator": ["keyword.operator.cal"],
+          "comment": ["comment.line.cal", "comment.block.cal"]
+        }
+      }
+    ]
+  },
+  "main": "./out/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -b tsconfig.json && tsc -b tsconfig.server.json",
+    "watch": "tsc -b -w tsconfig.json tsconfig.server.json",
+    "test": "node ./out/test/runTest.js",
+    "postinstall": "cd server && npm install"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0",
+    "vscode-languageserver": "^8.1.0",
+    "vscode-languageserver-textdocument": "^1.0.8"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^18.0.0",
+    "typescript": "^5.0.0"
+  }
+}

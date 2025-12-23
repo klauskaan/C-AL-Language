@@ -1,0 +1,10 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["cal.language-configuration.json"],
+      "schema": {}
+    }
+  ],
+  "jest.rootPath": "server",
+  "jest.jestCommandLine": "npm test --"
+}

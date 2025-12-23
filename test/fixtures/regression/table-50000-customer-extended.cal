@@ -1,0 +1,248 @@
+OBJECT Table 50000 Customer Extended
+{
+  OBJECT-PROPERTIES
+  {
+    Date=05-11-25;
+    Time=12:00:00;
+    Modified=Yes;
+    Version List=NAVW19.00.00.43402;
+  }
+  PROPERTIES
+  {
+    DataCaptionFields=No.,Name;
+    OnInsert=BEGIN
+               ValidateCustomer;
+             END;
+
+    OnModify=BEGIN
+               "Last Modified Date" := CURRENTDATETIME;
+             END;
+
+    OnDelete=BEGIN
+               CheckCanDelete;
+             END;
+  }
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        ;CaptionML=ENU=No.;
+                                                    NotBlank=Yes }
+    { 2   ;   ;Name                ;Text100       ;CaptionML=ENU=Name;
+                                                    OnValidate=BEGIN
+                                                                 IF Name <> '' THEN
+                                                                   Name := UPPERCASE(COPYSTR(Name,1,100));
+                                                               END;
+                                                                }
+    { 3   ;   ;Address             ;Text50        ;CaptionML=ENU=Address }
+    { 4   ;   ;City                ;Text30        ;CaptionML=ENU=City }
+    { 5   ;   ;Post Code           ;Code20        ;CaptionML=ENU=Post Code;
+                                                    TableRelation="Post Code";
+                                                    ValidateTableRelation=No }
+    { 6   ;   ;Balance             ;Decimal       ;CaptionML=ENU=Balance;
+                                                    FieldClass=FlowField;
+                                                    CalcFormula=Sum("Customer Ledger Entry".Amount WHERE (Customer No.=FIELD(No.),
+                                                                                                           Posting Date=FIELD(Date Filter)));
+                                                    DecimalPlaces=2:2;
+                                                    Editable=No;
+                                                    AutoFormatType=1 }
+    { 7   ;   ;Credit Limit        ;Decimal       ;CaptionML=ENU=Credit Limit;
+                                                    DecimalPlaces=2:2;
+                                                    AutoFormatType=1 }
+    { 8   ;   ;Blocked             ;Boolean       ;CaptionML=ENU=Blocked }
+    { 9   ;   ;Last Modified Date  ;DateTime      ;CaptionML=ENU=Last Modified;
+                                                    Editable=No }
+    { 10  ;   ;Customer Type       ;Option        ;CaptionML=ENU=Customer Type;
+                                                    OptionCaptionML=ENU=Standard,Premium,VIP;
+                                                    OptionString=Standard,Premium,VIP }
+    { 11  ;   ;Total Sales         ;Decimal       ;CaptionML=ENU=Total Sales;
+                                                    FieldClass=FlowField;
+                                                    CalcFormula=Sum("Sales Line".Amount WHERE (Sell-to Customer No.=FIELD(No.)));
+                                                    Editable=No;
+                                                    AutoFormatType=1 }
+    { 12  ;   ;Date Filter         ;Date          ;FieldClass=FlowFilter;
+                                                    CaptionML=ENU=Date Filter }
+    { 13  ;   ;Salesperson Code    ;Code10        ;CaptionML=ENU=Salesperson Code;
+                                                    TableRelation=Salesperson }
+    { 14  ;   ;E-Mail              ;Text80        ;CaptionML=ENU=E-Mail;
+                                                    ExtendedDatatype=E-Mail }
+    { 15  ;   ;Phone No.           ;Text30        ;CaptionML=ENU=Phone No.;
+                                                    ExtendedDatatype=Phone No. }
+  }
+  KEYS
+  {
+    {    ;No.                                     ;Clustered=Yes }
+    {    ;Name                                     }
+    {    ;Customer Type,Credit Limit               }
+  }
+  FIELDGROUPS
+  {
+    { 1   ;DropDown            ;No.,Name,City                    }
+    { 2   ;Brick               ;No.,Name,Balance                 }
+  }
+  CODE
+  {
+    VAR
+      Text001@1000 : TextConst 'ENU=Customer %1 has been created successfully;FRA=Le client %1 a été créé avec succès';
+      Text002@1001 : TextConst 'ENU=Credit limit exceeded for customer %1. Balance: %2, Limit: %3';
+      Text003@1002 : TextConst 'ENU=Cannot delete customer %1 because ledger entries exist';
+      CustLedgerEntry@1003 : Record 21;
+      SalesSetup@1004 : Record 311;
+      NoSeriesMgt@1005 : Codeunit 396;
+      TotalAmount@1006 : Decimal;
+      Counter@1007 : Integer;
+      BigNumber@1008 : BigInteger;
+      TempCustomer@1009 : TEMPORARY Record 50000;
+
+    PROCEDURE ValidateCustomer@1();
+    VAR
+      Customer@1000 : Record 18;
+      i@1001 : Integer;
+      ConfirmResult@1002 : Boolean;
+    BEGIN
+      // Validate customer number
+      IF "No." = '' THEN BEGIN
+        SalesSetup.GET;
+        NoSeriesMgt.InitSeries(SalesSetup."Customer Nos.",xRec."No. Series",0D,"No.","No. Series");
+      END;
+
+      // Check if customer already exists
+      Customer.RESET;
+      Customer.SETRANGE("No.","No.");
+      IF Customer.FINDFIRST THEN
+        ERROR('Customer %1 already exists',"No.");
+
+      // Validate credit limit
+      CALCFIELDS(Balance);
+      IF Balance > "Credit Limit" THEN BEGIN
+        ConfirmResult := CONFIRM(STRSUBSTNO(Text002,"No.",Balance,"Credit Limit"),FALSE);
+        IF NOT ConfirmResult THEN
+          ERROR('');
+      END;
+
+      // Initialize counters using FOR loop
+      TotalAmount := 0;
+      Counter := 0;
+      FOR i := 1 TO 10 DO BEGIN
+        Counter := Counter + i;
+        TotalAmount := TotalAmount + (i * 100);
+      END;
+
+      // Process related customers using REPEAT UNTIL
+      Customer.RESET;
+      Customer.SETRANGE(Blocked,FALSE);
+      IF Customer.FINDSET THEN
+        REPEAT
+          Customer.CALCFIELDS(Balance);
+          TotalAmount := TotalAmount + Customer.Balance;
+          Counter := Counter + 1;
+        UNTIL Customer.NEXT = 0;
+
+      // WHILE DO loop example
+      i := 1;
+      WHILE i <= 5 DO BEGIN
+        // Process
+        i := i + 1;
+      END;
+
+      // CASE statement for customer type
+      CASE "Customer Type" OF
+        "Customer Type"::Standard:
+          MESSAGE('Standard customer discount: 5%%');
+        "Customer Type"::Premium:
+          MESSAGE('Premium customer discount: 10%%');
+        "Customer Type"::VIP:
+          MESSAGE('VIP customer discount: 15%%');
+      ELSE
+        MESSAGE('Unknown customer type');
+      END;
+
+      // String operations
+      IF Name <> '' THEN BEGIN
+        Name := UPPERCASE(Name);
+        Name := COPYSTR(Name,1,MAXSTRLEN(Name));
+        IF STRLEN(Name) < 3 THEN
+          ERROR('Name must be at least 3 characters');
+      END;
+
+      // Date and time functions
+      "Last Modified Date" := CREATEDATETIME(TODAY,TIME);
+
+      // Numeric operations and comparisons
+      BigNumber := 1000000000000L;  // BigInteger literal with L suffix
+      TotalAmount := ROUND(Balance * 1.15,0.01);
+      IF TotalAmount > 10000 THEN
+        TotalAmount := ROUND(TotalAmount / 100,1) * 100;  // Round to nearest 100
+
+      // Logical operators
+      IF (Balance > 0) AND NOT Blocked AND ("Credit Limit" > 0) THEN
+        MESSAGE(STRSUBSTNO(Text001,"No."));
+
+      // WITH statement
+      WITH CustLedgerEntry DO BEGIN
+        SETRANGE("Customer No.","No.");
+        CALCFIELDS(Amount);
+      END;
+    END;
+
+    LOCAL PROCEDURE CheckCreditLimit@2() : Boolean;
+    VAR
+      Available@1000 : Decimal;
+    BEGIN
+      CALCFIELDS(Balance);
+      Available := "Credit Limit" - Balance;
+      IF Available < 0 THEN
+        EXIT(FALSE);
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE GetCustomerInfo@3(VAR CustomerName@1000 : Text[100];VAR CustomerBalance@1001 : Decimal);
+    BEGIN
+      CustomerName := Name;
+      CALCFIELDS(Balance);
+      CustomerBalance := Balance;
+    END;
+
+    [External]
+    PROCEDURE UpdateCreditLimit@4(NewLimit@1000 : Decimal);
+    BEGIN
+      // External procedure callable from other objects
+      TESTFIELD("No.");
+      IF NewLimit < 0 THEN
+        ERROR('Credit limit cannot be negative');
+
+      "Credit Limit" := NewLimit;
+      IF mybool THEN BEGIN
+        "End-Point" := OldENDPoint."END-Pint";
+      END;
+      MODIFY;
+    END;
+
+    LOCAL PROCEDURE CheckCanDelete@5();
+    BEGIN
+      CustLedgerEntry.RESET;
+      CustLedgerEntry.SETCURRENTKEY("Customer No.");
+      CustLedgerEntry.SETRANGE("Customer No.","No.");
+      IF NOT CustLedgerEntry.ISEMPTY THEN
+        ERROR(Text003,"No.");
+
+      CustLedgerEntry."No." := 'CLE001';
+      CustLedgerEntry.Name := 'Mike Testman';
+    END;
+
+    PROCEDURE ShowStatistics@6();
+    VAR
+      StatisticsPage@1000 : Page 151;
+    BEGIN
+      CALCFIELDS(Balance,"Total Sales");
+      StatisticsPage.SETRECORD(Rec);
+      StatisticsPage.RUNMODAL;
+    END;
+
+    BEGIN
+    {
+      Documentation trigger
+      This space is for file documentation, typically used for changelog.
+    }
+    END.
+  }
+}
+
