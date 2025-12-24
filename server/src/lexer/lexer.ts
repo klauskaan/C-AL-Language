@@ -77,6 +77,49 @@ export class Lexer {
     }
   }
 
+  /**
+   * Scan left brace '{' - handles both structural delimiters and block comments
+   * In CODE_BLOCK context, braces start comments; otherwise they are structural delimiters
+   */
+  private scanLeftBrace(startPos: number, startLine: number, startColumn: number): void {
+    // In CODE_BLOCK context, braces are comments
+    if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
+      this.scanBlockComment();
+      return;
+    }
+    // Otherwise, they are structural delimiters
+    this.advance();
+    this.braceDepth++;
+    this.addToken(TokenType.LeftBrace, '{', startPos, this.position, startLine, startColumn);
+
+    // Push SECTION_LEVEL context when we see opening brace at object level
+    if (this.getCurrentContext() === LexerContext.OBJECT_LEVEL && this.braceDepth === 1) {
+      this.pushContext(LexerContext.SECTION_LEVEL);
+    }
+  }
+
+  /**
+   * Scan right brace '}' - handles structural delimiters (not comments)
+   * In CODE_BLOCK context, closing braces are part of block comments (handled by scanBlockComment)
+   * @returns true if the brace was handled as a structural delimiter, false otherwise
+   */
+  private scanRightBrace(startPos: number, startLine: number, startColumn: number): boolean {
+    // In CODE_BLOCK context, this closes a comment (handled by scanBlockComment)
+    // Otherwise, it's a structural delimiter
+    if (this.getCurrentContext() !== LexerContext.CODE_BLOCK) {
+      this.advance();
+      this.braceDepth--;
+      this.addToken(TokenType.RightBrace, '}', startPos, this.position, startLine, startColumn);
+
+      // Pop context when closing a section
+      if (this.braceDepth === 0 && this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
+        this.popContext();
+      }
+      return true;
+    }
+    return false;
+  }
+
   private scanToken(): void {
     const startPos = this.position;
     const startLine = this.line;
@@ -109,35 +152,12 @@ export class Lexer {
 
     // Handle braces based on context
     if (ch === '{') {
-      // In CODE_BLOCK context, braces are comments
-      if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
-        this.scanBlockComment();
-        return;
-      }
-      // Otherwise, they are structural delimiters
-      this.advance();
-      this.braceDepth++;
-      this.addToken(TokenType.LeftBrace, ch, startPos, this.position, startLine, startColumn);
-
-      // Push SECTION_LEVEL context when we see opening brace at object level
-      if (this.getCurrentContext() === LexerContext.OBJECT_LEVEL && this.braceDepth === 1) {
-        this.pushContext(LexerContext.SECTION_LEVEL);
-      }
+      this.scanLeftBrace(startPos, startLine, startColumn);
       return;
     }
 
     if (ch === '}') {
-      // In CODE_BLOCK context, this closes a comment (handled by scanBlockComment)
-      // Otherwise, it's a structural delimiter
-      if (this.getCurrentContext() !== LexerContext.CODE_BLOCK) {
-        this.advance();
-        this.braceDepth--;
-        this.addToken(TokenType.RightBrace, ch, startPos, this.position, startLine, startColumn);
-
-        // Pop context when closing a section
-        if (this.braceDepth === 0 && this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
-          this.popContext();
-        }
+      if (this.scanRightBrace(startPos, startLine, startColumn)) {
         return;
       }
     }
