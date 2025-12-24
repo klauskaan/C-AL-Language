@@ -665,9 +665,8 @@ describe('SymbolTable', () => {
   CODE
   {
     VAR
-      gCounter : Integer;
-      gCustomer : Record "Customer";
-    END;
+      gCounter@1000 : Integer;
+      gCustomer@1001 : Record 18;
   }
 }`;
         const symbolTable = buildSymbolTable(code);
