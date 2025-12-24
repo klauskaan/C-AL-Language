@@ -590,47 +590,28 @@ describe('SymbolTable', () => {
     });
 
     describe('with field properties and validation triggers', () => {
-      it('should extract field properties when present', () => {
+      it('should extract field with validation trigger', () => {
+        // Valid C/AL syntax: field triggers are properties after the data type
+        // See test/fixtures/regression/table-50000-customer-extended.cal for real examples
         const code = `OBJECT Table 50000 TestTable
 {
   FIELDS
   {
-    {
-      1;No.;Code20;
-      Properties = [
-        { Description="Customer Number"; }
-      ]
-    }
+    { 1   ;   ;"No."               ;Code20        ;OnValidate=BEGIN
+                                                                IF "No." = '' THEN
+                                                                  ERROR('No. cannot be empty');
+                                                              END;
+                                                               }
   }
 }`;
         const symbolTable = buildSymbolTable(code);
 
-        expect(symbolTable.hasSymbol('No.')).toBe(true);
-        const symbol = symbolTable.getSymbol('No.');
-        expect(symbol?.kind).toBe('field');
-      });
-
-      it('should extract field validation triggers', () => {
-        const code = `OBJECT Table 50000 TestTable
-{
-  FIELDS
-  {
-    {
-      1;No.;Code20;
-      Triggers = [
-        OnValidate=BEGIN
-          IF No. = '' THEN
-            ERROR('No. cannot be empty');
-        END;
-      ]
-    }
-  }
-}`;
-        const symbolTable = buildSymbolTable(code);
-
+        // The field should be extracted even with a validation trigger
         expect(symbolTable.hasSymbol('No.')).toBe(true);
         const symbol = symbolTable.getSymbol('No.');
         expect(symbol).toBeDefined();
+        expect(symbol?.kind).toBe('field');
+        expect(symbol?.type).toBe('Code20');
       });
     });
 
@@ -653,9 +634,8 @@ describe('SymbolTable', () => {
   CODE
   {
     VAR
-      gCounter : Integer;
-      gCustomer : Record "Customer";
-    END;
+      gCounter@1000 : Integer;
+      gCustomer@1001 : Record 18;
   }
 }`;
         const symbolTable = buildSymbolTable(code);
@@ -762,7 +742,7 @@ describe('SymbolTable', () => {
 {
   FIELDS
   {
-    { 1 ; ; No. ; Code20 }
+    { 1   ;   ;"No."           ;Code20        }
   }
   CODE
   {
@@ -829,8 +809,8 @@ describe('SymbolTable', () => {
 {
   FIELDS
   {
-    { 1 ; ; No. ; Code20 }
-    { 2 ; ; Name ; Text100 }
+    { 1   ;   ;"No."           ;Code20        }
+    { 2   ;   ;Name            ;Text100       }
   }
 }`;
       const symbolTable = buildSymbolTable(code);
