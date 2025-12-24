@@ -184,8 +184,8 @@ describe('Lexer - Quoted Identifiers', () => {
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
-      // Should still tokenize without crashing
-      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      // Should tokenize as Unknown (error token) for unclosed identifier
+      expect(tokens[0].type).toBe(TokenType.Unknown);
       expect(tokens[0].value).toBe('Unclosed Identifier');
     });
 
@@ -194,8 +194,8 @@ describe('Lexer - Quoted Identifiers', () => {
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
-      // Should still tokenize without crashing
-      expect(tokens[0].type).toBe(TokenType.String);
+      // Should tokenize as Unknown (error token) for unclosed string
+      expect(tokens[0].type).toBe(TokenType.Unknown);
       expect(tokens[0].value).toBe('Unclosed String');
     });
 
@@ -204,8 +204,8 @@ describe('Lexer - Quoted Identifiers', () => {
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
-      // Should stop at newline
-      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
+      // Should stop at newline and emit Unknown (error token)
+      expect(tokens[0].type).toBe(TokenType.Unknown);
       expect(tokens[0].value).toBe('Multi');
     });
 
@@ -214,8 +214,8 @@ describe('Lexer - Quoted Identifiers', () => {
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
-      // Should stop at newline
-      expect(tokens[0].type).toBe(TokenType.String);
+      // Should stop at newline and emit Unknown (error token)
+      expect(tokens[0].type).toBe(TokenType.Unknown);
       expect(tokens[0].value).toBe('Multi');
     });
 

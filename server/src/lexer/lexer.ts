@@ -179,10 +179,11 @@ export class Lexer {
   private scanQuotedIdentifier(startPos: number, startLine: number, startColumn: number): void {
     this.advance(); // consume opening "
     let value = '';
+    let closed = false;
 
     while (this.position < this.input.length && this.currentChar() !== '"') {
       if (this.currentChar() === '\n' || this.currentChar() === '\r') {
-        // Quoted identifiers shouldn't span multiple lines, but handle gracefully
+        // Unclosed quoted identifier - newline before closing quote
         break;
       }
       value += this.currentChar();
@@ -191,14 +192,18 @@ export class Lexer {
 
     if (this.currentChar() === '"') {
       this.advance(); // consume closing "
+      closed = true;
     }
 
-    this.addToken(TokenType.QuotedIdentifier, value, startPos, this.position, startLine, startColumn);
+    // Emit Unknown token for unclosed quoted identifiers
+    const tokenType = closed ? TokenType.QuotedIdentifier : TokenType.Unknown;
+    this.addToken(tokenType, value, startPos, this.position, startLine, startColumn);
   }
 
   private scanString(startPos: number, startLine: number, startColumn: number): void {
     this.advance(); // consume opening '
     let value = '';
+    let closed = false;
 
     while (this.position < this.input.length) {
       const ch = this.currentChar();
@@ -212,10 +217,11 @@ export class Lexer {
         } else {
           // End of string
           this.advance();
+          closed = true;
           break;
         }
       } else if (ch === '\n' || ch === '\r') {
-        // Strings shouldn't span multiple lines
+        // Unclosed string - newline before closing quote
         break;
       } else {
         value += ch;
@@ -223,7 +229,9 @@ export class Lexer {
       }
     }
 
-    this.addToken(TokenType.String, value, startPos, this.position, startLine, startColumn);
+    // Emit Unknown token for unclosed strings
+    const tokenType = closed ? TokenType.String : TokenType.Unknown;
+    this.addToken(tokenType, value, startPos, this.position, startLine, startColumn);
   }
 
   private scanNumber(startPos: number, startLine: number, startColumn: number): void {
