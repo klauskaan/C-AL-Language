@@ -69,9 +69,10 @@ export class SignatureHelpProvider {
       );
     }
 
-    // Check user-defined procedures from symbol table
+    // Check user-defined procedures from symbol table using scope-aware lookup
     if (!func && symbolTable) {
-      const symbol = symbolTable.getSymbol(context.functionName);
+      const offset = document.offsetAt(position);
+      const symbol = symbolTable.getSymbolAtOffset(context.functionName, offset);
       if (symbol && (symbol.kind === 'procedure' || symbol.kind === 'function')) {
         // For user-defined procedures, we create a simple signature
         return this.buildUserProcedureSignature(symbol.name, context.parameterIndex);

@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "014-improve-test-coverage-and-add-missing-tests",
+  "spec": "002-implement-scope-hierarchy-in-symbol-table",
   "state": "building",
   "subtasks": {
-    "completed": 9,
-    "total": 17,
+    "completed": 11,
+    "total": 12,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "SemanticTokens Test Suite",
+    "current": "Integration Testing",
     "id": null,
-    "total": 7
+    "total": 2
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 9,
-    "started_at": "2025-12-24T00:24:42.921059"
+    "number": 12,
+    "started_at": "2025-12-23T19:44:19.967154"
   },
-  "last_update": "2025-12-24T00:48:57.641128"
+  "last_update": "2025-12-23T20:25:32.201140"
 }
