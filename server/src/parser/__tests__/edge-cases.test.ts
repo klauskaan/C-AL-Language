@@ -1367,10 +1367,10 @@ describe('Parser - Empty Sections', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
-
-      const ast = parser.parse();
-      expect(ast.object?.objectKind).toBe(ObjectKind.Report);
+      // Parse once and check both that it doesn't throw and produces valid AST
+      let ast;
+      expect(() => { ast = parser.parse(); }).not.toThrow();
+      expect(ast!.object?.objectKind).toBe(ObjectKind.Report);
     });
 
     it('should handle XMLport with all empty sections', () => {
@@ -1385,10 +1385,10 @@ describe('Parser - Empty Sections', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
-
-      const ast = parser.parse();
-      expect(ast.object?.objectKind).toBe(ObjectKind.XMLport);
+      // Parse once and check both that it doesn't throw and produces valid AST
+      let ast;
+      expect(() => { ast = parser.parse(); }).not.toThrow();
+      expect(ast!.object?.objectKind).toBe(ObjectKind.XMLport);
     });
 
     it('should handle Query with empty sections', () => {
@@ -1403,10 +1403,10 @@ describe('Parser - Empty Sections', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
-
-      const ast = parser.parse();
-      expect(ast.object?.objectKind).toBe(ObjectKind.Query);
+      // Parse once and check both that it doesn't throw and produces valid AST
+      let ast;
+      expect(() => { ast = parser.parse(); }).not.toThrow();
+      expect(ast!.object?.objectKind).toBe(ObjectKind.Query);
     });
 
     it('should handle inline object with multiple empty sections', () => {
