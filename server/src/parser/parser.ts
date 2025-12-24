@@ -37,6 +37,16 @@ import {
 } from './ast';
 
 /**
+ * Result of parsing object header (OBJECT keyword, type, ID, name)
+ */
+interface ObjectHeader {
+  startToken: Token;
+  objectKind: ObjectKind;
+  objectId: number;
+  objectName: string;
+}
+
+/**
  * Parser for C/AL language
  */
 export class Parser {
@@ -94,21 +104,7 @@ export class Parser {
    * Parse OBJECT declaration
    */
   private parseObject(): ObjectDeclaration {
-    const startToken = this.consume(TokenType.Object, 'Expected OBJECT keyword');
-
-    // Object type (Table, Page, etc.)
-    const objectKindToken = this.advance();
-    const objectKind = this.tokenTypeToObjectKind(objectKindToken.type);
-
-    // Object ID
-    const idToken = this.consume(TokenType.Integer, 'Expected object ID');
-    const objectId = this.parseInteger(idToken);
-
-    // Object Name (can be quoted or unquoted)
-    const nameToken = this.advance();
-    const objectName = nameToken.type === TokenType.QuotedIdentifier || nameToken.type === TokenType.Identifier
-      ? nameToken.value
-      : nameToken.value;
+    const { startToken, objectKind, objectId, objectName } = this.parseObjectHeader();
 
     // Consume opening brace of object body (if present)
     // Note: Tests may have partial objects without braces
@@ -116,22 +112,7 @@ export class Parser {
       this.advance(); // Consume {
 
       // Skip OBJECT-PROPERTIES section if present (it's metadata, not code)
-      if (this.check(TokenType.Object) && this.checkNext(TokenType.Minus)) {
-        // Skip OBJECT-PROPERTIES { ... }
-        this.advance(); // OBJECT
-        this.advance(); // -
-        this.advance(); // PROPERTIES
-        if (this.check(TokenType.LeftBrace)) {
-          this.advance(); // {
-          // Skip until matching }
-          let depth = 1;
-          while (depth > 0 && !this.isAtEnd()) {
-            if (this.check(TokenType.LeftBrace)) depth++;
-            else if (this.check(TokenType.RightBrace)) depth--;
-            this.advance();
-          }
-        }
-      }
+      this.skipObjectPropertiesSection();
     }
 
     // Parse sections
@@ -184,6 +165,49 @@ export class Parser {
       startToken,
       endToken: this.previous()
     };
+  }
+
+  /**
+   * Parse object header: OBJECT keyword, type, ID, and name
+   */
+  private parseObjectHeader(): ObjectHeader {
+    const startToken = this.consume(TokenType.Object, 'Expected OBJECT keyword');
+
+    // Object type (Table, Page, etc.)
+    const objectKindToken = this.advance();
+    const objectKind = this.tokenTypeToObjectKind(objectKindToken.type);
+
+    // Object ID
+    const idToken = this.consume(TokenType.Integer, 'Expected object ID');
+    const objectId = this.parseInteger(idToken);
+
+    // Object Name (can be quoted or unquoted)
+    const nameToken = this.advance();
+    const objectName = nameToken.value;
+
+    return { startToken, objectKind, objectId, objectName };
+  }
+
+  /**
+   * Skip OBJECT-PROPERTIES section if present (it's metadata, not code)
+   */
+  private skipObjectPropertiesSection(): void {
+    if (this.check(TokenType.Object) && this.checkNext(TokenType.Minus)) {
+      // Skip OBJECT-PROPERTIES { ... }
+      this.advance(); // OBJECT
+      this.advance(); // -
+      this.advance(); // PROPERTIES
+      if (this.check(TokenType.LeftBrace)) {
+        this.advance(); // {
+        // Skip until matching }
+        let depth = 1;
+        while (depth > 0 && !this.isAtEnd()) {
+          if (this.check(TokenType.LeftBrace)) depth++;
+          else if (this.check(TokenType.RightBrace)) depth--;
+          this.advance();
+        }
+      }
+    }
   }
 
   /**
@@ -723,82 +747,11 @@ export class Parser {
   private parseProcedure(isLocal: boolean = false): ProcedureDeclaration {
     const startToken = this.advance(); // PROCEDURE or FUNCTION
 
-    const nameToken = this.advance();
-    const name = nameToken.value;
+    const name = this.parseProcedureName();
 
-    // Skip @number if present (C/AL auto-numbering)
-    if (this.peek().value === '@') {
-      this.advance(); // @
-      if (this.check(TokenType.Integer)) {
-        this.advance(); // number
-      }
-    }
+    const parameters = this.parseProcedureParameters();
 
-    const parameters: ParameterDeclaration[] = [];
-
-    // Parse parameters if present
-    if (this.check(TokenType.LeftParen)) {
-      this.advance(); // consume '('
-
-      // Parse parameter list
-      while (!this.check(TokenType.RightParen) && !this.isAtEnd()) {
-        // Check for VAR keyword (pass by reference)
-        let isVar = false;
-        if (this.check(TokenType.Var)) {
-          isVar = true;
-          this.advance();
-        }
-
-        // Parameter name
-        if (this.check(TokenType.Identifier)) {
-          const paramToken = this.advance();
-          const paramName = paramToken.value;
-
-          // Colon and type
-          let dataType: DataType | null = null;
-          if (this.check(TokenType.Colon)) {
-            this.advance();
-            dataType = this.parseDataType();
-          }
-
-          parameters.push({
-            type: 'ParameterDeclaration',
-            name: paramName,
-            dataType: dataType || { type: 'DataType', typeName: 'Variant', startToken: paramToken, endToken: paramToken },
-            isVar,
-            startToken: paramToken,
-            endToken: this.previous()
-          });
-        }
-
-        // Skip semicolon between parameters
-        if (this.check(TokenType.Semicolon)) {
-          this.advance();
-        } else if (!this.check(TokenType.RightParen)) {
-          // Skip unknown tokens
-          this.advance();
-        }
-      }
-
-      this.consume(TokenType.RightParen, 'Expected )');
-    }
-
-    // Skip semicolon after procedure declaration
-    if (this.check(TokenType.Semicolon)) {
-      this.advance();
-    }
-
-    // Parse return type if present (for functions)
-    let returnType: DataType | null = null;
-    if (this.check(TokenType.Colon)) {
-      this.advance();
-      returnType = this.parseDataType();
-    }
-
-    // Skip semicolon after return type
-    if (this.check(TokenType.Semicolon)) {
-      this.advance();
-    }
+    const returnType = this.parseProcedureReturnType();
 
     // Parse local variables
     const variables: VariableDeclaration[] = [];
@@ -829,6 +782,106 @@ export class Parser {
       startToken,
       endToken: this.previous()
     };
+  }
+
+  /**
+   * Parse procedure/function name, handling @number syntax for C/AL auto-numbering
+   */
+  private parseProcedureName(): string {
+    const nameToken = this.advance();
+    const name = nameToken.value;
+
+    // Skip @number if present (C/AL auto-numbering)
+    if (this.peek().value === '@') {
+      this.advance(); // @
+      if (this.check(TokenType.Integer)) {
+        this.advance(); // number
+      }
+    }
+
+    return name;
+  }
+
+  /**
+   * Parse procedure/function parameter list including parentheses
+   */
+  private parseProcedureParameters(): ParameterDeclaration[] {
+    const parameters: ParameterDeclaration[] = [];
+
+    // Parse parameters if present
+    if (!this.check(TokenType.LeftParen)) {
+      return parameters;
+    }
+
+    this.advance(); // consume '('
+
+    // Parse parameter list
+    while (!this.check(TokenType.RightParen) && !this.isAtEnd()) {
+      // Check for VAR keyword (pass by reference)
+      let isVar = false;
+      if (this.check(TokenType.Var)) {
+        isVar = true;
+        this.advance();
+      }
+
+      // Parameter name
+      if (this.check(TokenType.Identifier)) {
+        const paramToken = this.advance();
+        const paramName = paramToken.value;
+
+        // Colon and type
+        let dataType: DataType | null = null;
+        if (this.check(TokenType.Colon)) {
+          this.advance();
+          dataType = this.parseDataType();
+        }
+
+        parameters.push({
+          type: 'ParameterDeclaration',
+          name: paramName,
+          dataType: dataType || { type: 'DataType', typeName: 'Variant', startToken: paramToken, endToken: paramToken },
+          isVar,
+          startToken: paramToken,
+          endToken: this.previous()
+        });
+      }
+
+      // Skip semicolon between parameters
+      if (this.check(TokenType.Semicolon)) {
+        this.advance();
+      } else if (!this.check(TokenType.RightParen)) {
+        // Skip unknown tokens
+        this.advance();
+      }
+    }
+
+    this.consume(TokenType.RightParen, 'Expected )');
+
+    // Skip semicolon after procedure declaration
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    return parameters;
+  }
+
+  /**
+   * Parse optional return type for procedure/function declarations
+   */
+  private parseProcedureReturnType(): DataType | null {
+    let returnType: DataType | null = null;
+
+    if (this.check(TokenType.Colon)) {
+      this.advance();
+      returnType = this.parseDataType();
+    }
+
+    // Skip semicolon after return type
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    return returnType;
   }
 
   /**
@@ -1302,16 +1355,27 @@ export class Parser {
     return this.parseOr();
   }
 
-  private parseOr(): Expression {
-    let left = this.parseAnd();
+  /**
+   * Parse binary expression with left-to-right associativity
+   * @param nextParser - Function to parse the next precedence level
+   * @param upperCaseOperator - Whether to uppercase the operator value
+   * @param operatorTypes - Token types that are operators at this level
+   */
+  private parseBinaryExpression(
+    nextParser: () => Expression,
+    upperCaseOperator: boolean,
+    ...operatorTypes: TokenType[]
+  ): Expression {
+    let left = nextParser();
 
-    while (this.check(TokenType.Or) || this.check(TokenType.Xor)) {
+    while (operatorTypes.some(op => this.check(op))) {
       const operator = this.advance();
-      const right = this.parseAnd();
+      const right = nextParser();
+
       left = {
         type: 'BinaryExpression',
-        operator: operator.value.toUpperCase(),
         left,
+        operator: upperCaseOperator ? operator.value.toUpperCase() : operator.value,
         right,
         startToken: left.startToken,
         endToken: right.endToken
@@ -1319,104 +1383,64 @@ export class Parser {
     }
 
     return left;
+  }
+
+  private parseOr(): Expression {
+    return this.parseBinaryExpression(
+      () => this.parseAnd(),
+      true,
+      TokenType.Or,
+      TokenType.Xor
+    );
   }
 
   private parseAnd(): Expression {
-    let left = this.parseEquality();
-
-    while (this.check(TokenType.And)) {
-      const operator = this.advance();
-      const right = this.parseEquality();
-      left = {
-        type: 'BinaryExpression',
-        operator: operator.value.toUpperCase(),
-        left,
-        right,
-        startToken: left.startToken,
-        endToken: right.endToken
-      } as BinaryExpression;
-    }
-
-    return left;
+    return this.parseBinaryExpression(
+      () => this.parseEquality(),
+      true,
+      TokenType.And
+    );
   }
 
   private parseEquality(): Expression {
-    let left = this.parseComparison();
-
-    while (this.check(TokenType.Equal) || this.check(TokenType.NotEqual)) {
-      const operator = this.advance();
-      const right = this.parseComparison();
-      left = {
-        type: 'BinaryExpression',
-        operator: operator.value,
-        left,
-        right,
-        startToken: left.startToken,
-        endToken: right.endToken
-      } as BinaryExpression;
-    }
-
-    return left;
+    return this.parseBinaryExpression(
+      () => this.parseComparison(),
+      false,
+      TokenType.Equal,
+      TokenType.NotEqual
+    );
   }
 
   private parseComparison(): Expression {
-    let left = this.parseTerm();
-
-    while (this.check(TokenType.Less) || this.check(TokenType.LessEqual) ||
-           this.check(TokenType.Greater) || this.check(TokenType.GreaterEqual) ||
-           this.check(TokenType.In)) {
-      const operator = this.advance();
-      const right = this.parseTerm();
-      left = {
-        type: 'BinaryExpression',
-        operator: operator.value,
-        left,
-        right,
-        startToken: left.startToken,
-        endToken: right.endToken
-      } as BinaryExpression;
-    }
-
-    return left;
+    return this.parseBinaryExpression(
+      () => this.parseTerm(),
+      false,
+      TokenType.Less,
+      TokenType.LessEqual,
+      TokenType.Greater,
+      TokenType.GreaterEqual,
+      TokenType.In
+    );
   }
 
   private parseTerm(): Expression {
-    let left = this.parseFactor();
-
-    while (this.check(TokenType.Plus) || this.check(TokenType.Minus)) {
-      const operator = this.advance();
-      const right = this.parseFactor();
-      left = {
-        type: 'BinaryExpression',
-        operator: operator.value,
-        left,
-        right,
-        startToken: left.startToken,
-        endToken: right.endToken
-      } as BinaryExpression;
-    }
-
-    return left;
+    return this.parseBinaryExpression(
+      () => this.parseFactor(),
+      false,
+      TokenType.Plus,
+      TokenType.Minus
+    );
   }
 
   private parseFactor(): Expression {
-    let left = this.parseUnary();
-
-    while (this.check(TokenType.Multiply) || this.check(TokenType.Divide) ||
-           this.check(TokenType.Div) || this.check(TokenType.Mod)) {
-      const operator = this.advance();
-      const right = this.parseUnary();
-      left = {
-        type: 'BinaryExpression',
-        operator: operator.value.toUpperCase(),
-        left,
-        right,
-        startToken: left.startToken,
-        endToken: right.endToken
-      } as BinaryExpression;
-    }
-
-    return left;
+    return this.parseBinaryExpression(
+      () => this.parseUnary(),
+      true,
+      TokenType.Multiply,
+      TokenType.Divide,
+      TokenType.Div,
+      TokenType.Mod
+    );
   }
 
   private parseUnary(): Expression {
@@ -1435,13 +1459,14 @@ export class Parser {
     return this.parsePrimary();
   }
 
-  private parsePrimary(): Expression {
-    // Check for AL-only tokens in expression context (e.g., ternary operator)
-    this.skipALOnlyTokens();
-
+  /**
+   * Parse literal expressions (Integer, Decimal, String, Boolean, Date, Time, DateTime)
+   * Returns null if current token is not a literal
+   */
+  private parseLiteral(): Expression | null {
     const token = this.peek();
 
-    // Literals
+    // Integer literal
     if (this.check(TokenType.Integer)) {
       this.advance();
       return {
@@ -1453,6 +1478,7 @@ export class Parser {
       } as Literal;
     }
 
+    // Decimal literal
     if (this.check(TokenType.Decimal)) {
       this.advance();
       return {
@@ -1464,6 +1490,7 @@ export class Parser {
       } as Literal;
     }
 
+    // String literal
     if (this.check(TokenType.String)) {
       this.advance();
       return {
@@ -1475,6 +1502,7 @@ export class Parser {
       } as Literal;
     }
 
+    // Boolean literal
     if (this.check(TokenType.True) || this.check(TokenType.False)) {
       this.advance();
       return {
@@ -1486,6 +1514,7 @@ export class Parser {
       } as Literal;
     }
 
+    // Date literal
     if (this.check(TokenType.Date)) {
       this.advance();
       return {
@@ -1497,6 +1526,7 @@ export class Parser {
       } as Literal;
     }
 
+    // Time literal
     if (this.check(TokenType.Time)) {
       this.advance();
       return {
@@ -1508,6 +1538,7 @@ export class Parser {
       } as Literal;
     }
 
+    // DateTime literal
     if (this.check(TokenType.DateTime)) {
       this.advance();
       return {
@@ -1517,6 +1548,19 @@ export class Parser {
         startToken: token,
         endToken: token
       } as Literal;
+    }
+
+    return null;
+  }
+
+  private parsePrimary(): Expression {
+    // Check for AL-only tokens in expression context (e.g., ternary operator)
+    this.skipALOnlyTokens();
+
+    // Try to parse as literal
+    const literal = this.parseLiteral();
+    if (literal) {
+      return literal;
     }
 
     // Parenthesized expression
