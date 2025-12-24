@@ -1,0 +1,2186 @@
+/**
+ * Parser Tests - Edge Cases
+ *
+ * Tests edge case scenarios for the parser including:
+ * - Deeply nested expressions (20+ levels)
+ * - Maximum field numbers (approaching 2 billion limit)
+ * - Empty PROPERTIES blocks and other empty sections
+ * - Comments within field definitions
+ *
+ * The parser should NEVER throw exceptions - it should collect errors
+ * and return a (possibly partial) AST for all inputs.
+ *
+ * See spec.md for detailed requirements on each edge case category.
+ */
+
+import { Lexer } from '../../lexer/lexer';
+import { Parser } from '../parser';
+import { ObjectKind } from '../ast';
+
+describe('Parser - Deeply Nested Expressions', () => {
+  describe('Nested parentheses in expressions', () => {
+    it('should handle 20 levels of nested parentheses without stack overflow', () => {
+      const depth = 20;
+      const nested = '('.repeat(depth) + 'x + 1' + ')'.repeat(depth);
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := ${nested};
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle 25 levels of nested parentheses without stack overflow', () => {
+      const depth = 25;
+      const nested = '('.repeat(depth) + 'x + 1' + ')'.repeat(depth);
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := ${nested};
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle 50 levels of nested parentheses without stack overflow', () => {
+      const depth = 50;
+      const nested = '('.repeat(depth) + 'value' + ')'.repeat(depth);
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := ${nested};
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should return valid AST for deeply nested expression', () => {
+      const depth = 20;
+      const nested = '('.repeat(depth) + 'x' + ')'.repeat(depth);
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := ${nested};
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+  });
+
+  describe('Nested NOT expressions', () => {
+    it('should handle deeply nested NOT operators', () => {
+      const notChain = 'NOT '.repeat(20) + 'x';
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF ${notChain} THEN;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle 10 levels of nested NOT operators', () => {
+      const notChain = 'NOT '.repeat(10) + 'boolVar';
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := ${notChain};
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Nested function calls', () => {
+    it('should handle deeply nested function calls', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := Func1(Func2(Func3(Func4(Func5(x)))));
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle nested function calls with multiple arguments', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := Outer(Inner1(a, b), Inner2(c, Inner3(d, e)));
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Nested IF statements', () => {
+    it('should handle deeply nested IF-THEN-ELSE structures', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF a THEN
+              IF b THEN
+                IF c THEN
+                  IF d THEN
+                    IF e THEN
+                      x := 1
+                    ELSE
+                      x := 2
+                  ELSE
+                    x := 3
+                ELSE
+                  x := 4
+              ELSE
+                x := 5
+            ELSE
+              x := 6;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle 15 levels of nested IF statements', () => {
+      let code = 'IF x THEN ';
+      for (let i = 0; i < 15; i++) {
+        code = `IF cond${i} THEN BEGIN ${code} END`;
+      }
+      const fullCode = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            ${code};
+          END;
+        }
+      }`;
+      const lexer = new Lexer(fullCode);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Mixed nested structures', () => {
+    it('should handle combination of nested parentheses and operators', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := ((((a + b) * c) - d) / ((e + f) * g));
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Nested loops', () => {
+    it('should handle deeply nested REPEAT-UNTIL loops', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            REPEAT
+              REPEAT
+                REPEAT
+                  REPEAT
+                    REPEAT
+                      x := x + 1;
+                    UNTIL x > 5;
+                  UNTIL x > 10;
+                UNTIL x > 15;
+              UNTIL x > 20;
+            UNTIL x > 25;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle deeply nested WHILE-DO loops', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            WHILE a DO
+              WHILE b DO
+                WHILE c DO
+                  WHILE d DO
+                    WHILE e DO
+                      x := x + 1;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle deeply nested FOR loops', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            FOR i := 1 TO 10 DO
+              FOR j := 1 TO 10 DO
+                FOR k := 1 TO 10 DO
+                  FOR l := 1 TO 10 DO
+                    FOR m := 1 TO 10 DO
+                      x := i + j + k + l + m;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle mixed nested loop types', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            FOR i := 1 TO 10 DO
+              WHILE condition DO
+                REPEAT
+                  FOR j := 1 TO 5 DO
+                    WHILE inner DO
+                      x := x + 1;
+                UNTIL done;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Nested CASE statements', () => {
+    it('should handle deeply nested CASE statements', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            CASE a OF
+              1:
+                CASE b OF
+                  1:
+                    CASE c OF
+                      1:
+                        CASE d OF
+                          1: x := 1;
+                          2: x := 2;
+                        END;
+                      2: x := 3;
+                    END;
+                  2: x := 4;
+                END;
+              2: x := 5;
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle CASE with nested IF and loops', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            CASE type OF
+              1:
+                IF condition THEN
+                  WHILE active DO
+                    CASE subtype OF
+                      1: x := 1;
+                      2: x := 2;
+                    END;
+              2:
+                REPEAT
+                  IF flag THEN
+                    x := x + 1;
+                UNTIL done;
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Nested BEGIN-END blocks', () => {
+    it('should handle deeply nested BEGIN-END blocks', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            BEGIN
+              BEGIN
+                BEGIN
+                  BEGIN
+                    BEGIN
+                      BEGIN
+                        BEGIN
+                          x := 1;
+                        END;
+                      END;
+                    END;
+                  END;
+                END;
+              END;
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle 20 levels of nested BEGIN-END blocks', () => {
+      const depth = 20;
+      let beginBlocks = 'BEGIN\n'.repeat(depth);
+      let endBlocks = 'END;\n'.repeat(depth);
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            ${beginBlocks}
+              x := 1;
+            ${endBlocks}
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Nested WITH statements', () => {
+    it('should handle deeply nested WITH statements', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            WITH Customer DO
+              WITH "Sales Header" DO
+                WITH "Sales Line" DO
+                  WITH Item DO
+                    WITH "Item Ledger Entry" DO
+                      Quantity := 10;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Nested array and member access', () => {
+    it('should handle deeply nested array indexers', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := arr[arr[arr[arr[arr[0]]]]];
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle deeply nested member access', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := Obj.Prop1.Prop2.Prop3.Prop4.Prop5.Value;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle combination of nested arrays, members, and function calls', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := Obj.GetArray()[GetIndex(arr[i].Value)].Prop.Method(x);
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Deeply nested binary expressions', () => {
+    it('should handle 20 levels of nested AND expressions', () => {
+      const conditions = Array.from({ length: 20 }, (_, i) => `cond${i}`).join(' AND ');
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF ${conditions} THEN
+              x := 1;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle 20 levels of nested OR expressions', () => {
+      const conditions = Array.from({ length: 20 }, (_, i) => `cond${i}`).join(' OR ');
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF ${conditions} THEN
+              x := 1;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle mixed AND/OR with parentheses nesting', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF ((a AND b) OR ((c AND d) OR ((e AND f) OR ((g AND h) OR (i AND j))))) THEN
+              x := 1;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle deeply nested arithmetic expressions', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := a + b * c - d / e + f * g - h / i + j * k - l / m + n * o - p / q + r;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Nested string concatenation', () => {
+    it('should handle deeply nested string concatenations', () => {
+      const parts = Array.from({ length: 20 }, (_, i) => `'part${i}'`).join(' + ');
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := ${parts};
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Complex nested real-world patterns', () => {
+    it('should handle NAV-style complex nested filtering', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Customer.FIND('-') THEN
+              REPEAT
+                IF Customer.Blocked = Customer.Blocked::" " THEN
+                  IF SalesHeader.FIND('-') THEN
+                    REPEAT
+                      IF SalesHeader.Status = SalesHeader.Status::Released THEN
+                        IF SalesLine.FIND('-') THEN
+                          REPEAT
+                            TotalAmount := TotalAmount + SalesLine.Amount;
+                          UNTIL SalesLine.NEXT = 0;
+                    UNTIL SalesHeader.NEXT = 0;
+              UNTIL Customer.NEXT = 0;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle deeply nested TRY-CATCH pattern (IF with error handling)', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF CODEUNIT.RUN(CODEUNIT::"Process 1") THEN
+              IF CODEUNIT.RUN(CODEUNIT::"Process 2") THEN
+                IF CODEUNIT.RUN(CODEUNIT::"Process 3") THEN
+                  IF CODEUNIT.RUN(CODEUNIT::"Process 4") THEN
+                    MESSAGE('All succeeded')
+                  ELSE
+                    ERROR('Process 4 failed')
+                ELSE
+                  ERROR('Process 3 failed')
+              ELSE
+                ERROR('Process 2 failed')
+            ELSE
+              ERROR('Process 1 failed');
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+});
+
+describe('Parser - Maximum Field Numbers', () => {
+  describe('Large field IDs', () => {
+    it('should handle maximum INT32 value as field number (2147483647)', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 2147483647 ; ; "MaxField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field number at JavaScript safe integer limit', () => {
+      // JavaScript MAX_SAFE_INTEGER is 9007199254740991
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 9007199254740991 ; ; "MaxSafeField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field number 1 (minimum practical)', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "FirstField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field number 0', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 0 ; ; "ZeroField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field number approaching 2 billion limit (1999999999)', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1999999999 ; ; "NearTwoBillion" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field number at 2 billion (2000000000)', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 2000000000 ; ; "TwoBillionField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field number at common NAV extension range (50000)', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 50000 ; ; "ExtensionField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field number at partner range boundary (99999999)', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 99999999 ; ; "PartnerField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Large object IDs', () => {
+    it('should handle maximum INT32 value as object ID (2147483647)', () => {
+      const code = `OBJECT Table 2147483647 MaxTable`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object).not.toBeNull();
+      expect(ast.object?.objectId).toBe(2147483647);
+    });
+
+    it('should handle object ID of 1 billion', () => {
+      const code = `OBJECT Table 1000000000 BigTable`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.objectId).toBe(1000000000);
+    });
+
+    it('should handle typical NAV reserved range IDs', () => {
+      const code = `OBJECT Codeunit 99999999 ExtendedCodeunit`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.objectId).toBe(99999999);
+    });
+  });
+
+  describe('Boundary value field IDs', () => {
+    it('should handle multiple fields with varying large IDs', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "First" ; Code20 }
+          { 1000000 ; ; "Million" ; Code20 }
+          { 2147483647 ; ; "MaxInt" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field numbers at various power-of-10 boundaries', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 10 ; ; "Ten" ; Code20 }
+          { 100 ; ; "Hundred" ; Code20 }
+          { 1000 ; ; "Thousand" ; Code20 }
+          { 10000 ; ; "TenThousand" ; Code20 }
+          { 100000 ; ; "HundredThousand" ; Code20 }
+          { 1000000 ; ; "Million" ; Code20 }
+          { 10000000 ; ; "TenMillion" ; Code20 }
+          { 100000000 ; ; "HundredMillion" ; Code20 }
+          { 1000000000 ; ; "Billion" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle consecutive large field numbers', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 2147483645 ; ; "MaxMinus2" ; Code20 }
+          { 2147483646 ; ; "MaxMinus1" ; Code20 }
+          { 2147483647 ; ; "Max" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle mix of small and large field numbers', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Small" ; Code20 }
+          { 2147483647 ; ; "Large" ; Code20 }
+          { 2 ; ; "SmallAgain" ; Code20 }
+          { 1999999999 ; ; "LargeAgain" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Field number edge cases in context', () => {
+    it('should handle large field number in table with PROPERTIES', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+          CaptionML=ENU=Test Table;
+        }
+        FIELDS {
+          { 2147483647 ; ; "MaxField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle large field number with field properties', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 2147483647 ; ; "MaxField" ; Code20 ;
+            CaptionML=ENU=Maximum Field }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle large field number followed by KEYS section', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 2147483647 ; ; "MaxField" ; Code20 }
+        }
+        KEYS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+});
+
+describe('Parser - Empty Sections', () => {
+  describe('Empty PROPERTIES blocks', () => {
+    it('should handle empty PROPERTIES section', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle PROPERTIES section with only whitespace', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle inline empty PROPERTIES section', () => {
+      const code = `OBJECT Table 1 Test { PROPERTIES { } }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should return valid AST for empty PROPERTIES', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+      expect(ast.object).toBeDefined();
+      expect(ast.object?.objectKind).toBe(ObjectKind.Table);
+      expect(ast.object?.objectId).toBe(1);
+      expect(ast.object?.objectName).toBe('Test');
+    });
+
+    it('should handle PROPERTIES with only newlines', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+
+
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle PROPERTIES with only tabs and spaces', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty PROPERTIES in Codeunit', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        PROPERTIES {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.objectKind).toBe(ObjectKind.Codeunit);
+    });
+
+    it('should handle empty PROPERTIES in Page', () => {
+      const code = `OBJECT Page 1 Test {
+        PROPERTIES {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.objectKind).toBe(ObjectKind.Page);
+    });
+
+    it('should handle empty PROPERTIES in Report', () => {
+      const code = `OBJECT Report 1 Test {
+        PROPERTIES {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.objectKind).toBe(ObjectKind.Report);
+    });
+
+    it('should handle empty PROPERTIES in XMLport', () => {
+      const code = `OBJECT XMLport 1 Test {
+        PROPERTIES {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.objectKind).toBe(ObjectKind.XMLport);
+    });
+
+    it('should handle empty PROPERTIES in Query', () => {
+      const code = `OBJECT Query 1 Test {
+        PROPERTIES {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.objectKind).toBe(ObjectKind.Query);
+    });
+  });
+
+  describe('Empty FIELDS blocks', () => {
+    it('should handle empty FIELDS section', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle inline empty FIELDS section', () => {
+      const code = `OBJECT Table 1 Test { FIELDS { } }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should return valid AST for empty FIELDS', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+      expect(ast.object).toBeDefined();
+      expect(ast.object?.objectKind).toBe(ObjectKind.Table);
+    });
+
+    it('should handle FIELDS with only whitespace', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle FIELDS followed by empty KEYS', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+        }
+        KEYS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Empty KEYS blocks', () => {
+    it('should handle empty KEYS section', () => {
+      const code = `OBJECT Table 1 Test {
+        KEYS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should return valid AST for empty KEYS', () => {
+      const code = `OBJECT Table 1 Test {
+        KEYS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+      expect(ast.object?.objectKind).toBe(ObjectKind.Table);
+    });
+
+    it('should handle inline empty KEYS section', () => {
+      const code = `OBJECT Table 1 Test { KEYS { } }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty KEYS after FIELDS with data', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Field1" ; Code20 }
+        }
+        KEYS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Empty CODE blocks', () => {
+    it('should handle empty CODE section', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle CODE section with only VAR block', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            x : Integer;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should return valid AST for empty CODE', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+      expect(ast.object?.objectKind).toBe(ObjectKind.Codeunit);
+    });
+
+    it('should handle inline empty CODE section', () => {
+      const code = `OBJECT Codeunit 1 Test { CODE { } }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty CODE in Table', () => {
+      const code = `OBJECT Table 1 Test {
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty CODE in Page', () => {
+      const code = `OBJECT Page 1 Test {
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty CODE in Report', () => {
+      const code = `OBJECT Report 1 Test {
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Empty CONTROLS blocks', () => {
+    it('should handle empty CONTROLS section in Page', () => {
+      const code = `OBJECT Page 1 Test {
+        CONTROLS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should return valid AST for empty CONTROLS', () => {
+      const code = `OBJECT Page 1 Test {
+        CONTROLS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+      expect(ast.object?.objectKind).toBe(ObjectKind.Page);
+    });
+
+    it('should handle inline empty CONTROLS section', () => {
+      const code = `OBJECT Page 1 Test { CONTROLS { } }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Empty DATAITEMS blocks', () => {
+    it('should handle empty DATAITEMS section in Report', () => {
+      const code = `OBJECT Report 1 Test {
+        DATAITEMS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should return valid AST for empty DATAITEMS', () => {
+      const code = `OBJECT Report 1 Test {
+        DATAITEMS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.object?.objectKind).toBe(ObjectKind.Report);
+    });
+  });
+
+  describe('Empty ELEMENTS blocks', () => {
+    it('should handle empty ELEMENTS section in XMLport', () => {
+      const code = `OBJECT XMLport 1 Test {
+        ELEMENTS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should return valid AST for empty ELEMENTS', () => {
+      const code = `OBJECT XMLport 1 Test {
+        ELEMENTS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.object?.objectKind).toBe(ObjectKind.XMLport);
+    });
+  });
+
+  describe('Empty REQUESTFORM blocks', () => {
+    it('should handle empty REQUESTFORM section in Report', () => {
+      const code = `OBJECT Report 1 Test {
+        REQUESTFORM {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Multiple empty sections', () => {
+    it('should handle object with all empty sections', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+        }
+        FIELDS {
+        }
+        KEYS {
+        }
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle page with empty sections', () => {
+      const code = `OBJECT Page 1 TestPage {
+        PROPERTIES {
+        }
+        CONTROLS {
+        }
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle Report with all empty sections', () => {
+      const code = `OBJECT Report 1 TestReport {
+        PROPERTIES {
+        }
+        DATAITEMS {
+        }
+        REQUESTFORM {
+        }
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      // Parse once and check both that it doesn't throw and produces valid AST
+      let ast;
+      expect(() => { ast = parser.parse(); }).not.toThrow();
+      expect(ast!.object?.objectKind).toBe(ObjectKind.Report);
+    });
+
+    it('should handle XMLport with all empty sections', () => {
+      const code = `OBJECT XMLport 1 TestXML {
+        PROPERTIES {
+        }
+        ELEMENTS {
+        }
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      // Parse once and check both that it doesn't throw and produces valid AST
+      let ast;
+      expect(() => { ast = parser.parse(); }).not.toThrow();
+      expect(ast!.object?.objectKind).toBe(ObjectKind.XMLport);
+    });
+
+    it('should handle Query with empty sections', () => {
+      const code = `OBJECT Query 1 TestQuery {
+        PROPERTIES {
+        }
+        ELEMENTS {
+        }
+        CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      // Parse once and check both that it doesn't throw and produces valid AST
+      let ast;
+      expect(() => { ast = parser.parse(); }).not.toThrow();
+      expect(ast!.object?.objectKind).toBe(ObjectKind.Query);
+    });
+
+    it('should handle inline object with multiple empty sections', () => {
+      const code = `OBJECT Table 1 Test { PROPERTIES { } FIELDS { } KEYS { } CODE { } }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty sections with varying whitespace', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+
+        }
+        FIELDS {
+
+
+        }
+        KEYS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Empty procedure body', () => {
+    it('should handle procedure with empty BEGIN-END block', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE EmptyProc();
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle function with empty BEGIN-END block', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          FUNCTION EmptyFunc() : Boolean;
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle multiple empty procedures', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Proc1();
+          BEGIN
+          END;
+
+          PROCEDURE Proc2();
+          BEGIN
+          END;
+
+          PROCEDURE Proc3();
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty local procedure', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          LOCAL PROCEDURE LocalEmpty();
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty trigger', () => {
+      const code = `OBJECT Table 1 Test {
+        CODE {
+          OnInsert=
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle inline empty BEGIN-END', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE EmptyInline();
+          BEGIN END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Empty VAR blocks', () => {
+    it('should handle empty VAR section in procedure', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+          BEGIN
+            x := 1;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty global VAR section', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+
+          PROCEDURE Test();
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Empty sections with comments only', () => {
+    it('should handle PROPERTIES with only line comment', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+          // This section intentionally left empty
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle FIELDS with only block comment', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { No fields defined yet }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle CODE with only comments', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          // TODO: Add procedures here
+          { Future implementation }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle multiple empty sections with comments', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+          // Empty properties
+        }
+        FIELDS {
+          { No fields }
+        }
+        KEYS {
+          // No keys
+        }
+        CODE {
+          // No code
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+});
+
+describe('Parser - Comments in Structural Sections', () => {
+  describe('Comments within field definitions', () => {
+    it('should handle line comment before field definition', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // This is a field comment
+          { 1 ; ; "Field1" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle line comment after field definition', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Field1" ; Code20 } // Field comment
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle line comments between multiple fields', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Field1" ; Code20 }
+          // Comment between fields
+          { 2 ; ; "Field2" ; Text50 }
+          // Another comment
+          { 3 ; ; "Field3" ; Integer }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle C-style comment before field', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          /* This is a C-style comment */
+          { 1 ; ; "Field1" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle C-style comment after field', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Field1" ; Code20 } /* End of field */
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle multi-line C-style comment between fields', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Field1" ; Code20 }
+          /*
+           * Multi-line comment
+           * between fields
+           */
+          { 2 ; ; "Field2" ; Text50 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle mixed comment types in FIELDS section', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // Line comment
+          { 1 ; ; "Field1" ; Code20 }
+          /* Block comment */
+          { 2 ; ; "Field2" ; Text50 }
+          // Another line comment
+          /* Another block comment */
+          { 3 ; ; "Field3" ; Integer }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle comment with C/AL keywords inside field section', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // IF THEN ELSE BEGIN END - this is just a comment
+          { 1 ; ; "Field1" ; Code20 }
+          /* PROCEDURE FUNCTION TRIGGER */
+          { 2 ; ; "Field2" ; Text50 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field with properties and preceding comment', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // Important field
+          { 1 ; ; "Field1" ; Code20 ;
+            CaptionML=ENU=Field One }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle field with properties and trailing comment', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Field1" ; Code20 ;
+            CaptionML=ENU=Field One } // Field with caption
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle multiple consecutive comments before field', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // Comment 1
+          // Comment 2
+          // Comment 3
+          { 1 ; ; "Field1" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty line comment in FIELDS section', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          //
+          { 1 ; ; "Field1" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle comment with special characters in FIELDS section', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // TODO: @author #123 $$$
+          { 1 ; ; "Field1" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle comment containing field-like syntax', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // { 99 ; ; "Commented Field" ; Code20 }
+          { 1 ; ; "RealField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle C-style comment containing field-like syntax', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          /* { 99 ; ; "Commented Field" ; Code20 } */
+          { 1 ; ; "RealField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle large field number with comment', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // Maximum field ID
+          { 2147483647 ; ; "MaxField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should return valid AST when fields have comments', () => {
+      const code = `OBJECT Table 50000 TestTable {
+        FIELDS {
+          // Primary key field
+          { 1 ; ; "No." ; Code20 }
+          /* Description field */
+          { 2 ; ; "Description" ; Text100 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+      expect(ast.object).toBeDefined();
+      expect(ast.object?.objectKind).toBe(ObjectKind.Table);
+      expect(ast.object?.objectId).toBe(50000);
+      expect(ast.object?.objectName).toBe('TestTable');
+    });
+  });
+
+  describe('Comments in FIELDS section', () => {
+    it('should handle line comment before field definition', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          // This is a field comment
+          { 1 ; ; "Field1" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle line comment between fields', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Field1" ; Code20 }
+          // Separator comment
+          { 2 ; ; "Field2" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle inline comment after field definition', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Field1" ; Code20 } // field comment
+          { 2 ; ; "Field2" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle block comment in FIELDS section', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { commented field block }
+          { 1 ; ; "RealField" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle multi-line block comment between fields', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; "Field1" ; Code20 }
+          {
+            This is a multi-line
+            block comment between fields
+          }
+          { 2 ; ; "Field2" ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Comments in PROPERTIES section', () => {
+    it('should handle comments in PROPERTIES', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+          // Property comment
+          CaptionML=ENU=Test;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle inline comment after property', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+          CaptionML=ENU=Test; // caption property
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Comments in CODE section', () => {
+    it('should handle comments between procedures', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Proc1();
+          BEGIN
+          END;
+
+          // Helper procedure
+          PROCEDURE Proc2();
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle block comments within procedure body', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            { block comment in code }
+            x := 1;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle line comments within procedure body', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            // line comment
+            x := 1;
+            // another comment
+            y := 2;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Comments between tokens', () => {
+    it('should handle comment between OBJECT and kind', () => {
+      const code = `OBJECT { comment } Table 1 Test`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle comment between object kind and ID', () => {
+      const code = `OBJECT Table { comment } 1 Test`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle multiple comments between tokens', () => {
+      const code = `OBJECT { c1 } Table { c2 } 1 { c3 } Test`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+
+  describe('Comments in VAR section', () => {
+    it('should handle comments between variable declarations', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            x : Integer;
+            // comment between vars
+            y : Decimal;
+
+          PROCEDURE Test();
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle inline comment after variable', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Counter : Integer; // loop counter
+
+          PROCEDURE Test();
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+});
+
+describe('Parser - Edge Case Combinations', () => {
+  describe('Combined edge cases', () => {
+    it('should handle deeply nested expression with large numbers', () => {
+      const depth = 10;
+      const nested = '('.repeat(depth) + '2147483647' + ')'.repeat(depth);
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := ${nested};
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle empty sections with comments', () => {
+      const code = `OBJECT Table 1 Test {
+        PROPERTIES {
+          // Empty properties
+        }
+        FIELDS {
+          { Only a comment here }
+        }
+        KEYS {
+          // No keys defined
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle object with quoted name containing special characters', () => {
+      const code = `OBJECT Table 50000 "My Table (Test) - Special/Chars"`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object).not.toBeNull();
+      expect(ast.object?.objectName).toBe('My Table (Test) - Special/Chars');
+    });
+  });
+
+  describe('Stress tests', () => {
+    it('should handle 100 levels of nesting without crash', () => {
+      const depth = 100;
+      const nested = '('.repeat(depth) + 'x' + ')'.repeat(depth);
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            result := ${nested};
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should handle many comments scattered throughout', () => {
+      const code = `OBJECT { c1 } Table { c2 } 1 { c3 } Test {
+        // comment
+        PROPERTIES {
+          // property comment
+        }
+        // between sections
+        FIELDS {
+          // field section comment
+          { 1 ; ; "Field1" ; Code20 } // inline
+          // another comment
+          { 2 ; ; "Field2" ; Code20 }
+        }
+        // after fields
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+  });
+});
