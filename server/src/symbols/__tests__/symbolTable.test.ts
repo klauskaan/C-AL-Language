@@ -1858,4 +1858,765 @@ describe('SymbolTable', () => {
       });
     });
   });
+
+  /**
+   * Integration Tests
+   *
+   * Tests that verify correct symbol extraction through the full
+   * Lexer -> Parser -> SymbolTable pipeline using realistic C/AL code.
+   */
+  describe('Integration Tests', () => {
+    describe('Full Lexer -> Parser -> SymbolTable pipeline', () => {
+      it('should correctly extract symbols from a complete Customer table object', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."           ;Code20        }
+    { 2   ;   ;Name            ;Text100       }
+    { 3   ;   ;"Search Name"   ;Code100       }
+    { 4   ;   ;"Name 2"        ;Text50        }
+    { 5   ;   ;Address         ;Text100       }
+    { 6   ;   ;"Address 2"     ;Text50        }
+    { 7   ;   ;City            ;Text30        }
+    { 8   ;   ;Contact         ;Text100       }
+    { 9   ;   ;"Phone No."     ;Text30        }
+    { 10  ;   ;"Telex No."     ;Text20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        // Should have exactly 10 fields
+        expect(allSymbols.length).toBe(10);
+
+        // Verify all fields are extracted with correct properties
+        expect(symbolTable.hasSymbol('No.')).toBe(true);
+        expect(symbolTable.getSymbol('No.')?.kind).toBe('field');
+        expect(symbolTable.getSymbol('No.')?.type).toBe('Code20');
+
+        expect(symbolTable.hasSymbol('Name')).toBe(true);
+        expect(symbolTable.getSymbol('Name')?.kind).toBe('field');
+        expect(symbolTable.getSymbol('Name')?.type).toBe('Text100');
+
+        expect(symbolTable.hasSymbol('Search Name')).toBe(true);
+        expect(symbolTable.getSymbol('Search Name')?.kind).toBe('field');
+        expect(symbolTable.getSymbol('Search Name')?.type).toBe('Code100');
+
+        // Verify case-insensitive lookup works through the full pipeline
+        expect(symbolTable.getSymbol('NO.')).toBe(symbolTable.getSymbol('no.'));
+        expect(symbolTable.getSymbol('ADDRESS')).toBe(symbolTable.getSymbol('address'));
+      });
+
+      it('should correctly extract symbols from a complete Sales Order Management codeunit', () => {
+        const code = `OBJECT Codeunit 80 SalesPost {
+          CODE {
+            VAR
+              Header : Record 36;
+              Line : Record 37;
+              Entry : Record 21;
+              TotalAmount : Decimal;
+              TotalAmountLCY : Decimal;
+              PostingDate : Date;
+              DocumentNo : Code;
+              ErrorMessage : Text;
+
+            PROCEDURE Run();
+            BEGIN
+            END;
+
+            PROCEDURE Execute();
+            BEGIN
+            END;
+
+            LOCAL PROCEDURE CheckFields();
+            BEGIN
+            END;
+
+            LOCAL PROCEDURE PostHeader();
+            BEGIN
+            END;
+
+            LOCAL PROCEDURE PostLines();
+            BEGIN
+            END;
+
+            PROCEDURE FinalizePosting();
+            BEGIN
+            END;
+
+            LOCAL PROCEDURE UpdateEntry();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        // Count variables and procedures
+        const variables = allSymbols.filter(s => s.kind === 'variable');
+        const procedures = allSymbols.filter(s => s.kind === 'procedure');
+
+        expect(variables.length).toBe(8);
+        expect(procedures.length).toBe(7);
+        expect(allSymbols.length).toBe(15);
+
+        // Verify variables
+        expect(symbolTable.getSymbol('Header')?.kind).toBe('variable');
+        expect(symbolTable.getSymbol('TotalAmount')?.kind).toBe('variable');
+        expect(symbolTable.getSymbol('TotalAmount')?.type).toBe('Decimal');
+        expect(symbolTable.getSymbol('PostingDate')?.type).toBe('Date');
+        expect(symbolTable.getSymbol('DocumentNo')?.type).toBe('Code');
+        expect(symbolTable.getSymbol('ErrorMessage')?.type).toBe('Text');
+
+        // Verify procedures
+        expect(symbolTable.getSymbol('Run')?.kind).toBe('procedure');
+        expect(symbolTable.getSymbol('Execute')?.kind).toBe('procedure');
+        expect(symbolTable.getSymbol('CheckFields')?.kind).toBe('procedure');
+        expect(symbolTable.getSymbol('PostHeader')?.kind).toBe('procedure');
+        expect(symbolTable.getSymbol('FinalizePosting')?.kind).toBe('procedure');
+      });
+
+      it('should correctly extract symbols from a table with both FIELDS and CODE sections', () => {
+        const code = `OBJECT Table 36 "Sales Header"
+{
+  FIELDS
+  {
+    { 1   ;   ;"Document Type"   ;Option        }
+    { 2   ;   ;"Sell-to Customer No.";Code20   }
+    { 3   ;   ;"No."             ;Code20        }
+    { 4   ;   ;"Bill-to Customer No.";Code20   }
+    { 5   ;   ;"Bill-to Name"    ;Text100       }
+    { 6   ;   ;"Bill-to Address" ;Text100       }
+    { 7   ;   ;"Posting Date"    ;Date          }
+    { 8   ;   ;"Document Date"   ;Date          }
+    { 9   ;   ;"Currency Code"   ;Code10        }
+    { 10  ;   ;Amount            ;Decimal       }
+  }
+
+  CODE
+  {
+    VAR
+      Customer : Record 18;
+      SalesSetup : Record 311;
+      GenJnlLine : Record 81;
+      PostingDescription : Text;
+
+    PROCEDURE InitRecord();
+    BEGIN
+    END;
+
+    LOCAL PROCEDURE TestStatusOpen();
+    BEGIN
+    END;
+
+    PROCEDURE Release();
+    BEGIN
+    END;
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        // Verify counts
+        const fields = allSymbols.filter(s => s.kind === 'field');
+        const variables = allSymbols.filter(s => s.kind === 'variable');
+        const procedures = allSymbols.filter(s => s.kind === 'procedure');
+
+        expect(fields.length).toBe(10);
+        expect(variables.length).toBe(4);
+        expect(procedures.length).toBe(3);
+        expect(allSymbols.length).toBe(17);
+
+        // Verify fields are extracted correctly
+        expect(symbolTable.getSymbol('Document Type')?.kind).toBe('field');
+        expect(symbolTable.getSymbol('Document Type')?.type).toBe('Option');
+        expect(symbolTable.getSymbol('Sell-to Customer No.')?.kind).toBe('field');
+        expect(symbolTable.getSymbol('Amount')?.type).toBe('Decimal');
+        expect(symbolTable.getSymbol('Posting Date')?.type).toBe('Date');
+
+        // Verify variables are extracted correctly
+        expect(symbolTable.getSymbol('Customer')?.kind).toBe('variable');
+        expect(symbolTable.getSymbol('PostingDescription')?.kind).toBe('variable');
+        expect(symbolTable.getSymbol('PostingDescription')?.type).toBe('Text');
+
+        // Verify procedures are extracted correctly
+        expect(symbolTable.getSymbol('InitRecord')?.kind).toBe('procedure');
+        expect(symbolTable.getSymbol('TestStatusOpen')?.kind).toBe('procedure');
+        expect(symbolTable.getSymbol('Release')?.kind).toBe('procedure');
+      });
+    });
+
+    describe('Token position tracking through the pipeline', () => {
+      it('should preserve correct token position for first field', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;FirstField      ;Code20        }
+    { 2   ;   ;SecondField     ;Text100       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const symbol = symbolTable.getSymbol('FirstField');
+
+        expect(symbol).toBeDefined();
+        expect(symbol?.token).toBeDefined();
+        expect(symbol?.token.line).toBeGreaterThan(0);
+        expect(symbol?.token.column).toBeGreaterThan(0);
+      });
+
+      it('should preserve correct token position for procedure on specific line', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE FirstProc();
+    BEGIN
+    END;
+
+    PROCEDURE SecondProc();
+    BEGIN
+    END;
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        const firstProc = symbolTable.getSymbol('FirstProc');
+        const secondProc = symbolTable.getSymbol('SecondProc');
+
+        expect(firstProc?.token.line).toBeLessThan(secondProc?.token.line || 0);
+      });
+
+      it('should preserve token information for position tracking', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;MyFieldName     ;Code20        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const symbol = symbolTable.getSymbol('MyFieldName');
+
+        // The startToken points to the field definition entry, providing position info
+        expect(symbol?.token).toBeDefined();
+        expect(symbol?.token.line).toBeGreaterThan(0);
+        expect(symbol?.token.column).toBeGreaterThan(0);
+      });
+
+      it('should track positions for quoted identifiers correctly', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"Customer No."  ;Code20        }
+    { 2   ;   ;"Bill-to Name"  ;Text100       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        const customerNo = symbolTable.getSymbol('Customer No.');
+        const billToName = symbolTable.getSymbol('Bill-to Name');
+
+        expect(customerNo?.token).toBeDefined();
+        expect(customerNo?.token.line).toBeLessThan(billToName?.token.line || 0);
+      });
+    });
+
+    describe('Real-world C/AL patterns', () => {
+      it('should handle NAV-style table with standard field patterns', () => {
+        const code = `OBJECT Table 50000 "My Custom Table"
+{
+  FIELDS
+  {
+    { 1   ;   ;"Entry No."       ;Integer       }
+    { 2   ;   ;"Document Type"   ;Option        }
+    { 3   ;   ;"Document No."    ;Code20        }
+    { 4   ;   ;"Posting Date"    ;Date          }
+    { 5   ;   ;Description       ;Text100       }
+    { 6   ;   ;Amount            ;Decimal       }
+    { 7   ;   ;"Amount (LCY)"    ;Decimal       }
+    { 8   ;   ;"Source Type"     ;Option        }
+    { 9   ;   ;"Source No."      ;Code20        }
+    { 10  ;   ;"User ID"         ;Code50        }
+    { 11  ;   ;"Created DateTime";DateTime      }
+    { 12  ;   ;Open              ;Boolean       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        expect(allSymbols.length).toBe(12);
+
+        // Verify all NAV-standard field patterns are captured
+        expect(symbolTable.hasSymbol('Entry No.')).toBe(true);
+        expect(symbolTable.hasSymbol('Document Type')).toBe(true);
+        expect(symbolTable.hasSymbol('Amount (LCY)')).toBe(true);
+        expect(symbolTable.hasSymbol('User ID')).toBe(true);
+        expect(symbolTable.hasSymbol('Created DateTime')).toBe(true);
+
+        // Verify types
+        expect(symbolTable.getSymbol('Entry No.')?.type).toBe('Integer');
+        expect(symbolTable.getSymbol('Amount (LCY)')?.type).toBe('Decimal');
+        expect(symbolTable.getSymbol('Created DateTime')?.type).toBe('DateTime');
+        expect(symbolTable.getSymbol('Open')?.type).toBe('Boolean');
+      });
+
+      it('should handle codeunit with TEMPORARY records and complex variable declarations', () => {
+        const code = `OBJECT Codeunit 50001 "Batch Processor"
+{
+  CODE
+  {
+    VAR
+      TempSalesLine : TEMPORARY Record 37;
+      TempPurchaseLine : TEMPORARY Record 39;
+      Customer : Record 18;
+      Vendor : Record 23;
+      Counter : Integer;
+      BatchSize : Integer;
+      ProcessingDate : Date;
+      LastErrorText : Text;
+      IsInitialized : Boolean;
+      TotalProcessed : Integer;
+
+    PROCEDURE Initialize();
+    BEGIN
+    END;
+
+    PROCEDURE ProcessBatch();
+    BEGIN
+    END;
+
+    LOCAL PROCEDURE ValidateRecord();
+    BEGIN
+    END;
+
+    LOCAL PROCEDURE PostRecord();
+    BEGIN
+    END;
+
+    PROCEDURE GetStatistics();
+    BEGIN
+    END;
+
+    LOCAL PROCEDURE ClearTemporaryRecords();
+    BEGIN
+    END;
+
+    LOCAL PROCEDURE LogError();
+    BEGIN
+    END;
+
+    PROCEDURE Finalize();
+    BEGIN
+    END;
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        const variables = allSymbols.filter(s => s.kind === 'variable');
+        const procedures = allSymbols.filter(s => s.kind === 'procedure');
+
+        expect(variables.length).toBe(10);
+        expect(procedures.length).toBe(8);
+
+        // Verify TEMPORARY records are captured
+        expect(symbolTable.hasSymbol('TempSalesLine')).toBe(true);
+        expect(symbolTable.hasSymbol('TempPurchaseLine')).toBe(true);
+
+        // Verify regular records
+        expect(symbolTable.hasSymbol('Customer')).toBe(true);
+        expect(symbolTable.hasSymbol('Vendor')).toBe(true);
+
+        // Verify simple types
+        expect(symbolTable.getSymbol('Counter')?.type).toBe('Integer');
+        expect(symbolTable.getSymbol('ProcessingDate')?.type).toBe('Date');
+        expect(symbolTable.getSymbol('LastErrorText')?.type).toBe('Text');
+        expect(symbolTable.getSymbol('IsInitialized')?.type).toBe('Boolean');
+      });
+
+      it('should handle procedure with @number syntax used in older NAV versions', () => {
+        const code = `OBJECT Codeunit 50002 "Legacy Code"
+{
+  CODE
+  {
+    VAR
+      SalesHeader@1000 : Record 36;
+      PostingDate@1001 : Date;
+
+    LOCAL PROCEDURE CheckDocument@1() : Boolean;
+    BEGIN
+    END;
+
+    PROCEDURE ProcessDocument@2();
+    BEGIN
+    END;
+
+    LOCAL PROCEDURE PostDocument@3();
+    BEGIN
+    END;
+
+    PROCEDURE GetResult@100() : Text;
+    BEGIN
+    END;
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        // Variables with @number should be extracted
+        expect(symbolTable.hasSymbol('SalesHeader')).toBe(true);
+        expect(symbolTable.hasSymbol('PostingDate')).toBe(true);
+
+        // Procedures with @number should be extracted
+        expect(symbolTable.hasSymbol('CheckDocument')).toBe(true);
+        expect(symbolTable.hasSymbol('ProcessDocument')).toBe(true);
+        expect(symbolTable.hasSymbol('PostDocument')).toBe(true);
+        expect(symbolTable.hasSymbol('GetResult')).toBe(true);
+
+        expect(symbolTable.getSymbol('CheckDocument')?.kind).toBe('procedure');
+        expect(symbolTable.getSymbol('ProcessDocument')?.kind).toBe('procedure');
+      });
+
+      it('should handle mixed LOCAL and public procedures in realistic codeunit', () => {
+        const code = `OBJECT Codeunit 50003 "Document Validation"
+{
+  CODE
+  {
+    VAR
+      ErrorBuffer : Text;
+      WarningCount : Integer;
+      ErrorCount : Integer;
+
+    PROCEDURE ValidateDocument();
+    BEGIN
+    END;
+
+    LOCAL PROCEDURE CheckHeader();
+    BEGIN
+    END;
+
+    LOCAL PROCEDURE CheckLines();
+    BEGIN
+    END;
+
+    LOCAL PROCEDURE CheckAmounts();
+    BEGIN
+    END;
+
+    PROCEDURE GetErrors() : Text;
+    BEGIN
+    END;
+
+    LOCAL PROCEDURE AddError();
+    BEGIN
+    END;
+
+    LOCAL PROCEDURE AddWarning();
+    BEGIN
+    END;
+
+    PROCEDURE HasErrors() : Boolean;
+    BEGIN
+    END;
+
+    PROCEDURE ClearErrors();
+    BEGIN
+    END;
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        const allSymbols = symbolTable.getAllSymbols();
+        const procedures = allSymbols.filter(s => s.kind === 'procedure');
+        const variables = allSymbols.filter(s => s.kind === 'variable');
+
+        expect(procedures.length).toBe(9);
+        expect(variables.length).toBe(3);
+
+        // All procedures (LOCAL and public) should be in symbol table
+        expect(symbolTable.hasSymbol('ValidateDocument')).toBe(true);
+        expect(symbolTable.hasSymbol('CheckHeader')).toBe(true);
+        expect(symbolTable.hasSymbol('CheckLines')).toBe(true);
+        expect(symbolTable.hasSymbol('GetErrors')).toBe(true);
+        expect(symbolTable.hasSymbol('AddError')).toBe(true);
+        expect(symbolTable.hasSymbol('HasErrors')).toBe(true);
+        expect(symbolTable.hasSymbol('ClearErrors')).toBe(true);
+      });
+    });
+
+    describe('Complex identifier scenarios', () => {
+      it('should handle fields with all allowed special characters in names', () => {
+        const code = `OBJECT Table 50004 "Special Fields"
+{
+  FIELDS
+  {
+    { 1   ;   ;"VAT %"             ;Decimal       }
+    { 2   ;   ;"Profit %"          ;Decimal       }
+    { 3   ;   ;"Amount (LCY)"      ;Decimal       }
+    { 4   ;   ;"Balance (LCY)"     ;Decimal       }
+    { 5   ;   ;"No. Series"        ;Code20        }
+    { 6   ;   ;"Gen. Bus. Posting Group";Code20  }
+    { 7   ;   ;"Phone No. 2"       ;Text30        }
+    { 8   ;   ;"E-Mail"            ;Text80        }
+    { 9   ;   ;"Fax No."           ;Text30        }
+    { 10  ;   ;"Home Page"         ;Text80        }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.getAllSymbols().length).toBe(10);
+
+        // Verify special character handling
+        expect(symbolTable.hasSymbol('VAT %')).toBe(true);
+        expect(symbolTable.hasSymbol('Amount (LCY)')).toBe(true);
+        expect(symbolTable.hasSymbol('No. Series')).toBe(true);
+        expect(symbolTable.hasSymbol('Gen. Bus. Posting Group')).toBe(true);
+        expect(symbolTable.hasSymbol('E-Mail')).toBe(true);
+
+        // Case-insensitive with special characters
+        expect(symbolTable.hasSymbol('vat %')).toBe(true);
+        expect(symbolTable.hasSymbol('AMOUNT (LCY)')).toBe(true);
+        expect(symbolTable.hasSymbol('gen. bus. posting group')).toBe(true);
+      });
+
+      it('should handle long identifier names up to NAV limits', () => {
+        const code = `OBJECT Table 50005 "Long Names"
+{
+  FIELDS
+  {
+    { 1   ;   ;"This Is A Very Long Field Name With Many Words";Text100 }
+    { 2   ;   ;"AnotherLongFieldNameWithoutSpacesBetweenWords";Integer }
+    { 3   ;   ;Short;Code10 }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('This Is A Very Long Field Name With Many Words')).toBe(true);
+        expect(symbolTable.hasSymbol('AnotherLongFieldNameWithoutSpacesBetweenWords')).toBe(true);
+        expect(symbolTable.hasSymbol('Short')).toBe(true);
+
+        // Verify lookup works with different cases on long names
+        expect(symbolTable.hasSymbol('this is a very long field name with many words')).toBe(true);
+      });
+
+      it('should handle identifiers that resemble C/AL keywords', () => {
+        const code = `OBJECT Table 50006 "Keyword-like Names"
+{
+  FIELDS
+  {
+    { 1   ;   ;"Begin Date"      ;Date          }
+    { 2   ;   ;"End Date"        ;Date          }
+    { 3   ;   ;"If Enabled"      ;Boolean       }
+    { 4   ;   ;"Then Value"      ;Text50        }
+    { 5   ;   ;"Else Value"      ;Text50        }
+    { 6   ;   ;"For Counter"     ;Integer       }
+    { 7   ;   ;"While Active"    ;Boolean       }
+    { 8   ;   ;"Repeat Count"    ;Integer       }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        // Verify keyword-like names are treated as identifiers, not keywords
+        expect(symbolTable.hasSymbol('Begin Date')).toBe(true);
+        expect(symbolTable.hasSymbol('End Date')).toBe(true);
+        expect(symbolTable.hasSymbol('If Enabled')).toBe(true);
+        expect(symbolTable.hasSymbol('Then Value')).toBe(true);
+        expect(symbolTable.hasSymbol('Else Value')).toBe(true);
+        expect(symbolTable.hasSymbol('For Counter')).toBe(true);
+
+        expect(symbolTable.getSymbol('Begin Date')?.kind).toBe('field');
+        expect(symbolTable.getSymbol('If Enabled')?.kind).toBe('field');
+      });
+    });
+
+    describe('End-to-end verification', () => {
+      it('should produce consistent results when re-parsing the same code', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."           ;Code20        }
+    { 2   ;   ;Name            ;Text100       }
+    { 3   ;   ;Balance         ;Decimal       }
+  }
+}`;
+        // Build symbol table twice from the same code
+        const symbolTable1 = buildSymbolTable(code);
+        const symbolTable2 = buildSymbolTable(code);
+
+        const symbols1 = symbolTable1.getAllSymbols();
+        const symbols2 = symbolTable2.getAllSymbols();
+
+        expect(symbols1.length).toBe(symbols2.length);
+
+        // Verify same symbols are extracted
+        for (const symbol of symbols1) {
+          expect(symbolTable2.hasSymbol(symbol.name)).toBe(true);
+          const corresponding = symbolTable2.getSymbol(symbol.name);
+          expect(corresponding?.kind).toBe(symbol.kind);
+          expect(corresponding?.type).toBe(symbol.type);
+        }
+      });
+
+      it('should correctly lexify, parse, and build symbols for a complete realistic table', () => {
+        const code = `OBJECT Table 21 "Cust. Ledger Entry"
+{
+  FIELDS
+  {
+    { 1   ;   ;"Entry No."       ;Integer       }
+    { 3   ;   ;"Customer No."    ;Code20        }
+    { 4   ;   ;"Posting Date"    ;Date          }
+    { 5   ;   ;"Document Type"   ;Option        }
+    { 6   ;   ;"Document No."    ;Code20        }
+    { 7   ;   ;Description       ;Text100       }
+    { 11  ;   ;"Currency Code"   ;Code10        }
+    { 13  ;   ;Amount            ;Decimal       }
+    { 14  ;   ;"Remaining Amount";Decimal       }
+    { 15  ;   ;"Original Amt. (LCY)";Decimal    }
+    { 16  ;   ;"Remaining Amt. (LCY)";Decimal   }
+    { 17  ;   ;"Amount (LCY)"    ;Decimal       }
+    { 18  ;   ;"Sales (LCY)"     ;Decimal       }
+    { 20  ;   ;"Due Date"        ;Date          }
+    { 22  ;   ;"Pmt. Discount Date";Date        }
+    { 23  ;   ;"Original Pmt. Disc. Possible";Decimal }
+    { 36  ;   ;Open              ;Boolean       }
+    { 43  ;   ;Positive          ;Boolean       }
+    { 44  ;   ;"Closed by Entry No.";Integer    }
+    { 45  ;   ;"Closed at Date"  ;Date          }
+  }
+}`;
+        // This tests the full pipeline
+        const ast = parseCode(code);
+        expect(ast).toBeDefined();
+        expect(ast.object).toBeDefined();
+        expect(ast.object?.objectKind).toBe('Table');
+        expect(ast.object?.objectId).toBe(21);
+        expect(ast.object?.objectName).toBe('Cust. Ledger Entry');
+
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const allSymbols = symbolTable.getAllSymbols();
+        expect(allSymbols.length).toBe(20);
+
+        // Spot check various fields
+        expect(symbolTable.getSymbol('Entry No.')?.type).toBe('Integer');
+        expect(symbolTable.getSymbol('Posting Date')?.type).toBe('Date');
+        expect(symbolTable.getSymbol('Amount (LCY)')?.type).toBe('Decimal');
+        expect(symbolTable.getSymbol('Open')?.type).toBe('Boolean');
+
+        // Verify all symbols have required properties
+        for (const symbol of allSymbols) {
+          expect(symbol.name).toBeTruthy();
+          expect(symbol.kind).toBe('field');
+          expect(symbol.token).toBeDefined();
+          expect(symbol.type).toBeTruthy();
+        }
+      });
+
+      it('should correctly process a codeunit with all typical sections', () => {
+        const code = `OBJECT Codeunit 12 "Gen. Jnl.-Post Line" {
+          CODE {
+            VAR
+              GLEntry : Record 17;
+              CustLedgEntry : Record 21;
+              VendLedgEntry : Record 25;
+              BankAccLedgEntry : Record 271;
+              GenJnlLine : Record 81;
+              Currency : Record 4;
+              CurrExchRate : Record 330;
+              GLSetup : Record 98;
+              AddCurrency : Record 4;
+              GLReg : Record 45;
+              NextEntryNo : Integer;
+              NextTransactionNo : Integer;
+              FiscalYearStartDate : Date;
+              BalanceCheckAmount : Decimal;
+              BalanceCheckAmountLCY : Decimal;
+              BalanceCheckAddCurrAmount : Decimal;
+
+            PROCEDURE RunWithCheck();
+            BEGIN
+            END;
+
+            PROCEDURE RunWithoutCheck();
+            BEGIN
+            END;
+
+            LOCAL PROCEDURE InitLastDocNo();
+            BEGIN
+            END;
+
+            LOCAL PROCEDURE InitNextEntryNo();
+            BEGIN
+            END;
+
+            PROCEDURE PostGLAcc();
+            BEGIN
+            END;
+
+            PROCEDURE PostCust();
+            BEGIN
+            END;
+
+            PROCEDURE PostVend();
+            BEGIN
+            END;
+
+            PROCEDURE PostBankAcc();
+            BEGIN
+            END;
+
+            LOCAL PROCEDURE InsertGLEntry();
+            BEGIN
+            END;
+
+            LOCAL PROCEDURE CreateGLEntry();
+            BEGIN
+            END;
+
+            LOCAL PROCEDURE CalcCurrencyAmount();
+            BEGIN
+            END;
+
+            LOCAL PROCEDURE CalcAddCurrencyAmount();
+            BEGIN
+            END;
+
+            PROCEDURE Finalize();
+            BEGIN
+            END;
+          }
+        }`;
+        const symbolTable = buildSymbolTable(code);
+        const allSymbols = symbolTable.getAllSymbols();
+
+        const variables = allSymbols.filter(s => s.kind === 'variable');
+        const procedures = allSymbols.filter(s => s.kind === 'procedure');
+
+        // Verify counts (16 variables, 13 procedures)
+        expect(variables.length).toBe(16);
+        expect(procedures.length).toBe(13);
+
+        // Verify Record type variables
+        expect(symbolTable.hasSymbol('GLEntry')).toBe(true);
+        expect(symbolTable.hasSymbol('CustLedgEntry')).toBe(true);
+        expect(symbolTable.hasSymbol('VendLedgEntry')).toBe(true);
+
+        // Verify simple type variables
+        expect(symbolTable.getSymbol('NextEntryNo')?.type).toBe('Integer');
+        expect(symbolTable.getSymbol('FiscalYearStartDate')?.type).toBe('Date');
+        expect(symbolTable.getSymbol('BalanceCheckAmount')?.type).toBe('Decimal');
+
+        // Verify procedures (both PUBLIC and LOCAL)
+        expect(symbolTable.hasSymbol('RunWithCheck')).toBe(true);
+        expect(symbolTable.hasSymbol('PostGLAcc')).toBe(true);
+        expect(symbolTable.hasSymbol('InsertGLEntry')).toBe(true);
+        expect(symbolTable.hasSymbol('CalcCurrencyAmount')).toBe(true);
+        expect(symbolTable.hasSymbol('Finalize')).toBe(true);
+      });
+    });
+  });
 });
