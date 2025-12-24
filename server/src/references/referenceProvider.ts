@@ -12,27 +12,15 @@ import {
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import {
   CALDocument,
-  Expression,
-  Statement,
   Identifier,
-  BinaryExpression,
-  UnaryExpression,
-  MemberExpression,
-  CallExpression,
-  ArrayAccessExpression,
-  BlockStatement,
-  IfStatement,
-  WhileStatement,
-  RepeatStatement,
-  ForStatement,
-  CaseStatement,
-  AssignmentStatement,
-  CallStatement,
-  ExitStatement,
   ProcedureDeclaration,
-  TriggerDeclaration
+  VariableDeclaration,
+  ParameterDeclaration,
+  FieldDeclaration
 } from '../parser/ast';
 import { Token } from '../lexer/tokens';
+import { ASTVisitor } from '../visitor/astVisitor';
+import { ASTWalker } from '../visitor/astWalker';
 
 /** Regex pattern for valid C/AL identifier characters */
 const IDENTIFIER_PATTERN = /[a-zA-Z0-9_]/;
@@ -47,10 +35,94 @@ interface SymbolReference {
 }
 
 /**
+ * Visitor that collects all symbol references from the AST.
+ *
+ * This visitor implements the ASTVisitor pattern to collect:
+ * - Variable definitions and usages
+ * - Procedure definitions and calls
+ * - Parameter definitions and usages
+ * - Field definitions and usages
+ *
+ * The walker handles all traversal logic, while this visitor focuses
+ * solely on collecting references.
+ */
+class ReferenceCollectorVisitor implements Partial<ASTVisitor> {
+  /** Collected symbol references */
+  public readonly refs: SymbolReference[] = [];
+
+  /**
+   * Visit an Identifier node - collect as a reference (not definition)
+   */
+  visitIdentifier(node: Identifier): void {
+    this.refs.push({
+      name: node.name,
+      token: node.startToken,
+      isDefinition: false
+    });
+  }
+
+  // Note: MemberExpression and ForStatement don't need explicit visitor methods.
+  // The walker visits all children automatically:
+  // - MemberExpression.property (Identifier) is collected by visitIdentifier
+  // - ForStatement.variable (Identifier) is collected by visitIdentifier
+
+  /**
+   * Visit a VariableDeclaration node - collect as a definition
+   */
+  visitVariableDeclaration(node: VariableDeclaration): void {
+    this.refs.push({
+      name: node.name,
+      token: node.startToken,
+      isDefinition: true
+    });
+  }
+
+  /**
+   * Visit a ParameterDeclaration node - collect as a definition
+   */
+  visitParameterDeclaration(node: ParameterDeclaration): void {
+    this.refs.push({
+      name: node.name,
+      token: node.startToken,
+      isDefinition: true
+    });
+  }
+
+  /**
+   * Visit a ProcedureDeclaration node - collect the procedure name as a definition
+   */
+  visitProcedureDeclaration(node: ProcedureDeclaration): void {
+    this.refs.push({
+      name: node.name,
+      token: node.startToken,
+      isDefinition: true
+    });
+  }
+
+  // Note: TriggerDeclaration doesn't need an explicit visitor method.
+  // Triggers don't add a name reference themselves.
+  // Their local variables are visited by the walker and collected by visitVariableDeclaration.
+
+  /**
+   * Visit a FieldDeclaration node - collect as a definition
+   */
+  visitFieldDeclaration(node: FieldDeclaration): void {
+    this.refs.push({
+      name: node.fieldName,
+      token: node.startToken,
+      isDefinition: true
+    });
+  }
+}
+
+/**
  * Reference provider class
  * Handles "Find All References" requests for C/AL symbols
  */
 export class ReferenceProvider {
+  /** Shared ASTWalker instance (stateless, can be reused) */
+  private readonly walker = new ASTWalker();
+
   /**
    * Helper to scan backwards from an offset while a predicate is true
    */
@@ -164,282 +236,15 @@ export class ReferenceProvider {
   }
 
   /**
-   * Collect all identifier references from an expression
-   */
-  private collectFromExpression(expr: Expression | null, refs: SymbolReference[]): void {
-    if (!expr) return;
-
-    switch (expr.type) {
-      case 'Identifier': {
-        const id = expr as Identifier;
-        refs.push({
-          name: id.name,
-          token: id.startToken,
-          isDefinition: false
-        });
-        break;
-      }
-
-      case 'BinaryExpression': {
-        const bin = expr as BinaryExpression;
-        this.collectFromExpression(bin.left, refs);
-        this.collectFromExpression(bin.right, refs);
-        break;
-      }
-
-      case 'UnaryExpression': {
-        const unary = expr as UnaryExpression;
-        this.collectFromExpression(unary.operand, refs);
-        break;
-      }
-
-      case 'MemberExpression': {
-        const member = expr as MemberExpression;
-        this.collectFromExpression(member.object, refs);
-        // Also collect the property (field reference)
-        refs.push({
-          name: member.property.name,
-          token: member.property.startToken,
-          isDefinition: false
-        });
-        break;
-      }
-
-      case 'CallExpression': {
-        const call = expr as CallExpression;
-        this.collectFromExpression(call.callee, refs);
-        for (const arg of call.arguments) {
-          this.collectFromExpression(arg, refs);
-        }
-        break;
-      }
-
-      case 'ArrayAccessExpression': {
-        const arr = expr as ArrayAccessExpression;
-        this.collectFromExpression(arr.array, refs);
-        this.collectFromExpression(arr.index, refs);
-        break;
-      }
-
-      // Literals don't contain identifiers
-      case 'Literal':
-        break;
-
-      default:
-        // Unknown expression type - ignore
-        break;
-    }
-  }
-
-  /**
-   * Collect all identifier references from a statement
-   */
-  private collectFromStatement(stmt: Statement | null, refs: SymbolReference[]): void {
-    if (!stmt) return;
-
-    switch (stmt.type) {
-      case 'BlockStatement': {
-        const block = stmt as BlockStatement;
-        for (const s of block.statements) {
-          this.collectFromStatement(s, refs);
-        }
-        break;
-      }
-
-      case 'IfStatement': {
-        const ifStmt = stmt as IfStatement;
-        this.collectFromExpression(ifStmt.condition, refs);
-        this.collectFromStatement(ifStmt.thenBranch, refs);
-        if (ifStmt.elseBranch) {
-          this.collectFromStatement(ifStmt.elseBranch, refs);
-        }
-        break;
-      }
-
-      case 'WhileStatement': {
-        const whileStmt = stmt as WhileStatement;
-        this.collectFromExpression(whileStmt.condition, refs);
-        this.collectFromStatement(whileStmt.body, refs);
-        break;
-      }
-
-      case 'RepeatStatement': {
-        const repeat = stmt as RepeatStatement;
-        for (const s of repeat.body) {
-          this.collectFromStatement(s, refs);
-        }
-        this.collectFromExpression(repeat.condition, refs);
-        break;
-      }
-
-      case 'ForStatement': {
-        const forStmt = stmt as ForStatement;
-        // The loop variable is a reference (write)
-        refs.push({
-          name: forStmt.variable.name,
-          token: forStmt.variable.startToken,
-          isDefinition: false
-        });
-        this.collectFromExpression(forStmt.from, refs);
-        this.collectFromExpression(forStmt.to, refs);
-        this.collectFromStatement(forStmt.body, refs);
-        break;
-      }
-
-      case 'CaseStatement': {
-        const caseStmt = stmt as CaseStatement;
-        this.collectFromExpression(caseStmt.expression, refs);
-        for (const branch of caseStmt.branches) {
-          for (const val of branch.values) {
-            this.collectFromExpression(val, refs);
-          }
-          for (const s of branch.statements) {
-            this.collectFromStatement(s, refs);
-          }
-        }
-        if (caseStmt.elseBranch) {
-          for (const s of caseStmt.elseBranch) {
-            this.collectFromStatement(s, refs);
-          }
-        }
-        break;
-      }
-
-      case 'AssignmentStatement': {
-        const assign = stmt as AssignmentStatement;
-        this.collectFromExpression(assign.target, refs);
-        this.collectFromExpression(assign.value, refs);
-        break;
-      }
-
-      case 'CallStatement': {
-        const call = stmt as CallStatement;
-        this.collectFromExpression(call.expression, refs);
-        break;
-      }
-
-      case 'ExitStatement': {
-        const exit = stmt as ExitStatement;
-        if (exit.value) {
-          this.collectFromExpression(exit.value, refs);
-        }
-        break;
-      }
-
-      default:
-        // Unknown statement type - ignore
-        break;
-    }
-  }
-
-  /**
-   * Collect all references from a procedure
-   */
-  private collectFromProcedure(proc: ProcedureDeclaration, refs: SymbolReference[]): void {
-    // Procedure name is a definition
-    refs.push({
-      name: proc.name,
-      token: proc.startToken,
-      isDefinition: true
-    });
-
-    // Parameters are definitions
-    for (const param of proc.parameters) {
-      refs.push({
-        name: param.name,
-        token: param.startToken,
-        isDefinition: true
-      });
-    }
-
-    // Local variables are definitions
-    for (const variable of proc.variables) {
-      refs.push({
-        name: variable.name,
-        token: variable.startToken,
-        isDefinition: true
-      });
-    }
-
-    // Body statements contain references
-    // Note: proc.body may contain BlockStatement(s) or direct statements
-    for (const stmt of proc.body) {
-      this.collectFromStatement(stmt, refs);
-    }
-  }
-
-  /**
-   * Collect all references from a trigger
-   */
-  private collectFromTrigger(trigger: TriggerDeclaration, refs: SymbolReference[]): void {
-    // Local variables are definitions
-    for (const variable of trigger.variables) {
-      refs.push({
-        name: variable.name,
-        token: variable.startToken,
-        isDefinition: true
-      });
-    }
-
-    // Body statements contain references
-    for (const stmt of trigger.body) {
-      this.collectFromStatement(stmt, refs);
-    }
-  }
-
-  /**
-   * Collect all symbol references from the AST
+   * Collect all symbol references from the AST using the visitor pattern.
+   *
+   * Uses ReferenceCollectorVisitor with ASTWalker to traverse the AST
+   * and collect all symbol definitions and usages.
    */
   private collectAllReferences(ast: CALDocument): SymbolReference[] {
-    const refs: SymbolReference[] = [];
-
-    if (!ast.object) {
-      return refs;
-    }
-
-    const obj = ast.object;
-
-    // Fields are definitions
-    if (obj.fields) {
-      for (const field of obj.fields.fields) {
-        refs.push({
-          name: field.fieldName,
-          token: field.startToken,
-          isDefinition: true
-        });
-
-        // Collect from field triggers (OnValidate, OnLookup, etc.)
-        if (field.triggers) {
-          for (const trigger of field.triggers) {
-            this.collectFromTrigger(trigger, refs);
-          }
-        }
-      }
-    }
-
-    // Code section
-    if (obj.code) {
-      // Global variables are definitions
-      for (const variable of obj.code.variables) {
-        refs.push({
-          name: variable.name,
-          token: variable.startToken,
-          isDefinition: true
-        });
-      }
-
-      // Procedures
-      for (const proc of obj.code.procedures) {
-        this.collectFromProcedure(proc, refs);
-      }
-
-      // Triggers
-      for (const trigger of obj.code.triggers) {
-        this.collectFromTrigger(trigger, refs);
-      }
-    }
-
-    return refs;
+    const visitor = new ReferenceCollectorVisitor();
+    this.walker.walk(ast, visitor);
+    return visitor.refs;
   }
 
   /**

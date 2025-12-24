@@ -170,7 +170,7 @@
     "cargo_aliases": [],
     "shell_scripts": []
   },
-  "project_dir": "/home/klaus/Source/C-AL-Language/.worktrees/011-create-tests-for-cross-file-features",
-  "created_at": "2025-12-24T01:54:00.845943",
-  "project_hash": "033dfbbb681e654c6df88788e7605c29"
+  "project_dir": "/home/klaus/Source/C-AL-Language/.worktrees/012-implement-visitor-pattern-for-ast-traversal",
+  "created_at": "2025-12-24T01:54:33.284121",
+  "project_hash": "5ecd74b0e0ed777c2ec08231023e5ee4"
 }

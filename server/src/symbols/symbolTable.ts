@@ -6,6 +6,8 @@ import {
   TriggerDeclaration,
   FieldDeclaration
 } from '../parser/ast';
+import { ASTVisitor } from '../visitor/astVisitor';
+import { ASTWalker } from '../visitor/astWalker';
 
 export interface Symbol {
   name: string;
@@ -133,12 +135,132 @@ export class Scope {
   }
 }
 
+/**
+ * Visitor that collects symbols from AST nodes and builds a hierarchical scope structure.
+ * Used internally by SymbolTable to build symbol tables using the ASTWalker.
+ */
+class SymbolCollectorVisitor implements Partial<ASTVisitor> {
+  private readonly rootScope: Scope;
+  private currentScope: Scope;
+
+  constructor(rootScope: Scope) {
+    this.rootScope = rootScope;
+    this.currentScope = rootScope;
+  }
+
+  /**
+   * Visit a FieldDeclaration node and add it to the current scope
+   */
+  visitFieldDeclaration(node: FieldDeclaration): void | false {
+    this.currentScope.addSymbol({
+      name: node.fieldName,
+      kind: 'field',
+      token: node.startToken,
+      type: node.dataType.typeName
+    });
+
+    // Field triggers are now handled by the walker traversing node.triggers
+    // and calling visitTriggerDeclaration for each trigger
+  }
+
+  /**
+   * Visit a VariableDeclaration node and add it to the current scope.
+   * This captures both global variables (in CodeSection) and local variables.
+   */
+  visitVariableDeclaration(node: VariableDeclaration): void | false {
+    this.currentScope.addSymbol({
+      name: node.name,
+      kind: 'variable',
+      token: node.startToken,
+      type: node.dataType.typeName
+    });
+  }
+
+  /**
+   * Visit a ProcedureDeclaration node and add it to the current scope.
+   * Creates a child scope for the procedure's local variables and parameters.
+   */
+  visitProcedureDeclaration(node: ProcedureDeclaration): void | false {
+    // Add procedure name to current scope (so it can be called from anywhere)
+    this.currentScope.addSymbol({
+      name: node.name,
+      kind: 'procedure',
+      token: node.startToken
+    });
+
+    // Create child scope for procedure body
+    const procScope = new Scope(this.currentScope);
+    procScope.startOffset = node.startToken.startOffset;
+    procScope.endOffset = node.endToken.endOffset;
+
+    // Add parameters to procedure scope
+    for (const param of node.parameters) {
+      procScope.addSymbol({
+        name: param.name,
+        kind: 'parameter',
+        token: param.startToken,
+        type: param.dataType.typeName
+      });
+    }
+
+    // Switch to procedure scope to collect local variables, then restore
+    const prevScope = this.currentScope;
+    this.currentScope = procScope;
+
+    // Manually add local variables to procedure scope
+    for (const variable of node.variables) {
+      procScope.addSymbol({
+        name: variable.name,
+        kind: 'variable',
+        token: variable.startToken,
+        type: variable.dataType.typeName
+      });
+    }
+
+    // Restore previous scope
+    this.currentScope = prevScope;
+
+    // Return false to prevent walker from re-traversing children
+    return false;
+  }
+
+  /**
+   * Visit a TriggerDeclaration node and add its local variables to a child scope.
+   */
+  visitTriggerDeclaration(node: TriggerDeclaration): void | false {
+    // Create child scope for trigger body
+    const triggerScope = new Scope(this.currentScope);
+    triggerScope.startOffset = node.startToken.startOffset;
+    triggerScope.endOffset = node.endToken.endOffset;
+
+    // Switch to trigger scope, handle variables, then restore
+    const prevScope = this.currentScope;
+    this.currentScope = triggerScope;
+
+    // Add local variables to trigger scope
+    for (const variable of node.variables) {
+      triggerScope.addSymbol({
+        name: variable.name,
+        kind: 'variable',
+        token: variable.startToken,
+        type: variable.dataType.typeName
+      });
+    }
+
+    // Restore previous scope
+    this.currentScope = prevScope;
+
+    // Return false to prevent walker from re-traversing children
+    return false;
+  }
+}
+
 export class SymbolTable {
   /** Root scope containing global symbols (fields, global variables, procedures) */
   private rootScope: Scope = new Scope(null);
 
   /**
-   * Build symbol table from AST.
+   * Build symbol table from AST using the visitor pattern.
    * Creates a hierarchical scope structure:
    * - Root scope: fields, global variables, procedure/trigger names
    * - Child scopes: procedure parameters and local variables, trigger local variables
@@ -151,105 +273,10 @@ export class SymbolTable {
       return;
     }
 
-    const obj = ast.object;
+    const walker = new ASTWalker();
+    const visitor = new SymbolCollectorVisitor(this.rootScope);
 
-    // Add fields to root scope
-    if (obj.fields) {
-      for (const field of obj.fields.fields) {
-        this.rootScope.addSymbol({
-          name: field.fieldName,
-          kind: 'field',
-          token: field.startToken,
-          type: field.dataType.typeName
-        });
-
-        // Add local variables from field triggers (OnValidate, OnLookup, etc.)
-        if (field.triggers) {
-          for (const trigger of field.triggers) {
-            // Create child scope for field trigger body
-            const triggerScope = new Scope(this.rootScope);
-            triggerScope.startOffset = trigger.startToken.startOffset;
-            triggerScope.endOffset = trigger.endToken.endOffset;
-
-            // Add local variables to trigger scope
-            for (const variable of trigger.variables) {
-              triggerScope.addSymbol({
-                name: variable.name,
-                kind: 'variable',
-                token: variable.startToken,
-                type: variable.dataType.typeName
-              });
-            }
-          }
-        }
-      }
-    }
-
-    // Add code section symbols
-    if (obj.code) {
-      // Global variables go to root scope
-      for (const variable of obj.code.variables) {
-        this.rootScope.addSymbol({
-          name: variable.name,
-          kind: 'variable',
-          token: variable.startToken,
-          type: variable.dataType.typeName
-        });
-      }
-
-      // Procedures get their own child scope
-      for (const procedure of obj.code.procedures) {
-        // Add procedure name to root scope (so it can be called from anywhere)
-        this.rootScope.addSymbol({
-          name: procedure.name,
-          kind: 'procedure',
-          token: procedure.startToken
-        });
-
-        // Create child scope for procedure body
-        const procScope = new Scope(this.rootScope);
-        procScope.startOffset = procedure.startToken.startOffset;
-        procScope.endOffset = procedure.endToken.endOffset;
-
-        // Add parameters to procedure scope
-        for (const param of procedure.parameters) {
-          procScope.addSymbol({
-            name: param.name,
-            kind: 'parameter',
-            token: param.startToken,
-            type: param.dataType.typeName
-          });
-        }
-
-        // Add local variables to procedure scope
-        for (const variable of procedure.variables) {
-          procScope.addSymbol({
-            name: variable.name,
-            kind: 'variable',
-            token: variable.startToken,
-            type: variable.dataType.typeName
-          });
-        }
-      }
-
-      // Triggers also get their own child scope
-      for (const trigger of obj.code.triggers) {
-        // Create child scope for trigger body
-        const triggerScope = new Scope(this.rootScope);
-        triggerScope.startOffset = trigger.startToken.startOffset;
-        triggerScope.endOffset = trigger.endToken.endOffset;
-
-        // Add local variables to trigger scope
-        for (const variable of trigger.variables) {
-          triggerScope.addSymbol({
-            name: variable.name,
-            kind: 'variable',
-            token: variable.startToken,
-            type: variable.dataType.typeName
-          });
-        }
-      }
-    }
+    walker.walk(ast, visitor);
   }
 
   /**
