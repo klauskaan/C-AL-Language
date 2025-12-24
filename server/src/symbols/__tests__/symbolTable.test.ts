@@ -621,30 +621,28 @@ describe('SymbolTable', () => {
         expect(symbol?.kind).toBe('field');
       });
 
-      it.skip('should extract field validation triggers - SKIPPED: test uses unsupported inline trigger syntax', () => {
-        // This test is skipped because C/AL does not support inline "Triggers = [...]" syntax for fields.
-        // Field triggers are declared differently in real C/AL code.
-        // See test/fixtures/regression/table-18-customer.cal for real C/AL examples.
+      it('should extract field with validation trigger', () => {
+        // Valid C/AL syntax: field triggers are properties after the data type
+        // See test/fixtures/regression/table-50000-customer-extended.cal for real examples
         const code = `OBJECT Table 50000 TestTable
 {
   FIELDS
   {
-    {
-      1;No.;Code20;
-      Triggers = [
-        OnValidate=BEGIN
-          IF No. = '' THEN
-            ERROR('No. cannot be empty');
-        END;
-      ]
-    }
+    { 1   ;   ;"No."               ;Code20        ;OnValidate=BEGIN
+                                                                IF "No." = '' THEN
+                                                                  ERROR('No. cannot be empty');
+                                                              END;
+                                                               }
   }
 }`;
         const symbolTable = buildSymbolTable(code);
 
+        // The field should be extracted even with a validation trigger
         expect(symbolTable.hasSymbol('No.')).toBe(true);
         const symbol = symbolTable.getSymbol('No.');
         expect(symbol).toBeDefined();
+        expect(symbol?.kind).toBe('field');
+        expect(symbol?.type).toBe('Code20');
       });
     });
 
