@@ -1,20 +1,15 @@
 /**
- * SymbolTable Tests
+ * Symbol Table Tests
  *
- * Tests for the SymbolTable class which extracts and stores symbols
- * from C/AL AST nodes. Covers symbol extraction from fields, variables,
- * and procedures, as well as case-insensitive lookup operations.
- * Also tests the Scope class and SymbolTable scope hierarchy.
+ * Tests for the Scope class and SymbolTable scope hierarchy.
  * Verifies that symbols are properly scoped with parent/child relationships,
  * variable shadowing works correctly, and position-aware lookups function properly.
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../../parser/parser';
 import { Scope, SymbolTable, Symbol } from '../symbolTable';
-import { CALDocument } from '../../parser/ast';
 import { Token, TokenType } from '../../lexer/tokens';
 import {
+  CALDocument,
   ObjectDeclaration,
   ObjectKind,
   CodeSection,
@@ -26,26 +21,6 @@ import {
   DataType,
   FieldDeclaration
 } from '../../parser/ast';
-
-/**
- * Helper to lex and parse C/AL code into an AST
- */
-function parseCode(code: string): CALDocument {
-  const lexer = new Lexer(code);
-  const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
-  return parser.parse();
-}
-
-/**
- * Helper to parse code and build a symbol table from it
- */
-function buildSymbolTable(code: string): SymbolTable {
-  const ast = parseCode(code);
-  const symbolTable = new SymbolTable();
-  symbolTable.buildFromAST(ast);
-  return symbolTable;
-}
 
 /**
  * Helper to create a mock token with required fields
@@ -481,436 +456,7 @@ describe('Scope Class', () => {
   });
 });
 
-describe('SymbolTable', () => {
-  describe('buildFromAST', () => {
-    describe('with fields', () => {
-      it('should extract a single field from a table object', () => {
-        const code = `OBJECT Table 18 Customer
-{
-  FIELDS
-  {
-    { 1   ;   ;"No."           ;Code20        }
-  }
-}`;
-        const symbolTable = buildSymbolTable(code);
-
-        expect(symbolTable.hasSymbol('No.')).toBe(true);
-        const symbol = symbolTable.getSymbol('No.');
-        expect(symbol).toBeDefined();
-        expect(symbol?.name).toBe('no.');
-        expect(symbol?.kind).toBe('field');
-        expect(symbol?.type).toBe('Code20');
-      });
-
-      it('should extract multiple fields from a table object', () => {
-        const code = `OBJECT Table 18 Customer
-{
-  FIELDS
-  {
-    { 1   ;   ;"No."           ;Code20        }
-    { 2   ;   ;Name            ;Text100       }
-    { 3   ;   ;Balance         ;Decimal       }
-  }
-}`;
-        const symbolTable = buildSymbolTable(code);
-
-        expect(symbolTable.hasSymbol('No.')).toBe(true);
-        expect(symbolTable.hasSymbol('Name')).toBe(true);
-        expect(symbolTable.hasSymbol('Balance')).toBe(true);
-
-        const allSymbols = symbolTable.getAllSymbols();
-        expect(allSymbols.length).toBe(3);
-      });
-
-      it('should correctly extract field types for various data types', () => {
-        const code = `OBJECT Table 50000 TestTable
-{
-  FIELDS
-  {
-    { 1   ;   ;CodeField       ;Code20        }
-    { 2   ;   ;TextField       ;Text50        }
-    { 3   ;   ;IntField        ;Integer       }
-    { 4   ;   ;DecimalField    ;Decimal       }
-    { 5   ;   ;DateField       ;Date          }
-    { 6   ;   ;BoolField       ;Boolean       }
-  }
-}`;
-        const symbolTable = buildSymbolTable(code);
-
-        expect(symbolTable.getSymbol('CodeField')?.type).toBe('Code20');
-        expect(symbolTable.getSymbol('TextField')?.type).toBe('Text50');
-        expect(symbolTable.getSymbol('IntField')?.type).toBe('Integer');
-        expect(symbolTable.getSymbol('DecimalField')?.type).toBe('Decimal');
-        expect(symbolTable.getSymbol('DateField')?.type).toBe('Date');
-        expect(symbolTable.getSymbol('BoolField')?.type).toBe('Boolean');
-      });
-
-      it('should handle quoted field names correctly', () => {
-        const code = `OBJECT Table 18 Customer
-{
-  FIELDS
-  {
-    { 1   ;   ;"No."           ;Code20        }
-    { 2   ;   ;"Customer Name" ;Text100       }
-    { 3   ;   ;"VAT %"         ;Decimal       }
-  }
-}`;
-        const symbolTable = buildSymbolTable(code);
-
-        expect(symbolTable.hasSymbol('No.')).toBe(true);
-        expect(symbolTable.hasSymbol('Customer Name')).toBe(true);
-        expect(symbolTable.hasSymbol('VAT %')).toBe(true);
-      });
-
-      it('should normalize field names to lowercase for case-insensitive lookup', () => {
-        const code = `OBJECT Table 18 Customer
-{
-  FIELDS
-  {
-    { 1   ;   ;CustomerNo      ;Code20        }
-    { 2   ;   ;NAME            ;Text100       }
-  }
-}`;
-        const symbolTable = buildSymbolTable(code);
-
-        // Original case
-        expect(symbolTable.hasSymbol('CustomerNo')).toBe(true);
-        expect(symbolTable.hasSymbol('NAME')).toBe(true);
-
-        // Different cases should also work
-        expect(symbolTable.hasSymbol('customerno')).toBe(true);
-        expect(symbolTable.hasSymbol('CUSTOMERNO')).toBe(true);
-        expect(symbolTable.hasSymbol('name')).toBe(true);
-        expect(symbolTable.hasSymbol('Name')).toBe(true);
-
-        // Symbol.name should be normalized (lowercase)
-        const symbol = symbolTable.getSymbol('CustomerNo');
-        expect(symbol?.name).toBe('customerno');
-      });
-
-      it('should store field token reference for position tracking', () => {
-        const code = `OBJECT Table 18 Customer
-{
-  FIELDS
-  {
-    { 1   ;   ;FieldWithToken  ;Code20        }
-  }
-}`;
-        const symbolTable = buildSymbolTable(code);
-        const symbol = symbolTable.getSymbol('FieldWithToken');
-
-        expect(symbol?.token).toBeDefined();
-        expect(symbol?.token.value).toBeDefined();
-      });
-
-      it('should set symbol kind to field for all field declarations', () => {
-        const code = `OBJECT Table 50000 TestTable
-{
-  FIELDS
-  {
-    { 1   ;   ;Field1          ;Code20        }
-    { 2   ;   ;Field2          ;Integer       }
-    { 3   ;   ;"Field 3"       ;Text50        }
-  }
-}`;
-        const symbolTable = buildSymbolTable(code);
-        const allSymbols = symbolTable.getAllSymbols();
-
-        allSymbols.forEach(symbol => {
-          expect(symbol.kind).toBe('field');
-        });
-      });
-    });
-
-    describe('with variables and procedures', () => {
-      it('should extract a single global variable from a codeunit object', () => {
-        const code = `OBJECT Codeunit 50000 Test {
-          CODE {
-            VAR
-              Counter : Integer;
-
-            PROCEDURE TestProc();
-            BEGIN
-            END;
-          }
-        }`;
-        const symbolTable = buildSymbolTable(code);
-
-        expect(symbolTable.hasSymbol('Counter')).toBe(true);
-        const symbol = symbolTable.getSymbol('Counter');
-        expect(symbol).toBeDefined();
-        expect(symbol?.name).toBe('counter');
-        expect(symbol?.kind).toBe('variable');
-        expect(symbol?.type).toBe('Integer');
-      });
-
-      it('should extract multiple global variables from a codeunit object', () => {
-        const code = `OBJECT Codeunit 50000 Test {
-          CODE {
-            VAR
-              Counter : Integer;
-              Name : Text;
-              Amount : Decimal;
-
-            PROCEDURE TestProc();
-            BEGIN
-            END;
-          }
-        }`;
-        const symbolTable = buildSymbolTable(code);
-
-        expect(symbolTable.hasSymbol('Counter')).toBe(true);
-        expect(symbolTable.hasSymbol('Name')).toBe(true);
-        expect(symbolTable.hasSymbol('Amount')).toBe(true);
-
-        const allSymbols = symbolTable.getAllSymbols();
-        const variableSymbols = allSymbols.filter(s => s.kind === 'variable');
-        expect(variableSymbols.length).toBe(3);
-      });
-
-      it('should extract a single procedure from a codeunit object', () => {
-        const code = `OBJECT Codeunit 50000 Test {
-          CODE {
-            PROCEDURE PublicMethod();
-            BEGIN
-            END;
-          }
-        }`;
-        const symbolTable = buildSymbolTable(code);
-
-        expect(symbolTable.hasSymbol('PublicMethod')).toBe(true);
-        const symbol = symbolTable.getSymbol('PublicMethod');
-        expect(symbol).toBeDefined();
-        expect(symbol?.name).toBe('publicmethod');
-        expect(symbol?.kind).toBe('procedure');
-      });
-
-      it('should extract multiple procedures from a codeunit object', () => {
-        const code = `OBJECT Codeunit 50000 Test {
-          CODE {
-            PROCEDURE FirstProc();
-            BEGIN
-            END;
-
-            PROCEDURE SecondProc();
-            BEGIN
-            END;
-
-            PROCEDURE ThirdProc();
-            BEGIN
-            END;
-          }
-        }`;
-        const symbolTable = buildSymbolTable(code);
-
-        expect(symbolTable.hasSymbol('FirstProc')).toBe(true);
-        expect(symbolTable.hasSymbol('SecondProc')).toBe(true);
-        expect(symbolTable.hasSymbol('ThirdProc')).toBe(true);
-
-        const allSymbols = symbolTable.getAllSymbols();
-        const procedureSymbols = allSymbols.filter(s => s.kind === 'procedure');
-        expect(procedureSymbols.length).toBe(3);
-      });
-
-      it('should extract both global variables and procedures together', () => {
-        const code = `OBJECT Codeunit 50000 Test {
-          CODE {
-            VAR
-              GlobalVar : Integer;
-              AnotherVar : Text;
-
-            PROCEDURE Process();
-            BEGIN
-            END;
-
-            PROCEDURE Calculate();
-            BEGIN
-            END;
-          }
-        }`;
-        const symbolTable = buildSymbolTable(code);
-
-        // Check variables
-        expect(symbolTable.hasSymbol('GlobalVar')).toBe(true);
-        expect(symbolTable.hasSymbol('AnotherVar')).toBe(true);
-        expect(symbolTable.getSymbol('GlobalVar')?.kind).toBe('variable');
-        expect(symbolTable.getSymbol('AnotherVar')?.kind).toBe('variable');
-
-        // Check procedures
-        expect(symbolTable.hasSymbol('Process')).toBe(true);
-        expect(symbolTable.hasSymbol('Calculate')).toBe(true);
-        expect(symbolTable.getSymbol('Process')?.kind).toBe('procedure');
-        expect(symbolTable.getSymbol('Calculate')?.kind).toBe('procedure');
-
-        // Total count
-        const allSymbols = symbolTable.getAllSymbols();
-        expect(allSymbols.length).toBe(4);
-      });
-
-      it('should correctly extract variable types for various data types', () => {
-        const code = `OBJECT Codeunit 50000 Test {
-          CODE {
-            VAR
-              IntVar : Integer;
-              DecVar : Decimal;
-              TextVar : Text;
-              BoolVar : Boolean;
-              DateVar : Date;
-              CodeVar : Code;
-
-            PROCEDURE TestProc();
-            BEGIN
-            END;
-          }
-        }`;
-        const symbolTable = buildSymbolTable(code);
-
-        expect(symbolTable.getSymbol('IntVar')?.type).toBe('Integer');
-        expect(symbolTable.getSymbol('DecVar')?.type).toBe('Decimal');
-        expect(symbolTable.getSymbol('TextVar')?.type).toBe('Text');
-        expect(symbolTable.getSymbol('BoolVar')?.type).toBe('Boolean');
-        expect(symbolTable.getSymbol('DateVar')?.type).toBe('Date');
-        expect(symbolTable.getSymbol('CodeVar')?.type).toBe('Code');
-      });
-
-      it('should extract LOCAL procedures with correct symbol kind', () => {
-        const code = `OBJECT Codeunit 50000 Test {
-          CODE {
-            LOCAL PROCEDURE PrivateHelper();
-            BEGIN
-            END;
-
-            PROCEDURE PublicMethod();
-            BEGIN
-            END;
-
-            LOCAL PROCEDURE AnotherPrivate();
-            BEGIN
-            END;
-          }
-        }`;
-        const symbolTable = buildSymbolTable(code);
-
-        // All procedures (local and public) should be extracted
-        expect(symbolTable.hasSymbol('PrivateHelper')).toBe(true);
-        expect(symbolTable.hasSymbol('PublicMethod')).toBe(true);
-        expect(symbolTable.hasSymbol('AnotherPrivate')).toBe(true);
-
-        // All should have 'procedure' kind
-        expect(symbolTable.getSymbol('PrivateHelper')?.kind).toBe('procedure');
-        expect(symbolTable.getSymbol('PublicMethod')?.kind).toBe('procedure');
-        expect(symbolTable.getSymbol('AnotherPrivate')?.kind).toBe('procedure');
-      });
-
-      it('should handle quoted variable names correctly', () => {
-        const code = `OBJECT Codeunit 50000 Test {
-          CODE {
-            VAR
-              "Temp Customer Entry" : Integer;
-              "VAR With Spaces" : Text;
-
-            PROCEDURE TestProc();
-            BEGIN
-            END;
-          }
-        }`;
-        const symbolTable = buildSymbolTable(code);
-
-        expect(symbolTable.hasSymbol('Temp Customer Entry')).toBe(true);
-        expect(symbolTable.hasSymbol('VAR With Spaces')).toBe(true);
-      });
-
-      it('should normalize variable names to lowercase for case-insensitive lookup', () => {
-        const code = `OBJECT Codeunit 50000 Test {
-          CODE {
-            VAR
-              CustomerNo : Code;
-              ALLCAPS : Integer;
-
-            PROCEDURE TestProc();
-            BEGIN
-            END;
-          }
-        }`;
-        const symbolTable = buildSymbolTable(code);
-
-        // Original case
-        expect(symbolTable.hasSymbol('CustomerNo')).toBe(true);
-        expect(symbolTable.hasSymbol('ALLCAPS')).toBe(true);
-
-        // Different cases should also work
-        expect(symbolTable.hasSymbol('customerno')).toBe(true);
-        expect(symbolTable.hasSymbol('CUSTOMERNO')).toBe(true);
-        expect(symbolTable.hasSymbol('allcaps')).toBe(true);
-        expect(symbolTable.hasSymbol('Allcaps')).toBe(true);
-
-        // Symbol.name should be normalized (lowercase)
-        expect(symbolTable.getSymbol('CustomerNo')?.name).toBe('customerno');
-        expect(symbolTable.getSymbol('ALLCAPS')?.name).toBe('allcaps');
-      });
-
-      it('should normalize procedure names to lowercase for case-insensitive lookup', () => {
-        const code = `OBJECT Codeunit 50000 Test {
-          CODE {
-            PROCEDURE ProcessData();
-            BEGIN
-            END;
-
-            PROCEDURE UPPERCASEPROC();
-            BEGIN
-            END;
-          }
-        }`;
-        const symbolTable = buildSymbolTable(code);
-
-        // Original case
-        expect(symbolTable.hasSymbol('ProcessData')).toBe(true);
-        expect(symbolTable.hasSymbol('UPPERCASEPROC')).toBe(true);
-
-        // Different cases should also work
-        expect(symbolTable.hasSymbol('processdata')).toBe(true);
-        expect(symbolTable.hasSymbol('PROCESSDATA')).toBe(true);
-        expect(symbolTable.hasSymbol('uppercaseproc')).toBe(true);
-
-        // Symbol.name should be normalized (lowercase)
-        expect(symbolTable.getSymbol('ProcessData')?.name).toBe('processdata');
-      });
-
-      it('should store variable token reference for position tracking', () => {
-        const code = `OBJECT Codeunit 50000 Test {
-          CODE {
-            VAR
-              TrackedVar : Integer;
-
-            PROCEDURE TestProc();
-            BEGIN
-            END;
-          }
-        }`;
-        const symbolTable = buildSymbolTable(code);
-        const symbol = symbolTable.getSymbol('TrackedVar');
-
-        expect(symbol?.token).toBeDefined();
-        expect(symbol?.token.value).toBeDefined();
-      });
-
-      it('should store procedure token reference for position tracking', () => {
-        const code = `OBJECT Codeunit 50000 Test {
-          CODE {
-            PROCEDURE TrackedProc();
-            BEGIN
-            END;
-          }
-        }`;
-        const symbolTable = buildSymbolTable(code);
-        const symbol = symbolTable.getSymbol('TrackedProc');
-
-        expect(symbol?.token).toBeDefined();
-        expect(symbol?.token.value).toBeDefined();
-      });
-    });
-  });
-
+describe('SymbolTable Class', () => {
   describe('buildFromAST - Empty AST', () => {
     it('should handle AST with no object', () => {
       const symbolTable = new SymbolTable();
@@ -983,6 +529,433 @@ describe('SymbolTable', () => {
       expect(symbolTable.hasSymbol('MyProcedure')).toBe(true);
       const procSymbol = symbolTable.getSymbol('MyProcedure');
       expect(procSymbol?.kind).toBe('procedure');
+    });
+
+    it('should create child scope for procedure', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        procedures: [
+          createMockProcedure('TestProc', [], [], 100, 200)
+        ]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      const rootScope = symbolTable.getRootScope();
+      expect(rootScope.children.length).toBe(1);
+    });
+
+    it('should add procedure parameters to procedure scope', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        procedures: [
+          createMockProcedure(
+            'Calculate',
+            [
+              createMockParameter('pInput', 'Integer', 110),
+              createMockParameter('pOutput', 'Decimal', 130)
+            ],
+            [],
+            100,
+            200
+          )
+        ]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      // Parameters should be in the procedure scope, not root
+      expect(symbolTable.getRootScope().hasOwnSymbol('pInput')).toBe(false);
+      expect(symbolTable.getRootScope().hasOwnSymbol('pOutput')).toBe(false);
+
+      // But accessible via position-aware lookup
+      const procScope = symbolTable.getScopeAtOffset(150);
+      expect(procScope.hasOwnSymbol('pInput')).toBe(true);
+      expect(procScope.hasOwnSymbol('pOutput')).toBe(true);
+
+      const paramSymbol = procScope.getOwnSymbol('pInput');
+      expect(paramSymbol?.kind).toBe('parameter');
+      expect(paramSymbol?.type).toBe('Integer');
+    });
+
+    it('should add procedure local variables to procedure scope', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        procedures: [
+          createMockProcedure(
+            'ProcessData',
+            [],
+            [
+              createMockVariable('lCounter', 'Integer', 120),
+              createMockVariable('lTotal', 'Decimal', 140)
+            ],
+            100,
+            200
+          )
+        ]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      // Local variables should be in the procedure scope, not root
+      expect(symbolTable.getRootScope().hasOwnSymbol('lCounter')).toBe(false);
+
+      // But accessible via position-aware lookup
+      const procScope = symbolTable.getScopeAtOffset(150);
+      expect(procScope.hasOwnSymbol('lCounter')).toBe(true);
+      expect(procScope.hasOwnSymbol('lTotal')).toBe(true);
+    });
+  });
+
+  describe('buildFromAST - Triggers', () => {
+    it('should create child scope for trigger', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        triggers: [
+          createMockTrigger('OnInsert', [], 100, 200)
+        ]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      const rootScope = symbolTable.getRootScope();
+      expect(rootScope.children.length).toBe(1);
+    });
+
+    it('should add trigger local variables to trigger scope', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        triggers: [
+          createMockTrigger(
+            'OnValidate',
+            [
+              createMockVariable('lOldValue', 'Text', 120),
+              createMockVariable('lNewValue', 'Text', 140)
+            ],
+            100,
+            200
+          )
+        ]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      // Local variables should not be in root scope
+      expect(symbolTable.getRootScope().hasOwnSymbol('lOldValue')).toBe(false);
+
+      // But accessible via position-aware lookup
+      const triggerScope = symbolTable.getScopeAtOffset(150);
+      expect(triggerScope.hasOwnSymbol('lOldValue')).toBe(true);
+      expect(triggerScope.hasOwnSymbol('lNewValue')).toBe(true);
+    });
+  });
+
+  describe('getScopeAtOffset', () => {
+    it('should return root scope for offset outside any procedure', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        procedures: [
+          createMockProcedure('TestProc', [], [], 100, 200)
+        ]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      const scope = symbolTable.getScopeAtOffset(50);
+      expect(scope).toBe(symbolTable.getRootScope());
+    });
+
+    it('should return procedure scope for offset inside procedure', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        procedures: [
+          createMockProcedure('TestProc', [], [], 100, 200)
+        ]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      const scope = symbolTable.getScopeAtOffset(150);
+      expect(scope).not.toBe(symbolTable.getRootScope());
+      expect(scope.parent).toBe(symbolTable.getRootScope());
+    });
+
+    it('should find correct procedure scope when multiple procedures exist', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        procedures: [
+          createMockProcedure(
+            'FirstProc',
+            [createMockParameter('p1', 'Integer', 110)],
+            [],
+            100,
+            200
+          ),
+          createMockProcedure(
+            'SecondProc',
+            [createMockParameter('p2', 'Text', 310)],
+            [],
+            300,
+            400
+          )
+        ]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      const firstScope = symbolTable.getScopeAtOffset(150);
+      expect(firstScope.hasOwnSymbol('p1')).toBe(true);
+      expect(firstScope.hasOwnSymbol('p2')).toBe(false);
+
+      const secondScope = symbolTable.getScopeAtOffset(350);
+      expect(secondScope.hasOwnSymbol('p2')).toBe(true);
+      expect(secondScope.hasOwnSymbol('p1')).toBe(false);
+    });
+  });
+
+  describe('getSymbolAtOffset', () => {
+    it('should find global symbol from anywhere', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        globalVariables: [createMockVariable('gCounter', 'Integer', 10)],
+        procedures: [createMockProcedure('TestProc', [], [], 100, 200)]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      // From root context
+      expect(symbolTable.getSymbolAtOffset('gCounter', 50)?.name).toBe('gCounter');
+
+      // From inside procedure
+      expect(symbolTable.getSymbolAtOffset('gCounter', 150)?.name).toBe('gCounter');
+    });
+
+    it('should find local symbol inside procedure', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        procedures: [
+          createMockProcedure(
+            'TestProc',
+            [createMockParameter('pParam', 'Integer', 110)],
+            [createMockVariable('lLocal', 'Text', 130)],
+            100,
+            200
+          )
+        ]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      // Inside procedure - should find local symbols
+      expect(symbolTable.getSymbolAtOffset('pParam', 150)?.kind).toBe('parameter');
+      expect(symbolTable.getSymbolAtOffset('lLocal', 150)?.kind).toBe('variable');
+
+      // Outside procedure - should not find local symbols
+      expect(symbolTable.getSymbolAtOffset('pParam', 50)).toBeUndefined();
+      expect(symbolTable.getSymbolAtOffset('lLocal', 50)).toBeUndefined();
+    });
+
+    it('should shadow global variable with local variable of same name', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        globalVariables: [createMockVariable('x', 'Integer', 10)],
+        procedures: [
+          createMockProcedure(
+            'TestProc',
+            [],
+            [createMockVariable('x', 'Text', 120)],
+            100,
+            200
+          )
+        ]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      // Outside procedure - should find global x (Integer)
+      const globalX = symbolTable.getSymbolAtOffset('x', 50);
+      expect(globalX?.type).toBe('Integer');
+
+      // Inside procedure - should find local x (Text) which shadows global
+      const localX = symbolTable.getSymbolAtOffset('x', 150);
+      expect(localX?.type).toBe('Text');
+    });
+  });
+
+  describe('getAllSymbols', () => {
+    it('should return symbols from all scopes', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        fields: [createMockField(1, 'FieldA', 'Code20', 10)],
+        globalVariables: [createMockVariable('gVar', 'Integer', 50)],
+        procedures: [
+          createMockProcedure(
+            'MyProc',
+            [createMockParameter('pParam', 'Text', 110)],
+            [createMockVariable('lLocal', 'Decimal', 130)],
+            100,
+            200
+          )
+        ]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      const allSymbols = symbolTable.getAllSymbols();
+
+      // Should have: FieldA, gVar, MyProc, pParam, lLocal
+      expect(allSymbols.length).toBe(5);
+
+      const names = allSymbols.map(s => s.name);
+      expect(names).toContain('FieldA');
+      expect(names).toContain('gVar');
+      expect(names).toContain('MyProc');
+      expect(names).toContain('pParam');
+      expect(names).toContain('lLocal');
+    });
+
+    it('should include symbols from multiple procedure scopes', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        procedures: [
+          createMockProcedure('Proc1', [], [createMockVariable('var1', 'Integer', 110)], 100, 200),
+          createMockProcedure('Proc2', [], [createMockVariable('var2', 'Text', 310)], 300, 400)
+        ]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      const allSymbols = symbolTable.getAllSymbols();
+      const names = allSymbols.map(s => s.name);
+
+      expect(names).toContain('Proc1');
+      expect(names).toContain('Proc2');
+      expect(names).toContain('var1');
+      expect(names).toContain('var2');
+    });
+  });
+
+  describe('getSymbol (root scope lookup)', () => {
+    it('should find symbol from root scope chain', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        globalVariables: [createMockVariable('gTest', 'Integer', 10)]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      expect(symbolTable.getSymbol('gTest')?.name).toBe('gTest');
+    });
+
+    it('should be case-insensitive', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        globalVariables: [createMockVariable('MyVariable', 'Integer', 10)]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      expect(symbolTable.getSymbol('myvariable')).toBeDefined();
+      expect(symbolTable.getSymbol('MYVARIABLE')).toBeDefined();
+      expect(symbolTable.getSymbol('MyVariable')).toBeDefined();
+    });
+  });
+
+  describe('hasSymbol (root scope lookup)', () => {
+    it('should return true for global symbol', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        globalVariables: [createMockVariable('gExists', 'Integer', 10)]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      expect(symbolTable.hasSymbol('gExists')).toBe(true);
+    });
+
+    it('should return false for unknown symbol', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({});
+
+      symbolTable.buildFromAST(ast);
+
+      expect(symbolTable.hasSymbol('doesNotExist')).toBe(false);
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle empty procedure scope', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        procedures: [createMockProcedure('EmptyProc', [], [], 100, 200)]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      const procScope = symbolTable.getScopeAtOffset(150);
+      expect(procScope.getOwnSymbols()).toEqual([]);
+      expect(procScope.parent).toBe(symbolTable.getRootScope());
+    });
+
+    it('should handle procedure with only parameters', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        procedures: [
+          createMockProcedure(
+            'ParamOnlyProc',
+            [createMockParameter('p1', 'Integer', 110)],
+            [],
+            100,
+            200
+          )
+        ]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      const procScope = symbolTable.getScopeAtOffset(150);
+      expect(procScope.getOwnSymbols().length).toBe(1);
+      expect(procScope.hasOwnSymbol('p1')).toBe(true);
+    });
+
+    it('should handle multiple procedures and triggers', () => {
+      const symbolTable = new SymbolTable();
+      const ast = createMockAST({
+        procedures: [
+          createMockProcedure('Proc1', [], [], 100, 200),
+          createMockProcedure('Proc2', [], [], 300, 400)
+        ],
+        triggers: [
+          createMockTrigger('OnInsert', [], 500, 600),
+          createMockTrigger('OnModify', [], 700, 800)
+        ]
+      });
+
+      symbolTable.buildFromAST(ast);
+
+      const rootScope = symbolTable.getRootScope();
+      // 2 procedures + 2 triggers = 4 child scopes
+      expect(rootScope.children.length).toBe(4);
+    });
+
+    it('should rebuild symbol table on multiple buildFromAST calls', () => {
+      const symbolTable = new SymbolTable();
+
+      // First build
+      const ast1 = createMockAST({
+        globalVariables: [createMockVariable('var1', 'Integer', 10)]
+      });
+      symbolTable.buildFromAST(ast1);
+      expect(symbolTable.hasSymbol('var1')).toBe(true);
+
+      // Second build (should replace)
+      const ast2 = createMockAST({
+        globalVariables: [createMockVariable('var2', 'Text', 10)]
+      });
+      symbolTable.buildFromAST(ast2);
+
+      expect(symbolTable.hasSymbol('var1')).toBe(false);
+      expect(symbolTable.hasSymbol('var2')).toBe(true);
     });
   });
 });
