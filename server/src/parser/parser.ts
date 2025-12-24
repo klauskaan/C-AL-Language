@@ -1207,49 +1207,11 @@ export class Parser {
 
     while (!this.check(TokenType.End) && !this.isAtEnd()) {
       if (this.check(TokenType.Else)) {
-        this.advance();
-        elseBranch = [];
-        while (!this.check(TokenType.End) && !this.isAtEnd()) {
-          const stmt = this.parseStatement();
-          if (stmt) {
-            elseBranch.push(stmt);
-          }
-        }
+        elseBranch = this.parseCaseElseBranch();
         break;
       }
 
-      const branchStart = this.peek();
-      const values: Expression[] = [];
-
-      // Parse value(s)
-      values.push(this.parseExpression());
-      while (this.check(TokenType.Comma)) {
-        this.advance();
-        values.push(this.parseExpression());
-      }
-
-      // Colon
-      this.consume(TokenType.Colon, 'Expected :');
-
-      // Parse statement(s)
-      const statements: Statement[] = [];
-      if (this.check(TokenType.Begin)) {
-        const block = this.parseBlock();
-        statements.push(...block.statements);
-      } else {
-        const stmt = this.parseStatement();
-        if (stmt) {
-          statements.push(stmt);
-        }
-      }
-
-      branches.push({
-        type: 'CaseBranch',
-        values,
-        statements,
-        startToken: branchStart,
-        endToken: this.previous()
-      });
+      branches.push(this.parseCaseBranch());
     }
 
     this.consume(TokenType.End, 'Expected END');
@@ -1265,6 +1227,59 @@ export class Parser {
       startToken,
       endToken: this.previous()
     };
+  }
+
+  /**
+   * Parse a single CASE branch with values and statements
+   */
+  private parseCaseBranch(): CaseBranch {
+    const branchStart = this.peek();
+    const values: Expression[] = [];
+
+    // Parse value(s)
+    values.push(this.parseExpression());
+    while (this.check(TokenType.Comma)) {
+      this.advance();
+      values.push(this.parseExpression());
+    }
+
+    // Colon
+    this.consume(TokenType.Colon, 'Expected :');
+
+    // Parse statement(s)
+    const statements: Statement[] = [];
+    if (this.check(TokenType.Begin)) {
+      const block = this.parseBlock();
+      statements.push(...block.statements);
+    } else {
+      const stmt = this.parseStatement();
+      if (stmt) {
+        statements.push(stmt);
+      }
+    }
+
+    return {
+      type: 'CaseBranch',
+      values,
+      statements,
+      startToken: branchStart,
+      endToken: this.previous()
+    };
+  }
+
+  /**
+   * Parse ELSE branch statements in a CASE statement
+   */
+  private parseCaseElseBranch(): Statement[] {
+    this.advance(); // consume ELSE token
+    const statements: Statement[] = [];
+    while (!this.check(TokenType.End) && !this.isAtEnd()) {
+      const stmt = this.parseStatement();
+      if (stmt) {
+        statements.push(stmt);
+      }
+    }
+    return statements;
   }
 
   private parseExitStatement(): ExitStatement {
