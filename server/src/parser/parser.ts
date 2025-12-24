@@ -230,10 +230,20 @@ export class Parser {
 
     this.consume(TokenType.Equal, 'Expected =');
 
-    // Property value - read until semicolon
+    // Property value - read until semicolon, preserving whitespace
     let value = '';
+    let lastToken: Token | null = null;
+
     while (!this.check(TokenType.Semicolon) && !this.isAtEnd()) {
-      value += this.advance().value;
+      const currentToken = this.advance();
+
+      // If there's a gap between tokens, add a space
+      if (lastToken !== null && currentToken.startOffset > lastToken.endOffset) {
+        value += ' ';
+      }
+
+      value += currentToken.value;
+      lastToken = currentToken;
     }
 
     const endToken = this.consume(TokenType.Semicolon, 'Expected ;');

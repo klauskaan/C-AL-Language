@@ -1513,3 +1513,306 @@ describe('Parser - Field Triggers', () => {
     });
   });
 });
+describe('Parser - Property Value Whitespace Preservation', () => {
+  describe('Simple property values', () => {
+    it('should parse single-token property value correctly', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          DataPerCompany=Yes;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.properties).not.toBeNull();
+      expect(ast.object?.properties?.properties).toHaveLength(1);
+      expect(ast.object?.properties?.properties[0].name).toBe('DataPerCompany');
+      expect(ast.object?.properties?.properties[0].value).toBe('Yes');
+    });
+
+    it('should parse numeric property value correctly', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          LookupPageID=123;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.properties?.properties[0].name).toBe('LookupPageID');
+      expect(ast.object?.properties?.properties[0].value).toBe('123');
+    });
+  });
+
+  describe('Multi-token property values (BEGIN END)', () => {
+    it('should preserve whitespace between BEGIN and END tokens', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          OnRun=BEGIN END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.properties?.properties).toHaveLength(1);
+      expect(ast.object?.properties?.properties[0].name).toBe('OnRun');
+      // The critical test: should be "BEGIN END" not "BEGINEND"
+      expect(ast.object?.properties?.properties[0].value).toBe('BEGIN END');
+    });
+
+    it('should preserve whitespace in multi-keyword property values', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          OnInsert=BEGIN IF Customer.FIND THEN Customer.DELETE; END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.properties?.properties[0].name).toBe('OnInsert');
+      // Should preserve spaces between all tokens
+      expect(ast.object?.properties?.properties[0].value).toContain('BEGIN IF');
+      expect(ast.object?.properties?.properties[0].value).not.toContain('BEGINIF');
+    });
+
+    it('should preserve spacing between operators and identifiers', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          OnValidate=BEGIN x := y + z; END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const value = ast.object?.properties?.properties[0].value || '';
+      expect(value).toContain('x :=');
+      expect(value).toContain('y +');
+    });
+  });
+
+  describe('Empty property values', () => {
+    it('should handle empty property value gracefully', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          Description=;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.properties?.properties).toHaveLength(1);
+      expect(ast.object?.properties?.properties[0].name).toBe('Description');
+      expect(ast.object?.properties?.properties[0].value).toBe('');
+    });
+  });
+
+  describe('CalcFormula expressions', () => {
+    it('should preserve whitespace in CalcFormula with Sum function', () => {
+      // CalcFormula tested at object-level PROPERTIES since field-level properties
+      // parsing is not currently supported in the parser
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          CalcFormula=Sum (Cust. Ledger Entry.Amount WHERE (Customer No.=FIELD (No.)));
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.properties?.properties).toHaveLength(1);
+      const prop = ast.object?.properties?.properties[0];
+      expect(prop?.name).toBe('CalcFormula');
+      // Should preserve spaces in CalcFormula expression
+      const formula = prop?.value || '';
+      expect(formula).toContain('Sum (');
+      expect(formula).toContain('WHERE (');
+    });
+
+    it('should preserve whitespace in CalcFormula with Lookup function', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          CalcFormula=Lookup (Country.Name WHERE (Code=FIELD (Region)));
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const prop = ast.object?.properties?.properties[0];
+      expect(prop?.name).toBe('CalcFormula');
+      const formula = prop?.value || '';
+      expect(formula).toContain('Lookup (');
+      expect(formula).toContain('WHERE (');
+    });
+
+    it('should preserve whitespace in complex CalcFormula with multiple conditions', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          CalcFormula=Sum (Entry.Amount WHERE (No.=FIELD (No.),Date=FIELD (Filter)));
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const prop = ast.object?.properties?.properties[0];
+      const formula = prop?.value || '';
+      // Should not concatenate tokens without spaces
+      expect(formula).not.toContain('SumEntry');
+      expect(formula).not.toContain('WHERENO');
+    });
+  });
+
+  describe('Quoted string property values', () => {
+    it('should preserve internal whitespace in quoted strings', () => {
+      // Note: The lexer strips quotes from string tokens, so we just verify
+      // the internal whitespace is preserved in the resulting value
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          Caption='Customer Master';
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.properties?.properties[0].name).toBe('Caption');
+      // Lexer strips quotes, value is the string content
+      expect(ast.object?.properties?.properties[0].value).toBe('Customer Master');
+    });
+
+    it('should preserve whitespace in double-quoted identifiers', () => {
+      // Double-quoted identifiers also have quotes stripped by lexer
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          OptionString=Option A,Option B,Option C;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const value = ast.object?.properties?.properties[0].value || '';
+      // Options should be preserved with whitespace between tokens
+      expect(value).toContain('Option A');
+      expect(value).toContain('Option B');
+    });
+
+    it('should preserve whitespace in TableRelation property', () => {
+      // Test TableRelation at object-level PROPERTIES since field-level
+      // properties parsing is not currently supported
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          TableRelation=Salesperson/Purchaser WHERE (Code=FIELD (Code));
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const prop = ast.object?.properties?.properties[0];
+      expect(prop?.name).toBe('TableRelation');
+      // Should preserve space between WHERE and (
+      expect(prop?.value).toContain('WHERE (');
+    });
+  });
+
+  describe('Multiple properties with various values', () => {
+    it('should preserve whitespace correctly in multiple properties', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          DataPerCompany=Yes;
+          Caption='Customer';
+          OnInsert=BEGIN END;
+          LookupPageID=21;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.properties?.properties).toHaveLength(4);
+      expect(ast.object?.properties?.properties[0].value).toBe('Yes');
+      // Lexer strips quotes from string literals
+      expect(ast.object?.properties?.properties[1].value).toBe('Customer');
+      expect(ast.object?.properties?.properties[2].value).toBe('BEGIN END');
+      expect(ast.object?.properties?.properties[3].value).toBe('21');
+    });
+  });
+
+  describe('Edge cases', () => {
+    it('should handle property value with only operators', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          TestProp=+ - * /;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const value = ast.object?.properties?.properties[0].value || '';
+      // Should have spaces between operators
+      expect(value).toContain('+ -');
+      expect(value).not.toBe('+-*/');
+    });
+
+    it('should handle property value with parentheses', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          TestProp=(Value1 OR Value2);
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const value = ast.object?.properties?.properties[0].value || '';
+      expect(value).toContain('Value1 OR');
+      expect(value).toContain('OR Value2');
+    });
+
+    it('should handle BEGIN END trigger property', () => {
+      // Test trigger property at object-level. Note: The parser stops at the
+      // first semicolon, so nested statements with internal semicolons need
+      // more advanced parsing. This test verifies simple BEGIN END case.
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          OnRun=BEGIN END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const prop = ast.object?.properties?.properties[0];
+      expect(prop?.name).toBe('OnRun');
+      const value = prop?.value || '';
+      // Key test: whitespace between BEGIN and END is preserved
+      expect(value).toBe('BEGIN END');
+      expect(value).not.toBe('BEGINEND');
+    });
+  });
+});
