@@ -1838,7 +1838,502 @@ describe('SemanticTokensProvider', () => {
   });
 
   describe('Position Calculation', () => {
-    // Tests will be added in subtask 2.6
+    /**
+     * Position Calculation Tests
+     *
+     * Semantic tokens use 0-indexed positions for compatibility with LSP.
+     * The lexer uses 1-indexed positions, so the provider must convert:
+     * - line: token.line - 1
+     * - char: token.column - 1
+     * - length: token.value.length
+     */
+
+    describe('0-Indexed Positions', () => {
+      it('should return 0-indexed line for first line (lexer line 1 becomes 0)', () => {
+        const code = 'BEGIN';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // BEGIN is on line 1 in lexer (1-indexed)
+        const beginToken = tokens.find(t => t.value === 'BEGIN');
+        expect(beginToken?.line).toBe(1);
+
+        // Semantic token should be on line 0 (0-indexed)
+        const semanticToken = builder.getTokenAt(0, 0);
+        expect(semanticToken).toBeDefined();
+        expect(semanticToken?.line).toBe(0);
+      });
+
+      it('should return 0-indexed character for first column (lexer column 1 becomes 0)', () => {
+        const code = 'BEGIN';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // BEGIN is at column 1 in lexer (1-indexed)
+        const beginToken = tokens.find(t => t.value === 'BEGIN');
+        expect(beginToken?.column).toBe(1);
+
+        // Semantic token should be at char 0 (0-indexed)
+        const semanticToken = builder.getTokenAt(0, 0);
+        expect(semanticToken).toBeDefined();
+        expect(semanticToken?.char).toBe(0);
+      });
+
+      it('should correctly calculate token length from value', () => {
+        const code = 'BEGIN';
+        const { builder } = buildSemanticTokens(code);
+
+        const semanticToken = builder.getTokenAt(0, 0);
+        expect(semanticToken).toBeDefined();
+        expect(semanticToken?.length).toBe(5); // 'BEGIN'.length === 5
+      });
+    });
+
+    describe('Single Line Token Positions', () => {
+      it('should correctly position first token at char 0', () => {
+        const code = 'IF x THEN';
+        const { builder } = buildSemanticTokens(code);
+
+        // 'IF' should be at (line=0, char=0)
+        const ifToken = builder.getTokenAt(0, 0);
+        expect(ifToken).toBeDefined();
+        expect(ifToken?.length).toBe(2);
+      });
+
+      it('should correctly position token in middle of line', () => {
+        const code = 'IF x THEN';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Find 'x' token position from lexer
+        const xToken = tokens.find(t => t.value === 'x');
+        expect(xToken).toBeDefined();
+
+        // Semantic token should be at (line=0, char=column-1)
+        const xSemantic = builder.getTokenAt(0, xToken!.column - 1);
+        expect(xSemantic).toBeDefined();
+        expect(xSemantic?.length).toBe(1);
+      });
+
+      it('should correctly position token at end of line', () => {
+        const code = 'IF x THEN';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // 'THEN' is at the end
+        const thenToken = tokens.find(t => t.value === 'THEN');
+        expect(thenToken).toBeDefined();
+
+        const thenSemantic = builder.getTokenAt(0, thenToken!.column - 1);
+        expect(thenSemantic).toBeDefined();
+        expect(thenSemantic?.length).toBe(4);
+      });
+
+      it('should correctly position multiple tokens on same line', () => {
+        const code = 'x := 1 + 2';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Verify each token's position
+        const xToken = tokens.find(t => t.value === 'x');
+        const assignToken = tokens.find(t => t.value === ':=');
+        const oneToken = tokens.find(t => t.value === '1');
+        const plusToken = tokens.find(t => t.value === '+');
+        const twoToken = tokens.find(t => t.value === '2');
+
+        // Each token should have correct semantic position
+        expect(builder.getTokenAt(0, xToken!.column - 1)).toBeDefined();
+        expect(builder.getTokenAt(0, assignToken!.column - 1)).toBeDefined();
+        expect(builder.getTokenAt(0, oneToken!.column - 1)).toBeDefined();
+        expect(builder.getTokenAt(0, plusToken!.column - 1)).toBeDefined();
+        expect(builder.getTokenAt(0, twoToken!.column - 1)).toBeDefined();
+      });
+
+      it('should correctly calculate length for short tokens', () => {
+        const code = 'x + y';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const xToken = tokens.find(t => t.value === 'x');
+        const yToken = tokens.find(t => t.value === 'y');
+        const plusToken = tokens.find(t => t.value === '+');
+
+        const xSemantic = builder.getTokenAt(0, xToken!.column - 1);
+        const ySemantic = builder.getTokenAt(0, yToken!.column - 1);
+        const plusSemantic = builder.getTokenAt(0, plusToken!.column - 1);
+
+        expect(xSemantic?.length).toBe(1);
+        expect(ySemantic?.length).toBe(1);
+        expect(plusSemantic?.length).toBe(1);
+      });
+
+      it('should correctly calculate length for long tokens', () => {
+        const code = 'VeryLongIdentifierName';
+        const { builder } = buildSemanticTokens(code);
+
+        const token = builder.getTokenAt(0, 0);
+        expect(token?.length).toBe(22);
+      });
+
+      it('should correctly calculate length for multi-character operators', () => {
+        const code = 'x := y <> z';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const assignToken = tokens.find(t => t.value === ':=');
+        const notEqualToken = tokens.find(t => t.value === '<>');
+
+        const assignSemantic = builder.getTokenAt(0, assignToken!.column - 1);
+        const notEqualSemantic = builder.getTokenAt(0, notEqualToken!.column - 1);
+
+        expect(assignSemantic?.length).toBe(2);
+        expect(notEqualSemantic?.length).toBe(2);
+      });
+    });
+
+    describe('Multiline Code Positions', () => {
+      it('should correctly position token on second line (line index 1)', () => {
+        const code = 'IF x THEN\nBEGIN';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // 'BEGIN' should be on line 2 in lexer (1-indexed)
+        const beginToken = tokens.find(t => t.value === 'BEGIN');
+        expect(beginToken?.line).toBe(2);
+
+        // Semantic token should be on line 1 (0-indexed)
+        const beginSemantic = builder.getTokenAt(1, 0);
+        expect(beginSemantic).toBeDefined();
+        expect(beginSemantic?.line).toBe(1);
+        expect(beginSemantic?.char).toBe(0);
+        expect(beginSemantic?.length).toBe(5);
+      });
+
+      it('should correctly position tokens across multiple lines', () => {
+        const code = 'IF x\nTHEN\nBEGIN\nEND';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Verify each keyword is on the expected line
+        const ifToken = tokens.find(t => t.value === 'IF');
+        const thenToken = tokens.find(t => t.value === 'THEN');
+        const beginToken = tokens.find(t => t.value === 'BEGIN');
+        const endToken = tokens.find(t => t.value === 'END');
+
+        // Check 0-indexed line positions
+        expect(builder.getTokenAt(0, ifToken!.column - 1)?.line).toBe(0);
+        expect(builder.getTokenAt(1, thenToken!.column - 1)?.line).toBe(1);
+        expect(builder.getTokenAt(2, beginToken!.column - 1)?.line).toBe(2);
+        expect(builder.getTokenAt(3, endToken!.column - 1)?.line).toBe(3);
+      });
+
+      it('should correctly position indented code on second line', () => {
+        const code = 'BEGIN\n  x := 1;\nEND';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // 'x' is indented by 2 spaces on line 2
+        const xToken = tokens.find(t => t.value === 'x');
+        expect(xToken?.line).toBe(2);
+        expect(xToken?.column).toBe(3); // 2 spaces + 1 (1-indexed)
+
+        // Semantic token: line 1 (0-indexed), char 2 (0-indexed from column 3)
+        const xSemantic = builder.getTokenAt(1, 2);
+        expect(xSemantic).toBeDefined();
+        expect(xSemantic?.line).toBe(1);
+        expect(xSemantic?.char).toBe(2);
+      });
+
+      it('should correctly position multiple tokens per line in multiline code', () => {
+        const code = 'a := 1;\nb := 2;\nc := 3;';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Get assignment tokens for each line
+        const aToken = tokens.find(t => t.value === 'a');
+        const bToken = tokens.find(t => t.value === 'b');
+        const cToken = tokens.find(t => t.value === 'c');
+
+        // Each variable should be on its respective line (0-indexed)
+        expect(builder.getTokenAt(0, aToken!.column - 1)?.line).toBe(0);
+        expect(builder.getTokenAt(1, bToken!.column - 1)?.line).toBe(1);
+        expect(builder.getTokenAt(2, cToken!.column - 1)?.line).toBe(2);
+      });
+
+      it('should handle many lines of code', () => {
+        const code = 'line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8\nline9\nline10';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Verify tokens on first, middle, and last lines
+        const line1Token = tokens.find(t => t.value === 'line1');
+        const line5Token = tokens.find(t => t.value === 'line5');
+        const line10Token = tokens.find(t => t.value === 'line10');
+
+        expect(builder.getTokenAt(0, 0)?.line).toBe(0);
+        expect(builder.getTokenAt(4, 0)?.line).toBe(4);
+        expect(builder.getTokenAt(9, 0)?.line).toBe(9);
+      });
+
+      it('should correctly position code after empty lines', () => {
+        const code = 'BEGIN\n\n\nEND';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // 'BEGIN' is on line 1, 'END' is on line 4 in lexer
+        const beginToken = tokens.find(t => t.value === 'BEGIN');
+        const endToken = tokens.find(t => t.value === 'END');
+
+        expect(beginToken?.line).toBe(1);
+        expect(endToken?.line).toBe(4);
+
+        // Semantic positions (0-indexed)
+        expect(builder.getTokenAt(0, 0)?.line).toBe(0);
+        expect(builder.getTokenAt(3, 0)?.line).toBe(3);
+      });
+    });
+
+    describe('Special Token Lengths', () => {
+      it('should correctly calculate length for quoted identifiers (without quotes)', () => {
+        const code = '"Line No." := 1';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Quoted identifier token value is 'Line No.' (without quotes)
+        const quotedToken = tokens.find(t => t.value === 'Line No.');
+        expect(quotedToken).toBeDefined();
+
+        const quotedSemantic = builder.getTokenAt(0, quotedToken!.column - 1);
+        expect(quotedSemantic).toBeDefined();
+        // Length is based on token.value.length, which is 'Line No.' = 8 chars
+        expect(quotedSemantic?.length).toBe(8);
+      });
+
+      it('should correctly calculate length for string literals (without quotes)', () => {
+        const code = "x := 'Hello World'";
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // String token value is 'Hello World' (without surrounding quotes)
+        const stringToken = tokens.find(t => t.value === 'Hello World');
+        expect(stringToken).toBeDefined();
+
+        const stringSemantic = builder.getTokenAt(0, stringToken!.column - 1);
+        expect(stringSemantic).toBeDefined();
+        // Length is based on 'Hello World' = 11 chars
+        expect(stringSemantic?.length).toBe(11);
+      });
+
+      it('should correctly calculate length for empty quoted identifier', () => {
+        const code = '"" := 1';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Empty quoted identifier has empty value
+        const emptyToken = tokens.find(t => t.type === TokenType.QuotedIdentifier && t.value === '');
+        expect(emptyToken).toBeDefined();
+
+        const emptySemantic = builder.getTokenAt(0, emptyToken!.column - 1);
+        expect(emptySemantic).toBeDefined();
+        expect(emptySemantic?.length).toBe(0);
+      });
+
+      it('should correctly calculate length for empty string literal', () => {
+        const code = "x := ''";
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Empty string has empty value
+        const emptyStringToken = tokens.find(t => t.type === TokenType.String && t.value === '');
+        expect(emptyStringToken).toBeDefined();
+
+        const emptySemantic = builder.getTokenAt(0, emptyStringToken!.column - 1);
+        expect(emptySemantic).toBeDefined();
+        expect(emptySemantic?.length).toBe(0);
+      });
+
+      it('should correctly calculate length for number tokens', () => {
+        const code = 'x := 12345';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const numToken = tokens.find(t => t.value === '12345');
+        expect(numToken).toBeDefined();
+
+        const numSemantic = builder.getTokenAt(0, numToken!.column - 1);
+        expect(numSemantic?.length).toBe(5);
+      });
+
+      it('should correctly calculate length for decimal number tokens', () => {
+        const code = 'x := 123.456';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const decToken = tokens.find(t => t.value === '123.456');
+        expect(decToken).toBeDefined();
+
+        const decSemantic = builder.getTokenAt(0, decToken!.column - 1);
+        expect(decSemantic?.length).toBe(7);
+      });
+    });
+
+    describe('Position Edge Cases', () => {
+      it('should correctly handle single character tokens', () => {
+        const code = 'x';
+        const { builder } = buildSemanticTokens(code);
+
+        const token = builder.getTokenAt(0, 0);
+        expect(token).toBeDefined();
+        expect(token?.line).toBe(0);
+        expect(token?.char).toBe(0);
+        expect(token?.length).toBe(1);
+      });
+
+      it('should correctly handle tokens at various character offsets', () => {
+        const code = '     x';  // 5 spaces before x
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const xToken = tokens.find(t => t.value === 'x');
+        expect(xToken?.column).toBe(6); // 1-indexed, after 5 spaces
+
+        const xSemantic = builder.getTokenAt(0, 5); // 0-indexed: char 5
+        expect(xSemantic).toBeDefined();
+        expect(xSemantic?.char).toBe(5);
+      });
+
+      it('should correctly handle tokens with tab characters (lexer uses column)', () => {
+        const code = '\tx';  // Tab before x
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const xToken = tokens.find(t => t.value === 'x');
+        // The column value depends on how the lexer counts tabs
+        // We just verify the semantic token is at the expected 0-indexed position
+        const xSemantic = builder.getTokenAt(0, xToken!.column - 1);
+        expect(xSemantic).toBeDefined();
+      });
+
+      it('should correctly handle very long lines', () => {
+        const longIdentifier = 'a'.repeat(100);
+        const code = longIdentifier;
+        const { builder } = buildSemanticTokens(code);
+
+        const token = builder.getTokenAt(0, 0);
+        expect(token).toBeDefined();
+        expect(token?.length).toBe(100);
+      });
+
+      it('should correctly handle token at high line number', () => {
+        // Create 50 lines with code on line 50
+        const lines = Array(49).fill('').concat(['END']);
+        const code = lines.join('\n');
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const endToken = tokens.find(t => t.value === 'END');
+        expect(endToken?.line).toBe(50); // 1-indexed
+
+        // Semantic token on line 49 (0-indexed)
+        const endSemantic = builder.getTokenAt(49, 0);
+        expect(endSemantic).toBeDefined();
+        expect(endSemantic?.line).toBe(49);
+      });
+
+      it('should correctly handle token at high column number', () => {
+        const spaces = ' '.repeat(100);
+        const code = spaces + 'END';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const endToken = tokens.find(t => t.value === 'END');
+        expect(endToken?.column).toBe(101); // 1-indexed, after 100 spaces
+
+        const endSemantic = builder.getTokenAt(0, 100); // 0-indexed
+        expect(endSemantic).toBeDefined();
+        expect(endSemantic?.char).toBe(100);
+      });
+    });
+
+    describe('Multiline Procedure Position Verification', () => {
+      it('should correctly position all tokens in a multiline procedure', () => {
+        const code = `PROCEDURE MyProc()
+VAR
+  x : Integer;
+BEGIN
+  x := 1;
+END`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Verify line positions (0-indexed) for key tokens
+        const procToken = tokens.find(t => t.value === 'PROCEDURE');
+        const varToken = tokens.find(t => t.value === 'VAR');
+        const intToken = tokens.find(t => t.value === 'Integer');
+        const beginToken = tokens.find(t => t.value === 'BEGIN');
+        const endToken = tokens.find(t => t.value === 'END');
+
+        // Check each token is on the expected 0-indexed line
+        expect(builder.getTokenAt(0, procToken!.column - 1)?.line).toBe(0); // PROCEDURE on line 0
+        expect(builder.getTokenAt(1, varToken!.column - 1)?.line).toBe(1);  // VAR on line 1
+        expect(builder.getTokenAt(2, intToken!.column - 1)?.line).toBe(2);  // Integer on line 2
+        expect(builder.getTokenAt(3, beginToken!.column - 1)?.line).toBe(3); // BEGIN on line 3
+        expect(builder.getTokenAt(5, endToken!.column - 1)?.line).toBe(5);  // END on line 5
+      });
+
+      it('should correctly position indented tokens in a multiline block', () => {
+        const code = `BEGIN
+  IF TRUE THEN
+    x := 1;
+  ELSE
+    x := 2;
+END`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Find the 'IF' token (indented by 2 spaces)
+        const ifToken = tokens.find(t => t.value === 'IF');
+        expect(ifToken?.line).toBe(2);
+        expect(ifToken?.column).toBe(3); // 2 spaces + 1 for 1-indexed
+
+        const ifSemantic = builder.getTokenAt(1, 2);
+        expect(ifSemantic).toBeDefined();
+        expect(ifSemantic?.line).toBe(1);
+        expect(ifSemantic?.char).toBe(2);
+        expect(ifSemantic?.length).toBe(2);
+
+        // Find the first 'x' (indented by 4 spaces)
+        const xTokens = tokens.filter(t => t.value === 'x');
+        const firstX = xTokens[0];
+        expect(firstX?.line).toBe(3);
+        expect(firstX?.column).toBe(5); // 4 spaces + 1 for 1-indexed
+
+        const xSemantic = builder.getTokenAt(2, 4);
+        expect(xSemantic).toBeDefined();
+        expect(xSemantic?.line).toBe(2);
+        expect(xSemantic?.char).toBe(4);
+      });
+    });
+
+    describe('Position Consistency with Lexer', () => {
+      it('should have consistent position mapping from lexer to semantic tokens', () => {
+        const code = 'VAR x : Integer';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // For each non-skipped lexer token, verify semantic position
+        for (const token of tokens) {
+          if (token.type === TokenType.Whitespace ||
+              token.type === TokenType.EOF ||
+              token.type === TokenType.LeftParen ||
+              token.type === TokenType.RightParen ||
+              token.type === TokenType.LeftBrace ||
+              token.type === TokenType.RightBrace ||
+              token.type === TokenType.Semicolon ||
+              token.type === TokenType.Colon ||
+              token.type === TokenType.Comma) {
+            continue; // Skip tokens that don't produce semantic tokens
+          }
+
+          const semanticToken = builder.getTokenAt(token.line - 1, token.column - 1);
+          if (semanticToken) {
+            expect(semanticToken.line).toBe(token.line - 1);
+            expect(semanticToken.char).toBe(token.column - 1);
+          }
+        }
+      });
+
+      it('should correctly map all keyword positions in complex code', () => {
+        const code = 'IF a > b THEN BEGIN c := d END ELSE e := f';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const keywords = ['IF', 'THEN', 'BEGIN', 'END', 'ELSE'];
+
+        for (const kw of keywords) {
+          const kwToken = tokens.find(t => t.value === kw);
+          expect(kwToken).toBeDefined();
+
+          const kwSemantic = builder.getTokenAt(kwToken!.line - 1, kwToken!.column - 1);
+          expect(kwSemantic).toBeDefined();
+          expect(kwSemantic?.tokenType).toBe(SemanticTokenTypes.Keyword);
+          expect(kwSemantic?.length).toBe(kw.length);
+        }
+      });
+    });
   });
 
   describe('Edge Cases', () => {
