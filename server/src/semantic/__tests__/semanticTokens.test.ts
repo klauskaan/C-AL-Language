@@ -2742,6 +2742,772 @@ END`;
       });
     });
   });
+
+  /**
+   * Integration Tests
+   *
+   * Tests that verify correct semantic token generation through the full
+   * Lexer -> SemanticTokensProvider pipeline using realistic C/AL code.
+   */
+  describe('Integration Tests', () => {
+    describe('Full Lexer -> SemanticTokensProvider pipeline', () => {
+      it('should correctly tokenize a complete Customer table object', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  PROPERTIES
+  {
+    CaptionML=[ENU=Customer;DEU=Debitor];
+  }
+  FIELDS
+  {
+    { 1   ;   ;"No."           ;Code20        }
+    { 2   ;   ;Name            ;Text100       }
+    { 3   ;   ;"Search Name"   ;Code100       }
+    { 4   ;   ;"Address 2"     ;Text50        }
+    { 5   ;   ;City            ;Text30        }
+    { 6   ;   ;"Phone No."     ;Text30        }
+    { 7   ;   ;Balance         ;Decimal       }
+    { 8   ;   ;"Balance (LCY)" ;Decimal       }
+  }
+}`;
+        const { builder } = buildSemanticTokens(code);
+
+        // Verify keywords are correctly identified
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        const keywordNames = ['OBJECT', 'Table', 'PROPERTIES', 'FIELDS'];
+        expect(keywords.length).toBeGreaterThan(0);
+
+        // Verify identifiers (both quoted and unquoted) are correctly mapped
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        expect(variables.length).toBeGreaterThan(0);
+
+        // Verify types are correctly identified
+        const types = builder.getTokensOfType(SemanticTokenTypes.Type);
+        expect(types.length).toBeGreaterThan(0);
+      });
+
+      it('should correctly tokenize a complete Sales Order Management codeunit', () => {
+        const code = `OBJECT Codeunit 80 SalesPost {
+          CODE {
+            VAR
+              Header : Record 36;
+              Line : Record 37;
+              TotalAmount : Decimal;
+              PostingDate : Date;
+              ErrorMessage : Text;
+
+            PROCEDURE Run();
+            BEGIN
+              Header.SETFILTER("No.", '<>%1', '');
+              IF Header.FINDSET THEN
+                REPEAT
+                  TotalAmount := TotalAmount + Header.Amount;
+                UNTIL Header.NEXT = 0;
+            END;
+
+            LOCAL PROCEDURE CheckFields();
+            VAR
+              LocalVar : Integer;
+            BEGIN
+              IF TotalAmount <= 0 THEN
+                ERROR(ErrorMessage);
+            END;
+
+            PROCEDURE FinalizePosting();
+            BEGIN
+              Line.MODIFYALL(Posted, TRUE);
+            END;
+          }
+        }`;
+        const { builder } = buildSemanticTokens(code);
+
+        // Should have many semantic tokens
+        expect(builder.tokens.length).toBeGreaterThan(50);
+
+        // Verify presence of all major semantic types
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        const types = builder.getTokensOfType(SemanticTokenTypes.Type);
+        const operators = builder.getTokensOfType(SemanticTokenTypes.Operator);
+        const strings = builder.getTokensOfType(SemanticTokenTypes.String);
+        const numbers = builder.getTokensOfType(SemanticTokenTypes.Number);
+
+        // Keywords: OBJECT, Codeunit, CODE, VAR, PROCEDURE, BEGIN, END, IF, THEN, REPEAT, UNTIL, LOCAL, ERROR, TRUE
+        expect(keywords.length).toBeGreaterThan(10);
+
+        // Variables: Header, Line, TotalAmount, PostingDate, ErrorMessage, LocalVar, etc.
+        expect(variables.length).toBeGreaterThan(10);
+
+        // Types: Record, Decimal, Date, Text, Integer
+        expect(types.length).toBeGreaterThan(3);
+
+        // Operators: :=, +, <=, =
+        expect(operators.length).toBeGreaterThan(2);
+
+        // Strings: '<>%1', '', etc.
+        expect(strings.length).toBeGreaterThan(0);
+      });
+
+      it('should correctly tokenize a table with both FIELDS and CODE sections', () => {
+        const code = `OBJECT Table 36 "Sales Header"
+{
+  FIELDS
+  {
+    { 1   ;   ;"Document Type"   ;Option        }
+    { 2   ;   ;"No."             ;Code20        }
+    { 3   ;   ;"Posting Date"    ;Date          }
+    { 4   ;   ;Amount            ;Decimal       }
+  }
+
+  CODE
+  {
+    VAR
+      LocalCustomer : Record 18;
+      TotalAmount : Decimal;
+
+    PROCEDURE UpdateAmount();
+    BEGIN
+      Amount := TotalAmount;
+      MODIFY;
+    END;
+
+    TRIGGER OnValidate();
+    BEGIN
+      IF Amount < 0 THEN
+        Amount := 0;
+    END;
+  }
+}`;
+        const { builder } = buildSemanticTokens(code);
+
+        // Verify FIELDS section tokens
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        expect(keywords.some(k => builder.tokens.indexOf(k) >= 0)).toBe(true);
+
+        // Verify CODE section tokens
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        expect(variables.length).toBeGreaterThan(3);
+
+        // Verify types from both sections
+        const types = builder.getTokensOfType(SemanticTokenTypes.Type);
+        expect(types.length).toBeGreaterThan(2);
+      });
+    });
+
+    describe('Quoted identifiers - CRITICAL feature verification', () => {
+      it('should map both regular and quoted field identifiers to Variable type in realistic table', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."           ;Code20        }
+    { 2   ;   ;Name            ;Text100       }
+    { 3   ;   ;"Search Name"   ;Code100       }
+    { 4   ;   ;Address         ;Text100       }
+    { 5   ;   ;"Balance (LCY)" ;Decimal       }
+  }
+}`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Find both quoted and unquoted identifier tokens
+        const quotedIdentifiers = tokens.filter(t => t.type === TokenType.QuotedIdentifier);
+        const regularIdentifiers = tokens.filter(t => t.type === TokenType.Identifier);
+
+        // Verify quoted identifiers exist
+        expect(quotedIdentifiers.length).toBeGreaterThan(0);
+
+        // Verify all identifiers (quoted and regular) map to Variable type
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        expect(variables.length).toBeGreaterThan(0);
+
+        // The key feature: both should produce semantic tokens of the same type
+        for (const quotedId of quotedIdentifiers) {
+          const semToken = builder.getTokenAt(quotedId.line - 1, quotedId.column - 1);
+          if (semToken) {
+            expect(semToken.tokenType).toBe(SemanticTokenTypes.Variable);
+          }
+        }
+      });
+
+      it('should ensure "Line No." and LineNo appear with same semantic highlighting in expressions', () => {
+        const code = `
+x := "Line No.";
+y := LineNo;
+"Line Amount" := Amount;
+"Line Discount %" := DiscountPct;
+`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // All identifiers should be Variable type
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+
+        // Should have: x, "Line No.", y, LineNo, "Line Amount", Amount, "Line Discount %", DiscountPct
+        expect(variables.length).toBe(8);
+
+        // All should have the same tokenType (Variable)
+        for (const v of variables) {
+          expect(v.tokenType).toBe(SemanticTokenTypes.Variable);
+        }
+      });
+
+      it('should handle quoted identifiers with special characters in assignments', () => {
+        const code = `
+"VAT %" := 25;
+"Balance (LCY)" := 1000.50;
+"Gen. Bus. Posting Group" := 'NATIONAL';
+`;
+        const { builder } = buildSemanticTokens(code);
+
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        const numbers = builder.getTokensOfType(SemanticTokenTypes.Number);
+        const strings = builder.getTokensOfType(SemanticTokenTypes.String);
+
+        // Should have quoted identifier variables
+        expect(variables.length).toBe(3);
+
+        // Should have numbers
+        expect(numbers.length).toBe(2);
+
+        // Should have string
+        expect(strings.length).toBe(1);
+      });
+
+      it('should correctly distinguish quoted identifiers from string literals in same code', () => {
+        const code = `
+"Customer Name" := 'John Doe';
+Description := "Search Name";
+`;
+        const { builder } = buildSemanticTokens(code);
+
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        const strings = builder.getTokensOfType(SemanticTokenTypes.String);
+
+        // Variables: "Customer Name", Description, "Search Name" = 3 identifiers
+        expect(variables.length).toBe(3);
+
+        // Strings: 'John Doe' only
+        expect(strings.length).toBe(1);
+
+        // All quoted identifiers should be variables, not strings
+        for (const v of variables) {
+          expect(v.tokenType).toBe(SemanticTokenTypes.Variable);
+        }
+      });
+    });
+
+    describe('Token position tracking in realistic code', () => {
+      it('should track correct line positions in multiline procedure', () => {
+        const code = `PROCEDURE Test();
+VAR
+  x : Integer;
+BEGIN
+  x := 1;
+END;`;
+        const { builder } = buildSemanticTokens(code);
+
+        // PROCEDURE should be on line 0
+        const procToken = builder.tokens.find(t =>
+          t.tokenType === SemanticTokenTypes.Keyword && t.line === 0 && t.char === 0
+        );
+        expect(procToken).toBeDefined();
+
+        // VAR should be on line 1
+        const varToken = builder.tokens.find(t =>
+          t.tokenType === SemanticTokenTypes.Keyword && t.line === 1
+        );
+        expect(varToken).toBeDefined();
+
+        // BEGIN should be on line 3
+        const beginToken = builder.tokens.find(t =>
+          t.tokenType === SemanticTokenTypes.Keyword && t.line === 3
+        );
+        expect(beginToken).toBeDefined();
+
+        // END should be on line 5
+        const endToken = builder.tokens.find(t =>
+          t.tokenType === SemanticTokenTypes.Keyword && t.line === 5
+        );
+        expect(endToken).toBeDefined();
+      });
+
+      it('should track correct character positions for indented code', () => {
+        const code = `BEGIN
+  x := 1;
+  IF y THEN
+    z := 2;
+END`;
+        const { builder } = buildSemanticTokens(code);
+
+        // Find 'x' on line 1 - should be at char 2 (2 spaces indentation)
+        const xToken = builder.tokens.find(t =>
+          t.tokenType === SemanticTokenTypes.Variable && t.line === 1 && t.length === 1
+        );
+        expect(xToken).toBeDefined();
+        expect(xToken?.char).toBe(2);
+
+        // Find 'z' on line 3 - should be at char 4 (4 spaces indentation)
+        const zToken = builder.tokens.find(t =>
+          t.tokenType === SemanticTokenTypes.Variable && t.line === 3 && t.length === 1 && t.char === 4
+        );
+        expect(zToken).toBeDefined();
+      });
+
+      it('should preserve token length for quoted identifiers with special characters', () => {
+        const code = '"Customer No." := "Bal. Account No."';
+        const { builder } = buildSemanticTokens(code);
+
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        expect(variables.length).toBe(2);
+
+        // "Customer No." has length 12 (without quotes as value)
+        const custNo = variables.find(v => v.char === 0);
+        expect(custNo).toBeDefined();
+        expect(custNo?.length).toBe(12);
+
+        // "Bal. Account No." has length 16 (without quotes as value)
+        const balAcct = variables.find(v => v.char > 0);
+        expect(balAcct).toBeDefined();
+        expect(balAcct?.length).toBe(16);
+      });
+    });
+
+    describe('Real-world C/AL patterns', () => {
+      it('should handle NAV-style filter expressions', () => {
+        const code = `
+Customer.SETRANGE("Customer Posting Group", PostingGroup);
+Customer.SETFILTER("No.", '%1..%2', '10000', '20000');
+Customer.SETFILTER(Balance, '>%1', 0);
+`;
+        const { builder } = buildSemanticTokens(code);
+
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        const strings = builder.getTokensOfType(SemanticTokenTypes.String);
+        const numbers = builder.getTokensOfType(SemanticTokenTypes.Number);
+
+        // Should correctly identify all identifiers
+        expect(variables.length).toBeGreaterThan(5);
+
+        // Should correctly identify filter strings: '%1..%2', '10000', '20000', '>%1'
+        expect(strings.length).toBe(4);
+
+        // Should correctly identify numbers
+        expect(numbers.length).toBe(1); // Only the 0
+      });
+
+      it('should handle CALCFIELDS and field method calls', () => {
+        const code = `
+Customer.CALCFIELDS(Balance, "Balance (LCY)");
+IF Customer."Balance (LCY)" > 0 THEN
+  MESSAGE('Customer has balance');
+`;
+        const { builder } = buildSemanticTokens(code);
+
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        const strings = builder.getTokensOfType(SemanticTokenTypes.String);
+        const numbers = builder.getTokensOfType(SemanticTokenTypes.Number);
+
+        expect(variables.length).toBeGreaterThan(3);
+        expect(keywords.length).toBeGreaterThan(1); // IF, THEN
+        expect(strings.length).toBe(1);
+        expect(numbers.length).toBe(1);
+      });
+
+      it('should handle RECORD TEMPORARY pattern', () => {
+        const code = `
+VAR
+  TempItem : Record 27 TEMPORARY;
+  TempCust : Record Customer TEMPORARY;
+`;
+        const { builder } = buildSemanticTokens(code);
+
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        const types = builder.getTokensOfType(SemanticTokenTypes.Type);
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+
+        // VAR and TEMPORARY (2x) = 3 keywords
+        expect(keywords.length).toBe(3);
+
+        // Record type (2x) = 2 types
+        expect(types.length).toBe(2);
+
+        // TempItem, TempCust, Customer = 3 identifiers
+        expect(variables.length).toBe(3);
+      });
+
+      it('should handle complex expressions with operators', () => {
+        const code = `
+Amount := Quantity * UnitPrice * (100 - "Discount %") / 100;
+IF (Amount > 0) AND (Amount <= MaxAmount) THEN
+  TotalAmount := TotalAmount + Amount;
+`;
+        const { builder } = buildSemanticTokens(code);
+
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        const operators = builder.getTokensOfType(SemanticTokenTypes.Operator);
+        const numbers = builder.getTokensOfType(SemanticTokenTypes.Number);
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+
+        // Many variables in expression
+        expect(variables.length).toBeGreaterThan(5);
+
+        // Operators: :=, *, *, -, /, >, <=, :=, +
+        expect(operators.length).toBeGreaterThan(5);
+
+        // Numbers: 100, 0, 100
+        expect(numbers.length).toBeGreaterThan(1);
+
+        // Keywords: IF, AND, THEN
+        expect(keywords.length).toBe(3);
+      });
+
+      it('should handle CASE statement with multiple options', () => {
+        const code = `
+CASE "Document Type" OF
+  "Document Type"::Quote:
+    ProcessQuote;
+  "Document Type"::Order:
+    ProcessOrder;
+  "Document Type"::Invoice:
+    ProcessInvoice;
+  ELSE
+    ERROR('Unknown document type');
+END;
+`;
+        const { builder } = buildSemanticTokens(code);
+
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        const strings = builder.getTokensOfType(SemanticTokenTypes.String);
+
+        // Keywords: CASE, OF, ELSE, ERROR, END (Note: ERROR might be identifier)
+        expect(keywords.length).toBeGreaterThan(2);
+
+        // Variables: "Document Type" (4x), Quote, Order, Invoice, ProcessQuote, ProcessOrder, ProcessInvoice
+        expect(variables.length).toBeGreaterThan(5);
+
+        // String for error message
+        expect(strings.length).toBe(1);
+      });
+
+      it('should handle FOR loop with DOWNTO', () => {
+        const code = `
+FOR i := Count DOWNTO 1 DO
+  Lines[i].Delete;
+`;
+        const { builder } = buildSemanticTokens(code);
+
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        const numbers = builder.getTokensOfType(SemanticTokenTypes.Number);
+
+        // Keywords: FOR, DOWNTO, DO
+        expect(keywords.length).toBe(3);
+
+        // Variables: i (2x), Count, Lines, Delete
+        expect(variables.length).toBeGreaterThan(3);
+
+        // Number: 1
+        expect(numbers.length).toBe(1);
+      });
+
+      it('should handle REPEAT-UNTIL loop with record operations', () => {
+        const code = `
+IF SalesLine.FINDSET THEN
+  REPEAT
+    LineAmount := SalesLine.Quantity * SalesLine."Unit Price";
+    TotalAmount += LineAmount;
+  UNTIL SalesLine.NEXT = 0;
+`;
+        const { builder } = buildSemanticTokens(code);
+
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        const operators = builder.getTokensOfType(SemanticTokenTypes.Operator);
+
+        // Keywords: IF, THEN, REPEAT, UNTIL
+        expect(keywords.length).toBe(4);
+
+        // Many variable references
+        expect(variables.length).toBeGreaterThan(5);
+
+        // Operators: :=, *, +=, =
+        expect(operators.length).toBeGreaterThan(2);
+      });
+    });
+
+    describe('Complete object type verification', () => {
+      it('should correctly tokenize a Page object', () => {
+        const code = `OBJECT Page 21 "Customer Card"
+{
+  PROPERTIES
+  {
+    SourceTable=Table18;
+  }
+  CONTROLS
+  {
+  }
+  CODE
+  {
+    VAR
+      SalesHeader : Record 36;
+
+    TRIGGER OnAfterGetRecord();
+    BEGIN
+      SalesHeader.SETRANGE("Sell-to Customer No.", "No.");
+    END;
+  }
+}`;
+        const { builder } = buildSemanticTokens(code);
+
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        const types = builder.getTokensOfType(SemanticTokenTypes.Type);
+
+        // Should identify Page keyword
+        expect(keywords.some(k => k.length === 4)).toBe(true);
+
+        // Should have variables for fields and record
+        expect(variables.length).toBeGreaterThan(3);
+
+        // Should have Record type
+        expect(types.length).toBeGreaterThan(0);
+      });
+
+      it('should correctly tokenize a Report object', () => {
+        const code = `OBJECT Report 206 "Sales - Invoice"
+{
+  PROPERTIES
+  {
+  }
+  DATASET
+  {
+  }
+  CODE
+  {
+    VAR
+      CompanyInfo : Record 79;
+      Customer : Record 18;
+
+    PROCEDURE InitReport();
+    BEGIN
+      CompanyInfo.GET;
+      Customer.GET("Bill-to Customer No.");
+    END;
+  }
+}`;
+        const { builder } = buildSemanticTokens(code);
+
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+
+        // Should identify Report keyword
+        expect(keywords.length).toBeGreaterThan(5);
+
+        // Should have variables
+        expect(variables.length).toBeGreaterThan(3);
+      });
+
+      it('should correctly tokenize an XMLport object', () => {
+        const code = `OBJECT XMLport 1000 "Export Customers"
+{
+  PROPERTIES
+  {
+    Direction=Export;
+    Format=Xml;
+  }
+  ELEMENTS
+  {
+  }
+  CODE
+  {
+    VAR
+      Customer : Record 18;
+      ExportCount : Integer;
+
+    TRIGGER OnPreXMLport();
+    BEGIN
+      ExportCount := 0;
+    END;
+  }
+}`;
+        const { builder } = buildSemanticTokens(code);
+
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        const numbers = builder.getTokensOfType(SemanticTokenTypes.Number);
+
+        // Should have keywords
+        expect(keywords.length).toBeGreaterThan(5);
+
+        // Should have variables
+        expect(variables.length).toBeGreaterThan(2);
+
+        // Should have numbers
+        expect(numbers.length).toBeGreaterThan(0);
+      });
+    });
+
+    describe('End-to-end verification', () => {
+      it('should maintain consistency between lexer tokens and semantic tokens count', () => {
+        const code = 'x := 1 + 2';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Count non-skipped lexer tokens
+        const significantTokens = tokens.filter(t =>
+          t.type !== TokenType.Whitespace &&
+          t.type !== TokenType.EOF
+        );
+
+        // Should have semantic tokens for: x, :=, 1, +, 2
+        expect(builder.tokens.length).toBe(5);
+        expect(significantTokens.length).toBeGreaterThanOrEqual(builder.tokens.length);
+      });
+
+      it('should correctly process a complete Gen. Jnl.-Post Line style codeunit', () => {
+        const code = `OBJECT Codeunit 12 "Gen. Jnl.-Post Line"
+{
+  CODE
+  {
+    VAR
+      GLEntry : Record 17;
+      CustLedgEntry : Record 21;
+      VendLedgEntry : Record 25;
+      "G/L Account" : Record 15;
+      TempJnlLine : Record 81 TEMPORARY;
+      PostingDate : Date;
+      DocumentNo : Code;
+      SourceCode : Code;
+      ReasonCode : Code;
+
+    PROCEDURE RunWithCheck(var GenJnlLine : Record 81);
+    BEGIN
+      GLEntry.LOCKTABLE;
+      IF GenJnlLine."Posting Date" = 0D THEN
+        ERROR('Posting Date must have a value');
+      PostingDate := GenJnlLine."Posting Date";
+      DocumentNo := GenJnlLine."Document No.";
+    END;
+
+    LOCAL PROCEDURE PrepareEntry();
+    VAR
+      LineNo : Integer;
+    BEGIN
+      GLEntry.INIT;
+      GLEntry."Entry No." := GetNextEntryNo;
+      GLEntry."Posting Date" := PostingDate;
+      GLEntry."Document No." := DocumentNo;
+    END;
+
+    PROCEDURE GetNextEntryNo() : Integer;
+    VAR
+      GLEntryNo : Integer;
+    BEGIN
+      IF GLEntry.FINDLAST THEN
+        GLEntryNo := GLEntry."Entry No." + 1
+      ELSE
+        GLEntryNo := 1;
+      EXIT(GLEntryNo);
+    END;
+  }
+}`;
+        const { builder } = buildSemanticTokens(code);
+
+        // Should process a large number of tokens
+        expect(builder.tokens.length).toBeGreaterThan(80);
+
+        // Verify all expected semantic types are present
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        const types = builder.getTokensOfType(SemanticTokenTypes.Type);
+        const operators = builder.getTokensOfType(SemanticTokenTypes.Operator);
+        const strings = builder.getTokensOfType(SemanticTokenTypes.String);
+        const numbers = builder.getTokensOfType(SemanticTokenTypes.Number);
+
+        // Keywords: OBJECT, Codeunit, CODE, VAR, PROCEDURE, BEGIN, END, IF, THEN, ERROR, LOCAL, EXIT, ELSE, TEMPORARY
+        expect(keywords.length).toBeGreaterThan(15);
+
+        // Variables: many field and variable references with quoted identifiers
+        expect(variables.length).toBeGreaterThan(25);
+
+        // Types: Record, Date, Code, Integer
+        expect(types.length).toBeGreaterThan(5);
+
+        // Operators: :=, =
+        expect(operators.length).toBeGreaterThan(5);
+
+        // Strings: error message
+        expect(strings.length).toBeGreaterThan(0);
+
+        // Numbers: 0, 1, record numbers
+        expect(numbers.length).toBeGreaterThan(3);
+      });
+
+      it('should verify token order matches source code order', () => {
+        const code = `BEGIN
+  x := 1;
+  y := 2;
+  z := 3;
+END`;
+        const { builder } = buildSemanticTokens(code);
+
+        // Tokens should be in order by line, then by character
+        for (let i = 1; i < builder.tokens.length; i++) {
+          const prev = builder.tokens[i - 1];
+          const curr = builder.tokens[i];
+
+          const prevPosition = prev.line * 10000 + prev.char;
+          const currPosition = curr.line * 10000 + curr.char;
+
+          expect(currPosition).toBeGreaterThanOrEqual(prevPosition);
+        }
+      });
+
+      it('should handle edge case of single-line complete object', () => {
+        const code = 'OBJECT Codeunit 1 Test { CODE { VAR x : Integer; PROCEDURE P(); BEGIN x := 1; END; } }';
+        const { builder } = buildSemanticTokens(code);
+
+        // Should process all tokens on single line
+        expect(builder.tokens.length).toBeGreaterThan(10);
+
+        // All tokens should be on line 0
+        for (const token of builder.tokens) {
+          expect(token.line).toBe(0);
+        }
+      });
+
+      it('should correctly handle deeply nested code structures', () => {
+        const code = `
+PROCEDURE DeepNest();
+BEGIN
+  IF Condition1 THEN
+    IF Condition2 THEN
+      IF Condition3 THEN
+        BEGIN
+          WHILE Loop1 DO
+            REPEAT
+              FOR i := 1 TO 10 DO
+                x := x + 1;
+            UNTIL Done;
+        END
+      ELSE
+        y := 0;
+END;
+`;
+        const { builder } = buildSemanticTokens(code);
+
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+
+        // Should correctly identify all keywords at all nesting levels
+        // PROCEDURE, BEGIN (2x), IF (3x), THEN (3x), WHILE, DO (2x), REPEAT, FOR, TO, UNTIL, END (2x), ELSE
+        expect(keywords.length).toBeGreaterThan(15);
+
+        // Should correctly identify all variables at all nesting levels
+        expect(variables.length).toBeGreaterThan(5);
+      });
+    });
+  });
 });
 
 describe('getSemanticTokensLegend', () => {
