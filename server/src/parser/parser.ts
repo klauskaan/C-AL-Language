@@ -76,6 +76,18 @@ export class Parser {
   }
 
   /**
+   * Skip @number suffix if present (C/AL auto-numbering)
+   */
+  private skipAutoNumberSuffix(): void {
+    if (this.peek().value === '@') {
+      this.advance(); // @
+      if (this.check(TokenType.Integer)) {
+        this.advance(); // number
+      }
+    }
+  }
+
+  /**
    * Parse the token stream into an AST
    */
   public parse(): CALDocument {
@@ -223,30 +235,12 @@ export class Parser {
     const properties: Property[] = [];
 
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
-      try {
-        properties.push(this.parseProperty());
-      } catch (error) {
-        if (error instanceof ParseError) {
-          this.errors.push(error);
-          // Track skipped region during error recovery
-          const skipStartToken = this.peek();
-          let skipCount = 0;
-          // Skip to next semicolon or right brace
-          while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
-            this.advance();
-            skipCount++;
-          }
-          if (this.check(TokenType.Semicolon)) {
-            this.advance();
-            skipCount++;
-          }
-          // Record the skipped region if any tokens were skipped
-          if (skipCount > 0) {
-            this.recordSkippedRegion(skipStartToken, this.previous(), skipCount, 'Error recovery');
-          }
-        } else {
-          throw error;
-        }
+      const property = this.parseWithRecovery(
+        () => this.parseProperty(),
+        [TokenType.Semicolon, TokenType.RightBrace]
+      );
+      if (property) {
+        properties.push(property);
       }
     }
 
@@ -304,26 +298,12 @@ export class Parser {
     const fields: FieldDeclaration[] = [];
 
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
-      try {
-        fields.push(this.parseField());
-      } catch (error) {
-        if (error instanceof ParseError) {
-          this.errors.push(error);
-          // Track skipped region during error recovery
-          const skipStartToken = this.peek();
-          let skipCount = 0;
-          // Skip to next field (left brace) or end of section (right brace)
-          while (!this.check(TokenType.LeftBrace) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
-            this.advance();
-            skipCount++;
-          }
-          // Record the skipped region if any tokens were skipped
-          if (skipCount > 0) {
-            this.recordSkippedRegion(skipStartToken, this.previous(), skipCount, 'Error recovery');
-          }
-        } else {
-          throw error;
-        }
+      const field = this.parseWithRecovery(
+        () => this.parseField(),
+        [TokenType.LeftBrace, TokenType.RightBrace]
+      );
+      if (field) {
+        fields.push(field);
       }
     }
 
@@ -411,6 +391,11 @@ export class Parser {
     };
   }
 
+  /**
+   * Parse data type specification
+   * Supports: simple types, sized types, Record types, ARRAY types, TextConst
+   * @returns DataType node with type information
+   */
   private parseDataType(): DataType {
     const startToken = this.peek();
     const typeToken = this.advance();
@@ -485,48 +470,49 @@ export class Parser {
     const triggers: TriggerDeclaration[] = [];
 
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
-      try {
-        const startToken = this.peek();
-        const nameToken = this.advance(); // Property or trigger name
-        const name = nameToken.value;
+      const result = this.parseWithRecovery(
+        () => {
+          const startToken = this.peek();
+          const nameToken = this.advance(); // Property or trigger name
+          const name = nameToken.value;
 
-        this.consume(TokenType.Equal, 'Expected =');
+          this.consume(TokenType.Equal, 'Expected =');
 
-        // Check if this is a trigger (starts with BEGIN or VAR) or regular property
-        if (this.check(TokenType.Begin) || this.check(TokenType.Var)) {
-          // This is a field trigger (OnValidate, OnLookup, etc.)
-          triggers.push(this.parseFieldTrigger(name, startToken));
+          // Check if this is a trigger (starts with BEGIN or VAR) or regular property
+          if (this.check(TokenType.Begin) || this.check(TokenType.Var)) {
+            // This is a field trigger (OnValidate, OnLookup, etc.)
+            return { type: 'trigger' as const, trigger: this.parseFieldTrigger(name, startToken) };
+          } else {
+            // Regular property - read value until semicolon
+            let value = '';
+            while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+              value += this.advance().value;
+            }
+
+            if (this.check(TokenType.Semicolon)) {
+              this.advance();
+            }
+
+            return {
+              type: 'property' as const,
+              property: {
+                type: 'Property' as const,
+                name,
+                value: value.trim(),
+                startToken,
+                endToken: this.previous()
+              }
+            };
+          }
+        },
+        [TokenType.Semicolon, TokenType.RightBrace]
+      );
+
+      if (result) {
+        if (result.type === 'trigger') {
+          triggers.push(result.trigger);
         } else {
-          // Regular property - read value until semicolon
-          let value = '';
-          while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
-            value += this.advance().value;
-          }
-
-          if (this.check(TokenType.Semicolon)) {
-            this.advance();
-          }
-
-          properties.push({
-            type: 'Property',
-            name,
-            value: value.trim(),
-            startToken,
-            endToken: this.previous()
-          });
-        }
-      } catch (error) {
-        if (error instanceof ParseError) {
-          this.errors.push(error);
-          // Skip to next semicolon or right brace for recovery
-          while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
-            this.advance();
-          }
-          if (this.check(TokenType.Semicolon)) {
-            this.advance();
-          }
-        } else {
-          throw error;
+          properties.push(result.property);
         }
       }
     }
@@ -544,26 +530,12 @@ export class Parser {
     const keys: KeyDeclaration[] = [];
 
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
-      try {
-        keys.push(this.parseKey());
-      } catch (error) {
-        if (error instanceof ParseError) {
-          this.errors.push(error);
-          // Track skipped region during error recovery
-          const skipStartToken = this.peek();
-          let skipCount = 0;
-          // Skip to next key (left brace) or end of section (right brace)
-          while (!this.check(TokenType.LeftBrace) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
-            this.advance();
-            skipCount++;
-          }
-          // Record the skipped region if any tokens were skipped
-          if (skipCount > 0) {
-            this.recordSkippedRegion(skipStartToken, this.previous(), skipCount, 'Error recovery');
-          }
-        } else {
-          throw error;
-        }
+      const key = this.parseWithRecovery(
+        () => this.parseKey(),
+        [TokenType.LeftBrace, TokenType.RightBrace]
+      );
+      if (key) {
+        keys.push(key);
       }
     }
 
@@ -702,24 +674,21 @@ export class Parser {
     };
   }
 
+  /**
+   * Parse variable declarations section (VAR keyword and variable list)
+   * Handles TEMPORARY keyword and @number auto-numbering syntax
+   * @param variables - Array to populate with parsed variable declarations
+   */
   private parseVariableDeclarations(variables: VariableDeclaration[]): void {
     this.consume(TokenType.Var, 'Expected VAR');
 
-    while (!this.check(TokenType.Procedure) && !this.check(TokenType.Function) &&
-           !this.check(TokenType.Local) && !this.check(TokenType.Trigger) &&
-           !this.check(TokenType.Begin) && !this.isAtEnd()) {
+    while (!this.isCodeSectionBoundary() && !this.isAtEnd()) {
       const startToken = this.peek();
       const nameToken = this.advance();
 
       if (nameToken.type === TokenType.Identifier || nameToken.type === TokenType.QuotedIdentifier) {
         // Skip @number if present (C/AL auto-numbering)
-        // The @ is tokenized as UNKNOWN
-        if (this.peek().value === '@') {
-          this.advance(); // @
-          if (this.check(TokenType.Integer)) {
-            this.advance(); // number
-          }
-        }
+        this.skipAutoNumberSuffix();
 
         this.consume(TokenType.Colon, 'Expected :');
 
@@ -795,12 +764,7 @@ export class Parser {
     const name = nameToken.value;
 
     // Skip @number if present (C/AL auto-numbering)
-    if (this.peek().value === '@') {
-      this.advance(); // @
-      if (this.check(TokenType.Integer)) {
-        this.advance(); // number
-      }
-    }
+    this.skipAutoNumberSuffix();
 
     return name;
   }
@@ -980,24 +944,12 @@ export class Parser {
     const statements: Statement[] = [];
 
     while (!this.check(TokenType.End) && !this.isAtEnd()) {
-      try {
-        const stmt = this.parseStatement();
-        if (stmt) {
-          statements.push(stmt);
-        }
-      } catch (error) {
-        if (error instanceof ParseError) {
-          this.errors.push(error);
-          // Skip to next statement boundary (semicolon) or END
-          while (!this.check(TokenType.Semicolon) && !this.check(TokenType.End) && !this.isAtEnd()) {
-            this.advance();
-          }
-          if (this.check(TokenType.Semicolon)) {
-            this.advance();
-          }
-        } else {
-          throw error;
-        }
+      const stmt = this.parseWithRecovery(
+        () => this.parseStatement(),
+        [TokenType.Semicolon, TokenType.End]
+      );
+      if (stmt) {
+        statements.push(stmt);
       }
     }
 
@@ -1621,6 +1573,11 @@ export class Parser {
     } as Identifier;
   }
 
+  /**
+   * Parse identifier with optional postfix operations
+   * Handles chained operations: object.property[index].method(args)
+   * @returns Expression node (Identifier, MemberExpression, CallExpression, or ArrayAccessExpression)
+   */
   private parseIdentifierExpression(): Expression {
     const startToken = this.peek();
     let expr: Expression = {
@@ -1631,61 +1588,97 @@ export class Parser {
       endToken: startToken
     } as Identifier;
 
-    // Handle member access (.) and function calls
+    // Handle postfix operations
     while (true) {
-      if (this.check(TokenType.Dot)) {
-        this.advance();
-        const memberToken = this.advance();
-        const property: Identifier = {
-          type: 'Identifier',
-          name: memberToken.value,
-          isQuoted: memberToken.type === TokenType.QuotedIdentifier,
-          startToken: memberToken,
-          endToken: memberToken
-        };
-        expr = {
-          type: 'MemberExpression',
-          object: expr,
-          property,
-          startToken: expr.startToken,
-          endToken: memberToken
-        } as MemberExpression;
-      } else if (this.check(TokenType.LeftParen)) {
-        // Function call - parse arguments into CallExpression
-        this.advance(); // consume '('
-        const args: Expression[] = [];
-        while (!this.check(TokenType.RightParen) && !this.isAtEnd()) {
-          args.push(this.parseExpression());
-          if (this.check(TokenType.Comma)) {
-            this.advance();
-          }
-        }
-        const endToken = this.check(TokenType.RightParen) ? this.advance() : this.previous();
-        expr = {
-          type: 'CallExpression',
-          callee: expr,
-          arguments: args,
-          startToken: expr.startToken,
-          endToken
-        } as CallExpression;
-      } else if (this.check(TokenType.LeftBracket)) {
-        // Array access - parse index into ArrayAccessExpression
-        this.advance(); // consume '['
-        const indexExpr = this.parseExpression();
-        const endToken = this.consume(TokenType.RightBracket, 'Expected ]');
-        expr = {
-          type: 'ArrayAccessExpression',
-          array: expr,
-          index: indexExpr,
-          startToken: expr.startToken,
-          endToken
-        } as ArrayAccessExpression;
-      } else {
+      const before = expr;
+
+      expr = this.parseMemberAccessIfPresent(expr);
+      expr = this.parseFunctionCallIfPresent(expr);
+      expr = this.parseArrayAccessIfPresent(expr);
+
+      if (expr === before) {
         break;
       }
     }
 
     return expr;
+  }
+
+  /**
+   * Parse member access (dot notation) if present
+   */
+  private parseMemberAccessIfPresent(expr: Expression): Expression {
+    if (!this.check(TokenType.Dot)) {
+      return expr;
+    }
+
+    this.advance();
+    const memberToken = this.advance();
+    const property: Identifier = {
+      type: 'Identifier',
+      name: memberToken.value,
+      isQuoted: memberToken.type === TokenType.QuotedIdentifier,
+      startToken: memberToken,
+      endToken: memberToken
+    };
+
+    return {
+      type: 'MemberExpression',
+      object: expr,
+      property,
+      startToken: expr.startToken,
+      endToken: memberToken
+    } as MemberExpression;
+  }
+
+  /**
+   * Parse function call if present
+   */
+  private parseFunctionCallIfPresent(expr: Expression): Expression {
+    if (!this.check(TokenType.LeftParen)) {
+      return expr;
+    }
+
+    this.advance();
+    const args: Expression[] = [];
+
+    while (!this.check(TokenType.RightParen) && !this.isAtEnd()) {
+      args.push(this.parseExpression());
+      if (this.check(TokenType.Comma)) {
+        this.advance();
+      }
+    }
+
+    const endToken = this.check(TokenType.RightParen) ? this.advance() : this.previous();
+
+    return {
+      type: 'CallExpression',
+      callee: expr,
+      arguments: args,
+      startToken: expr.startToken,
+      endToken
+    } as CallExpression;
+  }
+
+  /**
+   * Parse array access if present
+   */
+  private parseArrayAccessIfPresent(expr: Expression): Expression {
+    if (!this.check(TokenType.LeftBracket)) {
+      return expr;
+    }
+
+    this.advance();
+    const indexExpr = this.parseExpression();
+    const endToken = this.consume(TokenType.RightBracket, 'Expected ]');
+
+    return {
+      type: 'ArrayAccessExpression',
+      array: expr,
+      index: indexExpr,
+      startToken: expr.startToken,
+      endToken
+    } as ArrayAccessExpression;
   }
 
   /**
@@ -1712,6 +1705,17 @@ export class Parser {
   private checkNext(type: TokenType): boolean {
     if (this.current + 1 >= this.tokens.length) return false;
     return this.tokens[this.current + 1].type === type;
+  }
+
+  /**
+   * Check if current token marks end of variable declarations
+   */
+  private isCodeSectionBoundary(): boolean {
+    return this.check(TokenType.Procedure) ||
+           this.check(TokenType.Function) ||
+           this.check(TokenType.Local) ||
+           this.check(TokenType.Trigger) ||
+           this.check(TokenType.Begin);
   }
 
   private advance(): Token {
@@ -1795,6 +1799,49 @@ export class Parser {
     // Generate a diagnostic for the skipped region
     const tokenWord = tokenCount === 1 ? 'token' : 'tokens';
     this.recordError(`Skipped ${tokenCount} ${tokenWord} during error recovery`, startToken);
+  }
+
+  /**
+   * Parse item with automatic error recovery
+   * @param parser - Function that parses a single item
+   * @param recoveryTokens - Tokens to stop at during recovery
+   * @returns Parsed item or null if error occurred
+   */
+  private parseWithRecovery<T>(
+    parser: () => T,
+    recoveryTokens: TokenType[]
+  ): T | null {
+    try {
+      return parser();
+    } catch (error) {
+      if (error instanceof ParseError) {
+        this.errors.push(error);
+        this.recoverToTokens(recoveryTokens);
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Recover parser state by advancing to one of the specified tokens
+   */
+  private recoverToTokens(tokens: TokenType[]): void {
+    const skipStartToken = this.peek();
+    let skipCount = 0;
+
+    while (!tokens.some(t => this.check(t)) && !this.isAtEnd()) {
+      this.advance();
+      skipCount++;
+    }
+
+    if (skipCount > 0) {
+      this.recordSkippedRegion(skipStartToken, this.previous(), skipCount, 'Error recovery');
+    }
+
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
   }
 
   /**
