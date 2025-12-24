@@ -33,7 +33,10 @@ import {
   Identifier,
   Literal,
   BinaryExpression,
-  UnaryExpression
+  UnaryExpression,
+  MemberExpression,
+  CallExpression,
+  ArrayAccessExpression
 } from './ast';
 
 /**
@@ -850,7 +853,7 @@ export class Parser {
       if (this.check(TokenType.Semicolon)) {
         this.advance();
       } else if (!this.check(TokenType.RightParen)) {
-        // Skip unknown tokens
+        this.recordError('Unexpected token in parameter list', this.peek());
         this.advance();
       }
     }
@@ -1065,7 +1068,11 @@ export class Parser {
     // Parse then branch
     const thenBranch = this.check(TokenType.Begin)
       ? this.parseBlock()
-      : this.parseStatement()!;
+      : this.parseStatement();
+
+    if (!thenBranch) {
+      throw new ParseError('Expected statement after THEN', this.peek());
+    }
 
     // Parse optional else branch
     let elseBranch: Statement | null = null;
@@ -1073,7 +1080,11 @@ export class Parser {
       this.advance();
       elseBranch = this.check(TokenType.Begin)
         ? this.parseBlock()
-        : this.parseStatement()!;
+        : this.parseStatement();
+
+      if (!elseBranch) {
+        throw new ParseError('Expected statement after ELSE', this.peek());
+      }
     }
 
     return {
@@ -1098,7 +1109,11 @@ export class Parser {
     // Parse body
     const body = this.check(TokenType.Begin)
       ? this.parseBlock()
-      : this.parseStatement()!;
+      : this.parseStatement();
+
+    if (!body) {
+      throw new ParseError('Expected statement after DO', this.peek());
+    }
 
     return {
       type: 'WhileStatement',
@@ -1178,7 +1193,11 @@ export class Parser {
     // Parse body
     const body = this.check(TokenType.Begin)
       ? this.parseBlock()
-      : this.parseStatement()!;
+      : this.parseStatement();
+
+    if (!body) {
+      throw new ParseError('Expected statement after DO', this.peek());
+    }
 
     return {
       type: 'ForStatement',
@@ -1630,7 +1649,7 @@ export class Parser {
           property,
           startToken: expr.startToken,
           endToken: memberToken
-        } as any;
+        } as MemberExpression;
       } else if (this.check(TokenType.LeftParen)) {
         // Function call - parse arguments into CallExpression
         this.advance(); // consume '('
@@ -1648,7 +1667,7 @@ export class Parser {
           arguments: args,
           startToken: expr.startToken,
           endToken
-        } as any;
+        } as CallExpression;
       } else if (this.check(TokenType.LeftBracket)) {
         // Array access - parse index into ArrayAccessExpression
         this.advance(); // consume '['
@@ -1660,7 +1679,7 @@ export class Parser {
           index: indexExpr,
           startToken: expr.startToken,
           endToken
-        } as any;
+        } as ArrayAccessExpression;
       } else {
         break;
       }
