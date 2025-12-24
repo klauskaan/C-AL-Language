@@ -43,6 +43,7 @@ export class Parser {
   private tokens: Token[];
   private current: number = 0;
   private errors: ParseError[] = [];
+  private skippedRegions: SkippedRegion[] = [];
 
   constructor(tokens: Token[]) {
     // Filter out EOF token for easier parsing
@@ -200,12 +201,21 @@ export class Parser {
       } catch (error) {
         if (error instanceof ParseError) {
           this.errors.push(error);
+          // Track skipped region during error recovery
+          const skipStartToken = this.peek();
+          let skipCount = 0;
           // Skip to next semicolon or right brace
           while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
             this.advance();
+            skipCount++;
           }
           if (this.check(TokenType.Semicolon)) {
             this.advance();
+            skipCount++;
+          }
+          // Record the skipped region if any tokens were skipped
+          if (skipCount > 0) {
+            this.recordSkippedRegion(skipStartToken, this.previous(), skipCount, 'Error recovery');
           }
         } else {
           throw error;
@@ -272,9 +282,17 @@ export class Parser {
       } catch (error) {
         if (error instanceof ParseError) {
           this.errors.push(error);
+          // Track skipped region during error recovery
+          const skipStartToken = this.peek();
+          let skipCount = 0;
           // Skip to next field (left brace) or end of section (right brace)
           while (!this.check(TokenType.LeftBrace) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
             this.advance();
+            skipCount++;
+          }
+          // Record the skipped region if any tokens were skipped
+          if (skipCount > 0) {
+            this.recordSkippedRegion(skipStartToken, this.previous(), skipCount, 'Error recovery');
           }
         } else {
           throw error;
@@ -504,9 +522,17 @@ export class Parser {
       } catch (error) {
         if (error instanceof ParseError) {
           this.errors.push(error);
+          // Track skipped region during error recovery
+          const skipStartToken = this.peek();
+          let skipCount = 0;
           // Skip to next key (left brace) or end of section (right brace)
           while (!this.check(TokenType.LeftBrace) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
             this.advance();
+            skipCount++;
+          }
+          // Record the skipped region if any tokens were skipped
+          if (skipCount > 0) {
+            this.recordSkippedRegion(skipStartToken, this.previous(), skipCount, 'Error recovery');
           }
         } else {
           throw error;
@@ -1663,11 +1689,34 @@ export class Parser {
   }
 
   /**
+   * Get all skipped regions recorded during parsing
+   */
+  public getSkippedRegions(): SkippedRegion[] {
+    return this.skippedRegions;
+  }
+
+  /**
    * Record an error without throwing - used for error recovery
    */
   private recordError(message: string, token?: Token): void {
     const errorToken = token || this.peek();
     this.errors.push(new ParseError(message, errorToken));
+  }
+
+  /**
+   * Record a skipped region during error recovery
+   */
+  private recordSkippedRegion(startToken: Token, endToken: Token, tokenCount: number, reason: string): void {
+    this.skippedRegions.push({
+      startToken,
+      endToken,
+      tokenCount,
+      reason
+    });
+
+    // Generate a diagnostic for the skipped region
+    const tokenWord = tokenCount === 1 ? 'token' : 'tokens';
+    this.recordError(`Skipped ${tokenCount} ${tokenWord} during error recovery`, startToken);
   }
 
   /**
@@ -1731,11 +1780,19 @@ export class Parser {
    * Recovery points are: section keywords, END, or end of input.
    */
   private synchronize(): void {
+    const startToken = this.peek();
+    let tokenCount = 0;
+
     this.advance();
+    tokenCount++;
 
     while (!this.isAtEnd()) {
       // Stop at statement boundaries
       if (this.previous().type === TokenType.Semicolon) {
+        // Record skipped region before returning
+        if (tokenCount > 0) {
+          this.recordSkippedRegion(startToken, this.previous(), tokenCount, 'Error recovery');
+        }
         return;
       }
 
@@ -1753,10 +1810,20 @@ export class Parser {
         case TokenType.End:
         case TokenType.Var:
         case TokenType.RightBrace:
+          // Record skipped region before returning
+          if (tokenCount > 0) {
+            this.recordSkippedRegion(startToken, this.previous(), tokenCount, 'Error recovery');
+          }
           return;
       }
 
       this.advance();
+      tokenCount++;
+    }
+
+    // Record region if we skipped anything (reached end of input)
+    if (tokenCount > 0) {
+      this.recordSkippedRegion(startToken, this.previous(), tokenCount, 'Error recovery');
     }
   }
 }
@@ -1766,4 +1833,14 @@ export class ParseError extends Error {
     super(`${message} at line ${token.line}, column ${token.column}`);
     this.name = 'ParseError';
   }
+}
+
+/**
+ * Represents a region of tokens skipped during error recovery
+ */
+export interface SkippedRegion {
+  startToken: Token;      // First token in skipped region
+  endToken: Token;        // Last token in skipped region
+  tokenCount: number;     // Number of tokens skipped
+  reason: string;         // Why this region was skipped (e.g., "Error recovery")
 }
