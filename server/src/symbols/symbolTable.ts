@@ -6,6 +6,7 @@ import {
   TriggerDeclaration,
   FieldDeclaration
 } from '../parser/ast';
+import { Type } from '../types/types';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { ASTWalker } from '../visitor/astWalker';
 
@@ -13,7 +14,10 @@ export interface Symbol {
   name: string;
   kind: 'variable' | 'parameter' | 'field' | 'procedure' | 'function';
   token: Token;
+  /** Syntactic type name as a string (for backwards compatibility) */
   type?: string;
+  /** Resolved semantic type (when available from type resolution) */
+  resolvedType?: Type;
 }
 
 /**
