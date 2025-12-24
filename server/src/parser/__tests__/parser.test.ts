@@ -764,3 +764,752 @@ describe('Parser - TEMPORARY Variables', () => {
     expect(ast.object?.code?.variables[0].isTemporary).toBe(true);
   });
 });
+
+describe('Parser - Field Properties', () => {
+  describe('Simple field properties', () => {
+    it('should parse field with CaptionML property', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 ; CaptionML=ENU=No. }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.fields).not.toBeNull();
+      expect(ast.object?.fields?.fields).toHaveLength(1);
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.fieldName).toBe('No.');
+      expect(field?.properties).not.toBeNull();
+      expect(field?.properties?.properties).toHaveLength(1);
+      expect(field?.properties?.properties[0].name).toBe('CaptionML');
+      expect(field?.properties?.properties[0].value).toBe('ENU=No.');
+    });
+
+    it('should parse field with NotBlank property', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 ; NotBlank=Yes }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.properties).not.toBeNull();
+      expect(field?.properties?.properties).toHaveLength(1);
+      expect(field?.properties?.properties[0].name).toBe('NotBlank');
+      expect(field?.properties?.properties[0].value).toBe('Yes');
+    });
+
+    it('should parse field with TableRelation property', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 5 ; ; "Post Code" ; Code20 ; TableRelation="Post Code" }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.fieldName).toBe('Post Code');
+      expect(field?.properties).not.toBeNull();
+      expect(field?.properties?.properties).toHaveLength(1);
+      expect(field?.properties?.properties[0].name).toBe('TableRelation');
+      expect(field?.properties?.properties[0].value).toContain('Post Code');
+    });
+
+    it('should parse field with Editable property', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 6 ; ; Balance ; Decimal ; Editable=No }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.properties?.properties[0].name).toBe('Editable');
+      expect(field?.properties?.properties[0].value).toBe('No');
+    });
+
+    it('should parse field with FieldClass property', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 6 ; ; Balance ; Decimal ; FieldClass=FlowField }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.properties?.properties[0].name).toBe('FieldClass');
+      expect(field?.properties?.properties[0].value).toBe('FlowField');
+    });
+
+    it('should parse field with DecimalPlaces property', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 6 ; ; Balance ; Decimal ; DecimalPlaces=2:2 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.properties?.properties[0].name).toBe('DecimalPlaces');
+      expect(field?.properties?.properties[0].value).toBe('2:2');
+    });
+
+    it('should parse field with AutoFormatType property', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 7 ; ; Amount ; Decimal ; AutoFormatType=1 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.properties?.properties[0].name).toBe('AutoFormatType');
+      expect(field?.properties?.properties[0].value).toBe('1');
+    });
+
+    it('should parse field with ExtendedDatatype property', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 14 ; ; "E-Mail" ; Text80 ; ExtendedDatatype=E-Mail }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.fieldName).toBe('E-Mail');
+      expect(field?.properties?.properties[0].name).toBe('ExtendedDatatype');
+    });
+  });
+
+  describe('Multiple field properties', () => {
+    it('should parse field with CaptionML and NotBlank properties', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 ; CaptionML=ENU=No.;
+                                  NotBlank=Yes }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.properties).not.toBeNull();
+      expect(field?.properties?.properties.length).toBeGreaterThanOrEqual(2);
+
+      const propNames = field?.properties?.properties.map(p => p.name) || [];
+      expect(propNames).toContain('CaptionML');
+      expect(propNames).toContain('NotBlank');
+    });
+
+    it('should parse field with multiple properties including TableRelation', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 5 ; ; "Post Code" ; Code20 ; CaptionML=ENU=Post Code;
+                                        TableRelation="Post Code";
+                                        ValidateTableRelation=No }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.properties?.properties.length).toBeGreaterThanOrEqual(2);
+
+      const propNames = field?.properties?.properties.map(p => p.name) || [];
+      expect(propNames).toContain('CaptionML');
+      expect(propNames).toContain('TableRelation');
+    });
+
+    it('should parse field with FlowField properties', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 6 ; ; Balance ; Decimal ; CaptionML=ENU=Balance;
+                                       FieldClass=FlowField;
+                                       Editable=No }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      const propNames = field?.properties?.properties.map(p => p.name) || [];
+      expect(propNames).toContain('CaptionML');
+      expect(propNames).toContain('FieldClass');
+      expect(propNames).toContain('Editable');
+    });
+
+    it('should parse Option field with OptionString and OptionCaptionML', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 10 ; ; "Customer Type" ; Option ; CaptionML=ENU=Customer Type;
+                                              OptionCaptionML=ENU=Standard,Premium,VIP;
+                                              OptionString=Standard,Premium,VIP }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.fieldName).toBe('Customer Type');
+      const propNames = field?.properties?.properties.map(p => p.name) || [];
+      expect(propNames).toContain('CaptionML');
+      expect(propNames).toContain('OptionCaptionML');
+      expect(propNames).toContain('OptionString');
+    });
+  });
+
+  describe('Field without properties', () => {
+    it('should parse simple field with no properties', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.fieldNo).toBe(1);
+      expect(field?.fieldName).toBe('No.');
+      expect(field?.dataType.typeName).toBe('Code20');
+      expect(field?.properties).toBeNull();
+      expect(field?.triggers).toBeNull();
+    });
+
+    it('should parse multiple simple fields without properties', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 }
+          { 2 ; ; Name ; Text100 }
+          { 3 ; ; Address ; Text50 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.fields?.fields).toHaveLength(3);
+      expect(ast.object?.fields?.fields[0].fieldName).toBe('No.');
+      expect(ast.object?.fields?.fields[1].fieldName).toBe('Name');
+      expect(ast.object?.fields?.fields[2].fieldName).toBe('Address');
+    });
+  });
+
+  describe('Mixed fields with and without properties', () => {
+    it('should parse table with mixed field definitions', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 ; CaptionML=ENU=No.;
+                                  NotBlank=Yes }
+          { 2 ; ; Name ; Text100 }
+          { 3 ; ; City ; Text30 ; CaptionML=ENU=City }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.fields?.fields).toHaveLength(3);
+
+      // First field has properties
+      expect(ast.object?.fields?.fields[0].properties).not.toBeNull();
+      expect(ast.object?.fields?.fields[0].properties?.properties.length).toBeGreaterThanOrEqual(1);
+
+      // Second field has no properties
+      expect(ast.object?.fields?.fields[1].properties).toBeNull();
+
+      // Third field has one property
+      expect(ast.object?.fields?.fields[2].properties).not.toBeNull();
+    });
+  });
+
+  describe('Complex property values', () => {
+    it('should parse CalcFormula with complex expression', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 6 ; ; Balance ; Decimal ; CalcFormula=Sum("Customer Ledger Entry".Amount WHERE ("Customer No."=FIELD(No.))) }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.properties).not.toBeNull();
+      const calcFormulaProp = field?.properties?.properties.find(p => p.name === 'CalcFormula');
+      expect(calcFormulaProp).toBeDefined();
+      expect(calcFormulaProp?.value).toContain('Sum');
+      expect(calcFormulaProp?.value).toContain('Customer Ledger Entry');
+    });
+
+    it('should parse property with special characters in value', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "E-Mail" ; Text80 ; CaptionML=ENU=E-Mail Address }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.fieldName).toBe('E-Mail');
+      expect(field?.properties?.properties[0].name).toBe('CaptionML');
+    });
+  });
+
+  describe('Error recovery in field properties', () => {
+    it('should not crash on malformed field properties', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 ; CaptionML }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should continue parsing after field property error', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 ; BadProp }
+          { 2 ; ; Name ; Text100 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+  });
+});
+
+describe('Parser - Field Triggers', () => {
+  describe('OnValidate trigger parsing', () => {
+    it('should parse field with OnValidate trigger', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 2 ; ; Name ; Text100 ; OnValidate=BEGIN
+                                               MESSAGE('Name changed');
+                                             END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.fields).not.toBeNull();
+      expect(ast.object?.fields?.fields).toHaveLength(1);
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.fieldName).toBe('Name');
+      expect(field?.triggers).not.toBeNull();
+      expect(field?.triggers).toHaveLength(1);
+      expect(field?.triggers?.[0].name).toBe('OnValidate');
+      expect(field?.triggers?.[0].body.length).toBeGreaterThan(0);
+    });
+
+    it('should parse OnValidate trigger with empty body', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 2 ; ; Name ; Text100 ; OnValidate=BEGIN END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.triggers).not.toBeNull();
+      expect(field?.triggers).toHaveLength(1);
+      expect(field?.triggers?.[0].name).toBe('OnValidate');
+      expect(field?.triggers?.[0].body).toHaveLength(0);
+    });
+
+    it('should parse OnValidate trigger with IF statement', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 2 ; ; Name ; Text100 ; OnValidate=BEGIN
+                                               IF Name = '' THEN
+                                                 ERROR('Name is required');
+                                             END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.triggers).not.toBeNull();
+      expect(field?.triggers?.[0].body.length).toBeGreaterThan(0);
+      expect(field?.triggers?.[0].body[0].type).toBe('IfStatement');
+    });
+
+    it('should parse OnValidate trigger with multiple statements', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 2 ; ; Name ; Text100 ; OnValidate=BEGIN
+                                               MESSAGE('First');
+                                               MESSAGE('Second');
+                                               MESSAGE('Third');
+                                             END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.triggers?.[0].body.length).toBe(3);
+    });
+
+    it('should parse OnValidate trigger with nested BEGIN...END', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 2 ; ; Name ; Text100 ; OnValidate=BEGIN
+                                               IF Name <> '' THEN BEGIN
+                                                 MESSAGE('Name is set');
+                                                 MESSAGE('Processing...');
+                                               END;
+                                             END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.triggers).not.toBeNull();
+      expect(field?.triggers).toHaveLength(1);
+      const ifStmt = field?.triggers?.[0].body[0];
+      expect(ifStmt?.type).toBe('IfStatement');
+    });
+  });
+
+  describe('OnLookup trigger parsing', () => {
+    it('should parse field with OnLookup trigger', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 5 ; ; "Post Code" ; Code20 ; OnLookup=BEGIN
+                                                    MESSAGE('Lookup invoked');
+                                                  END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.fieldName).toBe('Post Code');
+      expect(field?.triggers).not.toBeNull();
+      expect(field?.triggers).toHaveLength(1);
+      expect(field?.triggers?.[0].name).toBe('OnLookup');
+      expect(field?.triggers?.[0].body.length).toBeGreaterThan(0);
+    });
+
+    it('should parse OnLookup trigger with record operations', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 5 ; ; "Post Code" ; Code20 ; OnLookup=BEGIN
+                                                    PostCode.RESET;
+                                                    IF PostCode.FIND('-') THEN
+                                                      MESSAGE('Found');
+                                                  END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.triggers).not.toBeNull();
+      expect(field?.triggers?.[0].name).toBe('OnLookup');
+      expect(field?.triggers?.[0].body.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('Field trigger with local variables', () => {
+    it('should parse OnValidate trigger with VAR section', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 2 ; ; Name ; Text100 ; OnValidate=VAR
+                                               LocalVar : Integer;
+                                             BEGIN
+                                               LocalVar := 100;
+                                               MESSAGE('Value: %1', LocalVar);
+                                             END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.triggers).not.toBeNull();
+      expect(field?.triggers).toHaveLength(1);
+      expect(field?.triggers?.[0].name).toBe('OnValidate');
+      expect(field?.triggers?.[0].variables.length).toBeGreaterThanOrEqual(1);
+      expect(field?.triggers?.[0].variables[0].name).toBe('LocalVar');
+    });
+  });
+
+  describe('Multiple field triggers', () => {
+    it('should parse field with both OnValidate and OnLookup triggers', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 5 ; ; "Post Code" ; Code20 ; OnValidate=BEGIN
+                                                      MESSAGE('Validated');
+                                                    END;
+                                         OnLookup=BEGIN
+                                                    MESSAGE('Lookup');
+                                                  END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.triggers).not.toBeNull();
+      expect(field?.triggers).toHaveLength(2);
+
+      const triggerNames = field?.triggers?.map(t => t.name) || [];
+      expect(triggerNames).toContain('OnValidate');
+      expect(triggerNames).toContain('OnLookup');
+    });
+  });
+
+  describe('Field trigger with properties', () => {
+    it('should parse field with properties AND OnValidate trigger', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 2 ; ; Name ; Text100 ; CaptionML=ENU=Name;
+                                   NotBlank=Yes;
+                                   OnValidate=BEGIN
+                                                MESSAGE('Name validated');
+                                              END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+
+      // Check properties
+      expect(field?.properties).not.toBeNull();
+      const propNames = field?.properties?.properties.map(p => p.name) || [];
+      expect(propNames).toContain('CaptionML');
+      expect(propNames).toContain('NotBlank');
+
+      // Check trigger
+      expect(field?.triggers).not.toBeNull();
+      expect(field?.triggers).toHaveLength(1);
+      expect(field?.triggers?.[0].name).toBe('OnValidate');
+    });
+
+    it('should parse field with TableRelation and OnValidate trigger', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 5 ; ; "Post Code" ; Code20 ; TableRelation="Post Code";
+                                         OnValidate=BEGIN
+                                                      IF "Post Code" = '' THEN
+                                                        CLEAR(City);
+                                                    END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+
+      // Check properties
+      expect(field?.properties).not.toBeNull();
+      expect(field?.properties?.properties.some(p => p.name === 'TableRelation')).toBe(true);
+
+      // Check trigger
+      expect(field?.triggers).not.toBeNull();
+      expect(field?.triggers?.[0].name).toBe('OnValidate');
+      expect(field?.triggers?.[0].body[0].type).toBe('IfStatement');
+    });
+  });
+
+  describe('Multiple fields with triggers', () => {
+    it('should parse multiple fields each with their own triggers', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 }
+          { 2 ; ; Name ; Text100 ; OnValidate=BEGIN
+                                                MESSAGE('Name changed');
+                                              END; }
+          { 3 ; ; Address ; Text50 }
+          { 5 ; ; "Post Code" ; Code20 ; OnLookup=BEGIN
+                                                    MESSAGE('Looking up');
+                                                  END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.fields?.fields).toHaveLength(4);
+
+      // First field: no trigger
+      expect(ast.object?.fields?.fields[0].triggers).toBeNull();
+
+      // Second field: OnValidate
+      expect(ast.object?.fields?.fields[1].triggers).toHaveLength(1);
+      expect(ast.object?.fields?.fields[1].triggers?.[0].name).toBe('OnValidate');
+
+      // Third field: no trigger
+      expect(ast.object?.fields?.fields[2].triggers).toBeNull();
+
+      // Fourth field: OnLookup
+      expect(ast.object?.fields?.fields[3].triggers).toHaveLength(1);
+      expect(ast.object?.fields?.fields[3].triggers?.[0].name).toBe('OnLookup');
+    });
+  });
+
+  describe('Field trigger with WHILE loop', () => {
+    it('should parse OnValidate trigger with WHILE statement', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 2 ; ; Name ; Text100 ; OnValidate=BEGIN
+                                               Counter := 0;
+                                               WHILE Counter < 10 DO BEGIN
+                                                 Counter := Counter + 1;
+                                               END;
+                                             END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.triggers).not.toBeNull();
+      expect(field?.triggers?.[0].body.length).toBeGreaterThanOrEqual(2);
+
+      // Find the WHILE statement
+      const whileStmt = field?.triggers?.[0].body.find(s => s.type === 'WhileStatement');
+      expect(whileStmt).toBeDefined();
+    });
+  });
+
+  describe('Field trigger with REPEAT...UNTIL', () => {
+    it('should parse OnValidate trigger with REPEAT statement', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 2 ; ; Name ; Text100 ; OnValidate=BEGIN
+                                               Counter := 0;
+                                               REPEAT
+                                                 Counter := Counter + 1;
+                                               UNTIL Counter >= 10;
+                                             END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.triggers).not.toBeNull();
+
+      // Find the REPEAT statement
+      const repeatStmt = field?.triggers?.[0].body.find(s => s.type === 'RepeatStatement');
+      expect(repeatStmt).toBeDefined();
+    });
+  });
+
+  describe('Field trigger error recovery', () => {
+    it('should not crash on malformed trigger code', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 2 ; ; Name ; Text100 ; OnValidate=BEGIN
+                                               IF THEN
+                                             END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+    });
+
+    it('should continue parsing after field trigger error', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 2 ; ; Name ; Text100 ; OnValidate=BEGIN
+                                               BadCode :::
+                                             END; }
+          { 3 ; ; Address ; Text50 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+  });
+});

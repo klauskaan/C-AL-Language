@@ -74,6 +74,7 @@ export interface FieldDeclaration extends ASTNode {
   fieldName: string;
   dataType: DataType;
   properties: PropertySection | null;
+  triggers: TriggerDeclaration[] | null;  // Field-level triggers (OnValidate, OnLookup, etc.)
 }
 
 /**

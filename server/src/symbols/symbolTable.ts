@@ -162,6 +162,26 @@ export class SymbolTable {
           token: field.startToken,
           type: field.dataType.typeName
         });
+
+        // Add local variables from field triggers (OnValidate, OnLookup, etc.)
+        if (field.triggers) {
+          for (const trigger of field.triggers) {
+            // Create child scope for field trigger body
+            const triggerScope = new Scope(this.rootScope);
+            triggerScope.startOffset = trigger.startToken.startOffset;
+            triggerScope.endOffset = trigger.endToken.endOffset;
+
+            // Add local variables to trigger scope
+            for (const variable of trigger.variables) {
+              triggerScope.addSymbol({
+                name: variable.name,
+                kind: 'variable',
+                token: variable.startToken,
+                type: variable.dataType.typeName
+              });
+            }
+          }
+        }
       }
     }
 

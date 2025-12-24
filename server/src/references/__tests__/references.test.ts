@@ -842,4 +842,282 @@ CODE
       expect(result.length).toBeGreaterThanOrEqual(2);
     });
   });
+
+  describe('field trigger references', () => {
+    it('should find variable references inside OnValidate trigger', () => {
+      const code = `OBJECT Table 50000 Test
+FIELDS
+{
+  { 1 ;   ; No ; Code10 }
+  { 2 ;   ; Name ; Text50 ;
+                           OnValidate=BEGIN
+                                        Name := 'Validated';
+                                      END; }
+}
+CODE
+  VAR
+    Counter : Integer;
+
+  PROCEDURE DoSomething();
+  BEGIN
+    Name := 'Test';
+  END;
+
+  BEGIN
+  END.`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+
+      // Position cursor on 'Name' field definition
+      const lines = code.split('\n');
+      const defLineIndex = lines.findIndex(l => l.includes('Name ; Text50'));
+      const nameCol = lines[defLineIndex].indexOf('Name');
+
+      const result = provider.getReferences(doc, Position.create(defLineIndex, nameCol + 2), ast, true);
+
+      // Name: 1 definition + usage in OnValidate + usage in procedure
+      expect(result.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should find global variable references inside field trigger', () => {
+      const code = `OBJECT Table 50000 Test
+FIELDS
+{
+  { 1 ;   ; No ; Code10 }
+  { 2 ;   ; Amount ; Decimal ;
+                              OnValidate=BEGIN
+                                           Counter := Counter + 1;
+                                         END; }
+}
+CODE
+  VAR
+    Counter : Integer;
+
+  PROCEDURE DoSomething();
+  BEGIN
+    Counter := 0;
+  END;
+
+  BEGIN
+  END.`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+
+      const lines = code.split('\n');
+      const defLineIndex = lines.findIndex(l => l.includes('Counter : Integer'));
+      const varCol = lines[defLineIndex].indexOf('Counter');
+
+      const result = provider.getReferences(doc, Position.create(defLineIndex, varCol + 3), ast, true);
+
+      // Counter: 1 definition + 2 usages in field trigger + 1 in procedure
+      expect(result.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('should find references inside OnLookup trigger', () => {
+      const code = `OBJECT Table 50000 Test
+FIELDS
+{
+  { 1 ;   ; No ; Code10 }
+  { 2 ;   ; CustomerNo ; Code20 ;
+                                 OnLookup=BEGIN
+                                            SearchValue := CustomerNo;
+                                          END; }
+}
+CODE
+  VAR
+    SearchValue : Code[20];
+
+  PROCEDURE DoSomething();
+  BEGIN
+    SearchValue := '';
+  END;
+
+  BEGIN
+  END.`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+
+      const lines = code.split('\n');
+      const defLineIndex = lines.findIndex(l => l.includes('SearchValue : Code'));
+      const varCol = lines[defLineIndex].indexOf('SearchValue');
+
+      const result = provider.getReferences(doc, Position.create(defLineIndex, varCol + 5), ast, true);
+
+      // SearchValue: 1 definition + 1 in OnLookup + 1 in procedure
+      expect(result.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should find references across multiple field triggers', () => {
+      const code = `OBJECT Table 50000 Test
+FIELDS
+{
+  { 1 ;   ; No ; Code10 }
+  { 2 ;   ; Name ; Text50 ;
+                           OnValidate=BEGIN
+                                        GlobalVar := 1;
+                                      END; }
+  { 3 ;   ; Amount ; Decimal ;
+                              OnValidate=BEGIN
+                                           GlobalVar := GlobalVar + 1;
+                                         END; }
+}
+CODE
+  VAR
+    GlobalVar : Integer;
+
+  PROCEDURE DoSomething();
+  BEGIN
+    GlobalVar := 0;
+  END;
+
+  BEGIN
+  END.`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+
+      const lines = code.split('\n');
+      const defLineIndex = lines.findIndex(l => l.includes('GlobalVar : Integer'));
+      const varCol = lines[defLineIndex].indexOf('GlobalVar');
+
+      const result = provider.getReferences(doc, Position.create(defLineIndex, varCol + 5), ast, true);
+
+      // GlobalVar: 1 definition + 1 in first trigger + 2 in second trigger + 1 in procedure
+      expect(result.length).toBeGreaterThanOrEqual(4);
+    });
+
+    it('should find references with local variables in field trigger', () => {
+      const code = `OBJECT Table 50000 Test
+FIELDS
+{
+  { 1 ;   ; No ; Code10 }
+  { 2 ;   ; Name ; Text50 ;
+                           OnValidate=VAR
+                                        LocalVar@1000 : Integer;
+                                      BEGIN
+                                        LocalVar := 1;
+                                        LocalVar := LocalVar + 1;
+                                      END; }
+}
+CODE
+  BEGIN
+  END.`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+
+      const lines = code.split('\n');
+      const localVarLineIndex = lines.findIndex(l => l.includes('LocalVar@1000'));
+
+      if (localVarLineIndex >= 0) {
+        const varCol = lines[localVarLineIndex].indexOf('LocalVar');
+
+        const result = provider.getReferences(doc, Position.create(localVarLineIndex, varCol + 3), ast, true);
+
+        // LocalVar: 1 definition + 2 usages in trigger body
+        expect(result.length).toBeGreaterThanOrEqual(2);
+      }
+    });
+
+    it('should find field references from usage inside field trigger', () => {
+      const code = `OBJECT Table 50000 Test
+FIELDS
+{
+  { 1 ;   ; No ; Code10 }
+  { 2 ;   ; Amount ; Decimal ;
+                              OnValidate=BEGIN
+                                           Amount := Amount * 2;
+                                         END; }
+}
+CODE
+  PROCEDURE DoSomething();
+  BEGIN
+    Amount := 100;
+  END;
+
+  BEGIN
+  END.`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+
+      // Find from usage inside trigger
+      const lines = code.split('\n');
+      const triggerLineIndex = lines.findIndex(l => l.includes('Amount := Amount * 2'));
+
+      if (triggerLineIndex >= 0) {
+        const amountCol = lines[triggerLineIndex].indexOf('Amount');
+
+        const result = provider.getReferences(doc, Position.create(triggerLineIndex, amountCol + 3), ast, true);
+
+        // Amount: 1 definition + 2 in trigger + 1 in procedure
+        expect(result.length).toBeGreaterThanOrEqual(3);
+      }
+    });
+
+    it('should find references in nested statements inside field trigger', () => {
+      const code = `OBJECT Table 50000 Test
+FIELDS
+{
+  { 1 ;   ; No ; Code10 }
+  { 2 ;   ; Status ; Option ;
+                             OnValidate=BEGIN
+                                          IF Status = 1 THEN
+                                            Status := 2;
+                                        END; }
+}
+CODE
+  PROCEDURE DoSomething();
+  BEGIN
+    Status := 0;
+  END;
+
+  BEGIN
+  END.`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+
+      // Position cursor on 'Status' field definition
+      const lines = code.split('\n');
+      const defLineIndex = lines.findIndex(l => l.includes('Status ; Option'));
+      const statusCol = lines[defLineIndex].indexOf('Status');
+
+      const result = provider.getReferences(doc, Position.create(defLineIndex, statusCol + 3), ast, true);
+
+      // Status: 1 definition + 2 in trigger (IF condition + assignment) + 1 in procedure
+      expect(result.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('should handle field trigger with procedure call', () => {
+      const code = `OBJECT Table 50000 Test
+FIELDS
+{
+  { 1 ;   ; No ; Code10 }
+  { 2 ;   ; Name ; Text50 ;
+                           OnValidate=BEGIN
+                                        ValidateName(Name);
+                                      END; }
+}
+CODE
+  PROCEDURE ValidateName(Value : Text[50]);
+  BEGIN
+  END;
+
+  PROCEDURE DoSomething();
+  BEGIN
+    ValidateName('Test');
+  END;
+
+  BEGIN
+  END.`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+
+      const lines = code.split('\n');
+      const defLineIndex = lines.findIndex(l => l.includes('PROCEDURE ValidateName'));
+      const procCol = lines[defLineIndex].indexOf('ValidateName');
+
+      const result = provider.getReferences(doc, Position.create(defLineIndex, procCol + 5), ast, true);
+
+      // ValidateName: 1 definition + 1 in field trigger + 1 in procedure
+      expect(result.length).toBeGreaterThanOrEqual(2);
+    });
+  });
 });

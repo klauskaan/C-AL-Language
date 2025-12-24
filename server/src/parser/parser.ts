@@ -311,10 +311,34 @@ export class Parser {
     // Data type
     const dataType = this.parseDataType();
 
-    // Optional properties
+    // Parse field properties and triggers
     let properties: PropertySection | null = null;
+    let triggers: TriggerDeclaration[] | null = null;
+
+    // Consume semicolon after data type if present
     if (this.check(TokenType.Semicolon)) {
       this.advance();
+    }
+
+    // Parse properties and triggers if not at closing brace
+    if (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      const propsStartToken = this.peek();
+      const result = this.parseFieldProperties();
+
+      // Create PropertySection if we have properties
+      if (result.properties.length > 0) {
+        properties = {
+          type: 'PropertySection',
+          properties: result.properties,
+          startToken: propsStartToken,
+          endToken: this.previous()
+        };
+      }
+
+      // Store triggers if we have any
+      if (result.triggers.length > 0) {
+        triggers = result.triggers;
+      }
     }
 
     const endToken = this.consume(TokenType.RightBrace, 'Expected }');
@@ -326,6 +350,7 @@ export class Parser {
       fieldName,
       dataType,
       properties,
+      triggers,
       startToken,
       endToken
     };
@@ -391,6 +416,67 @@ export class Parser {
       startToken,
       endToken: this.previous()
     };
+  }
+
+  /**
+   * Parse field properties and triggers after the data type
+   * Field properties follow format: PropertyName=Value;
+   * Field triggers follow format: OnValidate=BEGIN...END;
+   *
+   * @returns Object containing arrays of properties and triggers parsed from the field
+   */
+  private parseFieldProperties(): { properties: Property[], triggers: TriggerDeclaration[] } {
+    const properties: Property[] = [];
+    const triggers: TriggerDeclaration[] = [];
+
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      try {
+        const startToken = this.peek();
+        const nameToken = this.advance(); // Property or trigger name
+        const name = nameToken.value;
+
+        this.consume(TokenType.Equal, 'Expected =');
+
+        // Check if this is a trigger (starts with BEGIN or VAR) or regular property
+        if (this.check(TokenType.Begin) || this.check(TokenType.Var)) {
+          // This is a field trigger (OnValidate, OnLookup, etc.)
+          triggers.push(this.parseFieldTrigger(name, startToken));
+        } else {
+          // Regular property - read value until semicolon
+          let value = '';
+          while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+            value += this.advance().value;
+          }
+
+          if (this.check(TokenType.Semicolon)) {
+            this.advance();
+          }
+
+          properties.push({
+            type: 'Property',
+            name,
+            value: value.trim(),
+            startToken,
+            endToken: this.previous()
+          });
+        }
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Skip to next semicolon or right brace for recovery
+          while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+            this.advance();
+          }
+          if (this.check(TokenType.Semicolon)) {
+            this.advance();
+          }
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    return { properties, triggers };
   }
 
   /**
@@ -702,6 +788,43 @@ export class Parser {
       parameters,
       returnType,
       isLocal,
+      variables,
+      body,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  /**
+   * Parse a field-level trigger (e.g., OnValidate=BEGIN...END;)
+   * Unlike CODE section triggers, these don't have the TRIGGER keyword - the trigger name
+   * comes from the property name (OnValidate, OnLookup, etc.)
+   *
+   * @param name The trigger name (e.g., "OnValidate", "OnLookup")
+   * @param startToken The token where the trigger name started (for position tracking)
+   */
+  private parseFieldTrigger(name: string, startToken: Token): TriggerDeclaration {
+    // Parse local variables if VAR section is present (rare but possible)
+    const variables: VariableDeclaration[] = [];
+    if (this.check(TokenType.Var)) {
+      this.parseVariableDeclarations(variables);
+    }
+
+    // Parse trigger body (BEGIN...END block)
+    const body: Statement[] = [];
+    if (this.check(TokenType.Begin)) {
+      const block = this.parseBlock();
+      body.push(...block.statements);
+    }
+
+    // Consume trailing semicolon after END
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    return {
+      type: 'TriggerDeclaration',
+      name,
       variables,
       body,
       startToken,

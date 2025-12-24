@@ -407,6 +407,13 @@ export class ReferenceProvider {
           token: field.startToken,
           isDefinition: true
         });
+
+        // Collect from field triggers (OnValidate, OnLookup, etc.)
+        if (field.triggers) {
+          for (const trigger of field.triggers) {
+            this.collectFromTrigger(trigger, refs);
+          }
+        }
       }
     }
 

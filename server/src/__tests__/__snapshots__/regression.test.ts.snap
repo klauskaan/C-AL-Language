@@ -1606,6 +1606,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
             "type": "LEFT_BRACE",
             "value": "{",
           },
+          "triggers": null,
           "type": "FieldDeclaration",
         },
         {
@@ -1651,6 +1652,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
             "type": "LEFT_BRACE",
             "value": "{",
           },
+          "triggers": null,
           "type": "FieldDeclaration",
         },
         {
@@ -1696,6 +1698,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
             "type": "LEFT_BRACE",
             "value": "{",
           },
+          "triggers": null,
           "type": "FieldDeclaration",
         },
         {
@@ -1741,6 +1744,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
             "type": "LEFT_BRACE",
             "value": "{",
           },
+          "triggers": null,
           "type": "FieldDeclaration",
         },
         {
@@ -1786,6 +1790,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
             "type": "LEFT_BRACE",
             "value": "{",
           },
+          "triggers": null,
           "type": "FieldDeclaration",
         },
         {
@@ -1831,6 +1836,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
             "type": "LEFT_BRACE",
             "value": "{",
           },
+          "triggers": null,
           "type": "FieldDeclaration",
         },
         {
@@ -1876,6 +1882,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
             "type": "LEFT_BRACE",
             "value": "{",
           },
+          "triggers": null,
           "type": "FieldDeclaration",
         },
         {
@@ -1921,6 +1928,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
             "type": "LEFT_BRACE",
             "value": "{",
           },
+          "triggers": null,
           "type": "FieldDeclaration",
         },
       ],
