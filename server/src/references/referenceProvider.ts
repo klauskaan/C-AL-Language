@@ -12,18 +12,33 @@ import {
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import {
   CALDocument,
+  Expression,
+  Statement,
   Identifier,
+  BinaryExpression,
+  UnaryExpression,
+  MemberExpression,
+  CallExpression,
+  ArrayAccessExpression,
+  BlockStatement,
+  IfStatement,
+  WhileStatement,
+  RepeatStatement,
+  ForStatement,
+  CaseStatement,
+  AssignmentStatement,
+  CallStatement,
+  ExitStatement,
   ProcedureDeclaration,
+  TriggerDeclaration,
   VariableDeclaration,
   ParameterDeclaration,
   FieldDeclaration
 } from '../parser/ast';
 import { Token } from '../lexer/tokens';
+import { ProviderBase } from '../providers/providerBase';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { ASTWalker } from '../visitor/astWalker';
-
-/** Regex pattern for valid C/AL identifier characters */
-const IDENTIFIER_PATTERN = /[a-zA-Z0-9_]/;
 
 /**
  * Represents a reference to a symbol
@@ -118,38 +133,22 @@ class ReferenceCollectorVisitor implements Partial<ASTVisitor> {
 /**
  * Reference provider class
  * Handles "Find All References" requests for C/AL symbols
+ * Extends ProviderBase for shared provider functionality
  */
-export class ReferenceProvider {
+export class ReferenceProvider extends ProviderBase {
   /** Shared ASTWalker instance (stateless, can be reused) */
   private readonly walker = new ASTWalker();
 
   /**
-   * Helper to scan backwards from an offset while a predicate is true
-   */
-  private scanBackward(text: string, startOffset: number, predicate: (char: string) => boolean): number {
-    let pos = startOffset;
-    while (pos >= 0 && predicate(text[pos])) {
-      pos--;
-    }
-    return pos + 1;
-  }
-
-  /**
-   * Helper to scan forwards from an offset while a predicate is true
-   */
-  private scanForward(text: string, startOffset: number, predicate: (char: string) => boolean): number {
-    let pos = startOffset;
-    while (pos < text.length && predicate(text[pos])) {
-      pos++;
-    }
-    return pos;
-  }
-
-  /**
    * Get the word at the cursor position
    * Handles both regular identifiers and quoted identifiers (e.g., "No.")
+   * Overrides base class to add quoted identifier support for C/AL
+   *
+   * @param document - The text document
+   * @param position - The cursor position
+   * @returns Object with word, start, and end offsets, or null if not on identifier
    */
-  private getWordAtPosition(document: TextDocument, position: Position): { word: string; start: number; end: number } | null {
+  protected override getWordAtPosition(document: TextDocument, position: Position): { word: string; start: number; end: number } | null {
     const text = document.getText();
     const offset = document.offsetAt(position);
 
@@ -196,44 +195,10 @@ export class ReferenceProvider {
       }
     }
 
-    // Check if we're in a regular identifier
-    if (offset > 0 && !IDENTIFIER_PATTERN.test(text[offset]) && !IDENTIFIER_PATTERN.test(text[offset - 1])) {
-      return null;
-    }
-
-    const start = this.scanBackward(text, offset - 1, c => IDENTIFIER_PATTERN.test(c));
-    const end = this.scanForward(text, offset, c => IDENTIFIER_PATTERN.test(c));
-
-    if (start >= end) {
-      return null;
-    }
-
-    return {
-      word: text.substring(start, end),
-      start,
-      end
-    };
+    // Fall back to base class implementation for regular identifiers
+    return super.getWordAtPosition(document, position);
   }
 
-  /**
-   * Convert a token to an LSP Location
-   */
-  private tokenToLocation(token: Token, documentUri: string): Location {
-    // Token line and column are 1-based, LSP wants 0-based
-    const startLine = token.line - 1;
-    const startChar = token.column - 1;
-    const endChar = startChar + token.value.length;
-
-    const range: Range = {
-      start: { line: startLine, character: startChar },
-      end: { line: startLine, character: endChar }
-    };
-
-    return {
-      uri: documentUri,
-      range
-    };
-  }
 
   /**
    * Collect all symbol references from the AST using the visitor pattern.

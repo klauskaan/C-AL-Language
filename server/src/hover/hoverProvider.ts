@@ -15,9 +15,7 @@ import { SymbolTable, Symbol } from '../symbols/symbolTable';
 import { CALDocument } from '../parser/ast';
 import { Token, TokenType, KEYWORDS } from '../lexer/tokens';
 import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from '../completion/builtins';
-
-/** Regex pattern for valid C/AL identifier characters */
-const IDENTIFIER_PATTERN = /[a-zA-Z0-9_]/;
+import { ProviderBase } from '../providers/providerBase';
 
 /** Keywords that represent data types */
 const DATA_TYPE_KEYWORDS = new Set([
@@ -219,100 +217,9 @@ function getOperatorDescription(keyword: string): string {
 
 /**
  * Main hover provider class
+ * Extends ProviderBase to reuse common text scanning utilities
  */
-export class HoverProvider {
-  /**
-   * Helper to scan backwards from an offset while a predicate is true
-   */
-  private scanBackward(text: string, startOffset: number, predicate: (char: string) => boolean): number {
-    let pos = startOffset;
-    while (pos >= 0 && predicate(text[pos])) {
-      pos--;
-    }
-    return pos + 1;
-  }
-
-  /**
-   * Helper to scan forwards from an offset while a predicate is true
-   */
-  private scanForward(text: string, startOffset: number, predicate: (char: string) => boolean): number {
-    let pos = startOffset;
-    while (pos < text.length && predicate(text[pos])) {
-      pos++;
-    }
-    return pos;
-  }
-
-  /**
-   * Get the word at the cursor position
-   */
-  private getWordAtPosition(document: TextDocument, position: Position): { word: string; start: number; end: number } | null {
-    const text = document.getText();
-    const offset = document.offsetAt(position);
-
-    // Check if we're in an identifier
-    if (offset > 0 && !IDENTIFIER_PATTERN.test(text[offset]) && !IDENTIFIER_PATTERN.test(text[offset - 1])) {
-      return null;
-    }
-
-    const start = this.scanBackward(text, offset - 1, c => IDENTIFIER_PATTERN.test(c));
-    const end = this.scanForward(text, offset, c => IDENTIFIER_PATTERN.test(c));
-
-    if (start >= end) {
-      return null;
-    }
-
-    return {
-      word: text.substring(start, end),
-      start,
-      end
-    };
-  }
-
-  /**
-   * Check if we're after a dot (for method calls)
-   */
-  private isAfterDot(document: TextDocument, position: Position): boolean {
-    const text = document.getText();
-    const offset = document.offsetAt(position);
-
-    // Skip backwards over identifier to find dot
-    let i = this.scanBackward(text, offset - 1, c => IDENTIFIER_PATTERN.test(c)) - 1;
-    // Skip whitespace
-    while (i >= 0 && /\s/.test(text[i])) {
-      i--;
-    }
-    return i >= 0 && text[i] === '.';
-  }
-
-  /**
-   * Get the identifier before the dot
-   */
-  private getIdentifierBeforeDot(document: TextDocument, position: Position): string | null {
-    const text = document.getText();
-    const offset = document.offsetAt(position);
-
-    // Skip backwards over identifier (after dot) and whitespace to find dot
-    let dotPos = this.scanBackward(text, offset - 1, c => IDENTIFIER_PATTERN.test(c)) - 1;
-    while (dotPos >= 0 && /\s/.test(text[dotPos])) {
-      dotPos--;
-    }
-
-    if (dotPos < 0 || text[dotPos] !== '.') {
-      return null;
-    }
-
-    // Find the identifier before the dot
-    const end = dotPos;
-    const start = this.scanBackward(text, end - 1, c => IDENTIFIER_PATTERN.test(c));
-
-    if (start >= end) {
-      return null;
-    }
-
-    return text.substring(start, end);
-  }
-
+export class HoverProvider extends ProviderBase {
   /**
    * Get hover information for a position in the document
    */
@@ -350,10 +257,9 @@ export class HoverProvider {
       }
     }
 
-    // Check for symbol in symbol table using position-aware lookup
-    // This ensures correct symbol resolution when variables are shadowed in nested scopes
+    // Check for symbol in symbol table
     if (symbolTable) {
-      const symbol = symbolTable.getSymbolAtOffset(word, wordInfo.start);
+      const symbol = symbolTable.getSymbol(word);
       if (symbol) {
         return this.buildSymbolHover(symbol);
       }

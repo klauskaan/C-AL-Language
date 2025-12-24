@@ -15,6 +15,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SymbolTable } from '../symbols/symbolTable';
 import { CALDocument } from '../parser/ast';
 import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from '../completion/builtins';
+import { ProviderBase } from '../providers/providerBase';
 
 /**
  * Context for a function call being typed
@@ -35,8 +36,12 @@ interface ParsedParameter {
 
 /**
  * Main signature help provider class
+ * Extends ProviderBase for shared text scanning utilities
  */
-export class SignatureHelpProvider {
+export class SignatureHelpProvider extends ProviderBase {
+  constructor() {
+    super();
+  }
   /**
    * Get signature help for a function call at the cursor position
    */
@@ -169,19 +174,13 @@ export class SignatureHelpProvider {
 
     // Find the function name before the opening parenthesis
     let nameEnd = openParenPos;
-    let nameStart = nameEnd - 1;
 
-    // Skip whitespace before paren
-    while (nameStart >= 0 && /\s/.test(text[nameStart])) {
-      nameStart--;
-      nameEnd--;
-    }
+    // Skip whitespace before paren using base class method
+    const wsEnd = this.scanBackward(text, nameEnd - 1, c => /\s/.test(c));
+    nameEnd = wsEnd;
 
-    // Collect identifier characters
-    while (nameStart >= 0 && /[a-zA-Z0-9_]/.test(text[nameStart])) {
-      nameStart--;
-    }
-    nameStart++; // Move back to first character of identifier
+    // Collect identifier characters using base class method and pattern
+    const nameStart = this.scanBackward(text, nameEnd - 1, c => ProviderBase.IDENTIFIER_PATTERN.test(c));
 
     if (nameStart >= nameEnd) {
       return null;
@@ -190,14 +189,9 @@ export class SignatureHelpProvider {
     const functionName = text.substring(nameStart, nameEnd);
 
     // Check if this is a method call (preceded by a dot)
-    let isMethodCall = false;
-    let checkPos = nameStart - 1;
-    while (checkPos >= 0 && /\s/.test(text[checkPos])) {
-      checkPos--;
-    }
-    if (checkPos >= 0 && text[checkPos] === '.') {
-      isMethodCall = true;
-    }
+    // Skip whitespace before identifier and check for dot
+    const checkPos = this.scanBackward(text, nameStart - 1, c => /\s/.test(c)) - 1;
+    const isMethodCall = checkPos >= 0 && text[checkPos] === '.';
 
     return {
       functionName,

@@ -9,14 +9,15 @@
 import {
   CompletionItem,
   CompletionItemKind,
-  Position,
-  TextDocument
+  Position
 } from 'vscode-languageserver';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 
 import { KEYWORDS, TokenType } from '../lexer/tokens';
 import { SymbolTable, Symbol, Scope } from '../symbols/symbolTable';
 import { CALDocument } from '../parser/ast';
 import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from './builtins';
+import { ProviderBase } from '../providers/providerBase';
 
 /**
  * Categories of keywords for completion
@@ -136,9 +137,6 @@ function buildBuiltinItem(func: BuiltinFunction): CompletionItem {
   };
 }
 
-/** Regex pattern for valid C/AL identifier characters */
-const IDENTIFIER_PATTERN = /[a-zA-Z0-9_]/;
-
 /**
  * Collect all symbols visible from a scope by walking up the parent chain.
  * Inner scope symbols take precedence over outer scope symbols (shadowing).
@@ -169,24 +167,14 @@ function getVisibleSymbols(scope: Scope): Symbol[] {
 
 /**
  * Main completion provider class
+ * Extends ProviderBase for shared text scanning utilities
  */
-export class CompletionProvider {
+export class CompletionProvider extends ProviderBase {
   private keywordItems: CompletionItem[] = [];
 
   constructor() {
+    super();
     this.initializeKeywords();
-  }
-
-  /**
-   * Helper to scan backwards from an offset while a predicate is true
-   * Returns the position after scanning (exclusive start of matched region)
-   */
-  private scanBackward(text: string, startOffset: number, predicate: (char: string) => boolean): number {
-    let pos = startOffset;
-    while (pos >= 0 && predicate(text[pos])) {
-      pos--;
-    }
-    return pos + 1;
   }
 
   /**
@@ -267,58 +255,18 @@ export class CompletionProvider {
   }
 
   /**
-   * Get the word at/before the cursor position
+   * Get the prefix (partial word) at/before the cursor position for filtering
+   * Unlike getWordAtPosition, this only returns the text before the cursor
+   *
+   * @param document - The text document
+   * @param position - The cursor position
+   * @returns The prefix string (may be empty)
    */
-  private getWordAtPosition(document: TextDocument, position: Position): string {
+  private getPrefixAtPosition(document: TextDocument, position: Position): string {
     const text = document.getText();
     const offset = document.offsetAt(position);
-    const start = this.scanBackward(text, offset - 1, c => IDENTIFIER_PATTERN.test(c));
+    const start = this.scanBackward(text, offset - 1, c => ProviderBase.IDENTIFIER_PATTERN.test(c));
     return text.substring(start, offset);
-  }
-
-  /**
-   * Check if we're after a dot operator (handles prefix like "Rec.FI")
-   */
-  private isAfterDot(document: TextDocument, position: Position): boolean {
-    const text = document.getText();
-    const offset = document.offsetAt(position);
-
-    // Skip backwards over identifier and whitespace to find dot
-    let i = this.scanBackward(text, offset - 1, c => IDENTIFIER_PATTERN.test(c)) - 1;
-    // Skip whitespace
-    while (i >= 0 && /\s/.test(text[i])) {
-      i--;
-    }
-    return i >= 0 && text[i] === '.';
-  }
-
-  /**
-   * Get the identifier before the dot (handles prefix like "Rec.FI")
-   */
-  private getIdentifierBeforeDot(document: TextDocument, position: Position): string | null {
-    const text = document.getText();
-    const offset = document.offsetAt(position);
-
-    // Skip backwards over identifier (prefix after dot) and whitespace to find dot
-    let dotPos = this.scanBackward(text, offset - 1, c => IDENTIFIER_PATTERN.test(c)) - 1;
-    // Skip whitespace
-    while (dotPos >= 0 && /\s/.test(text[dotPos])) {
-      dotPos--;
-    }
-
-    if (dotPos < 0 || text[dotPos] !== '.') {
-      return null;
-    }
-
-    // Find the identifier before the dot
-    const end = dotPos;
-    const start = this.scanBackward(text, end - 1, c => IDENTIFIER_PATTERN.test(c));
-
-    if (start >= end) {
-      return null;
-    }
-
-    return text.substring(start, end);
   }
 
   /**
@@ -344,7 +292,7 @@ export class CompletionProvider {
     }
 
     // Get the current word prefix for filtering
-    const prefix = this.getWordAtPosition(document, position).toLowerCase();
+    const prefix = this.getPrefixAtPosition(document, position).toLowerCase();
 
     // Phase 1: Keyword completion
     for (const item of this.keywordItems) {
@@ -393,7 +341,7 @@ export class CompletionProvider {
     symbolTable?: SymbolTable
   ): CompletionItem[] {
     const items: CompletionItem[] = [];
-    const prefix = this.getWordAtPosition(document, position).toLowerCase();
+    const prefix = this.getPrefixAtPosition(document, position).toLowerCase();
 
     // Get the identifier before the dot
     const varName = this.getIdentifierBeforeDot(document, position);
