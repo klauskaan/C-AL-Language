@@ -840,8 +840,8 @@ describe('SymbolTable', () => {
 {
   FIELDS
   {
-    { 1 ; ; No. ; Code20 }
-    { 2 ; ; Name ; Text100 }
+    { 1   ;   ;"No."           ;Code20        }
+    { 2   ;   ;Name            ;Text100       }
   }
 }`;
       const symbolTable = buildSymbolTable(code);
