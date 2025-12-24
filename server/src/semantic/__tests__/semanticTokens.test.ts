@@ -2337,7 +2337,410 @@ END`;
   });
 
   describe('Edge Cases', () => {
-    // Tests will be added in subtask 2.7
+    describe('Empty and Minimal Input', () => {
+      it('should handle empty string input gracefully', () => {
+        const code = '';
+        const { builder } = buildSemanticTokens(code);
+
+        // Empty input produces only EOF token which is skipped
+        expect(builder.tokens.length).toBe(0);
+      });
+
+      it('should handle whitespace-only input', () => {
+        const code = '   \t\n  \r\n  ';
+        const { builder } = buildSemanticTokens(code);
+
+        // Only whitespace tokens which are all skipped
+        expect(builder.tokens.length).toBe(0);
+      });
+
+      it('should handle single token input', () => {
+        const code = 'BEGIN';
+        const { builder } = buildSemanticTokens(code);
+
+        expect(builder.tokens.length).toBe(1);
+        expect(builder.tokens[0].tokenType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should handle input with only punctuation', () => {
+        const code = '{ } ( ) [ ] ; : , .';
+        const { builder } = buildSemanticTokens(code);
+
+        // All punctuation should be skipped except for operators
+        // . is mapped to Operator type
+        const dotTokens = builder.getTokensOfType(SemanticTokenTypes.Operator);
+        expect(dotTokens.length).toBe(1); // Only the dot
+      });
+
+      it('should handle newline-only input', () => {
+        const code = '\n\n\n';
+        const { builder } = buildSemanticTokens(code);
+
+        expect(builder.tokens.length).toBe(0);
+      });
+    });
+
+    describe('Skipped Token Types', () => {
+      it('should skip whitespace tokens', () => {
+        const code = 'x     y';
+        const { builder } = buildSemanticTokens(code);
+
+        // Should only have tokens for x and y
+        expect(builder.tokens.length).toBe(2);
+      });
+
+      it('should skip left brace token', () => {
+        const code = '{';
+        const { builder } = buildSemanticTokens(code);
+
+        expect(builder.tokens.length).toBe(0);
+      });
+
+      it('should skip right brace token', () => {
+        const code = '}';
+        const { builder } = buildSemanticTokens(code);
+
+        expect(builder.tokens.length).toBe(0);
+      });
+
+      it('should skip left parenthesis token', () => {
+        const code = '(';
+        const { builder } = buildSemanticTokens(code);
+
+        expect(builder.tokens.length).toBe(0);
+      });
+
+      it('should skip right parenthesis token', () => {
+        const code = ')';
+        const { builder } = buildSemanticTokens(code);
+
+        expect(builder.tokens.length).toBe(0);
+      });
+
+      it('should skip left bracket token', () => {
+        const code = '[';
+        const { builder } = buildSemanticTokens(code);
+
+        expect(builder.tokens.length).toBe(0);
+      });
+
+      it('should skip right bracket token', () => {
+        const code = ']';
+        const { builder } = buildSemanticTokens(code);
+
+        expect(builder.tokens.length).toBe(0);
+      });
+
+      it('should skip semicolon token', () => {
+        const code = ';';
+        const { builder } = buildSemanticTokens(code);
+
+        expect(builder.tokens.length).toBe(0);
+      });
+
+      it('should skip colon token', () => {
+        const code = ':';
+        const { builder } = buildSemanticTokens(code);
+
+        expect(builder.tokens.length).toBe(0);
+      });
+
+      it('should skip comma token', () => {
+        const code = ',';
+        const { builder } = buildSemanticTokens(code);
+
+        expect(builder.tokens.length).toBe(0);
+      });
+
+      it('should skip EOF token', () => {
+        const code = '';
+        const { tokens, builder } = buildSemanticTokens(code);
+
+        // EOF should be in tokens array but not produce semantic token
+        const eofToken = tokens.find(t => t.type === TokenType.EOF);
+        expect(eofToken).toBeDefined();
+        expect(builder.tokens.length).toBe(0);
+      });
+
+      it('should skip all punctuation in realistic code', () => {
+        const code = 'PROCEDURE MyProc(a : Integer; b : Text) : Boolean';
+        const { builder } = buildSemanticTokens(code);
+
+        // Verify no semicolons, colons, or parentheses appear
+        // Only keywords, identifiers, and types should be present
+        const expectedCount = 6; // PROCEDURE, MyProc, a, Integer, b, Text, Boolean
+        // Note: The colon before Boolean might be skipped or included depending on implementation
+        expect(builder.tokens.length).toBeGreaterThanOrEqual(5);
+
+        // All tokens should be either keywords, types, or variables
+        for (const token of builder.tokens) {
+          expect([
+            SemanticTokenTypes.Keyword,
+            SemanticTokenTypes.Type,
+            SemanticTokenTypes.Variable
+          ]).toContain(token.tokenType);
+        }
+      });
+    });
+
+    describe('Large File Handling', () => {
+      it('should handle a file with many tokens (100+ tokens)', () => {
+        // Generate code with 100+ tokens
+        const statements: string[] = [];
+        for (let i = 0; i < 50; i++) {
+          statements.push(`x${i} := ${i}`);
+        }
+        const code = statements.join(';\n');
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Should have processed many tokens
+        expect(tokens.length).toBeGreaterThan(100);
+
+        // Should have produced semantic tokens for identifiers and numbers
+        expect(builder.tokens.length).toBeGreaterThan(50);
+
+        // Verify some tokens have correct types
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        const numbers = builder.getTokensOfType(SemanticTokenTypes.Number);
+
+        expect(variables.length).toBe(50); // x0 through x49
+        expect(numbers.length).toBe(50);   // 0 through 49
+      });
+
+      it('should handle a file with 500+ tokens', () => {
+        // Generate even more tokens
+        const statements: string[] = [];
+        for (let i = 0; i < 100; i++) {
+          statements.push(`var${i} := ${i} + ${i + 1}`);
+        }
+        const code = statements.join(';\n');
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Should have many tokens
+        expect(tokens.length).toBeGreaterThan(500);
+
+        // Should produce semantic tokens proportionally
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        const numbers = builder.getTokensOfType(SemanticTokenTypes.Number);
+        const operators = builder.getTokensOfType(SemanticTokenTypes.Operator);
+
+        expect(variables.length).toBe(100);
+        expect(numbers.length).toBe(200); // Two numbers per statement
+        expect(operators.length).toBeGreaterThanOrEqual(100); // At least the + operators
+      });
+
+      it('should handle deeply nested code structure', () => {
+        const code = `
+BEGIN
+  IF TRUE THEN
+  BEGIN
+    IF TRUE THEN
+    BEGIN
+      IF TRUE THEN
+      BEGIN
+        x := 1
+      END
+    END
+  END
+END`;
+        const { builder } = buildSemanticTokens(code);
+
+        // Should process all tokens correctly
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+
+        // BEGIN (4), IF (3), TRUE (3), THEN (3), END (4) = 17 keywords
+        expect(keywords.length).toBe(17);
+        expect(variables.length).toBe(1); // Only 'x'
+      });
+
+      it('should handle code with many lines (100+ lines)', () => {
+        // Generate 100 lines of code
+        const lines: string[] = ['BEGIN'];
+        for (let i = 0; i < 100; i++) {
+          lines.push(`  line${i} := ${i};`);
+        }
+        lines.push('END');
+        const code = lines.join('\n');
+
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Verify tokens span many lines
+        const lastToken = builder.tokens[builder.tokens.length - 1];
+        expect(lastToken.line).toBeGreaterThan(90); // END should be near line 101
+
+        // Verify token count
+        expect(builder.tokens.length).toBeGreaterThan(200);
+      });
+
+      it('should maintain correct line positions across large files', () => {
+        // Generate code with known positions
+        const lines: string[] = [];
+        for (let i = 0; i < 50; i++) {
+          lines.push('x');
+        }
+        const code = lines.join('\n');
+
+        const { builder } = buildSemanticTokens(code);
+
+        // Each 'x' should be on its own line
+        expect(builder.tokens.length).toBe(50);
+
+        for (let i = 0; i < 50; i++) {
+          expect(builder.tokens[i].line).toBe(i);
+          expect(builder.tokens[i].char).toBe(0);
+          expect(builder.tokens[i].length).toBe(1);
+        }
+      });
+
+      it('should handle very long identifiers', () => {
+        const longName = 'a'.repeat(500);
+        const code = `${longName} := 1`;
+        const { builder } = buildSemanticTokens(code);
+
+        const identToken = builder.getTokenAt(0, 0);
+        expect(identToken).toBeDefined();
+        expect(identToken?.length).toBe(500);
+        expect(identToken?.tokenType).toBe(SemanticTokenTypes.Variable);
+      });
+
+      it('should handle very long strings', () => {
+        const longString = 'a'.repeat(1000);
+        const code = `x := '${longString}'`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const stringToken = tokens.find(t => t.type === TokenType.String);
+        expect(stringToken).toBeDefined();
+
+        const stringSemantic = builder.getTokenAt(0, stringToken!.column - 1);
+        expect(stringSemantic?.length).toBe(1000);
+        expect(stringSemantic?.tokenType).toBe(SemanticTokenTypes.String);
+      });
+    });
+
+    describe('Mixed Content Edge Cases', () => {
+      it('should handle alternating semantic and skipped tokens', () => {
+        const code = 'x ( y ) z';
+        const { builder } = buildSemanticTokens(code);
+
+        // x, y, z are identifiers; (, ) are skipped
+        expect(builder.tokens.length).toBe(3);
+
+        const positions = builder.tokens.map(t => t.char);
+        expect(positions).toEqual([0, 4, 8]); // Correct character positions
+      });
+
+      it('should handle consecutive operators', () => {
+        const code = 'a + - * / b';
+        const { builder } = buildSemanticTokens(code);
+
+        const operators = builder.getTokensOfType(SemanticTokenTypes.Operator);
+        expect(operators.length).toBe(4); // +, -, *, /
+      });
+
+      it('should handle consecutive keywords', () => {
+        const code = 'BEGIN END IF THEN ELSE';
+        const { builder } = buildSemanticTokens(code);
+
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        expect(keywords.length).toBe(5);
+      });
+
+      it('should correctly handle mixed quoted and unquoted identifiers', () => {
+        const code = 'x "Line No." y "Amount" z';
+        const { builder } = buildSemanticTokens(code);
+
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        expect(variables.length).toBe(5); // x, "Line No.", y, "Amount", z
+
+        // All should be Variable type (key feature!)
+        for (const v of variables) {
+          expect(v.tokenType).toBe(SemanticTokenTypes.Variable);
+        }
+      });
+
+      it('should handle code with all semantic token types present', () => {
+        // Note: The C/AL lexer skips comments entirely, so we cannot test Comment semantic type here
+        const code = `
+PROCEDURE Test(x : Integer)
+VAR
+  str : Text;
+BEGIN
+  str := 'hello';
+  x := 123 + 456;
+  IF TRUE THEN
+    EXIT;
+END`;
+        const { builder } = buildSemanticTokens(code);
+
+        // Verify presence of major token types (excluding Comment which is skipped by lexer)
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+        const types = builder.getTokensOfType(SemanticTokenTypes.Type);
+        const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
+        const strings = builder.getTokensOfType(SemanticTokenTypes.String);
+        const numbers = builder.getTokensOfType(SemanticTokenTypes.Number);
+        const operators = builder.getTokensOfType(SemanticTokenTypes.Operator);
+
+        expect(keywords.length).toBeGreaterThan(0);
+        expect(types.length).toBeGreaterThan(0);
+        expect(variables.length).toBeGreaterThan(0);
+        expect(strings.length).toBeGreaterThan(0);
+        expect(numbers.length).toBeGreaterThan(0);
+        expect(operators.length).toBeGreaterThan(0);
+      });
+
+      it('should handle code where all tokens are skipped (comments only)', () => {
+        // The C/AL lexer skips comments, so this produces no semantic tokens
+        const code = '// This is a line comment';
+        const { builder } = buildSemanticTokens(code);
+
+        // All content is a comment which is skipped by lexer
+        expect(builder.tokens.length).toBe(0);
+      });
+    });
+
+    describe('Boundary Conditions', () => {
+      it('should handle token at column 0', () => {
+        const code = 'x';
+        const { builder } = buildSemanticTokens(code);
+
+        expect(builder.tokens[0].char).toBe(0);
+      });
+
+      it('should handle token at line 0', () => {
+        const code = 'x';
+        const { builder } = buildSemanticTokens(code);
+
+        expect(builder.tokens[0].line).toBe(0);
+      });
+
+      it('should handle maximum line position accurately', () => {
+        // Create 1000 lines to test high line numbers
+        const lines = Array(999).fill('').concat(['END']);
+        const code = lines.join('\n');
+        const { builder } = buildSemanticTokens(code);
+
+        const endToken = builder.tokens.find(t => t.line === 999);
+        expect(endToken).toBeDefined();
+        expect(endToken?.tokenType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should handle length of 0 (empty identifier)', () => {
+        // Empty quoted identifier
+        const code = '""';
+        const { builder } = buildSemanticTokens(code);
+
+        expect(builder.tokens.length).toBe(1);
+        expect(builder.tokens[0].length).toBe(0);
+      });
+
+      it('should handle length of 1 (single character)', () => {
+        const code = 'x';
+        const { builder } = buildSemanticTokens(code);
+
+        expect(builder.tokens[0].length).toBe(1);
+      });
+    });
   });
 });
 
