@@ -1142,15 +1142,15 @@ describe('Lexer - Edge Cases', () => {
       expect(tokens[0].value).toBe("'");
     });
 
-    it('should handle escaped quote at end of string (current behavior)', () => {
-      // LIMITATION: The lexer treats 'End'''' as 'End'' (string with '' at end)
-      // It doesn't correctly parse the trailing escaped quote
+    it('should handle escaped quote at end of string (unclosed)', () => {
+      // 'End'''' has 4 quotes after End which are 2 escaped quotes with no closing quote
+      // This is correctly identified as an unclosed string
       const code = "'End''''";
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
-      // Current behavior: produces "End''" (two single quotes at end, not one escaped)
-      expect(tokens[0].type).toBe(TokenType.String);
+      // Should be Unknown token since string is unclosed
+      expect(tokens[0].type).toBe(TokenType.Unknown);
       expect(tokens[0].value).toBe("End''");
     });
 
