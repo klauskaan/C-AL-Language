@@ -20,14 +20,16 @@ export class Lexer {
   private static readonly DATE_DIGITS_LONG = 8;     // MMDDYYYY format
   private static readonly UNDEFINED_DATE_DIGITS = 1; // 0D (undefined date)
   private static readonly MIN_TIME_DIGITS = 6;      // HHMMSS minimum
+  private static readonly MIN_CONTEXT_STACK_SIZE = 1; // Context stack minimum
 
   private input: string;
   private position: number = 0;
   private line: number = 1;
   private column: number = 1;
-  private tokens: Token[] = [];
-  private contextStack: LexerContext[] = [LexerContext.NORMAL];
+  private readonly tokens: Token[] = [];
+  private readonly contextStack: LexerContext[] = [LexerContext.NORMAL];
   private braceDepth: number = 0;
+  private contextUnderflowDetected: boolean = false;
 
   constructor(input: string) {
     this.input = input;
@@ -37,11 +39,12 @@ export class Lexer {
    * Tokenize the entire input
    */
   public tokenize(): Token[] {
-    this.tokens = [];
+    this.tokens.length = 0;
     this.position = 0;
     this.line = 1;
     this.column = 1;
-    this.contextStack = [LexerContext.NORMAL];
+    this.contextStack.length = 0;
+    this.contextStack.push(LexerContext.NORMAL);
     this.braceDepth = 0;
 
     while (this.position < this.input.length) {
@@ -54,9 +57,10 @@ export class Lexer {
 
   /**
    * Get current lexer context
+   * Defensive: Returns NORMAL if stack is empty (should never happen in normal operation)
    */
   private getCurrentContext(): LexerContext {
-    return this.contextStack[this.contextStack.length - 1];
+    return this.contextStack[this.contextStack.length - 1] ?? LexerContext.NORMAL;
   }
 
   /**
@@ -68,12 +72,13 @@ export class Lexer {
 
   /**
    * Pop the current context from the stack
+   * Sets contextUnderflowDetected flag if stack is at minimum size
    */
   private popContext(): void {
-    if (this.contextStack.length > 1) {
+    if (this.contextStack.length > Lexer.MIN_CONTEXT_STACK_SIZE) {
       this.contextStack.pop();
     } else {
-      console.warn(`Lexer: Attempted to pop context at stack depth 1 (underflow prevented) at line ${this.line}, column ${this.column}`);
+      this.contextUnderflowDetected = true;
     }
   }
 
@@ -108,12 +113,22 @@ export class Lexer {
     // Otherwise, it's a structural delimiter
     if (this.getCurrentContext() !== LexerContext.CODE_BLOCK) {
       this.advance();
+
+      // Prevent negative braceDepth from unmatched closing braces
+      if (this.braceDepth <= 0) {
+        this.addToken(TokenType.Unknown, '}', startPos, this.position, startLine, startColumn);
+        return true;
+      }
+
       this.braceDepth--;
       this.addToken(TokenType.RightBrace, '}', startPos, this.position, startLine, startColumn);
 
       // Pop context when closing a section
       if (this.braceDepth === 0 && this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
         this.popContext();
+        if (this.contextUnderflowDetected) {
+          this.contextUnderflowDetected = false;
+        }
       }
       return true;
     }
@@ -387,6 +402,7 @@ export class Lexer {
         // END closes a code block
         if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
           this.popContext();
+          this.contextUnderflowDetected = false;
         }
         break;
     }
@@ -506,11 +522,16 @@ export class Lexer {
   }
 
   private scanBlockComment(): void {
+    const startPos = this.position;
+    const startLine = this.line;
+    const startColumn = this.column;
     this.advance(); // consume {
+    let closed = false;
 
     while (this.position < this.input.length) {
       if (this.currentChar() === '}') {
         this.advance();
+        closed = true;
         break;
       }
 
@@ -520,16 +541,25 @@ export class Lexer {
         this.advance();
       }
     }
+
+    if (!closed) {
+      this.addToken(TokenType.Unknown, '{', startPos, this.position, startLine, startColumn);
+    }
   }
 
   private scanCStyleComment(): void {
+    const startPos = this.position;
+    const startLine = this.line;
+    const startColumn = this.column;
     this.advance(); // consume /
     this.advance(); // consume *
+    let closed = false;
 
     while (this.position < this.input.length) {
       if (this.currentChar() === '*' && this.peek() === '/') {
         this.advance(); // consume *
         this.advance(); // consume /
+        closed = true;
         break;
       }
 
@@ -538,6 +568,10 @@ export class Lexer {
       } else {
         this.advance();
       }
+    }
+
+    if (!closed) {
+      this.addToken(TokenType.Unknown, '/*', startPos, this.position, startLine, startColumn);
     }
   }
 

@@ -253,8 +253,10 @@ END`;
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
-      expect(tokens).toHaveLength(1);
-      expect(tokens[0].type).toBe(TokenType.EOF);
+      expect(tokens).toHaveLength(2);
+      expect(tokens[0].type).toBe(TokenType.Unknown);
+      expect(tokens[0].value).toBe('/*');
+      expect(tokens[1].type).toBe(TokenType.EOF);
     });
 
     it('should handle empty C-style comment', () => {
