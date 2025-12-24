@@ -174,7 +174,7 @@
     "cargo_aliases": [],
     "shell_scripts": []
   },
-  "project_dir": "/home/klaus/Source/C-AL-Language",
-  "created_at": "2025-12-23T21:54:40.619583",
-  "project_hash": "aa36c5d62e5d449ed6c8e9da338e91bf"
+  "project_dir": "/home/klaus/Source/C-AL-Language/.worktrees/009-fix-unclosed-quoted-identifier-string-errors",
+  "created_at": "2025-12-23T22:49:31.064786",
+  "project_hash": "4e2a161d1f0813e15cebb5706ee05888"
 }
