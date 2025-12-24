@@ -1,0 +1,42 @@
+{
+  "project_type": "single",
+  "services": {
+    "server": {
+      "path": "server",
+      "tech_stack": ["typescript", "vscode-languageserver"],
+      "port": null,
+      "dev_command": "npm run watch",
+      "compile_command": "npm run compile",
+      "test_command": "npm test",
+      "entry_point": "server/src/server.ts",
+      "key_directories": {
+        "parser": "server/src/parser",
+        "lexer": "server/src/lexer",
+        "references": "server/src/references",
+        "symbols": "server/src/symbols",
+        "tests": "server/src/__tests__"
+      }
+    }
+  },
+  "infrastructure": {
+    "docker": false,
+    "database": null,
+    "ci_cd": false
+  },
+  "conventions": {
+    "linter": null,
+    "formatter": null,
+    "testing": "jest",
+    "naming": {
+      "files": "camelCase",
+      "classes": "PascalCase",
+      "functions": "camelCase",
+      "interfaces": "PascalCase"
+    }
+  },
+  "vscode_extension": {
+    "client": "src/extension.ts",
+    "server": "server/src/server.ts",
+    "syntaxes": "syntaxes/"
+  }
+}

@@ -68,6 +68,9 @@ export class Parser {
     const startToken = this.peek();
     let object: ObjectDeclaration | null = null;
 
+    // Check for AL-only tokens at the document level
+    this.skipALOnlyTokens();
+
     try {
       if (!this.isAtEnd()) {
         object = this.parseObject();
@@ -138,6 +141,9 @@ export class Parser {
     let code: CodeSection | null = null;
 
     while (!this.isAtEnd()) {
+      // Check for AL-only tokens at section level
+      this.skipALOnlyTokens();
+
       const token = this.peek();
 
       try {
@@ -500,11 +506,17 @@ export class Parser {
     // Parse procedures and triggers
     while (!this.isAtEnd()) {
       try {
+        // Check for AL-only tokens before procedure/trigger declarations
+        this.skipALOnlyTokens();
+
         // Check for LOCAL keyword before PROCEDURE/FUNCTION
         let isLocal = false;
         if (this.check(TokenType.Local)) {
           isLocal = true;
           this.advance(); // consume LOCAL
+
+          // Check for AL-only tokens after LOCAL (e.g., "LOCAL internal PROCEDURE")
+          this.skipALOnlyTokens();
         }
 
         if (this.check(TokenType.Procedure) || this.check(TokenType.Function)) {
@@ -785,6 +797,9 @@ export class Parser {
   }
 
   private parseStatement(): Statement | null {
+    // Check for AL-only tokens at statement level
+    this.skipALOnlyTokens();
+
     const startToken = this.peek();
 
     // IF statement
@@ -1262,6 +1277,9 @@ export class Parser {
   }
 
   private parsePrimary(): Expression {
+    // Check for AL-only tokens in expression context (e.g., ternary operator)
+    this.skipALOnlyTokens();
+
     const token = this.peek();
 
     // Literals
@@ -1517,6 +1535,62 @@ export class Parser {
   private recordError(message: string, token?: Token): void {
     const errorToken = token || this.peek();
     this.errors.push(new ParseError(message, errorToken));
+  }
+
+  /**
+   * Check if the current token is an AL-only feature and record an error if so.
+   * AL-only features are not supported in C/AL and should be rejected with clear messages.
+   * Returns true if an AL-only token was found (and error recorded), false otherwise.
+   */
+  private checkAndReportALOnlyToken(): boolean {
+    const token = this.peek();
+
+    switch (token.type) {
+      case TokenType.ALOnlyKeyword:
+        this.recordError(
+          `AL-only keyword '${token.value}' is not supported in C/AL`,
+          token
+        );
+        this.advance(); // Consume the token to continue parsing
+        return true;
+
+      case TokenType.ALOnlyAccessModifier:
+        this.recordError(
+          `AL-only access modifier '${token.value}' is not supported in C/AL. Use LOCAL instead.`,
+          token
+        );
+        this.advance(); // Consume the token to continue parsing
+        return true;
+
+      case TokenType.TernaryOperator:
+        this.recordError(
+          `AL-only ternary operator (? :) is not supported in C/AL. Use IF-THEN-ELSE instead.`,
+          token
+        );
+        this.advance(); // Consume the token to continue parsing
+        return true;
+
+      case TokenType.PreprocessorDirective:
+        this.recordError(
+          `AL-only preprocessor directive '${token.value}' is not supported in C/AL`,
+          token
+        );
+        this.advance(); // Consume the token to continue parsing
+        return true;
+
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Skip any AL-only tokens at the current position, recording errors for each.
+   * This is used to continue parsing after encountering AL-only features.
+   */
+  private skipALOnlyTokens(): void {
+    while (this.checkAndReportALOnlyToken()) {
+      // Keep consuming AL-only tokens until we find a valid C/AL token
+    }
   }
 
   /**
