@@ -773,7 +773,7 @@ describe('SymbolTable', () => {
 {
   FIELDS
   {
-    { 1 ; ; No. ; Code20 }
+    { 1   ;   ;"No."           ;Code20        }
   }
   CODE
   {
