@@ -1,16 +1,16 @@
 {
   "active": true,
-  "spec": "009-fix-unclosed-quoted-identifier-string-errors",
-  "state": "complete",
+  "spec": "011-create-tests-for-cross-file-features",
+  "state": "building",
   "subtasks": {
-    "completed": 2,
-    "total": 2,
-    "in_progress": 0,
+    "completed": 4,
+    "total": 7,
+    "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Implementation",
-    "id": 1,
+    "current": "Table Relationship Tests",
+    "id": null,
     "total": 2
   },
   "workers": {
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 2,
-    "started_at": "2025-12-23T21:36:32.741303"
+    "number": 4,
+    "started_at": "2025-12-24T10:10:16.066052"
   },
-  "last_update": "2025-12-23T21:41:17.971095"
+  "last_update": "2025-12-24T10:21:21.106834"
 }
