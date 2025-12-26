@@ -67,7 +67,7 @@ interface ParsedDocument {
 }
 const documentCache = new Map<string, ParsedDocument>();
 
-connection.onInitialize((params: InitializeParams) => {
+connection.onInitialize((_params: InitializeParams) => {
   connection.console.log('C/AL Language Server initializing...');
 
   const result: InitializeResult = {

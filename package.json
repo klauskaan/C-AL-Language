@@ -69,14 +69,34 @@
     "semanticTokenScopes": [
       {
         "scopes": {
-          "keyword": ["keyword.control.cal", "keyword.other.cal"],
-          "variable": ["variable.other.cal", "entity.name.variable.cal"],
-          "type": ["storage.type.cal", "entity.name.type.cal"],
-          "function": ["entity.name.function.cal"],
-          "string": ["string.quoted.single.cal"],
-          "number": ["constant.numeric.cal"],
-          "operator": ["keyword.operator.cal"],
-          "comment": ["comment.line.cal", "comment.block.cal"]
+          "keyword": [
+            "keyword.control.cal",
+            "keyword.other.cal"
+          ],
+          "variable": [
+            "variable.other.cal",
+            "entity.name.variable.cal"
+          ],
+          "type": [
+            "storage.type.cal",
+            "entity.name.type.cal"
+          ],
+          "function": [
+            "entity.name.function.cal"
+          ],
+          "string": [
+            "string.quoted.single.cal"
+          ],
+          "number": [
+            "constant.numeric.cal"
+          ],
+          "operator": [
+            "keyword.operator.cal"
+          ],
+          "comment": [
+            "comment.line.cal",
+            "comment.block.cal"
+          ]
         }
       }
     ]
@@ -87,7 +107,9 @@
     "compile": "tsc -b tsconfig.json && tsc -b tsconfig.server.json",
     "watch": "tsc -b -w tsconfig.json tsconfig.server.json",
     "test": "node ./out/test/runTest.js",
-    "postinstall": "cd server && npm install"
+    "postinstall": "cd server && npm install",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix"
   },
   "dependencies": {
     "vscode-languageclient": "^8.1.0",
@@ -95,8 +117,11 @@
     "vscode-languageserver-textdocument": "^1.0.8"
   },
   "devDependencies": {
-    "@types/vscode": "^1.80.0",
     "@types/node": "^18.0.0",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^8.50.1",
+    "@typescript-eslint/parser": "^8.50.1",
+    "eslint": "^9.39.2",
     "typescript": "^5.0.0"
   }
 }

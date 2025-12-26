@@ -6,14 +6,13 @@
 import {
   Hover,
   Position,
-  MarkupContent,
   MarkupKind
 } from 'vscode-languageserver';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SymbolTable, Symbol } from '../symbols/symbolTable';
 import { CALDocument } from '../parser/ast';
-import { Token, TokenType, KEYWORDS } from '../lexer/tokens';
+import { Token, KEYWORDS } from '../lexer/tokens';
 import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from '../completion/builtins';
 import { ProviderBase } from '../providers/providerBase';
 
@@ -228,7 +227,7 @@ export class HoverProvider extends ProviderBase {
     position: Position,
     ast?: CALDocument,
     symbolTable?: SymbolTable,
-    tokens?: Token[]
+    _tokens?: Token[]
   ): Hover | null {
     const wordInfo = this.getWordAtPosition(document, position);
     if (!wordInfo) {

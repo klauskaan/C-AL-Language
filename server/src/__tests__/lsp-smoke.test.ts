@@ -25,12 +25,12 @@ import { SemanticTokensProvider, getSemanticTokensLegend } from '../semantic/sem
 describe('LSP Smoke Test', () => {
 
   describe('Module Loading', () => {
-    it('should attempt to load server module (expects connection error in test env)', () => {
+    it('should attempt to load server module (expects connection error in test env)', async () => {
       // The server module tries to create a connection when imported
       // In a test environment without IPC/stdio, this will throw a specific error
       // This is expected behavior - the module itself is valid, just can't connect
       try {
-        require('../server');
+        await import('../server');
         // If it doesn't throw, that's also fine (maybe mocked elsewhere)
       } catch (error: any) {
         // Verify it's the expected connection error, not a syntax/import error
@@ -38,22 +38,22 @@ describe('LSP Smoke Test', () => {
       }
     });
 
-    it('should import semantic tokens provider without errors', () => {
+    it('should import semantic tokens provider without errors', async () => {
       // Verify semantic tokens provider can be instantiated
-      expect(() => {
-        const { SemanticTokensProvider } = require('../semantic/semanticTokens');
+      await expect(async () => {
+        const { SemanticTokensProvider } = await import('../semantic/semanticTokens');
         new SemanticTokensProvider();
-      }).not.toThrow();
+      }).resolves.not.toThrow();
     });
 
-    it('should import lexer and parser modules without errors', () => {
+    it('should import lexer and parser modules without errors', async () => {
       // Verify core parsing modules are accessible
-      expect(() => {
-        const { Lexer } = require('../lexer/lexer');
-        const { Parser } = require('../parser/parser');
+      await expect(async () => {
+        const { Lexer } = await import('../lexer/lexer');
+        const { Parser } = await import('../parser/parser');
         new Lexer('test');
         new Parser([]);
-      }).not.toThrow();
+      }).resolves.not.toThrow();
     });
   });
 

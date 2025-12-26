@@ -1,6 +1,5 @@
 import { Token, TokenType } from '../lexer/tokens';
 import {
-  ASTNode,
   CALDocument,
   ObjectDeclaration,
   ObjectKind,
@@ -967,7 +966,7 @@ export class Parser {
     // Check for AL-only tokens at statement level
     this.skipALOnlyTokens();
 
-    const startToken = this.peek();
+    const _startToken = this.peek();
 
     // IF statement
     if (this.check(TokenType.If)) {

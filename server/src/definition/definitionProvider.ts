@@ -5,8 +5,7 @@
 
 import {
   Location,
-  Position,
-  Range
+  Position
 } from 'vscode-languageserver';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';

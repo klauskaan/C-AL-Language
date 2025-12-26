@@ -206,7 +206,7 @@ export class SignatureHelpProvider extends ProviderBase {
   private buildSignatureHelp(
     func: BuiltinFunction,
     activeParameter: number,
-    isMethodCall: boolean
+    _isMethodCall: boolean
   ): SignatureHelp {
     const parameters = this.parseSignatureParameters(func.signature);
 
@@ -241,7 +241,7 @@ export class SignatureHelpProvider extends ProviderBase {
    */
   private buildUserProcedureSignature(
     name: string,
-    activeParameter: number
+    _activeParameter: number
   ): SignatureHelp {
     // For user-defined procedures, we just show the name
     // Full parameter support would require AST parsing of procedure declarations

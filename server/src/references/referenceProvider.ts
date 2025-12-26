@@ -5,32 +5,14 @@
 
 import {
   Location,
-  Position,
-  Range
+  Position
 } from 'vscode-languageserver';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import {
   CALDocument,
-  Expression,
-  Statement,
   Identifier,
-  BinaryExpression,
-  UnaryExpression,
-  MemberExpression,
-  CallExpression,
-  ArrayAccessExpression,
-  BlockStatement,
-  IfStatement,
-  WhileStatement,
-  RepeatStatement,
-  ForStatement,
-  CaseStatement,
-  AssignmentStatement,
-  CallStatement,
-  ExitStatement,
   ProcedureDeclaration,
-  TriggerDeclaration,
   VariableDeclaration,
   ParameterDeclaration,
   FieldDeclaration
