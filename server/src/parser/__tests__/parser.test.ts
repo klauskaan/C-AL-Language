@@ -372,6 +372,909 @@ describe('Parser - Error Recovery', () => {
       expect(ast).toBeDefined();
     });
   });
+
+  describe('Missing semicolons', () => {
+    it('should recover when semicolon missing after property', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          DataPerCompany=Yes
+          LookupPageID=21;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should recover when semicolon missing between field properties', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 ; CaptionML=ENU=No.
+                                   NotBlank=Yes }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should recover when semicolon missing after variable declaration', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          VAR
+            x : Integer
+            y : Integer;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should recover when semicolon missing after assignment statement', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            x := 1
+            y := 2;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should recover when semicolon missing after procedure call', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            MESSAGE('Hello')
+            MESSAGE('World');
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should recover when semicolon missing after UNTIL in REPEAT', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            REPEAT
+              x := x + 1
+            UNTIL x > 10
+            y := 5;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should recover when semicolon missing after EXIT statement', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc() : Integer;
+          BEGIN
+            EXIT(42)
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should recover when semicolon missing between procedures', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE Test1();
+          BEGIN
+          END
+
+          PROCEDURE Test2();
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should recover when semicolon missing after IF-THEN statement', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            IF x THEN
+              y := 1
+            z := 2;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should collect multiple errors when multiple semicolons missing', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            a := 1
+            b := 2
+            c := 3
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should recover when semicolon missing after field data type', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 }
+          { 2 ; ; Name ; Text100 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should recover when semicolon missing in local VAR section', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          VAR
+            Local1 : Integer
+            Local2 : Text;
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should recover when semicolon missing after CASE branch', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            CASE x OF
+              1: y := 1
+              2: y := 2;
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should recover when semicolon missing after field trigger', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 ; OnValidate=BEGIN END }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should recover when semicolon missing after WHILE DO statement', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            WHILE x < 10 DO
+              x := x + 1
+            y := 5;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+  });
+
+  describe('Truncated files', () => {
+    it('should handle EOF after OBJECT keyword', () => {
+      const code = `OBJECT`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle EOF after object type', () => {
+      const code = `OBJECT Table`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle EOF after object ID', () => {
+      const code = `OBJECT Table 18`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle EOF after opening brace', () => {
+      const code = `OBJECT Table 18 Customer {`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle EOF mid-PROPERTIES section', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          DataPerCompany=`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle EOF mid-FIELDS definition', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No."`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle EOF in CODE section', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            x :=`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle EOF after BEGIN', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle EOF in IF condition', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            IF x >`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle EOF after WHILE keyword', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            WHILE`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle EOF in function call arguments', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            MESSAGE(`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle EOF in nested BEGIN-END blocks', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            IF x THEN BEGIN
+              y := 1;`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+  });
+
+  describe('Incomplete object definitions', () => {
+    it('should handle incomplete FIELDS section', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle incomplete PROPERTIES section', () => {
+      const code = `OBJECT Page 21 Customer {
+        PROPERTIES {
+          CaptionML=ENU=Customer`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle incomplete PROCEDURE definition', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc(`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle incomplete KEYS section', () => {
+      const code = `OBJECT Table 18 Customer {
+        KEYS {
+          { "No."`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle incomplete field property value', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 ; TableRelation=
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle incomplete VAR section missing data type', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          VAR
+            MyVar :`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle incomplete XMLport with multiple sections', () => {
+      const code = `OBJECT XMLport 50000 Export {
+        PROPERTIES {
+          Format=`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle Query with missing object name', () => {
+      const code = `OBJECT Query 100 {`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle MenuSuite with minimal incomplete definition', () => {
+      const code = `OBJECT MenuSuite 1`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle incomplete field trigger', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 ; OnValidate=BEGIN
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle incomplete IF statement in procedure', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            IF condition THEN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle incomplete CASE statement', () => {
+      const code = `OBJECT Page 21 Customer {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            CASE x OF
+              1:
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+  });
+
+  describe('Mismatched braces', () => {
+    it('should handle extra closing brace at object level', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          DataPerCompany=Yes;
+        }
+      }}`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle missing closing brace in PROPERTIES section', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          DataPerCompany=Yes;
+        FIELDS {
+          { 1 ; ; "No." ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle extra opening brace in FIELDS section', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          {{
+          { 1 ; ; "No." ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle mismatched field braces', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 }}
+          { 2 ; ; Name ; Text100 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle missing closing brace in CODE section', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            x := 1;
+          END;
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle extra closing brace after END keyword', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            x := 1;
+          END;}
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle nested braces mismatch in trigger', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 ; OnValidate=BEGIN
+                                                IF x THEN BEGIN
+                                                  y := 1;
+                                                END END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle multiple missing closing braces', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          DataPerCompany=Yes;
+        FIELDS {
+          { 1 ; ; "No." ; Code20 }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle brace in property value', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          OnInsert=BEGIN { END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle reversed braces', () => {
+      const code = `OBJECT Table 18 Customer }
+        PROPERTIES }
+          DataPerCompany=Yes;
+        {
+      {`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+  });
+
+  describe('Invalid keywords in wrong positions', () => {
+    it('should handle PROPERTIES keyword inside FIELDS section', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          PROPERTIES
+          { 1 ; ; "No." ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle CODE keyword inside PROPERTIES section', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          CODE
+          DataPerCompany=Yes;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle PROCEDURE keyword at object level', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROCEDURE TestProc();
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle BEGIN keyword in FIELDS section', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          BEGIN
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle END keyword without matching BEGIN', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle VAR keyword after BEGIN', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            VAR x : Integer;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle nested OBJECT keyword', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          DataPerCompany=Yes;
+        }
+        OBJECT Table 19 Vendor {}
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+
+    it('should handle multiple section keywords in sequence', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES FIELDS KEYS CODE {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      expect(() => parser.parse()).not.toThrow();
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+    });
+  });
 });
 
 describe('Parser - Different Object Types', () => {
