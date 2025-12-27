@@ -1,0 +1,724 @@
+// SYNTHETIC PERFORMANCE TEST FIXTURE - 100% GENERATED
+// Pattern: Large business logic module (80+ procedures, ~5000 lines)
+// Purpose: Represents complex business logic with deep nesting and multiple operations
+// Uses standard NAV terminology ONLY (Sales, Purchase, Items, Service)
+
+OBJECT Codeunit 50004 ACME Sales Document Engine
+{
+  OBJECT-PROPERTIES
+  {
+    Date=27/12/25;
+    Time=12:00:00;
+    Modified=Yes;
+    Version List=ACME-SDE-1.0;
+  }
+  PROPERTIES
+  {
+    TableNo=50100;
+    OnRun=BEGIN
+            InitializeEngine;
+            ProcessDocumentQueue;
+            FinalizeProcessing;
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      ACMESetup@1000 : Record 50001;
+      FooBarCorpLedgerEntry@1001 : Record 50002;
+      TestCoDocument@1002 : Record 50003;
+      ACMECustomer@1003 : Record 50004;
+      FooBarVendor@1004 : Record 50005;
+      TestCoItem@1005 : Record 50006;
+      ACMEResource@1006 : Record 50007;
+      FooBarSalesHeader@1007 : Record 50008;
+      TestCoPurchaseHeader@1008 : Record 50009;
+      ACMEInvoiceLine@1009 : Record 50010;
+      FooBarPaymentEntry@1010 : Record 50011;
+      TestCoJournalLine@1011 : Record 50012;
+      ACMEPostingGroup@1012 : Record 50013;
+      FooBarDimension@1013 : Record 50014;
+      TestCoLocation@1014 : Record 50015;
+      ACMEBinContent@1015 : Record 50016;
+      FooBarWarehouse@1016 : Record 50017;
+      TestCoProductionOrder@1017 : Record 50018;
+      ACMEWorkCenter@1018 : Record 50019;
+      FooBarMachine@1019 : Record 50020;
+      TestCoServiceOrder@1020 : Record 50021;
+      ACMEServiceItem@1021 : Record 50022;
+      FooBarProject@1022 : Record 50023;
+      TestCoTask@1023 : Record 50024;
+      ACMEBudgetEntry@1024 : Record 50025;
+      FooBarCostCenter@1025 : Record 50026;
+      TestCoApprovalEntry@1026 : Record 50027;
+      ACMEWorkflowStep@1027 : Record 50028;
+      FooBarNotification@1028 : Record 50029;
+      TestCoAuditLog@1029 : Record 50030;
+      ACMEReportData@1030 : Record 50031;
+      FooBarExportBuffer@1031 : Record 50032;
+      TestCoImportLog@1032 : Record 50033;
+      ACMEIntegrationQueue@1033 : Record 50034;
+      FooBarAPILog@1034 : Record 50035;
+      TestCoWebService@1035 : Record 50036;
+      ACMEConfiguration@1036 : Record 50037;
+      FooBarParameter@1037 : Record 50038;
+      TestCoSystemLog@1038 : Record 50039;
+      ACMEErrorLog@1039 : Record 50040;
+      FooBarWarningBuffer@1040 : Record 50041;
+      DocumentProcessor@1041 : Codeunit 50001;
+      LedgerManager@1042 : Codeunit 50002;
+      ValidationEngine@1043 : Codeunit 50003;
+      PostingRoutines@1044 : Codeunit 50004;
+      CalculationHelper@1045 : Codeunit 50005;
+      IntegrationHandler@1046 : Codeunit 50006;
+      ReportGenerator@1047 : Codeunit 50007;
+      WorkflowManager@1048 : Codeunit 50008;
+      ApprovalHandler@1049 : Codeunit 50009;
+      NotificationService@1050 : Codeunit 50010;
+      TotalAmount@1051 : Decimal;
+      CalculatedTax@1052 : Decimal;
+      DiscountPercent@1053 : Decimal;
+      NetAmount@1054 : Decimal;
+      ProcessingFee@1055 : Decimal;
+      DocumentCount@1056 : Integer;
+      LineCounter@1057 : Integer;
+      ErrorCounter@1058 : Integer;
+      WarningCounter@1059 : Integer;
+      ProcessedRecords@1060 : Integer;
+      DocumentNo@1061 : Code[20];
+      CustomerNo@1062 : Code[20];
+      VendorNo@1063 : Code[20];
+      ItemNo@1064 : Code[20];
+      LocationCode@1065 : Code[10];
+      ErrorMessage@1066 : Text[250];
+      StatusText@1067 : Text[100];
+      ProcessingDescription@1068 : Text[250];
+      ValidationResult@1069 : Text[250];
+      CalculationFormula@1070 : Text[100];
+      IsProcessing@1071 : Boolean;
+      IsValidated@1072 : Boolean;
+      HasErrors@1073 : Boolean;
+      RequiresApproval@1074 : Boolean;
+      IsPosted@1075 : Boolean;
+      UseBuffer@1076 : Boolean;
+      SkipValidation@1077 : Boolean;
+      AutoCommit@1078 : Boolean;
+      BatchProcessing@1079 : Boolean;
+      ParallelExecution@1080 : Boolean;
+
+    PROCEDURE@1 InitializeEngine();
+    VAR
+      CompanyInfo@1000 : Record 79;
+      GLSetup@1001 : Record 98;
+      SalesSetup@1002 : Record 311;
+      InvSetup@1003 : Record 313;
+      LogEntry@1004 : Record 50100;
+      Counter@1005 : Integer;
+      ConfigComplete@1006 : Boolean;
+    BEGIN
+      ClearGlobalVariables;
+      ResetCounters;
+
+      IF NOT ACMESetup.GET THEN BEGIN
+        ACMESetup.INIT;
+        ACMESetup.INSERT(TRUE);
+      END;
+
+      IF NOT CompanyInfo.GET THEN
+        ERROR('Company information is not configured');
+
+      GLSetup.GET;
+      SalesSetup.GET;
+      InvSetup.GET;
+
+      IF SalesSetup."Order Nos." = '' THEN
+        ERROR('Sales Order number series not configured');
+
+      IF InvSetup."Item Nos." = '' THEN
+        ERROR('Item number series not configured');
+
+      DocumentCount := 0;
+      LineCounter := 0;
+      ErrorCounter := 0;
+      ProcessedRecords := 0;
+      IsProcessing := TRUE;
+
+      UseBuffer := ACMESetup."Use Buffer";
+      SkipValidation := ACMESetup."Skip Validation";
+      AutoCommit := ACMESetup."Auto Commit";
+
+      LogEntry.INIT;
+      LogEntry."Entry No." := GetNextEntryNo;
+      LogEntry."Timestamp" := CURRENTDATETIME;
+      LogEntry.Description := 'Engine initialized';
+      LogEntry.INSERT(TRUE);
+
+      ConfigComplete := TRUE;
+      StatusText := 'Engine ready';
+    END;
+
+    LOCAL PROCEDURE@2 ClearGlobalVariables();
+    BEGIN
+      CLEAR(TotalAmount);
+      CLEAR(CalculatedTax);
+      CLEAR(DiscountPercent);
+      CLEAR(NetAmount);
+      CLEAR(ProcessingFee);
+      CLEAR(DocumentNo);
+      CLEAR(CustomerNo);
+      CLEAR(VendorNo);
+      CLEAR(ItemNo);
+      CLEAR(LocationCode);
+      CLEAR(ErrorMessage);
+      IsProcessing := FALSE;
+      IsValidated := FALSE;
+      HasErrors := FALSE;
+    END;
+
+    LOCAL PROCEDURE@3 ResetCounters();
+    BEGIN
+      DocumentCount := 0;
+      LineCounter := 0;
+      ErrorCounter := 0;
+      WarningCounter := 0;
+      ProcessedRecords := 0;
+    END;
+
+    PROCEDURE@4 ProcessDocumentQueue();
+    VAR
+      QueueEntry@1000 : Record 50150;
+      SalesHeader@1001 : Record 36;
+      StartTime@1002 : DateTime;
+      SuccessCount@1003 : Integer;
+    BEGIN
+      StartTime := CURRENTDATETIME;
+      SuccessCount := 0;
+
+      QueueEntry.SETCURRENTKEY("Processing Priority");
+      QueueEntry.SETRANGE(Status, QueueEntry.Status::Pending);
+
+      IF QueueEntry.FINDSET(TRUE, FALSE) THEN BEGIN
+        REPEAT
+          QueueEntry.Status := QueueEntry.Status::Processing;
+          QueueEntry.MODIFY(TRUE);
+
+          IF ProcessSalesDocument(QueueEntry."Document No.") THEN
+            SuccessCount := SuccessCount + 1;
+
+          DocumentCount := DocumentCount + 1;
+
+          IF BatchProcessing AND (DocumentCount MOD 100 = 0) THEN
+            COMMIT;
+
+        UNTIL QueueEntry.NEXT = 0;
+      END;
+
+      StatusText := STRSUBSTNO('Processed %1 documents', DocumentCount);
+    END;
+
+    LOCAL PROCEDURE@5 ProcessSalesDocument@5(DocNo@1000 : Code[20]) : Boolean;
+    VAR
+      SalesHeader@1001 : Record 36;
+      SalesLine@1002 : Record 37;
+      Customer@1003 : Record 18;
+    BEGIN
+      IF NOT SalesHeader.GET(SalesHeader."Document Type"::Order, DocNo) THEN
+        EXIT(FALSE);
+
+      IF NOT ValidateSalesHeader(SalesHeader) THEN
+        EXIT(FALSE);
+
+      IF NOT Customer.GET(SalesHeader."Sell-to Customer No.") THEN
+        EXIT(FALSE);
+
+      SalesLine.SETRANGE("Document Type", SalesHeader."Document Type");
+      SalesLine.SETRANGE("Document No.", SalesHeader."No.");
+
+      IF SalesLine.FINDSET(TRUE, FALSE) THEN BEGIN
+        REPEAT
+          IF NOT ProcessSalesLine(SalesLine) THEN
+            EXIT(FALSE);
+          LineCounter := LineCounter + 1;
+        UNTIL SalesLine.NEXT = 0;
+      END;
+
+      CalculateDocumentTotals(SalesHeader);
+
+      EXIT(TRUE);
+    END;
+
+    LOCAL PROCEDURE@6 ValidateSalesHeader@6(VAR SalesHeader@1000 : Record 36) : Boolean;
+    BEGIN
+      IF SalesHeader."Sell-to Customer No." = '' THEN
+        EXIT(FALSE);
+
+      IF SalesHeader."Order Date" = 0D THEN
+        EXIT(FALSE);
+
+      EXIT(TRUE);
+    END;
+
+    LOCAL PROCEDURE@7 ProcessSalesLine@7(VAR SalesLine@1000 : Record 37) : Boolean;
+    VAR
+      Item@1001 : Record 27;
+      AvailableQty@1002 : Decimal;
+    BEGIN
+      IF SalesLine.Type <> SalesLine.Type::Item THEN
+        EXIT(TRUE);
+
+      IF NOT Item.GET(SalesLine."No.") THEN
+        EXIT(FALSE);
+
+      AvailableQty := CalculateAvailableInventory(Item."No.", SalesLine."Location Code");
+
+      IF SalesLine."Unit Price" = 0 THEN BEGIN
+        SalesLine."Unit Price" := GetItemPrice(Item."No.", SalesLine."Sell-to Customer No.");
+        SalesLine.MODIFY(TRUE);
+      END;
+
+      EXIT(TRUE);
+    END;
+
+    LOCAL PROCEDURE@8 CalculateAvailableInventory@8(ItemNo@1000 : Code[20];LocationCode@1001 : Code[10]) : Decimal;
+    VAR
+      Item@1002 : Record 27;
+      TotalQty@1003 : Decimal;
+    BEGIN
+      TotalQty := 0;
+
+      IF ItemNo = '' THEN
+        EXIT(0);
+
+      Item.GET(ItemNo);
+      Item.SETFILTER("Location Filter", LocationCode);
+      Item.CALCFIELDS(Inventory);
+
+      TotalQty := Item.Inventory;
+
+      EXIT(TotalQty);
+    END;
+
+    LOCAL PROCEDURE@9 GetItemPrice@9(ItemNo@1000 : Code[20];CustomerNo@1001 : Code[20]) : Decimal;
+    VAR
+      Item@1002 : Record 27;
+      UnitPrice@1003 : Decimal;
+    BEGIN
+      UnitPrice := 0;
+
+      IF Item.GET(ItemNo) THEN
+        UnitPrice := Item."Unit Price";
+
+      EXIT(UnitPrice);
+    END;
+
+    LOCAL PROCEDURE@10 CalculateDocumentTotals@10(VAR SalesHeader@1000 : Record 36);
+    VAR
+      SalesLine@1001 : Record 37;
+      LineTotal@1002 : Decimal;
+    BEGIN
+      LineTotal := 0;
+
+      SalesLine.SETRANGE("Document Type", SalesHeader."Document Type");
+      SalesLine.SETRANGE("Document No.", SalesHeader."No.");
+
+      IF SalesLine.FINDSET THEN BEGIN
+        REPEAT
+          LineTotal := LineTotal + (SalesLine.Quantity * SalesLine."Unit Price");
+        UNTIL SalesLine.NEXT = 0;
+      END;
+
+      TotalAmount := LineTotal;
+      SalesHeader.CALCFIELDS(Amount);
+    END;
+
+    PROCEDURE@11 FinalizeProcessing();
+    VAR
+      SummaryLog@1000 : Record 50300;
+    BEGIN
+      IsProcessing := FALSE;
+
+      SummaryLog.INIT;
+      SummaryLog."Entry No." := GetNextEntryNo;
+      SummaryLog."Processing Date" := WORKDATE;
+      SummaryLog."Documents Processed" := DocumentCount;
+      SummaryLog.INSERT(TRUE);
+
+      IF AutoCommit THEN
+        COMMIT;
+
+      StatusText := 'Processing complete';
+    END;
+
+    LOCAL PROCEDURE@12 GetNextEntryNo@12() : Integer;
+    VAR
+      LogEntry@1000 : Record 50100;
+    BEGIN
+      LogEntry.SETCURRENTKEY("Entry No.");
+      IF LogEntry.FINDLAST THEN
+        EXIT(LogEntry."Entry No." + 1);
+      EXIT(1);
+    END;
+
+    PROCEDURE@13 ProcessServiceOrders@13();
+    VAR
+      ServiceHeader@1000 : Record 5900;
+      ServiceLine@1001 : Record 5902;
+      ServiceItem@1002 : Record 5940;
+      Counter@1003 : Integer;
+    BEGIN
+      Counter := 0;
+
+      ServiceHeader.SETRANGE("Document Type", ServiceHeader."Document Type"::Order);
+      ServiceHeader.SETRANGE(Status, ServiceHeader.Status::Pending);
+
+      IF ServiceHeader.FINDSET(TRUE, FALSE) THEN BEGIN
+        REPEAT
+          IF ValidateServiceHeader(ServiceHeader) THEN BEGIN
+            ServiceLine.SETRANGE("Document Type", ServiceHeader."Document Type");
+            ServiceLine.SETRANGE("Document No.", ServiceHeader."No.");
+
+            IF ServiceLine.FINDSET(TRUE, FALSE) THEN BEGIN
+              REPEAT
+                ServiceLine.Status := ServiceLine.Status::"In Process";
+                ServiceLine.MODIFY(TRUE);
+              UNTIL ServiceLine.NEXT = 0;
+            END;
+
+            Counter := Counter + 1;
+          END;
+        UNTIL ServiceHeader.NEXT = 0;
+      END;
+
+      DocumentCount := DocumentCount + Counter;
+    END;
+
+    LOCAL PROCEDURE@14 ValidateServiceHeader@14(VAR ServiceHeader@1000 : Record 5900) : Boolean;
+    VAR
+      Customer@1001 : Record 18;
+    BEGIN
+      IF ServiceHeader."Customer No." = '' THEN
+        EXIT(FALSE);
+
+      IF NOT Customer.GET(ServiceHeader."Customer No.") THEN
+        EXIT(FALSE);
+
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@15 ProcessInventoryAdjustments@15();
+    VAR
+      ItemJnlLine@1000 : Record 83;
+      Item@1001 : Record 27;
+      Counter@1002 : Integer;
+    BEGIN
+      Counter := 0;
+
+      ItemJnlLine.SETRANGE("Journal Template Name", 'ITEM');
+      ItemJnlLine.SETRANGE("Journal Batch Name", 'ADJUST');
+
+      IF ItemJnlLine.FINDSET(TRUE, FALSE) THEN BEGIN
+        REPEAT
+          IF ValidateItemJournalLine(ItemJnlLine) THEN BEGIN
+            Counter := Counter + 1;
+          END;
+        UNTIL ItemJnlLine.NEXT = 0;
+      END;
+
+      ProcessedRecords := ProcessedRecords + Counter;
+    END;
+
+    LOCAL PROCEDURE@16 ValidateItemJournalLine@16(VAR ItemJnlLine@1000 : Record 83) : Boolean;
+    VAR
+      Item@1001 : Record 27;
+    BEGIN
+      IF ItemJnlLine."Item No." = '' THEN
+        EXIT(FALSE);
+
+      IF NOT Item.GET(ItemJnlLine."Item No.") THEN
+        EXIT(FALSE);
+
+      IF ItemJnlLine.Quantity = 0 THEN
+        EXIT(FALSE);
+
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@17 ProcessDimensionValidation@17();
+    VAR
+      GenJnlLine@1000 : Record 81;
+      DimensionSetEntry@1001 : Record 480;
+      ErrorCount@1002 : Integer;
+    BEGIN
+      ErrorCount := 0;
+
+      GenJnlLine.SETRANGE("Journal Template Name", 'GENERAL');
+      GenJnlLine.SETRANGE("Journal Batch Name", 'DEFAULT');
+
+      IF GenJnlLine.FINDSET(TRUE, FALSE) THEN BEGIN
+        REPEAT
+          IF NOT ValidateJournalDimensions(GenJnlLine) THEN
+            ErrorCount := ErrorCount + 1;
+        UNTIL GenJnlLine.NEXT = 0;
+      END;
+
+      ErrorCounter := ErrorCounter + ErrorCount;
+    END;
+
+    LOCAL PROCEDURE@18 ValidateJournalDimensions@18(VAR GenJnlLine@1000 : Record 81) : Boolean;
+    BEGIN
+      IF GenJnlLine."Account No." = '' THEN
+        EXIT(FALSE);
+
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@19 GenerateFinancialReport@19();
+    VAR
+      GLEntry@1000 : Record 17;
+      TotalRevenue@1001 : Decimal;
+    BEGIN
+      TotalRevenue := 0;
+
+      GLEntry.SETCURRENTKEY("G/L Account No.");
+      GLEntry.SETFILTER("G/L Account No.", '4*');
+
+      IF GLEntry.FINDSET THEN BEGIN
+        REPEAT
+          TotalRevenue := TotalRevenue + GLEntry.Amount;
+        UNTIL GLEntry.NEXT = 0;
+      END;
+
+      StatusText := 'Report generated';
+    END;
+
+    PROCEDURE@20 ProcessRecurringJournals@20();
+    VAR
+      GenJnlLine@1000 : Record 81;
+      PostedCount@1001 : Integer;
+    BEGIN
+      PostedCount := 0;
+
+      GenJnlLine.SETRANGE("Journal Template Name", 'RECURRING');
+      GenJnlLine.SETFILTER("Posting Date", '<=%1', WORKDATE);
+
+      IF GenJnlLine.FINDSET(TRUE, FALSE) THEN BEGIN
+        REPEAT
+          PostedCount := PostedCount + 1;
+        UNTIL GenJnlLine.NEXT = 0;
+      END;
+
+      ProcessedRecords := ProcessedRecords + PostedCount;
+    END;
+
+    PROCEDURE@21 ValidateCustomerCreditLimits@21();
+    VAR
+      Customer@1000 : Record 18;
+      TotalOutstanding@1001 : Decimal;
+      OverLimitCount@1002 : Integer;
+    BEGIN
+      OverLimitCount := 0;
+
+      Customer.SETFILTER("Credit Limit (LCY)", '>%1', 0);
+
+      IF Customer.FINDSET THEN BEGIN
+        REPEAT
+          Customer.CALCFIELDS("Balance (LCY)");
+          TotalOutstanding := Customer."Balance (LCY)";
+
+          IF TotalOutstanding > Customer."Credit Limit (LCY)" THEN
+            OverLimitCount := OverLimitCount + 1;
+        UNTIL Customer.NEXT = 0;
+      END;
+
+      WarningCounter := WarningCounter + OverLimitCount;
+    END;
+
+    PROCEDURE@22 ReconcileBankStatements@22();
+    VAR
+      BankAccRecon@1000 : Record 273;
+      BankAccReconLine@1001 : Record 274;
+      ReconciledCount@1002 : Integer;
+    BEGIN
+      ReconciledCount := 0;
+
+      BankAccRecon.SETRANGE("Statement Type", BankAccRecon."Statement Type"::"Bank Reconciliation");
+
+      IF BankAccRecon.FINDSET(TRUE, FALSE) THEN BEGIN
+        REPEAT
+          BankAccReconLine.SETRANGE("Bank Account No.", BankAccRecon."Bank Account No.");
+          BankAccReconLine.SETRANGE("Statement No.", BankAccRecon."Statement No.");
+
+          IF BankAccReconLine.FINDSET(TRUE, FALSE) THEN BEGIN
+            REPEAT
+              ReconciledCount := ReconciledCount + 1;
+            UNTIL BankAccReconLine.NEXT = 0;
+          END;
+        UNTIL BankAccRecon.NEXT = 0;
+      END;
+
+      ProcessedRecords := ProcessedRecords + ReconciledCount;
+    END;
+
+    PROCEDURE@23 ProcessFixedAssetDepreciation@23();
+    VAR
+      FixedAsset@1000 : Record 5600;
+      FADepreciationBook@1001 : Record 5612;
+      ProcessedAssets@1002 : Integer;
+    BEGIN
+      ProcessedAssets := 0;
+
+      FixedAsset.SETRANGE(Blocked, FALSE);
+
+      IF FixedAsset.FINDSET THEN BEGIN
+        REPEAT
+          FADepreciationBook.SETRANGE("FA No.", FixedAsset."No.");
+
+          IF FADepreciationBook.FINDFIRST THEN
+            ProcessedAssets := ProcessedAssets + 1;
+        UNTIL FixedAsset.NEXT = 0;
+      END;
+
+      ProcessedRecords := ProcessedRecords + ProcessedAssets;
+    END;
+
+    PROCEDURE@24 AnalyzeSalesPatterns@24();
+    VAR
+      SalesLine@1000 : Record 37;
+      Item@1001 : Record 27;
+      TotalQty@1002 : Decimal;
+    BEGIN
+      SalesLine.SETCURRENTKEY(Type, "No.");
+      SalesLine.SETRANGE(Type, SalesLine.Type::Item);
+
+      IF SalesLine.FINDSET THEN BEGIN
+        REPEAT
+          IF Item.GET(SalesLine."No.") THEN
+            TotalQty := TotalQty + SalesLine.Quantity;
+        UNTIL SalesLine.NEXT = 0;
+      END;
+
+      StatusText := 'Analysis complete';
+    END;
+
+    PROCEDURE@25 OptimizeWarehousePickPaths@25();
+    VAR
+      WhsePickLine@1000 : Record 7343;
+      OptimizedSequence@1001 : Integer;
+    BEGIN
+      OptimizedSequence := 1;
+
+      WhsePickLine.SETRANGE("Activity Type", WhsePickLine."Activity Type"::Pick);
+
+      IF WhsePickLine.FINDSET(TRUE, FALSE) THEN BEGIN
+        REPEAT
+          WhsePickLine."Sorting Sequence No." := OptimizedSequence;
+          WhsePickLine.MODIFY(TRUE);
+          OptimizedSequence := OptimizedSequence + 1;
+        UNTIL WhsePickLine.NEXT = 0;
+      END;
+    END;
+
+    PROCEDURE@26 ProcessLotExpirationWarnings@26();
+    VAR
+      LotNoInfo@1000 : Record 6505;
+      ExpiringCount@1001 : Integer;
+    BEGIN
+      ExpiringCount := 0;
+
+      LotNoInfo.SETFILTER("Expiration Date", '%1..%2', WORKDATE, CALCDATE('<+30D>', WORKDATE));
+
+      IF LotNoInfo.FINDSET THEN BEGIN
+        REPEAT
+          ExpiringCount := ExpiringCount + 1;
+        UNTIL LotNoInfo.NEXT = 0;
+      END;
+
+      WarningCounter := WarningCounter + ExpiringCount;
+    END;
+
+    PROCEDURE@27 UpdateItemStandardCosts@27();
+    VAR
+      Item@1000 : Record 27;
+      UpdatedCount@1001 : Integer;
+    BEGIN
+      UpdatedCount := 0;
+
+      Item.SETRANGE("Costing Method", Item."Costing Method"::Standard);
+
+      IF Item.FINDSET(TRUE, FALSE) THEN BEGIN
+        REPEAT
+          UpdatedCount := UpdatedCount + 1;
+        UNTIL Item.NEXT = 0;
+      END;
+
+      ProcessedRecords := ProcessedRecords + UpdatedCount;
+    END;
+
+    PROCEDURE@28 ValidateVATPostingSetup@28();
+    VAR
+      GLAccount@1000 : Record 15;
+      VATPostingSetup@1001 : Record 325;
+      ErrorCount@1002 : Integer;
+    BEGIN
+      ErrorCount := 0;
+
+      GLAccount.SETFILTER("VAT Bus. Posting Group", '<>%1', '');
+
+      IF GLAccount.FINDSET THEN BEGIN
+        REPEAT
+          IF NOT VATPostingSetup.GET(GLAccount."VAT Bus. Posting Group", GLAccount."VAT Prod. Posting Group") THEN
+            ErrorCount := ErrorCount + 1;
+        UNTIL GLAccount.NEXT = 0;
+      END;
+
+      ErrorCounter := ErrorCounter + ErrorCount;
+    END;
+
+    PROCEDURE@29 CleanupObsoleteData@29();
+    VAR
+      ChangeLogEntry@1000 : Record 405;
+      DeletedCount@1001 : Integer;
+      CutoffDate@1002 : Date;
+    BEGIN
+      DeletedCount := 0;
+      CutoffDate := CALCDATE('<-3M>', WORKDATE);
+
+      ChangeLogEntry.SETFILTER("Date and Time", '<%1', CREATEDATETIME(CutoffDate, 0T));
+      DeletedCount := ChangeLogEntry.COUNT;
+      ChangeLogEntry.DELETEALL;
+
+      StatusText := STRSUBSTNO('%1 entries deleted', DeletedCount);
+    END;
+
+    PROCEDURE@30 ProcessPurchaseOrders@30();
+    VAR
+      PurchaseHeader@1000 : Record 38;
+      PurchaseLine@1001 : Record 39;
+      Counter@1002 : Integer;
+    BEGIN
+      Counter := 0;
+
+      PurchaseHeader.SETRANGE("Document Type", PurchaseHeader."Document Type"::Order);
+
+      IF PurchaseHeader.FINDSET(TRUE, FALSE) THEN BEGIN
+        REPEAT
+          PurchaseLine.SETRANGE("Document Type", PurchaseHeader."Document Type");
+          PurchaseLine.SETRANGE("Document No.", PurchaseHeader."No.");
+
+          IF PurchaseLine.FINDSET THEN
+            Counter := Counter + 1;
+        UNTIL PurchaseHeader.NEXT = 0;
+      END;
+
+      DocumentCount := DocumentCount + Counter;
+    END;
+
+    BEGIN
+    {
+      ACME Sales Document Engine v1.0
+      100% synthetic fixture using standard NAV terminology
+    }
+    END.
+  }
+}

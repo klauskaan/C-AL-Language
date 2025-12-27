@@ -1,0 +1,1188 @@
+// SYNTHETIC PERFORMANCE TEST FIXTURE - 100% GENERATED
+// Purpose: Tests parser error recovery and performance under poor code quality
+// Pattern: Non-best-practices that compiler tolerates (god object, deep nesting, duplication)
+
+OBJECT Codeunit 50015 GodObjectManagerUtilHelper
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/01/25;
+    Time=12:00:00;
+    Modified=Yes;
+    Version List=BAD-PRACTICE-TEST;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+      DoEverythingProcedure;
+    END;
+  }
+  CODE
+  {
+    VAR
+      x@1000 : Integer;
+      y@1001 : Integer;
+      z@1002 : Integer;
+      temp@1003 : Integer;
+      flag@1004 : Boolean;
+      flag2@1005 : Boolean;
+      flag3@1006 : Boolean;
+      str@1007 : Text[250];
+      str2@1008 : Text[250];
+      result@1009 : Decimal;
+      cnt@1010 : Integer;
+      idx@1011 : Integer;
+      rec@1012 : Record Item;
+      rec2@1013 : Record Customer;
+      rec3@1014 : Record Vendor;
+      rec4@1015 : Record "Sales Header";
+      rec5@1016 : Record "Purchase Header";
+
+    PROCEDURE DoEverythingProcedure@1();
+    VAR
+      localVar@1000 : Integer;
+      localFlag@1001 : Boolean;
+      localText@1002 : Text[100];
+      counter@1003 : Integer;
+      tempRec@1004 : Record Item;
+      i@1005 : Integer;
+      j@1006 : Integer;
+      k@1007 : Integer;
+      m@1008 : Integer;
+      n@1009 : Integer;
+      p@1010 : Integer;
+      q@1011 : Integer;
+      totalAmount@1012 : Decimal;
+      discountAmount@1013 : Decimal;
+      taxAmount@1014 : Decimal;
+      finalAmount@1015 : Decimal;
+      status@1016 : Integer;
+    BEGIN
+      // This procedure does everything - massive god procedure without proper extraction
+      localVar := 0;
+      counter := 0;
+      totalAmount := 0;
+      discountAmount := 0;
+      taxAmount := 0;
+      finalAmount := 0;
+      status := 0;
+
+      // Long IF chain without ELSE IF consolidation
+      IF localVar = 1 THEN
+        counter := counter + 1;
+      IF localVar = 2 THEN
+        counter := counter + 2;
+      IF localVar = 3 THEN
+        counter := counter + 3;
+      IF localVar = 4 THEN
+        counter := counter + 4;
+      IF localVar = 5 THEN
+        counter := counter + 5;
+      IF localVar = 6 THEN
+        counter := counter + 6;
+      IF localVar = 7 THEN
+        counter := counter + 7;
+      IF localVar = 8 THEN
+        counter := counter + 8;
+      IF localVar = 9 THEN
+        counter := counter + 9;
+      IF localVar = 10 THEN
+        counter := counter + 10;
+      IF localVar = 11 THEN
+        counter := counter + 11;
+      IF localVar = 12 THEN
+        counter := counter + 12;
+
+      // Overly complex nested logic without extraction
+      REPEAT
+        i := i + 1;
+        IF i > 0 THEN BEGIN
+          IF i < 100 THEN BEGIN
+            CASE i OF
+              1,2,3:
+                BEGIN
+                  IF counter > 5 THEN BEGIN
+                    IF localFlag THEN BEGIN
+                      totalAmount := totalAmount + 10.50;
+                      IF totalAmount > 1000 THEN BEGIN
+                        discountAmount := totalAmount * 0.1;
+                        IF discountAmount > 50 THEN BEGIN
+                          MESSAGE('Discount amount is %1 which is very high',discountAmount);
+                        END ELSE BEGIN
+                          MESSAGE('Discount amount is %1 which is acceptable',discountAmount);
+                        END;
+                      END;
+                    END;
+                  END;
+                END;
+              4,5,6:
+                BEGIN
+                  IF counter > 10 THEN BEGIN
+                    IF NOT localFlag THEN BEGIN
+                      totalAmount := totalAmount + 20.75;
+                      IF totalAmount > 2000 THEN BEGIN
+                        discountAmount := totalAmount * 0.15;
+                        IF discountAmount > 100 THEN BEGIN
+                          MESSAGE('Discount amount is %1 which is extremely high',discountAmount);
+                        END ELSE BEGIN
+                          MESSAGE('Discount amount is %1 which is reasonable',discountAmount);
+                        END;
+                      END;
+                    END;
+                  END;
+                END;
+              7,8,9,10:
+                BEGIN
+                  IF counter > 15 THEN BEGIN
+                    IF localFlag THEN BEGIN
+                      totalAmount := totalAmount + 30.25;
+                      IF totalAmount > 3000 THEN BEGIN
+                        discountAmount := totalAmount * 0.2;
+                        IF discountAmount > 150 THEN BEGIN
+                          MESSAGE('Discount amount is %1 which is too high',discountAmount);
+                        END ELSE BEGIN
+                          MESSAGE('Discount amount is %1 which is normal',discountAmount);
+                        END;
+                      END;
+                    END;
+                  END;
+                END;
+            END;
+          END;
+        END;
+      UNTIL i > 50;
+
+      // Deep nesting with magic numbers
+      FOR j := 1 TO 25 DO BEGIN
+        IF j MOD 2 = 0 THEN BEGIN
+          FOR k := 1 TO 15 DO BEGIN
+            IF k MOD 3 = 0 THEN BEGIN
+              FOR m := 1 TO 10 DO BEGIN
+                IF m MOD 5 = 0 THEN BEGIN
+                  totalAmount := totalAmount + 5.55;
+                  taxAmount := totalAmount * 0.0825;
+                  finalAmount := totalAmount + taxAmount - discountAmount;
+                  IF finalAmount > 500 THEN BEGIN
+                    status := 1;
+                  END;
+                  IF finalAmount > 1000 THEN BEGIN
+                    status := 2;
+                  END;
+                  IF finalAmount > 1500 THEN BEGIN
+                    status := 3;
+                  END;
+                  IF finalAmount > 2000 THEN BEGIN
+                    status := 4;
+                  END;
+                  IF finalAmount > 2500 THEN BEGIN
+                    status := 5;
+                  END;
+                END;
+              END;
+            END;
+          END;
+        END;
+      END;
+
+      // More nested complexity
+      REPEAT
+        n := n + 1;
+        IF n <= 30 THEN BEGIN
+          CASE n OF
+            1..10:
+              BEGIN
+                IF status = 1 THEN BEGIN
+                  REPEAT
+                    p := p + 1;
+                    IF p < 20 THEN BEGIN
+                      IF totalAmount > 0 THEN BEGIN
+                        totalAmount := totalAmount + 1.11;
+                      END;
+                    END;
+                  UNTIL p >= 20;
+                END;
+              END;
+            11..20:
+              BEGIN
+                IF status = 2 THEN BEGIN
+                  REPEAT
+                    q := q + 1;
+                    IF q < 25 THEN BEGIN
+                      IF totalAmount > 100 THEN BEGIN
+                        totalAmount := totalAmount + 2.22;
+                      END;
+                    END;
+                  UNTIL q >= 25;
+                END;
+              END;
+            21..30:
+              BEGIN
+                IF status = 3 THEN BEGIN
+                  REPEAT
+                    counter := counter + 1;
+                    IF counter < 30 THEN BEGIN
+                      IF totalAmount > 200 THEN BEGIN
+                        totalAmount := totalAmount + 3.33;
+                      END;
+                    END;
+                  UNTIL counter >= 30;
+                END;
+              END;
+          END;
+        END;
+      UNTIL n > 30;
+
+      // Long IF chain checking status
+      IF status = 0 THEN
+        MESSAGE('Status is zero which means initialization phase');
+      IF status = 1 THEN
+        MESSAGE('Status is one which means first level processing');
+      IF status = 2 THEN
+        MESSAGE('Status is two which means second level processing');
+      IF status = 3 THEN
+        MESSAGE('Status is three which means third level processing');
+      IF status = 4 THEN
+        MESSAGE('Status is four which means fourth level processing');
+      IF status = 5 THEN
+        MESSAGE('Status is five which means fifth level processing');
+      IF status = 6 THEN
+        MESSAGE('Status is six which means sixth level processing');
+      IF status = 7 THEN
+        MESSAGE('Status is seven which means seventh level processing');
+      IF status = 8 THEN
+        MESSAGE('Status is eight which means eighth level processing');
+      IF status = 9 THEN
+        MESSAGE('Status is nine which means ninth level processing');
+      IF status = 10 THEN
+        MESSAGE('Status is ten which means tenth level processing');
+
+      // More duplication and nested logic
+      IF rec.FINDFIRST THEN BEGIN
+        REPEAT
+          IF rec.Inventory > 0 THEN BEGIN
+            IF rec.Inventory < 100 THEN BEGIN
+              IF rec."Unit Price" > 0 THEN BEGIN
+                IF rec."Unit Price" < 50 THEN BEGIN
+                  totalAmount := totalAmount + (rec."Unit Price" * 1.1);
+                END ELSE BEGIN
+                  totalAmount := totalAmount + (rec."Unit Price" * 1.2);
+                END;
+              END;
+            END ELSE BEGIN
+              IF rec."Unit Price" > 0 THEN BEGIN
+                IF rec."Unit Price" < 100 THEN BEGIN
+                  totalAmount := totalAmount + (rec."Unit Price" * 1.15);
+                END ELSE BEGIN
+                  totalAmount := totalAmount + (rec."Unit Price" * 1.25);
+                END;
+              END;
+            END;
+          END;
+        UNTIL rec.NEXT = 0;
+      END;
+
+      // Duplicate error messages with slight variations
+      IF totalAmount < 0 THEN
+        ERROR('The total amount cannot be negative. Please check your calculations.');
+      IF discountAmount < 0 THEN
+        ERROR('The discount amount cannot be negative. Please check your calculations.');
+      IF taxAmount < 0 THEN
+        ERROR('The tax amount cannot be negative. Please check your calculations.');
+      IF finalAmount < 0 THEN
+        ERROR('The final amount cannot be negative. Please check your calculations.');
+
+      MESSAGE('Processing completed with total=%1, discount=%2, tax=%3, final=%4',
+        totalAmount,discountAmount,taxAmount,finalAmount);
+    END;
+
+    PROCEDURE ProcessCustomerDataBadly@2();
+    VAR
+      custRec@1000 : Record Customer;
+      salesRec@1001 : Record "Sales Header";
+      lineRec@1002 : Record "Sales Line";
+      total@1003 : Decimal;
+      discount@1004 : Decimal;
+      tax@1005 : Decimal;
+      final@1006 : Decimal;
+      counter@1007 : Integer;
+      status@1008 : Integer;
+      flag@1009 : Boolean;
+      i@1010 : Integer;
+      j@1011 : Integer;
+      k@1012 : Integer;
+    BEGIN
+      // Massive code duplication - similar to DoEverythingProcedure
+      total := 0;
+      discount := 0;
+      tax := 0;
+      final := 0;
+      counter := 0;
+      status := 0;
+
+      // Long IF chain without ELSE IF
+      IF counter = 1 THEN
+        status := status + 1;
+      IF counter = 2 THEN
+        status := status + 2;
+      IF counter = 3 THEN
+        status := status + 3;
+      IF counter = 4 THEN
+        status := status + 4;
+      IF counter = 5 THEN
+        status := status + 5;
+      IF counter = 6 THEN
+        status := status + 6;
+      IF counter = 7 THEN
+        status := status + 7;
+      IF counter = 8 THEN
+        status := status + 8;
+      IF counter = 9 THEN
+        status := status + 9;
+      IF counter = 10 THEN
+        status := status + 10;
+      IF counter = 11 THEN
+        status := status + 11;
+
+      // Complex nested logic
+      REPEAT
+        i := i + 1;
+        IF i > 0 THEN BEGIN
+          IF i < 80 THEN BEGIN
+            CASE i OF
+              1,2,3:
+                BEGIN
+                  IF counter > 3 THEN BEGIN
+                    IF flag THEN BEGIN
+                      total := total + 15.75;
+                      IF total > 800 THEN BEGIN
+                        discount := total * 0.12;
+                        IF discount > 60 THEN BEGIN
+                          MESSAGE('Customer discount is %1 which is very high',discount);
+                        END ELSE BEGIN
+                          MESSAGE('Customer discount is %1 which is acceptable',discount);
+                        END;
+                      END;
+                    END;
+                  END;
+                END;
+              4,5,6:
+                BEGIN
+                  IF counter > 8 THEN BEGIN
+                    IF NOT flag THEN BEGIN
+                      total := total + 25.50;
+                      IF total > 1800 THEN BEGIN
+                        discount := total * 0.18;
+                        IF discount > 120 THEN BEGIN
+                          MESSAGE('Customer discount is %1 which is extremely high',discount);
+                        END ELSE BEGIN
+                          MESSAGE('Customer discount is %1 which is reasonable',discount);
+                        END;
+                      END;
+                    END;
+                  END;
+                END;
+              7,8,9:
+                BEGIN
+                  IF counter > 12 THEN BEGIN
+                    IF flag THEN BEGIN
+                      total := total + 35.25;
+                      IF total > 2800 THEN BEGIN
+                        discount := total * 0.22;
+                        IF discount > 180 THEN BEGIN
+                          MESSAGE('Customer discount is %1 which is too high',discount);
+                        END ELSE BEGIN
+                          MESSAGE('Customer discount is %1 which is normal',discount);
+                        END;
+                      END;
+                    END;
+                  END;
+                END;
+            END;
+          END;
+        END;
+      UNTIL i > 40;
+
+      // Deep nesting with magic numbers
+      FOR j := 1 TO 20 DO BEGIN
+        IF j MOD 2 = 0 THEN BEGIN
+          FOR k := 1 TO 12 DO BEGIN
+            IF k MOD 3 = 0 THEN BEGIN
+              total := total + 7.77;
+              tax := total * 0.0875;
+              final := total + tax - discount;
+              IF final > 400 THEN BEGIN
+                status := 1;
+              END;
+              IF final > 800 THEN BEGIN
+                status := 2;
+              END;
+              IF final > 1200 THEN BEGIN
+                status := 3;
+              END;
+              IF final > 1600 THEN BEGIN
+                status := 4;
+              END;
+            END;
+          END;
+        END;
+      END;
+
+      // Duplicate error messages
+      IF total < 0 THEN
+        ERROR('The customer total cannot be negative. Please verify your input.');
+      IF discount < 0 THEN
+        ERROR('The customer discount cannot be negative. Please verify your input.');
+      IF tax < 0 THEN
+        ERROR('The customer tax cannot be negative. Please verify your input.');
+      IF final < 0 THEN
+        ERROR('The customer final amount cannot be negative. Please verify your input.');
+    END;
+
+    PROCEDURE HandleVendorTransactionsPoorly@3();
+    VAR
+      vendRec@1000 : Record Vendor;
+      purchRec@1001 : Record "Purchase Header";
+      amount@1002 : Decimal;
+      disc@1003 : Decimal;
+      taxAmt@1004 : Decimal;
+      finalAmt@1005 : Decimal;
+      cnt@1006 : Integer;
+      stat@1007 : Integer;
+      flg@1008 : Boolean;
+      x@1009 : Integer;
+      y@1010 : Integer;
+      z@1011 : Integer;
+    BEGIN
+      // More massive duplication
+      amount := 0;
+      disc := 0;
+      taxAmt := 0;
+      finalAmt := 0;
+      cnt := 0;
+      stat := 0;
+
+      // Another long IF chain
+      IF cnt = 1 THEN
+        stat := stat + 1;
+      IF cnt = 2 THEN
+        stat := stat + 2;
+      IF cnt = 3 THEN
+        stat := stat + 3;
+      IF cnt = 4 THEN
+        stat := stat + 4;
+      IF cnt = 5 THEN
+        stat := stat + 5;
+      IF cnt = 6 THEN
+        stat := stat + 6;
+      IF cnt = 7 THEN
+        stat := stat + 7;
+      IF cnt = 8 THEN
+        stat := stat + 8;
+      IF cnt = 9 THEN
+        stat := stat + 9;
+      IF cnt = 10 THEN
+        stat := stat + 10;
+
+      // Complex nested structure
+      REPEAT
+        x := x + 1;
+        IF x > 0 THEN BEGIN
+          IF x < 60 THEN BEGIN
+            CASE x OF
+              1,2:
+                BEGIN
+                  IF cnt > 2 THEN BEGIN
+                    IF flg THEN BEGIN
+                      amount := amount + 12.50;
+                      IF amount > 600 THEN BEGIN
+                        disc := amount * 0.11;
+                        IF disc > 40 THEN BEGIN
+                          MESSAGE('Vendor discount is %1 which is very high',disc);
+                        END ELSE BEGIN
+                          MESSAGE('Vendor discount is %1 which is acceptable',disc);
+                        END;
+                      END;
+                    END;
+                  END;
+                END;
+              3,4:
+                BEGIN
+                  IF cnt > 6 THEN BEGIN
+                    IF NOT flg THEN BEGIN
+                      amount := amount + 22.75;
+                      IF amount > 1600 THEN BEGIN
+                        disc := amount * 0.16;
+                        IF disc > 100 THEN BEGIN
+                          MESSAGE('Vendor discount is %1 which is extremely high',disc);
+                        END ELSE BEGIN
+                          MESSAGE('Vendor discount is %1 which is reasonable',disc);
+                        END;
+                      END;
+                    END;
+                  END;
+                END;
+              5,6,7:
+                BEGIN
+                  IF cnt > 10 THEN BEGIN
+                    IF flg THEN BEGIN
+                      amount := amount + 32.25;
+                      IF amount > 2600 THEN BEGIN
+                        disc := amount * 0.21;
+                        IF disc > 160 THEN BEGIN
+                          MESSAGE('Vendor discount is %1 which is too high',disc);
+                        END ELSE BEGIN
+                          MESSAGE('Vendor discount is %1 which is normal',disc);
+                        END;
+                      END;
+                    END;
+                  END;
+                END;
+            END;
+          END;
+        END;
+      UNTIL x > 35;
+
+      // More magic numbers and deep nesting
+      FOR y := 1 TO 18 DO BEGIN
+        IF y MOD 2 = 0 THEN BEGIN
+          FOR z := 1 TO 10 DO BEGIN
+            IF z MOD 2 = 0 THEN BEGIN
+              amount := amount + 6.66;
+              taxAmt := amount * 0.0775;
+              finalAmt := amount + taxAmt - disc;
+              IF finalAmt > 300 THEN BEGIN
+                stat := 1;
+              END;
+              IF finalAmt > 700 THEN BEGIN
+                stat := 2;
+              END;
+              IF finalAmt > 1100 THEN BEGIN
+                stat := 3;
+              END;
+              IF finalAmt > 1500 THEN BEGIN
+                stat := 4;
+              END;
+            END;
+          END;
+        END;
+      END;
+
+      // Duplicate error messages
+      IF amount < 0 THEN
+        ERROR('The vendor amount cannot be negative. Please check the data.');
+      IF disc < 0 THEN
+        ERROR('The vendor discount cannot be negative. Please check the data.');
+      IF taxAmt < 0 THEN
+        ERROR('The vendor tax cannot be negative. Please check the data.');
+      IF finalAmt < 0 THEN
+        ERROR('The vendor final amount cannot be negative. Please check the data.');
+    END;
+
+    PROCEDURE CalculateComplexStuffWithBadLogic@4();
+    VAR
+      val1@1000 : Decimal;
+      val2@1001 : Decimal;
+      val3@1002 : Decimal;
+      res@1003 : Decimal;
+      temp1@1004 : Decimal;
+      temp2@1005 : Decimal;
+      idx@1006 : Integer;
+      count@1007 : Integer;
+      state@1008 : Integer;
+      a@1009 : Integer;
+      b@1010 : Integer;
+      c@1011 : Integer;
+    BEGIN
+      // Overly long procedure with poor structure
+      val1 := 0;
+      val2 := 0;
+      val3 := 0;
+      res := 0;
+      temp1 := 0;
+      temp2 := 0;
+      count := 0;
+      state := 0;
+
+      // Long IF chain
+      IF count = 1 THEN
+        state := 1;
+      IF count = 2 THEN
+        state := 2;
+      IF count = 3 THEN
+        state := 3;
+      IF count = 4 THEN
+        state := 4;
+      IF count = 5 THEN
+        state := 5;
+      IF count = 6 THEN
+        state := 6;
+      IF count = 7 THEN
+        state := 7;
+      IF count = 8 THEN
+        state := 8;
+      IF count = 9 THEN
+        state := 9;
+      IF count = 10 THEN
+        state := 10;
+      IF count = 11 THEN
+        state := 11;
+      IF count = 12 THEN
+        state := 12;
+
+      // Nested calculation logic
+      FOR a := 1 TO 22 DO BEGIN
+        IF a MOD 3 = 0 THEN BEGIN
+          FOR b := 1 TO 14 DO BEGIN
+            IF b MOD 2 = 0 THEN BEGIN
+              FOR c := 1 TO 8 DO BEGIN
+                IF c MOD 4 = 0 THEN BEGIN
+                  val1 := val1 + 4.44;
+                  val2 := val2 + 8.88;
+                  temp1 := val1 * 1.5;
+                  temp2 := val2 * 2.5;
+                  res := temp1 + temp2;
+                  IF res > 100 THEN BEGIN
+                    state := state + 1;
+                  END;
+                  IF res > 200 THEN BEGIN
+                    state := state + 2;
+                  END;
+                  IF res > 300 THEN BEGIN
+                    state := state + 3;
+                  END;
+                END;
+              END;
+            END;
+          END;
+        END;
+      END;
+
+      // More nested complexity
+      REPEAT
+        idx := idx + 1;
+        IF idx <= 45 THEN BEGIN
+          CASE idx OF
+            1..15:
+              BEGIN
+                IF state > 0 THEN BEGIN
+                  REPEAT
+                    count := count + 1;
+                    IF count < 18 THEN BEGIN
+                      val3 := val3 + 2.22;
+                      IF val3 > 50 THEN BEGIN
+                        res := res + val3 * 0.1;
+                      END;
+                    END;
+                  UNTIL count >= 18;
+                END;
+              END;
+            16..30:
+              BEGIN
+                IF state > 5 THEN BEGIN
+                  REPEAT
+                    count := count + 1;
+                    IF count < 22 THEN BEGIN
+                      val3 := val3 + 3.33;
+                      IF val3 > 100 THEN BEGIN
+                        res := res + val3 * 0.15;
+                      END;
+                    END;
+                  UNTIL count >= 22;
+                END;
+              END;
+            31..45:
+              BEGIN
+                IF state > 10 THEN BEGIN
+                  REPEAT
+                    count := count + 1;
+                    IF count < 26 THEN BEGIN
+                      val3 := val3 + 4.44;
+                      IF val3 > 150 THEN BEGIN
+                        res := res + val3 * 0.2;
+                      END;
+                    END;
+                  UNTIL count >= 26;
+                END;
+              END;
+          END;
+        END;
+      UNTIL idx > 45;
+
+      // Duplicate validation
+      IF val1 < 0 THEN
+        ERROR('The first value cannot be negative. Please review the calculation.');
+      IF val2 < 0 THEN
+        ERROR('The second value cannot be negative. Please review the calculation.');
+      IF val3 < 0 THEN
+        ERROR('The third value cannot be negative. Please review the calculation.');
+      IF res < 0 THEN
+        ERROR('The result value cannot be negative. Please review the calculation.');
+    END;
+
+    PROCEDURE AnotherGiantProcedure@5();
+    VAR
+      data1@1000 : Decimal;
+      data2@1001 : Decimal;
+      data3@1002 : Decimal;
+      output@1003 : Decimal;
+      helper1@1004 : Decimal;
+      helper2@1005 : Decimal;
+      iter@1006 : Integer;
+      cntr@1007 : Integer;
+      mode@1008 : Integer;
+      p@1009 : Integer;
+      q@1010 : Integer;
+      r@1011 : Integer;
+      flag1@1012 : Boolean;
+      flag2@1013 : Boolean;
+    BEGIN
+      // Another overly long procedure
+      data1 := 0;
+      data2 := 0;
+      data3 := 0;
+      output := 0;
+      helper1 := 0;
+      helper2 := 0;
+      cntr := 0;
+      mode := 0;
+
+      // Sequential IF statements
+      IF cntr = 1 THEN
+        mode := 1;
+      IF cntr = 2 THEN
+        mode := 2;
+      IF cntr = 3 THEN
+        mode := 3;
+      IF cntr = 4 THEN
+        mode := 4;
+      IF cntr = 5 THEN
+        mode := 5;
+      IF cntr = 6 THEN
+        mode := 6;
+      IF cntr = 7 THEN
+        mode := 7;
+      IF cntr = 8 THEN
+        mode := 8;
+      IF cntr = 9 THEN
+        mode := 9;
+      IF cntr = 10 THEN
+        mode := 10;
+
+      // Deep nesting
+      FOR p := 1 TO 24 DO BEGIN
+        IF p MOD 3 = 0 THEN BEGIN
+          FOR q := 1 TO 16 DO BEGIN
+            IF q MOD 4 = 0 THEN BEGIN
+              FOR r := 1 TO 6 DO BEGIN
+                IF r MOD 2 = 0 THEN BEGIN
+                  data1 := data1 + 5.55;
+                  data2 := data2 + 9.99;
+                  helper1 := data1 * 1.25;
+                  helper2 := data2 * 2.75;
+                  output := helper1 + helper2;
+                  IF output > 150 THEN BEGIN
+                    mode := mode + 1;
+                  END;
+                  IF output > 250 THEN BEGIN
+                    mode := mode + 2;
+                  END;
+                  IF output > 350 THEN BEGIN
+                    mode := mode + 3;
+                  END;
+                  IF output > 450 THEN BEGIN
+                    mode := mode + 4;
+                  END;
+                END;
+              END;
+            END;
+          END;
+        END;
+      END;
+
+      // More nested loops and conditions
+      REPEAT
+        iter := iter + 1;
+        IF iter <= 40 THEN BEGIN
+          CASE iter OF
+            1..12:
+              BEGIN
+                IF mode > 1 THEN BEGIN
+                  IF flag1 THEN BEGIN
+                    REPEAT
+                      cntr := cntr + 1;
+                      IF cntr < 16 THEN BEGIN
+                        data3 := data3 + 1.11;
+                        IF data3 > 30 THEN BEGIN
+                          output := output + data3 * 0.08;
+                        END;
+                      END;
+                    UNTIL cntr >= 16;
+                  END;
+                END;
+              END;
+            13..25:
+              BEGIN
+                IF mode > 4 THEN BEGIN
+                  IF flag2 THEN BEGIN
+                    REPEAT
+                      cntr := cntr + 1;
+                      IF cntr < 20 THEN BEGIN
+                        data3 := data3 + 2.22;
+                        IF data3 > 80 THEN BEGIN
+                          output := output + data3 * 0.12;
+                        END;
+                      END;
+                    UNTIL cntr >= 20;
+                  END;
+                END;
+              END;
+            26..40:
+              BEGIN
+                IF mode > 7 THEN BEGIN
+                  IF NOT flag1 THEN BEGIN
+                    REPEAT
+                      cntr := cntr + 1;
+                      IF cntr < 24 THEN BEGIN
+                        data3 := data3 + 3.33;
+                        IF data3 > 120 THEN BEGIN
+                          output := output + data3 * 0.18;
+                        END;
+                      END;
+                    UNTIL cntr >= 24;
+                  END;
+                END;
+              END;
+          END;
+        END;
+      UNTIL iter > 40;
+
+      // Duplicate error messages
+      IF data1 < 0 THEN
+        ERROR('Data field 1 cannot be negative. Please validate the input.');
+      IF data2 < 0 THEN
+        ERROR('Data field 2 cannot be negative. Please validate the input.');
+      IF data3 < 0 THEN
+        ERROR('Data field 3 cannot be negative. Please validate the input.');
+      IF output < 0 THEN
+        ERROR('Output field cannot be negative. Please validate the input.');
+    END;
+
+    PROCEDURE YetAnotherMassiveProcedure@6();
+    VAR
+      num1@1000 : Decimal;
+      num2@1001 : Decimal;
+      num3@1002 : Decimal;
+      sum@1003 : Decimal;
+      aux1@1004 : Decimal;
+      aux2@1005 : Decimal;
+      loop@1006 : Integer;
+      tally@1007 : Integer;
+      status@1008 : Integer;
+      x@1009 : Integer;
+      y@1010 : Integer;
+      z@1011 : Integer;
+      isActive@1012 : Boolean;
+      isValid@1013 : Boolean;
+    BEGIN
+      // Continue the pattern of poor practices
+      num1 := 0;
+      num2 := 0;
+      num3 := 0;
+      sum := 0;
+      aux1 := 0;
+      aux2 := 0;
+      tally := 0;
+      status := 0;
+
+      // More long IF chains
+      IF tally = 1 THEN
+        status := 1;
+      IF tally = 2 THEN
+        status := 2;
+      IF tally = 3 THEN
+        status := 3;
+      IF tally = 4 THEN
+        status := 4;
+      IF tally = 5 THEN
+        status := 5;
+      IF tally = 6 THEN
+        status := 6;
+      IF tally = 7 THEN
+        status := 7;
+      IF tally = 8 THEN
+        status := 8;
+      IF tally = 9 THEN
+        status := 9;
+      IF tally = 10 THEN
+        status := 10;
+      IF tally = 11 THEN
+        status := 11;
+
+      // Complex nesting
+      FOR x := 1 TO 26 DO BEGIN
+        IF x MOD 2 = 0 THEN BEGIN
+          FOR y := 1 TO 18 DO BEGIN
+            IF y MOD 3 = 0 THEN BEGIN
+              FOR z := 1 TO 9 DO BEGIN
+                IF z MOD 3 = 0 THEN BEGIN
+                  num1 := num1 + 6.66;
+                  num2 := num2 + 11.11;
+                  aux1 := num1 * 1.35;
+                  aux2 := num2 * 2.85;
+                  sum := aux1 + aux2;
+                  IF sum > 180 THEN BEGIN
+                    status := status + 1;
+                  END;
+                  IF sum > 280 THEN BEGIN
+                    status := status + 2;
+                  END;
+                  IF sum > 380 THEN BEGIN
+                    status := status + 3;
+                  END;
+                  IF sum > 480 THEN BEGIN
+                    status := status + 4;
+                  END;
+                  IF sum > 580 THEN BEGIN
+                    status := status + 5;
+                  END;
+                END;
+              END;
+            END;
+          END;
+        END;
+      END;
+
+      // More repetitive nested logic
+      REPEAT
+        loop := loop + 1;
+        IF loop <= 38 THEN BEGIN
+          CASE loop OF
+            1..13:
+              BEGIN
+                IF status > 2 THEN BEGIN
+                  IF isActive THEN BEGIN
+                    REPEAT
+                      tally := tally + 1;
+                      IF tally < 14 THEN BEGIN
+                        num3 := num3 + 1.23;
+                        IF num3 > 40 THEN BEGIN
+                          sum := sum + num3 * 0.09;
+                        END;
+                      END;
+                    UNTIL tally >= 14;
+                  END;
+                END;
+              END;
+            14..26:
+              BEGIN
+                IF status > 6 THEN BEGIN
+                  IF isValid THEN BEGIN
+                    REPEAT
+                      tally := tally + 1;
+                      IF tally < 19 THEN BEGIN
+                        num3 := num3 + 2.34;
+                        IF num3 > 90 THEN BEGIN
+                          sum := sum + num3 * 0.13;
+                        END;
+                      END;
+                    UNTIL tally >= 19;
+                  END;
+                END;
+              END;
+            27..38:
+              BEGIN
+                IF status > 9 THEN BEGIN
+                  IF NOT isActive THEN BEGIN
+                    REPEAT
+                      tally := tally + 1;
+                      IF tally < 23 THEN BEGIN
+                        num3 := num3 + 3.45;
+                        IF num3 > 130 THEN BEGIN
+                          sum := sum + num3 * 0.19;
+                        END;
+                      END;
+                    UNTIL tally >= 23;
+                  END;
+                END;
+              END;
+          END;
+        END;
+      UNTIL loop > 38;
+
+      // More duplicate error patterns
+      IF num1 < 0 THEN
+        ERROR('Number 1 cannot be negative. Please check the values.');
+      IF num2 < 0 THEN
+        ERROR('Number 2 cannot be negative. Please check the values.');
+      IF num3 < 0 THEN
+        ERROR('Number 3 cannot be negative. Please check the values.');
+      IF sum < 0 THEN
+        ERROR('Sum cannot be negative. Please check the values.');
+    END;
+
+    PROCEDURE FinalGiantProcedure@7();
+    VAR
+      value1@1000 : Decimal;
+      value2@1001 : Decimal;
+      value3@1002 : Decimal;
+      total@1003 : Decimal;
+      temp1@1004 : Decimal;
+      temp2@1005 : Decimal;
+      index@1006 : Integer;
+      counter@1007 : Integer;
+      state@1008 : Integer;
+      i@1009 : Integer;
+      j@1010 : Integer;
+      k@1011 : Integer;
+      enabled@1012 : Boolean;
+      checked@1013 : Boolean;
+    BEGIN
+      // Last massive procedure with all the bad patterns
+      value1 := 0;
+      value2 := 0;
+      value3 := 0;
+      total := 0;
+      temp1 := 0;
+      temp2 := 0;
+      counter := 0;
+      state := 0;
+
+      // Final long IF chain
+      IF counter = 1 THEN
+        state := 1;
+      IF counter = 2 THEN
+        state := 2;
+      IF counter = 3 THEN
+        state := 3;
+      IF counter = 4 THEN
+        state := 4;
+      IF counter = 5 THEN
+        state := 5;
+      IF counter = 6 THEN
+        state := 6;
+      IF counter = 7 THEN
+        state := 7;
+      IF counter = 8 THEN
+        state := 8;
+      IF counter = 9 THEN
+        state := 9;
+      IF counter = 10 THEN
+        state := 10;
+      IF counter = 11 THEN
+        state := 11;
+      IF counter = 12 THEN
+        state := 12;
+      IF counter = 13 THEN
+        state := 13;
+
+      // Final deep nesting example
+      FOR i := 1 TO 28 DO BEGIN
+        IF i MOD 4 = 0 THEN BEGIN
+          FOR j := 1 TO 20 DO BEGIN
+            IF j MOD 5 = 0 THEN BEGIN
+              FOR k := 1 TO 10 DO BEGIN
+                IF k MOD 2 = 0 THEN BEGIN
+                  value1 := value1 + 7.77;
+                  value2 := value2 + 12.12;
+                  temp1 := value1 * 1.45;
+                  temp2 := value2 * 2.95;
+                  total := temp1 + temp2;
+                  IF total > 200 THEN BEGIN
+                    state := state + 1;
+                  END;
+                  IF total > 300 THEN BEGIN
+                    state := state + 2;
+                  END;
+                  IF total > 400 THEN BEGIN
+                    state := state + 3;
+                  END;
+                  IF total > 500 THEN BEGIN
+                    state := state + 4;
+                  END;
+                  IF total > 600 THEN BEGIN
+                    state := state + 5;
+                  END;
+                  IF total > 700 THEN BEGIN
+                    state := state + 6;
+                  END;
+                END;
+              END;
+            END;
+          END;
+        END;
+      END;
+
+      // Final nested complexity
+      REPEAT
+        index := index + 1;
+        IF index <= 42 THEN BEGIN
+          CASE index OF
+            1..14:
+              BEGIN
+                IF state > 3 THEN BEGIN
+                  IF enabled THEN BEGIN
+                    REPEAT
+                      counter := counter + 1;
+                      IF counter < 15 THEN BEGIN
+                        value3 := value3 + 1.34;
+                        IF value3 > 45 THEN BEGIN
+                          total := total + value3 * 0.11;
+                        END;
+                      END;
+                    UNTIL counter >= 15;
+                  END;
+                END;
+              END;
+            15..28:
+              BEGIN
+                IF state > 7 THEN BEGIN
+                  IF checked THEN BEGIN
+                    REPEAT
+                      counter := counter + 1;
+                      IF counter < 21 THEN BEGIN
+                        value3 := value3 + 2.45;
+                        IF value3 > 95 THEN BEGIN
+                          total := total + value3 * 0.14;
+                        END;
+                      END;
+                    UNTIL counter >= 21;
+                  END;
+                END;
+              END;
+            29..42:
+              BEGIN
+                IF state > 11 THEN BEGIN
+                  IF NOT enabled THEN BEGIN
+                    REPEAT
+                      counter := counter + 1;
+                      IF counter < 25 THEN BEGIN
+                        value3 := value3 + 3.56;
+                        IF value3 > 140 THEN BEGIN
+                          total := total + value3 * 0.21;
+                        END;
+                      END;
+                    UNTIL counter >= 25;
+                  END;
+                END;
+              END;
+          END;
+        END;
+      UNTIL index > 42;
+
+      // Final duplicate error messages
+      IF value1 < 0 THEN
+        ERROR('Value one cannot be negative. Validation failed.');
+      IF value2 < 0 THEN
+        ERROR('Value two cannot be negative. Validation failed.');
+      IF value3 < 0 THEN
+        ERROR('Value three cannot be negative. Validation failed.');
+      IF total < 0 THEN
+        ERROR('Total value cannot be negative. Validation failed.');
+
+      MESSAGE('Final procedure completed with state=%1 and total=%2',state,total);
+    END;
+
+    BEGIN
+    END.
+  }
+}

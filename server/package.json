@@ -7,7 +7,14 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:verbose": "jest --verbose"
+    "test:verbose": "jest --verbose",
+    "perf:quick": "NODE_OPTIONS='--expose-gc' ts-node src/__tests__/performance/suites/quick.suite.ts",
+    "perf:benchmark": "NODE_OPTIONS='--expose-gc' ts-node src/__tests__/performance/suites/standard.suite.ts",
+    "perf:stress": "NODE_OPTIONS='--expose-gc' ts-node src/__tests__/performance/suites/stress.suite.ts",
+    "perf:compare": "ts-node src/__tests__/performance/utils/compare.ts",
+    "perf:update-baseline": "ts-node src/__tests__/performance/utils/updateBaseline.ts",
+    "perf:memory": "NODE_OPTIONS='--expose-gc' ts-node src/__tests__/performance/benchmarks/memory.bench.ts",
+    "perf:all": "npm run perf:benchmark && npm run perf:memory && npm run perf:compare"
   },
   "dependencies": {
     "vscode-languageserver": "^8.1.0",
@@ -16,8 +23,13 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "^18.0.0",
+    "chalk": "^4.1.2",
     "jest": "^30.2.0",
+    "table": "^6.8.2",
+    "tinybench": "^2.9.0",
     "ts-jest": "^29.4.5",
-    "typescript": "^5.0.0"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0",
+    "v8-profiler-next": "^1.10.0"
   }
 }

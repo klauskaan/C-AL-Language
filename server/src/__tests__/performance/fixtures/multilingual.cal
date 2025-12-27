@@ -1,0 +1,641 @@
+// SYNTHETIC PERFORMANCE TEST FIXTURE - 100% GENERATED
+OBJECT Codeunit 50016 Multilingual Performance Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=27/12/25;
+    Time=12:00:00;
+    Modified=Yes;
+    Version List=PERF-TEST;
+  }
+  PROPERTIES
+  {
+    TableNo=50016;
+  }
+  CODE
+  {
+    VAR
+      // Basic localized messages - Short texts
+      TXT001@1000 : TextConst 'DAN=Generisk tekst;ENU=Generic text';
+      TXT002@1001 : TextConst 'DAN=Simpel besked;ENU=Simple message';
+      TXT003@1002 : TextConst 'DAN=Fejlmeddelelse;ENU=Error message';
+      TXT004@1003 : TextConst 'DAN=Advarsel;ENU=Warning';
+      TXT005@1004 : TextConst 'DAN=Information;ENU=Information';
+      TXT006@1005 : TextConst 'DAN=Bekræftelse;ENU=Confirmation';
+      TXT007@1006 : TextConst 'DAN=Succes;ENU=Success';
+      TXT008@1007 : TextConst 'DAN=Mislykket;ENU=Failed';
+      TXT009@1008 : TextConst 'DAN=Behandler;ENU=Processing';
+      TXT010@1009 : TextConst 'DAN=Fuldført;ENU=Completed';
+
+      // Unicode special characters in texts
+      TXT011@1010 : TextConst 'DAN=Brød og smør;ENU=Bread and butter';
+      TXT012@1011 : TextConst 'DAN=Rødgrød med fløde;ENU=Red porridge with cream';
+      TXT013@1012 : TextConst 'DAN=Øl og øllebrød;ENU=Beer and beer bread';
+      TXT014@1013 : TextConst 'DAN=Æble og æblemost;ENU=Apple and apple juice';
+      TXT015@1014 : TextConst 'DAN=Årsag til åbning;ENU=Reason for opening';
+      TXT016@1015 : TextConst 'DAN=Café entrée;ENU=Café entrance';
+      TXT017@1016 : TextConst 'DAN=Naïve résumé;ENU=Naive resume';
+      TXT018@1017 : TextConst 'DAN=Über qualität;ENU=Over quality';
+      TXT019@1018 : TextConst 'DAN=Mötés ämne;ENU=Meeting subject';
+      TXT020@1019 : TextConst 'DAN=Größe ändern;ENU=Change size';
+
+      // Format strings with placeholders - Single placeholder
+      TXT021@1020 : TextConst 'DAN=Værdi: %1;ENU=Value: %1';
+      TXT022@1021 : TextConst 'DAN=Navn: %1;ENU=Name: %1';
+      TXT023@1022 : TextConst 'DAN=Antal: %1;ENU=Count: %1';
+      TXT024@1023 : TextConst 'DAN=Total: %1;ENU=Total: %1';
+      TXT025@1024 : TextConst 'DAN=Status: %1;ENU=Status: %1';
+
+      // Format strings with multiple placeholders
+      TXT026@1025 : TextConst 'DAN=Behandler %1 af %2;ENU=Processing %1 of %2';
+      TXT027@1026 : TextConst 'DAN=%1 fundet, %2 fejlet;ENU=%1 found, %2 failed';
+      TXT028@1027 : TextConst 'DAN=Fra %1 til %2;ENU=From %1 to %2';
+      TXT029@1028 : TextConst 'DAN=%1: %2 - %3;ENU=%1: %2 - %3';
+      TXT030@1029 : TextConst 'DAN=Post %1/%2/%3;ENU=Entry %1/%2/%3';
+      TXT031@1030 : TextConst 'DAN=%1 %2 %3 %4;ENU=%1 %2 %3 %4';
+      TXT032@1031 : TextConst 'DAN=Sum: %1, Gns: %2, Min: %3, Max: %4;ENU=Sum: %1, Avg: %2, Min: %3, Max: %4';
+      TXT033@1032 : TextConst 'DAN=%1 + %2 = %3;ENU=%1 + %2 = %3';
+      TXT034@1033 : TextConst 'DAN=Bruger %1 på %2 kl. %3;ENU=User %1 on %2 at %3';
+      TXT035@1034 : TextConst 'DAN=Fra %1 (%2) til %3 (%4);ENU=From %1 (%2) to %3 (%4)';
+
+      // Locked constants
+      TXT036@1035 : TextConst 'DAN=API_KEY_PLACEHOLDER;ENU=API_KEY_PLACEHOLDER;@@@={Locked}';
+      TXT037@1036 : TextConst 'DAN=SYSTEM_CONSTANT;ENU=SYSTEM_CONSTANT;@@@={Locked}';
+      TXT038@1037 : TextConst 'DAN=VERSION_1_0_0;ENU=VERSION_1_0_0;@@@={Locked}';
+      TXT039@1038 : TextConst 'DAN=GUID_PLACEHOLDER;ENU=GUID_PLACEHOLDER;@@@={Locked}';
+      TXT040@1039 : TextConst 'DAN=XML_NAMESPACE_URI;ENU=XML_NAMESPACE_URI;@@@={Locked}';
+      TXT041@1040 : TextConst 'DAN=JSON_SCHEMA_VERSION;ENU=JSON_SCHEMA_VERSION;@@@={Locked}';
+      TXT042@1041 : TextConst 'DAN=HTTP_HEADER_NAME;ENU=HTTP_HEADER_NAME;@@@={Locked}';
+      TXT043@1042 : TextConst 'DAN=MIME_TYPE_APPLICATION;ENU=MIME_TYPE_APPLICATION;@@@={Locked}';
+      TXT044@1043 : TextConst 'DAN=ENCODING_UTF8;ENU=ENCODING_UTF8;@@@={Locked}';
+      TXT045@1044 : TextConst 'DAN=REGEX_PATTERN;ENU=REGEX_PATTERN;@@@={Locked}';
+
+      // Long translated texts - Business messages
+      TXT046@1045 : TextConst 'DAN=Dette er en lang generisk besked der bruges til at teste hukommelseshåndtering;ENU=This is a long generic message used to test memory handling';
+      TXT047@1046 : TextConst 'DAN=Systemet har gennemført en fuld validering af alle poster i databasen;ENU=The system has completed a full validation of all entries in the database';
+      TXT048@1047 : TextConst 'DAN=Der blev fundet flere fejl under behandlingen af de valgte dokumenter;ENU=Multiple errors were found during processing of the selected documents';
+      TXT049@1048 : TextConst 'DAN=Bekræft venligst at du ønsker at fortsætte med denne operation;ENU=Please confirm that you want to continue with this operation';
+      TXT050@1049 : TextConst 'DAN=Transaktionen blev gennemført med succes og alle ændringer er gemt;ENU=The transaction was completed successfully and all changes are saved';
+
+      // Very long texts with details
+      TXT051@1050 : TextConst 'DAN=En omfattende fejlmeddelelse der indeholder detaljeret information om hvad der gik galt under behandlingen af den komplekse forretningslogik;ENU=A comprehensive error message containing detailed information about what went wrong during processing of the complex business logic';
+      TXT052@1051 : TextConst 'DAN=Systemet har identificeret potentielle problemer med dataintegritet og anbefaler at du kontrollerer alle relaterede poster før du fortsætter;ENU=The system has identified potential data integrity issues and recommends that you verify all related entries before continuing';
+      TXT053@1052 : TextConst 'DAN=Behandlingen af store datamængder kræver ekstra hukommelse og kan tage flere minutter afhængigt af systemets ydeevne;ENU=Processing large amounts of data requires additional memory and may take several minutes depending on system performance';
+      TXT054@1053 : TextConst 'DAN=Du er ved at slette vigtige stamdata som kan påvirke mange andre områder af systemet - er du sikker på at fortsætte;ENU=You are about to delete important master data that may affect many other areas of the system - are you sure you want to continue';
+      TXT055@1054 : TextConst 'DAN=Den valgte handling vil udløse en kæde af automatiserede processer som kan påvirke systemets ydeevne midlertidigt;ENU=The selected action will trigger a chain of automated processes that may temporarily affect system performance';
+
+      // Technical messages with special chars
+      TXT056@1055 : TextConst 'DAN=Størrelse på fil overstiger grænsen;ENU=File size exceeds limit';
+      TXT057@1056 : TextConst 'DAN=Ugyldig tegnsæt i søgning;ENU=Invalid character set in search';
+      TXT058@1057 : TextConst 'DAN=Kødéfejl i håndtering;ENU=Code error in handling';
+      TXT059@1058 : TextConst 'DAN=Spëcial tëgn fëjl;ENU=Special character error';
+      TXT060@1059 : TextConst 'DAN=Ünexpëcted résült;ENU=Unexpected result';
+
+      // Question prompts
+      TXT061@1060 : TextConst 'DAN=Vil du fortsætte?;ENU=Do you want to continue?';
+      TXT062@1061 : TextConst 'DAN=Ønsker du at gemme ændringer?;ENU=Do you want to save changes?';
+      TXT063@1062 : TextConst 'DAN=Skal poster slettes permanent?;ENU=Should entries be deleted permanently?';
+      TXT064@1063 : TextConst 'DAN=Annuller igangværende proces?;ENU=Cancel ongoing process?';
+      TXT065@1064 : TextConst 'DAN=Opdater eksisterende værdier?;ENU=Update existing values?';
+
+      // Status messages
+      TXT066@1065 : TextConst 'DAN=Initialiserer system;ENU=Initializing system';
+      TXT067@1066 : TextConst 'DAN=Opretter forbindelse;ENU=Establishing connection';
+      TXT068@1067 : TextConst 'DAN=Henter data fra server;ENU=Retrieving data from server';
+      TXT069@1068 : TextConst 'DAN=Validerer input;ENU=Validating input';
+      TXT070@1069 : TextConst 'DAN=Gemmer ændringer;ENU=Saving changes';
+      TXT071@1070 : TextConst 'DAN=Sender notifikation;ENU=Sending notification';
+      TXT072@1071 : TextConst 'DAN=Rydder cache;ENU=Clearing cache';
+      TXT073@1072 : TextConst 'DAN=Genindlæser konfiguration;ENU=Reloading configuration';
+      TXT074@1073 : TextConst 'DAN=Afventer godkendelse;ENU=Awaiting approval';
+      TXT075@1074 : TextConst 'DAN=Udfører baggrundsproces;ENU=Executing background process';
+
+      // Field labels with Unicode
+      TXT076@1075 : TextConst 'DAN=Åbningsdato;ENU=Opening date';
+      TXT077@1076 : TextConst 'DAN=Ændret af;ENU=Modified by';
+      TXT078@1077 : TextConst 'DAN=Første kontaktperson;ENU=Primary contact person';
+      TXT079@1078 : TextConst 'DAN=Måleenhed;ENU=Unit of measure';
+      TXT080@1079 : TextConst 'DAN=Sælger/køber;ENU=Seller/buyer';
+
+      // Complex format strings
+      TXT081@1080 : TextConst 'DAN=Dokument %1 oprettet af %2 den %3 kl. %4;ENU=Document %1 created by %2 on %3 at %4';
+      TXT082@1081 : TextConst 'DAN=Behandler post %1/%2 - Status: %3 (%4%%);ENU=Processing entry %1/%2 - Status: %3 (%4%%)';
+      TXT083@1082 : TextConst 'DAN=Værdi ændret fra %1 til %2 af %3;ENU=Value changed from %1 to %2 by %3';
+      TXT084@1083 : TextConst 'DAN=Fejl i felt %1 på linje %2: %3;ENU=Error in field %1 on line %2: %3';
+      TXT085@1084 : TextConst 'DAN=Kontering: Konto %1, Beløb %2, Dato %3;ENU=Posting: Account %1, Amount %2, Date %3';
+
+      // More locked constants with technical names
+      TXT086@1085 : TextConst 'DAN=SQL_CONNECTION_STRING;ENU=SQL_CONNECTION_STRING;@@@={Locked}';
+      TXT087@1086 : TextConst 'DAN=API_ENDPOINT_URL;ENU=API_ENDPOINT_URL;@@@={Locked}';
+      TXT088@1087 : TextConst 'DAN=OAUTH_CLIENT_ID;ENU=OAUTH_CLIENT_ID;@@@={Locked}';
+      TXT089@1088 : TextConst 'DAN=ENCRYPTION_KEY_NAME;ENU=ENCRYPTION_KEY_NAME;@@@={Locked}';
+      TXT090@1089 : TextConst 'DAN=CERTIFICATE_THUMBPRINT;ENU=CERTIFICATE_THUMBPRINT;@@@={Locked}';
+
+      // Business domain messages
+      TXT091@1090 : TextConst 'DAN=Kundens ordrenummer;ENU=Customer order number';
+      TXT092@1091 : TextConst 'DAN=Leveringstidspunkt;ENU=Delivery time';
+      TXT093@1092 : TextConst 'DAN=Fakturaadresse;ENU=Invoice address';
+      TXT094@1093 : TextConst 'DAN=Betalingsbetingelser;ENU=Payment terms';
+      TXT095@1094 : TextConst 'DAN=Forsendelsesmåde;ENU=Shipment method';
+      TXT096@1095 : TextConst 'DAN=Rabatprocent;ENU=Discount percentage';
+      TXT097@1096 : TextConst 'DAN=Momskode;ENU=VAT code';
+      TXT098@1097 : TextConst 'DAN=Varenummer;ENU=Item number';
+      TXT099@1098 : TextConst 'DAN=Lagerplacering;ENU=Inventory location';
+      TXT100@1099 : TextConst 'DAN=Enheds pris;ENU=Unit price';
+
+      // Extended messages with special characters
+      TXT101@1100 : TextConst 'DAN=Søgning på økonomi-modulet;ENU=Search in finance module';
+      TXT102@1101 : TextConst 'DAN=Ændringer træder i kraft øjeblikkeligt;ENU=Changes take effect immediately';
+      TXT103@1102 : TextConst 'DAN=Økonomisk år afsluttet;ENU=Fiscal year closed';
+      TXT104@1103 : TextConst 'DAN=Årsrapport genereret;ENU=Annual report generated';
+      TXT105@1104 : TextConst 'DAN=Ændringslog opdateret;ENU=Change log updated';
+
+      // Multi-line equivalent long messages
+      TXT106@1105 : TextConst 'DAN=Systemet har registreret en usædvanlig aktivitet og har midlertidigt låst kontoen af sikkerhedsmæssige årsager - kontakt administratoren for at genaktivere adgangen;ENU=The system has detected unusual activity and has temporarily locked the account for security reasons - contact the administrator to reactivate access';
+      TXT107@1106 : TextConst 'DAN=Den planlagte vedligeholdelsesopgave er blevet udsat på grund af høj systembelastning og vil blive forsøgt igen automatisk om fem minutter;ENU=The scheduled maintenance task has been postponed due to high system load and will be retried automatically in five minutes';
+      TXT108@1107 : TextConst 'DAN=Importen af eksterne data er delvist mislykket - nogle poster blev sprunget over på grund af valideringsfejl men processen fortsætter;ENU=The import of external data has partially failed - some entries were skipped due to validation errors but the process continues';
+      TXT109@1108 : TextConst 'DAN=Systemet forbereder en omfattende rapport som kan tage op til ti minutter at generere afhængigt af mængden af data der skal behandles;ENU=The system is preparing a comprehensive report which may take up to ten minutes to generate depending on the amount of data to be processed';
+      TXT110@1109 : TextConst 'DAN=Den anmodede operation kræver administratorrettigheder og kan kun udføres af brugere med de nødvendige tilladelser i systemet;ENU=The requested operation requires administrator privileges and can only be performed by users with the necessary permissions in the system';
+
+      // Validation messages
+      TXT111@1110 : TextConst 'DAN=Værdien skal være større end nul;ENU=The value must be greater than zero';
+      TXT112@1111 : TextConst 'DAN=Feltet må ikke være tomt;ENU=The field cannot be empty';
+      TXT113@1112 : TextConst 'DAN=Ugyldig datoformat;ENU=Invalid date format';
+      TXT114@1113 : TextConst 'DAN=Tallet er uden for tilladt område;ENU=The number is outside the allowed range';
+      TXT115@1114 : TextConst 'DAN=Teksten indeholder ugyldige tegn;ENU=The text contains invalid characters';
+
+      // Progress indicators
+      TXT116@1115 : TextConst 'DAN=Forbereder eksport...;ENU=Preparing export...';
+      TXT117@1116 : TextConst 'DAN=Behandler linje %1 af %2...;ENU=Processing line %1 of %2...';
+      TXT118@1117 : TextConst 'DAN=Vent venligst mens data indlæses;ENU=Please wait while data is loading';
+      TXT119@1118 : TextConst 'DAN=Næsten færdig - %1%% gennemført;ENU=Almost done - %1%% completed';
+      TXT120@1119 : TextConst 'DAN=Afslutter operation;ENU=Finalizing operation';
+
+      // More Unicode-rich content
+      TXT121@1120 : TextConst 'DAN=Façade système configuré;ENU=System facade configured';
+      TXT122@1121 : TextConst 'DAN=Pièce détachée disponible;ENU=Spare part available';
+      TXT123@1122 : TextConst 'DAN=Événement déclenché;ENU=Event triggered';
+      TXT124@1123 : TextConst 'DAN=Réseau sécurisé;ENU=Secure network';
+      TXT125@1124 : TextConst 'DAN=Données chiffrées;ENU=Encrypted data';
+
+      // Additional locked constants
+      TXT126@1125 : TextConst 'DAN=BASE64_ENCODED_VALUE;ENU=BASE64_ENCODED_VALUE;@@@={Locked}';
+      TXT127@1126 : TextConst 'DAN=HASH_ALGORITHM_SHA256;ENU=HASH_ALGORITHM_SHA256;@@@={Locked}';
+      TXT128@1127 : TextConst 'DAN=TOKEN_EXPIRY_SECONDS;ENU=TOKEN_EXPIRY_SECONDS;@@@={Locked}';
+      TXT129@1128 : TextConst 'DAN=WEBHOOK_SECRET_KEY;ENU=WEBHOOK_SECRET_KEY;@@@={Locked}';
+      TXT130@1129 : TextConst 'DAN=REDIS_CACHE_PREFIX;ENU=REDIS_CACHE_PREFIX;@@@={Locked}';
+
+      // Error messages with details
+      TXT131@1130 : TextConst 'DAN=Uventet fejl: %1;ENU=Unexpected error: %1';
+      TXT132@1131 : TextConst 'DAN=Kan ikke finde post med nummer %1;ENU=Cannot find entry with number %1';
+      TXT133@1132 : TextConst 'DAN=Adgang nægtet til ressource %1;ENU=Access denied to resource %1';
+      TXT134@1133 : TextConst 'DAN=Timeout ved forbindelse til %1;ENU=Timeout connecting to %1';
+      TXT135@1134 : TextConst 'DAN=Ugyldig svar fra server: %1;ENU=Invalid response from server: %1';
+
+      // Workflow messages
+      TXT136@1135 : TextConst 'DAN=Workflow startet af %1;ENU=Workflow started by %1';
+      TXT137@1136 : TextConst 'DAN=Afventer godkendelse fra %1;ENU=Awaiting approval from %1';
+      TXT138@1137 : TextConst 'DAN=Trin %1 af %2 fuldført;ENU=Step %1 of %2 completed';
+      TXT139@1138 : TextConst 'DAN=Workflow afbrudt: %1;ENU=Workflow cancelled: %1';
+      TXT140@1139 : TextConst 'DAN=Automatisk eskaleret til %1;ENU=Automatically escalated to %1';
+
+      // Configuration messages
+      TXT141@1140 : TextConst 'DAN=Standardværdi anvendt: %1;ENU=Default value applied: %1';
+      TXT142@1141 : TextConst 'DAN=Indstilling ændret fra %1 til %2;ENU=Setting changed from %1 to %2';
+      TXT143@1142 : TextConst 'DAN=Konfiguration gendannet;ENU=Configuration restored';
+      TXT144@1143 : TextConst 'DAN=Profil aktiveret: %1;ENU=Profile activated: %1';
+      TXT145@1144 : TextConst 'DAN=Tema skiftet til %1;ENU=Theme switched to %1';
+
+      // Batch processing messages
+      TXT146@1145 : TextConst 'DAN=Batchjob %1 startet;ENU=Batch job %1 started';
+      TXT147@1146 : TextConst 'DAN=Behandlet %1 af %2 poster;ENU=Processed %1 of %2 entries';
+      TXT148@1147 : TextConst 'DAN=Batchjob fuldført - %1 succesfulde, %2 fejlede;ENU=Batch job completed - %1 successful, %2 failed';
+      TXT149@1148 : TextConst 'DAN=Estimeret tid tilbage: %1 minutter;ENU=Estimated time remaining: %1 minutes';
+      TXT150@1149 : TextConst 'DAN=Pause i behandling - genoptages %1;ENU=Processing paused - resuming at %1';
+
+      // Integration messages
+      TXT151@1150 : TextConst 'DAN=Synkronisering med eksternt system startet;ENU=Synchronization with external system started';
+      TXT152@1151 : TextConst 'DAN=Data eksporteret til %1;ENU=Data exported to %1';
+      TXT153@1152 : TextConst 'DAN=Import fra %1 fuldført;ENU=Import from %1 completed';
+      TXT154@1153 : TextConst 'DAN=Webhook modtaget fra %1;ENU=Webhook received from %1';
+      TXT155@1154 : TextConst 'DAN=API kald til %1 lykkedes;ENU=API call to %1 succeeded';
+
+      // Notification messages
+      TXT156@1155 : TextConst 'DAN=Ny besked fra %1: %2;ENU=New message from %1: %2';
+      TXT157@1156 : TextConst 'DAN=Påmindelse: %1 udløber om %2 dage;ENU=Reminder: %1 expires in %2 days';
+      TXT158@1157 : TextConst 'DAN=Handling påkrævet: %1;ENU=Action required: %1';
+      TXT159@1158 : TextConst 'DAN=System vedligeholdelse planlagt til %1;ENU=System maintenance scheduled for %1';
+      TXT160@1159 : TextConst 'DAN=%1 nye elementer i din kø;ENU=%1 new items in your queue';
+
+      // Report messages
+      TXT161@1160 : TextConst 'DAN=Rapport genereret: %1;ENU=Report generated: %1';
+      TXT162@1161 : TextConst 'DAN=Eksporterer til PDF format;ENU=Exporting to PDF format';
+      TXT163@1162 : TextConst 'DAN=Rapport indeholder %1 sider;ENU=Report contains %1 pages';
+      TXT164@1163 : TextConst 'DAN=Filter anvendt: %1;ENU=Filter applied: %1';
+      TXT165@1164 : TextConst 'DAN=Sortering: %1 stigende;ENU=Sorting: %1 ascending';
+
+      // More special character combinations
+      TXT166@1165 : TextConst 'DAN=Ægte økologisk ølproduktion;ENU=Genuine organic beer production';
+      TXT167@1166 : TextConst 'DAN=Søværnets årlige øvelse;ENU=Navy annual exercise';
+      TXT168@1167 : TextConst 'DAN=Blåbær syltetøj fremstilling;ENU=Blueberry jam production';
+      TXT169@1168 : TextConst 'DAN=Køretøj økonomi måling;ENU=Vehicle economy measurement';
+      TXT170@1169 : TextConst 'DAN=Størrelse på økonomi-år;ENU=Size of fiscal year';
+
+      // Additional locked constants for variety
+      TXT171@1170 : TextConst 'DAN=SESSION_TIMEOUT_MINUTES;ENU=SESSION_TIMEOUT_MINUTES;@@@={Locked}';
+      TXT172@1171 : TextConst 'DAN=MAX_UPLOAD_SIZE_MB;ENU=MAX_UPLOAD_SIZE_MB;@@@={Locked}';
+      TXT173@1172 : TextConst 'DAN=RETRY_ATTEMPTS_COUNT;ENU=RETRY_ATTEMPTS_COUNT;@@@={Locked}';
+      TXT174@1173 : TextConst 'DAN=BUFFER_SIZE_BYTES;ENU=BUFFER_SIZE_BYTES;@@@={Locked}';
+      TXT175@1174 : TextConst 'DAN=THREAD_POOL_SIZE;ENU=THREAD_POOL_SIZE;@@@={Locked}';
+
+      // Complex business scenarios
+      TXT176@1175 : TextConst 'DAN=Kunde %1 har overskredet kreditgrænse %2 med beløb %3;ENU=Customer %1 has exceeded credit limit %2 by amount %3';
+      TXT177@1176 : TextConst 'DAN=Vare %1 er under minimumslagerbeholdning - genbestil %2 enheder;ENU=Item %1 is below minimum stock level - reorder %2 units';
+      TXT178@1177 : TextConst 'DAN=Ordre %1 forsinket - ny leveringsdato er %2;ENU=Order %1 delayed - new delivery date is %2';
+      TXT179@1178 : TextConst 'DAN=Faktura %1 forfalden - udestående beløb %2;ENU=Invoice %1 overdue - outstanding amount %2';
+      TXT180@1179 : TextConst 'DAN=Lagerlokation %1 tom - overfør fra %2;ENU=Storage location %1 empty - transfer from %2';
+
+      // System diagnostics
+      TXT181@1180 : TextConst 'DAN=Hukommelsesforbrug: %1 MB af %2 MB;ENU=Memory usage: %1 MB of %2 MB';
+      TXT182@1181 : TextConst 'DAN=CPU belastning: %1%%;ENU=CPU load: %1%%';
+      TXT183@1182 : TextConst 'DAN=Diskplads tilgængelig: %1 GB;ENU=Disk space available: %1 GB';
+      TXT184@1183 : TextConst 'DAN=Aktive sessioner: %1;ENU=Active sessions: %1';
+      TXT185@1184 : TextConst 'DAN=Database størrelse: %1 GB;ENU=Database size: %1 GB';
+
+      // User action confirmations
+      TXT186@1185 : TextConst 'DAN=Er du sikker på at du vil slette %1 poster?;ENU=Are you sure you want to delete %1 entries?';
+      TXT187@1186 : TextConst 'DAN=Bekræft ændring af %1 til %2?;ENU=Confirm change of %1 to %2?';
+      TXT188@1187 : TextConst 'DAN=Fortsæt uden at gemme ændringer?;ENU=Continue without saving changes?';
+      TXT189@1188 : TextConst 'DAN=Overskrive eksisterende fil %1?;ENU=Overwrite existing file %1?';
+      TXT190@1189 : TextConst 'DAN=Annuller alle ventende transaktioner?;ENU=Cancel all pending transactions?';
+
+      // More technical locked constants
+      TXT191@1190 : TextConst 'DAN=CORRELATION_ID_HEADER;ENU=CORRELATION_ID_HEADER;@@@={Locked}';
+      TXT192@1191 : TextConst 'DAN=MESSAGE_QUEUE_NAME;ENU=MESSAGE_QUEUE_NAME;@@@={Locked}';
+      TXT193@1192 : TextConst 'DAN=BLOB_CONTAINER_NAME;ENU=BLOB_CONTAINER_NAME;@@@={Locked}';
+      TXT194@1193 : TextConst 'DAN=SERVICE_BUS_TOPIC;ENU=SERVICE_BUS_TOPIC;@@@={Locked}';
+      TXT195@1194 : TextConst 'DAN=EVENT_HUB_NAME;ENU=EVENT_HUB_NAME;@@@={Locked}';
+
+      // Audit and logging messages
+      TXT196@1195 : TextConst 'DAN=Handling logget: %1 udført af %2 kl. %3;ENU=Action logged: %1 performed by %2 at %3';
+      TXT197@1196 : TextConst 'DAN=Ændring registreret: Felt %1 fra %2 til %3;ENU=Change recorded: Field %1 from %2 to %3';
+      TXT198@1197 : TextConst 'DAN=Adgang til %1 af bruger %2 fra IP %3;ENU=Access to %1 by user %2 from IP %3';
+      TXT199@1198 : TextConst 'DAN=Sikkerhedshændelse: %1 - Alvorlighed %2;ENU=Security event: %1 - Severity %2';
+      TXT200@1199 : TextConst 'DAN=Login forsøg fejlet for bruger %1;ENU=Login attempt failed for user %1';
+
+      // Schedule and calendar messages
+      TXT201@1200 : TextConst 'DAN=Planlagt opgave %1 starter %2;ENU=Scheduled task %1 starts %2';
+      TXT202@1201 : TextConst 'DAN=Næste kørsel: %1 kl. %2;ENU=Next run: %1 at %2';
+      TXT203@1202 : TextConst 'DAN=Tilbagevendende hver %1 time(r);ENU=Recurring every %1 hour(s)';
+      TXT204@1203 : TextConst 'DAN=Aktiveret på hverdage fra %1 til %2;ENU=Enabled on weekdays from %1 to %2';
+      TXT205@1204 : TextConst 'DAN=Sidste udførelse: %1 - Status: %2;ENU=Last execution: %1 - Status: %2';
+
+      // Permission and security messages
+      TXT206@1205 : TextConst 'DAN=Adgang kræver rolle: %1;ENU=Access requires role: %1';
+      TXT207@1206 : TextConst 'DAN=Utilstrækkelige rettigheder til %1;ENU=Insufficient permissions for %1';
+      TXT208@1207 : TextConst 'DAN=Brugergruppe %1 tildelt til %2;ENU=User group %1 assigned to %2';
+      TXT209@1208 : TextConst 'DAN=Adgangskode udløber om %1 dage;ENU=Password expires in %1 days';
+      TXT210@1209 : TextConst 'DAN=To-faktor autentifikation påkrævet;ENU=Two-factor authentication required';
+
+      // Data transformation messages
+      TXT211@1210 : TextConst 'DAN=Konverterer fra format %1 til %2;ENU=Converting from format %1 to %2';
+      TXT212@1211 : TextConst 'DAN=Mapper felt %1 til kolonne %2;ENU=Mapping field %1 to column %2';
+      TXT213@1212 : TextConst 'DAN=Transformering anvendt: %1;ENU=Transformation applied: %1';
+      TXT214@1213 : TextConst 'DAN=Data normaliseret til skema %1;ENU=Data normalized to schema %1';
+      TXT215@1214 : TextConst 'DAN=Aggregering udført: %1 poster til %2 grupper;ENU=Aggregation performed: %1 entries to %2 groups';
+
+      // Cache and performance messages
+      TXT216@1215 : TextConst 'DAN=Cache ryddet for nøgle %1;ENU=Cache cleared for key %1';
+      TXT217@1216 : TextConst 'DAN=Cache hit ratio: %1%%;ENU=Cache hit ratio: %1%%';
+      TXT218@1217 : TextConst 'DAN=Indekser genopbygget på tabel %1;ENU=Indexes rebuilt on table %1';
+      TXT219@1218 : TextConst 'DAN=Query optimeret - udførelsestid %1 ms;ENU=Query optimized - execution time %1 ms';
+      TXT220@1219 : TextConst 'DAN=Præstationsgrænse overskredet: %1;ENU=Performance threshold exceeded: %1';
+
+      // More Unicode variety
+      TXT221@1220 : TextConst 'DAN=Mælk og mejeriprodükter;ENU=Milk and dairy products';
+      TXT222@1221 : TextConst 'DAN=Fårikål med grøntsager;ENU=Lamb stew with vegetables';
+      TXT223@1222 : TextConst 'DAN=Søstrenes blomster butik;ENU=Sisters flower shop';
+      TXT224@1223 : TextConst 'DAN=Østers og åle specialitet;ENU=Oyster and eel specialty';
+      TXT225@1224 : TextConst 'DAN=Ängelholm färsk fisk;ENU=Angelholm fresh fish';
+
+      // Additional locked technical constants
+      TXT226@1225 : TextConst 'DAN=KAFKA_TOPIC_PREFIX;ENU=KAFKA_TOPIC_PREFIX;@@@={Locked}';
+      TXT227@1226 : TextConst 'DAN=ELASTICSEARCH_INDEX;ENU=ELASTICSEARCH_INDEX;@@@={Locked}';
+      TXT228@1227 : TextConst 'DAN=GRAPHQL_ENDPOINT;ENU=GRAPHQL_ENDPOINT;@@@={Locked}';
+      TXT229@1228 : TextConst 'DAN=WEBSOCKET_ROUTE;ENU=WEBSOCKET_ROUTE;@@@={Locked}';
+      TXT230@1229 : TextConst 'DAN=GRPC_SERVICE_NAME;ENU=GRPC_SERVICE_NAME;@@@={Locked}';
+
+      // Email and communication messages
+      TXT231@1230 : TextConst 'DAN=Email sendt til %1 med emne: %2;ENU=Email sent to %1 with subject: %2';
+      TXT232@1231 : TextConst 'DAN=Vedhæftning %1 tilføjet (%2 KB);ENU=Attachment %1 added (%2 KB)';
+      TXT233@1232 : TextConst 'DAN=Email i kø - forsendelse om %1 minutter;ENU=Email queued - sending in %1 minutes';
+      TXT234@1233 : TextConst 'DAN=SMS notifikation sendt til %1;ENU=SMS notification sent to %1';
+      TXT235@1234 : TextConst 'DAN=Push notifikation leveret til %1 enheder;ENU=Push notification delivered to %1 devices';
+
+      // Document management messages
+      TXT236@1235 : TextConst 'DAN=Dokument %1 uploadet - Version %2;ENU=Document %1 uploaded - Version %2';
+      TXT237@1236 : TextConst 'DAN=Fil låst af %1 indtil %2;ENU=File locked by %1 until %2';
+      TXT238@1237 : TextConst 'DAN=Dokument delt med %1 brugere;ENU=Document shared with %1 users';
+      TXT239@1238 : TextConst 'DAN=Version %1 gendannet fra %2;ENU=Version %1 restored from %2';
+      TXT240@1239 : TextConst 'DAN=Dokument arkiveret til %1;ENU=Document archived to %1';
+
+      // Calculation and formula messages
+      TXT241@1240 : TextConst 'DAN=Beregning udført: %1 = %2;ENU=Calculation performed: %1 = %2';
+      TXT242@1241 : TextConst 'DAN=Formel anvendt: %1 på %2 poster;ENU=Formula applied: %1 to %2 entries';
+      TXT243@1242 : TextConst 'DAN=Runding til %1 decimaler;ENU=Rounding to %1 decimals';
+      TXT244@1243 : TextConst 'DAN=Valutaomregning: %1 %2 = %3 %4;ENU=Currency conversion: %1 %2 = %3 %4';
+      TXT245@1244 : TextConst 'DAN=Momssats %1%% anvendt - Moms: %2;ENU=VAT rate %1%% applied - VAT: %2';
+
+      // Import/Export detailed messages
+      TXT246@1245 : TextConst 'DAN=Import startede fra fil: %1 (%2 KB);ENU=Import started from file: %1 (%2 KB)';
+      TXT247@1246 : TextConst 'DAN=Parsing linje %1 - Format: %2;ENU=Parsing line %1 - Format: %2';
+      TXT248@1247 : TextConst 'DAN=Validering fejlet på række %1: %2;ENU=Validation failed on row %1: %2';
+      TXT249@1248 : TextConst 'DAN=Import resumé: %1 oprettet, %2 opdateret, %3 sprunget over;ENU=Import summary: %1 created, %2 updated, %3 skipped';
+      TXT250@1249 : TextConst 'DAN=Eksport fil genereret: %1 (%2 poster);ENU=Export file generated: %1 (%2 entries)';
+
+      // Testing and debugging messages
+      TXT251@1250 : TextConst 'DAN=Debug punkt ramt i %1 linje %2;ENU=Breakpoint hit in %1 line %2';
+      TXT252@1251 : TextConst 'DAN=Variable værdi: %1 = %2;ENU=Variable value: %1 = %2';
+      TXT253@1252 : TextConst 'DAN=Test bestået: %1 af %2 testcases;ENU=Test passed: %1 of %2 test cases';
+      TXT254@1253 : TextConst 'DAN=Assertion fejlet: Forventet %1, fik %2;ENU=Assertion failed: Expected %1, got %2';
+      TXT255@1254 : TextConst 'DAN=Test suite fuldført på %1 sekunder;ENU=Test suite completed in %1 seconds';
+
+      // Backup and restore messages
+      TXT256@1255 : TextConst 'DAN=Backup startet til lokation %1;ENU=Backup started to location %1';
+      TXT257@1256 : TextConst 'DAN=Backup fremskridt: %1%% fuldført;ENU=Backup progress: %1%% completed';
+      TXT258@1257 : TextConst 'DAN=Backup gemt som %1 (%2 MB);ENU=Backup saved as %1 (%2 MB)';
+      TXT259@1258 : TextConst 'DAN=Gendannelse fra backup %1 startet;ENU=Restore from backup %1 started';
+      TXT260@1259 : TextConst 'DAN=System gendannet til tilstand fra %1;ENU=System restored to state from %1';
+
+      // Additional special characters and combinations
+      TXT261@1260 : TextConst 'DAN=Çédille et tréma special;ENU=Cedilla and diaeresis special';
+      TXT262@1261 : TextConst 'DAN=Ångström måleenhed;ENU=Angstrom unit of measure';
+      TXT263@1262 : TextConst 'DAN=Øresunds bro trafik;ENU=Oresund bridge traffic';
+      TXT264@1263 : TextConst 'DAN=Smörgås med räkor;ENU=Sandwich with shrimp';
+      TXT265@1264 : TextConst 'DAN=Crème brûlée dessert;ENU=Creme brulee dessert';
+
+      // More locked constants for completeness
+      TXT266@1265 : TextConst 'DAN=AZURE_STORAGE_ACCOUNT;ENU=AZURE_STORAGE_ACCOUNT;@@@={Locked}';
+      TXT267@1266 : TextConst 'DAN=AWS_S3_BUCKET_NAME;ENU=AWS_S3_BUCKET_NAME;@@@={Locked}';
+      TXT268@1267 : TextConst 'DAN=DOCKER_IMAGE_TAG;ENU=DOCKER_IMAGE_TAG;@@@={Locked}';
+      TXT269@1268 : TextConst 'DAN=KUBERNETES_NAMESPACE;ENU=KUBERNETES_NAMESPACE;@@@={Locked}';
+      TXT270@1269 : TextConst 'DAN=TERRAFORM_WORKSPACE;ENU=TERRAFORM_WORKSPACE;@@@={Locked}';
+
+      // Version and update messages
+      TXT271@1270 : TextConst 'DAN=Ny version tilgængelig: %1 (nuværende: %2);ENU=New version available: %1 (current: %2)';
+      TXT272@1271 : TextConst 'DAN=Opdatering installeret - genstart påkrævet;ENU=Update installed - restart required';
+      TXT273@1272 : TextConst 'DAN=Migrating skema fra version %1 til %2;ENU=Migrating schema from version %1 to %2';
+      TXT274@1273 : TextConst 'DAN=Kompatibilitetskontrol bestået for version %1;ENU=Compatibility check passed for version %1';
+      TXT275@1274 : TextConst 'DAN=Rollback til tidligere version %1?;ENU=Rollback to previous version %1?';
+
+      // Queue and async processing
+      TXT276@1275 : TextConst 'DAN=Opgave tilføjet til kø - Position %1;ENU=Task added to queue - Position %1';
+      TXT277@1276 : TextConst 'DAN=Asynkron proces startet med ID %1;ENU=Async process started with ID %1';
+      TXT278@1277 : TextConst 'DAN=Job %1 fuldført efter %2 forsøg;ENU=Job %1 completed after %2 attempts';
+      TXT279@1278 : TextConst 'DAN=Dead letter kø: %1 fejlede beskeder;ENU=Dead letter queue: %1 failed messages';
+      TXT280@1279 : TextConst 'DAN=Kø tømt - %1 beskeder behandlet;ENU=Queue drained - %1 messages processed';
+
+      // Financial calculation messages
+      TXT281@1280 : TextConst 'DAN=Momskalkulation: Grundbeløb %1, Moms %2, Total %3;ENU=VAT calculation: Base amount %1, VAT %2, Total %3';
+      TXT282@1281 : TextConst 'DAN=Rabat anvendt: %1%% på %2 = %3;ENU=Discount applied: %1%% on %2 = %3';
+      TXT283@1282 : TextConst 'DAN=Renteberegning: %1 over %2 dage til %3%%;ENU=Interest calculation: %1 over %2 days at %3%%';
+      TXT284@1283 : TextConst 'DAN=Afdrag: Hovedstol %1, Rente %2, Total %3;ENU=Installment: Principal %1, Interest %2, Total %3';
+      TXT285@1284 : TextConst 'DAN=Afskrivning: %1 over %2 år = %3 per år;ENU=Depreciation: %1 over %2 years = %3 per year';
+
+      // Search and filter messages
+      TXT286@1285 : TextConst 'DAN=Søgning fandt %1 resultater i %2 ms;ENU=Search found %1 results in %2 ms';
+      TXT287@1286 : TextConst 'DAN=Filter aktiv: %1 på felt %2;ENU=Filter active: %1 on field %2';
+      TXT288@1287 : TextConst 'DAN=Sortering: %1 faldende, derefter %2 stigende;ENU=Sorting: %1 descending, then %2 ascending';
+      TXT289@1288 : TextConst 'DAN=Gruppering efter %1 - %2 grupper fundet;ENU=Grouping by %1 - %2 groups found';
+      TXT290@1289 : TextConst 'DAN=Avanceret søgning med %1 kriterier;ENU=Advanced search with %1 criteria';
+
+      // Localization specific messages
+      TXT291@1290 : TextConst 'DAN=Sprog skiftet til %1;ENU=Language switched to %1';
+      TXT292@1291 : TextConst 'DAN=Tidszone: %1 (UTC %2);ENU=Timezone: %1 (UTC %2)';
+      TXT293@1292 : TextConst 'DAN=Datoformat: %1;ENU=Date format: %1';
+      TXT294@1293 : TextConst 'DAN=Talformat: %1 decimalseparator, %2 tusindtalsseparator;ENU=Number format: %1 decimal separator, %2 thousands separator';
+      TXT295@1294 : TextConst 'DAN=Valutasymbol: %1 placeret %2;ENU=Currency symbol: %1 placed %2';
+
+      // Final set of locked constants
+      TXT296@1295 : TextConst 'DAN=CIRCUIT_BREAKER_THRESHOLD;ENU=CIRCUIT_BREAKER_THRESHOLD;@@@={Locked}';
+      TXT297@1296 : TextConst 'DAN=RATE_LIMIT_PER_MINUTE;ENU=RATE_LIMIT_PER_MINUTE;@@@={Locked}';
+      TXT298@1297 : TextConst 'DAN=HEALTHCHECK_ENDPOINT;ENU=HEALTHCHECK_ENDPOINT;@@@={Locked}';
+      TXT299@1298 : TextConst 'DAN=METRICS_COLLECTION_INTERVAL;ENU=METRICS_COLLECTION_INTERVAL;@@@={Locked}';
+      TXT300@1299 : TextConst 'DAN=FEATURE_FLAG_SERVICE;ENU=FEATURE_FLAG_SERVICE;@@@={Locked}';
+
+      // Additional diverse messages to reach target
+      TXT301@1300 : TextConst 'DAN=Brugerindstillinger gemt for %1;ENU=User preferences saved for %1';
+      TXT302@1301 : TextConst 'DAN=Session udløbet efter %1 minutters inaktivitet;ENU=Session expired after %1 minutes of inactivity';
+      TXT303@1302 : TextConst 'DAN=Ekstern tjeneste %1 er utilgængelig;ENU=External service %1 is unavailable';
+      TXT304@1303 : TextConst 'DAN=Datavalidering fuldført: %1 fejl, %2 advarsler;ENU=Data validation completed: %1 errors, %2 warnings';
+      TXT305@1304 : TextConst 'DAN=Transaktion rullet tilbage på grund af: %1;ENU=Transaction rolled back due to: %1';
+      TXT306@1305 : TextConst 'DAN=Lås erhvervet på ressource %1;ENU=Lock acquired on resource %1';
+      TXT307@1306 : TextConst 'DAN=Deadlock detekteret mellem %1 og %2;ENU=Deadlock detected between %1 and %2';
+      TXT308@1307 : TextConst 'DAN=Scheduler genstartet efter fejl;ENU=Scheduler restarted after failure';
+      TXT309@1308 : TextConst 'DAN=Hændelse %1 udløst med %2 abonnenter;ENU=Event %1 triggered with %2 subscribers';
+      TXT310@1309 : TextConst 'DAN=Metadata opdateret for objekt %1;ENU=Metadata updated for object %1';
+
+      // More complex Unicode strings
+      TXT311@1310 : TextConst 'DAN=Sønderjysk specialität med æ ø å;ENU=South Jutland specialty with ae oe aa';
+      TXT312@1311 : TextConst 'DAN=Français élégant caractères;ENU=French elegant characters';
+      TXT313@1312 : TextConst 'DAN=Deutsch Größe Änderung;ENU=German size change';
+      TXT314@1313 : TextConst 'DAN=Español ñoño mañana;ENU=Spanish special morning';
+      TXT315@1314 : TextConst 'DAN=Português São João;ENU=Portuguese Saint John';
+
+      // Mixed technical and business messages
+      TXT316@1315 : TextConst 'DAN=Replikering synkroniseret: %1 records til node %2;ENU=Replication synchronized: %1 records to node %2';
+      TXT317@1316 : TextConst 'DAN=Load balancing: %1%% til server %2;ENU=Load balancing: %1%% to server %2';
+      TXT318@1317 : TextConst 'DAN=Failover aktiveret - skifter til backup %1;ENU=Failover activated - switching to backup %1';
+      TXT319@1318 : TextConst 'DAN=Netværkslatens målt: %1 ms til %2;ENU=Network latency measured: %1 ms to %2';
+      TXT320@1319 : TextConst 'DAN=Bandwidth forbrug: %1 MB/s af %2 MB/s;ENU=Bandwidth consumption: %1 MB/s of %2 MB/s';
+
+    PROCEDURE ProcessMultilingüalData@1(Parám1@1000 : Text[100];Paramétér2@1001 : Integer);
+    VAR
+      TëmpVär@2000 : Text;
+      Rësült@2001 : Boolean;
+      Cöüntér@2002 : Integer;
+    BEGIN
+      // Demonstrate Unicode in identifiers and processing
+      TëmpVär := STRSUBSTNO(TXT026,Parám1,Paramétér2);
+      MESSAGE(TXT001);
+
+      FOR Cöüntér := 1 TO Paramétér2 DO BEGIN
+        Rësült := ValidateÜnicodeString(TëmpVär);
+        IF Rësült THEN
+          MESSAGE(TXT010)
+        ELSE
+          ERROR(TXT003);
+      END;
+    END;
+
+    PROCEDURE ValidateÜnicodeString@2(InputStríng@1000 : Text) : Boolean;
+    VAR
+      Längth@2000 : Integer;
+      Ïndëx@2001 : Integer;
+    BEGIN
+      Längth := STRLEN(InputStríng);
+      MESSAGE(TXT021,Längth);
+
+      IF Längth = 0 THEN
+        ERROR(TXT112);
+
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE FörmátMessageWithPläceholders@3();
+    VAR
+      Msg1@1000 : Text;
+      Msg2@1001 : Text;
+      Msg3@1002 : Text;
+    BEGIN
+      Msg1 := STRSUBSTNO(TXT032,100,50,25,200);
+      Msg2 := STRSUBSTNO(TXT034,'Üser123','2025-12-27','14:30:00');
+      Msg3 := STRSUBSTNO(TXT035,'Kärlstad','SE','Østersund','NO');
+
+      MESSAGE('%1\%2\%3',Msg1,Msg2,Msg3);
+    END;
+
+    PROCEDURE ProçessLockedCönstants@4();
+    BEGIN
+      // Locked constants should not be translated
+      MESSAGE('%1',TXT036);
+      MESSAGE('%1',TXT037);
+      MESSAGE('%1',TXT038);
+
+      // Used in technical contexts
+      IF TXT040 <> '' THEN
+        MESSAGE(TXT005);
+    END;
+
+    PROCEDURE HandleLöngTranslätedTexts@5();
+    VAR
+      Lång1@1000 : Text;
+      Lång2@1001 : Text;
+    BEGIN
+      Lång1 := TXT046;
+      Lång2 := TXT051;
+
+      MESSAGE('%1\%2',Lång1,Lång2);
+
+      // Very long messages for memory testing
+      MESSAGE(TXT106);
+      MESSAGE(TXT107);
+      MESSAGE(TXT108);
+    END;
+
+    PROCEDURE TestSpécialChäractérs@6();
+    VAR
+      Øl@1000 : Text;
+      Ærlig@1001 : Text;
+      Årsäg@1002 : Text;
+    BEGIN
+      Øl := TXT013;
+      Ærlig := TXT014;
+      Årsäg := TXT015;
+
+      MESSAGE('%1 - %2 - %3',Øl,Ærlig,Årsäg);
+
+      // More special character combinations
+      MESSAGE(TXT166);
+      MESSAGE(TXT167);
+      MESSAGE(TXT311);
+    END;
+
+    PROCEDURE GénérateComplexFormatStrings@7();
+    BEGIN
+      MESSAGE(TXT081,'DOC001','Johän Sörensson','2025-12-27','08:30');
+      MESSAGE(TXT082,45,100,'Prøcessing',67);
+      MESSAGE(TXT084,'Custömer Name',15,'Invalid charäcter: ø');
+      MESSAGE(TXT176,'CUST-Ø001','50000','5000');
+    END;
+
+    PROCEDURE SimülateMultilíngualWorkflow@8();
+    VAR
+      Stäge@1000 : Integer;
+      Tötal@1001 : Integer;
+    BEGIN
+      Tötal := 10;
+      MESSAGE(TXT136,'Ädmin Üser');
+
+      FOR Stäge := 1 TO Tötal DO BEGIN
+        MESSAGE(TXT138,Stäge,Tötal);
+        SLEEP(10);
+      END;
+
+      MESSAGE(TXT010);
+    END;
+
+    PROCEDURE TestÄllMessägeTypes@9();
+    BEGIN
+      // Short messages
+      MESSAGE(TXT001);
+      MESSAGE(TXT002);
+
+      // Questions
+      IF CONFIRM(TXT061) THEN
+        MESSAGE(TXT007)
+      ELSE
+        MESSAGE(TXT008);
+
+      // Status updates
+      MESSAGE(TXT066);
+      MESSAGE(TXT067);
+      MESSAGE(TXT070);
+
+      // Errors and warnings
+      ERROR(TXT003);
+    END;
+
+    PROCEDURE DëmonstrateAllFéatures@10();
+    VAR
+      Çounter@1000 : Integer;
+      Tëxt@1001 : Text;
+    BEGIN
+      // Mix all features
+      MESSAGE(TXT011); // Unicode chars
+      MESSAGE(TXT036); // Locked constant
+      MESSAGE(TXT046); // Long text
+
+      FOR Çounter := 1 TO 5 DO BEGIN
+        Tëxt := STRSUBSTNO(TXT027,Çounter * 10,Çounter);
+        MESSAGE(Tëxt);
+      END;
+
+      // Special characters in business context
+      MESSAGE(TXT091);
+      MESSAGE(TXT092);
+
+      // Technical messages
+      MESSAGE(TXT181,512,1024);
+      MESSAGE(TXT182,45);
+
+      MESSAGE(TXT010);
+    END;
+
+    BEGIN
+    {
+      Synthetic Performance Test Fixture - Multilingual
+
+      This codeunit tests the parser's ability to handle:
+      - 100+ TextConst declarations with DAN/ENU variants
+      - Unicode characters (ø, ä, é, ü, å, æ) in identifiers
+      - Unicode characters in string literals
+      - Locked constants with @@@ notation
+      - Format strings with multiple %1, %2, %3, %4 placeholders
+      - Mix of short and very long translated texts
+      - Special character combinations
+      - CaptionML patterns (shown in declarations)
+      - Memory-intensive localized content
+
+      Total lines: ~800
+      Total TextConst declarations: 320
+      Locked constants: 30
+      Unicode identifiers: Multiple procedures and variables
+      Format strings with placeholders: 65+
+
+      Purpose: Stress test Unicode handling, string memory management,
+      and localization pattern recognition in the LSP server.
+    }
+    END.
+  }
+}

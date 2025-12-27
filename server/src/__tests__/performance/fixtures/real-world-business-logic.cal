@@ -1,0 +1,2537 @@
+// SYNTHETIC PERFORMANCE TEST FIXTURE - 100% GENERATED
+// Purpose: Simulates real-world business module (comprehensive performance baseline)
+// Pattern: Realistic Gen. Jnl.-Post Line style codeunit with extensive business logic
+// Target: ~4000 lines with deep nesting, complex expressions, and multiple record operations
+
+OBJECT Codeunit 50017 ACME Document Posting Engine
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/15/24;
+    Time=10:30:00;
+    Modified=Yes;
+    Version List=ACME-TEST-1.0;
+  }
+  PROPERTIES
+  {
+    TableNo=81;
+    OnRun=BEGIN
+            PostGenJournalLine();
+          END;
+
+    Permissions=TableData 17=rimd,TableData 21=rimd,TableData 25=rimd,TableData 32=rimd,
+                TableData 254=rimd,TableData 271=rimd,TableData 380=rimd,TableData 5802=rimd;
+  }
+  CODE
+  {
+    VAR
+      GLEntry@1000 : Record 17;
+      CustLedgEntry@1001 : Record 21;
+      VendLedgEntry@1002 : Record 25;
+      GLReg@1003 : Record 45;
+      GenJnlLine@1004 : Record 81;
+      GenJnlPostLine@1005 : Codeunit 12;
+      GenJnlCheckLine@1006 : Codeunit 11;
+      ItemJnlPostLine@1007 : Codeunit 22;
+      DimMgt@1008 : Codeunit 408;
+      ExchAccGLJnlLine@1009 : Record 81;
+      TempCurrency@1010 : TEMPORARY Record 4;
+      TempDimSetEntry@1011 : TEMPORARY Record 480;
+      TempDimPostingBuffer@1012 : TEMPORARY Record 360;
+      TempGenJnlLine@1013 : TEMPORARY Record 81;
+      TempItemChargeAssgntPurch@1014 : TEMPORARY Record 5805;
+      TempItemChargeAssgntSales@1015 : TEMPORARY Record 5809;
+      TempValueEntryRelation@1016 : TEMPORARY Record 5997;
+      TempACMEPostingBuffer@1017 : TEMPORARY Record 49;
+      TempACMEAnalysisBuffer@1018 : TEMPORARY Record 49;
+      GLSetup@1019 : Record 98;
+      SalesSetup@1020 : Record 311;
+      PurchSetup@1021 : Record 312;
+      InvtSetup@1022 : Record 313;
+      ACMESetup@1023 : Record 50000;
+      Currency@1024 : Record 4;
+      CurrExchRate@1025 : Record 330;
+      VATPostingSetup@1026 : Record 325;
+      GenPostingSetup@1027 : Record 252;
+      SalesHeader@1028 : Record 36;
+      PurchHeader@1029 : Record 38;
+      SalesLine@1030 : Record 37;
+      PurchLine@1031 : Record 39;
+      ItemLedgEntry@1032 : Record 32;
+      ValueEntry@1033 : Record 5802;
+      Customer@1034 : Record 18;
+      Vendor@1035 : Record 23;
+      GLAccount@1036 : Record 15;
+      BankAccount@1037 : Record 270;
+      FALedgEntry@1038 : Record 5601;
+      FixedAsset@1039 : Record 5600;
+      FAPostingGroup@1040 : Record 5606;
+      FADeprBook@1041 : Record 5612;
+      MaintenanceLedgEntry@1042 : Record 5625;
+      InsCoverageLedgEntry@1043 : Record 5629;
+      ACMELedgerEntry@1044 : Record 50001;
+      ACMECustomerAnalysis@1045 : Record 50002;
+      ACMEVendorAnalysis@1046 : Record 50003;
+      ACMEDimensionSetup@1047 : Record 50004;
+      ACMEPostingGroup@1048 : Record 50005;
+      ACMEValidationRule@1049 : Record 50006;
+      ACMEWorkflowEntry@1050 : Record 50007;
+      ACMEApprovalEntry@1051 : Record 50008;
+      ACMENotificationEntry@1052 : Record 50009;
+      FooBarCorpSetup@1053 : Record 50010;
+      FooBarLedgerEntry@1054 : Record 50011;
+      TestCoAnalyticsBuffer@1055 : Record 50012;
+      TestCoValidationLog@1056 : Record 50013;
+      NextEntryNo@1057 : Integer;
+      NextTransactionNo@1058 : Integer;
+      NextGLRegisterNo@1059 : Integer;
+      NextACMEEntryNo@1060 : Integer;
+      NextWorkflowEntryNo@1061 : Integer;
+      CurrentSourceCode@1062 : Code[10];
+      CurrentJournalTemplateName@1063 : Code[10];
+      CurrentJournalBatchName@1064 : Code[10];
+      CurrentPostingDate@1065 : Date;
+      CurrentDocumentDate@1066 : Date;
+      CurrentDocumentNo@1067 : Code[20];
+      CurrentExternalDocNo@1068 : Code[35];
+      CurrentReasonCode@1069 : Code[10];
+      CurrentCurrencyCode@1070 : Code[10];
+      CurrentCurrencyFactor@1071 : Decimal;
+      CurrentVATAmount@1072 : Decimal;
+      CurrentVATBaseAmount@1073 : Decimal;
+      CurrentAmount@1074 : Decimal;
+      CurrentAmountLCY@1075 : Decimal;
+      CurrentDebitAmount@1076 : Decimal;
+      CurrentCreditAmount@1077 : Decimal;
+      CurrentBalAccountNo@1078 : Code[20];
+      CurrentDimensionSetID@1079 : Integer;
+      CurrentGlobalDim1Code@1080 : Code[20];
+      CurrentGlobalDim2Code@1081 : Code[20];
+      CurrentJobNo@1082 : Code[20];
+      CurrentBusinessUnitCode@1083 : Code[10];
+      CurrentSalesPersonCode@1084 : Code[20];
+      CurrentCampaignNo@1085 : Code[20];
+      TotalAmount@1086 : Decimal;
+      TotalAmountLCY@1087 : Decimal;
+      TotalVATAmount@1088 : Decimal;
+      TotalVATBaseAmount@1089 : Decimal;
+      TotalDebitAmount@1090 : Decimal;
+      TotalCreditAmount@1091 : Decimal;
+      BalanceAmount@1092 : Decimal;
+      BalanceAmountLCY@1093 : Decimal;
+      BalanceVATAmount@1094 : Decimal;
+      AccumulatedAmount@1095 : Decimal;
+      AccumulatedAmountLCY@1096 : Decimal;
+      ACMETotalProcessed@1097 : Decimal;
+      ACMETotalValidated@1098 : Decimal;
+      ACMETotalPosted@1099 : Decimal;
+      FooBarCorpBalance@1100 : Decimal;
+      FooBarCorpVATTotal@1101 : Decimal;
+      TestCoAnalyticsValue@1102 : Decimal;
+      VATPercent@1103 : Decimal;
+      DiscountPercent@1104 : Decimal;
+      PaymentDiscPercent@1105 : Decimal;
+      InterestPercent@1106 : Decimal;
+      ProfitPercent@1107 : Decimal;
+      CommissionPercent@1108 : Decimal;
+      AllocationPercent@1109 : Decimal;
+      ACMECalculationFactor@1110 : Decimal;
+      ACMEValidationThreshold@1111 : Decimal;
+      FooBarMultiplier@1112 : Decimal;
+      TestCoWeightFactor@1113 : Decimal;
+      PostingInProgress@1114 : Boolean;
+      ValidationEnabled@1115 : Boolean;
+      DimensionCheckRequired@1116 : Boolean;
+      ApprovalRequired@1117 : Boolean;
+      NotificationEnabled@1118 : Boolean;
+      ErrorCheckingEnabled@1119 : Boolean;
+      DetailedLoggingEnabled@1120 : Boolean;
+      ACMEFeatureEnabled@1121 : Boolean;
+      FooBarIntegrationActive@1122 : Boolean;
+      TestCoValidationActive@1123 : Boolean;
+      AutoPostEnabled@1124 : Boolean;
+      BatchPostingMode@1125 : Boolean;
+      ReversePostingMode@1126 : Boolean;
+      SimulationMode@1127 : Boolean;
+      DebugMode@1128 : Boolean;
+      PreviewMode@1129 : Boolean;
+      UseAmountsInclVAT@1130 : Boolean;
+      CalcPmtDiscOnCreditMemos@1131 : Boolean;
+      AdjustForPmtDisc@1132 : Boolean;
+      SkipWhseJnlLine@1133 : Boolean;
+      SuppressCommit@1134 : Boolean;
+      ACMEAutoValidation@1135 : Boolean;
+      ACMEStrictMode@1136 : Boolean;
+      FooBarCorpStrictChecks@1137 : Boolean;
+      TestCoEnhancedValidation@1138 : Boolean;
+      LineCount@1139 : Integer;
+      ProcessedLineCount@1140 : Integer;
+      ErrorCount@1141 : Integer;
+      WarningCount@1142 : Integer;
+      ValidationErrorCount@1143 : Integer;
+      DimensionErrorCount@1144 : Integer;
+      PostingErrorCount@1145 : Integer;
+      ACMEProcessedCount@1146 : Integer;
+      ACMEValidatedCount@1147 : Integer;
+      ACMEErrorCount@1148 : Integer;
+      FooBarCorpRecordCount@1149 : Integer;
+      TestCoValidationCount@1150 : Integer;
+      MaxIterations@1151 : Integer;
+      CurrentIteration@1152 : Integer;
+      RetryCount@1153 : Integer;
+      MaxRetryCount@1154 : Integer;
+      TimeoutSeconds@1155 : Integer;
+      BatchSize@1156 : Integer;
+      ChunkSize@1157 : Integer;
+      BufferSize@1158 : Integer;
+      CacheSize@1159 : Integer;
+      PoolSize@1160 : Integer;
+      QueueSize@1161 : Integer;
+      ACMEBatchLimit@1162 : Integer;
+      ACMEQueueDepth@1163 : Integer;
+      FooBarCorpPoolSize@1164 : Integer;
+      TestCoBufferLimit@1165 : Integer;
+      LastEntryNo@1166 : Integer;
+      LastTransactionNo@1167 : Integer;
+      LastRegisterNo@1168 : Integer;
+      LastACMEEntryNo@1169 : Integer;
+      LastWorkflowEntryNo@1170 : Integer;
+      LastGLEntryNo@1171 : Integer;
+      LastCustLedgEntryNo@1172 : Integer;
+      LastVendLedgEntryNo@1173 : Integer;
+      LastItemLedgEntryNo@1174 : Integer;
+      LastValueEntryNo@1175 : Integer;
+      LastFALedgEntryNo@1176 : Integer;
+      CurrentUserID@1177 : Code[50];
+      CurrentWindowsUserID@1178 : Code[208];
+      ResponsibilityCenter@1179 : Code[10];
+      LocationCode@1180 : Code[10];
+      DepartmentCode@1181 : Code[20];
+      ProjectCode@1182 : Code[20];
+      CostCenterCode@1183 : Code[20];
+      ACMEDivisionCode@1184 : Code[20];
+      ACMERegionCode@1185 : Code[20];
+      FooBarCorpBranchCode@1186 : Code[20];
+      FooBarCorpTeamCode@1187 : Code[20];
+      TestCoUnitCode@1188 : Code[20];
+      TestCoDeptCode@1189 : Code[20];
+      ErrorMessage@1190 : Text[250];
+      WarningMessage@1191 : Text[250];
+      ValidationMessage@1192 : Text[250];
+      ConfirmMessage@1193 : Text[250];
+      SuccessMessage@1194 : Text[250];
+      ACMEErrorText@1195 : Text[250];
+      ACMEWarningText@1196 : Text[250];
+      FooBarCorpMessage@1197 : Text[250];
+      TestCoValidationMsg@1198 : Text[250];
+      ProgressMessage@1199 : Text[250];
+      StatusMessage@1200 : Text[250];
+
+    PROCEDURE PostGenJournalLine@1();
+    VAR
+      SavedGenJnlLine@1000 : Record 81;
+      IsHandled@1001 : Boolean;
+      Counter@1002 : Integer;
+      MaxLoops@1003 : Integer;
+    BEGIN
+      // Main posting procedure - orchestrates entire posting process
+      OnBeforePostGenJournalLine(GenJnlLine,IsHandled);
+      IF IsHandled THEN
+        EXIT;
+
+      InitializePosting();
+      ValidateJournalLine(GenJnlLine);
+      CheckDimensions(GenJnlLine);
+      CalculateAmounts(GenJnlLine);
+
+      PostingInProgress := TRUE;
+      SavedGenJnlLine := GenJnlLine;
+
+      Counter := 0;
+      MaxLoops := 1000;
+
+      REPEAT
+        Counter := Counter + 1;
+
+        IF NOT PreviewMode THEN BEGIN
+          CreateGLEntry(GenJnlLine);
+          CreateDetailedLedgerEntries(GenJnlLine);
+          UpdateDimensionEntries(GenJnlLine);
+          ProcessACMELedgerEntry(GenJnlLine);
+          UpdateAnalytics(GenJnlLine);
+        END ELSE BEGIN
+          SimulateGLEntry(GenJnlLine);
+          SimulateDetailedEntries(GenJnlLine);
+        END;
+
+        UpdateCounters();
+
+        IF BatchPostingMode THEN BEGIN
+          IF ProcessedLineCount >= BatchSize THEN
+            FlushBatch();
+        END;
+
+      UNTIL (Counter >= MaxLoops) OR (NOT BatchPostingMode);
+
+      FinalizePosting(SavedGenJnlLine);
+      PostingInProgress := FALSE;
+
+      OnAfterPostGenJournalLine(GenJnlLine);
+    END;
+
+    PROCEDURE InitializePosting@2();
+    VAR
+      NoSeriesMgt@1000 : Codeunit 396;
+      LoopCounter@1001 : Integer;
+      SubLoopCounter@1002 : Integer;
+    BEGIN
+      // Initialize posting environment and load setup
+      GLSetup.GET;
+      SalesSetup.GET;
+      PurchSetup.GET;
+      InvtSetup.GET;
+
+      IF ACMESetup.GET THEN BEGIN
+        ACMEFeatureEnabled := ACMESetup."ACME Feature Enabled";
+        ACMEAutoValidation := ACMESetup."Auto Validation";
+        ACMEStrictMode := ACMESetup."Strict Mode";
+        ACMEBatchLimit := ACMESetup."Batch Limit";
+        ACMEQueueDepth := ACMESetup."Queue Depth";
+      END ELSE BEGIN
+        ACMEFeatureEnabled := FALSE;
+        ACMEAutoValidation := TRUE;
+        ACMEStrictMode := FALSE;
+        ACMEBatchLimit := 100;
+        ACMEQueueDepth := 50;
+      END;
+
+      IF FooBarCorpSetup.GET THEN BEGIN
+        FooBarIntegrationActive := FooBarCorpSetup."Integration Active";
+        FooBarCorpStrictChecks := FooBarCorpSetup."Strict Validation";
+        FooBarCorpPoolSize := FooBarCorpSetup."Connection Pool Size";
+        FooBarCorpBranchCode := FooBarCorpSetup."Default Branch Code";
+        FooBarCorpTeamCode := FooBarCorpSetup."Default Team Code";
+      END;
+
+      GetNextEntryNumbers();
+      ClearTemporaryBuffers();
+      ResetCounters();
+      InitializeBuffers();
+
+      CurrentUserID := USERID;
+      CurrentPostingDate := WORKDATE;
+      ValidationEnabled := TRUE;
+      DimensionCheckRequired := TRUE;
+      ErrorCheckingEnabled := TRUE;
+      DetailedLoggingEnabled := DebugMode;
+
+      LoopCounter := 0;
+      REPEAT
+        LoopCounter := LoopCounter + 1;
+        SubLoopCounter := 0;
+
+        REPEAT
+          SubLoopCounter := SubLoopCounter + 1;
+          InitializeSubBuffer(LoopCounter,SubLoopCounter);
+        UNTIL SubLoopCounter >= 10;
+
+      UNTIL LoopCounter >= 5;
+    END;
+
+    PROCEDURE ValidateJournalLine@3(VAR JnlLine@1000 : Record 81);
+    VAR
+      ErrorText@1001 : Text[250];
+      IsValid@1002 : Boolean;
+      ValidationLevel@1003 : Integer;
+      CheckCounter@1004 : Integer;
+    BEGIN
+      // Comprehensive journal line validation
+      IsValid := TRUE;
+      ValidationLevel := 0;
+      CheckCounter := 0;
+
+      IF JnlLine."Posting Date" = 0D THEN
+        ERROR('Posting Date must be specified for Document No. %1',JnlLine."Document No.");
+
+      IF JnlLine."Document No." = '' THEN
+        ERROR('Document No. must be specified');
+
+      IF JnlLine."Account Type" = JnlLine."Account Type"::" " THEN
+        ERROR('Account Type must be specified for Document No. %1',JnlLine."Document No.");
+
+      IF JnlLine."Account No." = '' THEN
+        ERROR('Account No. must be specified for Document No. %1',JnlLine."Document No.");
+
+      CheckCounter := CheckCounter + 1;
+
+      CASE JnlLine."Account Type" OF
+        JnlLine."Account Type"::"G/L Account":
+          BEGIN
+            ValidationLevel := ValidationLevel + 1;
+            ValidateGLAccount(JnlLine);
+            CheckGLAccountPosting(JnlLine."Account No.",JnlLine."Posting Date");
+            VerifyGLAccountBalance(JnlLine."Account No.",JnlLine.Amount);
+          END;
+        JnlLine."Account Type"::Customer:
+          BEGIN
+            ValidationLevel := ValidationLevel + 2;
+            ValidateCustomer(JnlLine);
+            CheckCustomerBlocked(JnlLine."Account No.");
+            VerifyCustomerCreditLimit(JnlLine."Account No.",JnlLine.Amount);
+            UpdateCustomerStatistics(JnlLine."Account No.",JnlLine.Amount);
+          END;
+        JnlLine."Account Type"::Vendor:
+          BEGIN
+            ValidationLevel := ValidationLevel + 2;
+            ValidateVendor(JnlLine);
+            CheckVendorBlocked(JnlLine."Account No.");
+            VerifyVendorPaymentTerms(JnlLine."Account No.",JnlLine."Due Date");
+            UpdateVendorStatistics(JnlLine."Account No.",JnlLine.Amount);
+          END;
+        JnlLine."Account Type"::"Bank Account":
+          BEGIN
+            ValidationLevel := ValidationLevel + 1;
+            ValidateBankAccount(JnlLine);
+            CheckBankAccountBalance(JnlLine."Account No.",JnlLine.Amount);
+          END;
+        JnlLine."Account Type"::"Fixed Asset":
+          BEGIN
+            ValidationLevel := ValidationLevel + 3;
+            ValidateFixedAsset(JnlLine);
+            CheckFADepreciation(JnlLine."Account No.",JnlLine."Posting Date");
+            VerifyFAPostingGroup(JnlLine."Account No.");
+          END;
+      END;
+
+      CheckCounter := CheckCounter + 1;
+
+      IF JnlLine."Bal. Account Type" <> JnlLine."Bal. Account Type"::" " THEN BEGIN
+        IF JnlLine."Bal. Account No." = '' THEN
+          ERROR('Bal. Account No. must be specified for Document No. %1',JnlLine."Document No.");
+
+        ValidationLevel := ValidationLevel + 1;
+        ValidateBalancingAccount(JnlLine);
+      END;
+
+      CheckCounter := CheckCounter + 1;
+
+      IF JnlLine."Currency Code" <> '' THEN BEGIN
+        ValidationLevel := ValidationLevel + 1;
+        ValidateCurrency(JnlLine);
+        CalculateCurrencyFactor(JnlLine);
+        CheckExchangeRateExists(JnlLine."Currency Code",JnlLine."Posting Date");
+      END;
+
+      CheckCounter := CheckCounter + 1;
+
+      IF ACMEFeatureEnabled THEN BEGIN
+        ValidationLevel := ValidationLevel + 2;
+        ValidateACMEFields(JnlLine);
+        CheckACMEBusinessRules(JnlLine);
+        VerifyACMEWorkflow(JnlLine);
+      END;
+
+      CheckCounter := CheckCounter + 1;
+
+      IF FooBarIntegrationActive THEN BEGIN
+        ValidationLevel := ValidationLevel + 1;
+        ValidateFooBarCorpFields(JnlLine);
+        CheckFooBarCorpIntegrity(JnlLine);
+      END;
+
+      CheckCounter := CheckCounter + 1;
+
+      IF TestCoValidationActive THEN BEGIN
+        ValidationLevel := ValidationLevel + 1;
+        ValidateTestCoAnalytics(JnlLine);
+        UpdateTestCoValidationLog(JnlLine,IsValid);
+      END;
+
+      ValidateVATPosting(JnlLine);
+      CheckDimensionValuePosting(JnlLine);
+
+      IF NOT IsValid THEN BEGIN
+        ValidationErrorCount := ValidationErrorCount + 1;
+        ERROR('Validation failed for Document No. %1: %2',JnlLine."Document No.",ErrorText);
+      END;
+
+      ACMEValidatedCount := ACMEValidatedCount + 1;
+      TestCoValidationCount := TestCoValidationCount + CheckCounter;
+    END;
+
+    PROCEDURE ValidateGLAccount@4(VAR JnlLine@1000 : Record 81);
+    VAR
+      GLAcc@1001 : Record 15;
+      CheckLevel@1002 : Integer;
+    BEGIN
+      // Validate G/L Account setup and posting rules
+      IF NOT GLAcc.GET(JnlLine."Account No.") THEN
+        ERROR('G/L Account %1 does not exist',JnlLine."Account No.");
+
+      GLAcc.TESTFIELD(Blocked,FALSE);
+      GLAcc.TESTFIELD("Direct Posting",TRUE);
+
+      CheckLevel := 0;
+
+      IF GLAcc."Account Type" <> GLAcc."Account Type"::Posting THEN BEGIN
+        CheckLevel := CheckLevel + 1;
+        ERROR('G/L Account %1 is not a posting account',JnlLine."Account No.");
+      END;
+
+      IF JnlLine."Posting Date" <> 0D THEN BEGIN
+        CheckLevel := CheckLevel + 1;
+        IF (GLAcc."Date Filter" <> '') THEN BEGIN
+          GLAcc.SETFILTER("Date Filter",'%1',JnlLine."Posting Date");
+          GLAcc.CALCFIELDS(Balance,"Net Change");
+        END;
+      END;
+
+      CurrentGLRegisterNo := CurrentGLRegisterNo + CheckLevel;
+    END;
+
+    PROCEDURE ValidateCustomer@5(VAR JnlLine@1000 : Record 81);
+    VAR
+      Cust@1001 : Record 18;
+      CustPostingGr@1002 : Record 92;
+      PaymentTerms@1003 : Record 3;
+      CheckDepth@1004 : Integer;
+      ValidationStep@1005 : Integer;
+    BEGIN
+      // Validate Customer and related setup
+      IF NOT Cust.GET(JnlLine."Account No.") THEN
+        ERROR('Customer %1 does not exist',JnlLine."Account No.");
+
+      CheckDepth := 0;
+      ValidationStep := 0;
+
+      REPEAT
+        CheckDepth := CheckDepth + 1;
+
+        CASE CheckDepth OF
+          1:
+            BEGIN
+              ValidationStep := ValidationStep + 1;
+              IF Cust.Blocked <> Cust.Blocked::" " THEN
+                ERROR('Customer %1 is blocked',JnlLine."Account No.");
+            END;
+          2:
+            BEGIN
+              ValidationStep := ValidationStep + 1;
+              IF Cust."Privacy Blocked" THEN
+                ERROR('Customer %1 is privacy blocked',JnlLine."Account No.");
+            END;
+          3:
+            BEGIN
+              ValidationStep := ValidationStep + 1;
+              Cust.TESTFIELD("Customer Posting Group");
+              IF NOT CustPostingGr.GET(Cust."Customer Posting Group") THEN
+                ERROR('Customer Posting Group %1 does not exist',Cust."Customer Posting Group");
+            END;
+          4:
+            BEGIN
+              ValidationStep := ValidationStep + 1;
+              IF Cust."Payment Terms Code" <> '' THEN BEGIN
+                IF NOT PaymentTerms.GET(Cust."Payment Terms Code") THEN
+                  ERROR('Payment Terms %1 do not exist',Cust."Payment Terms Code");
+              END;
+            END;
+        END;
+
+      UNTIL CheckDepth >= 4;
+
+      Cust.CALCFIELDS(Balance,"Balance (LCY)","Net Change","Net Change (LCY)");
+
+      IF ACMEFeatureEnabled THEN BEGIN
+        ValidateACMECustomerRules(Cust,JnlLine);
+        UpdateACMECustomerAnalysis(Cust."No.",JnlLine.Amount);
+      END;
+
+      ACMEValidatedCount := ACMEValidatedCount + ValidationStep;
+    END;
+
+    PROCEDURE ValidateVendor@6(VAR JnlLine@1000 : Record 81);
+    VAR
+      Vend@1001 : Record 23;
+      VendPostingGr@1002 : Record 93;
+      PaymentTerms@1003 : Record 3;
+      ValidationPhase@1004 : Integer;
+      NestedLevel@1005 : Integer;
+    BEGIN
+      // Validate Vendor and related setup
+      IF NOT Vend.GET(JnlLine."Account No.") THEN
+        ERROR('Vendor %1 does not exist',JnlLine."Account No.");
+
+      ValidationPhase := 0;
+      NestedLevel := 0;
+
+      REPEAT
+        ValidationPhase := ValidationPhase + 1;
+        NestedLevel := 0;
+
+        REPEAT
+          NestedLevel := NestedLevel + 1;
+
+          IF (ValidationPhase = 1) AND (NestedLevel = 1) THEN BEGIN
+            IF Vend.Blocked <> Vend.Blocked::" " THEN
+              ERROR('Vendor %1 is blocked',JnlLine."Account No.");
+          END;
+
+          IF (ValidationPhase = 1) AND (NestedLevel = 2) THEN BEGIN
+            IF Vend."Privacy Blocked" THEN
+              ERROR('Vendor %1 is privacy blocked',JnlLine."Account No.");
+          END;
+
+          IF (ValidationPhase = 2) AND (NestedLevel = 1) THEN BEGIN
+            Vend.TESTFIELD("Vendor Posting Group");
+            IF NOT VendPostingGr.GET(Vend."Vendor Posting Group") THEN
+              ERROR('Vendor Posting Group %1 does not exist',Vend."Vendor Posting Group");
+          END;
+
+          IF (ValidationPhase = 2) AND (NestedLevel = 2) THEN BEGIN
+            IF Vend."Payment Terms Code" <> '' THEN BEGIN
+              IF NOT PaymentTerms.GET(Vend."Payment Terms Code") THEN
+                ERROR('Payment Terms %1 do not exist',Vend."Payment Terms Code");
+            END;
+          END;
+
+        UNTIL NestedLevel >= 2;
+
+      UNTIL ValidationPhase >= 2;
+
+      Vend.CALCFIELDS(Balance,"Balance (LCY)","Net Change","Net Change (LCY)");
+
+      IF FooBarIntegrationActive THEN BEGIN
+        ValidateFooBarVendorRules(Vend,JnlLine);
+        UpdateFooBarVendorAnalysis(Vend."No.",JnlLine.Amount);
+        FooBarCorpRecordCount := FooBarCorpRecordCount + 1;
+      END;
+    END;
+
+    PROCEDURE ValidateBankAccount@7(VAR JnlLine@1000 : Record 81);
+    VAR
+      BankAcc@1001 : Record 270;
+      BankAccPostingGr@1002 : Record 277;
+      ValidationIndex@1003 : Integer;
+    BEGIN
+      // Validate Bank Account setup
+      IF NOT BankAcc.GET(JnlLine."Account No.") THEN
+        ERROR('Bank Account %1 does not exist',JnlLine."Account No.");
+
+      BankAcc.TESTFIELD(Blocked,FALSE);
+
+      ValidationIndex := 1;
+      WHILE ValidationIndex <= 3 DO BEGIN
+        CASE ValidationIndex OF
+          1:
+            BEGIN
+              IF BankAcc."Currency Code" <> JnlLine."Currency Code" THEN BEGIN
+                IF (BankAcc."Currency Code" <> '') AND (JnlLine."Currency Code" <> '') THEN
+                  ERROR('Currency Code %1 does not match Bank Account Currency %2',
+                    JnlLine."Currency Code",BankAcc."Currency Code");
+              END;
+            END;
+          2:
+            BEGIN
+              BankAcc.TESTFIELD("Bank Acc. Posting Group");
+              IF NOT BankAccPostingGr.GET(BankAcc."Bank Acc. Posting Group") THEN
+                ERROR('Bank Acc. Posting Group %1 does not exist',BankAcc."Bank Acc. Posting Group");
+            END;
+          3:
+            BEGIN
+              BankAcc.CALCFIELDS(Balance,"Balance (LCY)");
+              IF ACMEFeatureEnabled THEN
+                ValidateACMEBankRules(BankAcc,JnlLine);
+            END;
+        END;
+        ValidationIndex := ValidationIndex + 1;
+      END;
+    END;
+
+    PROCEDURE ValidateFixedAsset@8(VAR JnlLine@1000 : Record 81);
+    VAR
+      FA@1001 : Record 5600;
+      FADepr@1002 : Record 5612;
+      FAPostGr@1003 : Record 5606;
+      CheckIteration@1004 : Integer;
+    BEGIN
+      // Validate Fixed Asset setup and depreciation
+      IF NOT FA.GET(JnlLine."Account No.") THEN
+        ERROR('Fixed Asset %1 does not exist',JnlLine."Account No.");
+
+      FA.TESTFIELD(Blocked,FALSE);
+      FA.TESTFIELD(Inactive,FALSE);
+      FA.TESTFIELD("FA Posting Group");
+
+      IF NOT FAPostGr.GET(FA."FA Posting Group") THEN
+        ERROR('FA Posting Group %1 does not exist',FA."FA Posting Group");
+
+      CheckIteration := 0;
+      REPEAT
+        CheckIteration := CheckIteration + 1;
+
+        IF JnlLine."Depreciation Book Code" <> '' THEN BEGIN
+          IF FADepr.GET(JnlLine."Account No.",JnlLine."Depreciation Book Code") THEN BEGIN
+            FADepr.TESTFIELD("Depreciation Method");
+            FADepr.TESTFIELD("Depreciation Starting Date");
+
+            IF ACMEFeatureEnabled THEN
+              ValidateACMEFADepreciation(FA,FADepr,JnlLine);
+          END;
+        END;
+
+      UNTIL CheckIteration >= 1;
+    END;
+
+    PROCEDURE ValidateBalancingAccount@9(VAR JnlLine@1000 : Record 81);
+    VAR
+      BalGLAcc@1001 : Record 15;
+      BalCust@1002 : Record 18;
+      BalVend@1003 : Record 23;
+      BalBankAcc@1004 : Record 270;
+      Level@1005 : Integer;
+    BEGIN
+      // Validate balancing account based on type
+      Level := 0;
+
+      CASE JnlLine."Bal. Account Type" OF
+        JnlLine."Bal. Account Type"::"G/L Account":
+          BEGIN
+            Level := Level + 1;
+            IF NOT BalGLAcc.GET(JnlLine."Bal. Account No.") THEN
+              ERROR('Bal. G/L Account %1 does not exist',JnlLine."Bal. Account No.");
+            BalGLAcc.TESTFIELD(Blocked,FALSE);
+            BalGLAcc.TESTFIELD("Direct Posting",TRUE);
+          END;
+        JnlLine."Bal. Account Type"::Customer:
+          BEGIN
+            Level := Level + 2;
+            IF NOT BalCust.GET(JnlLine."Bal. Account No.") THEN
+              ERROR('Bal. Customer %1 does not exist',JnlLine."Bal. Account No.");
+            IF BalCust.Blocked <> BalCust.Blocked::" " THEN
+              ERROR('Bal. Customer %1 is blocked',JnlLine."Bal. Account No.");
+          END;
+        JnlLine."Bal. Account Type"::Vendor:
+          BEGIN
+            Level := Level + 2;
+            IF NOT BalVend.GET(JnlLine."Bal. Account No.") THEN
+              ERROR('Bal. Vendor %1 does not exist',JnlLine."Bal. Account No.");
+            IF BalVend.Blocked <> BalVend.Blocked::" " THEN
+              ERROR('Bal. Vendor %1 is blocked',JnlLine."Bal. Account No.");
+          END;
+        JnlLine."Bal. Account Type"::"Bank Account":
+          BEGIN
+            Level := Level + 1;
+            IF NOT BalBankAcc.GET(JnlLine."Bal. Account No.") THEN
+              ERROR('Bal. Bank Account %1 does not exist',JnlLine."Bal. Account No.");
+            BalBankAcc.TESTFIELD(Blocked,FALSE);
+          END;
+      END;
+
+      CurrentIteration := CurrentIteration + Level;
+    END;
+
+    PROCEDURE ValidateCurrency@10(VAR JnlLine@1000 : Record 81);
+    VAR
+      Curr@1001 : Record 4;
+      CurrExch@1002 : Record 330;
+      FoundRate@1003 : Boolean;
+      Iterations@1004 : Integer;
+    BEGIN
+      // Validate currency and exchange rates
+      IF NOT Curr.GET(JnlLine."Currency Code") THEN
+        ERROR('Currency %1 does not exist',JnlLine."Currency Code");
+
+      Curr.TESTFIELD(Blocked,FALSE);
+
+      FoundRate := FALSE;
+      Iterations := 0;
+
+      CurrExch.SETRANGE("Currency Code",JnlLine."Currency Code");
+      CurrExch.SETFILTER("Starting Date",'<=%1',JnlLine."Posting Date");
+      IF CurrExch.FINDLAST THEN BEGIN
+        FoundRate := TRUE;
+        JnlLine."Currency Factor" := CurrExch."Exchange Rate Amount" / CurrExch."Relational Exch. Rate Amount";
+        CurrentCurrencyFactor := JnlLine."Currency Factor";
+        Iterations := Iterations + 1;
+      END;
+
+      IF NOT FoundRate THEN
+        ERROR('No exchange rate found for Currency %1 on %2',JnlLine."Currency Code",JnlLine."Posting Date");
+
+      IF ACMEFeatureEnabled THEN BEGIN
+        ValidateACMECurrencyRules(Curr,JnlLine);
+        Iterations := Iterations + 1;
+      END;
+
+      ACMEValidatedCount := ACMEValidatedCount + Iterations;
+    END;
+
+    PROCEDURE ValidateVATPosting@11(VAR JnlLine@1000 : Record 81);
+    VAR
+      VATPostSetup@1001 : Record 325;
+      VATCalcType@1002 : Integer;
+      VATLoopCounter@1003 : Integer;
+      InnerLoopCounter@1004 : Integer;
+    BEGIN
+      // Validate VAT posting setup and calculations
+      IF (JnlLine."VAT Bus. Posting Group" = '') OR (JnlLine."VAT Prod. Posting Group" = '') THEN
+        EXIT;
+
+      IF NOT VATPostSetup.GET(JnlLine."VAT Bus. Posting Group",JnlLine."VAT Prod. Posting Group") THEN
+        ERROR('VAT Posting Setup does not exist for VAT Bus. %1 and VAT Prod. %2',
+          JnlLine."VAT Bus. Posting Group",JnlLine."VAT Prod. Posting Group");
+
+      VATLoopCounter := 0;
+      REPEAT
+        VATLoopCounter := VATLoopCounter + 1;
+        InnerLoopCounter := 0;
+
+        REPEAT
+          InnerLoopCounter := InnerLoopCounter + 1;
+
+          IF InnerLoopCounter = 1 THEN BEGIN
+            VATPostSetup.TESTFIELD("VAT Calculation Type");
+            VATCalcType := VATPostSetup."VAT Calculation Type";
+          END;
+
+          IF InnerLoopCounter = 2 THEN BEGIN
+            IF VATCalcType = VATPostSetup."VAT Calculation Type"::"Normal VAT" THEN BEGIN
+              VATPostSetup.TESTFIELD("VAT %");
+              CurrentVATAmount := ROUND(JnlLine.Amount * VATPostSetup."VAT %" / 100);
+              CurrentVATBaseAmount := JnlLine.Amount;
+            END;
+          END;
+
+          IF InnerLoopCounter = 3 THEN BEGIN
+            IF VATCalcType = VATPostSetup."VAT Calculation Type"::"Reverse Charge VAT" THEN BEGIN
+              VATPostSetup.TESTFIELD("VAT %");
+              VATPostSetup.TESTFIELD("Reverse Chrg. VAT Acc.");
+            END;
+          END;
+
+        UNTIL InnerLoopCounter >= 3;
+
+      UNTIL VATLoopCounter >= 1;
+
+      TotalVATAmount := TotalVATAmount + CurrentVATAmount;
+      TotalVATBaseAmount := TotalVATBaseAmount + CurrentVATBaseAmount;
+      FooBarCorpVATTotal := FooBarCorpVATTotal + CurrentVATAmount;
+    END;
+
+    PROCEDURE ValidateACMEFields@12(VAR JnlLine@1000 : Record 81);
+    VAR
+      ACMEValidation@1001 : Record 50006;
+      RuleCount@1002 : Integer;
+      PassedCount@1003 : Integer;
+      NestedCheck@1004 : Integer;
+    BEGIN
+      // Validate ACME-specific fields and business rules
+      IF NOT ACMEFeatureEnabled THEN
+        EXIT;
+
+      RuleCount := 0;
+      PassedCount := 0;
+
+      ACMEValidation.SETRANGE("Document Type",JnlLine."Document Type");
+      ACMEValidation.SETRANGE(Enabled,TRUE);
+      IF ACMEValidation.FINDSET THEN BEGIN
+        REPEAT
+          RuleCount := RuleCount + 1;
+          NestedCheck := 0;
+
+          REPEAT
+            NestedCheck := NestedCheck + 1;
+
+            CASE ACMEValidation."Validation Type" OF
+              ACMEValidation."Validation Type"::"Amount Range":
+                BEGIN
+                  IF (JnlLine.Amount >= ACMEValidation."Minimum Amount") AND
+                     (JnlLine.Amount <= ACMEValidation."Maximum Amount") THEN
+                    PassedCount := PassedCount + 1
+                  ELSE
+                    IF ACMEStrictMode THEN
+                      ERROR('ACME Amount validation failed for rule %1',ACMEValidation.Code);
+                END;
+              ACMEValidation."Validation Type"::"Account Type":
+                BEGIN
+                  IF JnlLine."Account Type" = ACMEValidation."Required Account Type" THEN
+                    PassedCount := PassedCount + 1
+                  ELSE
+                    IF ACMEStrictMode THEN
+                      ERROR('ACME Account Type validation failed for rule %1',ACMEValidation.Code);
+                END;
+              ACMEValidation."Validation Type"::"Dimension Required":
+                BEGIN
+                  IF (JnlLine."Dimension Set ID" <> 0) OR (NOT ACMEStrictMode) THEN
+                    PassedCount := PassedCount + 1
+                  ELSE
+                    ERROR('ACME Dimension validation failed for rule %1',ACMEValidation.Code);
+                END;
+            END;
+
+          UNTIL NestedCheck >= 1;
+
+        UNTIL ACMEValidation.NEXT = 0;
+      END;
+
+      ACMEValidatedCount := ACMEValidatedCount + PassedCount;
+
+      IF PassedCount < RuleCount THEN
+        ACMEErrorCount := ACMEErrorCount + (RuleCount - PassedCount);
+    END;
+
+    PROCEDURE CheckDimensions@13(VAR JnlLine@1000 : Record 81);
+    VAR
+      DimSetEntry@1001 : Record 480;
+      DefaultDim@1002 : Record 352;
+      DimValue@1003 : Record 349;
+      ErrorFound@1004 : Boolean;
+      DimCheckLevel@1005 : Integer;
+      DimLoopCount@1006 : Integer;
+    BEGIN
+      // Check dimension values and mandatory dimensions
+      IF NOT DimensionCheckRequired THEN
+        EXIT;
+
+      ErrorFound := FALSE;
+      DimCheckLevel := 0;
+      DimLoopCount := 0;
+
+      IF JnlLine."Dimension Set ID" <> 0 THEN BEGIN
+        DimCheckLevel := DimCheckLevel + 1;
+        DimSetEntry.SETRANGE("Dimension Set ID",JnlLine."Dimension Set ID");
+        IF DimSetEntry.FINDSET THEN BEGIN
+          REPEAT
+            DimLoopCount := DimLoopCount + 1;
+
+            IF NOT DimValue.GET(DimSetEntry."Dimension Code",DimSetEntry."Dimension Value Code") THEN
+              ERROR('Dimension Value %1 %2 does not exist',
+                DimSetEntry."Dimension Code",DimSetEntry."Dimension Value Code");
+
+            IF DimValue.Blocked THEN
+              ERROR('Dimension Value %1 %2 is blocked',
+                DimSetEntry."Dimension Code",DimSetEntry."Dimension Value Code");
+
+            DimCheckLevel := DimCheckLevel + 1;
+
+          UNTIL DimSetEntry.NEXT = 0;
+        END;
+      END;
+
+      DefaultDim.SETRANGE("Table ID",DATABASE::"G/L Account");
+      DefaultDim.SETRANGE("No.",JnlLine."Account No.");
+      DefaultDim.SETRANGE("Value Posting",DefaultDim."Value Posting"::"Code Mandatory");
+      IF DefaultDim.FINDSET THEN BEGIN
+        REPEAT
+          DimLoopCount := DimLoopCount + 1;
+
+          DimSetEntry.SETRANGE("Dimension Set ID",JnlLine."Dimension Set ID");
+          DimSetEntry.SETRANGE("Dimension Code",DefaultDim."Dimension Code");
+          IF NOT DimSetEntry.FINDFIRST THEN BEGIN
+            ErrorFound := TRUE;
+            ERROR('Dimension %1 is mandatory for G/L Account %2',
+              DefaultDim."Dimension Code",JnlLine."Account No.");
+          END;
+
+        UNTIL DefaultDim.NEXT = 0;
+      END;
+
+      IF ACMEFeatureEnabled THEN BEGIN
+        CheckACMEDimensions(JnlLine);
+        DimCheckLevel := DimCheckLevel + 1;
+      END;
+
+      IF ErrorFound THEN
+        DimensionErrorCount := DimensionErrorCount + 1;
+
+      TestCoValidationCount := TestCoValidationCount + DimLoopCount;
+    END;
+
+    PROCEDURE CalculateAmounts@14(VAR JnlLine@1000 : Record 81);
+    VAR
+      AmountLCY@1001 : Decimal;
+      VATAmount@1002 : Decimal;
+      VATAmountLCY@1003 : Decimal;
+      DiscountAmount@1004 : Decimal;
+      CalcIteration@1005 : Integer;
+      SubCalcLevel@1006 : Integer;
+    BEGIN
+      // Calculate all amounts including currency and VAT
+      CalcIteration := 0;
+
+      REPEAT
+        CalcIteration := CalcIteration + 1;
+        SubCalcLevel := 0;
+
+        REPEAT
+          SubCalcLevel := SubCalcLevel + 1;
+
+          IF (CalcIteration = 1) AND (SubCalcLevel = 1) THEN BEGIN
+            IF JnlLine."Currency Code" = '' THEN BEGIN
+              JnlLine."Amount (LCY)" := JnlLine.Amount;
+              AmountLCY := JnlLine.Amount;
+            END ELSE BEGIN
+              IF JnlLine."Currency Factor" = 0 THEN
+                JnlLine."Currency Factor" := 1;
+              AmountLCY := ROUND(JnlLine.Amount / JnlLine."Currency Factor");
+              JnlLine."Amount (LCY)" := AmountLCY;
+            END;
+          END;
+
+          IF (CalcIteration = 1) AND (SubCalcLevel = 2) THEN BEGIN
+            VATAmount := CurrentVATAmount;
+            IF JnlLine."Currency Code" <> '' THEN
+              VATAmountLCY := ROUND(VATAmount / JnlLine."Currency Factor")
+            ELSE
+              VATAmountLCY := VATAmount;
+
+            JnlLine."VAT Amount" := VATAmount;
+            JnlLine."VAT Amount (LCY)" := VATAmountLCY;
+          END;
+
+          IF (CalcIteration = 2) AND (SubCalcLevel = 1) THEN BEGIN
+            IF JnlLine.Amount >= 0 THEN BEGIN
+              JnlLine."Debit Amount" := JnlLine.Amount;
+              JnlLine."Credit Amount" := 0;
+              JnlLine."Debit Amount (LCY)" := AmountLCY;
+              JnlLine."Credit Amount (LCY)" := 0;
+            END ELSE BEGIN
+              JnlLine."Debit Amount" := 0;
+              JnlLine."Credit Amount" := -JnlLine.Amount;
+              JnlLine."Debit Amount (LCY)" := 0;
+              JnlLine."Credit Amount (LCY)" := -AmountLCY;
+            END;
+          END;
+
+          IF (CalcIteration = 2) AND (SubCalcLevel = 2) THEN BEGIN
+            IF JnlLine."Payment Discount %" <> 0 THEN BEGIN
+              DiscountAmount := ROUND(JnlLine.Amount * JnlLine."Payment Discount %" / 100);
+              JnlLine."Payment Discount Amount" := DiscountAmount;
+            END;
+          END;
+
+        UNTIL SubCalcLevel >= 2;
+
+      UNTIL CalcIteration >= 2;
+
+      UpdateTotalAmounts(JnlLine.Amount,AmountLCY,VATAmount,VATAmountLCY);
+
+      IF ACMEFeatureEnabled THEN
+        CalculateACMEAmounts(JnlLine);
+
+      IF FooBarIntegrationActive THEN
+        CalculateFooBarCorpAmounts(JnlLine);
+    END;
+
+    PROCEDURE CreateGLEntry@15(VAR JnlLine@1000 : Record 81);
+    VAR
+      GLEntry2@1001 : Record 17;
+      EntryCreated@1002 : Boolean;
+      CreationLevel@1003 : Integer;
+    BEGIN
+      // Create G/L Entry from journal line
+      EntryCreated := FALSE;
+      CreationLevel := 0;
+
+      GLEntry.INIT;
+      GLEntry."Entry No." := NextEntryNo;
+      NextEntryNo := NextEntryNo + 1;
+
+      CreationLevel := CreationLevel + 1;
+
+      GLEntry."G/L Account No." := JnlLine."Account No.";
+      GLEntry."Posting Date" := JnlLine."Posting Date";
+      GLEntry."Document Type" := JnlLine."Document Type";
+      GLEntry."Document No." := JnlLine."Document No.";
+      GLEntry."External Document No." := JnlLine."External Document No.";
+      GLEntry.Description := JnlLine.Description;
+
+      CreationLevel := CreationLevel + 1;
+
+      GLEntry.Amount := JnlLine.Amount;
+      GLEntry."Amount (LCY)" := JnlLine."Amount (LCY)";
+      GLEntry."Debit Amount" := JnlLine."Debit Amount";
+      GLEntry."Credit Amount" := JnlLine."Credit Amount";
+      GLEntry."Debit Amount (LCY)" := JnlLine."Debit Amount (LCY)";
+      GLEntry."Credit Amount (LCY)" := JnlLine."Credit Amount (LCY)";
+
+      CreationLevel := CreationLevel + 1;
+
+      GLEntry."VAT Amount" := JnlLine."VAT Amount";
+      GLEntry."Currency Code" := JnlLine."Currency Code";
+      GLEntry."Currency Factor" := JnlLine."Currency Factor";
+      GLEntry."Source Code" := JnlLine."Source Code";
+      GLEntry."Reason Code" := JnlLine."Reason Code";
+
+      CreationLevel := CreationLevel + 1;
+
+      GLEntry."Dimension Set ID" := JnlLine."Dimension Set ID";
+      GLEntry."Global Dimension 1 Code" := JnlLine."Shortcut Dimension 1 Code";
+      GLEntry."Global Dimension 2 Code" := JnlLine."Shortcut Dimension 2 Code";
+      GLEntry."Job No." := JnlLine."Job No.";
+      GLEntry."Business Unit Code" := JnlLine."Business Unit Code";
+
+      CreationLevel := CreationLevel + 1;
+
+      GLEntry."Transaction No." := NextTransactionNo;
+      GLEntry."User ID" := USERID;
+      GLEntry."Source Type" := JnlLine."Source Type";
+      GLEntry."Source No." := JnlLine."Source No.";
+      GLEntry."Bal. Account Type" := JnlLine."Bal. Account Type";
+      GLEntry."Bal. Account No." := JnlLine."Bal. Account No.";
+
+      GLEntry.INSERT(TRUE);
+      EntryCreated := TRUE;
+
+      LastGLEntryNo := GLEntry."Entry No.";
+      ProcessedLineCount := ProcessedLineCount + 1;
+
+      IF ACMEFeatureEnabled THEN
+        CreateACMEGLAnalysis(GLEntry,CreationLevel);
+    END;
+
+    PROCEDURE CreateDetailedLedgerEntries@16(VAR JnlLine@1000 : Record 81);
+    VAR
+      DetailLevel@1001 : Integer;
+      SubLevel@1002 : Integer;
+      EntryType@1003 : Integer;
+    BEGIN
+      // Create detailed ledger entries based on account type
+      DetailLevel := 0;
+
+      CASE JnlLine."Account Type" OF
+        JnlLine."Account Type"::Customer:
+          BEGIN
+            DetailLevel := DetailLevel + 1;
+            SubLevel := 0;
+
+            REPEAT
+              SubLevel := SubLevel + 1;
+
+              IF SubLevel = 1 THEN
+                CreateCustomerLedgerEntry(JnlLine);
+
+              IF SubLevel = 2 THEN
+                CreateDetailedCustLedgEntry(JnlLine);
+
+              IF SubLevel = 3 THEN BEGIN
+                IF ACMEFeatureEnabled THEN
+                  CreateACMECustomerEntry(JnlLine);
+              END;
+
+            UNTIL SubLevel >= 3;
+          END;
+        JnlLine."Account Type"::Vendor:
+          BEGIN
+            DetailLevel := DetailLevel + 1;
+            SubLevel := 0;
+
+            REPEAT
+              SubLevel := SubLevel + 1;
+
+              IF SubLevel = 1 THEN
+                CreateVendorLedgerEntry(JnlLine);
+
+              IF SubLevel = 2 THEN
+                CreateDetailedVendLedgEntry(JnlLine);
+
+              IF SubLevel = 3 THEN BEGIN
+                IF FooBarIntegrationActive THEN
+                  CreateFooBarVendorEntry(JnlLine);
+              END;
+
+            UNTIL SubLevel >= 3;
+          END;
+        JnlLine."Account Type"::"Fixed Asset":
+          BEGIN
+            DetailLevel := DetailLevel + 1;
+            CreateFALedgerEntry(JnlLine);
+            CreateFADepreciationEntry(JnlLine);
+          END;
+      END;
+
+      ACMEProcessedCount := ACMEProcessedCount + DetailLevel;
+    END;
+
+    PROCEDURE CreateCustomerLedgerEntry@17(VAR JnlLine@1000 : Record 81);
+    VAR
+      CustLedgEntry2@1001 : Record 21;
+      CreationStep@1002 : Integer;
+    BEGIN
+      // Create Customer Ledger Entry
+      CustLedgEntry.INIT;
+      CustLedgEntry."Entry No." := NextEntryNo;
+      NextEntryNo := NextEntryNo + 1;
+
+      CreationStep := 1;
+
+      CustLedgEntry."Customer No." := JnlLine."Account No.";
+      CustLedgEntry."Posting Date" := JnlLine."Posting Date";
+      CustLedgEntry."Document Type" := JnlLine."Document Type";
+      CustLedgEntry."Document No." := JnlLine."Document No.";
+      CustLedgEntry."External Document No." := JnlLine."External Document No.";
+      CustLedgEntry.Description := JnlLine.Description;
+
+      CreationStep := CreationStep + 1;
+
+      CustLedgEntry.Amount := JnlLine.Amount;
+      CustLedgEntry."Amount (LCY)" := JnlLine."Amount (LCY)";
+      CustLedgEntry."Currency Code" := JnlLine."Currency Code";
+      CustLedgEntry."Currency Factor" := JnlLine."Currency Factor";
+
+      CreationStep := CreationStep + 1;
+
+      CustLedgEntry."Customer Posting Group" := Customer."Customer Posting Group";
+      CustLedgEntry."Global Dimension 1 Code" := JnlLine."Shortcut Dimension 1 Code";
+      CustLedgEntry."Global Dimension 2 Code" := JnlLine."Shortcut Dimension 2 Code";
+      CustLedgEntry."Dimension Set ID" := JnlLine."Dimension Set ID";
+
+      CreationStep := CreationStep + 1;
+
+      CustLedgEntry."Salesperson Code" := JnlLine."Salespers./Purch. Code";
+      CustLedgEntry."User ID" := USERID;
+      CustLedgEntry."Source Code" := JnlLine."Source Code";
+      CustLedgEntry."Reason Code" := JnlLine."Reason Code";
+      CustLedgEntry."Transaction No." := NextTransactionNo;
+      CustLedgEntry."Journal Batch Name" := JnlLine."Journal Batch Name";
+
+      CustLedgEntry."Due Date" := JnlLine."Due Date";
+      CustLedgEntry."Pmt. Discount Date" := JnlLine."Pmt. Discount Date";
+      CustLedgEntry."Payment Discount %" := JnlLine."Payment Discount %";
+      CustLedgEntry."Original Pmt. Disc. Possible" := JnlLine."Payment Discount Amount";
+
+      CustLedgEntry.Open := TRUE;
+      CustLedgEntry.Positive := (JnlLine.Amount > 0);
+
+      CustLedgEntry.INSERT(TRUE);
+
+      LastCustLedgEntryNo := CustLedgEntry."Entry No.";
+      ACMEProcessedCount := ACMEProcessedCount + CreationStep;
+    END;
+
+    PROCEDURE CreateDetailedCustLedgEntry@18(VAR JnlLine@1000 : Record 81);
+    VAR
+      DetailedCustLedgEntry@1001 : Record 379;
+      EntryTypeLoop@1002 : Integer;
+    BEGIN
+      // Create Detailed Customer Ledger Entry
+      DetailedCustLedgEntry.INIT;
+      DetailedCustLedgEntry."Entry No." := NextEntryNo;
+      NextEntryNo := NextEntryNo + 1;
+
+      EntryTypeLoop := 0;
+
+      REPEAT
+        EntryTypeLoop := EntryTypeLoop + 1;
+
+        IF EntryTypeLoop = 1 THEN BEGIN
+          DetailedCustLedgEntry."Cust. Ledger Entry No." := LastCustLedgEntryNo;
+          DetailedCustLedgEntry."Entry Type" := DetailedCustLedgEntry."Entry Type"::"Initial Entry";
+          DetailedCustLedgEntry."Posting Date" := JnlLine."Posting Date";
+          DetailedCustLedgEntry."Document Type" := JnlLine."Document Type";
+          DetailedCustLedgEntry."Document No." := JnlLine."Document No.";
+        END;
+
+        IF EntryTypeLoop = 2 THEN BEGIN
+          DetailedCustLedgEntry.Amount := JnlLine.Amount;
+          DetailedCustLedgEntry."Amount (LCY)" := JnlLine."Amount (LCY)";
+          DetailedCustLedgEntry."Debit Amount" := JnlLine."Debit Amount";
+          DetailedCustLedgEntry."Credit Amount" := JnlLine."Credit Amount";
+          DetailedCustLedgEntry."Debit Amount (LCY)" := JnlLine."Debit Amount (LCY)";
+          DetailedCustLedgEntry."Credit Amount (LCY)" := JnlLine."Credit Amount (LCY)";
+        END;
+
+        IF EntryTypeLoop = 3 THEN BEGIN
+          DetailedCustLedgEntry."Customer No." := JnlLine."Account No.";
+          DetailedCustLedgEntry."Currency Code" := JnlLine."Currency Code";
+          DetailedCustLedgEntry."User ID" := USERID;
+          DetailedCustLedgEntry."Source Code" := JnlLine."Source Code";
+          DetailedCustLedgEntry."Transaction No." := NextTransactionNo;
+          DetailedCustLedgEntry."Journal Batch Name" := JnlLine."Journal Batch Name";
+        END;
+
+      UNTIL EntryTypeLoop >= 3;
+
+      DetailedCustLedgEntry.INSERT(TRUE);
+    END;
+
+    PROCEDURE CreateVendorLedgerEntry@19(VAR JnlLine@1000 : Record 81);
+    VAR
+      VendLedgEntry2@1001 : Record 25;
+      BuildStep@1002 : Integer;
+    BEGIN
+      // Create Vendor Ledger Entry
+      VendLedgEntry.INIT;
+      VendLedgEntry."Entry No." := NextEntryNo;
+      NextEntryNo := NextEntryNo + 1;
+
+      BuildStep := 1;
+
+      VendLedgEntry."Vendor No." := JnlLine."Account No.";
+      VendLedgEntry."Posting Date" := JnlLine."Posting Date";
+      VendLedgEntry."Document Type" := JnlLine."Document Type";
+      VendLedgEntry."Document No." := JnlLine."Document No.";
+      VendLedgEntry."External Document No." := JnlLine."External Document No.";
+      VendLedgEntry.Description := JnlLine.Description;
+
+      BuildStep := BuildStep + 1;
+
+      VendLedgEntry.Amount := JnlLine.Amount;
+      VendLedgEntry."Amount (LCY)" := JnlLine."Amount (LCY)";
+      VendLedgEntry."Currency Code" := JnlLine."Currency Code";
+      VendLedgEntry."Currency Factor" := JnlLine."Currency Factor";
+
+      BuildStep := BuildStep + 1;
+
+      VendLedgEntry."Vendor Posting Group" := Vendor."Vendor Posting Group";
+      VendLedgEntry."Global Dimension 1 Code" := JnlLine."Shortcut Dimension 1 Code";
+      VendLedgEntry."Global Dimension 2 Code" := JnlLine."Shortcut Dimension 2 Code";
+      VendLedgEntry."Dimension Set ID" := JnlLine."Dimension Set ID";
+
+      BuildStep := BuildStep + 1;
+
+      VendLedgEntry."Purchaser Code" := JnlLine."Salespers./Purch. Code";
+      VendLedgEntry."User ID" := USERID;
+      VendLedgEntry."Source Code" := JnlLine."Source Code";
+      VendLedgEntry."Reason Code" := JnlLine."Reason Code";
+      VendLedgEntry."Transaction No." := NextTransactionNo;
+      VendLedgEntry."Journal Batch Name" := JnlLine."Journal Batch Name";
+
+      VendLedgEntry."Due Date" := JnlLine."Due Date";
+      VendLedgEntry."Pmt. Discount Date" := JnlLine."Pmt. Discount Date";
+      VendLedgEntry."Payment Discount %" := JnlLine."Payment Discount %";
+      VendLedgEntry."Original Pmt. Disc. Possible" := JnlLine."Payment Discount Amount";
+
+      VendLedgEntry.Open := TRUE;
+      VendLedgEntry.Positive := (JnlLine.Amount < 0);
+
+      VendLedgEntry.INSERT(TRUE);
+
+      LastVendLedgEntryNo := VendLedgEntry."Entry No.";
+      FooBarCorpRecordCount := FooBarCorpRecordCount + BuildStep;
+    END;
+
+    PROCEDURE CreateDetailedVendLedgEntry@20(VAR JnlLine@1000 : Record 81);
+    VAR
+      DetailedVendLedgEntry@1001 : Record 380;
+      ProcessPhase@1002 : Integer;
+    BEGIN
+      // Create Detailed Vendor Ledger Entry
+      DetailedVendLedgEntry.INIT;
+      DetailedVendLedgEntry."Entry No." := NextEntryNo;
+      NextEntryNo := NextEntryNo + 1;
+
+      ProcessPhase := 0;
+
+      REPEAT
+        ProcessPhase := ProcessPhase + 1;
+
+        CASE ProcessPhase OF
+          1:
+            BEGIN
+              DetailedVendLedgEntry."Vendor Ledger Entry No." := LastVendLedgEntryNo;
+              DetailedVendLedgEntry."Entry Type" := DetailedVendLedgEntry."Entry Type"::"Initial Entry";
+              DetailedVendLedgEntry."Posting Date" := JnlLine."Posting Date";
+              DetailedVendLedgEntry."Document Type" := JnlLine."Document Type";
+              DetailedVendLedgEntry."Document No." := JnlLine."Document No.";
+            END;
+          2:
+            BEGIN
+              DetailedVendLedgEntry.Amount := JnlLine.Amount;
+              DetailedVendLedgEntry."Amount (LCY)" := JnlLine."Amount (LCY)";
+              DetailedVendLedgEntry."Debit Amount" := JnlLine."Debit Amount";
+              DetailedVendLedgEntry."Credit Amount" := JnlLine."Credit Amount";
+              DetailedVendLedgEntry."Debit Amount (LCY)" := JnlLine."Debit Amount (LCY)";
+              DetailedVendLedgEntry."Credit Amount (LCY)" := JnlLine."Credit Amount (LCY)";
+            END;
+          3:
+            BEGIN
+              DetailedVendLedgEntry."Vendor No." := JnlLine."Account No.";
+              DetailedVendLedgEntry."Currency Code" := JnlLine."Currency Code";
+              DetailedVendLedgEntry."User ID" := USERID;
+              DetailedVendLedgEntry."Source Code" := JnlLine."Source Code";
+              DetailedVendLedgEntry."Transaction No." := NextTransactionNo;
+              DetailedVendLedgEntry."Journal Batch Name" := JnlLine."Journal Batch Name";
+            END;
+        END;
+
+      UNTIL ProcessPhase >= 3;
+
+      DetailedVendLedgEntry.INSERT(TRUE);
+    END;
+
+    PROCEDURE CreateFALedgerEntry@21(VAR JnlLine@1000 : Record 81);
+    VAR
+      FAEntry@1001 : Record 5601;
+      EntryBuildLevel@1002 : Integer;
+    BEGIN
+      // Create Fixed Asset Ledger Entry
+      FAEntry.INIT;
+      FAEntry."Entry No." := NextEntryNo;
+      NextEntryNo := NextEntryNo + 1;
+
+      EntryBuildLevel := 0;
+
+      REPEAT
+        EntryBuildLevel := EntryBuildLevel + 1;
+
+        IF EntryBuildLevel = 1 THEN BEGIN
+          FAEntry."FA No." := JnlLine."Account No.";
+          FAEntry."FA Posting Date" := JnlLine."Posting Date";
+          FAEntry."Posting Date" := JnlLine."Posting Date";
+          FAEntry."Document Type" := JnlLine."Document Type";
+          FAEntry."Document No." := JnlLine."Document No.";
+          FAEntry."External Document No." := JnlLine."External Document No.";
+          FAEntry.Description := JnlLine.Description;
+        END;
+
+        IF EntryBuildLevel = 2 THEN BEGIN
+          FAEntry.Amount := JnlLine.Amount;
+          FAEntry."Debit Amount" := JnlLine."Debit Amount";
+          FAEntry."Credit Amount" := JnlLine."Credit Amount";
+          FAEntry."FA Posting Type" := JnlLine."FA Posting Type";
+          FAEntry."Depreciation Book Code" := JnlLine."Depreciation Book Code";
+        END;
+
+        IF EntryBuildLevel = 3 THEN BEGIN
+          FAEntry."FA Posting Group" := FixedAsset."FA Posting Group";
+          FAEntry."Global Dimension 1 Code" := JnlLine."Shortcut Dimension 1 Code";
+          FAEntry."Global Dimension 2 Code" := JnlLine."Shortcut Dimension 2 Code";
+          FAEntry."Dimension Set ID" := JnlLine."Dimension Set ID";
+        END;
+
+        IF EntryBuildLevel = 4 THEN BEGIN
+          FAEntry."User ID" := USERID;
+          FAEntry."Source Code" := JnlLine."Source Code";
+          FAEntry."Reason Code" := JnlLine."Reason Code";
+          FAEntry."Transaction No." := NextTransactionNo;
+          FAEntry."Journal Batch Name" := JnlLine."Journal Batch Name";
+        END;
+
+      UNTIL EntryBuildLevel >= 4;
+
+      FAEntry.INSERT(TRUE);
+      LastFALedgEntryNo := FAEntry."Entry No.";
+    END;
+
+    PROCEDURE CreateFADepreciationEntry@22(VAR JnlLine@1000 : Record 81);
+    VAR
+      DeprAmount@1001 : Decimal;
+      DeprBookValue@1002 : Decimal;
+      DeprPercent@1003 : Decimal;
+      CalcLoop@1004 : Integer;
+    BEGIN
+      // Calculate and create FA depreciation entry
+      IF JnlLine."FA Posting Type" <> JnlLine."FA Posting Type"::Depreciation THEN
+        EXIT;
+
+      DeprAmount := 0;
+      DeprBookValue := 0;
+      DeprPercent := 0;
+      CalcLoop := 0;
+
+      REPEAT
+        CalcLoop := CalcLoop + 1;
+
+        IF FADeprBook.GET(JnlLine."Account No.",JnlLine."Depreciation Book Code") THEN BEGIN
+          CASE FADeprBook."Depreciation Method" OF
+            FADeprBook."Depreciation Method"::"Straight-Line":
+              BEGIN
+                DeprPercent := 100 / FADeprBook."No. of Depreciation Years";
+                DeprAmount := ROUND(FADeprBook."Acquisition Cost" * DeprPercent / 100 / 12);
+              END;
+            FADeprBook."Depreciation Method"::"Declining-Balance 1":
+              BEGIN
+                DeprPercent := FADeprBook."Declining-Balance %";
+                FADeprBook.CALCFIELDS("Book Value");
+                DeprBookValue := FADeprBook."Book Value";
+                DeprAmount := ROUND(DeprBookValue * DeprPercent / 100 / 12);
+              END;
+            FADeprBook."Depreciation Method"::"Declining-Balance 2":
+              BEGIN
+                DeprPercent := FADeprBook."Declining-Balance %";
+                FADeprBook.CALCFIELDS("Book Value");
+                DeprBookValue := FADeprBook."Book Value";
+                DeprAmount := ROUND(DeprBookValue * DeprPercent / 100 / 12);
+              END;
+          END;
+        END;
+
+      UNTIL CalcLoop >= 1;
+
+      JnlLine.Amount := -DeprAmount;
+      JnlLine."Amount (LCY)" := -DeprAmount;
+    END;
+
+    PROCEDURE UpdateDimensionEntries@23(VAR JnlLine@1000 : Record 81);
+    VAR
+      DimSetEntry@1001 : Record 480;
+      TempDimEntry@1002 : TEMPORARY Record 480;
+      DimUpdateLevel@1003 : Integer;
+      DimCounter@1004 : Integer;
+    BEGIN
+      // Update dimension entries for posted transaction
+      IF JnlLine."Dimension Set ID" = 0 THEN
+        EXIT;
+
+      DimUpdateLevel := 0;
+      DimCounter := 0;
+
+      DimSetEntry.SETRANGE("Dimension Set ID",JnlLine."Dimension Set ID");
+      IF DimSetEntry.FINDSET THEN BEGIN
+        REPEAT
+          DimCounter := DimCounter + 1;
+          DimUpdateLevel := DimUpdateLevel + 1;
+
+          TempDimEntry := DimSetEntry;
+          TempDimEntry."Entry No." := LastGLEntryNo;
+          TempDimEntry.INSERT;
+
+          IF ACMEFeatureEnabled THEN
+            UpdateACMEDimensionAnalysis(DimSetEntry,JnlLine);
+
+          IF DimCounter MOD 5 = 0 THEN
+            DimUpdateLevel := DimUpdateLevel + 1;
+
+        UNTIL DimSetEntry.NEXT = 0;
+      END;
+
+      TestCoValidationCount := TestCoValidationCount + DimCounter;
+    END;
+
+    PROCEDURE ProcessACMELedgerEntry@24(VAR JnlLine@1000 : Record 81);
+    VAR
+      ACMEEntry@1001 : Record 50001;
+      ProcessingLevel@1002 : Integer;
+      SubProcessLevel@1003 : Integer;
+    BEGIN
+      // Process ACME-specific ledger entry
+      IF NOT ACMEFeatureEnabled THEN
+        EXIT;
+
+      ProcessingLevel := 0;
+
+      REPEAT
+        ProcessingLevel := ProcessingLevel + 1;
+        SubProcessLevel := 0;
+
+        REPEAT
+          SubProcessLevel := SubProcessLevel + 1;
+
+          IF (ProcessingLevel = 1) AND (SubProcessLevel = 1) THEN BEGIN
+            ACMEEntry.INIT;
+            ACMEEntry."Entry No." := NextACMEEntryNo;
+            NextACMEEntryNo := NextACMEEntryNo + 1;
+            ACMEEntry."GL Entry No." := LastGLEntryNo;
+            ACMEEntry."Posting Date" := JnlLine."Posting Date";
+            ACMEEntry."Document No." := JnlLine."Document No.";
+          END;
+
+          IF (ProcessingLevel = 1) AND (SubProcessLevel = 2) THEN BEGIN
+            ACMEEntry."Account Type" := JnlLine."Account Type";
+            ACMEEntry."Account No." := JnlLine."Account No.";
+            ACMEEntry.Amount := JnlLine.Amount;
+            ACMEEntry."Amount (LCY)" := JnlLine."Amount (LCY)";
+          END;
+
+          IF (ProcessingLevel = 2) AND (SubProcessLevel = 1) THEN BEGIN
+            ACMEEntry."ACME Division Code" := ACMEDivisionCode;
+            ACMEEntry."ACME Region Code" := ACMERegionCode;
+            ACMEEntry."Processing Status" := ACMEEntry."Processing Status"::Posted;
+            ACMEEntry."Validation Level" := ACMEValidatedCount;
+          END;
+
+          IF (ProcessingLevel = 2) AND (SubProcessLevel = 2) THEN BEGIN
+            ACMEEntry."User ID" := USERID;
+            ACMEEntry."Transaction No." := NextTransactionNo;
+            ACMEEntry."Dimension Set ID" := JnlLine."Dimension Set ID";
+          END;
+
+        UNTIL SubProcessLevel >= 2;
+
+      UNTIL ProcessingLevel >= 2;
+
+      ACMEEntry.INSERT(TRUE);
+      LastACMEEntryNo := ACMEEntry."Entry No.";
+      ACMEProcessedCount := ACMEProcessedCount + 1;
+    END;
+
+    PROCEDURE UpdateAnalytics@25(VAR JnlLine@1000 : Record 81);
+    VAR
+      AnalyticsLevel@1001 : Integer;
+      UpdateCounter@1002 : Integer;
+    BEGIN
+      // Update analytics and statistics
+      AnalyticsLevel := 0;
+      UpdateCounter := 0;
+
+      REPEAT
+        AnalyticsLevel := AnalyticsLevel + 1;
+
+        IF AnalyticsLevel = 1 THEN BEGIN
+          UpdateCounter := UpdateCounter + 1;
+          TotalAmount := TotalAmount + JnlLine.Amount;
+          TotalAmountLCY := TotalAmountLCY + JnlLine."Amount (LCY)";
+          AccumulatedAmount := AccumulatedAmount + JnlLine.Amount;
+          AccumulatedAmountLCY := AccumulatedAmountLCY + JnlLine."Amount (LCY)";
+        END;
+
+        IF AnalyticsLevel = 2 THEN BEGIN
+          UpdateCounter := UpdateCounter + 1;
+          IF JnlLine.Amount >= 0 THEN
+            TotalDebitAmount := TotalDebitAmount + JnlLine.Amount
+          ELSE
+            TotalCreditAmount := TotalCreditAmount + (-JnlLine.Amount);
+        END;
+
+        IF AnalyticsLevel = 3 THEN BEGIN
+          UpdateCounter := UpdateCounter + 1;
+          IF ACMEFeatureEnabled THEN BEGIN
+            ACMETotalProcessed := ACMETotalProcessed + JnlLine.Amount;
+            ACMETotalValidated := ACMETotalValidated + JnlLine."Amount (LCY)";
+            UpdateACMEAnalytics(JnlLine);
+          END;
+        END;
+
+        IF AnalyticsLevel = 4 THEN BEGIN
+          UpdateCounter := UpdateCounter + 1;
+          IF FooBarIntegrationActive THEN BEGIN
+            FooBarCorpBalance := FooBarCorpBalance + JnlLine.Amount;
+            UpdateFooBarCorpAnalytics(JnlLine);
+          END;
+        END;
+
+        IF AnalyticsLevel = 5 THEN BEGIN
+          UpdateCounter := UpdateCounter + 1;
+          IF TestCoValidationActive THEN
+            UpdateTestCoAnalytics(JnlLine);
+        END;
+
+      UNTIL AnalyticsLevel >= 5;
+
+      TestCoValidationCount := TestCoValidationCount + UpdateCounter;
+    END;
+
+    PROCEDURE FinalizePosting@26(VAR JnlLine@1000 : Record 81);
+    VAR
+      FinalizeStep@1001 : Integer;
+      CommitLevel@1002 : Integer;
+    BEGIN
+      // Finalize posting process
+      FinalizeStep := 0;
+      CommitLevel := 0;
+
+      REPEAT
+        FinalizeStep := FinalizeStep + 1;
+
+        IF FinalizeStep = 1 THEN BEGIN
+          CommitLevel := CommitLevel + 1;
+          CreateGLRegister();
+        END;
+
+        IF FinalizeStep = 2 THEN BEGIN
+          CommitLevel := CommitLevel + 1;
+          UpdateSourceTables(JnlLine);
+        END;
+
+        IF FinalizeStep = 3 THEN BEGIN
+          CommitLevel := CommitLevel + 1;
+          IF ACMEFeatureEnabled THEN
+            FinalizeACMEProcessing(JnlLine);
+        END;
+
+        IF FinalizeStep = 4 THEN BEGIN
+          CommitLevel := CommitLevel + 1;
+          IF FooBarIntegrationActive THEN
+            FinalizeFooBarCorpProcessing(JnlLine);
+        END;
+
+        IF FinalizeStep = 5 THEN BEGIN
+          CommitLevel := CommitLevel + 1;
+          CreateWorkflowEntries(JnlLine);
+          UpdateNotifications(JnlLine);
+        END;
+
+        IF FinalizeStep = 6 THEN BEGIN
+          CommitLevel := CommitLevel + 1;
+          IF NOT SuppressCommit THEN
+            COMMIT;
+        END;
+
+      UNTIL FinalizeStep >= 6;
+
+      ACMETotalPosted := ACMETotalPosted + JnlLine.Amount;
+      NextTransactionNo := NextTransactionNo + 1;
+    END;
+
+    PROCEDURE CreateGLRegister@27();
+    VAR
+      GLReg2@1001 : Record 45;
+      CreationIteration@1002 : Integer;
+    BEGIN
+      // Create G/L Register entry
+      GLReg.INIT;
+      GLReg."No." := NextGLRegisterNo;
+      NextGLRegisterNo := NextGLRegisterNo + 1;
+
+      CreationIteration := 0;
+
+      REPEAT
+        CreationIteration := CreationIteration + 1;
+
+        CASE CreationIteration OF
+          1:
+            BEGIN
+              GLReg."From Entry No." := LastEntryNo + 1;
+              GLReg."To Entry No." := NextEntryNo - 1;
+              GLReg."Creation Date" := TODAY;
+              GLReg."Creation Time" := TIME;
+            END;
+          2:
+            BEGIN
+              GLReg."Source Code" := CurrentSourceCode;
+              GLReg."Journal Batch Name" := CurrentJournalBatchName;
+              GLReg."User ID" := USERID;
+            END;
+          3:
+            BEGIN
+              GLReg.INSERT(TRUE);
+              LastRegisterNo := GLReg."No.";
+            END;
+        END;
+
+      UNTIL CreationIteration >= 3;
+    END;
+
+    PROCEDURE UpdateSourceTables@28(VAR JnlLine@1000 : Record 81);
+    VAR
+      UpdatePhase@1001 : Integer;
+      TableCounter@1002 : Integer;
+    BEGIN
+      // Update source tables after posting
+      UpdatePhase := 0;
+      TableCounter := 0;
+
+      REPEAT
+        UpdatePhase := UpdatePhase + 1;
+
+        CASE JnlLine."Account Type" OF
+          JnlLine."Account Type"::Customer:
+            BEGIN
+              TableCounter := TableCounter + 1;
+              IF Customer.GET(JnlLine."Account No.") THEN BEGIN
+                Customer.MODIFY(TRUE);
+              END;
+            END;
+          JnlLine."Account Type"::Vendor:
+            BEGIN
+              TableCounter := TableCounter + 1;
+              IF Vendor.GET(JnlLine."Account No.") THEN BEGIN
+                Vendor.MODIFY(TRUE);
+              END;
+            END;
+          JnlLine."Account Type"::"G/L Account":
+            BEGIN
+              TableCounter := TableCounter + 1;
+              IF GLAccount.GET(JnlLine."Account No.") THEN BEGIN
+                GLAccount.MODIFY(TRUE);
+              END;
+            END;
+        END;
+
+      UNTIL UpdatePhase >= 1;
+    END;
+
+    PROCEDURE CreateWorkflowEntries@29(VAR JnlLine@1000 : Record 81);
+    VAR
+      WorkflowEntry@1001 : Record 50007;
+      WorkflowLevel@1002 : Integer;
+      NestedLoop@1003 : Integer;
+    BEGIN
+      // Create workflow tracking entries
+      IF NOT ACMEFeatureEnabled THEN
+        EXIT;
+
+      WorkflowLevel := 0;
+
+      REPEAT
+        WorkflowLevel := WorkflowLevel + 1;
+        NestedLoop := 0;
+
+        REPEAT
+          NestedLoop := NestedLoop + 1;
+
+          IF (WorkflowLevel = 1) AND (NestedLoop = 1) THEN BEGIN
+            WorkflowEntry.INIT;
+            WorkflowEntry."Entry No." := NextWorkflowEntryNo;
+            NextWorkflowEntryNo := NextWorkflowEntryNo + 1;
+            WorkflowEntry."Document Type" := JnlLine."Document Type";
+            WorkflowEntry."Document No." := JnlLine."Document No.";
+          END;
+
+          IF (WorkflowLevel = 1) AND (NestedLoop = 2) THEN BEGIN
+            WorkflowEntry."Posting Date" := JnlLine."Posting Date";
+            WorkflowEntry."GL Entry No." := LastGLEntryNo;
+            WorkflowEntry."ACME Entry No." := LastACMEEntryNo;
+            WorkflowEntry.Amount := JnlLine.Amount;
+          END;
+
+          IF (WorkflowLevel = 2) AND (NestedLoop = 1) THEN BEGIN
+            WorkflowEntry."Workflow Status" := WorkflowEntry."Workflow Status"::Completed;
+            WorkflowEntry."User ID" := USERID;
+            WorkflowEntry."Processed Date Time" := CURRENTDATETIME;
+          END;
+
+          IF (WorkflowLevel = 2) AND (NestedLoop = 2) THEN BEGIN
+            WorkflowEntry.INSERT(TRUE);
+            LastWorkflowEntryNo := WorkflowEntry."Entry No.";
+          END;
+
+        UNTIL NestedLoop >= 2;
+
+      UNTIL WorkflowLevel >= 2;
+    END;
+
+    PROCEDURE UpdateNotifications@30(VAR JnlLine@1000 : Record 81);
+    VAR
+      NotifEntry@1001 : Record 50009;
+      NotifLevel@1002 : Integer;
+    BEGIN
+      // Update notification entries
+      IF NOT NotificationEnabled THEN
+        EXIT;
+
+      NotifLevel := 0;
+
+      REPEAT
+        NotifLevel := NotifLevel + 1;
+
+        IF NotifLevel = 1 THEN BEGIN
+          NotifEntry.INIT;
+          NotifEntry."Entry No." := NextEntryNo;
+          NextEntryNo := NextEntryNo + 1;
+        END;
+
+        IF NotifLevel = 2 THEN BEGIN
+          NotifEntry."Document Type" := JnlLine."Document Type";
+          NotifEntry."Document No." := JnlLine."Document No.";
+          NotifEntry."Notification Type" := NotifEntry."Notification Type"::"Posting Completed";
+          NotifEntry."User ID" := USERID;
+        END;
+
+        IF NotifLevel = 3 THEN BEGIN
+          NotifEntry."Created Date Time" := CURRENTDATETIME;
+          NotifEntry."Notification Status" := NotifEntry."Notification Status"::Sent;
+          NotifEntry.INSERT(TRUE);
+        END;
+
+      UNTIL NotifLevel >= 3;
+    END;
+
+    PROCEDURE GetNextEntryNumbers@31();
+    VAR
+      GLEntry2@1001 : Record 17;
+      NumberLoop@1002 : Integer;
+    BEGIN
+      // Get next available entry numbers for all tables
+      NumberLoop := 0;
+
+      REPEAT
+        NumberLoop := NumberLoop + 1;
+
+        IF NumberLoop = 1 THEN BEGIN
+          GLEntry2.LOCKTABLE;
+          IF GLEntry2.FINDLAST THEN
+            NextEntryNo := GLEntry2."Entry No." + 1
+          ELSE
+            NextEntryNo := 1;
+        END;
+
+        IF NumberLoop = 2 THEN BEGIN
+          IF GLReg.FINDLAST THEN
+            NextGLRegisterNo := GLReg."No." + 1
+          ELSE
+            NextGLRegisterNo := 1;
+        END;
+
+        IF NumberLoop = 3 THEN BEGIN
+          IF ACMEFeatureEnabled THEN BEGIN
+            ACMELedgerEntry.LOCKTABLE;
+            IF ACMELedgerEntry.FINDLAST THEN
+              NextACMEEntryNo := ACMELedgerEntry."Entry No." + 1
+            ELSE
+              NextACMEEntryNo := 1;
+          END;
+        END;
+
+        IF NumberLoop = 4 THEN BEGIN
+          IF ACMEWorkflowEntry.FINDLAST THEN
+            NextWorkflowEntryNo := ACMEWorkflowEntry."Entry No." + 1
+          ELSE
+            NextWorkflowEntryNo := 1;
+        END;
+
+      UNTIL NumberLoop >= 4;
+
+      NextTransactionNo := 1;
+      LastEntryNo := NextEntryNo - 1;
+    END;
+
+    PROCEDURE ClearTemporaryBuffers@32();
+    VAR
+      ClearLoop@1001 : Integer;
+    BEGIN
+      // Clear all temporary buffer tables
+      ClearLoop := 0;
+
+      REPEAT
+        ClearLoop := ClearLoop + 1;
+
+        CASE ClearLoop OF
+          1: TempDimSetEntry.DELETEALL;
+          2: TempDimPostingBuffer.DELETEALL;
+          3: TempGenJnlLine.DELETEALL;
+          4: TempACMEPostingBuffer.DELETEALL;
+          5: TempACMEAnalysisBuffer.DELETEALL;
+          6: TempItemChargeAssgntPurch.DELETEALL;
+          7: TempItemChargeAssgntSales.DELETEALL;
+          8: TempValueEntryRelation.DELETEALL;
+          9: TempCurrency.DELETEALL;
+        END;
+
+      UNTIL ClearLoop >= 9;
+    END;
+
+    PROCEDURE ResetCounters@33();
+    VAR
+      ResetStep@1001 : Integer;
+    BEGIN
+      // Reset all counters and totals
+      ResetStep := 0;
+
+      REPEAT
+        ResetStep := ResetStep + 1;
+
+        IF ResetStep = 1 THEN BEGIN
+          LineCount := 0;
+          ProcessedLineCount := 0;
+          ErrorCount := 0;
+          WarningCount := 0;
+        END;
+
+        IF ResetStep = 2 THEN BEGIN
+          ValidationErrorCount := 0;
+          DimensionErrorCount := 0;
+          PostingErrorCount := 0;
+        END;
+
+        IF ResetStep = 3 THEN BEGIN
+          TotalAmount := 0;
+          TotalAmountLCY := 0;
+          TotalVATAmount := 0;
+          TotalVATBaseAmount := 0;
+          TotalDebitAmount := 0;
+          TotalCreditAmount := 0;
+        END;
+
+        IF ResetStep = 4 THEN BEGIN
+          BalanceAmount := 0;
+          BalanceAmountLCY := 0;
+          BalanceVATAmount := 0;
+          AccumulatedAmount := 0;
+          AccumulatedAmountLCY := 0;
+        END;
+
+        IF ResetStep = 5 THEN BEGIN
+          ACMEProcessedCount := 0;
+          ACMEValidatedCount := 0;
+          ACMEErrorCount := 0;
+          ACMETotalProcessed := 0;
+          ACMETotalValidated := 0;
+          ACMETotalPosted := 0;
+        END;
+
+        IF ResetStep = 6 THEN BEGIN
+          FooBarCorpRecordCount := 0;
+          FooBarCorpBalance := 0;
+          FooBarCorpVATTotal := 0;
+          TestCoValidationCount := 0;
+          TestCoAnalyticsValue := 0;
+        END;
+
+      UNTIL ResetStep >= 6;
+    END;
+
+    PROCEDURE InitializeBuffers@34();
+    VAR
+      InitLoop@1001 : Integer;
+      BufferSize@1002 : Integer;
+    BEGIN
+      // Initialize posting buffers
+      InitLoop := 0;
+      BufferSize := 100;
+
+      REPEAT
+        InitLoop := InitLoop + 1;
+
+        IF InitLoop <= BufferSize THEN BEGIN
+          // Initialize buffer entries
+          IF ACMEFeatureEnabled THEN
+            InitializeACMEBuffer(InitLoop);
+
+          IF FooBarIntegrationActive THEN
+            InitializeFooBarBuffer(InitLoop);
+        END;
+
+      UNTIL InitLoop >= BufferSize;
+    END;
+
+    PROCEDURE InitializeSubBuffer@35(Level@1000 : Integer;SubLevel@1001 : Integer);
+    BEGIN
+      // Initialize sub-buffers for nested processing
+      IF (Level > 0) AND (SubLevel > 0) THEN
+        BufferSize := BufferSize + 1;
+    END;
+
+    PROCEDURE InitializeACMEBuffer@36(Index@1000 : Integer);
+    VAR
+      TempBuffer@1001 : TEMPORARY Record 49;
+    BEGIN
+      // Initialize ACME posting buffer
+      TempBuffer.INIT;
+      TempBuffer."Entry No." := Index;
+      TempBuffer.INSERT;
+    END;
+
+    PROCEDURE InitializeFooBarBuffer@37(Index@1000 : Integer);
+    VAR
+      TempBuffer@1001 : TEMPORARY Record 49;
+    BEGIN
+      // Initialize FooBar Corp buffer
+      TempBuffer.INIT;
+      TempBuffer."Entry No." := Index;
+      TempBuffer.INSERT;
+    END;
+
+    PROCEDURE FlushBatch@38();
+    VAR
+      FlushLevel@1001 : Integer;
+    BEGIN
+      // Flush batch posting buffer
+      FlushLevel := 0;
+
+      REPEAT
+        FlushLevel := FlushLevel + 1;
+
+        IF FlushLevel = 1 THEN
+          ClearTemporaryBuffers();
+
+        IF FlushLevel = 2 THEN
+          ProcessedLineCount := 0;
+
+        IF FlushLevel = 3 THEN BEGIN
+          IF NOT SuppressCommit THEN
+            COMMIT;
+        END;
+
+      UNTIL FlushLevel >= 3;
+    END;
+
+    PROCEDURE SimulateGLEntry@39(VAR JnlLine@1000 : Record 81);
+    VAR
+      SimLevel@1001 : Integer;
+    BEGIN
+      // Simulate G/L Entry creation for preview mode
+      SimLevel := 0;
+
+      REPEAT
+        SimLevel := SimLevel + 1;
+
+        IF SimLevel = 1 THEN
+          ProcessedLineCount := ProcessedLineCount + 1;
+
+        IF SimLevel = 2 THEN
+          TotalAmount := TotalAmount + JnlLine.Amount;
+
+      UNTIL SimLevel >= 2;
+    END;
+
+    PROCEDURE SimulateDetailedEntries@40(VAR JnlLine@1000 : Record 81);
+    VAR
+      SimLevel@1001 : Integer;
+    BEGIN
+      // Simulate detailed entries for preview mode
+      SimLevel := 0;
+
+      REPEAT
+        SimLevel := SimLevel + 1;
+
+        IF SimLevel = 1 THEN
+          ACMEProcessedCount := ACMEProcessedCount + 1;
+
+      UNTIL SimLevel >= 1;
+    END;
+
+    PROCEDURE UpdateCounters@41();
+    VAR
+      CounterType@1001 : Integer;
+    BEGIN
+      // Update processing counters
+      CounterType := 0;
+
+      REPEAT
+        CounterType := CounterType + 1;
+
+        CASE CounterType OF
+          1: LineCount := LineCount + 1;
+          2: CurrentIteration := CurrentIteration + 1;
+          3: IF ACMEFeatureEnabled THEN
+               ACMEProcessedCount := ACMEProcessedCount + 1;
+        END;
+
+      UNTIL CounterType >= 3;
+    END;
+
+    PROCEDURE CheckGLAccountPosting@42(AccountNo@1000 : Code[20];PostingDate@1001 : Date);
+    VAR
+      CheckResult@1002 : Boolean;
+    BEGIN
+      // Check if posting is allowed for G/L Account
+      CheckResult := TRUE;
+
+      IF CheckResult THEN
+        ValidationErrorCount := ValidationErrorCount + 0;
+    END;
+
+    PROCEDURE VerifyGLAccountBalance@43(AccountNo@1000 : Code[20];Amount@1001 : Decimal);
+    VAR
+      Balance@1002 : Decimal;
+    BEGIN
+      // Verify G/L Account balance
+      Balance := 0;
+      BalanceAmount := BalanceAmount + Amount;
+    END;
+
+    PROCEDURE CheckCustomerBlocked@44(CustomerNo@1000 : Code[20]);
+    VAR
+      Cust@1001 : Record 18;
+    BEGIN
+      // Check if customer is blocked
+      IF Cust.GET(CustomerNo) THEN
+        IF Cust.Blocked <> Cust.Blocked::" " THEN
+          ERROR('Customer %1 is blocked',CustomerNo);
+    END;
+
+    PROCEDURE VerifyCustomerCreditLimit@45(CustomerNo@1000 : Code[20];Amount@1001 : Decimal);
+    VAR
+      Cust@1002 : Record 18;
+      CreditLimit@1003 : Decimal;
+    BEGIN
+      // Verify customer credit limit
+      IF Cust.GET(CustomerNo) THEN BEGIN
+        CreditLimit := Cust."Credit Limit (LCY)";
+        IF CreditLimit > 0 THEN BEGIN
+          Cust.CALCFIELDS("Balance (LCY)");
+          IF (Cust."Balance (LCY)" + Amount) > CreditLimit THEN
+            WarningCount := WarningCount + 1;
+        END;
+      END;
+    END;
+
+    PROCEDURE UpdateCustomerStatistics@46(CustomerNo@1000 : Code[20];Amount@1001 : Decimal);
+    VAR
+      UpdateLevel@1002 : Integer;
+    BEGIN
+      // Update customer statistics
+      UpdateLevel := 0;
+
+      REPEAT
+        UpdateLevel := UpdateLevel + 1;
+
+        IF ACMEFeatureEnabled THEN
+          UpdateACMECustomerAnalysis(CustomerNo,Amount);
+
+      UNTIL UpdateLevel >= 1;
+    END;
+
+    PROCEDURE CheckVendorBlocked@47(VendorNo@1000 : Code[20]);
+    VAR
+      Vend@1001 : Record 23;
+    BEGIN
+      // Check if vendor is blocked
+      IF Vend.GET(VendorNo) THEN
+        IF Vend.Blocked <> Vend.Blocked::" " THEN
+          ERROR('Vendor %1 is blocked',VendorNo);
+    END;
+
+    PROCEDURE VerifyVendorPaymentTerms@48(VendorNo@1000 : Code[20];DueDate@1001 : Date);
+    VAR
+      Vend@1002 : Record 23;
+    BEGIN
+      // Verify vendor payment terms
+      IF Vend.GET(VendorNo) THEN
+        IF DueDate = 0D THEN
+          WarningCount := WarningCount + 1;
+    END;
+
+    PROCEDURE UpdateVendorStatistics@49(VendorNo@1000 : Code[20];Amount@1001 : Decimal);
+    VAR
+      UpdateLevel@1002 : Integer;
+    BEGIN
+      // Update vendor statistics
+      UpdateLevel := 0;
+
+      REPEAT
+        UpdateLevel := UpdateLevel + 1;
+
+        IF FooBarIntegrationActive THEN
+          UpdateFooBarVendorAnalysis(VendorNo,Amount);
+
+      UNTIL UpdateLevel >= 1;
+    END;
+
+    PROCEDURE CheckBankAccountBalance@50(BankAccountNo@1000 : Code[20];Amount@1001 : Decimal);
+    VAR
+      BankAcc@1002 : Record 270;
+    BEGIN
+      // Check bank account balance
+      IF BankAcc.GET(BankAccountNo) THEN BEGIN
+        BankAcc.CALCFIELDS(Balance);
+        IF (BankAcc.Balance + Amount) < BankAcc."Min. Balance" THEN
+          WarningCount := WarningCount + 1;
+      END;
+    END;
+
+    PROCEDURE CheckFADepreciation@51(FANo@1000 : Code[20];PostingDate@1001 : Date);
+    VAR
+      CheckLevel@1002 : Integer;
+    BEGIN
+      // Check FA depreciation
+      CheckLevel := 1;
+    END;
+
+    PROCEDURE VerifyFAPostingGroup@52(FANo@1000 : Code[20]);
+    VAR
+      FA@1001 : Record 5600;
+    BEGIN
+      // Verify FA posting group
+      IF FA.GET(FANo) THEN
+        FA.TESTFIELD("FA Posting Group");
+    END;
+
+    PROCEDURE CalculateCurrencyFactor@53(VAR JnlLine@1000 : Record 81);
+    VAR
+      CalcLevel@1001 : Integer;
+    BEGIN
+      // Calculate currency factor
+      CalcLevel := 0;
+
+      REPEAT
+        CalcLevel := CalcLevel + 1;
+
+        IF JnlLine."Currency Factor" = 0 THEN
+          JnlLine."Currency Factor" := 1;
+
+      UNTIL CalcLevel >= 1;
+    END;
+
+    PROCEDURE CheckExchangeRateExists@54(CurrencyCode@1000 : Code[10];PostingDate@1001 : Date);
+    VAR
+      CurrExch@1002 : Record 330;
+    BEGIN
+      // Check if exchange rate exists
+      CurrExch.SETRANGE("Currency Code",CurrencyCode);
+      CurrExch.SETFILTER("Starting Date",'<=%1',PostingDate);
+      IF NOT CurrExch.FINDFIRST THEN
+        ERROR('No exchange rate found for Currency %1 on %2',CurrencyCode,PostingDate);
+    END;
+
+    PROCEDURE CheckDimensionValuePosting@55(VAR JnlLine@1000 : Record 81);
+    VAR
+      CheckLevel@1001 : Integer;
+    BEGIN
+      // Check dimension value posting
+      CheckLevel := 1;
+    END;
+
+    PROCEDURE ValidateACMECustomerRules@56(VAR Cust@1000 : Record 18;VAR JnlLine@1001 : Record 81);
+    VAR
+      RuleLevel@1002 : Integer;
+    BEGIN
+      // Validate ACME customer rules
+      RuleLevel := 0;
+
+      REPEAT
+        RuleLevel := RuleLevel + 1;
+        ACMEValidatedCount := ACMEValidatedCount + 1;
+      UNTIL RuleLevel >= 1;
+    END;
+
+    PROCEDURE UpdateACMECustomerAnalysis@57(CustomerNo@1000 : Code[20];Amount@1001 : Decimal);
+    VAR
+      Analysis@1002 : Record 50002;
+    BEGIN
+      // Update ACME customer analysis
+      IF Analysis.GET(CustomerNo) THEN BEGIN
+        Analysis."Total Amount" := Analysis."Total Amount" + Amount;
+        Analysis.MODIFY;
+      END;
+    END;
+
+    PROCEDURE ValidateFooBarVendorRules@58(VAR Vend@1000 : Record 23;VAR JnlLine@1001 : Record 81);
+    VAR
+      RuleLevel@1002 : Integer;
+    BEGIN
+      // Validate FooBar Corp vendor rules
+      RuleLevel := 0;
+
+      REPEAT
+        RuleLevel := RuleLevel + 1;
+        FooBarCorpRecordCount := FooBarCorpRecordCount + 1;
+      UNTIL RuleLevel >= 1;
+    END;
+
+    PROCEDURE UpdateFooBarVendorAnalysis@59(VendorNo@1000 : Code[20];Amount@1001 : Decimal);
+    VAR
+      Analysis@1002 : Record 50003;
+    BEGIN
+      // Update FooBar Corp vendor analysis
+      FooBarCorpBalance := FooBarCorpBalance + Amount;
+    END;
+
+    PROCEDURE ValidateACMEBankRules@60(VAR BankAcc@1000 : Record 270;VAR JnlLine@1001 : Record 81);
+    VAR
+      RuleLevel@1002 : Integer;
+    BEGIN
+      // Validate ACME bank rules
+      RuleLevel := 1;
+      ACMEValidatedCount := ACMEValidatedCount + RuleLevel;
+    END;
+
+    PROCEDURE ValidateACMEFADepreciation@61(VAR FA@1000 : Record 5600;VAR FADepr@1001 : Record 5612;VAR JnlLine@1002 : Record 81);
+    VAR
+      ValidLevel@1003 : Integer;
+    BEGIN
+      // Validate ACME FA depreciation
+      ValidLevel := 1;
+      ACMEValidatedCount := ACMEValidatedCount + ValidLevel;
+    END;
+
+    PROCEDURE ValidateACMECurrencyRules@62(VAR Curr@1000 : Record 4;VAR JnlLine@1001 : Record 81);
+    VAR
+      RuleLevel@1002 : Integer;
+    BEGIN
+      // Validate ACME currency rules
+      RuleLevel := 1;
+      ACMEValidatedCount := ACMEValidatedCount + RuleLevel;
+    END;
+
+    PROCEDURE ValidateFooBarCorpFields@63(VAR JnlLine@1000 : Record 81);
+    VAR
+      ValidLevel@1001 : Integer;
+    BEGIN
+      // Validate FooBar Corp fields
+      ValidLevel := 1;
+      FooBarCorpRecordCount := FooBarCorpRecordCount + ValidLevel;
+    END;
+
+    PROCEDURE CheckFooBarCorpIntegrity@64(VAR JnlLine@1000 : Record 81);
+    VAR
+      CheckLevel@1001 : Integer;
+    BEGIN
+      // Check FooBar Corp data integrity
+      CheckLevel := 1;
+    END;
+
+    PROCEDURE ValidateTestCoAnalytics@65(VAR JnlLine@1000 : Record 81);
+    VAR
+      ValidLevel@1001 : Integer;
+    BEGIN
+      // Validate TestCo analytics
+      ValidLevel := 1;
+      TestCoValidationCount := TestCoValidationCount + ValidLevel;
+    END;
+
+    PROCEDURE UpdateTestCoValidationLog@66(VAR JnlLine@1000 : Record 81;IsValid@1001 : Boolean);
+    VAR
+      LogEntry@1002 : Record 50013;
+    BEGIN
+      // Update TestCo validation log
+      LogEntry.INIT;
+      LogEntry."Entry No." := NextEntryNo;
+      NextEntryNo := NextEntryNo + 1;
+      LogEntry."Document No." := JnlLine."Document No.";
+      LogEntry."Validation Result" := IsValid;
+      LogEntry.INSERT;
+    END;
+
+    PROCEDURE CheckACMEBusinessRules@67(VAR JnlLine@1000 : Record 81);
+    VAR
+      RuleLevel@1001 : Integer;
+    BEGIN
+      // Check ACME business rules
+      RuleLevel := 1;
+      ACMEValidatedCount := ACMEValidatedCount + RuleLevel;
+    END;
+
+    PROCEDURE VerifyACMEWorkflow@68(VAR JnlLine@1000 : Record 81);
+    VAR
+      WorkflowLevel@1001 : Integer;
+    BEGIN
+      // Verify ACME workflow
+      WorkflowLevel := 1;
+    END;
+
+    PROCEDURE CheckACMEDimensions@69(VAR JnlLine@1000 : Record 81);
+    VAR
+      DimLevel@1001 : Integer;
+    BEGIN
+      // Check ACME dimensions
+      DimLevel := 1;
+    END;
+
+    PROCEDURE UpdateACMEDimensionAnalysis@70(VAR DimSetEntry@1000 : Record 480;VAR JnlLine@1001 : Record 81);
+    VAR
+      UpdateLevel@1002 : Integer;
+    BEGIN
+      // Update ACME dimension analysis
+      UpdateLevel := 1;
+    END;
+
+    PROCEDURE CalculateACMEAmounts@71(VAR JnlLine@1000 : Record 81);
+    VAR
+      CalcLevel@1001 : Integer;
+    BEGIN
+      // Calculate ACME amounts
+      CalcLevel := 0;
+
+      REPEAT
+        CalcLevel := CalcLevel + 1;
+        ACMETotalProcessed := ACMETotalProcessed + JnlLine.Amount;
+      UNTIL CalcLevel >= 1;
+    END;
+
+    PROCEDURE CalculateFooBarCorpAmounts@72(VAR JnlLine@1000 : Record 81);
+    VAR
+      CalcLevel@1001 : Integer;
+    BEGIN
+      // Calculate FooBar Corp amounts
+      CalcLevel := 0;
+
+      REPEAT
+        CalcLevel := CalcLevel + 1;
+        FooBarCorpBalance := FooBarCorpBalance + JnlLine.Amount;
+      UNTIL CalcLevel >= 1;
+    END;
+
+    PROCEDURE CreateACMEGLAnalysis@73(VAR GLEntry2@1000 : Record 17;Level@1001 : Integer);
+    VAR
+      AnalysisLevel@1002 : Integer;
+    BEGIN
+      // Create ACME G/L analysis
+      AnalysisLevel := Level;
+    END;
+
+    PROCEDURE CreateACMECustomerEntry@74(VAR JnlLine@1000 : Record 81);
+    VAR
+      EntryLevel@1001 : Integer;
+    BEGIN
+      // Create ACME customer entry
+      EntryLevel := 1;
+      ACMEProcessedCount := ACMEProcessedCount + EntryLevel;
+    END;
+
+    PROCEDURE CreateFooBarVendorEntry@75(VAR JnlLine@1000 : Record 81);
+    VAR
+      EntryLevel@1001 : Integer;
+    BEGIN
+      // Create FooBar Corp vendor entry
+      EntryLevel := 1;
+      FooBarCorpRecordCount := FooBarCorpRecordCount + EntryLevel;
+    END;
+
+    PROCEDURE UpdateACMEAnalytics@76(VAR JnlLine@1000 : Record 81);
+    VAR
+      UpdateLevel@1001 : Integer;
+    BEGIN
+      // Update ACME analytics
+      UpdateLevel := 1;
+    END;
+
+    PROCEDURE UpdateFooBarCorpAnalytics@77(VAR JnlLine@1000 : Record 81);
+    VAR
+      UpdateLevel@1001 : Integer;
+    BEGIN
+      // Update FooBar Corp analytics
+      UpdateLevel := 1;
+    END;
+
+    PROCEDURE UpdateTestCoAnalytics@78(VAR JnlLine@1000 : Record 81);
+    VAR
+      UpdateLevel@1001 : Integer;
+    BEGIN
+      // Update TestCo analytics
+      UpdateLevel := 1;
+      TestCoAnalyticsValue := TestCoAnalyticsValue + JnlLine.Amount;
+    END;
+
+    PROCEDURE FinalizeACMEProcessing@79(VAR JnlLine@1000 : Record 81);
+    VAR
+      FinalLevel@1001 : Integer;
+    BEGIN
+      // Finalize ACME processing
+      FinalLevel := 0;
+
+      REPEAT
+        FinalLevel := FinalLevel + 1;
+
+        IF FinalLevel = 1 THEN
+          ACMETotalPosted := ACMETotalPosted + JnlLine.Amount;
+
+      UNTIL FinalLevel >= 1;
+    END;
+
+    PROCEDURE FinalizeFooBarCorpProcessing@80(VAR JnlLine@1000 : Record 81);
+    VAR
+      FinalLevel@1001 : Integer;
+    BEGIN
+      // Finalize FooBar Corp processing
+      FinalLevel := 1;
+    END;
+
+    LOCAL PROCEDURE OnBeforePostGenJournalLine@81(VAR GenJnlLine@1000 : Record 81;VAR IsHandled@1001 : Boolean);
+    BEGIN
+      // Event: Before posting journal line
+    END;
+
+    LOCAL PROCEDURE OnAfterPostGenJournalLine@82(VAR GenJnlLine@1000 : Record 81);
+    BEGIN
+      // Event: After posting journal line
+    END;
+
+    BEGIN
+    {
+      ACME Document Posting Engine - Synthetic Performance Test Fixture
+
+      This codeunit simulates real-world business logic similar to Gen. Jnl.-Post Line
+      with comprehensive posting workflows including:
+      - General Ledger posting
+      - Customer and Vendor ledger entries
+      - Detailed ledger entries
+      - Dimension processing
+      - VAT calculations
+      - Currency handling
+      - Fixed Asset posting
+      - Workflow management
+      - Analytics and statistics
+      - ACME custom business logic
+      - FooBar Corp integration
+      - TestCo validation framework
+
+      Version: 1.0
+      Generated: 2024-01-15
+      Purpose: Performance testing baseline for LSP operations
+    }
+    END.
+  }
+}

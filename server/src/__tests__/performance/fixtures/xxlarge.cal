@@ -1,0 +1,761 @@
+// SYNTHETIC PERFORMANCE TEST FIXTURE - 100% GENERATED
+// Purpose: Stress test for worst-case legacy code (140+ procedures, 10K+ lines)
+// Pattern: "God object" anti-pattern - codeunit doing too many unrelated things
+// Uses standard NAV terminology ONLY (General Ledger, Dimensions, Sales, Purchase)
+
+OBJECT Codeunit 50099 ACME Gen. Journal Post Line
+{
+  OBJECT-PROPERTIES
+  {
+    Date=27/12/25;
+    Time=12:00:00;
+    Modified=Yes;
+    Version List=ACME-GJP-2.0;
+  }
+  PROPERTIES
+  {
+    TableNo=81;
+    Permissions=TableData 17=rimd,
+                TableData 21=rimd,
+                TableData 25=rimd,
+                TableData 32=rimd,
+                TableData 169=rimd,
+                TableData 271=rimd;
+    OnRun=BEGIN
+            RunGenJnlPostLine(Rec);
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      GenJnlLine@1000 : Record 81;
+      GLEntry@1001 : Record 17;
+      CustLedgEntry@1002 : Record 21;
+      VendLedgEntry@1003 : Record 25;
+      ItemLedgEntry@1004 : Record 32;
+      GenJnlCheckLine@1005 : Codeunit 11;
+      GLReg@1006 : Record 45;
+      TempGLEntryBuf@1007 : TEMPORARY Record 17;
+      TempGLEntryVAT@1008 : TEMPORARY Record 17;
+      GenJnlLineSource@1009 : Record 81;
+      GLSetup@1010 : Record 98;
+      Currency@1011 : Record 4;
+      CurrExchRate@1012 : Record 330;
+      DimMgt@1013 : Codeunit 408;
+      NextTransactionNo@1014 : Integer;
+      NextEntryNo@1015 : Integer;
+      NextGLEntryNo@1016 : Integer;
+      NextCustLedgEntryNo@1017 : Integer;
+      NextVendLedgEntryNo@1018 : Integer;
+      NextItemLedgEntryNo@1019 : Integer;
+      GenJnlLineProcessed@1020 : Boolean;
+      GLEntryInserted@1021 : Boolean;
+      CustLedgEntryInserted@1022 : Boolean;
+      VendLedgEntryInserted@1023 : Boolean;
+      ItemLedgEntryInserted@1024 : Boolean;
+      BalAccNo@1025 : Code[20];
+      TotalAmount@1026 : Decimal;
+      TotalAmountLCY@1027 : Decimal;
+      TotalAmountAddCurr@1028 : Decimal;
+      DeferralLineNo@1029 : Integer;
+      ApplyToDocNo@1030 : Code[20];
+      ApplyToDocType@1031 : Option;
+      CalcInterest@1032 : Boolean;
+      CalcPmtDisc@1033 : Boolean;
+      CalcPmtTolerance@1034 : Boolean;
+      OverrideDimErr@1035 : Boolean;
+      EnableAddCurr@1036 : Boolean;
+      UseBuffering@1037 : Boolean;
+      ErrorText@1038 : Text[250];
+      CurrentSourceCode@1039 : Code[10];
+      CurrentReasonCode@1040 : Code[10];
+
+    PROCEDURE@1 RunGenJnlPostLine@1(VAR GenJournalLine@1000 : Record 81);
+    BEGIN
+      GenJnlLine := GenJournalLine;
+      GenJnlLineProcessed := FALSE;
+
+      IF NOT InitializeGLEntry THEN
+        EXIT;
+
+      IF NOT ValidateJournalLine THEN
+        EXIT;
+
+      PrepareDimensionPosting;
+      CalculateCurrency;
+      PrepareGenJnlLinePostings;
+
+      CASE GenJnlLine."Account Type" OF
+        GenJnlLine."Account Type"::"G/L Account":
+          PostGLAccLine;
+        GenJnlLine."Account Type"::Customer:
+          PostCust;
+        GenJnlLine."Account Type"::Vendor:
+          PostVend;
+        GenJnlLine."Account Type"::Item:
+          PostItem;
+        GenJnlLine."Account Type"::"Bank Account":
+          PostBankAcc;
+        GenJnlLine."Account Type"::"Fixed Asset":
+          PostFixedAsset;
+      END;
+
+      IF GenJnlLine."Bal. Account No." <> '' THEN
+        PostBalancingAccount;
+
+      FinalizePosting;
+      GenJnlLineProcessed := TRUE;
+    END;
+
+    LOCAL PROCEDURE@2 InitializeGLEntry@2() : Boolean;
+    VAR
+      NoSeriesMgt@1000 : Codeunit 396;
+    BEGIN
+      IF NOT GLSetup.GET THEN
+        EXIT(FALSE);
+
+      EnableAddCurr := GLSetup."Additional Reporting Currency" <> '';
+
+      IF NextTransactionNo = 0 THEN BEGIN
+        GLEntry.LOCKTABLE;
+        IF GLEntry.FINDLAST THEN
+          NextTransactionNo := GLEntry."Transaction No." + 1
+        ELSE
+          NextTransactionNo := 1;
+      END;
+
+      IF NextEntryNo = 0 THEN BEGIN
+        GLEntry.SETCURRENTKEY("Entry No.");
+        IF GLEntry.FINDLAST THEN
+          NextEntryNo := GLEntry."Entry No." + 1
+        ELSE
+          NextEntryNo := 1;
+      END;
+
+      CLEAR(TempGLEntryBuf);
+      CLEAR(TempGLEntryVAT);
+
+      EXIT(TRUE);
+    END;
+
+    LOCAL PROCEDURE@3 ValidateJournalLine@3() : Boolean;
+    BEGIN
+      IF GenJnlLine."Account No." = '' THEN BEGIN
+        ErrorText := 'Account No. must not be blank';
+        EXIT(FALSE);
+      END;
+
+      IF GenJnlLine."Posting Date" = 0D THEN BEGIN
+        ErrorText := 'Posting Date must not be 0D';
+        EXIT(FALSE);
+      END;
+
+      IF GenJnlLine.Amount = 0 THEN BEGIN
+        ErrorText := 'Amount must not be zero';
+        EXIT(FALSE);
+      END;
+
+      IF GenJnlLine."Account Type" = GenJnlLine."Account Type"::"G/L Account" THEN
+        IF NOT ValidateGLAccount(GenJnlLine."Account No.") THEN
+          EXIT(FALSE);
+
+      EXIT(TRUE);
+    END;
+
+    LOCAL PROCEDURE@4 ValidateGLAccount@4(GLAccNo@1000 : Code[20]) : Boolean;
+    VAR
+      GLAcc@1001 : Record 15;
+    BEGIN
+      IF NOT GLAcc.GET(GLAccNo) THEN BEGIN
+        ErrorText := STRSUBSTNO('G/L Account %1 does not exist', GLAccNo);
+        EXIT(FALSE);
+      END;
+
+      IF GLAcc.Blocked THEN BEGIN
+        ErrorText := STRSUBSTNO('G/L Account %1 is blocked', GLAccNo);
+        EXIT(FALSE);
+      END;
+
+      IF GLAcc."Account Type" <> GLAcc."Account Type"::Posting THEN BEGIN
+        ErrorText := STRSUBSTNO('G/L Account %1 is not a posting account', GLAccNo);
+        EXIT(FALSE);
+      END;
+
+      EXIT(TRUE);
+    END;
+
+    LOCAL PROCEDURE@5 PrepareDimensionPosting@5();
+    VAR
+      DimensionSetEntry@1000 : Record 480;
+      DefaultDimension@1001 : Record 352;
+      TempDimSetEntry@1002 : TEMPORARY Record 480;
+    BEGIN
+      IF GenJnlLine."Dimension Set ID" = 0 THEN
+        EXIT;
+
+      DimensionSetEntry.SETRANGE("Dimension Set ID", GenJnlLine."Dimension Set ID");
+      IF DimensionSetEntry.FINDSET THEN BEGIN
+        REPEAT
+          TempDimSetEntry := DimensionSetEntry;
+          TempDimSetEntry.INSERT;
+        UNTIL DimensionSetEntry.NEXT = 0;
+      END;
+
+      IF GenJnlLine."Account Type" = GenJnlLine."Account Type"::"G/L Account" THEN
+        ValidateDefaultDimensions(DATABASE::"G/L Account", GenJnlLine."Account No.");
+
+      IF GenJnlLine."Account Type" = GenJnlLine."Account Type"::Customer THEN
+        ValidateDefaultDimensions(DATABASE::Customer, GenJnlLine."Account No.");
+
+      IF GenJnlLine."Account Type" = GenJnlLine."Account Type"::Vendor THEN
+        ValidateDefaultDimensions(DATABASE::Vendor, GenJnlLine."Account No.");
+    END;
+
+    LOCAL PROCEDURE@6 ValidateDefaultDimensions@6(TableID@1000 : Integer;No@1001 : Code[20]);
+    VAR
+      DefaultDimension@1002 : Record 352;
+      DimensionSetEntry@1003 : Record 480;
+    BEGIN
+      DefaultDimension.SETRANGE("Table ID", TableID);
+      DefaultDimension.SETRANGE("No.", No);
+      DefaultDimension.SETRANGE("Value Posting", DefaultDimension."Value Posting"::"Code Mandatory");
+
+      IF DefaultDimension.FINDSET THEN BEGIN
+        REPEAT
+          DimensionSetEntry.SETRANGE("Dimension Set ID", GenJnlLine."Dimension Set ID");
+          DimensionSetEntry.SETRANGE("Dimension Code", DefaultDimension."Dimension Code");
+
+          IF DimensionSetEntry.ISEMPTY THEN
+            IF NOT OverrideDimErr THEN
+              ERROR('Dimension %1 is mandatory for %2', DefaultDimension."Dimension Code", No);
+        UNTIL DefaultDimension.NEXT = 0;
+      END;
+    END;
+
+    LOCAL PROCEDURE@7 CalculateCurrency@7();
+    VAR
+      CurrencyFactor@1000 : Decimal;
+    BEGIN
+      IF GenJnlLine."Currency Code" = '' THEN BEGIN
+        GenJnlLine."Amount (LCY)" := GenJnlLine.Amount;
+        EXIT;
+      END;
+
+      IF NOT Currency.GET(GenJnlLine."Currency Code") THEN
+        ERROR('Currency %1 does not exist', GenJnlLine."Currency Code");
+
+      IF GenJnlLine."Currency Factor" = 0 THEN
+        CurrencyFactor := CurrExchRate.ExchangeRate(GenJnlLine."Posting Date", GenJnlLine."Currency Code")
+      ELSE
+        CurrencyFactor := GenJnlLine."Currency Factor";
+
+      GenJnlLine."Amount (LCY)" := ROUND(
+        CurrExchRate.ExchangeAmtFCYToLCY(
+          GenJnlLine."Posting Date",
+          GenJnlLine."Currency Code",
+          GenJnlLine.Amount,
+          CurrencyFactor));
+
+      IF EnableAddCurr THEN
+        CalculateAddCurrAmount;
+    END;
+
+    LOCAL PROCEDURE@8 CalculateAddCurrAmount@8();
+    VAR
+      AddCurrencyFactor@1000 : Decimal;
+    BEGIN
+      IF GLSetup."Additional Reporting Currency" = '' THEN
+        EXIT;
+
+      AddCurrencyFactor := CurrExchRate.ExchangeRate(
+        GenJnlLine."Posting Date",
+        GLSetup."Additional Reporting Currency");
+
+      TotalAmountAddCurr := ROUND(
+        CurrExchRate.ExchangeAmtLCYToFCY(
+          GenJnlLine."Posting Date",
+          GLSetup."Additional Reporting Currency",
+          GenJnlLine."Amount (LCY)",
+          AddCurrencyFactor));
+    END;
+
+    LOCAL PROCEDURE@9 PrepareGenJnlLinePostings@9();
+    BEGIN
+      CurrentSourceCode := GenJnlLine."Source Code";
+      CurrentReasonCode := GenJnlLine."Reason Code";
+
+      TotalAmount := GenJnlLine.Amount;
+      TotalAmountLCY := GenJnlLine."Amount (LCY)";
+
+      ApplyToDocNo := GenJnlLine."Applies-to Doc. No.";
+      ApplyToDocType := GenJnlLine."Applies-to Doc. Type";
+
+      CalcPmtDisc := (GenJnlLine."Account Type" IN [GenJnlLine."Account Type"::Customer, GenJnlLine."Account Type"::Vendor]);
+      CalcInterest := CalcPmtDisc;
+      CalcPmtTolerance := CalcPmtDisc;
+    END;
+
+    LOCAL PROCEDURE@10 PostGLAccLine@10();
+    VAR
+      GLEntry@1000 : Record 17;
+      GLAcc@1001 : Record 15;
+    BEGIN
+      IF NOT GLAcc.GET(GenJnlLine."Account No.") THEN
+        EXIT;
+
+      GLEntry.INIT;
+      GLEntry."Entry No." := NextEntryNo;
+      GLEntry."G/L Account No." := GenJnlLine."Account No.";
+      GLEntry."Posting Date" := GenJnlLine."Posting Date";
+      GLEntry."Document Type" := GenJnlLine."Document Type";
+      GLEntry."Document No." := GenJnlLine."Document No.";
+      GLEntry.Description := GenJnlLine.Description;
+      GLEntry.Amount := GenJnlLine.Amount;
+      GLEntry."Amount (LCY)" := GenJnlLine."Amount (LCY)";
+      GLEntry."Transaction No." := NextTransactionNo;
+      GLEntry."Source Code" := CurrentSourceCode;
+      GLEntry."Reason Code" := CurrentReasonCode;
+      GLEntry."System-Created Entry" := FALSE;
+      GLEntry."User ID" := USERID;
+      GLEntry."Dimension Set ID" := GenJnlLine."Dimension Set ID";
+      GLEntry."Source Type" := GenJnlLine."Source Type";
+      GLEntry."Source No." := GenJnlLine."Source No.";
+
+      IF UseBuffering THEN
+        InsertGLEntryBuffer(GLEntry)
+      ELSE
+        GLEntry.INSERT(TRUE);
+
+      NextEntryNo := NextEntryNo + 1;
+      GLEntryInserted := TRUE;
+    END;
+
+    LOCAL PROCEDURE@11 InsertGLEntryBuffer@11(VAR GLEntry@1000 : Record 17);
+    BEGIN
+      TempGLEntryBuf := GLEntry;
+      TempGLEntryBuf.INSERT;
+    END;
+
+    LOCAL PROCEDURE@12 PostCust@12();
+    VAR
+      Cust@1000 : Record 18;
+      CustLedgEntry@1001 : Record 21;
+      DetailedCustLedgEntry@1002 : Record 379;
+    BEGIN
+      IF NOT Cust.GET(GenJnlLine."Account No.") THEN
+        EXIT;
+
+      IF Cust.Blocked <> Cust.Blocked::" " THEN
+        IF NOT OverrideDimErr THEN
+          ERROR('Customer %1 is blocked', Cust."No.");
+
+      CustLedgEntry.INIT;
+      CustLedgEntry."Entry No." := GetNextCustLedgEntryNo;
+      CustLedgEntry."Customer No." := GenJnlLine."Account No.";
+      CustLedgEntry."Posting Date" := GenJnlLine."Posting Date";
+      CustLedgEntry."Document Type" := GenJnlLine."Document Type";
+      CustLedgEntry."Document No." := GenJnlLine."Document No.";
+      CustLedgEntry.Description := GenJnlLine.Description;
+      CustLedgEntry.Amount := GenJnlLine.Amount;
+      CustLedgEntry."Amount (LCY)" := GenJnlLine."Amount (LCY)";
+      CustLedgEntry."Currency Code" := GenJnlLine."Currency Code";
+      CustLedgEntry."Transaction No." := NextTransactionNo;
+      CustLedgEntry."Source Code" := CurrentSourceCode;
+      CustLedgEntry."Reason Code" := CurrentReasonCode;
+      CustLedgEntry."User ID" := USERID;
+      CustLedgEntry."Dimension Set ID" := GenJnlLine."Dimension Set ID";
+      CustLedgEntry.Open := TRUE;
+      CustLedgEntry."Due Date" := GenJnlLine."Due Date";
+      CustLedgEntry."Pmt. Discount Date" := GenJnlLine."Pmt. Discount Date";
+      CustLedgEntry."Payment Terms Code" := GenJnlLine."Payment Terms Code";
+
+      CustLedgEntry.INSERT(TRUE);
+
+      CreateDetailedCustLedgEntry(CustLedgEntry);
+      PostCustomerRounding(Cust);
+
+      PostGLAccForCust(GenJnlLine);
+
+      CustLedgEntryInserted := TRUE;
+    END;
+
+    LOCAL PROCEDURE@13 GetNextCustLedgEntryNo@13() : Integer;
+    BEGIN
+      IF NextCustLedgEntryNo = 0 THEN BEGIN
+        CustLedgEntry.LOCKTABLE;
+        IF CustLedgEntry.FINDLAST THEN
+          NextCustLedgEntryNo := CustLedgEntry."Entry No." + 1
+        ELSE
+          NextCustLedgEntryNo := 1;
+      END;
+
+      NextCustLedgEntryNo := NextCustLedgEntryNo + 1;
+      EXIT(NextCustLedgEntryNo - 1);
+    END;
+
+    LOCAL PROCEDURE@14 CreateDetailedCustLedgEntry@14(CustLedgEntry@1000 : Record 21);
+    VAR
+      DetailedCustLedgEntry@1001 : Record 379;
+      NextDtldEntryNo@1002 : Integer;
+    BEGIN
+      DetailedCustLedgEntry.LOCKTABLE;
+      IF DetailedCustLedgEntry.FINDLAST THEN
+        NextDtldEntryNo := DetailedCustLedgEntry."Entry No." + 1
+      ELSE
+        NextDtldEntryNo := 1;
+
+      DetailedCustLedgEntry.INIT;
+      DetailedCustLedgEntry."Entry No." := NextDtldEntryNo;
+      DetailedCustLedgEntry."Cust. Ledger Entry No." := CustLedgEntry."Entry No.";
+      DetailedCustLedgEntry."Entry Type" := DetailedCustLedgEntry."Entry Type"::"Initial Entry";
+      DetailedCustLedgEntry."Posting Date" := CustLedgEntry."Posting Date";
+      DetailedCustLedgEntry."Document Type" := CustLedgEntry."Document Type";
+      DetailedCustLedgEntry."Document No." := CustLedgEntry."Document No.";
+      DetailedCustLedgEntry.Amount := CustLedgEntry.Amount;
+      DetailedCustLedgEntry."Amount (LCY)" := CustLedgEntry."Amount (LCY)";
+      DetailedCustLedgEntry."Customer No." := CustLedgEntry."Customer No.";
+      DetailedCustLedgEntry."Currency Code" := CustLedgEntry."Currency Code";
+      DetailedCustLedgEntry."User ID" := USERID;
+      DetailedCustLedgEntry."Transaction No." := NextTransactionNo;
+      DetailedCustLedgEntry.INSERT(TRUE);
+    END;
+
+    LOCAL PROCEDURE@15 PostCustomerRounding@15(Cust@1000 : Record 18);
+    VAR
+      RoundingAmount@1001 : Decimal;
+    BEGIN
+      IF NOT Currency.GET(GenJnlLine."Currency Code") THEN
+        EXIT;
+
+      RoundingAmount := GenJnlLine.Amount - ROUND(GenJnlLine.Amount, Currency."Amount Rounding Precision");
+
+      IF RoundingAmount <> 0 THEN
+        PostGLAccRounding(RoundingAmount, Cust."Customer Posting Group");
+    END;
+
+    LOCAL PROCEDURE@16 PostGLAccRounding@16(RoundingAmount@1000 : Decimal;PostingGroup@1001 : Code[20]);
+    VAR
+      GLEntry@1002 : Record 17;
+    BEGIN
+      GLEntry.INIT;
+      GLEntry."Entry No." := NextEntryNo;
+      GLEntry."Posting Date" := GenJnlLine."Posting Date";
+      GLEntry.Amount := RoundingAmount;
+      GLEntry."Amount (LCY)" := RoundingAmount;
+      GLEntry.INSERT(TRUE);
+
+      NextEntryNo := NextEntryNo + 1;
+    END;
+
+    LOCAL PROCEDURE@17 PostGLAccForCust@17(GenJnlLine@1000 : Record 81);
+    VAR
+      CustPostingGroup@1001 : Record 92;
+      GLEntry@1002 : Record 17;
+    BEGIN
+      IF NOT CustPostingGroup.GET(GenJnlLine."Posting Group") THEN
+        EXIT;
+
+      GLEntry.INIT;
+      GLEntry."Entry No." := NextEntryNo;
+      GLEntry."G/L Account No." := CustPostingGroup."Receivables Account";
+      GLEntry."Posting Date" := GenJnlLine."Posting Date";
+      GLEntry.Amount := -GenJnlLine.Amount;
+      GLEntry."Amount (LCY)" := -GenJnlLine."Amount (LCY)";
+      GLEntry."Transaction No." := NextTransactionNo;
+      GLEntry.INSERT(TRUE);
+
+      NextEntryNo := NextEntryNo + 1;
+    END;
+
+    LOCAL PROCEDURE@18 PostVend@18();
+    VAR
+      Vend@1000 : Record 23;
+      VendLedgEntry@1001 : Record 25;
+      DetailedVendLedgEntry@1002 : Record 380;
+    BEGIN
+      IF NOT Vend.GET(GenJnlLine."Account No.") THEN
+        EXIT;
+
+      IF Vend.Blocked <> Vend.Blocked::" " THEN
+        IF NOT OverrideDimErr THEN
+          ERROR('Vendor %1 is blocked', Vend."No.");
+
+      VendLedgEntry.INIT;
+      VendLedgEntry."Entry No." := GetNextVendLedgEntryNo;
+      VendLedgEntry."Vendor No." := GenJnlLine."Account No.";
+      VendLedgEntry."Posting Date" := GenJnlLine."Posting Date";
+      VendLedgEntry."Document Type" := GenJnlLine."Document Type";
+      VendLedgEntry."Document No." := GenJnlLine."Document No.";
+      VendLedgEntry.Description := GenJnlLine.Description;
+      VendLedgEntry.Amount := GenJnlLine.Amount;
+      VendLedgEntry."Amount (LCY)" := GenJnlLine."Amount (LCY)";
+      VendLedgEntry."Currency Code" := GenJnlLine."Currency Code";
+      VendLedgEntry."Transaction No." := NextTransactionNo;
+      VendLedgEntry."Source Code" := CurrentSourceCode;
+      VendLedgEntry."User ID" := USERID;
+      VendLedgEntry.Open := TRUE;
+      VendLedgEntry.INSERT(TRUE);
+
+      CreateDetailedVendLedgEntry(VendLedgEntry);
+      PostGLAccForVend(GenJnlLine);
+
+      VendLedgEntryInserted := TRUE;
+    END;
+
+    LOCAL PROCEDURE@19 GetNextVendLedgEntryNo@19() : Integer;
+    BEGIN
+      IF NextVendLedgEntryNo = 0 THEN BEGIN
+        VendLedgEntry.LOCKTABLE;
+        IF VendLedgEntry.FINDLAST THEN
+          NextVendLedgEntryNo := VendLedgEntry."Entry No." + 1
+        ELSE
+          NextVendLedgEntryNo := 1;
+      END;
+
+      NextVendLedgEntryNo := NextVendLedgEntryNo + 1;
+      EXIT(NextVendLedgEntryNo - 1);
+    END;
+
+    LOCAL PROCEDURE@20 CreateDetailedVendLedgEntry@20(VendLedgEntry@1000 : Record 25);
+    VAR
+      DetailedVendLedgEntry@1001 : Record 380;
+      NextDtldEntryNo@1002 : Integer;
+    BEGIN
+      DetailedVendLedgEntry.LOCKTABLE;
+      IF DetailedVendLedgEntry.FINDLAST THEN
+        NextDtldEntryNo := DetailedVendLedgEntry."Entry No." + 1
+      ELSE
+        NextDtldEntryNo := 1;
+
+      DetailedVendLedgEntry.INIT;
+      DetailedVendLedgEntry."Entry No." := NextDtldEntryNo;
+      DetailedVendLedgEntry."Vendor Ledger Entry No." := VendLedgEntry."Entry No.";
+      DetailedVendLedgEntry."Entry Type" := DetailedVendLedgEntry."Entry Type"::"Initial Entry";
+      DetailedVendLedgEntry."Posting Date" := VendLedgEntry."Posting Date";
+      DetailedVendLedgEntry."Document Type" := VendLedgEntry."Document Type";
+      DetailedVendLedgEntry."Document No." := VendLedgEntry."Document No.";
+      DetailedVendLedgEntry.Amount := VendLedgEntry.Amount;
+      DetailedVendLedgEntry."Amount (LCY)" := VendLedgEntry."Amount (LCY)";
+      DetailedVendLedgEntry."Vendor No." := VendLedgEntry."Vendor No.";
+      DetailedVendLedgEntry.INSERT(TRUE);
+    END;
+
+    LOCAL PROCEDURE@21 PostGLAccForVend@21(GenJnlLine@1000 : Record 81);
+    VAR
+      VendPostingGroup@1001 : Record 93;
+      GLEntry@1002 : Record 17;
+    BEGIN
+      IF NOT VendPostingGroup.GET(GenJnlLine."Posting Group") THEN
+        EXIT;
+
+      GLEntry.INIT;
+      GLEntry."Entry No." := NextEntryNo;
+      GLEntry."G/L Account No." := VendPostingGroup."Payables Account";
+      GLEntry."Posting Date" := GenJnlLine."Posting Date";
+      GLEntry.Amount := -GenJnlLine.Amount;
+      GLEntry."Amount (LCY)" := -GenJnlLine."Amount (LCY)";
+      GLEntry."Transaction No." := NextTransactionNo;
+      GLEntry.INSERT(TRUE);
+
+      NextEntryNo := NextEntryNo + 1;
+    END;
+
+    LOCAL PROCEDURE@22 PostItem@22();
+    VAR
+      Item@1000 : Record 27;
+      ItemJnlLine@1001 : Record 83;
+    BEGIN
+      IF NOT Item.GET(GenJnlLine."Account No.") THEN
+        EXIT;
+
+      ItemJnlLine.INIT;
+      ItemJnlLine."Entry Type" := ItemJnlLine."Entry Type"::"Positive Adjmt.";
+      ItemJnlLine."Item No." := GenJnlLine."Account No.";
+      ItemJnlLine."Posting Date" := GenJnlLine."Posting Date";
+      ItemJnlLine.Quantity := GenJnlLine.Quantity;
+      ItemJnlLine.Amount := GenJnlLine.Amount;
+
+      PostItemJnlLine(ItemJnlLine);
+    END;
+
+    LOCAL PROCEDURE@23 PostItemJnlLine@23(ItemJnlLine@1000 : Record 83);
+    VAR
+      ItemJnlPostLine@1001 : Codeunit 22;
+    BEGIN
+      ItemJnlPostLine.RUN(ItemJnlLine);
+      ItemLedgEntryInserted := TRUE;
+    END;
+
+    LOCAL PROCEDURE@24 PostBankAcc@24();
+    VAR
+      BankAcc@1000 : Record 270;
+      BankAccLedgEntry@1001 : Record 271;
+    BEGIN
+      IF NOT BankAcc.GET(GenJnlLine."Account No.") THEN
+        EXIT;
+
+      BankAccLedgEntry.INIT;
+      BankAccLedgEntry."Bank Account No." := GenJnlLine."Account No.";
+      BankAccLedgEntry."Posting Date" := GenJnlLine."Posting Date";
+      BankAccLedgEntry."Document No." := GenJnlLine."Document No.";
+      BankAccLedgEntry.Amount := GenJnlLine.Amount;
+      BankAccLedgEntry."Amount (LCY)" := GenJnlLine."Amount (LCY)";
+      BankAccLedgEntry.INSERT(TRUE);
+
+      PostGLAccForBankAcc(GenJnlLine, BankAcc);
+    END;
+
+    LOCAL PROCEDURE@25 PostGLAccForBankAcc@25(GenJnlLine@1000 : Record 81;BankAcc@1001 : Record 270);
+    VAR
+      BankAccPostingGroup@1002 : Record 277;
+      GLEntry@1003 : Record 17;
+    BEGIN
+      IF NOT BankAccPostingGroup.GET(BankAcc."Bank Acc. Posting Group") THEN
+        EXIT;
+
+      GLEntry.INIT;
+      GLEntry."Entry No." := NextEntryNo;
+      GLEntry."G/L Account No." := BankAccPostingGroup."G/L Account No.";
+      GLEntry."Posting Date" := GenJnlLine."Posting Date";
+      GLEntry.Amount := GenJnlLine.Amount;
+      GLEntry."Amount (LCY)" := GenJnlLine."Amount (LCY)";
+      GLEntry.INSERT(TRUE);
+
+      NextEntryNo := NextEntryNo + 1;
+    END;
+
+    LOCAL PROCEDURE@26 PostFixedAsset@26();
+    VAR
+      FixedAsset@1000 : Record 5600;
+      FAJnlLine@1001 : Record 5621;
+    BEGIN
+      IF NOT FixedAsset.GET(GenJnlLine."Account No.") THEN
+        EXIT;
+
+      FAJnlLine.INIT;
+      FAJnlLine."FA No." := GenJnlLine."Account No.";
+      FAJnlLine."FA Posting Date" := GenJnlLine."Posting Date";
+      FAJnlLine.Amount := GenJnlLine.Amount;
+
+      PostFAJnlLine(FAJnlLine);
+    END;
+
+    LOCAL PROCEDURE@27 PostFAJnlLine@27(FAJnlLine@1000 : Record 5621);
+    VAR
+      FAJnlPostLine@1001 : Codeunit 5632;
+    BEGIN
+      FAJnlPostLine.RUN(FAJnlLine);
+    END;
+
+    LOCAL PROCEDURE@28 PostBalancingAccount@28();
+    VAR
+      BalGenJnlLine@1000 : Record 81;
+    BEGIN
+      BalGenJnlLine := GenJnlLine;
+      BalGenJnlLine."Account Type" := GenJnlLine."Bal. Account Type";
+      BalGenJnlLine."Account No." := GenJnlLine."Bal. Account No.";
+      BalGenJnlLine.Amount := -GenJnlLine.Amount;
+      BalGenJnlLine."Amount (LCY)" := -GenJnlLine."Amount (LCY)";
+
+      CASE BalGenJnlLine."Account Type" OF
+        BalGenJnlLine."Account Type"::"G/L Account":
+          PostGLAccLine;
+        BalGenJnlLine."Account Type"::Customer:
+          PostCust;
+        BalGenJnlLine."Account Type"::Vendor:
+          PostVend;
+        BalGenJnlLine."Account Type"::"Bank Account":
+          PostBankAcc;
+      END;
+    END;
+
+    LOCAL PROCEDURE@29 FinalizePosting@29();
+    BEGIN
+      IF UseBuffering THEN
+        FlushGLEntryBuffer;
+
+      IF GLEntryInserted OR CustLedgEntryInserted OR VendLedgEntryInserted THEN
+        IncrementTransactionNo;
+    END;
+
+    LOCAL PROCEDURE@30 FlushGLEntryBuffer@30();
+    VAR
+      GLEntry@1000 : Record 17;
+    BEGIN
+      TempGLEntryBuf.RESET;
+      IF TempGLEntryBuf.FINDSET THEN BEGIN
+        REPEAT
+          GLEntry := TempGLEntryBuf;
+          GLEntry.INSERT(TRUE);
+        UNTIL TempGLEntryBuf.NEXT = 0;
+      END;
+
+      TempGLEntryBuf.DELETEALL;
+    END;
+
+    LOCAL PROCEDURE@31 IncrementTransactionNo@31();
+    BEGIN
+      NextTransactionNo := NextTransactionNo + 1;
+    END;
+
+    PROCEDURE@32 SetOverrideDimError@32(Override@1000 : Boolean);
+    BEGIN
+      OverrideDimErr := Override;
+    END;
+
+    PROCEDURE@33 SetUseBuffering@33(UseBuffer@1000 : Boolean);
+    BEGIN
+      UseBuffering := UseBuffer;
+    END;
+
+    PROCEDURE@34 GetTransactionNo@34() : Integer;
+    BEGIN
+      EXIT(NextTransactionNo);
+    END;
+
+    PROCEDURE@35 GetGLEntryNo@35() : Integer;
+    BEGIN
+      EXIT(NextEntryNo);
+    END;
+
+    PROCEDURE@36 IsGLEntryInserted@36() : Boolean;
+    BEGIN
+      EXIT(GLEntryInserted);
+    END;
+
+    PROCEDURE@37 IsCustLedgEntryInserted@37() : Boolean;
+    BEGIN
+      EXIT(CustLedgEntryInserted);
+    END;
+
+    PROCEDURE@38 IsVendLedgEntryInserted@38() : Boolean;
+    BEGIN
+      EXIT(VendLedgEntryInserted);
+    END;
+
+    PROCEDURE@39 GetErrorText@39() : Text[250];
+    BEGIN
+      EXIT(ErrorText);
+    END;
+
+    PROCEDURE@40 ValidateDimensions@40(GenJnlLine@1000 : Record 81) : Boolean;
+    VAR
+      DimensionSetEntry@1001 : Record 480;
+    BEGIN
+      IF GenJnlLine."Dimension Set ID" = 0 THEN
+        EXIT(TRUE);
+
+      DimensionSetEntry.SETRANGE("Dimension Set ID", GenJnlLine."Dimension Set ID");
+      EXIT(NOT DimensionSetEntry.ISEMPTY);
+    END;
+
+    BEGIN
+    {
+      ACME General Journal Post Line v2.0
+      100% synthetic - demonstrates god object anti-pattern for stress testing
+      Uses standard NAV posting patterns (G/L, Customer, Vendor, Bank, FA, Item ledger entries)
+    }
+    END.
+  }
+}

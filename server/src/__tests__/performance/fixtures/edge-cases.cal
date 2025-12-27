@@ -1,0 +1,619 @@
+// SYNTHETIC PERFORMANCE TEST FIXTURE - 100% GENERATED
+// Purpose: Tests lexer robustness and quoted identifier handling
+// Pattern: Syntax edge cases and compiler tolerances
+
+OBJECT Codeunit 50014 Edge Case Tolerance Manager
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/15/25;
+    Time=14:30:00;
+    Modified=Yes;
+    Version List=EDGE-CASE-TEST;
+  }
+  PROPERTIES
+  {
+    SingleInstance=Yes;
+    TableNo=27;
+    OnRun=BEGIN
+            // ACME >> Initialization Region
+            InitializeEdgeCaseProcessor;
+            ProcessQuotedIdentifiers;
+            HandleUnicodeIdentifiers;
+            // << ACME
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      "Order-No."@1000000000 : Code[20];
+      "Line-Amount"@1000000001 : Decimal;
+      "Customer-Name"@1000000002 : Text[100];
+      "Item-Description"@1000000003 : Text[250];
+      "Unit-Price"@1000000004 : Decimal;
+      "Quantity-On-Hand"@1000000005 : Decimal;
+      "Posting-Date"@1000000006 : Date;
+      "Document-Type"@1000000007 : Option;
+      "Entry-No."@1000000008 : Integer;
+      "External-Reference-ID"@1000000009 : Code[50];
+      VeryLongIdentifierNameThatExceedsNormalLengthToTestLexerCapabilityWithExtendedIdentifierHandling@1000000010 : Text[250];
+      AnotherExtremelyLongVariableNameDesignedToStressTestTheParserAndLexerComponentsOfTheCompilerInfrastructure@1000000011 : Text[250];
+      SuperDuperMegaUltraExtraLongIdentifierNameCreatedSpecificallyForEdgeCaseTestingAndValidation@1000000012 : Text[250];
+      "Øresund-Bridge-Toll-Amount"@1000000013 : Decimal;
+      "Ästhetik-Faktor"@1000000014 : Integer;
+      "Café-Revenue"@1000000015 : Decimal;
+      "Naïve-Calculation-Method"@1000000016 : Option;
+      "Zürich-Office-Code"@1000000017 : Code[10];
+      "São-Paulo-Branch"@1000000018 : Code[10];
+      "Москва-Region"@1000000019 : Text[50];
+      "北京-Location"@1000000020 : Code[20];
+      EdgeCaseCounter@1000000021 : Integer;
+      QuotedFieldReference@1000000022 : Text[100];
+      MultibyteCharacterTest@1000000023 : Text[100];
+      "Special-Characters-Test!@#"@1000000024 : Text[50];
+      "Hyphen-Separated-Long-Name"@1000000025 : Code[30];
+      Text001@1000000026 : TextConst 'DAN=Generisk dansk tekst for test;ENU=Generic English text for test;DEU=Generischer deutscher Text für Test;FRA=Texte français générique pour test';
+      Text002@1000000027 : TextConst 'DAN=Fejlmeddelelse scenario A;ENU=Error message scenario A;ESP=Mensaje de error escenario A;ITA=Messaggio di errore scenario A';
+      Text003@1000000028 : TextConst 'DAN=Advarsel om grænseværdi;ENU=Warning about boundary value;NOR=Advarsel om grenseverdi;SVE=Varning om gränsvärde';
+      Text004@1000000029 : TextConst 'DAN=Bekræftelse påkrævet;ENU=Confirmation required;FIN=Vahvistus vaaditaan;ISL=Staðfesting krafist';
+      Text005@1000000030 : TextConst 'DAN=Gennemfør handling nu;ENU=Execute action now;NLD=Voer actie nu uit;POL=Wykonaj akcję teraz';
+      "___Underscore___Test___"@1000000031 : Integer;
+      "Multiple---Hyphens---Test"@1000000032 : Code[20];
+      GlobalProcessingFlag@1000000033 : Boolean;
+      NestedQuotedIdentifierTest@1000000034 : Text[150];
+      "Période-Fiscale"@1000000035 : Code[10];
+      "Numéro-Séquentiel"@1000000036 : Integer;
+
+    // ACME >> Core Edge Case Processing
+    PROCEDURE InitializeEdgeCaseProcessor@1000000000();
+    VAR
+      LocalVeryLongVariableNameForTestingPurposesWithinProcedureScopeToValidateLocalVariableHandling@1000 : Integer;
+      "Local-Quoted-Identifier"@1001 : Text[50];
+      "Løkke-Tæller"@1002 : Integer;
+    BEGIN
+      EdgeCaseCounter := 0;
+      GlobalProcessingFlag := TRUE;
+
+      // Test whitespace handling
+      "Order-No."      :=      'TEST001'      ;
+      "Line-Amount"    :=    1234.56    ;
+
+
+
+      // Multiple blank lines above for whitespace testing
+
+      "Customer-Name" := 'Test Customer ABC';
+      VeryLongIdentifierNameThatExceedsNormalLengthToTestLexerCapabilityWithExtendedIdentifierHandling :=
+        'Very long content stored in very long identifier name';
+
+      AnotherExtremelyLongVariableNameDesignedToStressTestTheParserAndLexerComponentsOfTheCompilerInfrastructure :=
+        'Additional extremely long content for testing purposes';
+
+      SuperDuperMegaUltraExtraLongIdentifierNameCreatedSpecificallyForEdgeCaseTestingAndValidation :=
+        'Maximum length identifier content validation';
+    END;
+    // << ACME
+
+    // ACME >> Unicode Identifier Handling
+    PROCEDURE HandleUnicodeIdentifiers@1000000001();
+    VAR
+      "Temporær-Værdi"@1000 : Decimal;
+      "Grüße-Counter"@1001 : Integer;
+    BEGIN
+      "Øresund-Bridge-Toll-Amount" := 450.00;
+      "Ästhetik-Faktor" := 42;
+      "Café-Revenue" := 15678.90;
+      "Zürich-Office-Code" := 'ZRH-001';
+      "São-Paulo-Branch" := 'SAO-001';
+
+      // Test Unicode in expressions
+      IF "Øresund-Bridge-Toll-Amount" > 400 THEN
+        "Café-Revenue" := "Café-Revenue" * 1.15;
+
+      "Période-Fiscale" := 'Q1-2025';
+      "Numéro-Séquentiel" := "Numéro-Séquentiel" + 1;
+    END;
+    // << ACME
+
+    // ACME >> Quoted Field Reference Processing
+    PROCEDURE ProcessQuotedIdentifiers@1000000002();
+    VAR
+      "Interim-Result"@1000 : Decimal;
+      CalculationBuffer@1001 : Text[250];
+    BEGIN
+      // Test quoted identifiers in complex expressions
+      "Line-Amount" :=
+        ("Unit-Price" * "Quantity-On-Hand") +
+        ("Øresund-Bridge-Toll-Amount" * 0.25) -
+        ("Café-Revenue" * 0.05);
+
+      // Test with conditional logic
+      IF ("Order-No." <> '') AND ("Customer-Name" <> '') THEN BEGIN
+        "Entry-No." := "Entry-No." + 1;
+        "External-Reference-ID" := "Order-No." + '-' + FORMAT("Entry-No.");
+      END;
+
+      // Test nested quoted identifier references
+      CASE "Document-Type" OF
+        0: "Line-Amount" := "Unit-Price" * "Quantity-On-Hand";
+        1: "Line-Amount" := ("Unit-Price" * "Quantity-On-Hand") * 1.10;
+        2: "Line-Amount" := ("Unit-Price" * "Quantity-On-Hand") * 0.90;
+      END;
+    END;
+    // << ACME
+
+    // ACME >> Extreme Whitespace Patterns
+    PROCEDURE     ExtremeLongProcedureNameToTestIdentifierLengthHandlingAndParserToleranceWithWhitespace@1000000003     (        )     ;
+    VAR
+      LocalVariable1@1000    :    Integer   ;
+      LocalVariable2@1001:Decimal;
+      LocalVariable3    @1002    :    Text[100]    ;
+    BEGIN
+      // Intentional unusual formatting
+      LocalVariable1:=100;
+      LocalVariable2    :=    200.50    ;
+      LocalVariable3:='Test';
+
+      IF    LocalVariable1    >    50    THEN
+        LocalVariable2    :=    LocalVariable2    *    2    ;
+
+      WHILE    LocalVariable1    >    0    DO    BEGIN
+        LocalVariable1    :=    LocalVariable1    -    1    ;
+      END    ;
+    END;
+    // << ACME
+
+    PROCEDURE EmptyProcedureBodyTest1@1000000004();
+    BEGIN
+    END;
+
+    PROCEDURE EmptyProcedureBodyTest2@1000000005();
+    BEGIN
+      // Only comment, effectively empty
+    END;
+
+    PROCEDURE EmptyProcedureBodyTest3@1000000006();
+    BEGIN
+
+
+      // Multiple blank lines
+
+
+    END;
+
+    // ACME >> Single Case Statement Testing
+    PROCEDURE SingleCaseStatementTest@1000000007();
+    VAR
+      TestValue@1000 : Integer;
+    BEGIN
+      TestValue := 1;
+
+      CASE TestValue OF
+        1: EdgeCaseCounter := EdgeCaseCounter + 1;
+      END;
+
+      CASE "Document-Type" OF
+        0: "Line-Amount" := 0;
+      END;
+    END;
+    // << ACME
+
+    // ACME >> Complex Quoted Expression Testing
+    PROCEDURE ComplexQuotedExpressionEvaluation@1000000008();
+    VAR
+      "Result-Buffer"@1000 : Decimal;
+      "Intermediate-Value-1"@1001 : Decimal;
+      "Intermediate-Value-2"@1002 : Decimal;
+    BEGIN
+      "Intermediate-Value-1" :=
+        (("Unit-Price" + "Øresund-Bridge-Toll-Amount") *
+         ("Quantity-On-Hand" - 5)) /
+        (1 + ("Ästhetik-Faktor" / 100));
+
+      "Intermediate-Value-2" :=
+        "Café-Revenue" *
+        (1 - (("Line-Amount" / "Café-Revenue") * 0.15));
+
+      "Result-Buffer" :=
+        "Intermediate-Value-1" + "Intermediate-Value-2";
+
+      // Update quoted field references
+      "Line-Amount" := "Result-Buffer";
+      "External-Reference-ID" :=
+        "Order-No." + '-' +
+        "Customer-Name" + '-' +
+        FORMAT("Entry-No.");
+    END;
+    // << ACME
+
+    // ACME >> Multilingual Text Constant Usage
+    PROCEDURE MultilingualTextConstantTest@1000000009();
+    VAR
+      MessageBuffer@1000 : Text[250];
+    BEGIN
+      MessageBuffer := Text001;
+      MESSAGE(Text001);
+      MESSAGE(Text002);
+
+      IF EdgeCaseCounter > 100 THEN
+        ERROR(Text002);
+
+      IF "Line-Amount" < 0 THEN
+        MESSAGE(Text003);
+
+      IF GlobalProcessingFlag THEN
+        MESSAGE(Text004);
+
+      MESSAGE(Text005);
+    END;
+    // << ACME
+
+    // ACME >> Special Character Identifier Testing
+    PROCEDURE SpecialCharacterIdentifierProcessing@1000000010();
+    BEGIN
+      "___Underscore___Test___" := 999;
+      "Multiple---Hyphens---Test" := 'MULTI-HYPHEN';
+      "Special-Characters-Test!@#" := 'Special chars test';
+      "Hyphen-Separated-Long-Name" := 'HSL-NAME-001';
+
+      IF "___Underscore___Test___" > 0 THEN
+        EdgeCaseCounter := EdgeCaseCounter + "___Underscore___Test___";
+    END;
+    // << ACME
+
+    // ACME >> Nested Condition with Quoted Identifiers
+    PROCEDURE NestedConditionQuotedIdentifierTest@1000000011();
+    BEGIN
+      IF "Order-No." <> '' THEN BEGIN
+        IF "Customer-Name" <> '' THEN BEGIN
+          IF "Line-Amount" > 0 THEN BEGIN
+            IF "Quantity-On-Hand" > 0 THEN BEGIN
+              IF "Unit-Price" > 0 THEN BEGIN
+                "External-Reference-ID" := 'VALID';
+                EdgeCaseCounter := EdgeCaseCounter + 1;
+              END ELSE BEGIN
+                "External-Reference-ID" := 'INVALID-PRICE';
+              END;
+            END;
+          END;
+        END;
+      END;
+    END;
+    // << ACME
+
+    // ACME >> Loop with Quoted Identifiers
+    PROCEDURE LoopWithQuotedIdentifiers@1000000012();
+    VAR
+      "Loop-Counter"@1000 : Integer;
+      "Accumulator-Value"@1001 : Decimal;
+    BEGIN
+      "Loop-Counter" := 1;
+      "Accumulator-Value" := 0;
+
+      WHILE "Loop-Counter" <= 100 DO BEGIN
+        "Accumulator-Value" := "Accumulator-Value" + "Loop-Counter";
+        "Loop-Counter" := "Loop-Counter" + 1;
+      END;
+
+      REPEAT
+        "Loop-Counter" := "Loop-Counter" - 1;
+        "Accumulator-Value" := "Accumulator-Value" - "Loop-Counter";
+      UNTIL "Loop-Counter" <= 0;
+
+      FOR "Loop-Counter" := 1 TO 50 DO
+        "Accumulator-Value" := "Accumulator-Value" + 0.5;
+    END;
+    // << ACME
+
+    // ACME >> Array and Dimension Testing
+    PROCEDURE ArrayDimensionEdgeCaseTest@1000000013();
+    VAR
+      "Array-Value"@1000 : ARRAY [10] OF Decimal;
+      "Matrix-Value"@1001 : ARRAY [5,5] OF Integer;
+      "Index-1"@1002 : Integer;
+      "Index-2"@1003 : Integer;
+    BEGIN
+      FOR "Index-1" := 1 TO 10 DO
+        "Array-Value"["Index-1"] := "Index-1" * 10.5;
+
+      FOR "Index-1" := 1 TO 5 DO
+        FOR "Index-2" := 1 TO 5 DO
+          "Matrix-Value"["Index-1","Index-2"] := "Index-1" * "Index-2";
+    END;
+    // << ACME
+
+    // ACME >> Record Field Quoted Access
+    PROCEDURE RecordFieldQuotedAccessTest@1000000014();
+    VAR
+      ItemRecord@1000 : Record 27;
+      "Field-Value-Buffer"@1001 : Text[100];
+    BEGIN
+      ItemRecord.INIT;
+      ItemRecord."No." := "Order-No.";
+
+      IF ItemRecord.FIND('-') THEN
+        REPEAT
+          "Field-Value-Buffer" := ItemRecord."No.";
+          EdgeCaseCounter := EdgeCaseCounter + 1;
+        UNTIL ItemRecord.NEXT = 0;
+    END;
+    // << ACME
+
+    // ACME >> Filter and SetRange with Quoted Fields
+    PROCEDURE FilterSetRangeQuotedFieldTest@1000000015();
+    VAR
+      CustomerRecord@1000 : Record 18;
+      "Filter-Value"@1001 : Code[20];
+    BEGIN
+      "Filter-Value" := "Order-No.";
+
+      CustomerRecord.SETRANGE("No.","Filter-Value");
+      CustomerRecord.SETFILTER("Name",'@*' + "Customer-Name" + '*');
+
+      IF CustomerRecord.FINDFIRST THEN
+        "Customer-Name" := CustomerRecord."Name";
+    END;
+    // << ACME
+
+    // ACME >> Calculation Formula Edge Cases
+    PROCEDURE CalculationFormulaEdgeCases@1000000016();
+    VAR
+      "Division-Result"@1000 : Decimal;
+      "Modulo-Result"@1001 : Integer;
+    BEGIN
+      "Division-Result" :=
+        (("Line-Amount" + "Café-Revenue") /
+         (("Unit-Price" * "Quantity-On-Hand") + 0.01)) *
+        (1 + ("Øresund-Bridge-Toll-Amount" / 1000));
+
+      "Modulo-Result" :=
+        "Entry-No." MOD ("Ästhetik-Faktor" + 1);
+
+      // Test DIV operator
+      EdgeCaseCounter :=
+        EdgeCaseCounter + (12345 DIV ("Ästhetik-Faktor" + 1));
+    END;
+    // << ACME
+
+    // ACME >> Format and Evaluate with Quoted Identifiers
+    PROCEDURE FormatEvaluateQuotedIdentifierTest@1000000017();
+    VAR
+      "Formatted-Text"@1000 : Text[250];
+      "Parsed-Decimal"@1001 : Decimal;
+    BEGIN
+      "Formatted-Text" :=
+        FORMAT("Line-Amount") + ' | ' +
+        FORMAT("Café-Revenue") + ' | ' +
+        FORMAT("Øresund-Bridge-Toll-Amount");
+
+      "External-Reference-ID" :=
+        FORMAT("Entry-No.",10,'<Integer,10><Filler Character,0>');
+
+      EVALUATE("Parsed-Decimal","Formatted-Text");
+    END;
+    // << ACME
+
+    // ACME >> Boolean Expression Complexity
+    PROCEDURE ComplexBooleanExpressionTest@1000000018();
+    VAR
+      "Condition-Result"@1000 : Boolean;
+    BEGIN
+      "Condition-Result" :=
+        ("Order-No." <> '') AND
+        ("Customer-Name" <> '') AND
+        (("Line-Amount" > 0) OR ("Café-Revenue" > 0)) AND
+        NOT (("Quantity-On-Hand" = 0) AND ("Unit-Price" = 0)) AND
+        (("Ästhetik-Faktor" IN [1..100]) OR
+         ("Entry-No." IN [1000..9999]));
+
+      GlobalProcessingFlag :=
+        "Condition-Result" AND
+        ("Øresund-Bridge-Toll-Amount" >= 0);
+    END;
+    // << ACME
+
+    // ACME >> String Manipulation Edge Cases
+    PROCEDURE StringManipulationEdgeCases@1000000019();
+    VAR
+      "String-Buffer-1"@1000 : Text[250];
+      "String-Buffer-2"@1001 : Text[250];
+      "Position-Index"@1002 : Integer;
+    BEGIN
+      "String-Buffer-1" :=
+        COPYSTR("Customer-Name",1,10) +
+        DELCHR("Order-No.",'=',' -') +
+        LOWERCASE("External-Reference-ID");
+
+      "String-Buffer-2" :=
+        UPPERCASE("Zürich-Office-Code") +
+        PADSTR("São-Paulo-Branch",20,' ');
+
+      "Position-Index" :=
+        STRPOS("Customer-Name","Order-No.");
+
+      IF STRLEN("String-Buffer-1") > 50 THEN
+        "String-Buffer-1" := INSSTR("String-Buffer-1",'***',25);
+    END;
+    // << ACME
+
+    // ACME >> Date Time Calculation with Quoted Fields
+    PROCEDURE DateTimeCalculationQuotedFields@1000000020();
+    VAR
+      "Calculated-Date"@1000 : Date;
+      "Date-Difference"@1001 : Integer;
+      "Working-Date"@1002 : Date;
+    BEGIN
+      "Posting-Date" := TODAY;
+      "Calculated-Date" := CALCDATE('<+30D>',"Posting-Date");
+      "Date-Difference" := "Calculated-Date" - "Posting-Date";
+
+      "Working-Date" := "Posting-Date";
+      WHILE "Working-Date" <= "Calculated-Date" DO
+        "Working-Date" := CALCDATE('<+1D>',"Working-Date");
+    END;
+    // << ACME
+
+    PROCEDURE AnotherEmptyProcedure@1000000021();
+    BEGIN
+      // Intentionally empty for edge case testing
+    END;
+
+    // ACME >> Very Long Expression Line
+    PROCEDURE VeryLongExpressionLineTest@1000000022();
+    BEGIN
+      "Line-Amount" := (("Unit-Price" * "Quantity-On-Hand") + ("Café-Revenue" * 0.15) - ("Øresund-Bridge-Toll-Amount" * 0.25) + (EdgeCaseCounter * 0.01) - ("Ästhetik-Faktor" * 1.5)) * (1 + (0.05 * "Entry-No.")) / (1 + (AnotherExtremelyLongVariableNameDesignedToStressTestTheParserAndLexerComponentsOfTheCompilerInfrastructure.LENGTH / 1000));
+    END;
+    // << ACME
+
+    // ACME >> Mixed Case Keywords Test
+    PROCEDURE MixedCaseKeywordToleranceTest@1000000023();
+    VAR
+      TempValue@1000 : Integer;
+    BEGIN
+      TempValue := 0;
+
+      if TempValue = 0 then
+        TempValue := 1;
+
+      IF TempValue > 0 THEN
+        TempValue := TempValue + 1;
+
+      If TempValue < 100 Then
+        TempValue := TempValue * 2;
+    END;
+    // << ACME
+
+    // ACME >> Exit Statement Variations
+    PROCEDURE ExitStatementVariations@1000000024() : Boolean;
+    BEGIN
+      IF "Order-No." = '' THEN
+        EXIT(FALSE);
+
+      IF "Customer-Name" = '' THEN
+        EXIT;
+
+      IF "Line-Amount" <= 0 THEN
+        EXIT(FALSE);
+
+      EXIT(TRUE);
+    END;
+    // << ACME
+
+    // ACME >> CALCFIELDS and CALCSUM with Quoted
+    PROCEDURE CalcFieldsCalcSumQuotedTest@1000000025();
+    VAR
+      SalesLineRecord@1000 : Record 37;
+      "Total-Amount"@1001 : Decimal;
+    BEGIN
+      SalesLineRecord.SETRANGE("Document Type",SalesLineRecord."Document Type"::Order);
+      SalesLineRecord.SETRANGE("Document No.","Order-No.");
+
+      IF SalesLineRecord.FINDSET THEN
+        REPEAT
+          SalesLineRecord.CALCFIELDS(Amount);
+          "Total-Amount" := "Total-Amount" + SalesLineRecord.Amount;
+        UNTIL SalesLineRecord.NEXT = 0;
+
+      SalesLineRecord.CALCSUMS(Amount);
+      "Line-Amount" := "Total-Amount";
+    END;
+    // << ACME
+
+    // ACME >> WITH Statement Edge Cases
+    PROCEDURE WithStatementEdgeCases@1000000026();
+    VAR
+      ItemRecord@1000 : Record 27;
+    BEGIN
+      WITH ItemRecord DO BEGIN
+        INIT;
+        "No." := "Order-No.";
+        Description := "Item-Description";
+
+        IF INSERT THEN
+          MESSAGE(Text001);
+      END;
+    END;
+    // << ACME
+
+    // ACME >> Compound Assignment Patterns
+    PROCEDURE CompoundAssignmentPatterns@1000000027();
+    BEGIN
+      EdgeCaseCounter += 1;
+      "Line-Amount" += "Café-Revenue";
+      "Entry-No." += 1;
+
+      EdgeCaseCounter -= 1;
+      "Line-Amount" -= 10.50;
+
+      EdgeCaseCounter *= 2;
+      "Line-Amount" *= 1.15;
+
+      EdgeCaseCounter /= 2;
+      "Line-Amount" /= 1.15;
+    END;
+    // << ACME
+
+    // ACME >> Error and Message Variations
+    PROCEDURE ErrorMessageVariations@1000000028();
+    BEGIN
+      IF "Order-No." = '' THEN
+        ERROR(Text002);
+
+      IF "Line-Amount" < 0 THEN
+        ERROR('Negative amount not allowed: %1',"Line-Amount");
+
+      MESSAGE(Text001);
+      MESSAGE('Processing order: %1 for customer: %2',"Order-No.","Customer-Name");
+
+      IF CONFIRM(Text004,TRUE) THEN
+        GlobalProcessingFlag := TRUE;
+    END;
+    // << ACME
+
+    LOCAL PROCEDURE LocalProcedureWithQuotedParams@1000000029("Param-1"@1000 : Code[20];"Param-2"@1001 : Decimal) : Text[100];
+    VAR
+      "Return-Value"@1002 : Text[100];
+    BEGIN
+      "Return-Value" := "Param-1" + FORMAT("Param-2");
+      EXIT("Return-Value");
+    END;
+
+    // ACME >> Test All Quoted Parameter Passing
+    PROCEDURE TestQuotedParameterPassing@1000000030();
+    VAR
+      "Result-Text"@1000 : Text[100];
+    BEGIN
+      "Result-Text" :=
+        LocalProcedureWithQuotedParams("Order-No.","Line-Amount");
+
+      "External-Reference-ID" :=
+        COPYSTR("Result-Text",1,MAXSTRLEN("External-Reference-ID"));
+    END;
+    // << ACME
+
+    BEGIN
+    {
+      // ACME >> Object Documentation
+      Edge Case Tolerance Manager - Synthetic Performance Test Fixture
+
+      Purpose: Test lexer robustness and quoted identifier handling
+      Version: 1.0.0.0
+
+      This codeunit contains:
+      - Special characters in identifiers (quotes, hyphens)
+      - Very long identifier names (100+ characters)
+      - Multilingual TextConst with GENERIC translations
+      - Unusual formatting and whitespace
+      - Empty procedure bodies
+      - CASE with single case
+      - Comment patterns with ACME regions
+      - Unicode characters in identifiers
+      - Quoted field references in complex expressions
+
+      All identifiers are fictitious for testing purposes only.
+      // << ACME
+    }
+    END.
+  }
+}

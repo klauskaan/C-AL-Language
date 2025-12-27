@@ -1,0 +1,787 @@
+// SYNTHETIC PERFORMANCE TEST FIXTURE - 100% GENERATED
+// Purpose: Tests parser field declaration handling with massive field count
+// Target: ~3000 lines with 500+ field definitions
+
+OBJECT Table 50012 Massive Field Test Table
+{
+  OBJECT-PROPERTIES
+  {
+    Date=27/12/25;
+    Time=12:00:00;
+    Modified=Yes;
+    Version List=PERF-TEST;
+  }
+  PROPERTIES
+  {
+    DataPerCompany=Yes;
+    CaptionML=ENU=Massive Field Test Table;
+    LookupPageID=Page50012;
+    DrillDownPageID=Page50012;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Entry No.           ;Integer       ;CaptionML=ENU=Entry No.;
+                                                    AutoIncrement=Yes;
+                                                    NotBlank=Yes }
+    { 2   ;   ;Document No.        ;Code20        ;CaptionML=ENU=Document No.;
+                                                    NotBlank=Yes;
+                                                    TableRelation="Document Master".No. }
+    { 3   ;   ;Customer No.        ;Code20        ;CaptionML=ENU=Customer No.;
+                                                    TableRelation=Customer;
+                                                    OnValidate=BEGIN
+                                                                 IF "Customer No." <> '' THEN
+                                                                   VALIDATE("Customer Name");
+                                                               END;
+                                                                }
+    { 4   ;   ;Customer Name       ;Text100       ;CaptionML=ENU=Customer Name;
+                                                    Editable=No }
+    { 5   ;   ;Posting Date        ;Date          ;CaptionML=ENU=Posting Date;
+                                                    NotBlank=Yes }
+    { 6   ;   ;Amount              ;Decimal       ;CaptionML=ENU=Amount;
+                                                    AutoFormatType=1 }
+    { 7   ;   ;Amount LCY          ;Decimal       ;CaptionML=ENU=Amount LCY;
+                                                    AutoFormatType=1;
+                                                    Editable=No }
+    { 8   ;   ;Quantity            ;Decimal       ;CaptionML=ENU=Quantity;
+                                                    DecimalPlaces=0:5 }
+    { 9   ;   ;Unit Price          ;Decimal       ;CaptionML=ENU=Unit Price;
+                                                    AutoFormatType=2;
+                                                    MinValue=0 }
+    { 10  ;   ;Status              ;Option        ;CaptionML=ENU=Status;
+                                                    OptionCaptionML=ENU=Open,Released,Pending,Closed;
+                                                    OptionString=Open,Released,Pending,Closed }
+    { 11  ;   ;Active              ;Boolean       ;CaptionML=ENU=Active;
+                                                    InitValue=Yes }
+    { 12  ;   ;Description         ;Text250       ;CaptionML=ENU=Description }
+    { 13  ;   ;Field 013           ;Code10        ;CaptionML=ENU=Field 013 }
+    { 14  ;   ;Field 014           ;Text50        ;CaptionML=ENU=Field 014 }
+    { 15  ;   ;Field 015           ;Integer       ;CaptionML=ENU=Field 015 }
+    { 16  ;   ;Field 016           ;Decimal       ;CaptionML=ENU=Field 016 }
+    { 17  ;   ;Field 017           ;Date          ;CaptionML=ENU=Field 017 }
+    { 18  ;   ;Field 018           ;Boolean       ;CaptionML=ENU=Field 018 }
+    { 19  ;   ;Field 019           ;Code20        ;CaptionML=ENU=Field 019;
+                                                    TableRelation="Reference Table" }
+    { 20  ;   ;Field 020           ;Text100       ;CaptionML=ENU=Field 020 }
+    { 21  ;   ;Field 021           ;Integer       ;CaptionML=ENU=Field 021 }
+    { 22  ;   ;Field 022           ;Decimal       ;CaptionML=ENU=Field 022;
+                                                    DecimalPlaces=2:5 }
+    { 23  ;   ;Field 023           ;Code15        ;CaptionML=ENU=Field 023 }
+    { 24  ;   ;Field 024           ;Text80        ;CaptionML=ENU=Field 024 }
+    { 25  ;   ;Field 025           ;Date          ;CaptionML=ENU=Field 025 }
+    { 26  ;   ;Field 026           ;Boolean       ;CaptionML=ENU=Field 026 }
+    { 27  ;   ;Field 027           ;Integer       ;CaptionML=ENU=Field 027;
+                                                    MinValue=0;
+                                                    MaxValue=999999 }
+    { 28  ;   ;Field 028           ;Decimal       ;CaptionML=ENU=Field 028 }
+    { 29  ;   ;Field 029           ;Code20        ;CaptionML=ENU=Field 029 }
+    { 30  ;   ;Field 030           ;Text150       ;CaptionML=ENU=Field 030 }
+    { 31  ;   ;Field 031           ;Integer       ;CaptionML=ENU=Field 031 }
+    { 32  ;   ;Field 032           ;Decimal       ;CaptionML=ENU=Field 032;
+                                                    AutoFormatType=1 }
+    { 33  ;   ;Field 033           ;Date          ;CaptionML=ENU=Field 033 }
+    { 34  ;   ;Field 034           ;Boolean       ;CaptionML=ENU=Field 034 }
+    { 35  ;   ;Field 035           ;Code10        ;CaptionML=ENU=Field 035 }
+    { 36  ;   ;Field 036           ;Text60        ;CaptionML=ENU=Field 036 }
+    { 37  ;   ;Field 037           ;Integer       ;CaptionML=ENU=Field 037 }
+    { 38  ;   ;Field 038           ;Decimal       ;CaptionML=ENU=Field 038 }
+    { 39  ;   ;Field 039           ;Date          ;CaptionML=ENU=Field 039 }
+    { 40  ;   ;Field 040           ;Boolean       ;CaptionML=ENU=Field 040 }
+    { 41  ;   ;Field 041           ;Code20        ;CaptionML=ENU=Field 041;
+                                                    TableRelation="Lookup Table" }
+    { 42  ;   ;Field 042           ;Text90        ;CaptionML=ENU=Field 042 }
+    { 43  ;   ;Field 043           ;Integer       ;CaptionML=ENU=Field 043 }
+    { 44  ;   ;Field 044           ;Decimal       ;CaptionML=ENU=Field 044;
+                                                    DecimalPlaces=0:2 }
+    { 45  ;   ;Field 045           ;Code15        ;CaptionML=ENU=Field 045 }
+    { 46  ;   ;Field 046           ;Text120       ;CaptionML=ENU=Field 046 }
+    { 47  ;   ;Field 047           ;Date          ;CaptionML=ENU=Field 047 }
+    { 48  ;   ;Field 048           ;Boolean       ;CaptionML=ENU=Field 048 }
+    { 49  ;   ;Field 049           ;Integer       ;CaptionML=ENU=Field 049 }
+    { 50  ;   ;Field 050           ;Decimal       ;CaptionML=ENU=Field 050 }
+    { 51  ;   ;Field 051           ;Code20        ;CaptionML=ENU=Field 051 }
+    { 52  ;   ;Field 052           ;Text75        ;CaptionML=ENU=Field 052 }
+    { 53  ;   ;Field 053           ;Integer       ;CaptionML=ENU=Field 053 }
+    { 54  ;   ;Field 054           ;Decimal       ;CaptionML=ENU=Field 054 }
+    { 55  ;   ;Field 055           ;Date          ;CaptionML=ENU=Field 055 }
+    { 56  ;   ;Field 056           ;Boolean       ;CaptionML=ENU=Field 056 }
+    { 57  ;   ;Field 057           ;Code10        ;CaptionML=ENU=Field 057 }
+    { 58  ;   ;Field 058           ;Text200       ;CaptionML=ENU=Field 058 }
+    { 59  ;   ;Field 059           ;Integer       ;CaptionML=ENU=Field 059 }
+    { 60  ;   ;Field 060           ;Decimal       ;CaptionML=ENU=Field 060;
+                                                    AutoFormatType=2 }
+    { 61  ;   ;Field 061           ;Code20        ;CaptionML=ENU=Field 061;
+                                                    TableRelation="Master Data" }
+    { 62  ;   ;Field 062           ;Text85        ;CaptionML=ENU=Field 062 }
+    { 63  ;   ;Field 063           ;Date          ;CaptionML=ENU=Field 063 }
+    { 64  ;   ;Field 064           ;Boolean       ;CaptionML=ENU=Field 064 }
+    { 65  ;   ;Field 065           ;Integer       ;CaptionML=ENU=Field 065 }
+    { 66  ;   ;Field 066           ;Decimal       ;CaptionML=ENU=Field 066 }
+    { 67  ;   ;Field 067           ;Code15        ;CaptionML=ENU=Field 067 }
+    { 68  ;   ;Field 068           ;Text110       ;CaptionML=ENU=Field 068 }
+    { 69  ;   ;Field 069           ;Integer       ;CaptionML=ENU=Field 069 }
+    { 70  ;   ;Field 070           ;Decimal       ;CaptionML=ENU=Field 070 }
+    { 71  ;   ;Field 071           ;Date          ;CaptionML=ENU=Field 071 }
+    { 72  ;   ;Field 072           ;Boolean       ;CaptionML=ENU=Field 072 }
+    { 73  ;   ;Field 073           ;Code20        ;CaptionML=ENU=Field 073 }
+    { 74  ;   ;Field 074           ;Text95        ;CaptionML=ENU=Field 074 }
+    { 75  ;   ;Field 075           ;Integer       ;CaptionML=ENU=Field 075;
+                                                    MinValue=-999999;
+                                                    MaxValue=999999 }
+    { 76  ;   ;Field 076           ;Decimal       ;CaptionML=ENU=Field 076;
+                                                    DecimalPlaces=1:3 }
+    { 77  ;   ;Field 077           ;Code10        ;CaptionML=ENU=Field 077 }
+    { 78  ;   ;Field 078           ;Text130       ;CaptionML=ENU=Field 078 }
+    { 79  ;   ;Field 079           ;Date          ;CaptionML=ENU=Field 079 }
+    { 80  ;   ;Field 080           ;Boolean       ;CaptionML=ENU=Field 080 }
+    { 81  ;   ;Field 081           ;Integer       ;CaptionML=ENU=Field 081 }
+    { 82  ;   ;Field 082           ;Decimal       ;CaptionML=ENU=Field 082 }
+    { 83  ;   ;Field 083           ;Code20        ;CaptionML=ENU=Field 083;
+                                                    TableRelation="Entity Table" }
+    { 84  ;   ;Field 084           ;Text70        ;CaptionML=ENU=Field 084 }
+    { 85  ;   ;Field 085           ;Integer       ;CaptionML=ENU=Field 085 }
+    { 86  ;   ;Field 086           ;Decimal       ;CaptionML=ENU=Field 086 }
+    { 87  ;   ;Field 087           ;Date          ;CaptionML=ENU=Field 087 }
+    { 88  ;   ;Field 088           ;Boolean       ;CaptionML=ENU=Field 088 }
+    { 89  ;   ;Field 089           ;Code15        ;CaptionML=ENU=Field 089 }
+    { 90  ;   ;Field 090           ;Text160       ;CaptionML=ENU=Field 090 }
+    { 91  ;   ;Field 091           ;Integer       ;CaptionML=ENU=Field 091 }
+    { 92  ;   ;Field 092           ;Decimal       ;CaptionML=ENU=Field 092;
+                                                    AutoFormatType=1 }
+    { 93  ;   ;Field 093           ;Code20        ;CaptionML=ENU=Field 093 }
+    { 94  ;   ;Field 094           ;Text105       ;CaptionML=ENU=Field 094 }
+    { 95  ;   ;Field 095           ;Date          ;CaptionML=ENU=Field 095 }
+    { 96  ;   ;Field 096           ;Boolean       ;CaptionML=ENU=Field 096 }
+    { 97  ;   ;Field 097           ;Integer       ;CaptionML=ENU=Field 097 }
+    { 98  ;   ;Field 098           ;Decimal       ;CaptionML=ENU=Field 098 }
+    { 99  ;   ;Field 099           ;Code10        ;CaptionML=ENU=Field 099 }
+    { 100 ;   ;Field 100           ;Text140       ;CaptionML=ENU=Field 100 }
+    { 101 ;   ;Field 101           ;Integer       ;CaptionML=ENU=Field 101 }
+    { 102 ;   ;Field 102           ;Decimal       ;CaptionML=ENU=Field 102;
+                                                    DecimalPlaces=2:4 }
+    { 103 ;   ;Field 103           ;Date          ;CaptionML=ENU=Field 103 }
+    { 104 ;   ;Field 104           ;Boolean       ;CaptionML=ENU=Field 104 }
+    { 105 ;   ;Field 105           ;Code20        ;CaptionML=ENU=Field 105;
+                                                    TableRelation="Reference Data";
+                                                    OnValidate=BEGIN
+                                                                 IF "Field 105" <> '' THEN
+                                                                   TESTFIELD("Field 106");
+                                                               END;
+                                                                }
+    { 106 ;   ;Field 106           ;Text80        ;CaptionML=ENU=Field 106 }
+    { 107 ;   ;Field 107           ;Integer       ;CaptionML=ENU=Field 107 }
+    { 108 ;   ;Field 108           ;Decimal       ;CaptionML=ENU=Field 108 }
+    { 109 ;   ;Field 109           ;Code15        ;CaptionML=ENU=Field 109 }
+    { 110 ;   ;Field 110           ;Text115       ;CaptionML=ENU=Field 110 }
+    { 111 ;   ;Field 111           ;Date          ;CaptionML=ENU=Field 111 }
+    { 112 ;   ;Field 112           ;Boolean       ;CaptionML=ENU=Field 112 }
+    { 113 ;   ;Field 113           ;Integer       ;CaptionML=ENU=Field 113 }
+    { 114 ;   ;Field 114           ;Decimal       ;CaptionML=ENU=Field 114 }
+    { 115 ;   ;Field 115           ;Code20        ;CaptionML=ENU=Field 115 }
+    { 116 ;   ;Field 116           ;Text65        ;CaptionML=ENU=Field 116 }
+    { 117 ;   ;Field 117           ;Integer       ;CaptionML=ENU=Field 117 }
+    { 118 ;   ;Field 118           ;Decimal       ;CaptionML=ENU=Field 118;
+                                                    AutoFormatType=2 }
+    { 119 ;   ;Field 119           ;Date          ;CaptionML=ENU=Field 119 }
+    { 120 ;   ;Field 120           ;Boolean       ;CaptionML=ENU=Field 120 }
+    { 121 ;   ;Field 121           ;Code10        ;CaptionML=ENU=Field 121 }
+    { 122 ;   ;Field 122           ;Text175       ;CaptionML=ENU=Field 122 }
+    { 123 ;   ;Field 123           ;Integer       ;CaptionML=ENU=Field 123 }
+    { 124 ;   ;Field 124           ;Decimal       ;CaptionML=ENU=Field 124 }
+    { 125 ;   ;Field 125           ;Code20        ;CaptionML=ENU=Field 125;
+                                                    TableRelation="Data Table" }
+    { 126 ;   ;Field 126           ;Text125       ;CaptionML=ENU=Field 126 }
+    { 127 ;   ;Field 127           ;Date          ;CaptionML=ENU=Field 127 }
+    { 128 ;   ;Field 128           ;Boolean       ;CaptionML=ENU=Field 128 }
+    { 129 ;   ;Field 129           ;Integer       ;CaptionML=ENU=Field 129 }
+    { 130 ;   ;Field 130           ;Decimal       ;CaptionML=ENU=Field 130;
+                                                    DecimalPlaces=0:3 }
+    { 131 ;   ;Field 131           ;Code15        ;CaptionML=ENU=Field 131 }
+    { 132 ;   ;Field 132           ;Text55        ;CaptionML=ENU=Field 132 }
+    { 133 ;   ;Field 133           ;Integer       ;CaptionML=ENU=Field 133 }
+    { 134 ;   ;Field 134           ;Decimal       ;CaptionML=ENU=Field 134 }
+    { 135 ;   ;Field 135           ;Date          ;CaptionML=ENU=Field 135 }
+    { 136 ;   ;Field 136           ;Boolean       ;CaptionML=ENU=Field 136 }
+    { 137 ;   ;Field 137           ;Code20        ;CaptionML=ENU=Field 137 }
+    { 138 ;   ;Field 138           ;Text180       ;CaptionML=ENU=Field 138 }
+    { 139 ;   ;Field 139           ;Integer       ;CaptionML=ENU=Field 139 }
+    { 140 ;   ;Field 140           ;Decimal       ;CaptionML=ENU=Field 140;
+                                                    AutoFormatType=1 }
+    { 141 ;   ;Field 141           ;Code10        ;CaptionML=ENU=Field 141 }
+    { 142 ;   ;Field 142           ;Text145       ;CaptionML=ENU=Field 142 }
+    { 143 ;   ;Field 143           ;Date          ;CaptionML=ENU=Field 143 }
+    { 144 ;   ;Field 144           ;Boolean       ;CaptionML=ENU=Field 144 }
+    { 145 ;   ;Field 145           ;Integer       ;CaptionML=ENU=Field 145 }
+    { 146 ;   ;Field 146           ;Decimal       ;CaptionML=ENU=Field 146 }
+    { 147 ;   ;Field 147           ;Code20        ;CaptionML=ENU=Field 147;
+                                                    TableRelation="Linked Table" }
+    { 148 ;   ;Field 148           ;Text100       ;CaptionML=ENU=Field 148 }
+    { 149 ;   ;Field 149           ;Integer       ;CaptionML=ENU=Field 149 }
+    { 150 ;   ;Field 150           ;Decimal       ;CaptionML=ENU=Field 150;
+                                                    DecimalPlaces=1:5 }
+    { 151 ;   ;Field 151           ;Code15        ;CaptionML=ENU=Field 151 }
+    { 152 ;   ;Field 152           ;Text190       ;CaptionML=ENU=Field 152 }
+    { 153 ;   ;Field 153           ;Date          ;CaptionML=ENU=Field 153 }
+    { 154 ;   ;Field 154           ;Boolean       ;CaptionML=ENU=Field 154 }
+    { 155 ;   ;Field 155           ;Integer       ;CaptionML=ENU=Field 155;
+                                                    MinValue=0 }
+    { 156 ;   ;Field 156           ;Decimal       ;CaptionML=ENU=Field 156 }
+    { 157 ;   ;Field 157           ;Code20        ;CaptionML=ENU=Field 157 }
+    { 158 ;   ;Field 158           ;Text135       ;CaptionML=ENU=Field 158 }
+    { 159 ;   ;Field 159           ;Integer       ;CaptionML=ENU=Field 159 }
+    { 160 ;   ;Field 160           ;Decimal       ;CaptionML=ENU=Field 160 }
+    { 161 ;   ;Field 161           ;Date          ;CaptionML=ENU=Field 161 }
+    { 162 ;   ;Field 162           ;Boolean       ;CaptionML=ENU=Field 162 }
+    { 163 ;   ;Field 163           ;Code10        ;CaptionML=ENU=Field 163 }
+    { 164 ;   ;Field 164           ;Text170       ;CaptionML=ENU=Field 164 }
+    { 165 ;   ;Field 165           ;Integer       ;CaptionML=ENU=Field 165 }
+    { 166 ;   ;Field 166           ;Decimal       ;CaptionML=ENU=Field 166;
+                                                    AutoFormatType=2 }
+    { 167 ;   ;Field 167           ;Code20        ;CaptionML=ENU=Field 167;
+                                                    TableRelation="Item Master";
+                                                    OnValidate=BEGIN
+                                                                 CALCFIELDS("Field 501","Field 502");
+                                                               END;
+                                                                }
+    { 168 ;   ;Field 168           ;Text155       ;CaptionML=ENU=Field 168 }
+    { 169 ;   ;Field 169           ;Date          ;CaptionML=ENU=Field 169 }
+    { 170 ;   ;Field 170           ;Boolean       ;CaptionML=ENU=Field 170 }
+    { 171 ;   ;Field 171           ;Integer       ;CaptionML=ENU=Field 171 }
+    { 172 ;   ;Field 172           ;Decimal       ;CaptionML=ENU=Field 172;
+                                                    DecimalPlaces=2:2 }
+    { 173 ;   ;Field 173           ;Code15        ;CaptionML=ENU=Field 173 }
+    { 174 ;   ;Field 174           ;Text195       ;CaptionML=ENU=Field 174 }
+    { 175 ;   ;Field 175           ;Integer       ;CaptionML=ENU=Field 175 }
+    { 176 ;   ;Field 176           ;Decimal       ;CaptionML=ENU=Field 176 }
+    { 177 ;   ;Field 177           ;Date          ;CaptionML=ENU=Field 177 }
+    { 178 ;   ;Field 178           ;Boolean       ;CaptionML=ENU=Field 178 }
+    { 179 ;   ;Field 179           ;Code20        ;CaptionML=ENU=Field 179 }
+    { 180 ;   ;Field 180           ;Text165       ;CaptionML=ENU=Field 180 }
+    { 181 ;   ;Field 181           ;Integer       ;CaptionML=ENU=Field 181 }
+    { 182 ;   ;Field 182           ;Decimal       ;CaptionML=ENU=Field 182 }
+    { 183 ;   ;Field 183           ;Code10        ;CaptionML=ENU=Field 183 }
+    { 184 ;   ;Field 184           ;Text185       ;CaptionML=ENU=Field 184 }
+    { 185 ;   ;Field 185           ;Date          ;CaptionML=ENU=Field 185 }
+    { 186 ;   ;Field 186           ;Boolean       ;CaptionML=ENU=Field 186 }
+    { 187 ;   ;Field 187           ;Integer       ;CaptionML=ENU=Field 187 }
+    { 188 ;   ;Field 188           ;Decimal       ;CaptionML=ENU=Field 188;
+                                                    AutoFormatType=1 }
+    { 189 ;   ;Field 189           ;Code20        ;CaptionML=ENU=Field 189;
+                                                    TableRelation="Vendor Master" }
+    { 190 ;   ;Field 190           ;Text220       ;CaptionML=ENU=Field 190 }
+    { 191 ;   ;Field 191           ;Integer       ;CaptionML=ENU=Field 191 }
+    { 192 ;   ;Field 192           ;Decimal       ;CaptionML=ENU=Field 192;
+                                                    DecimalPlaces=0:4 }
+    { 193 ;   ;Field 193           ;Code15        ;CaptionML=ENU=Field 193 }
+    { 194 ;   ;Field 194           ;Text210       ;CaptionML=ENU=Field 194 }
+    { 195 ;   ;Field 195           ;Date          ;CaptionML=ENU=Field 195 }
+    { 196 ;   ;Field 196           ;Boolean       ;CaptionML=ENU=Field 196 }
+    { 197 ;   ;Field 197           ;Integer       ;CaptionML=ENU=Field 197 }
+    { 198 ;   ;Field 198           ;Decimal       ;CaptionML=ENU=Field 198 }
+    { 199 ;   ;Field 199           ;Code20        ;CaptionML=ENU=Field 199 }
+    { 200 ;   ;Field 200           ;Text230       ;CaptionML=ENU=Field 200 }
+    { 201 ;   ;Field 201           ;Integer       ;CaptionML=ENU=Field 201 }
+    { 202 ;   ;Field 202           ;Decimal       ;CaptionML=ENU=Field 202 }
+    { 203 ;   ;Field 203           ;Date          ;CaptionML=ENU=Field 203 }
+    { 204 ;   ;Field 204           ;Boolean       ;CaptionML=ENU=Field 204 }
+    { 205 ;   ;Field 205           ;Code10        ;CaptionML=ENU=Field 205 }
+    { 206 ;   ;Field 206           ;Text240       ;CaptionML=ENU=Field 206 }
+    { 207 ;   ;Field 207           ;Integer       ;CaptionML=ENU=Field 207 }
+    { 208 ;   ;Field 208           ;Decimal       ;CaptionML=ENU=Field 208;
+                                                    AutoFormatType=2 }
+    { 209 ;   ;Field 209           ;Code20        ;CaptionML=ENU=Field 209;
+                                                    TableRelation="Account Table" }
+    { 210 ;   ;Field 210           ;Text205       ;CaptionML=ENU=Field 210 }
+    { 211 ;   ;Field 211           ;Date          ;CaptionML=ENU=Field 211 }
+    { 212 ;   ;Field 212           ;Boolean       ;CaptionML=ENU=Field 212 }
+    { 213 ;   ;Field 213           ;Integer       ;CaptionML=ENU=Field 213 }
+    { 214 ;   ;Field 214           ;Decimal       ;CaptionML=ENU=Field 214;
+                                                    DecimalPlaces=3:5 }
+    { 215 ;   ;Field 215           ;Code15        ;CaptionML=ENU=Field 215 }
+    { 216 ;   ;Field 216           ;Text225       ;CaptionML=ENU=Field 216 }
+    { 217 ;   ;Field 217           ;Integer       ;CaptionML=ENU=Field 217;
+                                                    MaxValue=1000000 }
+    { 218 ;   ;Field 218           ;Decimal       ;CaptionML=ENU=Field 218 }
+    { 219 ;   ;Field 219           ;Code20        ;CaptionML=ENU=Field 219 }
+    { 220 ;   ;Field 220           ;Text215       ;CaptionML=ENU=Field 220 }
+    { 221 ;   ;Field 221           ;Date          ;CaptionML=ENU=Field 221 }
+    { 222 ;   ;Field 222           ;Boolean       ;CaptionML=ENU=Field 222 }
+    { 223 ;   ;Field 223           ;Integer       ;CaptionML=ENU=Field 223 }
+    { 224 ;   ;Field 224           ;Decimal       ;CaptionML=ENU=Field 224 }
+    { 225 ;   ;Field 225           ;Code10        ;CaptionML=ENU=Field 225 }
+    { 226 ;   ;Field 226           ;Text245       ;CaptionML=ENU=Field 226 }
+    { 227 ;   ;Field 227           ;Integer       ;CaptionML=ENU=Field 227 }
+    { 228 ;   ;Field 228           ;Decimal       ;CaptionML=ENU=Field 228;
+                                                    AutoFormatType=1 }
+    { 229 ;   ;Field 229           ;Code20        ;CaptionML=ENU=Field 229;
+                                                    TableRelation="Dimension Table";
+                                                    OnValidate=BEGIN
+                                                                 IF "Field 229" <> xRec."Field 229" THEN
+                                                                   "Field 230" := '';
+                                                               END;
+                                                                }
+    { 230 ;   ;Field 230           ;Text235       ;CaptionML=ENU=Field 230 }
+    { 231 ;   ;Field 231           ;Date          ;CaptionML=ENU=Field 231 }
+    { 232 ;   ;Field 232           ;Boolean       ;CaptionML=ENU=Field 232 }
+    { 233 ;   ;Field 233           ;Integer       ;CaptionML=ENU=Field 233 }
+    { 234 ;   ;Field 234           ;Decimal       ;CaptionML=ENU=Field 234;
+                                                    DecimalPlaces=1:4 }
+    { 235 ;   ;Field 235           ;Code15        ;CaptionML=ENU=Field 235 }
+    { 236 ;   ;Field 236           ;Text200       ;CaptionML=ENU=Field 236 }
+    { 237 ;   ;Field 237           ;Integer       ;CaptionML=ENU=Field 237 }
+    { 238 ;   ;Field 238           ;Decimal       ;CaptionML=ENU=Field 238 }
+    { 239 ;   ;Field 239           ;Code20        ;CaptionML=ENU=Field 239 }
+    { 240 ;   ;Field 240           ;Text250       ;CaptionML=ENU=Field 240 }
+    { 241 ;   ;Field 241           ;Date          ;CaptionML=ENU=Field 241 }
+    { 242 ;   ;Field 242           ;Boolean       ;CaptionML=ENU=Field 242 }
+    { 243 ;   ;Field 243           ;Integer       ;CaptionML=ENU=Field 243 }
+    { 244 ;   ;Field 244           ;Decimal       ;CaptionML=ENU=Field 244 }
+    { 245 ;   ;Field 245           ;Code10        ;CaptionML=ENU=Field 245 }
+    { 246 ;   ;Field 246           ;Text188       ;CaptionML=ENU=Field 246 }
+    { 247 ;   ;Field 247           ;Integer       ;CaptionML=ENU=Field 247 }
+    { 248 ;   ;Field 248           ;Decimal       ;CaptionML=ENU=Field 248;
+                                                    AutoFormatType=2 }
+    { 249 ;   ;Field 249           ;Code20        ;CaptionML=ENU=Field 249;
+                                                    TableRelation="Setup Table" }
+    { 250 ;   ;Field 250           ;Text198       ;CaptionML=ENU=Field 250 }
+    { 251 ;   ;Field 251           ;Date          ;CaptionML=ENU=Field 251 }
+    { 252 ;   ;Field 252           ;Boolean       ;CaptionML=ENU=Field 252 }
+    { 253 ;   ;Field 253           ;Integer       ;CaptionML=ENU=Field 253 }
+    { 254 ;   ;Field 254           ;Decimal       ;CaptionML=ENU=Field 254;
+                                                    DecimalPlaces=2:3 }
+    { 255 ;   ;Field 255           ;Code15        ;CaptionML=ENU=Field 255 }
+    { 256 ;   ;Field 256           ;Text208       ;CaptionML=ENU=Field 256 }
+    { 257 ;   ;Field 257           ;Integer       ;CaptionML=ENU=Field 257 }
+    { 258 ;   ;Field 258           ;Decimal       ;CaptionML=ENU=Field 258 }
+    { 259 ;   ;Field 259           ;Code20        ;CaptionML=ENU=Field 259 }
+    { 260 ;   ;Field 260           ;Text218       ;CaptionML=ENU=Field 260 }
+    { 261 ;   ;Field 261           ;Date          ;CaptionML=ENU=Field 261 }
+    { 262 ;   ;Field 262           ;Boolean       ;CaptionML=ENU=Field 262 }
+    { 263 ;   ;Field 263           ;Integer       ;CaptionML=ENU=Field 263 }
+    { 264 ;   ;Field 264           ;Decimal       ;CaptionML=ENU=Field 264 }
+    { 265 ;   ;Field 265           ;Code10        ;CaptionML=ENU=Field 265 }
+    { 266 ;   ;Field 266           ;Text228       ;CaptionML=ENU=Field 266 }
+    { 267 ;   ;Field 267           ;Integer       ;CaptionML=ENU=Field 267 }
+    { 268 ;   ;Field 268           ;Decimal       ;CaptionML=ENU=Field 268;
+                                                    AutoFormatType=1 }
+    { 269 ;   ;Field 269           ;Code20        ;CaptionML=ENU=Field 269;
+                                                    TableRelation="Location Table" }
+    { 270 ;   ;Field 270           ;Text238       ;CaptionML=ENU=Field 270 }
+    { 271 ;   ;Field 271           ;Date          ;CaptionML=ENU=Field 271 }
+    { 272 ;   ;Field 272           ;Boolean       ;CaptionML=ENU=Field 272 }
+    { 273 ;   ;Field 273           ;Integer       ;CaptionML=ENU=Field 273 }
+    { 274 ;   ;Field 274           ;Decimal       ;CaptionML=ENU=Field 274;
+                                                    DecimalPlaces=0:5 }
+    { 275 ;   ;Field 275           ;Code15        ;CaptionML=ENU=Field 275 }
+    { 276 ;   ;Field 276           ;Text248       ;CaptionML=ENU=Field 276 }
+    { 277 ;   ;Field 277           ;Integer       ;CaptionML=ENU=Field 277 }
+    { 278 ;   ;Field 278           ;Decimal       ;CaptionML=ENU=Field 278 }
+    { 279 ;   ;Field 279           ;Code20        ;CaptionML=ENU=Field 279 }
+    { 280 ;   ;Field 280           ;Text203       ;CaptionML=ENU=Field 280 }
+    { 281 ;   ;Field 281           ;Date          ;CaptionML=ENU=Field 281 }
+    { 282 ;   ;Field 282           ;Boolean       ;CaptionML=ENU=Field 282 }
+    { 283 ;   ;Field 283           ;Integer       ;CaptionML=ENU=Field 283;
+                                                    MinValue=-100000;
+                                                    MaxValue=100000 }
+    { 284 ;   ;Field 284           ;Decimal       ;CaptionML=ENU=Field 284 }
+    { 285 ;   ;Field 285           ;Code10        ;CaptionML=ENU=Field 285 }
+    { 286 ;   ;Field 286           ;Text213       ;CaptionML=ENU=Field 286 }
+    { 287 ;   ;Field 287           ;Integer       ;CaptionML=ENU=Field 287 }
+    { 288 ;   ;Field 288           ;Decimal       ;CaptionML=ENU=Field 288;
+                                                    AutoFormatType=2 }
+    { 289 ;   ;Field 289           ;Code20        ;CaptionML=ENU=Field 289;
+                                                    TableRelation="Resource Table";
+                                                    OnValidate=BEGIN
+                                                                 VALIDATE("Field 290");
+                                                                 VALIDATE("Field 291");
+                                                               END;
+                                                                }
+    { 290 ;   ;Field 290           ;Text223       ;CaptionML=ENU=Field 290 }
+    { 291 ;   ;Field 291           ;Integer       ;CaptionML=ENU=Field 291 }
+    { 292 ;   ;Field 292           ;Decimal       ;CaptionML=ENU=Field 292;
+                                                    DecimalPlaces=1:2 }
+    { 293 ;   ;Field 293           ;Code15        ;CaptionML=ENU=Field 293 }
+    { 294 ;   ;Field 294           ;Text233       ;CaptionML=ENU=Field 294 }
+    { 295 ;   ;Field 295           ;Date          ;CaptionML=ENU=Field 295 }
+    { 296 ;   ;Field 296           ;Boolean       ;CaptionML=ENU=Field 296 }
+    { 297 ;   ;Field 297           ;Integer       ;CaptionML=ENU=Field 297 }
+    { 298 ;   ;Field 298           ;Decimal       ;CaptionML=ENU=Field 298 }
+    { 299 ;   ;Field 299           ;Code20        ;CaptionML=ENU=Field 299 }
+    { 300 ;   ;Field 300           ;Text243       ;CaptionML=ENU=Field 300 }
+    { 301 ;   ;Field 301           ;Integer       ;CaptionML=ENU=Field 301 }
+    { 302 ;   ;Field 302           ;Decimal       ;CaptionML=ENU=Field 302 }
+    { 303 ;   ;Field 303           ;Date          ;CaptionML=ENU=Field 303 }
+    { 304 ;   ;Field 304           ;Boolean       ;CaptionML=ENU=Field 304 }
+    { 305 ;   ;Field 305           ;Code10        ;CaptionML=ENU=Field 305 }
+    { 306 ;   ;Field 306           ;Text193       ;CaptionML=ENU=Field 306 }
+    { 307 ;   ;Field 307           ;Integer       ;CaptionML=ENU=Field 307 }
+    { 308 ;   ;Field 308           ;Decimal       ;CaptionML=ENU=Field 308;
+                                                    AutoFormatType=1 }
+    { 309 ;   ;Field 309           ;Code20        ;CaptionML=ENU=Field 309;
+                                                    TableRelation="Category Table" }
+    { 310 ;   ;Field 310           ;Text183       ;CaptionML=ENU=Field 310 }
+    { 311 ;   ;Field 311           ;Date          ;CaptionML=ENU=Field 311 }
+    { 312 ;   ;Field 312           ;Boolean       ;CaptionML=ENU=Field 312 }
+    { 313 ;   ;Field 313           ;Integer       ;CaptionML=ENU=Field 313 }
+    { 314 ;   ;Field 314           ;Decimal       ;CaptionML=ENU=Field 314;
+                                                    DecimalPlaces=2:5 }
+    { 315 ;   ;Field 315           ;Code15        ;CaptionML=ENU=Field 315 }
+    { 316 ;   ;Field 316           ;Text173       ;CaptionML=ENU=Field 316 }
+    { 317 ;   ;Field 317           ;Integer       ;CaptionML=ENU=Field 317 }
+    { 318 ;   ;Field 318           ;Decimal       ;CaptionML=ENU=Field 318 }
+    { 319 ;   ;Field 319           ;Code20        ;CaptionML=ENU=Field 319 }
+    { 320 ;   ;Field 320           ;Text163       ;CaptionML=ENU=Field 320 }
+    { 321 ;   ;Field 321           ;Date          ;CaptionML=ENU=Field 321 }
+    { 322 ;   ;Field 322           ;Boolean       ;CaptionML=ENU=Field 322 }
+    { 323 ;   ;Field 323           ;Integer       ;CaptionML=ENU=Field 323 }
+    { 324 ;   ;Field 324           ;Decimal       ;CaptionML=ENU=Field 324 }
+    { 325 ;   ;Field 325           ;Code10        ;CaptionML=ENU=Field 325 }
+    { 326 ;   ;Field 326           ;Text153       ;CaptionML=ENU=Field 326 }
+    { 327 ;   ;Field 327           ;Integer       ;CaptionML=ENU=Field 327 }
+    { 328 ;   ;Field 328           ;Decimal       ;CaptionML=ENU=Field 328;
+                                                    AutoFormatType=2 }
+    { 329 ;   ;Field 329           ;Code20        ;CaptionML=ENU=Field 329;
+                                                    TableRelation="Type Table" }
+    { 330 ;   ;Field 330           ;Text143       ;CaptionML=ENU=Field 330 }
+    { 331 ;   ;Field 331           ;Date          ;CaptionML=ENU=Field 331 }
+    { 332 ;   ;Field 332           ;Boolean       ;CaptionML=ENU=Field 332 }
+    { 333 ;   ;Field 333           ;Integer       ;CaptionML=ENU=Field 333 }
+    { 334 ;   ;Field 334           ;Decimal       ;CaptionML=ENU=Field 334;
+                                                    DecimalPlaces=0:2 }
+    { 335 ;   ;Field 335           ;Code15        ;CaptionML=ENU=Field 335 }
+    { 336 ;   ;Field 336           ;Text133       ;CaptionML=ENU=Field 336 }
+    { 337 ;   ;Field 337           ;Integer       ;CaptionML=ENU=Field 337 }
+    { 338 ;   ;Field 338           ;Decimal       ;CaptionML=ENU=Field 338 }
+    { 339 ;   ;Field 339           ;Code20        ;CaptionML=ENU=Field 339 }
+    { 340 ;   ;Field 340           ;Text123       ;CaptionML=ENU=Field 340 }
+    { 341 ;   ;Field 341           ;Date          ;CaptionML=ENU=Field 341 }
+    { 342 ;   ;Field 342           ;Boolean       ;CaptionML=ENU=Field 342 }
+    { 343 ;   ;Field 343           ;Integer       ;CaptionML=ENU=Field 343 }
+    { 344 ;   ;Field 344           ;Decimal       ;CaptionML=ENU=Field 344 }
+    { 345 ;   ;Field 345           ;Code10        ;CaptionML=ENU=Field 345 }
+    { 346 ;   ;Field 346           ;Text113       ;CaptionML=ENU=Field 346 }
+    { 347 ;   ;Field 347           ;Integer       ;CaptionML=ENU=Field 347;
+                                                    MinValue=0 }
+    { 348 ;   ;Field 348           ;Decimal       ;CaptionML=ENU=Field 348;
+                                                    AutoFormatType=1 }
+    { 349 ;   ;Field 349           ;Code20        ;CaptionML=ENU=Field 349;
+                                                    TableRelation="Status Table";
+                                                    OnValidate=BEGIN
+                                                                 IF "Field 349" IN ['CLOSED','ARCHIVED'] THEN
+                                                                   ERROR('Cannot modify closed records');
+                                                               END;
+                                                                }
+    { 350 ;   ;Field 350           ;Text103       ;CaptionML=ENU=Field 350 }
+    { 351 ;   ;Field 351           ;Date          ;CaptionML=ENU=Field 351 }
+    { 352 ;   ;Field 352           ;Boolean       ;CaptionML=ENU=Field 352 }
+    { 353 ;   ;Field 353           ;Integer       ;CaptionML=ENU=Field 353 }
+    { 354 ;   ;Field 354           ;Decimal       ;CaptionML=ENU=Field 354;
+                                                    DecimalPlaces=3:4 }
+    { 355 ;   ;Field 355           ;Code15        ;CaptionML=ENU=Field 355 }
+    { 356 ;   ;Field 356           ;Text93        ;CaptionML=ENU=Field 356 }
+    { 357 ;   ;Field 357           ;Integer       ;CaptionML=ENU=Field 357 }
+    { 358 ;   ;Field 358           ;Decimal       ;CaptionML=ENU=Field 358 }
+    { 359 ;   ;Field 359           ;Code20        ;CaptionML=ENU=Field 359 }
+    { 360 ;   ;Field 360           ;Text83        ;CaptionML=ENU=Field 360 }
+    { 361 ;   ;Field 361           ;Date          ;CaptionML=ENU=Field 361 }
+    { 362 ;   ;Field 362           ;Boolean       ;CaptionML=ENU=Field 362 }
+    { 363 ;   ;Field 363           ;Integer       ;CaptionML=ENU=Field 363 }
+    { 364 ;   ;Field 364           ;Decimal       ;CaptionML=ENU=Field 364 }
+    { 365 ;   ;Field 365           ;Code10        ;CaptionML=ENU=Field 365 }
+    { 366 ;   ;Field 366           ;Text73        ;CaptionML=ENU=Field 366 }
+    { 367 ;   ;Field 367           ;Integer       ;CaptionML=ENU=Field 367 }
+    { 368 ;   ;Field 368           ;Decimal       ;CaptionML=ENU=Field 368;
+                                                    AutoFormatType=2 }
+    { 369 ;   ;Field 369           ;Code20        ;CaptionML=ENU=Field 369;
+                                                    TableRelation="Region Table" }
+    { 370 ;   ;Field 370           ;Text63        ;CaptionML=ENU=Field 370 }
+    { 371 ;   ;Field 371           ;Date          ;CaptionML=ENU=Field 371 }
+    { 372 ;   ;Field 372           ;Boolean       ;CaptionML=ENU=Field 372 }
+    { 373 ;   ;Field 373           ;Integer       ;CaptionML=ENU=Field 373 }
+    { 374 ;   ;Field 374           ;Decimal       ;CaptionML=ENU=Field 374;
+                                                    DecimalPlaces=1:3 }
+    { 375 ;   ;Field 375           ;Code15        ;CaptionML=ENU=Field 375 }
+    { 376 ;   ;Field 376           ;Text53        ;CaptionML=ENU=Field 376 }
+    { 377 ;   ;Field 377           ;Integer       ;CaptionML=ENU=Field 377 }
+    { 378 ;   ;Field 378           ;Decimal       ;CaptionML=ENU=Field 378 }
+    { 379 ;   ;Field 379           ;Code20        ;CaptionML=ENU=Field 379 }
+    { 380 ;   ;Field 380           ;Text43        ;CaptionML=ENU=Field 380 }
+    { 381 ;   ;Field 381           ;Date          ;CaptionML=ENU=Field 381 }
+    { 382 ;   ;Field 382           ;Boolean       ;CaptionML=ENU=Field 382 }
+    { 383 ;   ;Field 383           ;Integer       ;CaptionML=ENU=Field 383 }
+    { 384 ;   ;Field 384           ;Decimal       ;CaptionML=ENU=Field 384 }
+    { 385 ;   ;Field 385           ;Code10        ;CaptionML=ENU=Field 385 }
+    { 386 ;   ;Field 386           ;Text33        ;CaptionML=ENU=Field 386 }
+    { 387 ;   ;Field 387           ;Integer       ;CaptionML=ENU=Field 387 }
+    { 388 ;   ;Field 388           ;Decimal       ;CaptionML=ENU=Field 388;
+                                                    AutoFormatType=1 }
+    { 389 ;   ;Field 389           ;Code20        ;CaptionML=ENU=Field 389;
+                                                    TableRelation="Branch Table" }
+    { 390 ;   ;Field 390           ;Text40        ;CaptionML=ENU=Field 390 }
+    { 391 ;   ;Field 391           ;Date          ;CaptionML=ENU=Field 391 }
+    { 392 ;   ;Field 392           ;Boolean       ;CaptionML=ENU=Field 392 }
+    { 393 ;   ;Field 393           ;Integer       ;CaptionML=ENU=Field 393 }
+    { 394 ;   ;Field 394           ;Decimal       ;CaptionML=ENU=Field 394;
+                                                    DecimalPlaces=2:4 }
+    { 395 ;   ;Field 395           ;Code15        ;CaptionML=ENU=Field 395 }
+    { 396 ;   ;Field 396           ;Text45        ;CaptionML=ENU=Field 396 }
+    { 397 ;   ;Field 397           ;Integer       ;CaptionML=ENU=Field 397 }
+    { 398 ;   ;Field 398           ;Decimal       ;CaptionML=ENU=Field 398 }
+    { 399 ;   ;Field 399           ;Code20        ;CaptionML=ENU=Field 399 }
+    { 400 ;   ;Field 400           ;Text50        ;CaptionML=ENU=Field 400 }
+    { 401 ;   ;Field 401           ;Date          ;CaptionML=ENU=Field 401 }
+    { 402 ;   ;Field 402           ;Boolean       ;CaptionML=ENU=Field 402 }
+    { 403 ;   ;Field 403           ;Integer       ;CaptionML=ENU=Field 403 }
+    { 404 ;   ;Field 404           ;Decimal       ;CaptionML=ENU=Field 404 }
+    { 405 ;   ;Field 405           ;Code10        ;CaptionML=ENU=Field 405 }
+    { 406 ;   ;Field 406           ;Text55        ;CaptionML=ENU=Field 406 }
+    { 407 ;   ;Field 407           ;Integer       ;CaptionML=ENU=Field 407 }
+    { 408 ;   ;Field 408           ;Decimal       ;CaptionML=ENU=Field 408;
+                                                    AutoFormatType=2 }
+    { 409 ;   ;Field 409           ;Code20        ;CaptionML=ENU=Field 409;
+                                                    TableRelation="Division Table";
+                                                    OnValidate=BEGIN
+                                                                 TESTFIELD(Status,Status::Open);
+                                                               END;
+                                                                }
+    { 410 ;   ;Field 410           ;Text60        ;CaptionML=ENU=Field 410 }
+    { 411 ;   ;Field 411           ;Date          ;CaptionML=ENU=Field 411 }
+    { 412 ;   ;Field 412           ;Boolean       ;CaptionML=ENU=Field 412 }
+    { 413 ;   ;Field 413           ;Integer       ;CaptionML=ENU=Field 413 }
+    { 414 ;   ;Field 414           ;Decimal       ;CaptionML=ENU=Field 414;
+                                                    DecimalPlaces=0:3 }
+    { 415 ;   ;Field 415           ;Code15        ;CaptionML=ENU=Field 415 }
+    { 416 ;   ;Field 416           ;Text65        ;CaptionML=ENU=Field 416 }
+    { 417 ;   ;Field 417           ;Integer       ;CaptionML=ENU=Field 417 }
+    { 418 ;   ;Field 418           ;Decimal       ;CaptionML=ENU=Field 418 }
+    { 419 ;   ;Field 419           ;Code20        ;CaptionML=ENU=Field 419 }
+    { 420 ;   ;Field 420           ;Text70        ;CaptionML=ENU=Field 420 }
+    { 421 ;   ;Field 421           ;Date          ;CaptionML=ENU=Field 421 }
+    { 422 ;   ;Field 422           ;Boolean       ;CaptionML=ENU=Field 422 }
+    { 423 ;   ;Field 423           ;Integer       ;CaptionML=ENU=Field 423;
+                                                    MaxValue=9999999 }
+    { 424 ;   ;Field 424           ;Decimal       ;CaptionML=ENU=Field 424 }
+    { 425 ;   ;Field 425           ;Code10        ;CaptionML=ENU=Field 425 }
+    { 426 ;   ;Field 426           ;Text75        ;CaptionML=ENU=Field 426 }
+    { 427 ;   ;Field 427           ;Integer       ;CaptionML=ENU=Field 427 }
+    { 428 ;   ;Field 428           ;Decimal       ;CaptionML=ENU=Field 428;
+                                                    AutoFormatType=1 }
+    { 429 ;   ;Field 429           ;Code20        ;CaptionML=ENU=Field 429;
+                                                    TableRelation="Unit Table" }
+    { 430 ;   ;Field 430           ;Text80        ;CaptionML=ENU=Field 430 }
+    { 431 ;   ;Field 431           ;Date          ;CaptionML=ENU=Field 431 }
+    { 432 ;   ;Field 432           ;Boolean       ;CaptionML=ENU=Field 432 }
+    { 433 ;   ;Field 433           ;Integer       ;CaptionML=ENU=Field 433 }
+    { 434 ;   ;Field 434           ;Decimal       ;CaptionML=ENU=Field 434;
+                                                    DecimalPlaces=3:3 }
+    { 435 ;   ;Field 435           ;Code15        ;CaptionML=ENU=Field 435 }
+    { 436 ;   ;Field 436           ;Text85        ;CaptionML=ENU=Field 436 }
+    { 437 ;   ;Field 437           ;Integer       ;CaptionML=ENU=Field 437 }
+    { 438 ;   ;Field 438           ;Decimal       ;CaptionML=ENU=Field 438 }
+    { 439 ;   ;Field 439           ;Code20        ;CaptionML=ENU=Field 439 }
+    { 440 ;   ;Field 440           ;Text90        ;CaptionML=ENU=Field 440 }
+    { 441 ;   ;Field 441           ;Date          ;CaptionML=ENU=Field 441 }
+    { 442 ;   ;Field 442           ;Boolean       ;CaptionML=ENU=Field 442 }
+    { 443 ;   ;Field 443           ;Integer       ;CaptionML=ENU=Field 443 }
+    { 444 ;   ;Field 444           ;Decimal       ;CaptionML=ENU=Field 444 }
+    { 445 ;   ;Field 445           ;Code10        ;CaptionML=ENU=Field 445 }
+    { 446 ;   ;Field 446           ;Text95        ;CaptionML=ENU=Field 446 }
+    { 447 ;   ;Field 447           ;Integer       ;CaptionML=ENU=Field 447 }
+    { 448 ;   ;Field 448           ;Decimal       ;CaptionML=ENU=Field 448;
+                                                    AutoFormatType=2 }
+    { 449 ;   ;Field 449           ;Code20        ;CaptionML=ENU=Field 449;
+                                                    TableRelation="Group Table" }
+    { 450 ;   ;Field 450           ;Text100       ;CaptionML=ENU=Field 450 }
+    { 451 ;   ;Field 451           ;Date          ;CaptionML=ENU=Field 451 }
+    { 452 ;   ;Field 452           ;Boolean       ;CaptionML=ENU=Field 452 }
+    { 453 ;   ;Field 453           ;Integer       ;CaptionML=ENU=Field 453 }
+    { 454 ;   ;Field 454           ;Decimal       ;CaptionML=ENU=Field 454;
+                                                    DecimalPlaces=1:5 }
+    { 455 ;   ;Field 455           ;Code15        ;CaptionML=ENU=Field 455 }
+    { 456 ;   ;Field 456           ;Text105       ;CaptionML=ENU=Field 456 }
+    { 457 ;   ;Field 457           ;Integer       ;CaptionML=ENU=Field 457 }
+    { 458 ;   ;Field 458           ;Decimal       ;CaptionML=ENU=Field 458 }
+    { 459 ;   ;Field 459           ;Code20        ;CaptionML=ENU=Field 459 }
+    { 460 ;   ;Field 460           ;Text110       ;CaptionML=ENU=Field 460 }
+    { 461 ;   ;Field 461           ;Date          ;CaptionML=ENU=Field 461 }
+    { 462 ;   ;Field 462           ;Boolean       ;CaptionML=ENU=Field 462 }
+    { 463 ;   ;Field 463           ;Integer       ;CaptionML=ENU=Field 463 }
+    { 464 ;   ;Field 464           ;Decimal       ;CaptionML=ENU=Field 464 }
+    { 465 ;   ;Field 465           ;Code10        ;CaptionML=ENU=Field 465 }
+    { 466 ;   ;Field 466           ;Text115       ;CaptionML=ENU=Field 466 }
+    { 467 ;   ;Field 467           ;Integer       ;CaptionML=ENU=Field 467 }
+    { 468 ;   ;Field 468           ;Decimal       ;CaptionML=ENU=Field 468;
+                                                    AutoFormatType=1 }
+    { 469 ;   ;Field 469           ;Code20        ;CaptionML=ENU=Field 469;
+                                                    TableRelation="Class Table";
+                                                    OnValidate=BEGIN
+                                                                 IF "Field 469" <> '' THEN BEGIN
+                                                                   VALIDATE("Field 470");
+                                                                   CALCFIELDS("Field 503");
+                                                                 END;
+                                                               END;
+                                                                }
+    { 470 ;   ;Field 470           ;Text120       ;CaptionML=ENU=Field 470 }
+    { 471 ;   ;Field 471           ;Date          ;CaptionML=ENU=Field 471 }
+    { 472 ;   ;Field 472           ;Boolean       ;CaptionML=ENU=Field 472 }
+    { 473 ;   ;Field 473           ;Integer       ;CaptionML=ENU=Field 473 }
+    { 474 ;   ;Field 474           ;Decimal       ;CaptionML=ENU=Field 474;
+                                                    DecimalPlaces=2:5 }
+    { 475 ;   ;Field 475           ;Code15        ;CaptionML=ENU=Field 475 }
+    { 476 ;   ;Field 476           ;Text125       ;CaptionML=ENU=Field 476 }
+    { 477 ;   ;Field 477           ;Integer       ;CaptionML=ENU=Field 477 }
+    { 478 ;   ;Field 478           ;Decimal       ;CaptionML=ENU=Field 478 }
+    { 479 ;   ;Field 479           ;Code20        ;CaptionML=ENU=Field 479 }
+    { 480 ;   ;Field 480           ;Text130       ;CaptionML=ENU=Field 480 }
+    { 481 ;   ;Field 481           ;Date          ;CaptionML=ENU=Field 481 }
+    { 482 ;   ;Field 482           ;Boolean       ;CaptionML=ENU=Field 482 }
+    { 483 ;   ;Field 483           ;Integer       ;CaptionML=ENU=Field 483;
+                                                    MinValue=-999999 }
+    { 484 ;   ;Field 484           ;Decimal       ;CaptionML=ENU=Field 484 }
+    { 485 ;   ;Field 485           ;Code10        ;CaptionML=ENU=Field 485 }
+    { 486 ;   ;Field 486           ;Text135       ;CaptionML=ENU=Field 486 }
+    { 487 ;   ;Field 487           ;Integer       ;CaptionML=ENU=Field 487 }
+    { 488 ;   ;Field 488           ;Decimal       ;CaptionML=ENU=Field 488;
+                                                    AutoFormatType=2 }
+    { 489 ;   ;Field 489           ;Code20        ;CaptionML=ENU=Field 489;
+                                                    TableRelation="Code Table" }
+    { 490 ;   ;Field 490           ;Text140       ;CaptionML=ENU=Field 490 }
+    { 491 ;   ;Field 491           ;Date          ;CaptionML=ENU=Field 491 }
+    { 492 ;   ;Field 492           ;Boolean       ;CaptionML=ENU=Field 492 }
+    { 493 ;   ;Field 493           ;Integer       ;CaptionML=ENU=Field 493 }
+    { 494 ;   ;Field 494           ;Decimal       ;CaptionML=ENU=Field 494;
+                                                    DecimalPlaces=0:4 }
+    { 495 ;   ;Field 495           ;Code15        ;CaptionML=ENU=Field 495 }
+    { 496 ;   ;Field 496           ;Text145       ;CaptionML=ENU=Field 496 }
+    { 497 ;   ;Field 497           ;Integer       ;CaptionML=ENU=Field 497 }
+    { 498 ;   ;Field 498           ;Decimal       ;CaptionML=ENU=Field 498 }
+    { 499 ;   ;Field 499           ;Code20        ;CaptionML=ENU=Field 499 }
+    { 500 ;   ;Field 500           ;Text150       ;CaptionML=ENU=Field 500 }
+    { 501 ;   ;Total Amount        ;Decimal       ;FieldClass=FlowField;
+                                                    CaptionML=ENU=Total Amount;
+                                                    CalcFormula=Sum("Transaction Line".Amount WHERE (Document No.=FIELD(Document No.),
+                                                                                                     Type=CONST(Sale),
+                                                                                                     Posting Date=FIELD(FILTER(Posting Date)),
+                                                                                                     Status=FILTER(<>Cancelled)));
+                                                    Editable=No }
+    { 502 ;   ;Total Quantity      ;Decimal       ;FieldClass=FlowField;
+                                                    CaptionML=ENU=Total Quantity;
+                                                    CalcFormula=Sum("Transaction Line".Quantity WHERE (Document No.=FIELD(Document No.),
+                                                                                                       Active=CONST(Yes),
+                                                                                                       Location Code=FIELD(FILTER(Field 013))));
+                                                    DecimalPlaces=0:5;
+                                                    Editable=No }
+    { 503 ;   ;Outstanding Balance ;Decimal       ;FieldClass=FlowField;
+                                                    CaptionML=ENU=Outstanding Balance;
+                                                    CalcFormula=Sum("Payment Entry".Amount WHERE (Customer No.=FIELD(Customer No.),
+                                                                                                  Document Type=CONST(Invoice),
+                                                                                                  Status=FILTER(Open|Released),
+                                                                                                  Due Date=FIELD(FILTER(Posting Date))));
+                                                    AutoFormatType=1;
+                                                    Editable=No }
+    { 504 ;   ;Total Cost          ;Decimal       ;FieldClass=FlowField;
+                                                    CaptionML=ENU=Total Cost;
+                                                    CalcFormula=Sum("Cost Entry"."Cost Amount" WHERE (Entry Type=CONST(Direct),
+                                                                                                      Document No.=FIELD(Document No.),
+                                                                                                      Posting Date=FIELD(FILTER(Posting Date)),
+                                                                                                      Reversed=CONST(No)));
+                                                    AutoFormatType=1;
+                                                    Editable=No }
+    { 505 ;   ;Item Count          ;Integer       ;FieldClass=FlowField;
+                                                    CaptionML=ENU=Item Count;
+                                                    CalcFormula=Count("Item Entry" WHERE (Document No.=FIELD(Document No.),
+                                                                                          Entry Type=FILTER(Sale|Purchase),
+                                                                                          Status=CONST(Posted)));
+                                                    Editable=No }
+    { 506 ;   ;Discount Amount     ;Decimal       ;FieldClass=FlowField;
+                                                    CaptionML=ENU=Discount Amount;
+                                                    CalcFormula=Sum("Discount Line"."Discount Amount" WHERE (Document No.=FIELD(Document No.),
+                                                                                                             Applied=CONST(Yes),
+                                                                                                             Valid Until=FIELD(FILTER(Posting Date))));
+                                                    AutoFormatType=1;
+                                                    Editable=No }
+    { 507 ;   ;Shipped Quantity    ;Decimal       ;FieldClass=FlowField;
+                                                    CaptionML=ENU=Shipped Quantity;
+                                                    CalcFormula=Sum("Shipment Line".Quantity WHERE (Order No.=FIELD(Document No.),
+                                                                                                    Status=CONST(Shipped),
+                                                                                                    Shipment Date=FIELD(FILTER(Posting Date))));
+                                                    DecimalPlaces=0:5;
+                                                    Editable=No }
+    { 508 ;   ;Tax Amount          ;Decimal       ;FieldClass=FlowField;
+                                                    CaptionML=ENU=Tax Amount;
+                                                    CalcFormula=Sum("Tax Entry"."Tax Amount" WHERE (Document No.=FIELD(Document No.),
+                                                                                                    Tax Type=FILTER(VAT|Sales Tax),
+                                                                                                    Posting Date=FIELD(FILTER(Posting Date))));
+                                                    AutoFormatType=1;
+                                                    Editable=No }
+    { 509 ;   ;Payment Count       ;Integer       ;FieldClass=FlowField;
+                                                    CaptionML=ENU=Payment Count;
+                                                    CalcFormula=Count("Payment Line" WHERE (Applied-to Doc. No.=FIELD(Document No.),
+                                                                                            Status=CONST(Applied),
+                                                                                            Customer No.=FIELD(Customer No.)));
+                                                    Editable=No }
+    { 510 ;   ;Net Amount          ;Decimal       ;FieldClass=FlowField;
+                                                    CaptionML=ENU=Net Amount;
+                                                    CalcFormula=Sum("Financial Entry"."Net Amount" WHERE (Document No.=FIELD(Document No.),
+                                                                                                          Category=CONST(Revenue),
+                                                                                                          Posting Date=FIELD(FILTER(Posting Date)),
+                                                                                                          Adjustment=CONST(No)));
+                                                    AutoFormatType=1;
+                                                    Editable=No }
+    { 511 ;   ;Field 511           ;Option        ;CaptionML=ENU=Field 511;
+                                                    OptionCaptionML=ENU=None,Low,Medium,High,Critical;
+                                                    OptionString=None,Low,Medium,High,Critical }
+    { 512 ;   ;Field 512           ;Option        ;CaptionML=ENU=Field 512;
+                                                    OptionCaptionML=ENU=Draft,Submitted,Approved,Rejected,Cancelled;
+                                                    OptionString=Draft,Submitted,Approved,Rejected,Cancelled }
+    { 513 ;   ;Field 513           ;Code20        ;CaptionML=ENU=Field 513 }
+    { 514 ;   ;Field 514           ;Text250       ;CaptionML=ENU=Field 514 }
+    { 515 ;   ;Field 515           ;Integer       ;CaptionML=ENU=Field 515 }
+    { 516 ;   ;Field 516           ;Decimal       ;CaptionML=ENU=Field 516 }
+    { 517 ;   ;Field 517           ;Date          ;CaptionML=ENU=Field 517 }
+    { 518 ;   ;Field 518           ;Boolean       ;CaptionML=ENU=Field 518 }
+    { 519 ;   ;Field 519           ;Code15        ;CaptionML=ENU=Field 519 }
+    { 520 ;   ;Field 520           ;Text200       ;CaptionML=ENU=Field 520 }
+    { 521 ;   ;Field 521           ;Integer       ;CaptionML=ENU=Field 521 }
+    { 522 ;   ;Field 522           ;Decimal       ;CaptionML=ENU=Field 522;
+                                                    AutoFormatType=1 }
+    { 523 ;   ;Field 523           ;Date          ;CaptionML=ENU=Field 523 }
+    { 524 ;   ;Field 524           ;Boolean       ;CaptionML=ENU=Field 524 }
+    { 525 ;   ;Field 525           ;Code10        ;CaptionML=ENU=Field 525 }
+    { 526 ;   ;Field 526           ;Text180       ;CaptionML=ENU=Field 526 }
+    { 527 ;   ;Field 527           ;Integer       ;CaptionML=ENU=Field 527 }
+    { 528 ;   ;Field 528           ;Decimal       ;CaptionML=ENU=Field 528 }
+    { 529 ;   ;Field 529           ;Code20        ;CaptionML=ENU=Field 529;
+                                                    TableRelation="Priority Table" }
+    { 530 ;   ;Field 530           ;Text160       ;CaptionML=ENU=Field 530 }
+  }
+  KEYS
+  {
+    {    ;Entry No.                               ;Clustered=Yes }
+    {    ;Document No.,Posting Date                }
+    {    ;Customer No.,Posting Date                }
+    {    ;Status,Posting Date                      }
+    {    ;Posting Date,Active                      ;SumIndexFields=Amount,Amount LCY,Quantity }
+    {    ;Document No.,Customer No.,Status         }
+    {    ;Field 013,Field 041,Posting Date         }
+    {    ;Field 061,Field 083,Status               }
+    {    ;Field 105,Field 125,Active               }
+    {    ;Field 147,Field 167,Posting Date         ;SumIndexFields=Amount LCY }
+    {    ;Field 189,Field 209,Document No.         }
+    {    ;Field 229,Field 249,Status               }
+    {    ;Field 269,Field 289,Active               }
+    {    ;Field 309,Field 329,Posting Date         }
+    {    ;Field 349,Field 369,Document No.         }
+    {    ;Field 389,Field 409,Status               }
+    {    ;Field 429,Field 449,Active               }
+    {    ;Field 469,Field 489,Posting Date         }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}

@@ -1,0 +1,517 @@
+// SYNTHETIC PERFORMANCE TEST FIXTURE - 100% GENERATED
+// Pattern: Large procedure count (100+ procedures)
+// Purpose: Stress test symbol table with many procedure definitions
+// Uses standard NAV terminology ONLY (Resources, Service, Items)
+
+OBJECT Codeunit 50020 ACME Resource Management Service
+{
+  OBJECT-PROPERTIES
+  {
+    Date=27/12/25;
+    Time=12:00:00;
+    Modified=Yes;
+    Version List=ACME-RMS-1.0;
+  }
+  PROPERTIES
+  {
+  }
+  CODE
+  {
+    VAR
+      ResourceRec@1000 : Record 156;
+      ServiceItemRec@1001 : Record 5940;
+      ItemRec@1002 : Record 27;
+
+    PROCEDURE@1 ValidateResourceNo@1(ResourceNo@1000 : Code[20]) : Boolean;
+    BEGIN
+      EXIT(ResourceRec.GET(ResourceNo));
+    END;
+
+    PROCEDURE@2 CheckResourceAvailability@2(ResourceNo@1000 : Code[20];StartDate@1001 : Date;EndDate@1002 : Date) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@3 CalculateResourceCapacity@3(ResourceNo@1000 : Code[20]) : Decimal;
+    BEGIN
+      EXIT(8);
+    END;
+
+    PROCEDURE@4 GetResourceHourlyRate@4(ResourceNo@1000 : Code[20]) : Decimal;
+    VAR
+      Resource@1001 : Record 156;
+    BEGIN
+      IF Resource.GET(ResourceNo) THEN
+        EXIT(Resource."Unit Cost");
+      EXIT(0);
+    END;
+
+    PROCEDURE@5 AllocateResourceToService@5(ResourceNo@1000 : Code[20];ServiceOrderNo@1001 : Code[20]) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@6 ReleaseResourceAllocation@6(ResourceNo@1000 : Code[20];ServiceOrderNo@1001 : Code[20]) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@7 FindAvailableResources@7(SkillCode@1000 : Code[10];RequiredDate@1001 : Date) : Code[20];
+    BEGIN
+      EXIT('');
+    END;
+
+    PROCEDURE@8 CalculateResourceUtilization@8(ResourceNo@1000 : Code[20];PeriodStart@1001 : Date;PeriodEnd@1002 : Date) : Decimal;
+    BEGIN
+      EXIT(75);
+    END;
+
+    PROCEDURE@9 UpdateResourceSkills@9(ResourceNo@1000 : Code[20];SkillCode@1001 : Code[10]);
+    BEGIN
+    END;
+
+    PROCEDURE@10 ValidateResourceSkill@10(ResourceNo@1000 : Code[20];SkillCode@1001 : Code[10]) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@11 CalculateServiceDuration@11(ServiceItemNo@1000 : Code[20];ServiceTaskCode@1001 : Code[10]) : Decimal;
+    BEGIN
+      EXIT(2);
+    END;
+
+    PROCEDURE@12 EstimateServiceCost@12(ServiceOrderNo@1000 : Code[20]) : Decimal;
+    BEGIN
+      EXIT(500);
+    END;
+
+    PROCEDURE@13 CreateServiceSchedule@13(ResourceNo@1000 : Code[20];StartDate@1001 : Date;EndDate@1002 : Date);
+    BEGIN
+    END;
+
+    PROCEDURE@14 UpdateServiceSchedule@14(ScheduleEntryNo@1000 : Integer;NewStartTime@1001 : Time);
+    BEGIN
+    END;
+
+    PROCEDURE@15 DeleteServiceSchedule@15(ScheduleEntryNo@1000 : Integer);
+    BEGIN
+    END;
+
+    PROCEDURE@16 ValidateServiceItemNo@16(ServiceItemNo@1000 : Code[20]) : Boolean;
+    BEGIN
+      EXIT(ServiceItemRec.GET(ServiceItemNo));
+    END;
+
+    PROCEDURE@17 GetServiceItemLocation@17(ServiceItemNo@1000 : Code[20]) : Code[10];
+    BEGIN
+      EXIT('MAIN');
+    END;
+
+    PROCEDURE@18 CalculateNextServiceDate@18(ServiceItemNo@1000 : Code[20]) : Date;
+    BEGIN
+      EXIT(CALCDATE('<+1M>', WORKDATE));
+    END;
+
+    PROCEDURE@19 CreateServiceReminder@19(ServiceItemNo@1000 : Code[20];ReminderDate@1001 : Date);
+    BEGIN
+    END;
+
+    PROCEDURE@20 ProcessServiceQueue@20();
+    BEGIN
+    END;
+
+    PROCEDURE@21 AssignResourceToJob@21(ResourceNo@1000 : Code[20];JobNo@1001 : Code[20];TaskNo@1002 : Code[20]);
+    BEGIN
+    END;
+
+    PROCEDURE@22 CalculateJobResourceCost@22(JobNo@1000 : Code[20];ResourceNo@1001 : Code[20]) : Decimal;
+    BEGIN
+      EXIT(1000);
+    END;
+
+    PROCEDURE@23 UpdateJobResourceHours@23(JobNo@1000 : Code[20];ResourceNo@1001 : Code[20];Hours@1002 : Decimal);
+    BEGIN
+    END;
+
+    PROCEDURE@24 ValidateJobTaskNo@24(JobNo@1000 : Code[20];TaskNo@1001 : Code[20]) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@25 CalculateJobCompletion@25(JobNo@1000 : Code[20]) : Decimal;
+    BEGIN
+      EXIT(50);
+    END;
+
+    PROCEDURE@26 CreateResourceJournalEntry@26(ResourceNo@1000 : Code[20];EntryType@1001 : Option;Quantity@1002 : Decimal);
+    BEGIN
+    END;
+
+    PROCEDURE@27 PostResourceJournal@27(JournalBatchName@1000 : Code[10]) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@28 ValidateResourceJournalLine@28(LineNo@1000 : Integer) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@29 CalculateResourcePriceAdjustment@29(ResourceNo@1000 : Code[20];AdjustmentPct@1001 : Decimal) : Decimal;
+    BEGIN
+      EXIT(0);
+    END;
+
+    PROCEDURE@30 ApplyResourcePriceChange@30(ResourceNo@1000 : Code[20];NewPrice@1001 : Decimal);
+    BEGIN
+    END;
+
+    PROCEDURE@31 GetResourceCurrentPrice@31(ResourceNo@1000 : Code[20]) : Decimal;
+    BEGIN
+      EXIT(50);
+    END;
+
+    PROCEDURE@32 CalculateResourceOverhead@32(ResourceNo@1000 : Code[20]) : Decimal;
+    BEGIN
+      EXIT(10);
+    END;
+
+    PROCEDURE@33 UpdateResourceStatistics@33(ResourceNo@1000 : Code[20]);
+    BEGIN
+    END;
+
+    PROCEDURE@34 GetResourceTotalHours@34(ResourceNo@1000 : Code[20];PeriodFilter@1001 : Text[50]) : Decimal;
+    BEGIN
+      EXIT(160);
+    END;
+
+    PROCEDURE@35 CalculateResourceEfficiency@35(ResourceNo@1000 : Code[20]) : Decimal;
+    BEGIN
+      EXIT(85);
+    END;
+
+    PROCEDURE@36 CreateResourceTimeEntry@36(ResourceNo@1000 : Code[20];WorkDate@1001 : Date;Hours@1002 : Decimal;JobNo@1003 : Code[20]);
+    BEGIN
+    END;
+
+    PROCEDURE@37 ValidateResourceTimeEntry@37(EntryNo@1000 : Integer) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@38 ApproveResourceTimeEntry@38(EntryNo@1000 : Integer;ApproverID@1001 : Code[50]);
+    BEGIN
+    END;
+
+    PROCEDURE@39 RejectResourceTimeEntry@39(EntryNo@1000 : Integer;ReasonCode@1001 : Code[10]);
+    BEGIN
+    END;
+
+    PROCEDURE@40 CalculateResourceBillableHours@40(ResourceNo@1000 : Code[20];Period@1001 : Date) : Decimal;
+    BEGIN
+      EXIT(120);
+    END;
+
+    PROCEDURE@41 GetResourceNonBillableHours@41(ResourceNo@1000 : Code[20];Period@1001 : Date) : Decimal;
+    BEGIN
+      EXIT(40);
+    END;
+
+    PROCEDURE@42 GenerateResourceInvoice@42(ResourceNo@1000 : Code[20];PeriodStart@1001 : Date;PeriodEnd@1002 : Date) : Code[20];
+    BEGIN
+      EXIT('INV-001');
+    END;
+
+    PROCEDURE@43 CalculateResourceRevenue@43(ResourceNo@1000 : Code[20];Period@1001 : Date) : Decimal;
+    BEGIN
+      EXIT(6000);
+    END;
+
+    PROCEDURE@44 UpdateResourceCalendar@44(ResourceNo@1000 : Code[20];CalendarDate@1001 : Date;IsAvailable@1002 : Boolean);
+    BEGIN
+    END;
+
+    PROCEDURE@45 CheckResourceCalendar@45(ResourceNo@1000 : Code[20];CheckDate@1001 : Date) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@46 CreateResourceVacationEntry@46(ResourceNo@1000 : Code[20];StartDate@1001 : Date;EndDate@1002 : Date);
+    BEGIN
+    END;
+
+    PROCEDURE@47 DeleteResourceVacationEntry@47(EntryNo@1000 : Integer);
+    BEGIN
+    END;
+
+    PROCEDURE@48 GetResourceVacationDays@48(ResourceNo@1000 : Code[20];Year@1001 : Integer) : Integer;
+    BEGIN
+      EXIT(20);
+    END;
+
+    PROCEDURE@49 CalculateResourceWorkingDays@49(ResourceNo@1000 : Code[20];StartDate@1001 : Date;EndDate@1002 : Date) : Integer;
+    BEGIN
+      EXIT(22);
+    END;
+
+    PROCEDURE@50 ValidateResourceGroup@50(GroupCode@1000 : Code[20]) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@51 AssignResourceToGroup@51(ResourceNo@1000 : Code[20];GroupCode@1001 : Code[20]);
+    BEGIN
+    END;
+
+    PROCEDURE@52 RemoveResourceFromGroup@52(ResourceNo@1000 : Code[20];GroupCode@1001 : Code[20]);
+    BEGIN
+    END;
+
+    PROCEDURE@53 GetResourceGroupMembers@53(GroupCode@1000 : Code[20]) : Integer;
+    BEGIN
+      EXIT(5);
+    END;
+
+    PROCEDURE@54 CalculateGroupCapacity@54(GroupCode@1000 : Code[20]) : Decimal;
+    BEGIN
+      EXIT(40);
+    END;
+
+    PROCEDURE@55 AllocateGroupToProject@55(GroupCode@1000 : Code[20];ProjectCode@1001 : Code[20]);
+    BEGIN
+    END;
+
+    PROCEDURE@56 CreateResourceContract@56(ResourceNo@1000 : Code[20];CustomerNo@1001 : Code[20];StartDate@1002 : Date) : Code[20];
+    BEGIN
+      EXIT('CONT-001');
+    END;
+
+    PROCEDURE@57 RenewResourceContract@57(ContractNo@1000 : Code[20];NewEndDate@1001 : Date);
+    BEGIN
+    END;
+
+    PROCEDURE@58 TerminateResourceContract@58(ContractNo@1000 : Code[20];TerminationDate@1001 : Date);
+    BEGIN
+    END;
+
+    PROCEDURE@59 CalculateContractValue@59(ContractNo@1000 : Code[20]) : Decimal;
+    BEGIN
+      EXIT(50000);
+    END;
+
+    PROCEDURE@60 UpdateContractPricing@60(ContractNo@1000 : Code[20];NewHourlyRate@1001 : Decimal);
+    BEGIN
+    END;
+
+    PROCEDURE@61 ValidateServiceContract@61(ContractNo@1000 : Code[20]) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@62 GenerateContractInvoice@62(ContractNo@1000 : Code[20];InvoiceDate@1001 : Date) : Code[20];
+    BEGIN
+      EXIT('INV-CONT-001');
+    END;
+
+    PROCEDURE@63 CalculateResourceMargin@63(ResourceNo@1000 : Code[20]) : Decimal;
+    BEGIN
+      EXIT(35);
+    END;
+
+    PROCEDURE@64 GetResourceProfitability@64(ResourceNo@1000 : Code[20];Period@1001 : Date) : Decimal;
+    BEGIN
+      EXIT(2000);
+    END;
+
+    PROCEDURE@65 AnalyzeResourcePerformance@65(ResourceNo@1000 : Code[20];StartDate@1001 : Date;EndDate@1002 : Date);
+    BEGIN
+    END;
+
+    PROCEDURE@66 GenerateResourceReport@66(ReportType@1000 : Option;ResourceFilter@1001 : Text[100]);
+    BEGIN
+    END;
+
+    PROCEDURE@67 ExportResourceData@67(ResourceNo@1000 : Code[20];FilePath@1001 : Text[250]);
+    BEGIN
+    END;
+
+    PROCEDURE@68 ImportResourceData@68(FilePath@1000 : Text[250]) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@69 SynchronizeResourceData@69(ResourceNo@1000 : Code[20];ExternalSystemID@1001 : Text[50]);
+    BEGIN
+    END;
+
+    PROCEDURE@70 ValidateResourceCertification@70(ResourceNo@1000 : Code[20];CertificationCode@1001 : Code[20]) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@71 RenewResourceCertification@71(ResourceNo@1000 : Code[20];CertificationCode@1001 : Code[20];ExpiryDate@1002 : Date);
+    BEGIN
+    END;
+
+    PROCEDURE@72 GetResourceCertifications@72(ResourceNo@1000 : Code[20]) : Integer;
+    BEGIN
+      EXIT(3);
+    END;
+
+    PROCEDURE@73 CalculateTrainingNeeds@73(ResourceNo@1000 : Code[20]);
+    BEGIN
+    END;
+
+    PROCEDURE@74 ScheduleResourceTraining@74(ResourceNo@1000 : Code[20];TrainingCode@1001 : Code[20];TrainingDate@1002 : Date);
+    BEGIN
+    END;
+
+    PROCEDURE@75 CompleteResourceTraining@75(TrainingEntryNo@1000 : Integer;CompletionDate@1001 : Date);
+    BEGIN
+    END;
+
+    PROCEDURE@76 CalculateResourceCompetencyLevel@76(ResourceNo@1000 : Code[20];SkillArea@1001 : Code[20]) : Integer;
+    BEGIN
+      EXIT(4);
+    END;
+
+    PROCEDURE@77 UpdateResourceCompetency@77(ResourceNo@1000 : Code[20];SkillArea@1001 : Code[20];Level@1002 : Integer);
+    BEGIN
+    END;
+
+    PROCEDURE@78 GetResourceQualifications@78(ResourceNo@1000 : Code[20]) : Text[250];
+    BEGIN
+      EXIT('NAV Development, SQL, C#');
+    END;
+
+    PROCEDURE@79 ValidateResourceQualification@79(ResourceNo@1000 : Code[20];QualificationCode@1001 : Code[20]) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@80 CalculateResourceProductivity@80(ResourceNo@1000 : Code[20];Period@1001 : Date) : Decimal;
+    BEGIN
+      EXIT(92);
+    END;
+
+    PROCEDURE@81 CompareResourcePerformance@81(Resource1@1000 : Code[20];Resource2@1001 : Code[20]) : Integer;
+    BEGIN
+      EXIT(0);
+    END;
+
+    PROCEDURE@82 RankResourcesByPerformance@82(GroupCode@1000 : Code[20]);
+    BEGIN
+    END;
+
+    PROCEDURE@83 IdentifyTopPerformers@83(Period@1000 : Date) : Text[250];
+    BEGIN
+      EXIT('RES-001,RES-002,RES-003');
+    END;
+
+    PROCEDURE@84 CalculateResourceBonus@84(ResourceNo@1000 : Code[20];Period@1001 : Date) : Decimal;
+    BEGIN
+      EXIT(500);
+    END;
+
+    PROCEDURE@85 ProcessResourceBonuses@85(Period@1000 : Date);
+    BEGIN
+    END;
+
+    PROCEDURE@86 GenerateBonusJournalEntries@86(Period@1000 : Date);
+    BEGIN
+    END;
+
+    PROCEDURE@87 ValidateResourceLocation@87(ResourceNo@1000 : Code[20];LocationCode@1001 : Code[10]) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@88 TransferResource@88(ResourceNo@1000 : Code[20];FromLocation@1001 : Code[10];ToLocation@1002 : Code[10]);
+    BEGIN
+    END;
+
+    PROCEDURE@89 GetResourcesByLocation@89(LocationCode@1000 : Code[10]) : Integer;
+    BEGIN
+      EXIT(15);
+    END;
+
+    PROCEDURE@90 CalculateLocationCapacity@90(LocationCode@1000 : Code[10]) : Decimal;
+    BEGIN
+      EXIT(120);
+    END;
+
+    PROCEDURE@91 OptimizeResourceAllocation@91(ProjectCode@1000 : Code[20]);
+    BEGIN
+    END;
+
+    PROCEDURE@92 RebalanceResourceWorkload@92(GroupCode@1000 : Code[20]);
+    BEGIN
+    END;
+
+    PROCEDURE@93 IdentifyResourceBottlenecks@93() : Text[250];
+    BEGIN
+      EXIT('Service Queue, Installation Team');
+    END;
+
+    PROCEDURE@94 ForecastResourceDemand@94(ForecastPeriod@1000 : Date) : Decimal;
+    BEGIN
+      EXIT(200);
+    END;
+
+    PROCEDURE@95 CalculateResourceShortage@95(RequiredSkill@1000 : Code[20];Period@1001 : Date) : Decimal;
+    BEGIN
+      EXIT(5);
+    END;
+
+    PROCEDURE@96 CreateResourceRequisition@96(SkillRequired@1000 : Code[20];Quantity@1001 : Integer;RequiredDate@1002 : Date);
+    BEGIN
+    END;
+
+    PROCEDURE@97 ApproveResourceRequisition@97(RequisitionNo@1000 : Code[20]);
+    BEGIN
+    END;
+
+    PROCEDURE@98 ProcessResourceRecruitment@98(RequisitionNo@1000 : Code[20]);
+    BEGIN
+    END;
+
+    PROCEDURE@99 OnboardNewResource@99(ResourceNo@1000 : Code[20];StartDate@1001 : Date);
+    BEGIN
+    END;
+
+    PROCEDURE@100 OffboardResource@100(ResourceNo@1000 : Code[20];EndDate@1001 : Date;ReasonCode@1002 : Code[10]);
+    BEGIN
+    END;
+
+    PROCEDURE@101 ArchiveResourceData@101(ResourceNo@1000 : Code[20]);
+    BEGIN
+    END;
+
+    PROCEDURE@102 RestoreResourceData@102(ResourceNo@1000 : Code[20];ArchiveDate@1001 : Date) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@103 ValidateResourceSettings@103(ResourceNo@1000 : Code[20]) : Boolean;
+    BEGIN
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE@104 UpdateResourcePreferences@104(ResourceNo@1000 : Code[20];PreferenceType@1001 : Option;Value@1002 : Text[50]);
+    BEGIN
+    END;
+
+    PROCEDURE@105 GetResourcePreference@105(ResourceNo@1000 : Code[20];PreferenceType@1001 : Option) : Text[50];
+    BEGIN
+      EXIT('Standard');
+    END;
+
+    BEGIN
+    {
+      ACME Resource Management Service v1.0
+      100% synthetic - demonstrates many procedures pattern for symbol table stress testing
+      Uses standard NAV terminology (Resources, Service, Jobs, Time management)
+    }
+    END.
+  }
+}

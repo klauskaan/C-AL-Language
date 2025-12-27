@@ -1,0 +1,773 @@
+// SYNTHETIC PERFORMANCE TEST FIXTURE - 100% GENERATED
+// Pattern: Complex business entity table with 100 fields
+// Purpose: Performance testing for standard entity with field triggers
+// Target: ~1000 lines, 30KB
+// Features: FlowFields, TableRelations, OnValidate/OnLookup triggers, nested procedures
+
+OBJECT Table 50002 Sales Order Header
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/01/25;
+    Time=12:00:00;
+    Modified=Yes;
+    Version List=TEST1.0;
+  }
+  PROPERTIES
+  {
+    OnInsert=BEGIN
+               IF "Order No." = '' THEN BEGIN
+                 TestSetup.GET;
+                 TestSetup.TESTFIELD("Order Nos.");
+                 NoSeriesMgt.InitSeries("Order Nos.",xRec."Order Nos.",0D,"Order No.","Order Nos.");
+               END;
+               InitRecord;
+               ValidateOrderDate;
+             END;
+
+    OnModify=BEGIN
+               "Last Modified Date" := TODAY;
+               "Last Modified Time" := TIME;
+               UpdateStatusCode;
+             END;
+
+    OnDelete=BEGIN
+               IF Status = Status::Confirmed THEN
+                 ERROR(CannotDeleteConfirmedErr);
+               DeleteRelatedLines;
+             END;
+
+    OnRename=BEGIN
+               ERROR(CannotRenameErr);
+             END;
+
+    CaptionML=ENU=Sales Order Header;
+    LookupPageID=Page50002;
+    DrillDownPageID=Page50002;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Order No.           ;Code20        ;CaptionML=ENU=Order No.;
+                                                   NotBlank=Yes;
+                                                   OnValidate=BEGIN
+                                                                IF "Order No." <> xRec."Order No." THEN BEGIN
+                                                                  TestSetup.GET;
+                                                                  NoSeriesMgt.TestManual("Order Nos.");
+                                                                  "Order Nos." := '';
+                                                                END;
+                                                              END;
+                                                                }
+    { 2   ;   ;Customer No.        ;Code20        ;TableRelation=Customer;
+                                                   CaptionML=ENU=Customer No.;
+                                                   OnValidate=VAR
+                                                                Cust@1000 : Record 50010;
+                                                              BEGIN
+                                                                IF "Customer No." <> '' THEN BEGIN
+                                                                  Cust.GET("Customer No.");
+                                                                  "Customer Name" := Cust.Name;
+                                                                  "Customer Credit Limit" := Cust."Credit Limit";
+                                                                  "Payment Terms Code" := Cust."Payment Terms Code";
+                                                                  "Shipping Agent Code" := Cust."Shipping Agent Code";
+                                                                  ValidateCreditLimit;
+                                                                  UpdatePriceGroup;
+                                                                END ELSE BEGIN
+                                                                  "Customer Name" := '';
+                                                                  "Customer Credit Limit" := 0;
+                                                                END;
+                                                              END;
+
+                                                   OnLookup=VAR
+                                                              CustList@1000 : Page 50010;
+                                                            BEGIN
+                                                              CustList.LOOKUPMODE(TRUE);
+                                                              IF CustList.RUNMODAL = ACTION::LookupOK THEN BEGIN
+                                                                CustList.GETRECORD(Cust);
+                                                                "Customer No." := Cust."No.";
+                                                                VALIDATE("Customer No.");
+                                                              END;
+                                                            END;
+                                                             }
+    { 3   ;   ;Customer Name       ;Text100       ;CaptionML=ENU=Customer Name }
+    { 4   ;   ;Order Date          ;Date          ;CaptionML=ENU=Order Date;
+                                                   OnValidate=BEGIN
+                                                                IF "Order Date" <> 0D THEN BEGIN
+                                                                  IF "Order Date" < "Posting Date" THEN
+                                                                    ERROR(OrderDateBeforePostingErr);
+                                                                  CalculateShipmentDate;
+                                                                  ValidateOrderDate;
+                                                                END;
+                                                              END;
+                                                                }
+    { 5   ;   ;Posting Date        ;Date          ;CaptionML=ENU=Posting Date;
+                                                   OnValidate=BEGIN
+                                                                TestStatusOpen;
+                                                                IF "Posting Date" <> xRec."Posting Date" THEN
+                                                                  RecalculateAmounts;
+                                                              END;
+                                                                }
+    { 6   ;   ;Shipment Date       ;Date          ;CaptionML=ENU=Shipment Date }
+    { 7   ;   ;Due Date            ;Date          ;CaptionML=ENU=Due Date }
+    { 8   ;   ;Status              ;Option        ;CaptionML=ENU=Status;
+                                                   OptionCaptionML=ENU=Open,Pending,Confirmed,Shipped,Invoiced;
+                                                   OptionString=Open,Pending,Confirmed,Shipped,Invoiced;
+                                                   Editable=No }
+    { 9   ;   ;Currency Code       ;Code10        ;TableRelation=Currency;
+                                                   CaptionML=ENU=Currency Code;
+                                                   OnValidate=BEGIN
+                                                                IF "Currency Code" <> xRec."Currency Code" THEN BEGIN
+                                                                  UpdateCurrencyFactor;
+                                                                  RecalculateAmounts;
+                                                                END;
+                                                              END;
+                                                                }
+    { 10  ;   ;Currency Factor     ;Decimal       ;CaptionML=ENU=Currency Factor;
+                                                   DecimalPlaces=0:15;
+                                                   MinValue=0;
+                                                   Editable=No }
+    { 11  ;   ;Amount              ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Sales Order Line".Amount WHERE (Order No.=FIELD(Order No.)));
+                                                   CaptionML=ENU=Amount;
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 12  ;   ;Amount Including VAT;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Sales Order Line"."Amount Including VAT" WHERE (Order No.=FIELD(Order No.)));
+                                                   CaptionML=ENU=Amount Including VAT;
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 13  ;   ;Payment Terms Code  ;Code10        ;TableRelation="Payment Terms";
+                                                   CaptionML=ENU=Payment Terms Code;
+                                                   OnValidate=BEGIN
+                                                                IF "Payment Terms Code" <> '' THEN
+                                                                  CalculateDueDate;
+                                                              END;
+                                                                }
+    { 14  ;   ;Payment Discount %  ;Decimal       ;CaptionML=ENU=Payment Discount %;
+                                                   DecimalPlaces=0:5;
+                                                   MinValue=0;
+                                                   MaxValue=100 }
+    { 15  ;   ;Shipping Agent Code ;Code10        ;TableRelation="Shipping Agent";
+                                                   CaptionML=ENU=Shipping Agent Code;
+                                                   OnValidate=BEGIN
+                                                                IF "Shipping Agent Code" <> xRec."Shipping Agent Code" THEN
+                                                                  "Shipping Agent Service Code" := '';
+                                                              END;
+                                                                }
+    { 16  ;   ;Shipping Agent Service Code;Code10 ;TableRelation="Shipping Agent Service".Code WHERE (Shipping Agent Code=FIELD(Shipping Agent Code));
+                                                   CaptionML=ENU=Shipping Agent Service Code }
+    { 17  ;   ;Salesperson Code    ;Code20        ;TableRelation=Salesperson;
+                                                   CaptionML=ENU=Salesperson Code;
+                                                   OnValidate=BEGIN
+                                                                ValidateSalesperson;
+                                                              END;
+                                                                }
+    { 18  ;   ;Order Nos.          ;Code20        ;TableRelation="No. Series";
+                                                   CaptionML=ENU=Order Nos.;
+                                                   Editable=No }
+    { 19  ;   ;External Document No.;Code35       ;CaptionML=ENU=External Document No. }
+    { 20  ;   ;Your Reference      ;Text35        ;CaptionML=ENU=Your Reference }
+    { 21  ;   ;Ship-to Code        ;Code10        ;TableRelation="Ship-to Address".Code WHERE (Customer No.=FIELD(Customer No.));
+                                                   CaptionML=ENU=Ship-to Code;
+                                                   OnValidate=BEGIN
+                                                                IF "Ship-to Code" <> '' THEN
+                                                                  CopyShipToAddress;
+                                                              END;
+                                                                }
+    { 22  ;   ;Ship-to Name        ;Text100       ;CaptionML=ENU=Ship-to Name }
+    { 23  ;   ;Ship-to Address     ;Text100       ;CaptionML=ENU=Ship-to Address }
+    { 24  ;   ;Ship-to Address 2   ;Text50        ;CaptionML=ENU=Ship-to Address 2 }
+    { 25  ;   ;Ship-to City        ;Text30        ;CaptionML=ENU=Ship-to City }
+    { 26  ;   ;Ship-to Post Code   ;Code20        ;TableRelation="Post Code";
+                                                   CaptionML=ENU=Ship-to Post Code;
+                                                   ValidateTableRelation=No }
+    { 27  ;   ;Ship-to County      ;Text30        ;CaptionML=ENU=Ship-to County }
+    { 28  ;   ;Ship-to Country Code;Code10        ;TableRelation=Country;
+                                                   CaptionML=ENU=Ship-to Country Code }
+    { 29  ;   ;Ship-to Contact     ;Text100       ;CaptionML=ENU=Ship-to Contact }
+    { 30  ;   ;Bill-to Customer No.;Code20        ;TableRelation=Customer;
+                                                   CaptionML=ENU=Bill-to Customer No.;
+                                                   OnValidate=BEGIN
+                                                                IF "Bill-to Customer No." <> '' THEN
+                                                                  CopyBillToAddress;
+                                                              END;
+                                                                }
+    { 31  ;   ;Bill-to Name        ;Text100       ;CaptionML=ENU=Bill-to Name }
+    { 32  ;   ;Bill-to Address     ;Text100       ;CaptionML=ENU=Bill-to Address }
+    { 33  ;   ;Bill-to Address 2   ;Text50        ;CaptionML=ENU=Bill-to Address 2 }
+    { 34  ;   ;Bill-to City        ;Text30        ;CaptionML=ENU=Bill-to City }
+    { 35  ;   ;Bill-to Post Code   ;Code20        ;TableRelation="Post Code";
+                                                   CaptionML=ENU=Bill-to Post Code;
+                                                   ValidateTableRelation=No }
+    { 36  ;   ;Bill-to County      ;Text30        ;CaptionML=ENU=Bill-to County }
+    { 37  ;   ;Bill-to Country Code;Code10        ;TableRelation=Country;
+                                                   CaptionML=ENU=Bill-to Country Code }
+    { 38  ;   ;Bill-to Contact     ;Text100       ;CaptionML=ENU=Bill-to Contact }
+    { 39  ;   ;Location Code       ;Code10        ;TableRelation=Location WHERE (Use As In-Transit=CONST(No));
+                                                   CaptionML=ENU=Location Code;
+                                                   OnValidate=BEGIN
+                                                                ValidateLocationCode;
+                                                              END;
+                                                                }
+    { 40  ;   ;Shortcut Dimension 1 Code;Code20   ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   CaptionML=ENU=Shortcut Dimension 1 Code;
+                                                   CaptionClass='1,2,1' }
+    { 41  ;   ;Shortcut Dimension 2 Code;Code20   ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   CaptionML=ENU=Shortcut Dimension 2 Code;
+                                                   CaptionClass='1,2,2' }
+    { 42  ;   ;Customer Price Group;Code10        ;TableRelation="Customer Price Group";
+                                                   CaptionML=ENU=Customer Price Group }
+    { 43  ;   ;Customer Discount Group;Code20     ;TableRelation="Customer Discount Group";
+                                                   CaptionML=ENU=Customer Discount Group }
+    { 44  ;   ;Language Code       ;Code10        ;TableRelation=Language;
+                                                   CaptionML=ENU=Language Code }
+    { 45  ;   ;No. of Lines        ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Order Line" WHERE (Order No.=FIELD(Order No.)));
+                                                   CaptionML=ENU=No. of Lines;
+                                                   Editable=No }
+    { 46  ;   ;Priority            ;Option        ;CaptionML=ENU=Priority;
+                                                   OptionCaptionML=ENU=Low,Normal,High,Urgent;
+                                                   OptionString=Low,Normal,High,Urgent }
+    { 47  ;   ;Shipping Time       ;DateFormula   ;CaptionML=ENU=Shipping Time }
+    { 48  ;   ;Shipping Advice     ;Option        ;CaptionML=ENU=Shipping Advice;
+                                                   OptionCaptionML=ENU=Partial,Complete;
+                                                   OptionString=Partial,Complete }
+    { 49  ;   ;Completely Shipped  ;Boolean       ;CaptionML=ENU=Completely Shipped;
+                                                   Editable=No }
+    { 50  ;   ;Last Shipment Date  ;Date          ;CaptionML=ENU=Last Shipment Date;
+                                                   Editable=No }
+    { 51  ;   ;Requested Delivery Date;Date       ;CaptionML=ENU=Requested Delivery Date;
+                                                   OnValidate=BEGIN
+                                                                IF "Requested Delivery Date" <> 0D THEN
+                                                                  ValidateRequestedDate;
+                                                              END;
+                                                                }
+    { 52  ;   ;Promised Delivery Date;Date        ;CaptionML=ENU=Promised Delivery Date }
+    { 53  ;   ;Quote No.           ;Code20        ;CaptionML=ENU=Quote No.;
+                                                   Editable=No }
+    { 54  ;   ;Quote Valid Until   ;Date          ;CaptionML=ENU=Quote Valid Until }
+    { 55  ;   ;Campaign No.        ;Code20        ;TableRelation=Campaign;
+                                                   CaptionML=ENU=Campaign No. }
+    { 56  ;   ;Opportunity No.     ;Code20        ;TableRelation=Opportunity;
+                                                   CaptionML=ENU=Opportunity No. }
+    { 57  ;   ;Responsibility Center;Code10       ;TableRelation="Responsibility Center";
+                                                   CaptionML=ENU=Responsibility Center }
+    { 58  ;   ;Assigned User ID    ;Code50        ;TableRelation=User."User Name";
+                                                   CaptionML=ENU=Assigned User ID;
+                                                   OnValidate=BEGIN
+                                                                ValidateUserAssignment;
+                                                              END;
+                                                                }
+    { 59  ;   ;Customer Credit Limit;Decimal      ;CaptionML=ENU=Customer Credit Limit;
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 60  ;   ;Price Calculation Method;Option    ;CaptionML=ENU=Price Calculation Method;
+                                                   OptionCaptionML=ENU=Standard,Best Price,Lowest Unit Cost;
+                                                   OptionString=Standard,Best Price,Lowest Unit Cost }
+    { 61  ;   ;VAT Bus. Posting Group;Code20      ;TableRelation="VAT Business Posting Group";
+                                                   CaptionML=ENU=VAT Bus. Posting Group }
+    { 62  ;   ;Transaction Type    ;Code10        ;TableRelation="Transaction Type";
+                                                   CaptionML=ENU=Transaction Type }
+    { 63  ;   ;Transport Method    ;Code10        ;TableRelation="Transport Method";
+                                                   CaptionML=ENU=Transport Method }
+    { 64  ;   ;Exit Point          ;Code10        ;TableRelation="Entry/Exit Point";
+                                                   CaptionML=ENU=Exit Point }
+    { 65  ;   ;Area                ;Code10        ;TableRelation=Area;
+                                                   CaptionML=ENU=Area }
+    { 66  ;   ;Transaction Specification;Code10   ;TableRelation="Transaction Specification";
+                                                   CaptionML=ENU=Transaction Specification }
+    { 67  ;   ;Payment Method Code ;Code10        ;TableRelation="Payment Method";
+                                                   CaptionML=ENU=Payment Method Code }
+    { 68  ;   ;Shipping No.        ;Code20        ;CaptionML=ENU=Shipping No. }
+    { 69  ;   ;Shipping No. Series ;Code20        ;TableRelation="No. Series";
+                                                   CaptionML=ENU=Shipping No. Series }
+    { 70  ;   ;Posting No.         ;Code20        ;CaptionML=ENU=Posting No. }
+    { 71  ;   ;Posting No. Series  ;Code20        ;TableRelation="No. Series";
+                                                   CaptionML=ENU=Posting No. Series }
+    { 72  ;   ;Last Modified Date  ;Date          ;CaptionML=ENU=Last Modified Date;
+                                                   Editable=No }
+    { 73  ;   ;Last Modified Time  ;Time          ;CaptionML=ENU=Last Modified Time;
+                                                   Editable=No }
+    { 74  ;   ;Print Posted Documents;Boolean     ;CaptionML=ENU=Print Posted Documents }
+    { 75  ;   ;Invoice Discount Calculation;Option;CaptionML=ENU=Invoice Discount Calculation;
+                                                   OptionCaptionML=ENU=None,%,Amount;
+                                                   OptionString=None,%,Amount }
+    { 76  ;   ;Invoice Discount Value;Decimal     ;CaptionML=ENU=Invoice Discount Value;
+                                                   OnValidate=BEGIN
+                                                                IF "Invoice Discount Calculation" = "Invoice Discount Calculation"::None THEN
+                                                                  ERROR(InvoiceDiscountCalculationErr);
+                                                                RecalculateInvoiceDiscount;
+                                                              END;
+                                                                }
+    { 77  ;   ;Total Weight        ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Sales Order Line".Weight WHERE (Order No.=FIELD(Order No.)));
+                                                   CaptionML=ENU=Total Weight;
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 78  ;   ;Total Volume        ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Sales Order Line".Volume WHERE (Order No.=FIELD(Order No.)));
+                                                   CaptionML=ENU=Total Volume;
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 79  ;   ;Total Packages      ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Sales Order Line"."No. of Packages" WHERE (Order No.=FIELD(Order No.)));
+                                                   CaptionML=ENU=Total Packages;
+                                                   Editable=No }
+    { 80  ;   ;Reserve             ;Option        ;CaptionML=ENU=Reserve;
+                                                   OptionCaptionML=ENU=Never,Optional,Always;
+                                                   OptionString=Never,Optional,Always }
+    { 81  ;   ;Outbound Whse. Handling Time;DateFormula;CaptionML=ENU=Outbound Whse. Handling Time }
+    { 82  ;   ;Shipping Agent Service;Text50      ;CaptionML=ENU=Shipping Agent Service;
+                                                   Editable=No }
+    { 83  ;   ;Late Order Shipping ;Boolean       ;CaptionML=ENU=Late Order Shipping;
+                                                   Editable=No }
+    { 84  ;   ;Shipping Delay Days ;Integer       ;CaptionML=ENU=Shipping Delay Days;
+                                                   Editable=No }
+    { 85  ;   ;Cancelled           ;Boolean       ;CaptionML=ENU=Cancelled;
+                                                   OnValidate=BEGIN
+                                                                IF Cancelled THEN
+                                                                  ValidateCancellation;
+                                                              END;
+                                                                }
+    { 86  ;   ;Cancellation Reason Code;Code10    ;TableRelation="Cancellation Reason";
+                                                   CaptionML=ENU=Cancellation Reason Code }
+    { 87  ;   ;Apply to Doc. Type  ;Option        ;CaptionML=ENU=Apply to Doc. Type;
+                                                   OptionCaptionML=ENU=" ,Payment,Invoice,Credit Memo,Finance Charge Memo,Reminder,Refund";
+                                                   OptionString=" ,Payment,Invoice,Credit Memo,Finance Charge Memo,Reminder,Refund" }
+    { 88  ;   ;Apply to Doc. No.   ;Code20        ;CaptionML=ENU=Apply to Doc. No. }
+    { 89  ;   ;Created By          ;Code50        ;TableRelation=User."User Name";
+                                                   CaptionML=ENU=Created By;
+                                                   Editable=No }
+    { 90  ;   ;Created Date        ;Date          ;CaptionML=ENU=Created Date;
+                                                   Editable=No }
+    { 91  ;   ;Created Time        ;Time          ;CaptionML=ENU=Created Time;
+                                                   Editable=No }
+    { 92  ;   ;Total Quantity      ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Sales Order Line".Quantity WHERE (Order No.=FIELD(Order No.)));
+                                                   CaptionML=ENU=Total Quantity;
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 93  ;   ;Total Outstanding Qty;Decimal      ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Sales Order Line"."Outstanding Quantity" WHERE (Order No.=FIELD(Order No.)));
+                                                   CaptionML=ENU=Total Outstanding Qty;
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 94  ;   ;Approval Status     ;Option        ;CaptionML=ENU=Approval Status;
+                                                   OptionCaptionML=ENU=Open,Pending Approval,Approved,Rejected;
+                                                   OptionString=Open,Pending Approval,Approved,Rejected;
+                                                   Editable=No }
+    { 95  ;   ;Approval Entry Count;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Approval Entry" WHERE (Document No.=FIELD(Order No.)));
+                                                   CaptionML=ENU=Approval Entry Count;
+                                                   Editable=No }
+    { 96  ;   ;Comment Lines Count ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Comment Line" WHERE (Table Name=CONST(Sales Order),No.=FIELD(Order No.)));
+                                                   CaptionML=ENU=Comment Lines Count;
+                                                   Editable=No }
+    { 97  ;   ;Special Instructions;Text250       ;CaptionML=ENU=Special Instructions }
+    { 98  ;   ;Reference Document No.;Code20      ;CaptionML=ENU=Reference Document No. }
+    { 99  ;   ;Processing Priority ;Integer       ;CaptionML=ENU=Processing Priority;
+                                                   MinValue=0;
+                                                   MaxValue=10 }
+    { 100 ;   ;Warehouse Document No.;Code20      ;CaptionML=ENU=Warehouse Document No.;
+                                                   Editable=No }
+  }
+  KEYS
+  {
+    {    ;Order No.                               ;Clustered=Yes }
+    {    ;Customer No.,Order Date                  }
+    {    ;Status,Posting Date                      }
+    {    ;Salesperson Code,Order Date              }
+    {    ;Location Code,Shipment Date              }
+    {    ;Bill-to Customer No.,Order Date          }
+    {    ;Assigned User ID,Status                  }
+    {    ;Campaign No.,Status                      }
+  }
+  FIELDGROUPS
+  {
+    { 1   ;DropDown            ;Order No.,Customer No.,Customer Name,Order Date,Amount }
+    { 2   ;Brick               ;Order No.,Customer Name,Amount,Status }
+  }
+  CODE
+  {
+    VAR
+      TestSetup@1000 : Record 50001;
+      Cust@1001 : Record 50010;
+      ShipToAddr@1002 : Record 50011;
+      BillToCustomer@1003 : Record 50010;
+      NoSeriesMgt@1004 : Codeunit 396;
+      CurrExchRate@1005 : Record 330;
+      CannotDeleteConfirmedErr@1006 : TextConst 'ENU=Cannot delete order with status Confirmed.';
+      CannotRenameErr@1007 : TextConst 'ENU=You cannot rename a sales order.';
+      OrderDateBeforePostingErr@1008 : TextConst 'ENU=Order Date cannot be before Posting Date.';
+      CreditLimitExceededErr@1009 : TextConst 'ENU=Customer credit limit exceeded. Current limit: %1';
+      InvalidStatusErr@1010 : TextConst 'ENU=Cannot modify order with status %1.';
+      LocationMandatoryErr@1011 : TextConst 'ENU=Location Code is mandatory for this operation.';
+      SalespersonNotFoundErr@1012 : TextConst 'ENU=Salesperson %1 does not exist.';
+      InvalidUserAssignmentErr@1013 : TextConst 'ENU=User %1 is not authorized for this responsibility center.';
+      InvoiceDiscountCalculationErr@1014 : TextConst 'ENU=Invoice discount calculation method must be set before entering a value.';
+      ConfirmCancellationQst@1015 : TextConst 'ENU=Are you sure you want to cancel this order?';
+      DeleteLinesQst@1016 : TextConst 'ENU=Do you want to delete the related order lines?';
+      ShipmentDateCalculatedMsg@1017 : TextConst 'ENU=Shipment date has been calculated to %1.';
+
+    PROCEDURE InitRecord@1();
+    BEGIN
+      IF "Posting Date" = 0D THEN
+        "Posting Date" := WORKDATE;
+      IF "Order Date" = 0D THEN
+        "Order Date" := WORKDATE;
+
+      TestSetup.GET;
+      IF "Shipping No. Series" = '' THEN
+        "Shipping No. Series" := TestSetup."Posted Shipping Nos.";
+      IF "Posting No. Series" = '' THEN
+        "Posting No. Series" := TestSetup."Posted Invoice Nos.";
+
+      "Created By" := USERID;
+      "Created Date" := TODAY;
+      "Created Time" := TIME;
+      Status := Status::Open;
+      "Approval Status" := "Approval Status"::Open;
+    END;
+
+    PROCEDURE ValidateOrderDate@2();
+    VAR
+      DateDiff@1000 : Integer;
+    BEGIN
+      IF "Order Date" = 0D THEN
+        EXIT;
+
+      DateDiff := "Order Date" - TODAY;
+      IF DateDiff > 365 THEN
+        ERROR('Order date cannot be more than 1 year in the future.');
+
+      IF "Posting Date" = 0D THEN
+        "Posting Date" := "Order Date";
+    END;
+
+    PROCEDURE CalculateShipmentDate@3();
+    VAR
+      ShippingAgentService@1000 : Record 50020;
+      ShippingTime@1001 : DateFormula;
+    BEGIN
+      IF "Shipping Agent Code" = '' THEN BEGIN
+        "Shipment Date" := "Order Date";
+        EXIT;
+      END;
+
+      IF "Shipping Agent Service Code" <> '' THEN BEGIN
+        IF ShippingAgentService.GET("Shipping Agent Code","Shipping Agent Service Code") THEN BEGIN
+          EVALUATE(ShippingTime,ShippingAgentService."Shipping Time");
+          "Shipment Date" := CALCDATE(ShippingTime,"Order Date");
+        END;
+      END ELSE
+        "Shipment Date" := CALCDATE("Shipping Time","Order Date");
+
+      MESSAGE(ShipmentDateCalculatedMsg,"Shipment Date");
+    END;
+
+    PROCEDURE CalculateDueDate@4();
+    VAR
+      PaymentTerms@1000 : Record 50030;
+    BEGIN
+      IF "Payment Terms Code" = '' THEN
+        EXIT;
+
+      IF PaymentTerms.GET("Payment Terms Code") THEN BEGIN
+        IF FORMAT(PaymentTerms."Due Date Calculation") <> '' THEN
+          "Due Date" := CALCDATE(PaymentTerms."Due Date Calculation","Posting Date")
+        ELSE
+          "Due Date" := "Posting Date";
+
+        "Payment Discount %" := PaymentTerms."Discount %";
+      END;
+    END;
+
+    PROCEDURE UpdateCurrencyFactor@5();
+    VAR
+      CurrencyDate@1000 : Date;
+    BEGIN
+      IF "Currency Code" = '' THEN BEGIN
+        "Currency Factor" := 0;
+        EXIT;
+      END;
+
+      IF "Posting Date" <> 0D THEN
+        CurrencyDate := "Posting Date"
+      ELSE
+        CurrencyDate := WORKDATE;
+
+      "Currency Factor" := CurrExchRate.ExchangeRate(CurrencyDate,"Currency Code");
+    END;
+
+    PROCEDURE ValidateCreditLimit@6();
+    VAR
+      CurrentBalance@1000 : Decimal;
+      OrderAmount@1001 : Decimal;
+    BEGIN
+      IF "Customer Credit Limit" = 0 THEN
+        EXIT;
+
+      CurrentBalance := GetCustomerBalance;
+      CALCFIELDS(Amount);
+      OrderAmount := Amount;
+
+      IF (CurrentBalance + OrderAmount) > "Customer Credit Limit" THEN
+        ERROR(CreditLimitExceededErr,"Customer Credit Limit");
+    END;
+
+    PROCEDURE GetCustomerBalance@7() : Decimal;
+    VAR
+      CustLedgerEntry@1000 : Record 50040;
+      Balance@1001 : Decimal;
+    BEGIN
+      Balance := 0;
+      CustLedgerEntry.SETRANGE("Customer No.","Customer No.");
+      CustLedgerEntry.SETRANGE(Open,TRUE);
+      IF CustLedgerEntry.FINDSET THEN
+        REPEAT
+          Balance := Balance + CustLedgerEntry."Remaining Amount";
+        UNTIL CustLedgerEntry.NEXT = 0;
+      EXIT(Balance);
+    END;
+
+    PROCEDURE UpdatePriceGroup@8();
+    VAR
+      Customer@1000 : Record 50010;
+    BEGIN
+      IF "Customer No." = '' THEN
+        EXIT;
+
+      IF Customer.GET("Customer No.") THEN BEGIN
+        "Customer Price Group" := Customer."Customer Price Group";
+        "Customer Discount Group" := Customer."Customer Discount Group";
+      END;
+    END;
+
+    PROCEDURE CopyShipToAddress@9();
+    BEGIN
+      IF "Ship-to Code" = '' THEN
+        EXIT;
+
+      IF ShipToAddr.GET("Customer No.","Ship-to Code") THEN BEGIN
+        "Ship-to Name" := ShipToAddr.Name;
+        "Ship-to Address" := ShipToAddr.Address;
+        "Ship-to Address 2" := ShipToAddr."Address 2";
+        "Ship-to City" := ShipToAddr.City;
+        "Ship-to Post Code" := ShipToAddr."Post Code";
+        "Ship-to County" := ShipToAddr.County;
+        "Ship-to Country Code" := ShipToAddr."Country Code";
+        "Ship-to Contact" := ShipToAddr.Contact;
+      END;
+    END;
+
+    PROCEDURE CopyBillToAddress@10();
+    BEGIN
+      IF "Bill-to Customer No." = '' THEN
+        "Bill-to Customer No." := "Customer No.";
+
+      IF BillToCustomer.GET("Bill-to Customer No.") THEN BEGIN
+        "Bill-to Name" := BillToCustomer.Name;
+        "Bill-to Address" := BillToCustomer.Address;
+        "Bill-to Address 2" := BillToCustomer."Address 2";
+        "Bill-to City" := BillToCustomer.City;
+        "Bill-to Post Code" := BillToCustomer."Post Code";
+        "Bill-to County" := BillToCustomer.County;
+        "Bill-to Country Code" := BillToCustomer."Country Code";
+        "Bill-to Contact" := BillToCustomer.Contact;
+      END;
+    END;
+
+    PROCEDURE TestStatusOpen@11();
+    BEGIN
+      TESTFIELD(Status,Status::Open);
+    END;
+
+    PROCEDURE RecalculateAmounts@12();
+    VAR
+      SalesLine@1000 : Record 50003;
+    BEGIN
+      SalesLine.SETRANGE("Order No.","Order No.");
+      IF SalesLine.FINDSET(TRUE,FALSE) THEN
+        REPEAT
+          SalesLine.UpdateAmounts;
+          SalesLine.MODIFY(TRUE);
+        UNTIL SalesLine.NEXT = 0;
+    END;
+
+    PROCEDURE UpdateStatusCode@13();
+    BEGIN
+      CASE Status OF
+        Status::Open:
+          CheckIfCanConfirm;
+        Status::Confirmed:
+          CheckIfFullyShipped;
+        Status::Shipped:
+          CheckIfFullyInvoiced;
+      END;
+    END;
+
+    PROCEDURE CheckIfCanConfirm@14();
+    VAR
+      SalesLine@1000 : Record 50003;
+      HasLines@1001 : Boolean;
+    BEGIN
+      SalesLine.SETRANGE("Order No.","Order No.");
+      HasLines := NOT SalesLine.ISEMPTY;
+
+      IF HasLines AND ("Customer No." <> '') THEN BEGIN
+        IF "Approval Status" = "Approval Status"::Approved THEN
+          Status := Status::Pending;
+      END;
+    END;
+
+    PROCEDURE CheckIfFullyShipped@15();
+    VAR
+      SalesLine@1000 : Record 50003;
+      AllShipped@1001 : Boolean;
+    BEGIN
+      AllShipped := TRUE;
+      SalesLine.SETRANGE("Order No.","Order No.");
+      IF SalesLine.FINDSET THEN
+        REPEAT
+          IF SalesLine."Outstanding Quantity" > 0 THEN
+            AllShipped := FALSE;
+        UNTIL (SalesLine.NEXT = 0) OR (NOT AllShipped);
+
+      IF AllShipped THEN
+        "Completely Shipped" := TRUE;
+    END;
+
+    PROCEDURE CheckIfFullyInvoiced@16();
+    VAR
+      SalesLine@1000 : Record 50003;
+      AllInvoiced@1001 : Boolean;
+    BEGIN
+      AllInvoiced := TRUE;
+      SalesLine.SETRANGE("Order No.","Order No.");
+      IF SalesLine.FINDSET THEN
+        REPEAT
+          IF SalesLine."Qty. to Invoice" > 0 THEN
+            AllInvoiced := FALSE;
+        UNTIL (SalesLine.NEXT = 0) OR (NOT AllInvoiced);
+
+      IF AllInvoiced THEN
+        Status := Status::Invoiced;
+    END;
+
+    PROCEDURE DeleteRelatedLines@17();
+    VAR
+      SalesLine@1000 : Record 50003;
+      ConfirmDelete@1001 : Boolean;
+    BEGIN
+      ConfirmDelete := CONFIRM(DeleteLinesQst,FALSE);
+      IF NOT ConfirmDelete THEN
+        ERROR('');
+
+      SalesLine.SETRANGE("Order No.","Order No.");
+      IF SalesLine.FINDSET THEN
+        SalesLine.DELETEALL(TRUE);
+    END;
+
+    PROCEDURE ValidateSalesperson@18();
+    VAR
+      Salesperson@1000 : Record 50050;
+    BEGIN
+      IF "Salesperson Code" = '' THEN
+        EXIT;
+
+      IF NOT Salesperson.GET("Salesperson Code") THEN
+        ERROR(SalespersonNotFoundErr,"Salesperson Code");
+    END;
+
+    PROCEDURE ValidateLocationCode@19();
+    VAR
+      Location@1000 : Record 50060;
+    BEGIN
+      IF "Location Code" = '' THEN
+        EXIT;
+
+      IF Location.GET("Location Code") THEN BEGIN
+        IF Location."Require Shipment" THEN
+          "Shipping Advice" := "Shipping Advice"::Complete;
+      END;
+    END;
+
+    PROCEDURE ValidateUserAssignment@20();
+    VAR
+      UserSetup@1000 : Record 50070;
+    BEGIN
+      IF "Assigned User ID" = '' THEN
+        EXIT;
+
+      IF UserSetup.GET("Assigned User ID") THEN BEGIN
+        IF ("Responsibility Center" <> '') AND
+           (UserSetup."Responsibility Center" <> '') THEN BEGIN
+          IF UserSetup."Responsibility Center" <> "Responsibility Center" THEN
+            ERROR(InvalidUserAssignmentErr,"Assigned User ID");
+        END;
+      END;
+    END;
+
+    PROCEDURE ValidateRequestedDate@21();
+    BEGIN
+      IF "Requested Delivery Date" < "Order Date" THEN
+        ERROR('Requested delivery date cannot be before order date.');
+
+      IF "Requested Delivery Date" <> 0D THEN BEGIN
+        IF "Promised Delivery Date" = 0D THEN
+          "Promised Delivery Date" := "Requested Delivery Date";
+      END;
+    END;
+
+    PROCEDURE RecalculateInvoiceDiscount@22();
+    VAR
+      TotalAmount@1000 : Decimal;
+      DiscountAmount@1001 : Decimal;
+    BEGIN
+      CALCFIELDS(Amount);
+      TotalAmount := Amount;
+
+      CASE "Invoice Discount Calculation" OF
+        "Invoice Discount Calculation"::"%":
+          DiscountAmount := TotalAmount * "Invoice Discount Value" / 100;
+        "Invoice Discount Calculation"::Amount:
+          DiscountAmount := "Invoice Discount Value";
+      END;
+
+      ApplyInvoiceDiscount(DiscountAmount);
+    END;
+
+    PROCEDURE ApplyInvoiceDiscount@23(DiscountAmount@1000 : Decimal);
+    VAR
+      SalesLine@1001 : Record 50003;
+    BEGIN
+      SalesLine.SETRANGE("Order No.","Order No.");
+      IF SalesLine.FINDSET(TRUE,FALSE) THEN
+        REPEAT
+          SalesLine."Inv. Discount Amount" := DiscountAmount * SalesLine.Amount / Amount;
+          SalesLine.MODIFY(TRUE);
+        UNTIL SalesLine.NEXT = 0;
+    END;
+
+    PROCEDURE ValidateCancellation@24();
+    BEGIN
+      IF NOT CONFIRM(ConfirmCancellationQst,FALSE) THEN
+        ERROR('');
+
+      TESTFIELD(Status,Status::Open);
+      "Cancellation Reason Code" := 'USER_CANCEL';
+      Status := Status::Open;
+    END;
+
+    PROCEDURE ReopenOrder@25();
+    BEGIN
+      IF Status IN [Status::Shipped,Status::Invoiced] THEN
+        ERROR('Cannot reopen order with status %1.',Status);
+
+      Status := Status::Open;
+      "Approval Status" := "Approval Status"::Open;
+    END;
+
+    BEGIN
+    END.
+  }
+}

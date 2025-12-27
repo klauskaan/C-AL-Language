@@ -1,0 +1,73 @@
+{
+  "timestamp": "2025-12-27T16:20:14.721Z",
+  "version": "0.4.6",
+  "duration": 26.068,
+  "environment": {
+    "node": "v20.19.2",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "complexityTests": [
+    {
+      "fixture": "deep-nesting.cal",
+      "lines": 1047,
+      "meanMs": 741.7340070448648,
+      "memoryMB": 0.9116424560546875,
+      "tokensPerSecond": 1411.5572294862716
+    },
+    {
+      "fixture": "many-procedures.cal",
+      "lines": 518,
+      "meanMs": 428.47377077978393,
+      "memoryMB": 0.6758064270019531,
+      "tokensPerSecond": 1208.9421461138363
+    },
+    {
+      "fixture": "large-table.cal",
+      "lines": 788,
+      "meanMs": 1298.5724250486721,
+      "memoryMB": 1.7249031066894531,
+      "tokensPerSecond": 606.8202164160884
+    },
+    {
+      "fixture": "complex-expressions.cal",
+      "lines": 646,
+      "meanMs": 859.9875743766078,
+      "memoryMB": 1.3699668884277343,
+      "tokensPerSecond": 751.1736439544209
+    },
+    {
+      "fixture": "edge-cases.cal",
+      "lines": 620,
+      "meanMs": 421.72465464896163,
+      "memoryMB": 0.571734619140625,
+      "tokensPerSecond": 1470.1535543756158
+    },
+    {
+      "fixture": "bad-practices.cal",
+      "lines": 1189,
+      "meanMs": 827.6855647496909,
+      "memoryMB": 1.051781463623047,
+      "tokensPerSecond": 1436.5358665637452
+    },
+    {
+      "fixture": "multilingual.cal",
+      "lines": 642,
+      "meanMs": 778.6266263137196,
+      "memoryMB": 1.2968727111816407,
+      "tokensPerSecond": 824.5287000258955
+    },
+    {
+      "fixture": "real-world-business-logic.cal",
+      "lines": 2538,
+      "meanMs": 2274.956577272769,
+      "memoryMB": 2.8772598266601563,
+      "tokensPerSecond": 1115.6256894549472
+    }
+  ],
+  "summary": {
+    "totalFixtures": 9,
+    "avgMemoryMB": 1.309995937347412,
+    "avgThroughput": 1103.1671307988527
+  }
+}

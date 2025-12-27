@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Performance Baseline Schema",
+  "description": "Schema for C-AL Language Server performance baselines",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Version of the language server"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the baseline was created"
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "node": {
+          "type": "string",
+          "description": "Node.js version"
+        },
+        "platform": {
+          "type": "string",
+          "description": "Operating system platform"
+        },
+        "cpu": {
+          "type": "string",
+          "description": "CPU architecture"
+        }
+      },
+      "required": ["node", "platform", "cpu"]
+    },
+    "benchmarks": {
+      "type": "object",
+      "description": "Benchmark results keyed by benchmark name",
+      "patternProperties": {
+        ".*": {
+          "type": "object",
+          "properties": {
+            "meanMs": {
+              "type": "number",
+              "description": "Mean execution time in milliseconds"
+            },
+            "stdDevMs": {
+              "type": "number",
+              "description": "Standard deviation in milliseconds"
+            },
+            "minMs": {
+              "type": "number",
+              "description": "Minimum execution time in milliseconds"
+            },
+            "maxMs": {
+              "type": "number",
+              "description": "Maximum execution time in milliseconds"
+            },
+            "ops": {
+              "type": "number",
+              "description": "Operations per second"
+            },
+            "samples": {
+              "type": "number",
+              "description": "Number of samples collected"
+            },
+            "memoryMB": {
+              "type": "number",
+              "description": "Memory usage in megabytes (optional)"
+            }
+          },
+          "required": ["meanMs", "stdDevMs", "minMs", "maxMs", "ops", "samples"]
+        }
+      }
+    }
+  },
+  "required": ["version", "timestamp", "environment", "benchmarks"]
+}

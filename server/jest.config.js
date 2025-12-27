@@ -5,7 +5,8 @@ module.exports = {
   roots: ['<rootDir>/src'],
   testMatch: [
     '**/__tests__/**/*.test.ts',
-    '**/__tests__/**/*.spec.ts'
+    '**/__tests__/**/*.spec.ts',
+    '!**/__tests__/performance/**'
   ],
   collectCoverageFrom: [
     'src/**/*.ts',

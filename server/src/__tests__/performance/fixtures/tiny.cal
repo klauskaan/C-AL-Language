@@ -1,0 +1,99 @@
+// SYNTHETIC PERFORMANCE TEST FIXTURE - 100% GENERATED
+// Pattern: Simple table with basic procedures
+// Purpose: Baseline for minimal parsing overhead
+// Target: ~100 lines, 3KB
+// Complexity: Simple table (20 fields), 5 procedures with basic logic
+
+OBJECT Table 50000 Customer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=27-12-25;
+    Time=12:00:00;
+    Modified=Yes;
+    Version List=ACME-BASE;
+  }
+  PROPERTIES
+  {
+    DataCaptionFields="No.","Name";
+    LookupPageID="Customer List";
+  }
+  FIELDS
+  {
+    { 1   ;"No."               ;Code20        ;CaptionML=ENU=No. }
+    { 2   ;"Name"              ;Text100       ;CaptionML=ENU=Name }
+    { 3   ;"Address"           ;Text100       ;CaptionML=ENU=Address }
+    { 4   ;"City"              ;Text50        ;CaptionML=ENU=City }
+    { 5   ;"Post Code"         ;Code20        ;CaptionML=ENU=Post Code }
+    { 6   ;"Country Code"      ;Code10        ;TableRelation=Country;
+                                                CaptionML=ENU=Country Code }
+    { 7   ;"Phone No."         ;Text30        ;CaptionML=ENU=Phone No. }
+    { 8   ;"Email"             ;Text80        ;CaptionML=ENU=Email }
+    { 9   ;"Balance"           ;Decimal       ;FieldClass=FlowField;
+                                                CalcFormula=Sum("Customer Ledger Entry".Amount WHERE ("Customer No."=FIELD("No.")));
+                                                CaptionML=ENU=Balance }
+    { 10  ;"Credit Limit"      ;Decimal       ;CaptionML=ENU=Credit Limit }
+    { 11  ;"Salesperson Code"  ;Code20        ;TableRelation=Salesperson;
+                                                CaptionML=ENU=Salesperson Code }
+    { 12  ;"Customer Price Group";Code10      ;TableRelation="Customer Price Group";
+                                                CaptionML=ENU=Customer Price Group }
+    { 13  ;"Payment Terms Code";Code10        ;TableRelation="Payment Terms";
+                                                CaptionML=ENU=Payment Terms Code }
+    { 14  ;"Last Date Modified";Date          ;CaptionML=ENU=Last Date Modified }
+    { 15  ;"Status"            ;Option        ;OptionString=Active,Blocked,Inactive;
+                                                CaptionML=ENU=Status }
+    { 16  ;"VAT Registration No.";Text20      ;CaptionML=ENU=VAT Registration No. }
+    { 17  ;"Created Date"      ;Date          ;CaptionML=ENU=Created Date }
+    { 18  ;"Created By"        ;Code50        ;CaptionML=ENU=Created By }
+    { 19  ;"Blocked"           ;Boolean       ;CaptionML=ENU=Blocked }
+    { 20  ;"Currency Code"     ;Code10        ;TableRelation=Currency;
+                                                CaptionML=ENU=Currency Code }
+  }
+  KEYS
+  {
+    {    ;"No."                                ;Clustered=Yes }
+    {    ;"Name"                                }
+    {    ;"City"                                }
+  }
+  CODE
+  {
+    VAR
+      Text001@1000 : TextConst 'ENU=Customer %1 does not exist.';
+      Text002@1001 : TextConst 'ENU=Credit limit exceeded.';
+
+    PROCEDURE CheckCreditLimit@1();
+    BEGIN
+      CALCFIELDS(Balance);
+      IF Balance > "Credit Limit" THEN
+        ERROR(Text002);
+    END;
+
+    PROCEDURE GetBalance@2() : Decimal;
+    BEGIN
+      CALCFIELDS(Balance);
+      EXIT(Balance);
+    END;
+
+    PROCEDURE IsBlocked@3() : Boolean;
+    BEGIN
+      EXIT((Status = Status::Blocked) OR Blocked);
+    END;
+
+    PROCEDURE ValidateCustomer@4();
+    BEGIN
+      IF "No." = '' THEN
+        ERROR(Text001,"No.");
+
+      CheckCreditLimit;
+    END;
+
+    PROCEDURE UpdateLastModified@5();
+    BEGIN
+      "Last Date Modified" := TODAY;
+      MODIFY;
+    END;
+
+    BEGIN
+    END.
+  }
+}

@@ -1,0 +1,267 @@
+{
+  "version": "0.4.6",
+  "timestamp": "2025-12-27T16:19:32.454Z",
+  "environment": {
+    "node": "v20.19.2",
+    "platform": "linux",
+    "cpu": "x64"
+  },
+  "benchmarks": {
+    "Lexer: Tokenize tiny file (~100 lines)": {
+      "meanMs": 76.3393537404575,
+      "stdDevMs": 29.416589633645355,
+      "minMs": 71.31299999991825,
+      "maxMs": 1268.6080000000857,
+      "ops": 13099.403531759674,
+      "samples": 13100
+    },
+    "Lexer: Tokenize small file (~500 lines)": {
+      "meanMs": 257.33806253216557,
+      "stdDevMs": 45.51217709778824,
+      "minMs": 244.75100000017846,
+      "maxMs": 921.835000000101,
+      "ops": 3885.938948013206,
+      "samples": 3886
+    },
+    "Lexer: Tokenize medium file (~1000 lines)": {
+      "meanMs": 839.5975897651014,
+      "stdDevMs": 161.89238471408598,
+      "minMs": 778.1780000000253,
+      "maxMs": 2538.556999999855,
+      "ops": 1191.046773109217,
+      "samples": 1192
+    },
+    "Lexer: Tokenize large file (~2000 lines)": {
+      "meanMs": 1175.2468319624038,
+      "stdDevMs": 106.08398407114339,
+      "minMs": 1119.3329999996422,
+      "maxMs": 1661.2420000001293,
+      "ops": 850.8850845657842,
+      "samples": 851
+    },
+    "Lexer: Tokenize xlarge file (~700 lines)": {
+      "meanMs": 579.7820759420158,
+      "stdDevMs": 78.19469421973498,
+      "minMs": 549.7250000007625,
+      "maxMs": 1285.9180000004926,
+      "ops": 1724.7859868300075,
+      "samples": 1725
+    },
+    "Lexer: Tokenize huge file (~5000 lines)": {
+      "meanMs": 3102.4650526315463,
+      "stdDevMs": 422.82863432294073,
+      "minMs": 2831.0959999998886,
+      "maxMs": 4842.655999999806,
+      "ops": 322.32433985091586,
+      "samples": 323
+    },
+    "Lexer: Tokenize enormous file (~10000 lines)": {
+      "meanMs": 8484.82436440679,
+      "stdDevMs": 2482.762795482646,
+      "minMs": 6296.593999999459,
+      "maxMs": 19089.202000000114,
+      "ops": 117.85747789841426,
+      "samples": 118
+    },
+    "Parser: Parse tiny file (~100 lines)": {
+      "meanMs": 489.181406356975,
+      "stdDevMs": 88.61238892655197,
+      "minMs": 385.2740000002086,
+      "maxMs": 3249.9319999988074,
+      "ops": 2044.2314180483395,
+      "samples": 2045
+    },
+    "Parser: Parse small file (~500 lines)": {
+      "meanMs": 274.2428459007333,
+      "stdDevMs": 76.95774888717716,
+      "minMs": 251.88900000102876,
+      "maxMs": 1098.7129999994067,
+      "ops": 3646.403233293336,
+      "samples": 3647
+    },
+    "Parser: Parse medium file (~1000 lines)": {
+      "meanMs": 879.0872045654274,
+      "stdDevMs": 192.68999663488222,
+      "minMs": 804.0400000008958,
+      "maxMs": 2593.3009999989736,
+      "ops": 1137.543573386835,
+      "samples": 1139
+    },
+    "Parser: Parse large file (~2000 lines)": {
+      "meanMs": 1378.9755261708226,
+      "stdDevMs": 378.3526270405463,
+      "minMs": 1168.1819999994332,
+      "maxMs": 3652.62199999961,
+      "ops": 725.1760317870381,
+      "samples": 726
+    },
+    "Parser: Simple table (18 fields)": {
+      "meanMs": 44.794029787230706,
+      "stdDevMs": 24.01979785895748,
+      "minMs": 39.982999998755986,
+      "maxMs": 884.265000000596,
+      "ops": 22324.403603559396,
+      "samples": 22325
+    },
+    "Parser: Complex table (200+ fields, CalcFormulas)": {
+      "meanMs": 198.66092947953794,
+      "stdDevMs": 46.17964781505782,
+      "minMs": 188.71900000158348,
+      "maxMs": 700.7279999997991,
+      "ops": 5033.7024125471025,
+      "samples": 5034
+    },
+    "Parser: Codeunit (892 lines, 40+ procedures)": {
+      "meanMs": 1039.6806604361775,
+      "stdDevMs": 129.5383082856629,
+      "minMs": 979.9729999995179,
+      "maxMs": 2139.613000001191,
+      "ops": 961.8337996019565,
+      "samples": 963
+    },
+    "Parser: Deep nesting (5-7 levels)": {
+      "meanMs": 770.4926101695182,
+      "stdDevMs": 124.49613641416131,
+      "minMs": 726.8430000003718,
+      "maxMs": 1500.25099999948,
+      "ops": 1297.8709812414518,
+      "samples": 1298
+    },
+    "Parser: Many procedures (100+ procedures)": {
+      "meanMs": 468.48617892274723,
+      "stdDevMs": 96.44641352813692,
+      "minMs": 435.9660000009171,
+      "maxMs": 1557.0039999984147,
+      "ops": 2134.534688514042,
+      "samples": 2135
+    },
+    "SymbolTable: Build from tiny AST (~50 symbols)": {
+      "meanMs": 487.1245703848308,
+      "stdDevMs": 55.23688049113746,
+      "minMs": 458.2440000012866,
+      "maxMs": 1339.4509999998263,
+      "ops": 2052.862985765623,
+      "samples": 2053
+    },
+    "SymbolTable: Build from small AST (~100 symbols)": {
+      "meanMs": 266.91342620764294,
+      "stdDevMs": 55.25350158079613,
+      "minMs": 252.21500000043306,
+      "maxMs": 929.1229999980715,
+      "ops": 3746.5331519968527,
+      "samples": 3747
+    },
+    "SymbolTable: Build from medium AST (~200 symbols)": {
+      "meanMs": 861.5229224806399,
+      "stdDevMs": 142.7681249028351,
+      "minMs": 807.0809999990161,
+      "maxMs": 1494.114000000991,
+      "ops": 1160.7352212064584,
+      "samples": 1161
+    },
+    "SymbolTable: Build from many procedures (~500+ symbols)": {
+      "meanMs": 464.1860496519487,
+      "stdDevMs": 84.1601715251679,
+      "minMs": 435.24299999990035,
+      "maxMs": 993.9609999964887,
+      "ops": 2154.3086026600968,
+      "samples": 2155
+    },
+    "SymbolTable: Case-insensitive lookup (100 lookups)": {
+      "meanMs": 3.1500939956072873,
+      "stdDevMs": 5.078665873293778,
+      "minMs": 2.8800000000046566,
+      "maxMs": 572.623999996722,
+      "ops": 317450.84476668644,
+      "samples": 317451
+    },
+    "SymbolTable: Case-insensitive lookup (1000 lookups)": {
+      "meanMs": 30.166315082964363,
+      "stdDevMs": 14.789604450981631,
+      "minMs": 28.558999998494983,
+      "maxMs": 619.2860000010114,
+      "ops": 33149.55761914467,
+      "samples": 33150
+    },
+    "SymbolTable: Scope traversal (deep nesting)": {
+      "meanMs": 876.6632129710326,
+      "stdDevMs": 175.30620278238783,
+      "minMs": 806.8099999982223,
+      "maxMs": 2014.1480000020238,
+      "ops": 1140.6889044778964,
+      "samples": 1141
+    },
+    "Integration: Lex → Parse → Symbols (tiny.cal)": {
+      "meanMs": 508.614614641588,
+      "stdDevMs": 137.00017703376705,
+      "minMs": 472.4900000001071,
+      "maxMs": 2540.6440000006114,
+      "ops": 1966.1251785001948,
+      "samples": 1967
+    },
+    "Integration: Lex → Parse → Symbols (small.cal)": {
+      "meanMs": 273.29071420766013,
+      "stdDevMs": 72.65939291194722,
+      "minMs": 253.10499999977765,
+      "maxMs": 1422.5210000004154,
+      "ops": 3659.1071266334693,
+      "samples": 3660
+    },
+    "Integration: Lex → Parse → Symbols (medium.cal)": {
+      "meanMs": 916.9031732355529,
+      "stdDevMs": 264.9983865873199,
+      "minMs": 806.060000002617,
+      "maxMs": 3370.9879999987606,
+      "ops": 1090.6277011466939,
+      "samples": 1091
+    },
+    "Integration: Lex → Parse → Symbols (large.cal)": {
+      "meanMs": 1295.138613195412,
+      "stdDevMs": 187.67285598383387,
+      "minMs": 1205.5400000026566,
+      "maxMs": 2306.909999999334,
+      "ops": 772.118126825641,
+      "samples": 773
+    },
+    "Integration: Lex → Parse → Symbols (xlarge.cal)": {
+      "meanMs": 645.3061129032628,
+      "stdDevMs": 239.36581174003803,
+      "minMs": 563.6599999997998,
+      "maxMs": 4211.18899999783,
+      "ops": 1549.6521418353727,
+      "samples": 1550
+    },
+    "Integration: Lex → Parse → Symbols (xxlarge.cal)": {
+      "meanMs": 696.6725327297418,
+      "stdDevMs": 135.06837525368505,
+      "minMs": 646.0449999976845,
+      "maxMs": 2112.2489999979734,
+      "ops": 1435.3946122746413,
+      "samples": 1436
+    },
+    "Integration: Document cache (10 ops, medium.cal)": {
+      "meanMs": 8685.778689655057,
+      "stdDevMs": 374.2366554030884,
+      "minMs": 8175.545000001875,
+      "maxMs": 11261.405999997805,
+      "ops": 115.13072526140007,
+      "samples": 116
+    },
+    "Integration: STRESS TEST (huge.cal - 5K lines)": {
+      "meanMs": 3399.567949152648,
+      "stdDevMs": 460.4617406752425,
+      "minMs": 3060.6320000006235,
+      "maxMs": 6348.747999996704,
+      "ops": 294.15502644953835,
+      "samples": 295
+    },
+    "Integration: EXTREME STRESS TEST (enormous.cal - 10K lines)": {
+      "meanMs": 7819.17807812485,
+      "stdDevMs": 744.2298214895453,
+      "minMs": 6997.2689999995055,
+      "maxMs": 9926.071000001684,
+      "ops": 127.89067981424132,
+      "samples": 128
+    }
+  }
+}

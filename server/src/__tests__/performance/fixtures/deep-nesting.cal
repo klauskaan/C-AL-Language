@@ -1,0 +1,1046 @@
+// SYNTHETIC PERFORMANCE TEST FIXTURE - 100% GENERATED
+// Purpose: Tests parser stack depth and scope traversal with deep control flow nesting
+// Target: ~800 lines with 5-7 levels of nested control structures
+
+OBJECT Codeunit 50010 Deep Nesting Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=27/12/25;
+    Time=12:00:00;
+    Modified=Yes;
+    Version List=ACME-PERF-1.0;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            TestDeepIfNesting;
+            TestNestedCaseStatements;
+            TestWhileWithNestedStructures;
+            TestRepeatUntilComplexity;
+            TestMixedNestingPatterns;
+            TestMaximumDepthScenarios;
+          END;
+  }
+  CODE
+  {
+    VAR
+      ACMEGlobalCounter@1000 : Integer;
+      FooBarStatus@1001 : Code[20];
+      TestCoValue@1002 : Decimal;
+      ProcessingLevel@1003 : Integer;
+      NestedDepth@1004 : Integer;
+      ValidationResult@1005 : Boolean;
+      TempBuffer@1006 : Text[1024];
+
+    PROCEDURE TestDeepIfNesting@1();
+    VAR
+      Level1Condition@1000 : Boolean;
+      Level2Condition@1001 : Boolean;
+      Level3Condition@1002 : Boolean;
+      Level4Condition@1003 : Boolean;
+      Level5Condition@1004 : Boolean;
+      Level6Condition@1005 : Boolean;
+      ACMECustomerNo@1006 : Code[20];
+      FooBarAmount@1007 : Decimal;
+      TestCoQuantity@1008 : Integer;
+    BEGIN
+      // Deep IF nesting - 7 levels
+      Level1Condition := ACMEGlobalCounter > 0;
+
+      IF Level1Condition THEN BEGIN
+        ACMECustomerNo := 'ACME-001';
+        Level2Condition := FooBarStatus <> '';
+
+        IF Level2Condition THEN BEGIN
+          FooBarAmount := TestCoValue * 1.15;
+          Level3Condition := FooBarAmount > 1000;
+
+          IF Level3Condition THEN BEGIN
+            TestCoQuantity := ACMEGlobalCounter * 10;
+            Level4Condition := TestCoQuantity MOD 2 = 0;
+
+            IF Level4Condition THEN BEGIN
+              ProcessingLevel := 4;
+              Level5Condition := ValidateACMECustomer(ACMECustomerNo);
+
+              IF Level5Condition THEN BEGIN
+                NestedDepth := NestedDepth + 1;
+                Level6Condition := CalculateFooBarDiscount(FooBarAmount) > 0;
+
+                IF Level6Condition THEN BEGIN
+                  ValidationResult := TRUE;
+
+                  IF ProcessFinalACMEValidation(ACMECustomerNo, FooBarAmount) THEN BEGIN
+                    // Level 7 - Maximum depth
+                    TempBuffer := 'ACME Processing Complete at Level 7';
+                    UpdateACMEStatistics(ACMECustomerNo, TestCoQuantity);
+                    RecordFooBarTransaction(FooBarAmount);
+                    FinalizeTestCoProcessing(ValidationResult);
+                  END ELSE BEGIN
+                    TempBuffer := 'ACME Validation Failed at Level 7';
+                    LogACMEError(ACMECustomerNo, 'Level 7 validation failed');
+                  END;
+                END ELSE BEGIN
+                  ValidationResult := FALSE;
+                  LogFooBarWarning('Discount calculation failed at Level 6');
+                  ResetTestCoCounters;
+                END;
+              END ELSE BEGIN
+                NestedDepth := NestedDepth - 1;
+                HandleACMEValidationFailure(ACMECustomerNo);
+                ClearFooBarStatus;
+              END;
+            END ELSE BEGIN
+              ProcessingLevel := 3;
+              LogTestCoMessage('Even quantity check failed at Level 4');
+              AdjustACMEQuantity(TestCoQuantity);
+            END;
+          END ELSE BEGIN
+            TestCoQuantity := 0;
+            ApplyFooBarMinimumThreshold(FooBarAmount);
+            NotifyACMELowAmount(ACMECustomerNo);
+          END;
+        END ELSE BEGIN
+          FooBarAmount := 0;
+          InitializeTestCoDefaults;
+          SetACMEDefaultStatus(ACMECustomerNo);
+        END;
+      END ELSE BEGIN
+        ACMECustomerNo := '';
+        ResetAllFooBarCounters;
+        ClearTestCoBuffer;
+      END;
+    END;
+
+    PROCEDURE TestNestedCaseStatements@2();
+    VAR
+      OuterCaseValue@1000 : Integer;
+      MiddleCaseValue@1001 : Code[10];
+      InnerCaseValue@1002 : Option;
+      ACMECategory@1003 : Code[20];
+      FooBarType@1004 : Integer;
+      TestCoStatus@1005 : Code[10];
+    BEGIN
+      // Nested CASE statements - 6 levels
+      OuterCaseValue := ACMEGlobalCounter MOD 5;
+
+      CASE OuterCaseValue OF
+        0:
+          BEGIN
+            ACMECategory := 'CAT-A';
+            MiddleCaseValue := FooBarStatus;
+
+            CASE MiddleCaseValue OF
+              'ACTIVE':
+                BEGIN
+                  FooBarType := 1;
+                  InnerCaseValue := ProcessingLevel MOD 3;
+
+                  CASE InnerCaseValue OF
+                    0:
+                      BEGIN
+                        TestCoStatus := 'READY';
+
+                        CASE TestCoStatus OF
+                          'READY':
+                            BEGIN
+                              ValidationResult := TRUE;
+
+                              CASE ValidationResult OF
+                                TRUE:
+                                  BEGIN
+                                    NestedDepth := 6;
+
+                                    CASE NestedDepth OF
+                                      6:
+                                        BEGIN
+                                          ProcessACMECategoryA(ACMECategory);
+                                          UpdateFooBarActiveStatus(FooBarType);
+                                          FinalizeTestCoReady(TestCoStatus);
+                                        END;
+                                      5:
+                                        BEGIN
+                                          HandleACMEAlternateDepth(ACMECategory);
+                                        END;
+                                      ELSE
+                                        BEGIN
+                                          LogACMEDepthWarning(NestedDepth);
+                                        END;
+                                    END;
+                                  END;
+                                FALSE:
+                                  BEGIN
+                                    NestedDepth := 5;
+                                    RevertFooBarValidation(FooBarType);
+                                  END;
+                              END;
+                            END;
+                          'PENDING':
+                            BEGIN
+                              ValidationResult := FALSE;
+                              HoldTestCoProcessing(TestCoStatus);
+                            END;
+                          ELSE
+                            BEGIN
+                              LogTestCoUnknownStatus(TestCoStatus);
+                            END;
+                        END;
+                      END;
+                    1:
+                      BEGIN
+                        TestCoStatus := 'PENDING';
+                        QueueACMEProcessing(ACMECategory);
+                      END;
+                    2:
+                      BEGIN
+                        TestCoStatus := 'ERROR';
+                        LogFooBarTypeError(FooBarType);
+                      END;
+                    ELSE
+                      BEGIN
+                        ResetTestCoStatus;
+                      END;
+                  END;
+                END;
+              'INACTIVE':
+                BEGIN
+                  FooBarType := 2;
+                  ArchiveACMECategory(ACMECategory);
+                END;
+              'SUSPENDED':
+                BEGIN
+                  FooBarType := 3;
+                  SuspendFooBarProcessing(FooBarType);
+                END;
+              ELSE
+                BEGIN
+                  HandleFooBarUnknownStatus(MiddleCaseValue);
+                END;
+            END;
+          END;
+        1:
+          BEGIN
+            ACMECategory := 'CAT-B';
+            ProcessACMECategoryB(ACMECategory);
+          END;
+        2:
+          BEGIN
+            ACMECategory := 'CAT-C';
+            ProcessACMECategoryC(ACMECategory);
+          END;
+        3:
+          BEGIN
+            ACMECategory := 'CAT-D';
+            ProcessACMECategoryD(ACMECategory);
+          END;
+        4:
+          BEGIN
+            ACMECategory := 'CAT-E';
+            ProcessACMECategoryE(ACMECategory);
+          END;
+        ELSE
+          BEGIN
+            ACMECategory := 'UNKNOWN';
+            LogACMEUnknownCategory(OuterCaseValue);
+          END;
+      END;
+    END;
+
+    PROCEDURE TestWhileWithNestedStructures@3();
+    VAR
+      WhileCounter@1000 : Integer;
+      ACMERecord@1001 : Record "ACME Master";
+      FooBarIterator@1002 : Integer;
+      TestCoLimit@1003 : Integer;
+      InnerCondition@1004 : Boolean;
+      DeepCondition@1005 : Boolean;
+    BEGIN
+      // WHILE with nested IF/CASE structures - 6 levels
+      WhileCounter := 0;
+
+      WHILE WhileCounter < 100 DO BEGIN
+        ACMERecord.SETRANGE("ACME Status", FooBarStatus);
+
+        IF ACMERecord.FINDFIRST THEN BEGIN
+          FooBarIterator := 0;
+
+          WHILE FooBarIterator < ACMERecord."FooBar Count" DO BEGIN
+            InnerCondition := FooBarIterator MOD 5 = 0;
+
+            IF InnerCondition THEN BEGIN
+              TestCoLimit := FooBarIterator * 2;
+
+              CASE ACMERecord."TestCo Type" OF
+                'TYPE-A':
+                  BEGIN
+                    DeepCondition := TestCoLimit > 50;
+
+                    IF DeepCondition THEN BEGIN
+                      ProcessingLevel := 6;
+
+                      WHILE ProcessingLevel > 0 DO BEGIN
+                        // Level 6 - Deep nesting in WHILE
+                        IF ProcessACMETypeA(ACMERecord."No.", ProcessingLevel) THEN BEGIN
+                          UpdateFooBarIterator(FooBarIterator, ProcessingLevel);
+                          DecrementTestCoLimit(TestCoLimit);
+                        END ELSE BEGIN
+                          LogACMEProcessingError(ACMERecord."No.", ProcessingLevel);
+                          BreakFooBarLoop(FooBarIterator);
+                        END;
+
+                        ProcessingLevel := ProcessingLevel - 1;
+                      END;
+                    END ELSE BEGIN
+                      ApplyTestCoMinimumProcessing(TestCoLimit);
+                    END;
+                  END;
+                'TYPE-B':
+                  BEGIN
+                    ProcessACMETypeB(ACMERecord."No.", FooBarIterator);
+                  END;
+                'TYPE-C':
+                  BEGIN
+                    ProcessACMETypeC(ACMERecord."No.", FooBarIterator);
+                  END;
+                ELSE
+                  BEGIN
+                    LogFooBarUnknownType(ACMERecord."TestCo Type");
+                  END;
+              END;
+            END ELSE BEGIN
+              SkipFooBarIteration(FooBarIterator);
+            END;
+
+            FooBarIterator := FooBarIterator + 1;
+          END;
+        END ELSE BEGIN
+          LogACMENoRecordsFound(FooBarStatus);
+        END;
+
+        WhileCounter := WhileCounter + 1;
+      END;
+    END;
+
+    PROCEDURE TestRepeatUntilComplexity@4();
+    VAR
+      RepeatCounter@1000 : Integer;
+      ACMEThreshold@1001 : Decimal;
+      FooBarCheckpoint@1002 : Integer;
+      TestCoMarker@1003 : Code[20];
+      Level1Done@1004 : Boolean;
+      Level2Done@1005 : Boolean;
+      Level3Done@1006 : Boolean;
+      Level4Done@1007 : Boolean;
+      Level5Done@1008 : Boolean;
+    BEGIN
+      // REPEAT/UNTIL with complex nested conditions - 7 levels
+      RepeatCounter := 0;
+      Level1Done := FALSE;
+
+      REPEAT
+        ACMEThreshold := TestCoValue + RepeatCounter;
+        Level2Done := FALSE;
+
+        IF ACMEThreshold > 100 THEN BEGIN
+          FooBarCheckpoint := RepeatCounter MOD 10;
+
+          REPEAT
+            TestCoMarker := 'MARK-' + FORMAT(FooBarCheckpoint);
+            Level3Done := FALSE;
+
+            IF ValidateTestCoMarker(TestCoMarker) THEN BEGIN
+              ProcessingLevel := 3;
+
+              REPEAT
+                NestedDepth := ProcessingLevel * 2;
+                Level4Done := FALSE;
+
+                CASE NestedDepth OF
+                  6:
+                    BEGIN
+                      ValidationResult := TRUE;
+
+                      IF ValidationResult THEN BEGIN
+                        ACMEGlobalCounter := ACMEGlobalCounter + 1;
+                        Level5Done := FALSE;
+
+                        REPEAT
+                          FooBarStatus := 'PROCESSING';
+
+                          IF ProcessACMEDeepLevel(ACMEGlobalCounter, NestedDepth) THEN BEGIN
+                            TempBuffer := 'Level 6 processing complete';
+
+                            // Level 7 - Maximum depth in REPEAT
+                            IF NestedDepth >= 6 THEN BEGIN
+                              FinalizeACMEDeepProcessing(ACMEGlobalCounter);
+                              CommitFooBarChanges(FooBarStatus);
+                              UpdateTestCoMarker(TestCoMarker);
+                              Level5Done := TRUE;
+                            END ELSE BEGIN
+                              IncrementNestedDepth;
+                            END;
+                          END ELSE BEGIN
+                            RollbackACMEProcessing(ACMEGlobalCounter);
+                            Level5Done := TRUE;
+                          END;
+                        UNTIL Level5Done OR (ACMEGlobalCounter > 1000);
+                      END ELSE BEGIN
+                        SkipACMEValidation(NestedDepth);
+                      END;
+
+                      Level4Done := TRUE;
+                    END;
+                  4:
+                    BEGIN
+                      HandleACMEMediumDepth(NestedDepth);
+                      Level4Done := TRUE;
+                    END;
+                  2:
+                    BEGIN
+                      HandleACMEShallowDepth(NestedDepth);
+                      Level4Done := TRUE;
+                    END;
+                  ELSE
+                    BEGIN
+                      LogFooBarDepthWarning(NestedDepth);
+                      Level4Done := TRUE;
+                    END;
+                END;
+
+                ProcessingLevel := ProcessingLevel - 1;
+              UNTIL Level4Done OR (ProcessingLevel <= 0);
+            END ELSE BEGIN
+              LogTestCoInvalidMarker(TestCoMarker);
+            END;
+
+            FooBarCheckpoint := FooBarCheckpoint + 1;
+            Level3Done := (FooBarCheckpoint > 20);
+          UNTIL Level3Done;
+        END ELSE BEGIN
+          IncrementACMEThreshold(ACMEThreshold);
+        END;
+
+        RepeatCounter := RepeatCounter + 1;
+        Level2Done := (RepeatCounter > 50);
+      UNTIL Level2Done;
+
+      Level1Done := TRUE;
+    END;
+
+    PROCEDURE TestMixedNestingPatterns@5();
+    VAR
+      MixedCounter@1000 : Integer;
+      ACMESelector@1001 : Code[10];
+      FooBarMode@1002 : Integer;
+      TestCoPhase@1003 : Code[20];
+      ComplexCondition@1004 : Boolean;
+    BEGIN
+      // Mixed nesting: IF -> WHILE -> CASE -> REPEAT -> IF -> CASE
+      MixedCounter := 0;
+
+      IF ACMEGlobalCounter > 0 THEN BEGIN
+        ACMESelector := 'MIX-A';
+
+        WHILE MixedCounter < 50 DO BEGIN
+          FooBarMode := MixedCounter MOD 4;
+
+          CASE FooBarMode OF
+            0:
+              BEGIN
+                TestCoPhase := 'PHASE-1';
+                ComplexCondition := FALSE;
+
+                REPEAT
+                  ComplexCondition := ValidateMixedACMEPhase(TestCoPhase, MixedCounter);
+
+                  IF ComplexCondition THEN BEGIN
+                    ProcessingLevel := 5;
+
+                    CASE ProcessingLevel OF
+                      5:
+                        BEGIN
+                          // Level 6 - Mixed nesting pattern
+                          ExecuteACMEPhase1(ACMESelector, MixedCounter);
+                          UpdateFooBarMixedMode(FooBarMode);
+                          AdvanceTestCoPhase(TestCoPhase);
+                        END;
+                      4:
+                        BEGIN
+                          ExecuteACMEPhase2(ACMESelector, MixedCounter);
+                        END;
+                      3:
+                        BEGIN
+                          ExecuteACMEPhase3(ACMESelector, MixedCounter);
+                        END;
+                      ELSE
+                        BEGIN
+                          LogFooBarUnknownLevel(ProcessingLevel);
+                        END;
+                    END;
+                  END ELSE BEGIN
+                    RetryMixedACMEValidation(TestCoPhase);
+                  END;
+                UNTIL ComplexCondition OR (MixedCounter > 100);
+              END;
+            1:
+              BEGIN
+                TestCoPhase := 'PHASE-2';
+                ProcessMixedFooBarMode1(FooBarMode, MixedCounter);
+              END;
+            2:
+              BEGIN
+                TestCoPhase := 'PHASE-3';
+                ProcessMixedFooBarMode2(FooBarMode, MixedCounter);
+              END;
+            3:
+              BEGIN
+                TestCoPhase := 'PHASE-4';
+                ProcessMixedFooBarMode3(FooBarMode, MixedCounter);
+              END;
+            ELSE
+              BEGIN
+                LogTestCoUnknownPhase(FooBarMode);
+              END;
+          END;
+
+          MixedCounter := MixedCounter + 1;
+        END;
+      END ELSE BEGIN
+        ResetMixedACMECounters;
+      END;
+    END;
+
+    PROCEDURE TestMaximumDepthScenarios@6();
+    VAR
+      Depth1Counter@1000 : Integer;
+      Depth2Counter@1001 : Integer;
+      Depth3Counter@1002 : Integer;
+      Depth4Counter@1003 : Integer;
+      Depth5Counter@1004 : Integer;
+      Depth6Counter@1005 : Integer;
+      Depth7Counter@1006 : Integer;
+      ACMEMaxDepth@1007 : Integer;
+    BEGIN
+      // Maximum depth scenario - 7 levels of REPEAT/UNTIL with IF nesting
+      Depth1Counter := 0;
+      ACMEMaxDepth := 0;
+
+      REPEAT
+        Depth2Counter := 0;
+
+        IF Depth1Counter MOD 2 = 0 THEN BEGIN
+
+          REPEAT
+            Depth3Counter := 0;
+
+            IF Depth2Counter MOD 3 = 0 THEN BEGIN
+
+              REPEAT
+                Depth4Counter := 0;
+
+                IF Depth3Counter MOD 5 = 0 THEN BEGIN
+
+                  REPEAT
+                    Depth5Counter := 0;
+
+                    IF Depth4Counter MOD 7 = 0 THEN BEGIN
+
+                      REPEAT
+                        Depth6Counter := 0;
+
+                        IF Depth5Counter MOD 11 = 0 THEN BEGIN
+
+                          REPEAT
+                            Depth7Counter := 0;
+
+                            IF Depth6Counter MOD 13 = 0 THEN BEGIN
+                              // Level 7 - Maximum depth achieved
+                              ACMEMaxDepth := 7;
+                              RecordACMEMaxDepth(ACMEMaxDepth);
+                              LogFooBarDepthAchievement(Depth7Counter);
+                              ProcessTestCoMaxDepth(
+                                Depth1Counter,
+                                Depth2Counter,
+                                Depth3Counter,
+                                Depth4Counter,
+                                Depth5Counter,
+                                Depth6Counter,
+                                Depth7Counter
+                              );
+                            END ELSE BEGIN
+                              IncrementTestCoDepth7(Depth7Counter);
+                            END;
+
+                            Depth7Counter := Depth7Counter + 1;
+                          UNTIL Depth7Counter > 2;
+                        END ELSE BEGIN
+                          SkipFooBarDepth6(Depth6Counter);
+                        END;
+
+                        Depth6Counter := Depth6Counter + 1;
+                      UNTIL Depth6Counter > 3;
+                    END ELSE BEGIN
+                      SkipACMEDepth5(Depth5Counter);
+                    END;
+
+                    Depth5Counter := Depth5Counter + 1;
+                  UNTIL Depth5Counter > 4;
+                END ELSE BEGIN
+                  SkipTestCoDepth4(Depth4Counter);
+                END;
+
+                Depth4Counter := Depth4Counter + 1;
+              UNTIL Depth4Counter > 5;
+            END ELSE BEGIN
+              SkipFooBarDepth3(Depth3Counter);
+            END;
+
+            Depth3Counter := Depth3Counter + 1;
+          UNTIL Depth3Counter > 6;
+        END ELSE BEGIN
+          SkipACMEDepth2(Depth2Counter);
+        END;
+
+        Depth2Counter := Depth2Counter + 1;
+      UNTIL Depth1Counter > 10;
+    END;
+
+    PROCEDURE ValidateACMECustomer@10(CustomerNo@1000 : Code[20]) : Boolean;
+    BEGIN
+      EXIT(CustomerNo <> '');
+    END;
+
+    PROCEDURE CalculateFooBarDiscount@11(Amount@1000 : Decimal) : Decimal;
+    BEGIN
+      IF Amount > 5000 THEN
+        EXIT(Amount * 0.15)
+      ELSE IF Amount > 2000 THEN
+        EXIT(Amount * 0.10)
+      ELSE IF Amount > 1000 THEN
+        EXIT(Amount * 0.05)
+      ELSE
+        EXIT(0);
+    END;
+
+    PROCEDURE ProcessFinalACMEValidation@12(CustomerNo@1000 : Code[20];Amount@1001 : Decimal) : Boolean;
+    BEGIN
+      EXIT((CustomerNo <> '') AND (Amount > 0));
+    END;
+
+    PROCEDURE UpdateACMEStatistics@13(CustomerNo@1000 : Code[20];Quantity@1001 : Integer);
+    BEGIN
+      ACMEGlobalCounter := ACMEGlobalCounter + Quantity;
+    END;
+
+    PROCEDURE RecordFooBarTransaction@14(Amount@1000 : Decimal);
+    BEGIN
+      TestCoValue := TestCoValue + Amount;
+    END;
+
+    PROCEDURE FinalizeTestCoProcessing@15(Result@1000 : Boolean);
+    BEGIN
+      ValidationResult := Result;
+    END;
+
+    PROCEDURE LogACMEError@16(CustomerNo@1000 : Code[20];ErrorText@1001 : Text[250]);
+    BEGIN
+      TempBuffer := 'ERROR: ' + CustomerNo + ' - ' + ErrorText;
+    END;
+
+    PROCEDURE LogFooBarWarning@17(WarningText@1000 : Text[250]);
+    BEGIN
+      TempBuffer := 'WARNING: ' + WarningText;
+    END;
+
+    PROCEDURE ResetTestCoCounters@18();
+    BEGIN
+      ProcessingLevel := 0;
+      NestedDepth := 0;
+    END;
+
+    PROCEDURE HandleACMEValidationFailure@19(CustomerNo@1000 : Code[20]);
+    BEGIN
+      FooBarStatus := 'FAILED';
+    END;
+
+    PROCEDURE ClearFooBarStatus@20();
+    BEGIN
+      FooBarStatus := '';
+    END;
+
+    PROCEDURE LogTestCoMessage@21(MessageText@1000 : Text[250]);
+    BEGIN
+      TempBuffer := 'INFO: ' + MessageText;
+    END;
+
+    PROCEDURE AdjustACMEQuantity@22(VAR Quantity@1000 : Integer);
+    BEGIN
+      Quantity := Quantity + 1;
+    END;
+
+    PROCEDURE ApplyFooBarMinimumThreshold@23(Amount@1000 : Decimal);
+    BEGIN
+      IF Amount < 100 THEN
+        TestCoValue := 100;
+    END;
+
+    PROCEDURE NotifyACMELowAmount@24(CustomerNo@1000 : Code[20]);
+    BEGIN
+      TempBuffer := 'Low amount for: ' + CustomerNo;
+    END;
+
+    PROCEDURE InitializeTestCoDefaults@25();
+    BEGIN
+      TestCoValue := 0;
+      ProcessingLevel := 0;
+    END;
+
+    PROCEDURE SetACMEDefaultStatus@26(CustomerNo@1000 : Code[20]);
+    BEGIN
+      FooBarStatus := 'DEFAULT';
+    END;
+
+    PROCEDURE ResetAllFooBarCounters@27();
+    BEGIN
+      ACMEGlobalCounter := 0;
+      ProcessingLevel := 0;
+      NestedDepth := 0;
+    END;
+
+    PROCEDURE ClearTestCoBuffer@28();
+    BEGIN
+      TempBuffer := '';
+    END;
+
+    PROCEDURE ProcessACMECategoryA@29(Category@1000 : Code[20]);
+    BEGIN
+      FooBarStatus := 'CAT-A-PROC';
+    END;
+
+    PROCEDURE UpdateFooBarActiveStatus@30(TypeCode@1000 : Integer);
+    BEGIN
+      ProcessingLevel := TypeCode;
+    END;
+
+    PROCEDURE FinalizeTestCoReady@31(Status@1000 : Code[10]);
+    BEGIN
+      ValidationResult := (Status = 'READY');
+    END;
+
+    PROCEDURE HandleACMEAlternateDepth@32(Category@1000 : Code[20]);
+    BEGIN
+      NestedDepth := 5;
+    END;
+
+    PROCEDURE LogACMEDepthWarning@33(Depth@1000 : Integer);
+    BEGIN
+      TempBuffer := 'Unexpected depth: ' + FORMAT(Depth);
+    END;
+
+    PROCEDURE RevertFooBarValidation@34(TypeCode@1000 : Integer);
+    BEGIN
+      ValidationResult := FALSE;
+    END;
+
+    PROCEDURE HoldTestCoProcessing@35(Status@1000 : Code[10]);
+    BEGIN
+      FooBarStatus := 'HOLD';
+    END;
+
+    PROCEDURE LogTestCoUnknownStatus@36(Status@1000 : Code[10]);
+    BEGIN
+      TempBuffer := 'Unknown status: ' + Status;
+    END;
+
+    PROCEDURE QueueACMEProcessing@37(Category@1000 : Code[20]);
+    BEGIN
+      FooBarStatus := 'QUEUED';
+    END;
+
+    PROCEDURE LogFooBarTypeError@38(TypeCode@1000 : Integer);
+    BEGIN
+      TempBuffer := 'Type error: ' + FORMAT(TypeCode);
+    END;
+
+    PROCEDURE ResetTestCoStatus@39();
+    BEGIN
+      FooBarStatus := '';
+    END;
+
+    PROCEDURE ArchiveACMECategory@40(Category@1000 : Code[20]);
+    BEGIN
+      FooBarStatus := 'ARCHIVED';
+    END;
+
+    PROCEDURE SuspendFooBarProcessing@41(TypeCode@1000 : Integer);
+    BEGIN
+      ProcessingLevel := -1;
+    END;
+
+    PROCEDURE HandleFooBarUnknownStatus@42(Status@1000 : Code[10]);
+    BEGIN
+      TempBuffer := 'Unknown FooBar status: ' + Status;
+    END;
+
+    PROCEDURE ProcessACMECategoryB@43(Category@1000 : Code[20]);
+    BEGIN
+      FooBarStatus := 'CAT-B-PROC';
+    END;
+
+    PROCEDURE ProcessACMECategoryC@44(Category@1000 : Code[20]);
+    BEGIN
+      FooBarStatus := 'CAT-C-PROC';
+    END;
+
+    PROCEDURE ProcessACMECategoryD@45(Category@1000 : Code[20]);
+    BEGIN
+      FooBarStatus := 'CAT-D-PROC';
+    END;
+
+    PROCEDURE ProcessACMECategoryE@46(Category@1000 : Code[20]);
+    BEGIN
+      FooBarStatus := 'CAT-E-PROC';
+    END;
+
+    PROCEDURE LogACMEUnknownCategory@47(Value@1000 : Integer);
+    BEGIN
+      TempBuffer := 'Unknown category value: ' + FORMAT(Value);
+    END;
+
+    PROCEDURE ProcessACMETypeA@48(RecordNo@1000 : Code[20];Level@1001 : Integer) : Boolean;
+    BEGIN
+      EXIT((RecordNo <> '') AND (Level > 0));
+    END;
+
+    PROCEDURE UpdateFooBarIterator@49(VAR Iterator@1000 : Integer;Level@1001 : Integer);
+    BEGIN
+      Iterator := Iterator + Level;
+    END;
+
+    PROCEDURE DecrementTestCoLimit@50(VAR Limit@1000 : Integer);
+    BEGIN
+      Limit := Limit - 1;
+    END;
+
+    PROCEDURE LogACMEProcessingError@51(RecordNo@1000 : Code[20];Level@1001 : Integer);
+    BEGIN
+      TempBuffer := 'Processing error: ' + RecordNo + ' at level ' + FORMAT(Level);
+    END;
+
+    PROCEDURE BreakFooBarLoop@52(Iterator@1000 : Integer);
+    BEGIN
+      ProcessingLevel := 0;
+    END;
+
+    PROCEDURE ApplyTestCoMinimumProcessing@53(Limit@1000 : Integer);
+    BEGIN
+      IF Limit < 10 THEN
+        ProcessingLevel := 1;
+    END;
+
+    PROCEDURE ProcessACMETypeB@54(RecordNo@1000 : Code[20];Iterator@1001 : Integer);
+    BEGIN
+      FooBarStatus := 'TYPE-B';
+    END;
+
+    PROCEDURE ProcessACMETypeC@55(RecordNo@1000 : Code[20];Iterator@1001 : Integer);
+    BEGIN
+      FooBarStatus := 'TYPE-C';
+    END;
+
+    PROCEDURE LogFooBarUnknownType@56(TypeCode@1000 : Code[10]);
+    BEGIN
+      TempBuffer := 'Unknown type: ' + TypeCode;
+    END;
+
+    PROCEDURE SkipFooBarIteration@57(Iterator@1000 : Integer);
+    BEGIN
+      // Skip processing
+    END;
+
+    PROCEDURE LogACMENoRecordsFound@58(Status@1000 : Code[20]);
+    BEGIN
+      TempBuffer := 'No records found with status: ' + Status;
+    END;
+
+    PROCEDURE ValidateTestCoMarker@59(Marker@1000 : Code[20]) : Boolean;
+    BEGIN
+      EXIT(Marker <> '');
+    END;
+
+    PROCEDURE ProcessACMEDeepLevel@60(Counter@1000 : Integer;Depth@1001 : Integer) : Boolean;
+    BEGIN
+      EXIT((Counter > 0) AND (Depth >= 6));
+    END;
+
+    PROCEDURE FinalizeACMEDeepProcessing@61(Counter@1000 : Integer);
+    BEGIN
+      ACMEGlobalCounter := Counter;
+    END;
+
+    PROCEDURE CommitFooBarChanges@62(Status@1000 : Code[20]);
+    BEGIN
+      FooBarStatus := Status;
+    END;
+
+    PROCEDURE UpdateTestCoMarker@63(Marker@1000 : Code[20]);
+    BEGIN
+      TempBuffer := 'Marker updated: ' + Marker;
+    END;
+
+    PROCEDURE IncrementNestedDepth@64();
+    BEGIN
+      NestedDepth := NestedDepth + 1;
+    END;
+
+    PROCEDURE RollbackACMEProcessing@65(Counter@1000 : Integer);
+    BEGIN
+      ACMEGlobalCounter := Counter - 1;
+    END;
+
+    PROCEDURE SkipACMEValidation@66(Depth@1000 : Integer);
+    BEGIN
+      NestedDepth := Depth - 1;
+    END;
+
+    PROCEDURE HandleACMEMediumDepth@67(Depth@1000 : Integer);
+    BEGIN
+      ProcessingLevel := 4;
+    END;
+
+    PROCEDURE HandleACMEShallowDepth@68(Depth@1000 : Integer);
+    BEGIN
+      ProcessingLevel := 2;
+    END;
+
+    PROCEDURE LogFooBarDepthWarning@69(Depth@1000 : Integer);
+    BEGIN
+      TempBuffer := 'Depth warning: ' + FORMAT(Depth);
+    END;
+
+    PROCEDURE LogTestCoInvalidMarker@70(Marker@1000 : Code[20]);
+    BEGIN
+      TempBuffer := 'Invalid marker: ' + Marker;
+    END;
+
+    PROCEDURE IncrementACMEThreshold@71(VAR Threshold@1000 : Decimal);
+    BEGIN
+      Threshold := Threshold + 10;
+    END;
+
+    PROCEDURE ValidateMixedACMEPhase@72(Phase@1000 : Code[20];Counter@1001 : Integer) : Boolean;
+    BEGIN
+      EXIT((Phase <> '') AND (Counter MOD 10 = 0));
+    END;
+
+    PROCEDURE ExecuteACMEPhase1@73(Selector@1000 : Code[10];Counter@1001 : Integer);
+    BEGIN
+      FooBarStatus := 'PHASE-1-EXEC';
+    END;
+
+    PROCEDURE UpdateFooBarMixedMode@74(Mode@1000 : Integer);
+    BEGIN
+      ProcessingLevel := Mode;
+    END;
+
+    PROCEDURE AdvanceTestCoPhase@75(VAR Phase@1000 : Code[20]);
+    BEGIN
+      Phase := 'PHASE-NEXT';
+    END;
+
+    PROCEDURE ExecuteACMEPhase2@76(Selector@1000 : Code[10];Counter@1001 : Integer);
+    BEGIN
+      FooBarStatus := 'PHASE-2-EXEC';
+    END;
+
+    PROCEDURE ExecuteACMEPhase3@77(Selector@1000 : Code[10];Counter@1001 : Integer);
+    BEGIN
+      FooBarStatus := 'PHASE-3-EXEC';
+    END;
+
+    PROCEDURE LogFooBarUnknownLevel@78(Level@1000 : Integer);
+    BEGIN
+      TempBuffer := 'Unknown level: ' + FORMAT(Level);
+    END;
+
+    PROCEDURE RetryMixedACMEValidation@79(Phase@1000 : Code[20]);
+    BEGIN
+      ValidationResult := FALSE;
+    END;
+
+    PROCEDURE ProcessMixedFooBarMode1@80(Mode@1000 : Integer;Counter@1001 : Integer);
+    BEGIN
+      ProcessingLevel := Mode + 1;
+    END;
+
+    PROCEDURE ProcessMixedFooBarMode2@81(Mode@1000 : Integer;Counter@1001 : Integer);
+    BEGIN
+      ProcessingLevel := Mode + 2;
+    END;
+
+    PROCEDURE ProcessMixedFooBarMode3@82(Mode@1000 : Integer;Counter@1001 : Integer);
+    BEGIN
+      ProcessingLevel := Mode + 3;
+    END;
+
+    PROCEDURE LogTestCoUnknownPhase@83(Mode@1000 : Integer);
+    BEGIN
+      TempBuffer := 'Unknown phase mode: ' + FORMAT(Mode);
+    END;
+
+    PROCEDURE ResetMixedACMECounters@84();
+    BEGIN
+      ACMEGlobalCounter := 0;
+      ProcessingLevel := 0;
+    END;
+
+    PROCEDURE RecordACMEMaxDepth@85(Depth@1000 : Integer);
+    BEGIN
+      NestedDepth := Depth;
+    END;
+
+    PROCEDURE LogFooBarDepthAchievement@86(Counter@1000 : Integer);
+    BEGIN
+      TempBuffer := 'Maximum depth achieved at counter: ' + FORMAT(Counter);
+    END;
+
+    PROCEDURE ProcessTestCoMaxDepth@87(D1@1000 : Integer;D2@1001 : Integer;D3@1002 : Integer;D4@1003 : Integer;D5@1004 : Integer;D6@1005 : Integer;D7@1006 : Integer);
+    BEGIN
+      ACMEGlobalCounter := D1 + D2 + D3 + D4 + D5 + D6 + D7;
+    END;
+
+    PROCEDURE IncrementTestCoDepth7@88(VAR Counter@1000 : Integer);
+    BEGIN
+      Counter := Counter + 1;
+    END;
+
+    PROCEDURE SkipFooBarDepth6@89(Counter@1000 : Integer);
+    BEGIN
+      // Skip depth 6
+    END;
+
+    PROCEDURE SkipACMEDepth5@90(Counter@1000 : Integer);
+    BEGIN
+      // Skip depth 5
+    END;
+
+    PROCEDURE SkipTestCoDepth4@91(Counter@1000 : Integer);
+    BEGIN
+      // Skip depth 4
+    END;
+
+    PROCEDURE SkipFooBarDepth3@92(Counter@1000 : Integer);
+    BEGIN
+      // Skip depth 3
+    END;
+
+    PROCEDURE SkipACMEDepth2@93(Counter@1000 : Integer);
+    BEGIN
+      // Skip depth 2
+    END;
+
+    BEGIN
+    END.
+  }
+}

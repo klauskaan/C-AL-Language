@@ -1,0 +1,4722 @@
+// Auto-generated CAL file for performance testing
+// Target: 5000 lines
+// Complexity: medium
+// Generated: 2025-12-27T14:58:10.150Z
+
+codeunit 50000 "Performance Test Large File"
+{
+
+procedure ProcessOrder0(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice0(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50000 "Custom List 0"
+{
+    PageType = List;
+    SourceTable = "Custom Table 0";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+procedure ProcessOrder1(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice1(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder2(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice2(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50001 "Custom List 1"
+{
+    PageType = List;
+    SourceTable = "Custom Table 1";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+table 50000 "Custom Table 0"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+table 50001 "Custom Table 1"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder3(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice3(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50002 "Custom List 2"
+{
+    PageType = List;
+    SourceTable = "Custom Table 2";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+procedure ProcessOrder4(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice4(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+table 50002 "Custom Table 2"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder5(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice5(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50003 "Custom List 3"
+{
+    PageType = List;
+    SourceTable = "Custom Table 3";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+page 50004 "Custom List 4"
+{
+    PageType = List;
+    SourceTable = "Custom Table 4";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+procedure ProcessOrder6(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice6(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50005 "Custom List 5"
+{
+    PageType = List;
+    SourceTable = "Custom Table 5";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+procedure ProcessOrder7(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice7(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+table 50003 "Custom Table 3"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder8(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice8(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+table 50004 "Custom Table 4"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+table 50005 "Custom Table 5"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder9(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice9(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50006 "Custom List 6"
+{
+    PageType = List;
+    SourceTable = "Custom Table 6";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+procedure ProcessOrder10(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice10(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder11(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice11(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50007 "Custom List 7"
+{
+    PageType = List;
+    SourceTable = "Custom Table 7";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+procedure ProcessOrder12(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice12(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder13(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice13(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder14(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice14(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder15(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice15(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder16(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice16(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder17(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice17(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder18(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice18(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder19(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice19(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder20(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice20(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder21(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice21(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50008 "Custom List 8"
+{
+    PageType = List;
+    SourceTable = "Custom Table 8";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+procedure ProcessOrder22(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice22(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder23(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice23(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50009 "Custom List 9"
+{
+    PageType = List;
+    SourceTable = "Custom Table 9";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+table 50006 "Custom Table 6"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder24(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice24(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder25(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice25(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder26(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice26(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder27(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice27(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50010 "Custom List 10"
+{
+    PageType = List;
+    SourceTable = "Custom Table 10";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+page 50011 "Custom List 11"
+{
+    PageType = List;
+    SourceTable = "Custom Table 11";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+table 50007 "Custom Table 7"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+table 50008 "Custom Table 8"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder28(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice28(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder29(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice29(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder30(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice30(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder31(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice31(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder32(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice32(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder33(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice33(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder34(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice34(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder35(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice35(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+table 50009 "Custom Table 9"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder36(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice36(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder37(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice37(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder38(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice38(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder39(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice39(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50012 "Custom List 12"
+{
+    PageType = List;
+    SourceTable = "Custom Table 12";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+procedure ProcessOrder40(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice40(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder41(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice41(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder42(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice42(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder43(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice43(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder44(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice44(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder45(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice45(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder46(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice46(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+table 50010 "Custom Table 10"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+table 50011 "Custom Table 11"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder47(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice47(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+table 50012 "Custom Table 12"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder48(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice48(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder49(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice49(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+table 50013 "Custom Table 13"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder50(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice50(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+table 50014 "Custom Table 14"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder51(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice51(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50013 "Custom List 13"
+{
+    PageType = List;
+    SourceTable = "Custom Table 13";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+procedure ProcessOrder52(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice52(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+table 50015 "Custom Table 15"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder53(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice53(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder54(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice54(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+table 50016 "Custom Table 16"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder55(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice55(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder56(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice56(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50014 "Custom List 14"
+{
+    PageType = List;
+    SourceTable = "Custom Table 14";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+page 50015 "Custom List 15"
+{
+    PageType = List;
+    SourceTable = "Custom Table 15";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+procedure ProcessOrder57(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice57(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder58(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice58(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder59(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice59(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder60(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice60(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50016 "Custom List 16"
+{
+    PageType = List;
+    SourceTable = "Custom Table 16";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+page 50017 "Custom List 17"
+{
+    PageType = List;
+    SourceTable = "Custom Table 17";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+procedure ProcessOrder61(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice61(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+table 50017 "Custom Table 17"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder62(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice62(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50018 "Custom List 18"
+{
+    PageType = List;
+    SourceTable = "Custom Table 18";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+page 50019 "Custom List 19"
+{
+    PageType = List;
+    SourceTable = "Custom Table 19";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+table 50018 "Custom Table 18"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder63(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice63(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder64(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice64(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder65(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice65(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder66(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice66(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder67(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice67(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+procedure ProcessOrder68(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice68(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50020 "Custom List 20"
+{
+    PageType = List;
+    SourceTable = "Custom Table 20";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+table 50019 "Custom Table 19"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+table 50020 "Custom Table 20"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+table 50021 "Custom Table 21"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+table 50022 "Custom Table 22"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+page 50021 "Custom List 21"
+{
+    PageType = List;
+    SourceTable = "Custom Table 21";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+table 50023 "Custom Table 23"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder69(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice69(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+
+page 50022 "Custom List 22"
+{
+    PageType = List;
+    SourceTable = "Custom Table 22";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+table 50024 "Custom Table 24"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+procedure ProcessOrder70(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
+var
+    OrderHeader: Record "Sales Header";
+    OrderLine: Record "Sales Line";
+    Customer: Record Customer;
+    Total: Decimal;
+    Discount: Decimal;
+    FinalAmount: Decimal;
+begin
+    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
+        exit(false);
+
+    if not Customer.Get(CustomerNo) then
+        Error('Customer %1 not found', CustomerNo);
+
+    Total := 0;
+    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
+    OrderLine.SetRange("Document No.", OrderNo);
+    if OrderLine.FindSet() then
+        repeat
+            Total += OrderLine.Amount;
+        until OrderLine.Next() = 0;
+
+    Discount := Total * Customer."Discount %" / 100;
+    FinalAmount := Total - Discount;
+
+    OrderHeader."Amount Including VAT" := FinalAmount;
+    OrderHeader.Modify();
+
+    exit(true);
+end;
+
+procedure GetUnitPrice70(ItemCode: Code[20]): Decimal
+var
+    Item: Record Item;
+begin
+    if Item.Get(ItemCode) then
+        exit(Item."Unit Price")
+    else
+        exit(0);
+end;
+}

@@ -1,0 +1,645 @@
+// SYNTHETIC PERFORMANCE TEST FIXTURE - 100% GENERATED
+// Purpose: Tests lexer string handling and expression parsing
+// Target: ~1000 lines with complex expressions, long strings, and nested calculations
+
+CODEUNIT 50013 "Complex Expression Benchmark"
+{
+  TableNo = "Performance Test Record";
+
+  trigger OnRun()
+  var
+    ComplexCalculationResult: Decimal;
+    StringBuilderOutput: Text[1024];
+    XMLPayloadBuffer: Text[1024];
+    JSONDataBuffer: Text[1024];
+    FilteredRecordCount: Integer;
+    AggregatedValue: Decimal;
+    TransformationResult: Decimal;
+    ValidationStatusCode: Code[20];
+    ProcessingTimestamp: DateTime;
+    IterationCounter: Integer;
+  begin
+    // Complex STRSUBSTNO with maximum parameters
+    StringBuilderOutput := STRSUBSTNO(
+      TextConst001,
+      'ParamValue1', 'ParamValue2', 'ParamValue3', 'ParamValue4', 'ParamValue5',
+      'ParamValue6', 'ParamValue7', 'ParamValue8', 'ParamValue9', 'ParamValue10',
+      'ParamValue11', 'ParamValue12', 'ParamValue13', 'ParamValue14', 'ParamValue15',
+      'ParamValue16', 'ParamValue17', 'ParamValue18', 'ParamValue19', 'ParamValue20'
+    );
+
+    // Multi-parameter STRSUBSTNO with complex nested expressions
+    XMLPayloadBuffer := STRSUBSTNO(
+      TextConst002,
+      FORMAT(CURRENTDATETIME, 0, '<Year4>-<Month,2>-<Day,2>T<Hours24>:<Minutes,2>:<Seconds,2>'),
+      FORMAT((ComplexCalculationResult * 1.19), 0, '<Precision,2:2><Standard Format,0>'),
+      USERID,
+      COMPANYNAME,
+      FORMAT(RANDOM(999999)),
+      'TransactionType_' + FORMAT(RANDOM(100)),
+      'StatusCode_' + FORMAT(RANDOM(10)),
+      'Category_' + FORMAT(RANDOM(50)),
+      'Subcategory_' + FORMAT(RANDOM(25)),
+      'Region_' + FORMAT(RANDOM(15)),
+      'Department_' + FORMAT(RANDOM(30)),
+      'CostCenter_' + FORMAT(RANDOM(100)),
+      'Project_' + FORMAT(RANDOM(200)),
+      'Activity_' + FORMAT(RANDOM(75)),
+      'Resource_' + FORMAT(RANDOM(500)),
+      'Location_' + FORMAT(RANDOM(20)),
+      'Dimension1_' + FORMAT(RANDOM(10)),
+      'Dimension2_' + FORMAT(RANDOM(10)),
+      'Dimension3_' + FORMAT(RANDOM(10)),
+      'Dimension4_' + FORMAT(RANDOM(10))
+    );
+
+    // JSON payload construction with STRSUBSTNO
+    JSONDataBuffer := STRSUBSTNO(
+      TextConst003,
+      DELCHR(USERID, '=', ' '),
+      FORMAT(CURRENTDATETIME, 0, 9),
+      FORMAT(ComplexCalculationResult, 0, '<Precision,2:2>'),
+      FORMAT(AggregatedValue, 0, '<Precision,2:2>'),
+      FORMAT(TransformationResult, 0, '<Precision,2:2>'),
+      ValidationStatusCode,
+      FORMAT(ProcessingTimestamp, 0, 9),
+      FORMAT(IterationCounter),
+      'ProcessingEngine_v2.5.1',
+      'CalculationModule_Advanced',
+      'DataSource_Primary',
+      'ValidationRule_Strict',
+      'ErrorHandling_Enabled',
+      'Logging_Verbose',
+      'Cache_Enabled',
+      'Compression_GZip',
+      'Encryption_AES256',
+      'Protocol_HTTPS',
+      'Authentication_OAuth2',
+      'Authorization_RoleBased'
+    );
+
+    // Complex mathematical expression with deep nesting
+    ComplexCalculationResult :=
+      (((((100.0 + 25.5) * 3.14159) - (75.25 / 2.5)) + ((50.0 * 1.5) - (25.0 / 5.0))) *
+       (((200.0 - 50.0) / (10.0 + 5.0)) + ((30.0 * 2.0) - (15.0 / 3.0)))) +
+      (((((150.0 / 3.0) + (45.0 * 2.0)) - ((60.0 - 20.0) / 4.0)) *
+        (((80.0 + 40.0) / 6.0) - ((90.0 / 3.0) + 10.0)))) +
+      (((((125.0 * 0.8) - (35.0 + 15.0)) / ((20.0 - 5.0) * 2.0)) +
+        (((95.0 / 5.0) + (55.0 - 25.0)) * ((40.0 + 10.0) / 5.0)))));
+
+    // Long calculation with multiple operations
+    AggregatedValue :=
+      POWER(ComplexCalculationResult, 2) +
+      SQRT(ABS(ComplexCalculationResult * 1.5)) +
+      ROUND((ComplexCalculationResult / 3.7), 0.01, '=') +
+      (ComplexCalculationResult MOD 100) +
+      (ComplexCalculationResult DIV 10) * 2.5 +
+      EXP(LOG(ABS(ComplexCalculationResult) + 1)) +
+      POWER(1.05, 12) * ComplexCalculationResult +
+      (ROUND(ComplexCalculationResult * 1.19, 0.01) - ComplexCalculationResult) +
+      (ComplexCalculationResult * (1 + (0.05 / 12))) +
+      ((ComplexCalculationResult + 100) * (ComplexCalculationResult - 50) / (ComplexCalculationResult + 25));
+
+    // Transformation expression with conditional logic
+    TransformationResult :=
+      (ComplexCalculationResult * 0.85) +
+      (AggregatedValue * 0.15) +
+      ((ComplexCalculationResult + AggregatedValue) / 2 * 1.1) +
+      (POWER((ComplexCalculationResult + AggregatedValue) / 2, 1.5) / 100) +
+      (SQRT(ComplexCalculationResult * AggregatedValue) * 0.5) +
+      ((ComplexCalculationResult - AggregatedValue) / (ComplexCalculationResult + AggregatedValue) * 100) +
+      (LOG(ABS(ComplexCalculationResult) + ABS(AggregatedValue) + 1) * 50) +
+      ((ComplexCalculationResult MOD 1000) + (AggregatedValue MOD 1000)) / 10 +
+      (ROUND(ComplexCalculationResult * 1.25, 1) + ROUND(AggregatedValue * 0.75, 1)) +
+      ((ComplexCalculationResult DIV 100) * 100 + (AggregatedValue DIV 100) * 100) / 2;
+
+    // String concatenation with many operators
+    StringBuilderOutput :=
+      'Part1_' + 'Part2_' + 'Part3_' + 'Part4_' + 'Part5_' +
+      'Part6_' + 'Part7_' + 'Part8_' + 'Part9_' + 'Part10_' +
+      FORMAT(ComplexCalculationResult) + '_' +
+      FORMAT(AggregatedValue) + '_' +
+      FORMAT(TransformationResult) + '_' +
+      FORMAT(CURRENTDATETIME) + '_' +
+      USERID + '_' + COMPANYNAME + '_' +
+      'Segment1/' + 'Segment2/' + 'Segment3/' + 'Segment4/' + 'Segment5/' +
+      'Value:' + FORMAT(RANDOM(10000)) + '|' +
+      'Status:' + ValidationStatusCode + '|' +
+      'Counter:' + FORMAT(IterationCounter) + '|' +
+      'Timestamp:' + FORMAT(ProcessingTimestamp) + '|' +
+      'Checksum:' + FORMAT(RANDOM(999999)) + '|' +
+      'Hash:' + FORMAT(RANDOM(999999)) + FORMAT(RANDOM(999999));
+
+    // Additional complex calculation expression
+    ComplexCalculationResult :=
+      ((POWER(2, 10) + POWER(3, 7) + POWER(5, 5)) / (SQRT(144) + SQRT(256) + SQRT(400))) *
+      ((LOG(1000) + LOG(10000) + LOG(100000)) / (EXP(1) + EXP(2) + EXP(0.5))) +
+      ((ROUND(12345.6789, 0.01) + ROUND(98765.4321, 0.1) + ROUND(55555.5555, 1)) /
+       (ABS(-1234.56) + ABS(-9876.54) + ABS(-5555.55))) +
+      (((100 MOD 7) + (100 MOD 11) + (100 MOD 13)) * ((100 DIV 7) + (100 DIV 11) + (100 DIV 13))) +
+      ((POWER(1.05, 12) + POWER(1.06, 12) + POWER(1.07, 12)) * 1000 / 3);
+
+    // Nested mathematical operations
+    AggregatedValue :=
+      (((((1 + 2) * (3 + 4)) / ((5 + 6) - (7 - 8))) +
+        (((9 * 10) / (11 + 12)) - ((13 - 14) * (15 + 16)))) *
+       (((17 + 18) * (19 + 20)) / ((21 - 22) + (23 * 24)))) +
+      (((((25 / 5) + (30 / 6)) * ((35 / 7) + (40 / 8))) -
+        (((45 / 9) - (50 / 10)) / ((55 / 11) - (60 / 12))))) +
+      ((((65 + 70) / (75 - 80)) * ((85 * 90) / (95 + 100))) +
+       (((105 - 110) * (115 + 120)) / ((125 / 5) + (130 * 2))));
+
+    // Long string concatenation with computed values
+    XMLPayloadBuffer :=
+      '<Root>' +
+      '<Header ID="' + FORMAT(RANDOM(100000)) + '" Timestamp="' + FORMAT(CURRENTDATETIME, 0, 9) + '">' +
+      '<User>' + USERID + '</User>' +
+      '<Company>' + COMPANYNAME + '</Company>' +
+      '<Session>' + FORMAT(SESSIONID) + '</Session>' +
+      '</Header>' +
+      '<Body>' +
+      '<Calculation Result="' + FORMAT(ComplexCalculationResult) + '" />' +
+      '<Aggregation Result="' + FORMAT(AggregatedValue) + '" />' +
+      '<Transformation Result="' + FORMAT(TransformationResult) + '" />' +
+      '<Iteration Count="' + FORMAT(IterationCounter) + '" />' +
+      '<Validation Status="' + ValidationStatusCode + '" />' +
+      '<Processing Timestamp="' + FORMAT(ProcessingTimestamp, 0, 9) + '" />' +
+      '</Body>' +
+      '<Footer Checksum="' + FORMAT(RANDOM(999999)) + '" />' +
+      '</Root>';
+
+    // Another complex mathematical expression
+    TransformationResult :=
+      SQRT(POWER(ComplexCalculationResult, 2) + POWER(AggregatedValue, 2)) +
+      (POWER(ComplexCalculationResult + AggregatedValue, 2) - POWER(ComplexCalculationResult - AggregatedValue, 2)) / 4 +
+      ((ComplexCalculationResult * AggregatedValue) / (ComplexCalculationResult + AggregatedValue)) * 2 +
+      LOG(POWER(EXP(1), (ComplexCalculationResult / 1000))) * 1000 +
+      (ROUND(ComplexCalculationResult * AggregatedValue, 0.01) MOD 10000) / 100 +
+      ((POWER(ComplexCalculationResult, 3) + POWER(AggregatedValue, 3)) / (POWER(ComplexCalculationResult, 2) + POWER(AggregatedValue, 2))) +
+      (ABS(ComplexCalculationResult - AggregatedValue) / ABS(ComplexCalculationResult + AggregatedValue)) * 1000;
+
+    // JSON construction with concatenation
+    JSONDataBuffer :=
+      '{' +
+      '"metadata": {' +
+      '"user": "' + DELCHR(USERID, '=', ' ') + '", ' +
+      '"company": "' + DELCHR(COMPANYNAME, '=', ' ') + '", ' +
+      '"timestamp": "' + FORMAT(CURRENTDATETIME, 0, 9) + '", ' +
+      '"session": ' + FORMAT(SESSIONID) +
+      '}, ' +
+      '"calculations": {' +
+      '"complex": ' + FORMAT(ComplexCalculationResult, 0, '<Precision,2:2>') + ', ' +
+      '"aggregated": ' + FORMAT(AggregatedValue, 0, '<Precision,2:2>') + ', ' +
+      '"transformation": ' + FORMAT(TransformationResult, 0, '<Precision,2:2>') +
+      '}, ' +
+      '"status": {' +
+      '"code": "' + ValidationStatusCode + '", ' +
+      '"iteration": ' + FORMAT(IterationCounter) + ', ' +
+      '"processed": "' + FORMAT(ProcessingTimestamp, 0, 9) + '"' +
+      '}, ' +
+      '"checksum": "' + FORMAT(RANDOM(999999)) + FORMAT(RANDOM(999999)) + '"' +
+      '}';
+
+    // Polynomial evaluation expression
+    ComplexCalculationResult :=
+      (POWER(IterationCounter, 5) * 0.0001) +
+      (POWER(IterationCounter, 4) * 0.001) +
+      (POWER(IterationCounter, 3) * 0.01) +
+      (POWER(IterationCounter, 2) * 0.1) +
+      (IterationCounter * 1.0) +
+      100.0 +
+      (1 / (IterationCounter + 1)) * 1000 +
+      SQRT(IterationCounter + 1) * 10 +
+      LOG(IterationCounter + 1) * 50 +
+      EXP(IterationCounter / 100) * 0.01;
+
+    // Trigonometric-style calculations (simulated with available functions)
+    AggregatedValue :=
+      POWER(EXP(ComplexCalculationResult / 1000), 2) +
+      POWER(LOG(ABS(ComplexCalculationResult) + 1), 2) +
+      SQRT(POWER(ComplexCalculationResult, 2) + POWER(AggregatedValue, 2)) +
+      (POWER(ComplexCalculationResult, 2) - POWER(TransformationResult, 2)) / (2 * ComplexCalculationResult) +
+      ((ComplexCalculationResult + TransformationResult) / 2) * SQRT(1 - POWER((ComplexCalculationResult - TransformationResult) / (ComplexCalculationResult + TransformationResult), 2));
+
+    // Statistical calculations expression
+    TransformationResult :=
+      ((ComplexCalculationResult + AggregatedValue) / 2) +
+      SQRT((POWER(ComplexCalculationResult - ((ComplexCalculationResult + AggregatedValue) / 2), 2) +
+            POWER(AggregatedValue - ((ComplexCalculationResult + AggregatedValue) / 2), 2)) / 2) +
+      (ABS(ComplexCalculationResult - AggregatedValue) / 2) +
+      ((POWER(ComplexCalculationResult, 3) + POWER(AggregatedValue, 3)) / 2) -
+      (3 * ((ComplexCalculationResult + AggregatedValue) / 2) * POWER((ComplexCalculationResult + AggregatedValue) / 2, 2));
+
+    // Financial calculation expressions
+    ComplexCalculationResult :=
+      (1000 * POWER(1 + (0.05 / 12), 12 * 10)) +
+      (500 * ((POWER(1 + (0.06 / 12), 12 * 5) - 1) / (0.06 / 12))) +
+      (2000 / POWER(1 + 0.04, 5)) +
+      (1500 * ((1 - POWER(1 + 0.07, -10)) / 0.07)) +
+      (((1 + 0.08) / (1 + 0.03) - 1) * 10000) +
+      ((POWER(1.05, 20) - 1) / 0.05 * 100) +
+      (750 * EXP(0.045 * 7));
+
+    // Compound expression with multiple operation types
+    AggregatedValue :=
+      (ComplexCalculationResult + 1000) * (1 + 0.05) +
+      (TransformationResult - 500) / (1 + 0.03) +
+      ROUND((ComplexCalculationResult * 1.19), 0.01) +
+      (ROUND(TransformationResult, 1) - TransformationResult) +
+      ((ComplexCalculationResult DIV 100) * 100) +
+      ((TransformationResult MOD 1000) / 10) +
+      POWER(1 + (ComplexCalculationResult / 100000), 2) +
+      SQRT(ABS(TransformationResult) * ABS(ComplexCalculationResult)) / 100;
+
+    // String builder with format operations
+    StringBuilderOutput :=
+      'Record[' + FORMAT(IterationCounter, 10, '<Integer,6><Filler Character,0>') + ']|' +
+      'Value[' + FORMAT(ComplexCalculationResult, 0, '<Precision,2:2><Standard Format,0>') + ']|' +
+      'Aggregate[' + FORMAT(AggregatedValue, 0, '<Precision,2:2><Standard Format,0>') + ']|' +
+      'Transform[' + FORMAT(TransformationResult, 0, '<Precision,2:2><Standard Format,0>') + ']|' +
+      'Date[' + FORMAT(TODAY, 0, '<Year4>-<Month,2>-<Day,2>') + ']|' +
+      'Time[' + FORMAT(TIME, 0, '<Hours24,2>:<Minutes,2>:<Seconds,2>') + ']|' +
+      'DateTime[' + FORMAT(CURRENTDATETIME, 0, '<Year4><Month,2><Day,2><Hours24,2><Minutes,2><Seconds,2>') + ']|' +
+      'User[' + PADSTR(USERID, 20) + ']|' +
+      'Company[' + PADSTR(COMPANYNAME, 30) + ']|' +
+      'Session[' + FORMAT(SESSIONID, 10) + ']';
+
+    // Complex nested conditional expression simulation
+    TransformationResult :=
+      (ComplexCalculationResult * ((AggregatedValue > 1000) = TRUE)) +
+      (ComplexCalculationResult * 0.5 * ((AggregatedValue <= 1000) = TRUE)) +
+      (AggregatedValue * ((ComplexCalculationResult > 5000) = TRUE)) +
+      (AggregatedValue * 0.75 * ((ComplexCalculationResult <= 5000) = TRUE)) +
+      (100 * ((ValidationStatusCode = 'APPROVED') = TRUE)) +
+      (50 * ((ValidationStatusCode = 'PENDING') = TRUE)) +
+      (0 * ((ValidationStatusCode = 'REJECTED') = TRUE));
+
+    // Multi-stage calculation pipeline
+    ComplexCalculationResult :=
+      ((((IterationCounter * 1.5) + 100) * 2.0) - 50) / 3.0;
+
+    AggregatedValue :=
+      ((((ComplexCalculationResult / 2.5) + 75) * 1.8) - 25) / 1.5;
+
+    TransformationResult :=
+      ((((AggregatedValue * 3.2) - 150) / 2.7) + 200) * 1.1;
+
+    // Expression with many parentheses levels
+    ComplexCalculationResult :=
+      ((((((((((1 + 2) * 3) + 4) * 5) + 6) * 7) + 8) * 9) + 10) * 11) +
+      ((((((((((12 - 11) * 10) - 9) * 8) - 7) * 6) - 5) * 4) - 3) * 2) +
+      ((((((((((13 + 14) / 2) + 15) / 2) + 16) / 2) + 17) / 2) + 18) / 2) +
+      ((((((((((19 * 2) - 20) * 2) - 21) * 2) - 22) * 2) - 23) * 2) - 24);
+
+    // Array-like indexed calculation simulation
+    AggregatedValue :=
+      ((IterationCounter MOD 10 = 0) = TRUE) * 1000 +
+      ((IterationCounter MOD 10 = 1) = TRUE) * 900 +
+      ((IterationCounter MOD 10 = 2) = TRUE) * 800 +
+      ((IterationCounter MOD 10 = 3) = TRUE) * 700 +
+      ((IterationCounter MOD 10 = 4) = TRUE) * 600 +
+      ((IterationCounter MOD 10 = 5) = TRUE) * 500 +
+      ((IterationCounter MOD 10 = 6) = TRUE) * 400 +
+      ((IterationCounter MOD 10 = 7) = TRUE) * 300 +
+      ((IterationCounter MOD 10 = 8) = TRUE) * 200 +
+      ((IterationCounter MOD 10 = 9) = TRUE) * 100;
+
+    // Bitwise-style operations simulation using MOD and DIV
+    TransformationResult :=
+      ((IterationCounter DIV 1) MOD 2) * POWER(2, 0) +
+      ((IterationCounter DIV 2) MOD 2) * POWER(2, 1) +
+      ((IterationCounter DIV 4) MOD 2) * POWER(2, 2) +
+      ((IterationCounter DIV 8) MOD 2) * POWER(2, 3) +
+      ((IterationCounter DIV 16) MOD 2) * POWER(2, 4) +
+      ((IterationCounter DIV 32) MOD 2) * POWER(2, 5) +
+      ((IterationCounter DIV 64) MOD 2) * POWER(2, 6) +
+      ((IterationCounter DIV 128) MOD 2) * POWER(2, 7);
+
+    // String manipulation chain
+    ValidationStatusCode :=
+      COPYSTR(
+        DELCHR(
+          PADSTR(
+            UPPERCASE(
+              LOWERCASE(
+                'StatusCode_' + FORMAT(RANDOM(100))
+              )
+            ),
+            20,
+            'X'
+          ),
+          '=',
+          ' '
+        ),
+        1,
+        20
+      );
+
+    // Complex format expression
+    StringBuilderOutput :=
+      FORMAT(
+        ComplexCalculationResult,
+        0,
+        '<Precision,2:2><Standard Format,0>'
+      ) + ' | ' +
+      FORMAT(
+        AggregatedValue,
+        0,
+        '<Sign><Integer Thousand><Decimals,3>'
+      ) + ' | ' +
+      FORMAT(
+        TransformationResult,
+        0,
+        '<Integer><Decimals><Comma,.>'
+      ) + ' | ' +
+      FORMAT(
+        CURRENTDATETIME,
+        0,
+        '<Year4>-<Month,2>-<Day,2>T<Hours24,2>:<Minutes,2>:<Seconds,2>.<Thousands,3>Z'
+      );
+
+    // Recursive-style calculation
+    ComplexCalculationResult := 1;
+    ComplexCalculationResult := ComplexCalculationResult * 2 + 1;
+    ComplexCalculationResult := ComplexCalculationResult * 2 + 1;
+    ComplexCalculationResult := ComplexCalculationResult * 2 + 1;
+    ComplexCalculationResult := ComplexCalculationResult * 2 + 1;
+    ComplexCalculationResult := ComplexCalculationResult * 2 + 1;
+    ComplexCalculationResult := ComplexCalculationResult * 2 + 1;
+    ComplexCalculationResult := ComplexCalculationResult * 2 + 1;
+    ComplexCalculationResult := ComplexCalculationResult * 2 + 1;
+
+    // Fibonacci-style sequence calculation
+    AggregatedValue := 0;
+    TransformationResult := 1;
+    ComplexCalculationResult := AggregatedValue + TransformationResult;
+    AggregatedValue := TransformationResult + ComplexCalculationResult;
+    TransformationResult := ComplexCalculationResult + AggregatedValue;
+    ComplexCalculationResult := AggregatedValue + TransformationResult;
+    AggregatedValue := TransformationResult + ComplexCalculationResult;
+    TransformationResult := ComplexCalculationResult + AggregatedValue;
+    ComplexCalculationResult := AggregatedValue + TransformationResult;
+    AggregatedValue := TransformationResult + ComplexCalculationResult;
+  end;
+
+  procedure ComplexFilterOperations()
+  var
+    PerformanceTestRecord: Record "Performance Test Record";
+    SalesOrderHeader: Record "Fictional Sales Order";
+    PurchaseOrderLine: Record "Fictional Purchase Line";
+    ItemLedgerEntry: Record "Fictional Item Ledger";
+    CustomerLedgerEntry: Record "Fictional Cust. Ledger";
+    VendorLedgerEntry: Record "Fictional Vendor Ledger";
+    GLEntry: Record "Fictional G/L Entry";
+    ValueEntry: Record "Fictional Value Entry";
+    FilteredCount: Integer;
+  begin
+    // Complex multi-field filter with many SETRANGE calls
+    PerformanceTestRecord.RESET;
+    PerformanceTestRecord.SETCURRENTKEY("Posting Date", "Document Type", "Document No.");
+    PerformanceTestRecord.SETRANGE("Posting Date", 20240101D, 20241231D);
+    PerformanceTestRecord.SETRANGE("Document Type", PerformanceTestRecord."Document Type"::Invoice);
+    PerformanceTestRecord.SETRANGE("Status Code", 'APPROVED');
+    PerformanceTestRecord.SETRANGE("Processing Status", PerformanceTestRecord."Processing Status"::Completed);
+    PerformanceTestRecord.SETRANGE("Validation Result", TRUE);
+    PerformanceTestRecord.SETRANGE("Error Count", 0);
+    PerformanceTestRecord.SETRANGE("Warning Count", 0, 5);
+    PerformanceTestRecord.SETRANGE("Amount", 1000, 100000);
+    PerformanceTestRecord.SETRANGE("Currency Code", 'USD', 'EUR');
+    PerformanceTestRecord.SETFILTER("Customer No.", '%1|%2|%3|%4|%5', 'CUST001', 'CUST002', 'CUST003', 'CUST004', 'CUST005');
+    PerformanceTestRecord.SETFILTER("Location Code", '<>%1&<>%2', 'BLOCKED1', 'BLOCKED2');
+    PerformanceTestRecord.SETFILTER("Dimension 1 Value", '@*SALES*|@*PURCHASE*|@*SERVICE*');
+    PerformanceTestRecord.SETFILTER("Dimension 2 Value", '%1..%2', 'AA', 'ZZ');
+    PerformanceTestRecord.SETFILTER("User ID", '<>%1', 'SYSTEM');
+    FilteredCount := PerformanceTestRecord.COUNT;
+
+    // Another complex filter scenario
+    SalesOrderHeader.RESET;
+    SalesOrderHeader.SETCURRENTKEY("Sell-to Customer No.", "Order Date", "Document Type");
+    SalesOrderHeader.SETRANGE("Document Type", SalesOrderHeader."Document Type"::Order);
+    SalesOrderHeader.SETRANGE("Order Date", CALCDATE('<-1Y>', TODAY), TODAY);
+    SalesOrderHeader.SETRANGE("Status", SalesOrderHeader.Status::Released);
+    SalesOrderHeader.SETRANGE("Completely Shipped", FALSE);
+    SalesOrderHeader.SETRANGE("Shipping Advice", SalesOrderHeader."Shipping Advice"::Complete);
+    SalesOrderHeader.SETFILTER("Sell-to Customer No.", '<>%1', '');
+    SalesOrderHeader.SETFILTER("Bill-to Customer No.", '<>%1', '');
+    SalesOrderHeader.SETFILTER("Amount", '>%1', 0);
+    SalesOrderHeader.SETFILTER("Amount Including VAT", '>%1', 0);
+    SalesOrderHeader.SETFILTER("Outstanding Amount", '>%1', 100);
+    SalesOrderHeader.SETFILTER("Shipment Date", '>=%1', TODAY);
+    SalesOrderHeader.SETFILTER("Location Code", '%1|%2|%3|%4|%5|%6|%7', 'LOC1', 'LOC2', 'LOC3', 'LOC4', 'LOC5', 'LOC6', 'LOC7');
+    SalesOrderHeader.SETFILTER("Salesperson Code", '<>%1', '');
+    SalesOrderHeader.SETFILTER("Payment Terms Code", '%1|%2|%3', '30DAYS', '60DAYS', '90DAYS');
+    SalesOrderHeader.SETFILTER("Shipping Agent Code", '<>%1&<>%2', 'BLOCKED1', 'BLOCKED2');
+    SalesOrderHeader.SETFILTER("External Document No.", '<>%1', '');
+    SalesOrderHeader.SETFILTER("Your Reference", '@*PO*|@*ORDER*');
+    SalesOrderHeader.SETFILTER("Campaign No.", '%1..%2|%3', 'CAMP001', 'CAMP100', 'CAMP999');
+    SalesOrderHeader.SETFILTER("Opportunity No.", '<>%1', '');
+    FilteredCount := SalesOrderHeader.COUNT;
+
+    // Purchase order line complex filtering
+    PurchaseOrderLine.RESET;
+    PurchaseOrderLine.SETCURRENTKEY("Document Type", "Buy-from Vendor No.", "Expected Receipt Date");
+    PurchaseOrderLine.SETRANGE("Document Type", PurchaseOrderLine."Document Type"::Order);
+    PurchaseOrderLine.SETRANGE("Type", PurchaseOrderLine.Type::Item);
+    PurchaseOrderLine.SETFILTER("No.", '<>%1', '');
+    PurchaseOrderLine.SETFILTER("Quantity", '>%1', 0);
+    PurchaseOrderLine.SETFILTER("Outstanding Quantity", '>%1', 0);
+    PurchaseOrderLine.SETFILTER("Qty. to Receive", '>=%1', 0);
+    PurchaseOrderLine.SETRANGE("Expected Receipt Date", CALCDATE('<-30D>', TODAY), CALCDATE('<+30D>', TODAY));
+    PurchaseOrderLine.SETFILTER("Buy-from Vendor No.", '%1|%2|%3|%4|%5', 'VEND001', 'VEND002', 'VEND003', 'VEND004', 'VEND005');
+    PurchaseOrderLine.SETFILTER("Location Code", '%1|%2|%3', 'MAIN', 'WAREHOUSE1', 'WAREHOUSE2');
+    PurchaseOrderLine.SETFILTER("Unit of Measure Code", '%1|%2|%3|%4', 'PCS', 'BOX', 'PALLET', 'EACH');
+    PurchaseOrderLine.SETFILTER("Direct Unit Cost", '>%1&<%2', 0, 10000);
+    PurchaseOrderLine.SETFILTER("Line Discount %", '<%1', 50);
+    PurchaseOrderLine.SETFILTER("VAT %", '%1|%2|%3', 0, 10, 20);
+    PurchaseOrderLine.SETFILTER("Job No.", '<>%1', '');
+    PurchaseOrderLine.SETFILTER("Prod. Order No.", '<>%1', '');
+    PurchaseOrderLine.SETFILTER("Blanket Order No.", '<>%1', '');
+    PurchaseOrderLine.SETFILTER("Requested Receipt Date", '>=%1', TODAY);
+    PurchaseOrderLine.SETFILTER("Promised Receipt Date", '>=%1', TODAY);
+    PurchaseOrderLine.SETFILTER("Variant Code", '%1|%2|%3', '', 'VARIANT1', 'VARIANT2');
+    FilteredCount := PurchaseOrderLine.COUNT;
+
+    // Item ledger entry complex filtering
+    ItemLedgerEntry.RESET;
+    ItemLedgerEntry.SETCURRENTKEY("Item No.", "Posting Date", "Entry Type");
+    ItemLedgerEntry.SETRANGE("Posting Date", CALCDATE('<-1Y>', TODAY), TODAY);
+    ItemLedgerEntry.SETFILTER("Entry Type", '%1|%2|%3|%4',
+      ItemLedgerEntry."Entry Type"::Purchase,
+      ItemLedgerEntry."Entry Type"::Sale,
+      ItemLedgerEntry."Entry Type"::"Positive Adjmt.",
+      ItemLedgerEntry."Entry Type"::"Negative Adjmt.");
+    ItemLedgerEntry.SETFILTER("Item No.", '@ITEM*|@PROD*|@MAT*');
+    ItemLedgerEntry.SETFILTER("Location Code", '%1|%2|%3|%4|%5', 'LOC01', 'LOC02', 'LOC03', 'LOC04', 'LOC05');
+    ItemLedgerEntry.SETFILTER("Quantity", '<>%1', 0);
+    ItemLedgerEntry.SETRANGE("Open", FALSE);
+    ItemLedgerEntry.SETRANGE("Positive", TRUE);
+    ItemLedgerEntry.SETFILTER("Document Type", '%1|%2|%3',
+      ItemLedgerEntry."Document Type"::"Sales Shipment",
+      ItemLedgerEntry."Document Type"::"Purchase Receipt",
+      ItemLedgerEntry."Document Type"::"Transfer Receipt");
+    ItemLedgerEntry.SETFILTER("Document No.", '<>%1', '');
+    ItemLedgerEntry.SETFILTER("Source Type", '%1|%2',
+      ItemLedgerEntry."Source Type"::Customer,
+      ItemLedgerEntry."Source Type"::Vendor);
+    ItemLedgerEntry.SETFILTER("Source No.", '<>%1', '');
+    ItemLedgerEntry.SETFILTER("Country/Region Code", '%1|%2|%3|%4|%5', 'US', 'GB', 'DE', 'FR', 'IT');
+    ItemLedgerEntry.SETFILTER("Global Dimension 1 Code", '@DEPT*|@DIV*');
+    ItemLedgerEntry.SETFILTER("Global Dimension 2 Code", '@PROJ*|@CAMP*');
+    ItemLedgerEntry.SETFILTER("Lot No.", '<>%1', '');
+    ItemLedgerEntry.SETFILTER("Serial No.", '<>%1', '');
+    ItemLedgerEntry.SETFILTER("Variant Code", '%1|%2|%3|%4', '', 'VAR1', 'VAR2', 'VAR3');
+    ItemLedgerEntry.SETFILTER("Unit of Measure Code", '%1|%2|%3', 'PCS', 'KG', 'M');
+    ItemLedgerEntry.SETFILTER("Invoiced Quantity", '<>%1', 0);
+    ItemLedgerEntry.SETRANGE("Drop Shipment", FALSE);
+    FilteredCount := ItemLedgerEntry.COUNT;
+
+    // Customer ledger entry complex filtering
+    CustomerLedgerEntry.RESET;
+    CustomerLedgerEntry.SETCURRENTKEY("Customer No.", "Posting Date", "Document Type");
+    CustomerLedgerEntry.SETRANGE("Posting Date", CALCDATE('<-2Y>', TODAY), TODAY);
+    CustomerLedgerEntry.SETFILTER("Document Type", '%1|%2|%3|%4',
+      CustomerLedgerEntry."Document Type"::Invoice,
+      CustomerLedgerEntry."Document Type"::"Credit Memo",
+      CustomerLedgerEntry."Document Type"::Payment,
+      CustomerLedgerEntry."Document Type"::Refund);
+    CustomerLedgerEntry.SETFILTER("Customer No.", '@CUST*|@CLIENT*');
+    CustomerLedgerEntry.SETRANGE("Open", TRUE);
+    CustomerLedgerEntry.SETFILTER("Amount", '<>%1', 0);
+    CustomerLedgerEntry.SETFILTER("Remaining Amount", '<>%1', 0);
+    CustomerLedgerEntry.SETFILTER("Due Date", '<%1', TODAY);
+    CustomerLedgerEntry.SETFILTER("Currency Code", '%1|%2|%3|%4', 'USD', 'EUR', 'GBP', 'JPY');
+    CustomerLedgerEntry.SETFILTER("Salesperson Code", '<>%1', '');
+    CustomerLedgerEntry.SETFILTER("Global Dimension 1 Code", '%1|%2|%3', 'SALES', 'SERVICE', 'RENTAL');
+    CustomerLedgerEntry.SETFILTER("Global Dimension 2 Code", '@REGION*');
+    CustomerLedgerEntry.SETFILTER("Customer Posting Group", '%1|%2|%3', 'DOMESTIC', 'FOREIGN', 'EU');
+    CustomerLedgerEntry.SETFILTER("Payment Method Code", '%1|%2|%3|%4', 'BANK', 'CASH', 'CHECK', 'CARD');
+    CustomerLedgerEntry.SETFILTER("Payment Terms Code", '<>%1', '');
+    CustomerLedgerEntry.SETFILTER("On Hold", '%1', '');
+    CustomerLedgerEntry.SETRANGE("Accepted Payment Tolerance", 0);
+    CustomerLedgerEntry.SETRANGE("Accepted Pmt. Disc. Tolerance", FALSE);
+    CustomerLedgerEntry.SETFILTER("Document No.", '@INV*|@CR*|@PMT*');
+    CustomerLedgerEntry.SETFILTER("External Document No.", '<>%1', '');
+    CustomerLedgerEntry.SETFILTER("Your Reference", '@*ORDER*|@*REF*');
+    FilteredCount := CustomerLedgerEntry.COUNT;
+
+    // Vendor ledger entry complex filtering
+    VendorLedgerEntry.RESET;
+    VendorLedgerEntry.SETCURRENTKEY("Vendor No.", "Posting Date", "Document Type");
+    VendorLedgerEntry.SETRANGE("Posting Date", CALCDATE('<-2Y>', TODAY), TODAY);
+    VendorLedgerEntry.SETFILTER("Document Type", '%1|%2|%3|%4',
+      VendorLedgerEntry."Document Type"::Invoice,
+      VendorLedgerEntry."Document Type"::"Credit Memo",
+      VendorLedgerEntry."Document Type"::Payment,
+      VendorLedgerEntry."Document Type"::Refund);
+    VendorLedgerEntry.SETFILTER("Vendor No.", '@VEND*|@SUPP*');
+    VendorLedgerEntry.SETRANGE("Open", TRUE);
+    VendorLedgerEntry.SETFILTER("Amount", '<>%1', 0);
+    VendorLedgerEntry.SETFILTER("Remaining Amount", '<>%1', 0);
+    VendorLedgerEntry.SETFILTER("Due Date", '<%1|>%2', CALCDATE('<-30D>', TODAY), CALCDATE('<+60D>', TODAY));
+    VendorLedgerEntry.SETFILTER("Pmt. Discount Date", '>=%1', TODAY);
+    VendorLedgerEntry.SETFILTER("Currency Code", '%1|%2|%3|%4|%5', 'USD', 'EUR', 'GBP', 'JPY', 'CHF');
+    VendorLedgerEntry.SETFILTER("Purchaser Code", '<>%1', '');
+    VendorLedgerEntry.SETFILTER("Global Dimension 1 Code", '%1|%2|%3', 'PURCHASE', 'PRODUCTION', 'ADMIN');
+    VendorLedgerEntry.SETFILTER("Global Dimension 2 Code", '@COSTCENTER*');
+    VendorLedgerEntry.SETFILTER("Vendor Posting Group", '%1|%2|%3', 'DOMESTIC', 'FOREIGN', 'EU');
+    VendorLedgerEntry.SETFILTER("Payment Method Code", '%1|%2|%3', 'BANK', 'CHECK', 'WIRE');
+    VendorLedgerEntry.SETFILTER("Payment Terms Code", '%1|%2|%3|%4', '30DAYS', '60DAYS', '90DAYS', 'NET30');
+    VendorLedgerEntry.SETFILTER("On Hold", '%1', '');
+    VendorLedgerEntry.SETRANGE("Applying Entry", FALSE);
+    VendorLedgerEntry.SETRANGE("Reversed", FALSE);
+    VendorLedgerEntry.SETFILTER("Document No.", '@PINV*|@PCR*|@PPMT*');
+    VendorLedgerEntry.SETFILTER("External Document No.", '<>%1', '');
+    VendorLedgerEntry.SETFILTER("Your Reference", '<>%1', '');
+    VendorLedgerEntry.SETFILTER("Creditor No.", '<>%1', '');
+    FilteredCount := VendorLedgerEntry.COUNT;
+
+    // G/L Entry complex filtering
+    GLEntry.RESET;
+    GLEntry.SETCURRENTKEY("G/L Account No.", "Posting Date");
+    GLEntry.SETRANGE("Posting Date", CALCDATE('<-1Y>', TODAY), TODAY);
+    GLEntry.SETFILTER("G/L Account No.", '%1..%2|%3..%4|%5..%6', '1000', '1999', '4000', '4999', '6000', '6999');
+    GLEntry.SETFILTER("Amount", '<>%1', 0);
+    GLEntry.SETFILTER("Debit Amount", '>%1', 0);
+    GLEntry.SETFILTER("Credit Amount", '>%1', 0);
+    GLEntry.SETFILTER("Document Type", '%1|%2|%3|%4',
+      GLEntry."Document Type"::Invoice,
+      GLEntry."Document Type"::"Credit Memo",
+      GLEntry."Document Type"::Payment,
+      GLEntry."Document Type"::Refund);
+    GLEntry.SETFILTER("Document No.", '<>%1', '');
+    GLEntry.SETFILTER("Source Type", '%1|%2|%3',
+      GLEntry."Source Type"::Customer,
+      GLEntry."Source Type"::Vendor,
+      GLEntry."Source Type"::"Bank Account");
+    GLEntry.SETFILTER("Source No.", '<>%1', '');
+    GLEntry.SETFILTER("Global Dimension 1 Code", '@DEPT*|@DIV*|@BU*');
+    GLEntry.SETFILTER("Global Dimension 2 Code", '@PROJ*|@PROD*|@REGION*');
+    GLEntry.SETFILTER("Gen. Posting Type", '%1|%2', GLEntry."Gen. Posting Type"::Purchase, GLEntry."Gen. Posting Type"::Sale);
+    GLEntry.SETFILTER("Gen. Bus. Posting Group", '<>%1', '');
+    GLEntry.SETFILTER("Gen. Prod. Posting Group", '<>%1', '');
+    GLEntry.SETFILTER("VAT Bus. Posting Group", '<>%1', '');
+    GLEntry.SETFILTER("VAT Prod. Posting Group", '<>%1', '');
+    GLEntry.SETFILTER("VAT Amount", '<>%1', 0);
+    GLEntry.SETFILTER("Job No.", '<>%1', '');
+    GLEntry.SETFILTER("Business Unit Code", '%1|%2|%3', 'BU01', 'BU02', 'BU03');
+    GLEntry.SETFILTER("User ID", '<>%1&<>%2', 'SYSTEM', 'ADMIN');
+    GLEntry.SETFILTER("Source Code", '%1|%2|%3|%4', 'SALES', 'PURCHASES', 'GENJNL', 'CASHRECJNL');
+    GLEntry.SETFILTER("Reason Code", '@*ADJ*|@*CORR*|@*RECLASS*');
+    FilteredCount := GLEntry.COUNT;
+
+    // Value entry complex filtering
+    ValueEntry.RESET;
+    ValueEntry.SETCURRENTKEY("Item No.", "Posting Date", "Entry Type");
+    ValueEntry.SETRANGE("Posting Date", CALCDATE('<-1Y>', TODAY), TODAY);
+    ValueEntry.SETFILTER("Item No.", '@ITEM*|@PROD*|@MAT*|@FERT*');
+    ValueEntry.SETFILTER("Entry Type", '%1|%2|%3|%4|%5',
+      ValueEntry."Entry Type"::"Direct Cost",
+      ValueEntry."Entry Type"::Revaluation,
+      ValueEntry."Entry Type"::Rounding,
+      ValueEntry."Entry Type"::Variance,
+      ValueEntry."Entry Type"::"Indirect Cost");
+    ValueEntry.SETFILTER("Valued Quantity", '<>%1', 0);
+    ValueEntry.SETFILTER("Cost Amount (Actual)", '<>%1', 0);
+    ValueEntry.SETFILTER("Sales Amount (Actual)", '<>%1', 0);
+    ValueEntry.SETFILTER("Location Code", '%1|%2|%3|%4|%5|%6', 'MAIN', 'WH01', 'WH02', 'TRANSIT', 'PRODUCTION', 'QC');
+    ValueEntry.SETFILTER("Document Type", '%1|%2|%3|%4',
+      ValueEntry."Document Type"::"Sales Shipment",
+      ValueEntry."Document Type"::"Purchase Receipt",
+      ValueEntry."Document Type"::"Transfer Receipt",
+      ValueEntry."Document Type"::"Production Order");
+    ValueEntry.SETFILTER("Document No.", '<>%1', '');
+    ValueEntry.SETFILTER("Item Ledger Entry Type", '%1|%2|%3|%4',
+      ValueEntry."Item Ledger Entry Type"::Purchase,
+      ValueEntry."Item Ledger Entry Type"::Sale,
+      ValueEntry."Item Ledger Entry Type"::Output,
+      ValueEntry."Item Ledger Entry Type"::Consumption);
+    ValueEntry.SETFILTER("Source Type", '%1|%2|%3',
+      ValueEntry."Source Type"::Customer,
+      ValueEntry."Source Type"::Vendor,
+      ValueEntry."Source Type"::Item);
+    ValueEntry.SETFILTER("Source No.", '<>%1', '');
+    ValueEntry.SETFILTER("Global Dimension 1 Code", '@SALES*|@PROD*|@SERV*');
+    ValueEntry.SETFILTER("Global Dimension 2 Code", '@*REGION*|@*COUNTRY*');
+    ValueEntry.SETFILTER("Inventory Posting Group", '%1|%2|%3', 'FINISHED', 'RAW', 'RESALE');
+    ValueEntry.SETFILTER("Gen. Bus. Posting Group", '%1|%2|%3', 'DOMESTIC', 'EU', 'EXPORT');
+    ValueEntry.SETFILTER("Gen. Prod. Posting Group", '<>%1', '');
+    ValueEntry.SETFILTER("Variant Code", '%1|%2|%3|%4|%5', '', 'VAR1', 'VAR2', 'VAR3', 'VAR4');
+    ValueEntry.SETRANGE("Partial Revaluation", FALSE);
+    ValueEntry.SETFILTER("Lot No.", '<>%1', '');
+    ValueEntry.SETFILTER("Serial No.", '<>%1', '');
+    ValueEntry.SETFILTER("Job No.", '<>%1', '');
+    FilteredCount := ValueEntry.COUNT;
+  end;
+
+  var
+    TextConst001: Label 'ComplexMessage[%1][%2][%3][%4][%5][%6][%7][%8][%9][%10][%11][%12][%13][%14][%15][%16][%17][%18][%19][%20]';
+    TextConst002: Label '<Document><Header Timestamp="%1" Amount="%2" User="%3" Company="%4" Session="%5"/><Transaction Type="%6" Status="%7" Category="%8" Subcategory="%9" Region="%10" Department="%11" CostCenter="%12" Project="%13" Activity="%14" Resource="%15" Location="%16" Dim1="%17" Dim2="%18" Dim3="%19" Dim4="%20"/></Document>';
+    TextConst003: Label '{"metadata":{"user":"%1","timestamp":"%2","calculation":"%3","aggregation":"%4","transformation":"%5","status":"%6","processed":"%7","iteration":"%8"},"system":{"engine":"%9","module":"%10","source":"%11","validation":"%12","errorHandling":"%13","logging":"%14","cache":"%15","compression":"%16","encryption":"%17","protocol":"%18","authentication":"%19","authorization":"%20"}}';
+    TextConst004: Label 'VeryLongTextConstantWithEmbeddedXMLContent<Root><Metadata><User>%USER%</User><Company>%COMPANY%</Company><Timestamp>%TIMESTAMP%</Timestamp><SessionID>%SESSION%</SessionID><Version>2.5.1</Version></Metadata><Payload><Transaction ID="%TRANSACTION%" Type="%TYPE%" Status="%STATUS%" Amount="%AMOUNT%" Currency="%CURRENCY%"><Details><Line No="%LINE%" Item="%ITEM%" Quantity="%QTY%" UnitPrice="%PRICE%" Discount="%DISC%" VAT="%VAT%" Total="%TOTAL%"/><Dimensions><Dimension Code="DEPT" Value="%DEPT%"/><Dimension Code="PROJ" Value="%PROJ%"/><Dimension Code="REGION" Value="%REGION%"/></Dimensions></Details></Transaction></Payload><Footer><Checksum>%CHECKSUM%</Checksum><Signature>%SIGNATURE%</Signature></Footer></Root>';
+    TextConst005: Label 'VeryLongTextConstantWithEmbeddedJSONContent{"schema":"PerformanceTestRecord","version":"1.0.0","metadata":{"generatedBy":"SyntheticFixtureGenerator","generatedAt":"2024-01-15T10:30:00Z","purpose":"PerformanceTesting","complexity":"High"},"data":{"id":"REC-000001","type":"TestRecord","status":"Active","attributes":{"field1":"Value with special chars: <>&\"''","field2":"Unicode: \u00E9\u00E8\u00EA\u00EB\u00F1\u00F6\u00FC","field3":"Escaped quotes: \"nested \"\"double\"\" quotes\"","field4":"Long value: AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJKKKKLLLLMMMMNNNNOOOOPPPPQQQQRRRRSSSSTTTTUUUUVVVVWWWWXXXXYYYYZZZZ","field5":"Numbers: 0123456789","field6":"Symbols: !@#$%^&*()_+-=[]{}|;:,.<>?/~`"},"nested":{"level1":{"level2":{"level3":{"level4":{"level5":"DeepValue"}}}}},"array":[1,2,3,4,5,6,7,8,9,10]}}';
+    TextConst006: Label 'ProcessingRule[Priority=%1][Category=%2][Type=%3][Status=%4][Validation=%5][Threshold=%6][MinValue=%7][MaxValue=%8][DefaultValue=%9][Unit=%10][Format=%11][Precision=%12][Rounding=%13][Calculation=%14][Formula=%15][Expression=%16][Condition=%17][Action=%18][Result=%19][Output=%20]';
+    TextConst007: Label '<ProcessingConfiguration><General><ProcessingMode>Batch</ProcessingMode><ThreadCount>%1</ThreadCount><BatchSize>%2</BatchSize><Timeout>%3</Timeout><Retry>%4</Retry></General><Validation><EnableValidation>%5</EnableValidation><StrictMode>%6</StrictMode><WarningLevel>%7</WarningLevel><ErrorHandling>%8</ErrorHandling></Validation><Performance><CacheEnabled>%9</CacheEnabled><CacheSize>%10</CacheSize><CompressionEnabled>%11</CompressionEnabled><OptimizationLevel>%12</OptimizationLevel></Performance><Logging><LogLevel>%13</LogLevel><LogTarget>%14</LogTarget><LogFormat>%15</LogFormat><LogRotation>%16</LogRotation></Logging><Security><EncryptionEnabled>%17</EncryptionEnabled><EncryptionAlgorithm>%18</EncryptionAlgorithm><AuthenticationMethod>%19</AuthenticationMethod><AuthorizationPolicy>%20</AuthorizationPolicy></Security></ProcessingConfiguration>';
+    TextConst008: Label '{"configuration":{"processing":{"mode":"%1","threads":%2,"batchSize":%3,"timeout":%4,"retry":%5},"validation":{"enabled":%6,"strict":%7,"warningLevel":"%8","errorHandling":"%9"},"performance":{"cache":{"enabled":%10,"size":%11},"compression":{"enabled":%12,"algorithm":"%13"},"optimization":"%14"},"logging":{"level":"%15","target":"%16","format":"%17","rotation":"%18"},"security":{"encryption":{"enabled":%19,"algorithm":"%20"}}}}';
+}

@@ -1,0 +1,1993 @@
+// SYNTHETIC PERFORMANCE TEST FIXTURE - 100% GENERATED
+// Purpose: Large form/dashboard scenario with 50+ controls and complex action patterns
+// Target: ~2000 lines, 60KB
+
+PAGE 50003 "ACME Sales Dashboard"
+{
+    PageType = Document;
+    SourceTable = "ACME Sales Document";
+    Caption = 'ACME Sales Dashboard - Advanced Analytics';
+    UsageCategory = Documents;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(content)
+        {
+            group(GeneralInfo)
+            {
+                Caption = 'General Information';
+
+                field("Document No."; "Document No.")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the document number for this ACME sales record';
+
+                    trigger OnValidate()
+                    begin
+                        if "Document No." = '' then
+                            Error(DocumentNoEmptyErr);
+                        ValidateDocumentStructure();
+                        UpdateRelatedRecords();
+                    end;
+                }
+
+                field("Customer No."; "Customer No.")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the customer number from ACME customer database';
+
+                    trigger OnValidate()
+                    begin
+                        if "Customer No." <> '' then begin
+                            ValidateCustomerExists();
+                            CalculateCustomerCreditLimit();
+                            UpdateCustomerStatistics();
+                        end;
+                    end;
+                }
+
+                field("Customer Name"; "Customer Name")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Displays the customer name';
+                    Editable = false;
+                }
+
+                field("Posting Date"; "Posting Date")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies when the document will be posted';
+
+                    trigger OnValidate()
+                    begin
+                        ValidatePostingDate();
+                        CheckFiscalPeriod();
+                        UpdatePeriodStatistics();
+                    end;
+                }
+
+                field("Document Date"; "Document Date")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the date when the document was created';
+                }
+
+                field("Sales Person Code"; "Sales Person Code")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the salesperson assigned to this document';
+
+                    trigger OnValidate()
+                    begin
+                        ValidateSalesPersonActive();
+                        CalculateCommissionRate();
+                    end;
+                }
+
+                field("Territory Code"; "Territory Code")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the sales territory';
+                }
+
+                field("Currency Code"; "Currency Code")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the currency code';
+
+                    trigger OnValidate()
+                    begin
+                        UpdateExchangeRates();
+                        RecalculateAmounts();
+                    end;
+                }
+
+                field("Payment Terms Code"; "Payment Terms Code")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the payment terms';
+                }
+
+                field("Shipment Method Code"; "Shipment Method Code")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the shipment method';
+                }
+            }
+
+            group(AmountDetails)
+            {
+                Caption = 'Amount Details';
+
+                field("Total Amount"; "Total Amount")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the total amount excluding VAT';
+                    Editable = false;
+                    Style = Strong;
+                }
+
+                field("Total VAT Amount"; "Total VAT Amount")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the total VAT amount';
+                    Editable = false;
+                }
+
+                field("Total Amount Including VAT"; "Total Amount Including VAT")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the total amount including VAT';
+                    Editable = false;
+                    Style = Strong;
+                }
+
+                field("Line Discount Amount"; "Line Discount Amount")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the total line discount amount';
+                    Editable = false;
+                }
+
+                field("Invoice Discount Amount"; "Invoice Discount Amount")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the invoice discount amount';
+
+                    trigger OnValidate()
+                    begin
+                        if "Invoice Discount Amount" > "Total Amount" then
+                            Error(DiscountTooLargeErr);
+                        RecalculateDiscounts();
+                    end;
+                }
+
+                field("Total Discount Percentage"; "Total Discount Percentage")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the total discount percentage';
+                    Editable = false;
+                }
+
+                field("Amount to Customer"; "Amount to Customer")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the final amount to be paid by customer';
+                    Editable = false;
+                    Style = StrongAccent;
+                }
+            }
+
+            group(ShippingBilling)
+            {
+                Caption = 'Shipping and Billing';
+
+                field("Ship-to Code"; "Ship-to Code")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the ship-to address code';
+
+                    trigger OnValidate()
+                    begin
+                        UpdateShippingAddress();
+                        ValidateShippingZone();
+                    end;
+                }
+
+                field("Ship-to Name"; "Ship-to Name")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the ship-to name';
+                }
+
+                field("Ship-to Address"; "Ship-to Address")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the ship-to address';
+                }
+
+                field("Ship-to City"; "Ship-to City")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the ship-to city';
+                }
+
+                field("Ship-to Post Code"; "Ship-to Post Code")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the ship-to postal code';
+                }
+
+                field("Ship-to Country"; "Ship-to Country")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the ship-to country';
+
+                    trigger OnValidate()
+                    begin
+                        ValidateCountryCode();
+                        UpdateTaxRules();
+                    end;
+                }
+
+                field("Bill-to Customer No."; "Bill-to Customer No.")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the bill-to customer number';
+                }
+
+                field("Bill-to Name"; "Bill-to Name")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the bill-to name';
+                }
+
+                field("Bill-to Address"; "Bill-to Address")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the bill-to address';
+                }
+
+                field("Bill-to City"; "Bill-to City")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the bill-to city';
+                }
+            }
+
+            group(StatusTracking)
+            {
+                Caption = 'Status and Tracking';
+
+                field(Status; Status)
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the current status of the document';
+                    Editable = false;
+                    Style = Attention;
+                }
+
+                field("Approval Status"; "Approval Status")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the approval status';
+                    Editable = false;
+                }
+
+                field("Workflow Status"; "Workflow Status")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the workflow status';
+                    Editable = false;
+                }
+
+                field("Priority Level"; "Priority Level")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the priority level';
+
+                    trigger OnValidate()
+                    begin
+                        case "Priority Level" of
+                            "Priority Level"::Critical:
+                                SendCriticalNotification();
+                            "Priority Level"::High:
+                                SendHighPriorityNotification();
+                            "Priority Level"::Normal:
+                                UpdateNormalWorkflow();
+                            "Priority Level"::Low:
+                                UpdateLowPriorityQueue();
+                        end;
+                    end;
+                }
+
+                field("Processing Stage"; "Processing Stage")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the current processing stage';
+                    Editable = false;
+                }
+
+                field("Last Modified Date"; "Last Modified Date")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows when the document was last modified';
+                    Editable = false;
+                }
+
+                field("Last Modified By"; "Last Modified By")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows who last modified the document';
+                    Editable = false;
+                }
+            }
+
+            group(BusinessMetrics)
+            {
+                Caption = 'Business Metrics';
+
+                field("Profit Margin %"; "Profit Margin %")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the calculated profit margin percentage';
+                    Editable = false;
+                    Style = Favorable;
+                }
+
+                field("Cost Amount"; "Cost Amount")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the total cost amount';
+                    Editable = false;
+                }
+
+                field("Profit Amount"; "Profit Amount")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the calculated profit amount';
+                    Editable = false;
+                    Style = Favorable;
+                }
+
+                field("Commission Amount"; "Commission Amount")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the commission amount for salesperson';
+                    Editable = false;
+                }
+
+                field("Bonus Eligible"; "Bonus Eligible")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Indicates if this sale is eligible for bonus';
+                }
+
+                field("Target Achievement %"; "Target Achievement %")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the target achievement percentage';
+                    Editable = false;
+                }
+
+                field("Quarter Target"; "Quarter Target")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the quarterly target';
+                    Editable = false;
+                }
+
+                field("YTD Sales Amount"; "YTD Sales Amount")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows year-to-date sales amount';
+                    Editable = false;
+                }
+            }
+
+            group(AdvancedOptions)
+            {
+                Caption = 'Advanced Options';
+
+                field("Risk Assessment Level"; "Risk Assessment Level")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the risk assessment level';
+                }
+
+                field("Credit Check Status"; "Credit Check Status")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the credit check status';
+                    Editable = false;
+                }
+
+                field("Fraud Detection Score"; "Fraud Detection Score")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the fraud detection score';
+                    Editable = false;
+                }
+
+                field("Compliance Status"; "Compliance Status")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the compliance verification status';
+                    Editable = false;
+                }
+
+                field("External Reference No."; "External Reference No.")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies external reference number';
+                }
+
+                field("Campaign Code"; "Campaign Code")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the marketing campaign code';
+                }
+
+                field("Source Channel"; "Source Channel")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the source channel';
+                }
+
+                field("Customer Rating"; "Customer Rating")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Shows the customer rating';
+                    Editable = false;
+                }
+            }
+        }
+
+        area(factboxes)
+        {
+            part(CustomerStatistics; "ACME Customer Statistics")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Customer No." = FIELD("Customer No.");
+            }
+
+            part(SalesPersonStatistics; "ACME Salesperson Stats")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Salesperson Code" = FIELD("Sales Person Code");
+            }
+
+            systempart(Notes; Notes)
+            {
+                ApplicationArea = All;
+            }
+
+            systempart(Links; Links)
+            {
+                ApplicationArea = All;
+            }
+        }
+    }
+
+    actions
+    {
+        area(processing)
+        {
+            group(ProcessingActions)
+            {
+                Caption = 'Processing';
+                Image = Process;
+
+                action(Post)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Post';
+                    Image = Post;
+                    Promoted = true;
+                    PromotedCategory = Process;
+                    PromotedIsBig = true;
+                    ToolTip = 'Post the document to the general ledger';
+
+                    trigger OnAction()
+                    begin
+                        if not Confirm(ConfirmPostQst, false, "Document No.") then
+                            exit;
+
+                        ValidateBeforePosting();
+                        PerformCreditCheck();
+
+                        if CheckApprovalRequired() then begin
+                            Error(ApprovalRequiredErr);
+                            exit;
+                        end;
+
+                        ExecutePostingRoutine();
+                        UpdatePostedStatistics();
+                        SendPostingNotifications();
+                        Message(PostSuccessMsg, "Document No.");
+                    end;
+                }
+
+                action(PostAndSend)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Post and Send';
+                    Image = PostMail;
+                    Promoted = true;
+                    PromotedCategory = Process;
+                    ToolTip = 'Post the document and send it to the customer';
+
+                    trigger OnAction()
+                    begin
+                        if not Confirm(ConfirmPostAndSendQst, false, "Customer Name") then
+                            exit;
+
+                        ValidateBeforePosting();
+                        ExecutePostingRoutine();
+
+                        case "Send Method" of
+                            "Send Method"::Email:
+                                SendDocumentByEmail();
+                            "Send Method"::Print:
+                                PrintAndSendDocument();
+                            "Send Method"::Electronic:
+                                SendElectronicDocument();
+                            else
+                                Error(InvalidSendMethodErr);
+                        end;
+
+                        Message(PostAndSendSuccessMsg);
+                    end;
+                }
+
+                action(PostAndPrint)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Post and Print';
+                    Image = PostPrint;
+                    Promoted = true;
+                    PromotedCategory = Process;
+                    ToolTip = 'Post and print the document';
+
+                    trigger OnAction()
+                    begin
+                        ValidateBeforePosting();
+                        ExecutePostingRoutine();
+                        PrintDocument();
+                        Message(PostAndPrintSuccessMsg);
+                    end;
+                }
+
+                action(Release)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Release';
+                    Image = ReleaseDoc;
+                    Promoted = true;
+                    PromotedCategory = Process;
+                    ToolTip = 'Release the document for further processing';
+
+                    trigger OnAction()
+                    begin
+                        if Status = Status::Released then
+                            Error(AlreadyReleasedErr);
+
+                        ValidateForRelease();
+                        PerformReleaseChecks();
+                        UpdateStatusToReleased();
+                        Message(ReleaseSuccessMsg);
+                    end;
+                }
+
+                action(Reopen)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Reopen';
+                    Image = ReOpen;
+                    Promoted = true;
+                    PromotedCategory = Process;
+                    ToolTip = 'Reopen the document for editing';
+
+                    trigger OnAction()
+                    begin
+                        if Status = Status::Open then
+                            Error(AlreadyOpenErr);
+
+                        CheckReopenPermissions();
+                        UpdateStatusToOpen();
+                        Message(ReopenSuccessMsg);
+                    end;
+                }
+
+                action(CalculateInvoiceDiscount)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Calculate Invoice Discount';
+                    Image = CalculateInvoiceDiscount;
+                    ToolTip = 'Calculate the invoice discount based on customer setup';
+
+                    trigger OnAction()
+                    begin
+                        CalculateInvoiceDiscountAmount();
+                        RecalculateAllAmounts();
+                        Message(DiscountCalculatedMsg);
+                    end;
+                }
+            }
+
+            group(ApprovalActions)
+            {
+                Caption = 'Approval';
+                Image = Approval;
+
+                action(SendApprovalRequest)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Send Approval Request';
+                    Image = SendApprovalRequest;
+                    Promoted = true;
+                    PromotedCategory = Category4;
+                    ToolTip = 'Send this document for approval';
+
+                    trigger OnAction()
+                    begin
+                        if "Approval Status" <> "Approval Status"::Open then
+                            Error(CannotSendForApprovalErr);
+
+                        ValidateApprovalRequirements();
+                        CreateApprovalRequest();
+                        SendApprovalNotifications();
+                        UpdateApprovalStatus("Approval Status"::"Pending Approval");
+                        Message(ApprovalRequestSentMsg);
+                    end;
+                }
+
+                action(CancelApprovalRequest)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Cancel Approval Request';
+                    Image = CancelApprovalRequest;
+                    Promoted = true;
+                    PromotedCategory = Category4;
+                    ToolTip = 'Cancel the approval request';
+
+                    trigger OnAction()
+                    begin
+                        if not Confirm(ConfirmCancelApprovalQst, false) then
+                            exit;
+
+                        CancelApprovalEntry();
+                        UpdateApprovalStatus("Approval Status"::Open);
+                        Message(ApprovalCancelledMsg);
+                    end;
+                }
+
+                action(Approve)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Approve';
+                    Image = Approve;
+                    Promoted = true;
+                    PromotedCategory = Category4;
+                    ToolTip = 'Approve this document';
+
+                    trigger OnAction()
+                    begin
+                        ValidateApproverPermissions();
+                        ProcessApproval();
+                        UpdateApprovalStatus("Approval Status"::Approved);
+                        SendApprovalConfirmation();
+                        Message(DocumentApprovedMsg);
+                    end;
+                }
+
+                action(Reject)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Reject';
+                    Image = Reject;
+                    Promoted = true;
+                    PromotedCategory = Category4;
+                    ToolTip = 'Reject this document';
+
+                    trigger OnAction()
+                    begin
+                        if not Confirm(ConfirmRejectQst, false) then
+                            exit;
+
+                        ValidateApproverPermissions();
+                        ProcessRejection();
+                        UpdateApprovalStatus("Approval Status"::Rejected);
+                        SendRejectionNotification();
+                        Message(DocumentRejectedMsg);
+                    end;
+                }
+            }
+
+            group(NavigationActions)
+            {
+                Caption = 'Navigate';
+                Image = Navigate;
+
+                action(Customer)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Customer';
+                    Image = Customer;
+                    RunObject = Page "ACME Customer Card";
+                    RunPageLink = "No." = FIELD("Customer No.");
+                    ToolTip = 'View or edit the customer record';
+                }
+
+                action(SalesPerson)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Salesperson';
+                    Image = SalesPerson;
+                    ToolTip = 'View salesperson details';
+
+                    trigger OnAction()
+                    begin
+                        ShowSalesPersonDetails();
+                    end;
+                }
+
+                action(CustomerLedgerEntries)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Customer Ledger Entries';
+                    Image = CustomerLedger;
+                    ToolTip = 'View customer ledger entries';
+
+                    trigger OnAction()
+                    begin
+                        ShowCustomerLedgerEntries();
+                    end;
+                }
+
+                action(PostedDocuments)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Posted Documents';
+                    Image = PostedOrder;
+                    ToolTip = 'View posted documents for this customer';
+
+                    trigger OnAction()
+                    begin
+                        FilterPostedDocuments();
+                        ShowPostedDocumentsList();
+                    end;
+                }
+
+                action(Dimensions)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Dimensions';
+                    Image = Dimensions;
+                    ToolTip = 'View or edit dimension assignments';
+
+                    trigger OnAction()
+                    begin
+                        ShowDimensions();
+                    end;
+                }
+            }
+
+            group(ReportActions)
+            {
+                Caption = 'Reports';
+                Image = Report;
+
+                action(PrintDocument)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Print';
+                    Image = Print;
+                    Promoted = true;
+                    PromotedCategory = Report;
+                    ToolTip = 'Print the document';
+
+                    trigger OnAction()
+                    begin
+                        SetReportSelection();
+                        PrintDocument();
+                    end;
+                }
+
+                action(Preview)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Preview';
+                    Image = View;
+                    ToolTip = 'Preview the document';
+
+                    trigger OnAction()
+                    begin
+                        PreviewDocument();
+                    end;
+                }
+
+                action(CustomerStatisticsReport)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Customer Statistics';
+                    Image = Report;
+                    RunObject = Report "ACME Customer Statistics";
+                    ToolTip = 'View customer statistics report';
+                }
+
+                action(SalesAnalysis)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Sales Analysis';
+                    Image = Report;
+                    ToolTip = 'Run sales analysis report';
+
+                    trigger OnAction()
+                    begin
+                        RunSalesAnalysisReport();
+                    end;
+                }
+
+                action(ProfitabilityReport)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Profitability Analysis';
+                    Image = Report;
+                    ToolTip = 'View profitability analysis';
+
+                    trigger OnAction()
+                    begin
+                        CalculateProfitability();
+                        ShowProfitabilityReport();
+                    end;
+                }
+            }
+
+            group(FunctionActions)
+            {
+                Caption = 'Functions';
+                Image = Action;
+
+                action(CopyDocument)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Copy Document';
+                    Image = Copy;
+                    ToolTip = 'Copy from another document';
+
+                    trigger OnAction()
+                    begin
+                        SelectDocumentToCopy();
+                        PerformCopyOperation();
+                        RecalculateAllAmounts();
+                        Message(DocumentCopiedMsg);
+                    end;
+                }
+
+                action(ArchiveDocument)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Archive Document';
+                    Image = Archive;
+                    ToolTip = 'Archive this document';
+
+                    trigger OnAction()
+                    begin
+                        if not Confirm(ConfirmArchiveQst, false) then
+                            exit;
+
+                        CreateArchiveEntry();
+                        Message(DocumentArchivedMsg);
+                    end;
+                }
+
+                action(ExportToExcel)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Export to Excel';
+                    Image = Excel;
+                    ToolTip = 'Export document data to Excel';
+
+                    trigger OnAction()
+                    begin
+                        PrepareExcelExport();
+                        ExportDataToExcel();
+                        Message(ExportSuccessMsg);
+                    end;
+                }
+
+                action(AttachDocument)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Attach Document';
+                    Image = Attach;
+                    ToolTip = 'Attach files to this document';
+
+                    trigger OnAction()
+                    begin
+                        OpenAttachmentDialog();
+                    end;
+                }
+
+                action(SendCustomNotification)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Send Notification';
+                    Image = Notification;
+                    ToolTip = 'Send custom notification';
+
+                    trigger OnAction()
+                    begin
+                        CreateCustomNotification();
+                        SendToRecipients();
+                        Message(NotificationSentMsg);
+                    end;
+                }
+            }
+        }
+
+        area(navigation)
+        {
+            group(RelatedInformation)
+            {
+                Caption = 'Related Information';
+                Image = Info;
+
+                action(Statistics)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Statistics';
+                    Image = Statistics;
+                    Promoted = true;
+                    PromotedCategory = Category5;
+                    ToolTip = 'View document statistics';
+
+                    trigger OnAction()
+                    begin
+                        CalculateStatistics();
+                        ShowStatisticsPage();
+                    end;
+                }
+
+                action(Comments)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Comments';
+                    Image = ViewComments;
+                    ToolTip = 'View or add comments';
+
+                    trigger OnAction()
+                    begin
+                        ShowCommentsPage();
+                    end;
+                }
+
+                action(ApprovalEntries)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Approval Entries';
+                    Image = Approvals;
+                    ToolTip = 'View approval entries';
+
+                    trigger OnAction()
+                    begin
+                        ShowApprovalEntries();
+                    end;
+                }
+
+                action(WorkflowHistory)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Workflow History';
+                    Image = WorkflowLog;
+                    ToolTip = 'View workflow history';
+
+                    trigger OnAction()
+                    begin
+                        ShowWorkflowHistory();
+                    end;
+                }
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    begin
+        InitializePageVariables();
+        LoadUserPreferences();
+        SetupPageFilters();
+
+        if UserSetup."Show Dashboard Metrics" then begin
+            CalculateDashboardMetrics();
+            UpdateVisibleControls();
+        end;
+
+        CheckUserPermissions();
+        ValidateUserSetup();
+
+        case CurrentView of
+            CurrentView::Standard:
+                SetStandardView();
+            CurrentView::Advanced:
+                SetAdvancedView();
+            CurrentView::Compact:
+                SetCompactView();
+            else
+                SetDefaultView();
+        end;
+    end;
+
+    trigger OnAfterGetRecord()
+    begin
+        CalculateDisplayFields();
+        UpdateStatusIndicators();
+
+        if "Customer No." <> '' then begin
+            LoadCustomerData();
+            CalculateCustomerMetrics();
+            CheckCreditLimitWarning();
+        end;
+
+        if "Sales Person Code" <> '' then begin
+            LoadSalesPersonData();
+            CalculateSalesPersonMetrics();
+        end;
+
+        ValidateWorkflowState();
+        UpdateActionVisibility();
+        CheckPendingApprovals();
+
+        case Status of
+            Status::Open:
+                EnableEditControls();
+            Status::Released:
+                DisableEditControls();
+            Status::Posted:
+                SetPostedViewMode();
+            Status::Cancelled:
+                SetCancelledViewMode();
+        end;
+    end;
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    begin
+        InitializeNewDocument();
+        SetDefaultValues();
+        AssignDocumentNumber();
+
+        "Posting Date" := WorkDate();
+        "Document Date" := WorkDate();
+        Status := Status::Open;
+        "Approval Status" := "Approval Status"::Open;
+
+        if UserSetup."Default Territory" <> '' then
+            "Territory Code" := UserSetup."Default Territory";
+
+        if UserSetup."Default Salesperson" <> '' then
+            "Sales Person Code" := UserSetup."Default Salesperson";
+    end;
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    begin
+        ValidateRequiredFields();
+        PerformBusinessValidation();
+        LogDocumentCreation();
+        UpdateCreationStatistics();
+    end;
+
+    trigger OnModifyRecord(): Boolean
+    begin
+        ValidateModificationAllowed();
+        LogDocumentModification();
+        UpdateModificationStatistics();
+        "Last Modified Date" := Today;
+        "Last Modified By" := UserId;
+    end;
+
+    trigger OnDeleteRecord(): Boolean
+    begin
+        if not Confirm(ConfirmDeleteQst, false, "Document No.") then
+            exit(false);
+
+        ValidateDeletionAllowed();
+        PerformDeletionChecks();
+        LogDocumentDeletion();
+
+        case Status of
+            Status::Posted:
+                Error(CannotDeletePostedErr);
+            Status::Released:
+                if not CheckDeleteReleasedPermission() then
+                    Error(CannotDeleteReleasedErr);
+        end;
+    end;
+
+    trigger OnClosePage()
+    begin
+        SaveUserPreferences();
+        CleanupTemporaryData();
+        FinalizePageState();
+
+        if HasPendingChanges() then begin
+            if Confirm(SaveChangesQst, true) then
+                SavePendingChanges();
+        end;
+    end;
+
+    var
+        UserSetup: Record "ACME User Setup";
+        SalesSetup: Record "ACME Sales Setup";
+        Customer: Record "ACME Customer";
+        SalesPerson: Record "ACME Salesperson";
+        TempStatistics: Record "ACME Statistics Buffer" temporary;
+        ApprovalMgt: Codeunit "ACME Approval Management";
+        DocumentMgt: Codeunit "ACME Document Management";
+        NotificationMgt: Codeunit "ACME Notification Management";
+        ExportMgt: Codeunit "ACME Export Management";
+        ValidationMgt: Codeunit "ACME Validation Management";
+        CurrentView: Option Standard,Advanced,Compact,Custom;
+        Status: Option Open,Released,Posted,Cancelled;
+        DashboardMetricsVisible: Boolean;
+        EditControlsEnabled: Boolean;
+        ApprovalActionsVisible: Boolean;
+        PostingActionsEnabled: Boolean;
+        CreditLimitWarningVisible: Boolean;
+        HighPriorityIndicator: Boolean;
+        ComplianceCheckPassed: Boolean;
+        HasPendingWorkflow: Boolean;
+        IsApprover: Boolean;
+        CanModifyDocument: Boolean;
+        ShowAdvancedMetrics: Boolean;
+
+        DocumentNoEmptyErr: Label 'Document number cannot be empty.';
+        DiscountTooLargeErr: Label 'Discount amount cannot exceed total amount.';
+        ApprovalRequiredErr: Label 'This document requires approval before posting.';
+        InvalidSendMethodErr: Label 'Invalid send method specified.';
+        AlreadyReleasedErr: Label 'Document is already released.';
+        AlreadyOpenErr: Label 'Document is already open.';
+        CannotSendForApprovalErr: Label 'Cannot send document for approval in current state.';
+        CannotDeletePostedErr: Label 'Cannot delete posted documents.';
+        CannotDeleteReleasedErr: Label 'You do not have permission to delete released documents.';
+        ConfirmPostQst: Label 'Do you want to post document %1?';
+        ConfirmPostAndSendQst: Label 'Do you want to post and send this document to %1?';
+        ConfirmCancelApprovalQst: Label 'Do you want to cancel the approval request?';
+        ConfirmRejectQst: Label 'Do you want to reject this document?';
+        ConfirmArchiveQst: Label 'Do you want to archive this document?';
+        ConfirmDeleteQst: Label 'Do you want to delete document %1?';
+        SaveChangesQst: Label 'Do you want to save your changes?';
+        PostSuccessMsg: Label 'Document %1 has been posted successfully.';
+        PostAndSendSuccessMsg: Label 'Document has been posted and sent successfully.';
+        PostAndPrintSuccessMsg: Label 'Document has been posted and sent to printer.';
+        ReleaseSuccessMsg: Label 'Document has been released successfully.';
+        ReopenSuccessMsg: Label 'Document has been reopened successfully.';
+        DiscountCalculatedMsg: Label 'Invoice discount has been calculated.';
+        ApprovalRequestSentMsg: Label 'Approval request has been sent.';
+        ApprovalCancelledMsg: Label 'Approval request has been cancelled.';
+        DocumentApprovedMsg: Label 'Document has been approved.';
+        DocumentRejectedMsg: Label 'Document has been rejected.';
+        DocumentCopiedMsg: Label 'Document has been copied successfully.';
+        DocumentArchivedMsg: Label 'Document has been archived.';
+        ExportSuccessMsg: Label 'Data has been exported successfully.';
+        NotificationSentMsg: Label 'Notification has been sent.';
+
+    local procedure InitializePageVariables()
+    begin
+        DashboardMetricsVisible := true;
+        EditControlsEnabled := true;
+        ApprovalActionsVisible := false;
+        PostingActionsEnabled := false;
+        CreditLimitWarningVisible := false;
+
+        if not UserSetup.Get(UserId) then begin
+            UserSetup.Init();
+            UserSetup."User ID" := UserId;
+            UserSetup.Insert();
+        end;
+
+        if not SalesSetup.Get() then
+            SalesSetup.Init();
+    end;
+
+    local procedure LoadUserPreferences()
+    begin
+        if UserSetup."Default View" <> '' then begin
+            case UserSetup."Default View" of
+                'STANDARD':
+                    CurrentView := CurrentView::Standard;
+                'ADVANCED':
+                    CurrentView := CurrentView::Advanced;
+                'COMPACT':
+                    CurrentView := CurrentView::Compact;
+                else
+                    CurrentView := CurrentView::Standard;
+            end;
+        end;
+
+        ShowAdvancedMetrics := UserSetup."Show Advanced Metrics";
+    end;
+
+    local procedure SetupPageFilters()
+    var
+        FilterText: Text;
+    begin
+        if UserSetup."Territory Filter" <> '' then
+            SetFilter("Territory Code", UserSetup."Territory Filter");
+
+        if UserSetup."Salesperson Filter" <> '' then
+            SetFilter("Sales Person Code", UserSetup."Salesperson Filter");
+
+        if UserSetup."Date Filter" <> '' then begin
+            FilterText := UserSetup."Date Filter";
+            SetFilter("Posting Date", FilterText);
+        end;
+    end;
+
+    local procedure CalculateDashboardMetrics()
+    var
+        TotalSales: Decimal;
+        TotalProfit: Decimal;
+        AvgDiscount: Decimal;
+    begin
+        TempStatistics.Reset();
+        TempStatistics.DeleteAll();
+
+        TotalSales := CalculateTotalSalesAmount();
+        TotalProfit := CalculateTotalProfitAmount();
+
+        if TotalSales <> 0 then
+            AvgDiscount := ("Line Discount Amount" + "Invoice Discount Amount") / TotalSales * 100;
+
+        TempStatistics."Total Sales" := TotalSales;
+        TempStatistics."Total Profit" := TotalProfit;
+        TempStatistics."Average Discount" := AvgDiscount;
+        TempStatistics.Insert();
+    end;
+
+    local procedure UpdateVisibleControls()
+    begin
+        DashboardMetricsVisible := UserSetup."Show Dashboard Metrics";
+
+        case Status of
+            Status::Open:
+                begin
+                    EditControlsEnabled := true;
+                    PostingActionsEnabled := true;
+                end;
+            Status::Released:
+                begin
+                    EditControlsEnabled := false;
+                    PostingActionsEnabled := true;
+                end;
+            Status::Posted:
+                begin
+                    EditControlsEnabled := false;
+                    PostingActionsEnabled := false;
+                end;
+        end;
+    end;
+
+    local procedure CheckUserPermissions()
+    begin
+        CanModifyDocument := UserSetup."Can Modify Documents";
+        IsApprover := UserSetup."Approval Authority" > 0;
+
+        if UserSetup."Approval Authority" > 0 then
+            ApprovalActionsVisible := true;
+    end;
+
+    local procedure ValidateUserSetup()
+    begin
+        if not UserSetup."Sales Module Access" then
+            Error('You do not have access to the sales module.');
+
+        if UserSetup."Restrict Territory" then begin
+            if "Territory Code" <> UserSetup."Territory Filter" then
+                Error('You can only access documents in your territory.');
+        end;
+    end;
+
+    local procedure SetStandardView()
+    begin
+        ShowAdvancedMetrics := false;
+        DashboardMetricsVisible := true;
+    end;
+
+    local procedure SetAdvancedView()
+    begin
+        ShowAdvancedMetrics := true;
+        DashboardMetricsVisible := true;
+    end;
+
+    local procedure SetCompactView()
+    begin
+        ShowAdvancedMetrics := false;
+        DashboardMetricsVisible := false;
+    end;
+
+    local procedure SetDefaultView()
+    begin
+        CurrentView := CurrentView::Standard;
+        SetStandardView();
+    end;
+
+    local procedure CalculateDisplayFields()
+    var
+        TotalAmount: Decimal;
+        VATAmount: Decimal;
+    begin
+        TotalAmount := "Total Amount";
+        VATAmount := TotalAmount * SalesSetup."Default VAT %" / 100;
+
+        "Total VAT Amount" := VATAmount;
+        "Total Amount Including VAT" := TotalAmount + VATAmount;
+        "Amount to Customer" := "Total Amount Including VAT" - "Invoice Discount Amount";
+
+        if "Cost Amount" <> 0 then
+            "Profit Margin %" := ("Total Amount" - "Cost Amount") / "Total Amount" * 100;
+
+        "Profit Amount" := "Total Amount" - "Cost Amount";
+    end;
+
+    local procedure UpdateStatusIndicators()
+    begin
+        case "Priority Level" of
+            "Priority Level"::Critical,
+            "Priority Level"::High:
+                HighPriorityIndicator := true;
+            else
+                HighPriorityIndicator := false;
+        end;
+
+        ComplianceCheckPassed := "Compliance Status" = "Compliance Status"::Passed;
+        HasPendingWorkflow := "Workflow Status" = "Workflow Status"::Pending;
+    end;
+
+    local procedure LoadCustomerData()
+    begin
+        if Customer.Get("Customer No.") then begin
+            "Customer Name" := Customer.Name;
+            "Payment Terms Code" := Customer."Payment Terms Code";
+            "Currency Code" := Customer."Currency Code";
+        end;
+    end;
+
+    local procedure CalculateCustomerMetrics()
+    var
+        CustomerSales: Decimal;
+        CreditLimit: Decimal;
+    begin
+        if not Customer.Get("Customer No.") then
+            exit;
+
+        Customer.CalcFields("Balance (LCY)", "Sales (LCY)");
+        CustomerSales := Customer."Sales (LCY)";
+        CreditLimit := Customer."Credit Limit (LCY)";
+
+        if Customer."Balance (LCY)" + "Amount to Customer" > CreditLimit then
+            CreditLimitWarningVisible := true
+        else
+            CreditLimitWarningVisible := false;
+    end;
+
+    local procedure CheckCreditLimitWarning()
+    begin
+        if CreditLimitWarningVisible then begin
+            if SalesSetup."Block on Credit Limit" then
+                Error('Customer credit limit exceeded. Cannot proceed.');
+        end;
+    end;
+
+    local procedure LoadSalesPersonData()
+    begin
+        if SalesPerson.Get("Sales Person Code") then begin
+            CalculateCommissionRate();
+        end;
+    end;
+
+    local procedure CalculateSalesPersonMetrics()
+    var
+        TargetAmount: Decimal;
+        ActualAmount: Decimal;
+    begin
+        if not SalesPerson.Get("Sales Person Code") then
+            exit;
+
+        SalesPerson.CalcFields("Sales (LCY)");
+        ActualAmount := SalesPerson."Sales (LCY)";
+        TargetAmount := SalesPerson."Target Amount";
+
+        if TargetAmount <> 0 then
+            "Target Achievement %" := ActualAmount / TargetAmount * 100;
+    end;
+
+    local procedure ValidateWorkflowState()
+    begin
+        case "Workflow Status" of
+            "Workflow Status"::Pending:
+                HasPendingWorkflow := true;
+            "Workflow Status"::Approved:
+                HasPendingWorkflow := false;
+            "Workflow Status"::Rejected:
+                begin
+                    HasPendingWorkflow := false;
+                    EditControlsEnabled := false;
+                end;
+        end;
+    end;
+
+    local procedure UpdateActionVisibility()
+    begin
+        ApprovalActionsVisible := IsApprover and ("Approval Status" = "Approval Status"::"Pending Approval");
+        PostingActionsEnabled := (Status = Status::Released) and ("Approval Status" = "Approval Status"::Approved);
+    end;
+
+    local procedure CheckPendingApprovals()
+    begin
+        if "Approval Status" = "Approval Status"::"Pending Approval" then begin
+            HasPendingWorkflow := true;
+            EditControlsEnabled := false;
+        end;
+    end;
+
+    local procedure EnableEditControls()
+    begin
+        EditControlsEnabled := CanModifyDocument;
+    end;
+
+    local procedure DisableEditControls()
+    begin
+        EditControlsEnabled := false;
+    end;
+
+    local procedure SetPostedViewMode()
+    begin
+        EditControlsEnabled := false;
+        PostingActionsEnabled := false;
+        ApprovalActionsVisible := false;
+    end;
+
+    local procedure SetCancelledViewMode()
+    begin
+        EditControlsEnabled := false;
+        PostingActionsEnabled := false;
+        ApprovalActionsVisible := false;
+    end;
+
+    local procedure InitializeNewDocument()
+    begin
+        Status := Status::Open;
+        "Approval Status" := "Approval Status"::Open;
+        "Workflow Status" := "Workflow Status"::Open;
+        "Priority Level" := "Priority Level"::Normal;
+    end;
+
+    local procedure SetDefaultValues()
+    begin
+        "Posting Date" := WorkDate();
+        "Document Date" := WorkDate();
+        "Currency Code" := SalesSetup."Default Currency Code";
+        "Payment Terms Code" := SalesSetup."Default Payment Terms";
+    end;
+
+    local procedure AssignDocumentNumber()
+    begin
+        if "Document No." = '' then
+            "Document No." := DocumentMgt.GetNextDocumentNo('SALES-DOC');
+    end;
+
+    local procedure ValidateRequiredFields()
+    begin
+        if "Customer No." = '' then
+            Error('Customer No. must have a value.');
+
+        if "Posting Date" = 0D then
+            Error('Posting Date must have a value.');
+    end;
+
+    local procedure PerformBusinessValidation()
+    begin
+        ValidationMgt.ValidateDocument(Rec);
+
+        if not ComplianceCheckPassed then
+            Error('Document does not pass compliance checks.');
+    end;
+
+    local procedure LogDocumentCreation()
+    begin
+        DocumentMgt.LogActivity("Document No.", 'CREATE', UserId);
+    end;
+
+    local procedure UpdateCreationStatistics()
+    begin
+        "Last Modified Date" := Today;
+        "Last Modified By" := UserId;
+    end;
+
+    local procedure ValidateModificationAllowed()
+    begin
+        if Status = Status::Posted then
+            Error('Cannot modify posted documents.');
+
+        if not CanModifyDocument then
+            Error('You do not have permission to modify documents.');
+    end;
+
+    local procedure LogDocumentModification()
+    begin
+        DocumentMgt.LogActivity("Document No.", 'MODIFY', UserId);
+    end;
+
+    local procedure UpdateModificationStatistics()
+    begin
+        "Last Modified Date" := Today;
+        "Last Modified By" := UserId;
+    end;
+
+    local procedure ValidateDeletionAllowed()
+    begin
+        if Status = Status::Posted then
+            Error(CannotDeletePostedErr);
+
+        if "Approval Status" = "Approval Status"::"Pending Approval" then
+            Error('Cannot delete documents pending approval.');
+    end;
+
+    local procedure PerformDeletionChecks()
+    begin
+        if HasPostedEntries() then
+            Error('Cannot delete document with posted entries.');
+    end;
+
+    local procedure LogDocumentDeletion()
+    begin
+        DocumentMgt.LogActivity("Document No.", 'DELETE', UserId);
+    end;
+
+    local procedure CheckDeleteReleasedPermission(): Boolean
+    begin
+        exit(UserSetup."Can Delete Released");
+    end;
+
+    local procedure SaveUserPreferences()
+    begin
+        UserSetup.Modify();
+    end;
+
+    local procedure CleanupTemporaryData()
+    begin
+        TempStatistics.Reset();
+        TempStatistics.DeleteAll();
+    end;
+
+    local procedure FinalizePageState()
+    begin
+        DocumentMgt.FinalizeSession("Document No.");
+    end;
+
+    local procedure HasPendingChanges(): Boolean
+    begin
+        exit(Modify());
+    end;
+
+    local procedure SavePendingChanges()
+    begin
+        Modify(true);
+        Commit();
+    end;
+
+    local procedure ValidateDocumentStructure()
+    begin
+        ValidationMgt.ValidateDocumentNo("Document No.");
+    end;
+
+    local procedure UpdateRelatedRecords()
+    begin
+        DocumentMgt.UpdateRelatedDocuments("Document No.");
+    end;
+
+    local procedure ValidateCustomerExists()
+    begin
+        if not Customer.Get("Customer No.") then
+            Error('Customer %1 does not exist.', "Customer No.");
+    end;
+
+    local procedure CalculateCustomerCreditLimit()
+    begin
+        if Customer.Get("Customer No.") then
+            Customer.CalcFields("Balance (LCY)");
+    end;
+
+    local procedure UpdateCustomerStatistics()
+    begin
+        if Customer.Get("Customer No.") then
+            Customer.CalcFields("Sales (LCY)", "Balance (LCY)");
+    end;
+
+    local procedure ValidatePostingDate()
+    begin
+        if "Posting Date" < SalesSetup."Allow Posting From" then
+            Error('Posting date is before allowed posting period.');
+
+        if "Posting Date" > SalesSetup."Allow Posting To" then
+            Error('Posting date is after allowed posting period.');
+    end;
+
+    local procedure CheckFiscalPeriod()
+    var
+        AccountingPeriod: Record "ACME Accounting Period";
+    begin
+        AccountingPeriod.SetRange("Starting Date", 0D, "Posting Date");
+        if AccountingPeriod.FindLast() then begin
+            if AccountingPeriod.Closed then
+                Error('Cannot post to closed fiscal period.');
+        end;
+    end;
+
+    local procedure UpdatePeriodStatistics()
+    begin
+        // Update period statistics
+    end;
+
+    local procedure ValidateSalesPersonActive()
+    begin
+        if SalesPerson.Get("Sales Person Code") then begin
+            if not SalesPerson.Active then
+                Error('Salesperson %1 is not active.', "Sales Person Code");
+        end;
+    end;
+
+    local procedure CalculateCommissionRate()
+    begin
+        if SalesPerson.Get("Sales Person Code") then
+            "Commission Amount" := "Total Amount" * SalesPerson."Commission %" / 100;
+    end;
+
+    local procedure UpdateExchangeRates()
+    begin
+        // Update exchange rates for currency
+    end;
+
+    local procedure RecalculateAmounts()
+    begin
+        CalculateDisplayFields();
+    end;
+
+    local procedure SendCriticalNotification()
+    begin
+        NotificationMgt.SendCriticalAlert("Document No.", "Customer No.");
+    end;
+
+    local procedure SendHighPriorityNotification()
+    begin
+        NotificationMgt.SendHighPriorityAlert("Document No.");
+    end;
+
+    local procedure UpdateNormalWorkflow()
+    begin
+        "Workflow Status" := "Workflow Status"::Open;
+    end;
+
+    local procedure UpdateLowPriorityQueue()
+    begin
+        // Add to low priority queue
+    end;
+
+    local procedure ValidateBeforePosting()
+    begin
+        ValidateRequiredFields();
+        PerformBusinessValidation();
+
+        if "Total Amount" = 0 then
+            Error('Cannot post document with zero amount.');
+    end;
+
+    local procedure PerformCreditCheck()
+    begin
+        CalculateCustomerMetrics();
+        CheckCreditLimitWarning();
+    end;
+
+    local procedure CheckApprovalRequired(): Boolean
+    begin
+        if "Total Amount" > SalesSetup."Approval Threshold" then
+            exit("Approval Status" <> "Approval Status"::Approved);
+
+        exit(false);
+    end;
+
+    local procedure ExecutePostingRoutine()
+    begin
+        DocumentMgt.PostDocument(Rec);
+        Status := Status::Posted;
+        Modify();
+    end;
+
+    local procedure UpdatePostedStatistics()
+    begin
+        DocumentMgt.UpdatePostedStatistics("Document No.");
+    end;
+
+    local procedure SendPostingNotifications()
+    begin
+        NotificationMgt.SendPostingConfirmation("Document No.", "Customer No.");
+    end;
+
+    local procedure SendDocumentByEmail()
+    begin
+        DocumentMgt.SendByEmail("Document No.", "Customer No.");
+    end;
+
+    local procedure PrintAndSendDocument()
+    begin
+        PrintDocument();
+        DocumentMgt.SendByMail("Document No.");
+    end;
+
+    local procedure SendElectronicDocument()
+    begin
+        DocumentMgt.SendElectronicDocument("Document No.");
+    end;
+
+    local procedure PrintDocument()
+    begin
+        DocumentMgt.PrintDocument("Document No.");
+    end;
+
+    local procedure ValidateForRelease()
+    begin
+        ValidateRequiredFields();
+        PerformBusinessValidation();
+    end;
+
+    local procedure PerformReleaseChecks()
+    begin
+        if "Total Amount" = 0 then
+            Error('Cannot release document with zero amount.');
+    end;
+
+    local procedure UpdateStatusToReleased()
+    begin
+        Status := Status::Released;
+        Modify();
+    end;
+
+    local procedure CheckReopenPermissions()
+    begin
+        if not UserSetup."Can Reopen Documents" then
+            Error('You do not have permission to reopen documents.');
+    end;
+
+    local procedure UpdateStatusToOpen()
+    begin
+        Status := Status::Open;
+        Modify();
+    end;
+
+    local procedure CalculateInvoiceDiscountAmount()
+    var
+        DiscountPct: Decimal;
+    begin
+        if Customer.Get("Customer No.") then begin
+            DiscountPct := Customer."Invoice Disc. %";
+            "Invoice Discount Amount" := "Total Amount" * DiscountPct / 100;
+        end;
+    end;
+
+    local procedure RecalculateAllAmounts()
+    begin
+        CalculateDisplayFields();
+        Modify();
+    end;
+
+    local procedure RecalculateDiscounts()
+    begin
+        CalculateInvoiceDiscountAmount();
+        RecalculateAllAmounts();
+    end;
+
+    local procedure ValidateApprovalRequirements()
+    begin
+        if "Total Amount" = 0 then
+            Error('Cannot send document with zero amount for approval.');
+    end;
+
+    local procedure CreateApprovalRequest()
+    begin
+        ApprovalMgt.CreateApprovalRequest(Rec);
+    end;
+
+    local procedure SendApprovalNotifications()
+    begin
+        NotificationMgt.SendApprovalRequest("Document No.");
+    end;
+
+    local procedure UpdateApprovalStatus(NewStatus: Option)
+    begin
+        "Approval Status" := NewStatus;
+        Modify();
+    end;
+
+    local procedure CancelApprovalEntry()
+    begin
+        ApprovalMgt.CancelApprovalRequest(Rec);
+    end;
+
+    local procedure ValidateApproverPermissions()
+    begin
+        if not IsApprover then
+            Error('You do not have approval permissions.');
+    end;
+
+    local procedure ProcessApproval()
+    begin
+        ApprovalMgt.ProcessApproval(Rec, UserId);
+    end;
+
+    local procedure SendApprovalConfirmation()
+    begin
+        NotificationMgt.SendApprovalConfirmation("Document No.");
+    end;
+
+    local procedure ProcessRejection()
+    begin
+        ApprovalMgt.ProcessRejection(Rec, UserId);
+    end;
+
+    local procedure SendRejectionNotification()
+    begin
+        NotificationMgt.SendRejectionNotification("Document No.");
+    end;
+
+    local procedure ShowSalesPersonDetails()
+    begin
+        if SalesPerson.Get("Sales Person Code") then
+            PAGE.Run(PAGE::"ACME Salesperson Card", SalesPerson);
+    end;
+
+    local procedure ShowCustomerLedgerEntries()
+    begin
+        DocumentMgt.ShowCustomerLedger("Customer No.");
+    end;
+
+    local procedure FilterPostedDocuments()
+    begin
+        // Apply filters for posted documents
+    end;
+
+    local procedure ShowPostedDocumentsList()
+    begin
+        DocumentMgt.ShowPostedDocuments("Customer No.");
+    end;
+
+    local procedure ShowDimensions()
+    begin
+        DocumentMgt.ShowDimensions("Document No.");
+    end;
+
+    local procedure SetReportSelection()
+    begin
+        // Set report selection
+    end;
+
+    local procedure PreviewDocument()
+    begin
+        DocumentMgt.PreviewDocument("Document No.");
+    end;
+
+    local procedure RunSalesAnalysisReport()
+    begin
+        REPORT.Run(REPORT::"ACME Sales Analysis");
+    end;
+
+    local procedure CalculateProfitability()
+    begin
+        CalculateDisplayFields();
+    end;
+
+    local procedure ShowProfitabilityReport()
+    begin
+        REPORT.Run(REPORT::"ACME Profitability Analysis");
+    end;
+
+    local procedure SelectDocumentToCopy()
+    begin
+        // Open document selection page
+    end;
+
+    local procedure PerformCopyOperation()
+    begin
+        DocumentMgt.CopyDocument(Rec);
+    end;
+
+    local procedure CreateArchiveEntry()
+    begin
+        DocumentMgt.ArchiveDocument("Document No.");
+    end;
+
+    local procedure PrepareExcelExport()
+    begin
+        ExportMgt.PrepareExport(Rec);
+    end;
+
+    local procedure ExportDataToExcel()
+    begin
+        ExportMgt.ExportToExcel();
+    end;
+
+    local procedure OpenAttachmentDialog()
+    begin
+        DocumentMgt.OpenAttachments("Document No.");
+    end;
+
+    local procedure CreateCustomNotification()
+    begin
+        NotificationMgt.CreateCustomNotification("Document No.");
+    end;
+
+    local procedure SendToRecipients()
+    begin
+        NotificationMgt.SendToRecipients();
+    end;
+
+    local procedure CalculateStatistics()
+    begin
+        CalculateDashboardMetrics();
+    end;
+
+    local procedure ShowStatisticsPage()
+    begin
+        PAGE.Run(PAGE::"ACME Document Statistics", Rec);
+    end;
+
+    local procedure ShowCommentsPage()
+    begin
+        DocumentMgt.ShowComments("Document No.");
+    end;
+
+    local procedure ShowApprovalEntries()
+    begin
+        ApprovalMgt.ShowApprovalEntries(Rec);
+    end;
+
+    local procedure ShowWorkflowHistory()
+    begin
+        DocumentMgt.ShowWorkflowHistory("Document No.");
+    end;
+
+    local procedure UpdateShippingAddress()
+    begin
+        // Update shipping address from ship-to code
+    end;
+
+    local procedure ValidateShippingZone()
+    begin
+        // Validate shipping zone
+    end;
+
+    local procedure ValidateCountryCode()
+    begin
+        // Validate country code
+    end;
+
+    local procedure UpdateTaxRules()
+    begin
+        // Update tax rules based on country
+    end;
+
+    local procedure HasPostedEntries(): Boolean
+    begin
+        exit(false);
+    end;
+
+    local procedure CalculateTotalSalesAmount(): Decimal
+    begin
+        exit("Total Amount");
+    end;
+
+    local procedure CalculateTotalProfitAmount(): Decimal
+    begin
+        exit("Profit Amount");
+    end;
+}
