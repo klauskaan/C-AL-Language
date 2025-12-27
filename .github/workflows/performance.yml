@@ -46,6 +46,10 @@ jobs:
       - name: Install dependencies
         working-directory: ./server
         run: npm ci
+        
+      - name: Generate large test fixtures
+        working-directory: ./server
+        run: npm run perf:generate-fixtures
 
       - name: Determine suite to run
         id: suite
