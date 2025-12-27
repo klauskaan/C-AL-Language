@@ -1,7 +1,32 @@
+# IDE and test files
 .vscode/**
 .vscode-test/**
 test/**
+**/__tests__/**
+
+# Git metadata
 .gitignore
 .git/**
+.worktrees/**
+
+# Build artifacts
 *.vsix
+*.tsbuildinfo
+out/
+
+# Dependencies (bundled separately)
 node_modules/**
+
+# TypeScript source files (only ship compiled .js)
+server/src/**/*.ts
+!server/src/**/*.d.ts
+
+# Development tool configs
+eslint.config.js
+server/jest.config.js
+
+# Personal tool configurations
+.claude_settings.json
+
+# Test data
+test/REAL/
