@@ -8,6 +8,7 @@ test/REAL/
 # Auto Claude data directory
 .auto-claude/
 .auto-claude-status
+.auto-claude-security.json
 
 .claude_settings.json
 
