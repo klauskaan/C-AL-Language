@@ -27,6 +27,7 @@ server/jest.config.js
 
 # Personal tool configurations
 .claude_settings.json
+.claude/
 
 # Test data
 test/REAL/
