@@ -35,8 +35,9 @@ export function getRegressionFixturesPath(): string {
  */
 export function loadFixture(name: string): string {
   // Check cache first
-  if (fixtureCache.has(name)) {
-    return fixtureCache.get(name)!;
+  const cached = fixtureCache.get(name);
+  if (cached !== undefined) {
+    return cached;
   }
 
   const fixturePath = join(getPerformanceFixturesPath(), name);
@@ -56,8 +57,9 @@ export function loadFixture(name: string): string {
 export function loadRegressionFixture(name: string): string {
   // Check cache first
   const cacheKey = `regression:${name}`;
-  if (fixtureCache.has(cacheKey)) {
-    return fixtureCache.get(cacheKey)!;
+  const cached = fixtureCache.get(cacheKey);
+  if (cached !== undefined) {
+    return cached;
   }
 
   const fixturePath = join(getRegressionFixturesPath(), name);
