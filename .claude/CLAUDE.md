@@ -95,6 +95,26 @@ cd server && npm run perf:memory     # Memory profiling
 - Press F5 in VS Code to launch Extension Development Host
 - Open a `.cal` file to test language features
 - Use Debug Console for language server logs
+- **Syntax highlighting issues:** See `.claude/docs/syntax-highlighting-debugging.md` for details
+
+**Quick Highlighting Mode Switching:**
+```bash
+npm run mode              # Show current mode
+npm run mode:textmate     # Test TextMate grammar only
+npm run mode:semantic     # Test semantic tokens only
+npm run mode:both         # Test both (default)
+```
+
+See [Highlighting Test Modes](.claude/docs/highlighting-test-modes.md) for full guide.
+
+**Extension Settings for Testing:**
+```json
+{
+  "cal.languageServer.enabled": true,        // Toggle entire LSP (requires reload)
+  "cal.semanticHighlighting.enabled": true,  // Toggle semantic tokens only (requires reload)
+  "editor.semanticHighlighting.enabled": true // VS Code built-in (no reload needed)
+}
+```
 
 ## Coding Standards
 
