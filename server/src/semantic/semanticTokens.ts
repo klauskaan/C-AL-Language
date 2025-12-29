@@ -107,6 +107,7 @@ export class SemanticTokensProvider {
       case TokenType.Query:
       case TokenType.XMLport:
       case TokenType.MenuSuite:
+      case TokenType.ObjectProperties:
       case TokenType.Properties:
       case TokenType.Fields:
       case TokenType.Keys:
@@ -145,7 +146,16 @@ export class SemanticTokensProvider {
       case TokenType.With:
       case TokenType.Array:
       case TokenType.Temporary:
+      case TokenType.LeftBrace:
+      case TokenType.RightBrace:
         return SemanticTokenTypes.Keyword;
+
+      // Handle unmatched right braces as keywords for semantic highlighting
+      case TokenType.Unknown:
+        if (token.value === '}') {
+          return SemanticTokenTypes.Keyword;
+        }
+        return null; // Skip other unknown tokens
 
       // Data types
       case TokenType.Boolean:

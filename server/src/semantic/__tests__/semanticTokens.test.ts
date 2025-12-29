@@ -174,12 +174,18 @@ describe('SemanticTokensProvider', () => {
       expect(builder.tokens.length).toBe(2);
     });
 
-    it('should skip punctuation tokens', () => {
+    it('should highlight braces as keywords', () => {
       const code = '{ }';
       const { builder } = buildSemanticTokens(code);
 
-      // Braces should be skipped
-      expect(builder.tokens.length).toBe(0);
+      // Braces are structural keywords in C/AL (like BEGIN/END)
+      expect(builder.tokens.length).toBe(2);
+      expect(builder.tokens[0]).toMatchObject({
+        tokenType: SemanticTokenTypes.Keyword,
+      });
+      expect(builder.tokens[1]).toMatchObject({
+        tokenType: SemanticTokenTypes.Keyword,
+      });
     });
 
     it('should handle empty token array', () => {
@@ -2389,18 +2395,24 @@ END`;
         expect(builder.tokens.length).toBe(2);
       });
 
-      it('should skip left brace token', () => {
+      it('should highlight left brace as keyword', () => {
         const code = '{';
         const { builder } = buildSemanticTokens(code);
 
-        expect(builder.tokens.length).toBe(0);
+        expect(builder.tokens.length).toBe(1);
+        expect(builder.tokens[0]).toMatchObject({
+          tokenType: SemanticTokenTypes.Keyword,
+        });
       });
 
-      it('should skip right brace token', () => {
+      it('should highlight right brace as keyword', () => {
         const code = '}';
         const { builder } = buildSemanticTokens(code);
 
-        expect(builder.tokens.length).toBe(0);
+        expect(builder.tokens.length).toBe(1);
+        expect(builder.tokens[0]).toMatchObject({
+          tokenType: SemanticTokenTypes.Keyword,
+        });
       });
 
       it('should skip left parenthesis token', () => {
