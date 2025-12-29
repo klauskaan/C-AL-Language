@@ -33,7 +33,7 @@ interface MultiDocumentContext {
 /**
  * Helper to create a TextDocument from a string
  */
-function createDocument(content: string, uri: string = 'file:///test.cal'): TextDocument {
+function _createDocument(content: string, uri: string = 'file:///test.cal'): TextDocument {
   return TextDocument.create(uri, 'cal', 1, content);
 }
 

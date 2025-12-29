@@ -5,10 +5,14 @@
  * rejected in C/AL code with clear, actionable error messages.
  *
  * AL-only features not supported in C/AL:
- * - Keywords: ENUM, INTERFACE, EXTENDS, MODIFY, IMPLEMENTS
+ * - Keywords: ENUM, INTERFACE, EXTENDS, IMPLEMENTS
  * - Access modifiers: INTERNAL, PROTECTED, PUBLIC (only LOCAL is valid)
  * - Ternary operator: ? :
  * - Preprocessor directives: #if, #else, #endif
+ *
+ * Note: MODIFY is NOT in this list - it's a valid C/AL Record method.
+ * In AL, MODIFY is used for page/table extensions (MODIFY PageName { }).
+ * In C/AL, MODIFY is a method call (Customer.MODIFY or just MODIFY inside WITH).
  */
 
 import { Lexer } from '../lexer';
@@ -82,23 +86,6 @@ describe('AL-Only Feature Validation', () => {
       });
     });
 
-    describe('MODIFY keyword rejection', () => {
-      it('should reject MODIFY keyword with clear error', () => {
-        const code = `MODIFY CustomerCard { }`;
-        const errors = getParseErrors(code);
-        expect(errors.length).toBeGreaterThan(0);
-        expect(errors[0].message).toContain("AL-only keyword 'MODIFY'");
-        expect(errors[0].message).toContain('not supported in C/AL');
-      });
-
-      it('should tokenize MODIFY as ALOnlyKeyword', () => {
-        const lexer = new Lexer('MODIFY');
-        const tokens = lexer.tokenize();
-        expect(tokens[0].type).toBe(TokenType.ALOnlyKeyword);
-        expect(tokens[0].value).toBe('MODIFY');
-      });
-    });
-
     describe('IMPLEMENTS keyword rejection', () => {
       it('should reject IMPLEMENTS keyword with clear error', () => {
         // Use IMPLEMENTS at the start to ensure it's detected
@@ -120,7 +107,7 @@ describe('AL-Only Feature Validation', () => {
     });
 
     describe('All AL-only keywords recognition', () => {
-      const alOnlyKeywords = ['ENUM', 'INTERFACE', 'EXTENDS', 'MODIFY', 'IMPLEMENTS'];
+      const alOnlyKeywords = ['ENUM', 'INTERFACE', 'EXTENDS', 'IMPLEMENTS'];
 
       it.each(alOnlyKeywords)('should recognize %s as AL-only keyword', (keyword) => {
         const lexer = new Lexer(keyword);
@@ -171,13 +158,14 @@ describe('AL-Only Feature Validation', () => {
         }
       });
 
-      it('should reject MODIFY regardless of case', () => {
+      it('should allow MODIFY as identifier (C/AL Record method)', () => {
         const variants = ['MODIFY', 'modify', 'Modify', 'mOdIfY'];
 
         for (const variant of variants) {
           const lexer = new Lexer(variant);
           const tokens = lexer.tokenize();
-          expect(tokens[0].type).toBe(TokenType.ALOnlyKeyword);
+          // MODIFY is NOT an AL-only keyword - it's a valid C/AL Record method
+          expect(tokens[0].type).toBe(TokenType.Identifier);
         }
       });
 
@@ -972,7 +960,7 @@ END;`;
 
   describe('edge cases', () => {
     describe('case insensitivity', () => {
-      const alOnlyKeywords = ['ENUM', 'INTERFACE', 'EXTENDS', 'MODIFY', 'IMPLEMENTS'];
+      const alOnlyKeywords = ['ENUM', 'INTERFACE', 'EXTENDS', 'IMPLEMENTS'];
 
       it.each(alOnlyKeywords)('should recognize %s in any case variation', (keyword) => {
         const variants = [
@@ -990,7 +978,7 @@ END;`;
       });
 
       it('should preserve original case in token value for AL-only keywords', () => {
-        const variants = ['eNuM', 'InTeRfAcE', 'ExTeNdS', 'MoDiFy', 'ImPlEmEnTs'];
+        const variants = ['eNuM', 'InTeRfAcE', 'ExTeNdS', 'ImPlEmEnTs'];
 
         for (const variant of variants) {
           const lexer = new Lexer(variant);

@@ -849,6 +849,9 @@ export class Parser {
         const paramToken = this.advance();
         const paramName = paramToken.value;
 
+        // Skip @number if present (C/AL auto-numbering)
+        this.skipAutoNumberSuffix();
+
         // Colon and type
         let dataType: DataType | null = null;
         if (this.check(TokenType.Colon)) {
@@ -1625,24 +1628,30 @@ export class Parser {
     }
 
     // Fallback - consume token and return identifier
+    // This handles keywords used as identifiers (e.g., CODEUNIT, DATABASE, REPORT in expressions)
     const fallbackToken = this.advance();
-    return {
+    const expr: Expression = {
       type: 'Identifier',
       name: fallbackToken.value,
       isQuoted: false,
       startToken: fallbackToken,
       endToken: fallbackToken
     } as Identifier;
+
+    // Apply postfix operations to fallback expressions too
+    // This allows CODEUNIT::X, DATABASE::Y, etc.
+    return this.parsePostfixOperations(expr);
   }
 
   /**
    * Parse identifier with optional postfix operations
    * Handles chained operations: object.property[index].method(args)
+   * Also handles :: operator for Option type values
    * @returns Expression node (Identifier, MemberExpression, CallExpression, or ArrayAccessExpression)
    */
   private parseIdentifierExpression(): Expression {
     const startToken = this.peek();
-    let expr: Expression = {
+    const expr: Expression = {
       type: 'Identifier',
       name: this.advance().value,
       isQuoted: startToken.type === TokenType.QuotedIdentifier,
@@ -1650,20 +1659,32 @@ export class Parser {
       endToken: startToken
     } as Identifier;
 
+    return this.parsePostfixOperations(expr);
+  }
+
+  /**
+   * Parse postfix operations (., ::, (), []) on an expression
+   * @param expr - The base expression to apply postfix operations to
+   * @returns Expression with all postfix operations applied
+   */
+  private parsePostfixOperations(expr: Expression): Expression {
+    let result = expr;
+
     // Handle postfix operations
     while (true) {
-      const before = expr;
+      const before = result;
 
-      expr = this.parseMemberAccessIfPresent(expr);
-      expr = this.parseFunctionCallIfPresent(expr);
-      expr = this.parseArrayAccessIfPresent(expr);
+      result = this.parseMemberAccessIfPresent(result);
+      result = this.parseScopeAccessIfPresent(result);
+      result = this.parseFunctionCallIfPresent(result);
+      result = this.parseArrayAccessIfPresent(result);
 
-      if (expr === before) {
+      if (result === before) {
         break;
       }
     }
 
-    return expr;
+    return result;
   }
 
   /**
@@ -1675,6 +1696,43 @@ export class Parser {
     }
 
     this.advance();
+    const memberToken = this.advance();
+    const property: Identifier = {
+      type: 'Identifier',
+      name: memberToken.value,
+      isQuoted: memberToken.type === TokenType.QuotedIdentifier,
+      startToken: memberToken,
+      endToken: memberToken
+    };
+
+    return {
+      type: 'MemberExpression',
+      object: expr,
+      property,
+      startToken: expr.startToken,
+      endToken: memberToken
+    } as MemberExpression;
+  }
+
+  /**
+   * Parse scope access (:: operator) if present
+   * Used for Option type values: Status::Open, "Document Type"::Order
+   */
+  private parseScopeAccessIfPresent(expr: Expression): Expression {
+    if (!this.check(TokenType.DoubleColon)) {
+      return expr;
+    }
+
+    this.advance(); // consume ::
+
+    // Check if there's a valid identifier or quoted identifier after ::
+    if (!this.check(TokenType.Identifier) &&
+        !this.check(TokenType.QuotedIdentifier) &&
+        !this.check(TokenType.Integer)) { // Allow numeric option values like Priority::0
+      this.recordError('Expected identifier after :: operator', this.peek());
+      return expr;
+    }
+
     const memberToken = this.advance();
     const property: Identifier = {
       type: 'Identifier',

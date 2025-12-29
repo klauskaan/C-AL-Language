@@ -13,7 +13,6 @@
 
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../parser';
-import { TokenType } from '../../lexer/tokens';
 
 describe('Parser - Basic Functionality', () => {
   describe('Parser initialization', () => {

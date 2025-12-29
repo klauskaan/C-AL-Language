@@ -207,7 +207,6 @@ describe('Diagnostics', () => {
     END.
   }
 }`;
-      const errors = getParseErrors(code);
       // Parser should recover and still parse the CODE section
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
@@ -323,10 +322,6 @@ describe('Diagnostics', () => {
 }`;
       const errors = getParseErrors(code);
       // Look for an error mentioning the invalid value or integer
-      const hasIntegerError = errors.some(e =>
-        e.message.toLowerCase().includes('integer') ||
-        e.message.includes('notanumber')
-      );
       expect(errors.length).toBeGreaterThan(0);
     });
   });

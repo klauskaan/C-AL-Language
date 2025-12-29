@@ -163,23 +163,27 @@ describe('DefinitionProvider', () => {
   describe('Integration with Parser', () => {
     it('should find variable definition from parsed code', () => {
       // Code with variable declaration and usage
-      // Parser expects: { fieldNo ; fieldName ; dataType } and CODE without braces
+      // Parser expects: outer braces around entire object body including CODE section
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    Counter : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      Counter : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    Counter := 1;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      Counter := 1;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast, symbolTable } = parseAndBuildSymbols(code);
 
@@ -200,21 +204,25 @@ CODE
     });
 
     it('should find field definition from parsed code', () => {
-      // Parser expects: { fieldNo ; fieldName ; dataType } and CODE without braces
+      // Parser expects: outer braces around entire object body including CODE section
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-  { 2 ;   ; Name ; Text50 }
-}
-CODE
-  PROCEDURE DoSomething();
-  BEGIN
-    Name := 'Test';
-  END;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+    { 2 ;   ; Name ; Text50 }
+  }
+  CODE
+  {
+    PROCEDURE DoSomething();
+    BEGIN
+      Name := 'Test';
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast, symbolTable } = parseAndBuildSymbols(code);
 
@@ -233,24 +241,28 @@ CODE
     });
 
     it('should find procedure definition from parsed code', () => {
-      // Parser expects: { fieldNo ; fieldName ; dataType } and CODE without braces
+      // Parser expects: outer braces around entire object body including CODE section
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  PROCEDURE MyProcedure();
-  BEGIN
-  END;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    PROCEDURE MyProcedure();
+    BEGIN
+    END;
 
-  PROCEDURE CallIt();
-  BEGIN
-    MyProcedure;
-  END;
+    PROCEDURE CallIt();
+    BEGIN
+      MyProcedure;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast, symbolTable } = parseAndBuildSymbols(code);
 
@@ -272,23 +284,27 @@ CODE
   describe('Field Access (Dot Notation)', () => {
     it('should find field definition after dot via symbol table', () => {
       // Fields are added to symbol table, so Rec.CustomerName should still find CustomerName
-      // Parser expects: { fieldNo ; fieldName ; dataType } and CODE without braces
+      // Parser expects: outer braces around entire object body including CODE section
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; CustomerNo ; Code20 }
-  { 2 ;   ; CustomerName ; Text100 }
-}
-CODE
-  PROCEDURE DoSomething();
-  VAR
-    Rec : Record 50000;
-  BEGIN
-    Rec.CustomerName := 'Test';
-  END;
+  FIELDS
+  {
+    { 1 ;   ; CustomerNo ; Code20 }
+    { 2 ;   ; CustomerName ; Text100 }
+  }
+  CODE
+  {
+    PROCEDURE DoSomething();
+    VAR
+      Rec : Record 50000;
+    BEGIN
+      Rec.CustomerName := 'Test';
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast, symbolTable } = parseAndBuildSymbols(code);
 

@@ -244,7 +244,6 @@ export const AL_ONLY_KEYWORDS: Map<string, TokenType> = new Map([
   ['enum', TokenType.ALOnlyKeyword],
   ['interface', TokenType.ALOnlyKeyword],
   ['extends', TokenType.ALOnlyKeyword],
-  ['modify', TokenType.ALOnlyKeyword],
   ['implements', TokenType.ALOnlyKeyword]
 ]);
 

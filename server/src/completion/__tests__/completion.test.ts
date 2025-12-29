@@ -35,7 +35,7 @@ function mockToken(): any {
 /**
  * Helper to parse content and build symbol table
  */
-function parseAndBuildSymbols(content: string): { ast: any; symbolTable: SymbolTable } {
+function _parseAndBuildSymbols(content: string): { ast: any; symbolTable: SymbolTable } {
   const lexer = new Lexer(content);
   const tokens = lexer.tokenize();
   const parser = new Parser(tokens);
