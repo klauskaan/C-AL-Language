@@ -1298,9 +1298,18 @@ export class Parser {
       // For compound assignments, transform to binary expression
       let finalValue = value;
       if (opToken.type !== TokenType.Assign) {
-        const op = opToken.type === TokenType.PlusAssign ? '+' :
-                   opToken.type === TokenType.MinusAssign ? '-' :
-                   opToken.type === TokenType.MultiplyAssign ? '*' : '/';
+        let op: string;
+        if (opToken.type === TokenType.PlusAssign) {
+          op = '+';
+        } else if (opToken.type === TokenType.MinusAssign) {
+          op = '-';
+        } else if (opToken.type === TokenType.MultiplyAssign) {
+          op = '*';
+        } else if (opToken.type === TokenType.DivideAssign) {
+          op = '/';
+        } else {
+          throw new Error(`Unexpected compound assignment operator: ${opToken.type}`);
+        }
         finalValue = {
           type: 'BinaryExpression',
           operator: op,
