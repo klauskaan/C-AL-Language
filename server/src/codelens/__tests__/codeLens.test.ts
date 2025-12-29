@@ -460,6 +460,119 @@ CODE
       expect(lenses[0].command?.arguments?.[1]).toHaveProperty('character');
       expect(Array.isArray(lenses[0].command?.arguments?.[2])).toBe(true);  // Locations
     });
+
+    it('should have properly structured command arguments for VS Code showReferences', () => {
+      // REGRESSION TEST for CodeLens clicking issue
+      //
+      // BUG: Clicking CodeLens references throws:
+      //   "argument does not match one of these constraints: arg instanceof Constraint,
+      //   arg.constructor === constraint, nor constraint(arg) === true"
+      //
+      // ROOT CAUSE:
+      //   VS Code's editor.action.showReferences command expects VS Code API types:
+      //     - vscode.Uri (not string)
+      //     - vscode.Position (not plain Position object)
+      //     - vscode.Location[] (not plain Location objects)
+      //
+      //   However, LSP protocol types are plain objects and strings.
+      //   The LanguageClient middleware should convert these types automatically,
+      //   but this conversion is not happening for CodeLens command arguments.
+      //
+      // FIX LOCATION:
+      //   The fix must be in the CLIENT (extension.ts), not the server.
+      //   Add middleware to LanguageClient that converts command arguments
+      //   from LSP protocol types to VS Code API types.
+      //
+      // TEST LIMITATION:
+      //   This test runs in the SERVER context (Jest/Node.js) and validates that
+      //   the server sends correct LSP protocol types. It CANNOT test the actual
+      //   VS Code command execution or middleware conversion.
+      //
+      // MANUAL VERIFICATION REQUIRED:
+      //   After implementing the middleware fix in extension.ts:
+      //   1. Open a .cal file with procedures
+      //   2. Click on a CodeLens "X references" label
+      //   3. Verify the references peek panel opens correctly
+      //   4. Verify no console errors
+      //
+      // This test validates SERVER-SIDE structure only (baseline for the fix).
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE CalledProc@1();
+    BEGIN
+    END;
+
+    PROCEDURE Caller@2();
+    BEGIN
+      CalledProc;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const lenses = provider.getCodeLenses(doc, ast);
+
+      // Find the CodeLens for CalledProc (which has 1 reference)
+      const calledProcLens = lenses.find(lens =>
+        lens.command?.arguments?.[1]?.line === 4  // CalledProc is on line 5 (0-based: 4)
+      );
+
+      expect(calledProcLens).toBeDefined();
+      expect(calledProcLens?.command).toBeDefined();
+      expect(calledProcLens?.command?.command).toBe('editor.action.showReferences');
+
+      const args = calledProcLens?.command?.arguments;
+      expect(args).toBeDefined();
+      expect(args?.length).toBe(3);
+
+      // Argument 1: URI (string) - will be converted by middleware to vscode.Uri
+      expect(typeof args?.[0]).toBe('string');
+      expect(args?.[0]).toBe('file:///test.cal');
+
+      // Argument 2: Position (plain object) - will be converted by middleware to vscode.Position
+      const position = args?.[1];
+      expect(position).toEqual({
+        line: expect.any(Number),
+        character: expect.any(Number)
+      });
+      expect(position?.line).toBe(4);  // 0-based line number
+      expect(typeof position?.character).toBe('number');
+
+      // Argument 3: Locations array (plain objects) - will be converted by middleware to vscode.Location[]
+      const locations = args?.[2];
+      expect(Array.isArray(locations)).toBe(true);
+      expect(locations?.length).toBe(1);  // CalledProc has 1 reference
+
+      // Each location should have the LSP Location structure:
+      // { uri: string, range: { start: Position, end: Position } }
+      const location = locations?.[0];
+      expect(location).toBeDefined();
+      expect(typeof location?.uri).toBe('string');
+      expect(location?.uri).toBe('file:///test.cal');
+
+      // Validate range structure
+      expect(location?.range).toBeDefined();
+      expect(location?.range).toHaveProperty('start');
+      expect(location?.range).toHaveProperty('end');
+
+      // Validate start and end positions
+      expect(location?.range?.start).toEqual({
+        line: expect.any(Number),
+        character: expect.any(Number)
+      });
+      expect(location?.range?.end).toEqual({
+        line: expect.any(Number),
+        character: expect.any(Number)
+      });
+
+      // The reference should be on line 11 (0-based: 10) where CalledProc is called
+      expect(location?.range?.start.line).toBe(10);
+    });
   });
 
   describe('Range Calculation', () => {
