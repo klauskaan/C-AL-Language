@@ -15,19 +15,11 @@ import {
   createOptionType,
   createTextType,
   createCodeunitType,
-  createUnknownType,
-  TypeFormatOptions
+  createUnknownType
 } from '../typeUtils';
 
 import {
   Type,
-  PrimitiveType,
-  RecordType,
-  ArrayType,
-  OptionType,
-  TextType,
-  CodeunitType,
-  UnknownType,
   PrimitiveName
 } from '../types';
 

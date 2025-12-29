@@ -28,7 +28,7 @@ This VS Code extension provides comprehensive language support for Microsoft Dyn
 
 **Version:** 0.4.6
 **Min VS Code:** 1.80.0
-**Test Suite:** 398 tests (~7s execution)
+**Test Suite:** 2019 tests (~7-14s execution)
 
 ## Critical Language Distinction ⚠️
 
@@ -194,8 +194,88 @@ Delegate specialized work to agents (saves main context):
 - `performance-specialist` - Performance optimization (Opus)
 - `test-writer` - Write comprehensive tests (Sonnet)
 - `refactoring-guide` - Strategic refactoring (Opus)
+- `general-purpose` - Research, analysis, multi-step tasks (Haiku/Sonnet)
+- `Explore` - Fast codebase exploration (Quick/Medium/Very thorough)
 
-**Pro tip:** Always use `test-runner` agent for test execution to keep main conversation clean.
+### 🚀 Agent Usage Philosophy: MORE IS BETTER!
+
+**CRITICAL:** Use agents EXTENSIVELY and IN PARALLEL whenever possible. Agents are a superpower for context management!
+
+#### Why Use Many Agents?
+1. **Massive Context Savings** - Each agent runs in isolated context, freeing up main conversation
+2. **Parallel Execution** - Launch 4-6 agents simultaneously for complex tasks
+3. **Specialized Knowledge** - Each agent brings focused expertise
+4. **Better Analysis** - Agents can deep-dive without cluttering main thread
+
+#### When to Use Agents (Always!)
+- ✅ **Analyzing test failures** - Launch separate agents for each test suite
+- ✅ **Investigating bugs** - One agent per hypothesis/area
+- ✅ **Fixing multiple issues** - Parallel test-writer agents for each fix
+- ✅ **Research tasks** - Git history, codebase structure, dependencies
+- ✅ **Code reviews** - Separate agents for different aspects
+- ✅ **Running tests** - ALWAYS delegate to test-runner agent
+
+#### Real Example from Recent Session
+**Task:** Fix 54 failing tests across 3 test suites
+
+**Bad Approach (Don't do this):**
+```typescript
+// Analyze failures manually, then fix one by one
+// Uses 50K+ tokens in main context, takes forever
+```
+
+**Good Approach (DO THIS!):**
+```typescript
+// Launch 4 agents in parallel:
+Task(subagent_type='general-purpose') // Analyze git history
+Task(subagent_type='general-purpose') // Analyze CodeLens failures
+Task(subagent_type='general-purpose') // Analyze Reference failures
+Task(subagent_type='general-purpose') // Analyze Definition failures
+
+// Then launch 3 test-writer agents in parallel:
+Task(subagent_type='test-writer') // Fix CodeLens tests
+Task(subagent_type='test-writer') // Fix Reference tests
+Task(subagent_type='test-writer') // Fix Definition tests
+
+// Result: 28 tests fixed, used only ~10K main context tokens!
+```
+
+#### Agent Launching Best Practices
+
+1. **Launch in Parallel** - Use `run_in_background=true` for all but last agent
+2. **Collect Results** - Use `TaskOutput` to gather results when ready
+3. **Be Specific** - Give each agent a clear, focused task with context
+4. **Choose Right Model** - Haiku for simple tasks, Sonnet for complex, Opus for architecture
+5. **Resume if Needed** - Agents can be resumed with full context using their ID
+
+#### Common Agent Patterns
+
+**Pattern 1: Parallel Analysis**
+```
+Launch 3-4 analysis agents → Collect results → Make informed decision
+```
+
+**Pattern 2: Divide and Conquer**
+```
+Launch test-writer agents for each failing test suite → All fix in parallel
+```
+
+**Pattern 3: Investigation + Fix**
+```
+Launch general-purpose to investigate → Launch test-writer to fix → Verify
+```
+
+**Pattern 4: Multi-aspect Review**
+```
+Launch typescript-reviewer + cal-expert + architect → Comprehensive review
+```
+
+### Agent Success Metrics
+- **Context saved:** Agents handle 100K+ tokens outside main conversation
+- **Time saved:** Parallel execution means 4x-6x faster task completion
+- **Quality:** Each agent brings specialized focus and deep analysis
+
+**Remember:** When in doubt, use MORE agents, not fewer. They're free context!
 
 ## Known Limitations
 

@@ -36,22 +36,26 @@ describe('ReferenceProvider', () => {
   describe('Basic Reference Finding', () => {
     it('should find all references to a variable', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    Counter : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      Counter : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    Counter := 1;
-    Counter := Counter + 1;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      Counter := 1;
+      Counter := Counter + 1;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -68,28 +72,32 @@ CODE
 
     it('should find references to a procedure', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  PROCEDURE MyProcedure();
-  BEGIN
-  END;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    PROCEDURE MyProcedure();
+    BEGIN
+    END;
 
-  PROCEDURE CallIt();
-  BEGIN
-    MyProcedure;
-  END;
+    PROCEDURE CallIt();
+    BEGIN
+      MyProcedure;
+    END;
 
-  PROCEDURE CallItTwice();
-  BEGIN
-    MyProcedure;
-    MyProcedure;
-  END;
+    PROCEDURE CallItTwice();
+    BEGIN
+      MyProcedure;
+      MyProcedure;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -106,20 +114,24 @@ CODE
 
     it('should find references to a field', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-  { 2 ;   ; Name ; Text50 }
-}
-CODE
-  PROCEDURE DoSomething();
-  BEGIN
-    Name := 'Test';
-    Name := Name + ' More';
-  END;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+    { 2 ;   ; Name ; Text50 }
+  }
+  CODE
+  {
+    PROCEDURE DoSomething();
+    BEGIN
+      Name := 'Test';
+      Name := Name + ' More';
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -140,21 +152,25 @@ CODE
   describe('Include/Exclude Declaration', () => {
     it('should include declaration when includeDeclaration is true', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    MyVar : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      MyVar : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    MyVar := 1;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      MyVar := 1;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -170,21 +186,25 @@ CODE
 
     it('should exclude declaration when includeDeclaration is false', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    Counter : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      Counter : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    Counter := 1;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      Counter := 1;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -206,23 +226,27 @@ CODE
   describe('Case Insensitivity', () => {
     it('should find references regardless of case', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    MyVariable : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      MyVariable : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    myvariable := 1;
-    MYVARIABLE := 2;
-    MyVariable := 3;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      myvariable := 1;
+      MYVARIABLE := 2;
+      MyVariable := 3;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -240,23 +264,27 @@ CODE
   describe('Expression Contexts', () => {
     it('should find references in binary expressions', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    A : Integer;
-    B : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      A : Integer;
+      B : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    A := A + B;
-    B := A - B;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      A := A + B;
+      B := A - B;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -272,22 +300,26 @@ CODE
 
     it('should find references in IF conditions', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    Flag : Boolean;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      Flag : Boolean;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    IF Flag THEN
-      Flag := FALSE;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      IF Flag THEN
+        Flag := FALSE;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -303,23 +335,27 @@ CODE
 
     it('should find references in WHILE loops', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    Counter : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      Counter : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    Counter := 0;
-    WHILE Counter < 10 DO
-      Counter := Counter + 1;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      Counter := 0;
+      WHILE Counter < 10 DO
+        Counter := Counter + 1;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -335,24 +371,28 @@ CODE
 
     it('should find references in REPEAT loops', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    I : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      I : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    I := 0;
-    REPEAT
-      I := I + 1;
-    UNTIL I >= 10;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      I := 0;
+      REPEAT
+        I := I + 1;
+      UNTIL I >= 10;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -368,24 +408,28 @@ CODE
 
     it('should find references in FOR loops including loop variable', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    I : Integer;
-    Sum : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      I : Integer;
+      Sum : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    Sum := 0;
-    FOR I := 1 TO 10 DO
-      Sum := Sum + I;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      Sum := 0;
+      FOR I := 1 TO 10 DO
+        Sum := Sum + I;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -401,24 +445,28 @@ CODE
 
     it('should find references in CASE statements', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    Status : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      Status : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    CASE Status OF
-      1: Status := 2;
-      2: Status := 3;
+    PROCEDURE DoSomething();
+    BEGIN
+      CASE Status OF
+        1: Status := 2;
+        2: Status := 3;
+      END;
     END;
-  END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -434,26 +482,30 @@ CODE
 
     it('should find references in function call arguments', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    Value : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      Value : Integer;
 
-  PROCEDURE ProcessValue(P : Integer);
-  BEGIN
-  END;
+    PROCEDURE ProcessValue(P : Integer);
+    BEGIN
+    END;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    ProcessValue(Value);
-    ProcessValue(Value + 1);
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      ProcessValue(Value);
+      ProcessValue(Value + 1);
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -471,22 +523,26 @@ CODE
   describe('Member Expressions', () => {
     it('should find references to fields accessed via member expression', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-  { 2 ;   ; CustomerName ; Text100 }
-}
-CODE
-  PROCEDURE DoSomething();
-  VAR
-    Rec : Record 50000;
-  BEGIN
-    Rec.CustomerName := 'Test';
-    Rec.CustomerName := Rec.CustomerName + ' More';
-  END;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+    { 2 ;   ; CustomerName ; Text100 }
+  }
+  CODE
+  {
+    PROCEDURE DoSomething();
+    VAR
+      Rec : Record 50000;
+    BEGIN
+      Rec.CustomerName := 'Test';
+      Rec.CustomerName := Rec.CustomerName + ' More';
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -504,21 +560,25 @@ CODE
   describe('Local Variables and Parameters', () => {
     it('should find references to local variables', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  PROCEDURE DoSomething();
-  VAR
-    LocalVar : Integer;
-  BEGIN
-    LocalVar := 1;
-    LocalVar := LocalVar + 1;
-  END;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    PROCEDURE DoSomething();
+    VAR
+      LocalVar : Integer;
+    BEGIN
+      LocalVar := 1;
+      LocalVar := LocalVar + 1;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -534,18 +594,22 @@ CODE
 
     it('should find references to procedure parameters', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  PROCEDURE DoSomething(Param : Integer);
-  BEGIN
-    Param := Param + 1;
-  END;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    PROCEDURE DoSomething(Param : Integer);
+    BEGIN
+      Param := Param + 1;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -563,13 +627,17 @@ CODE
   describe('Edge Cases', () => {
     it('should return empty array for unknown symbol', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  BEGIN
-  END.`;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -591,16 +659,20 @@ CODE
 
     it('should return empty array when cursor not on identifier', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    MyVar : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      MyVar : Integer;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -612,21 +684,25 @@ CODE
 
     it('should handle identifiers with underscores', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    My_Var_Name : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      My_Var_Name : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    My_Var_Name := 1;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      My_Var_Name := 1;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -641,21 +717,25 @@ CODE
 
     it('should handle identifiers with numbers', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    Var123 : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      Var123 : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    Var123 := 1;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      Var123 := 1;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -672,21 +752,25 @@ CODE
   describe('Location Accuracy', () => {
     it('should return correct line and character positions', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    TestVar : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      TestVar : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    TestVar := 1;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      TestVar := 1;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -708,21 +792,25 @@ CODE
     it('should return correct URI', () => {
       const uri = 'file:///home/user/project/test.cal';
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    MyVar : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      MyVar : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    MyVar := 1;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      MyVar := 1;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code, uri);
       const { ast } = parseContent(code);
 
@@ -741,27 +829,31 @@ CODE
   describe('Trigger References', () => {
     it('should find references in trigger bodies', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-  { 2 ;   ; Name ; Text50 }
-}
-CODE
-  VAR
-    GlobalVar : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+    { 2 ;   ; Name ; Text50 }
+  }
+  CODE
+  {
+    VAR
+      GlobalVar : Integer;
 
-  TRIGGER OnInsert();
-  BEGIN
-    GlobalVar := 1;
-  END;
+    TRIGGER OnInsert();
+    BEGIN
+      GlobalVar := 1;
+    END;
 
-  TRIGGER OnModify();
-  BEGIN
-    GlobalVar := GlobalVar + 1;
-  END;
+    TRIGGER OnModify();
+    BEGIN
+      GlobalVar := GlobalVar + 1;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -779,22 +871,26 @@ CODE
   describe('EXIT Statement References', () => {
     it('should find references in EXIT statements', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    Result : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      Result : Integer;
 
-  PROCEDURE GetResult() : Integer;
-  BEGIN
-    Result := 42;
-    EXIT(Result);
-  END;
+    PROCEDURE GetResult() : Integer;
+    BEGIN
+      Result := 42;
+      EXIT(Result);
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -812,23 +908,27 @@ CODE
   describe('Array Access References', () => {
     it('should find references in array access expressions', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-}
-CODE
-  VAR
-    Index : Integer;
-    Values : ARRAY[10] OF Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+  }
+  CODE
+  {
+    VAR
+      Index : Integer;
+      Values : ARRAY[10] OF Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    Index := 1;
-    Values[Index] := 42;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      Index := 1;
+      Values[Index] := 42;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -846,25 +946,29 @@ CODE
   describe('field trigger references', () => {
     it('should find variable references inside OnValidate trigger', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-  { 2 ;   ; Name ; Text50 ;
-                           OnValidate=BEGIN
-                                        Name := 'Validated';
-                                      END; }
-}
-CODE
-  VAR
-    Counter : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+    { 2 ;   ; Name ; Text50 ;
+                             OnValidate=BEGIN
+                                          Name := 'Validated';
+                                        END; }
+  }
+  CODE
+  {
+    VAR
+      Counter : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    Name := 'Test';
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      Name := 'Test';
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -881,25 +985,29 @@ CODE
 
     it('should find global variable references inside field trigger', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-  { 2 ;   ; Amount ; Decimal ;
-                              OnValidate=BEGIN
-                                           Counter := Counter + 1;
-                                         END; }
-}
-CODE
-  VAR
-    Counter : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+    { 2 ;   ; Amount ; Decimal ;
+                                OnValidate=BEGIN
+                                             Counter := Counter + 1;
+                                           END; }
+  }
+  CODE
+  {
+    VAR
+      Counter : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    Counter := 0;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      Counter := 0;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -915,25 +1023,29 @@ CODE
 
     it('should find references inside OnLookup trigger', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-  { 2 ;   ; CustomerNo ; Code20 ;
-                                 OnLookup=BEGIN
-                                            SearchValue := CustomerNo;
-                                          END; }
-}
-CODE
-  VAR
-    SearchValue : Code[20];
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+    { 2 ;   ; CustomerNo ; Code20 ;
+                                   OnLookup=BEGIN
+                                              SearchValue := CustomerNo;
+                                            END; }
+  }
+  CODE
+  {
+    VAR
+      SearchValue : Code[20];
 
-  PROCEDURE DoSomething();
-  BEGIN
-    SearchValue := '';
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      SearchValue := '';
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -949,29 +1061,33 @@ CODE
 
     it('should find references across multiple field triggers', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-  { 2 ;   ; Name ; Text50 ;
-                           OnValidate=BEGIN
-                                        GlobalVar := 1;
-                                      END; }
-  { 3 ;   ; Amount ; Decimal ;
-                              OnValidate=BEGIN
-                                           GlobalVar := GlobalVar + 1;
-                                         END; }
-}
-CODE
-  VAR
-    GlobalVar : Integer;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+    { 2 ;   ; Name ; Text50 ;
+                             OnValidate=BEGIN
+                                          GlobalVar := 1;
+                                        END; }
+    { 3 ;   ; Amount ; Decimal ;
+                                OnValidate=BEGIN
+                                             GlobalVar := GlobalVar + 1;
+                                           END; }
+  }
+  CODE
+  {
+    VAR
+      GlobalVar : Integer;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    GlobalVar := 0;
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      GlobalVar := 0;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -987,20 +1103,24 @@ CODE
 
     it('should find references with local variables in field trigger', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-  { 2 ;   ; Name ; Text50 ;
-                           OnValidate=VAR
-                                        LocalVar@1000 : Integer;
-                                      BEGIN
-                                        LocalVar := 1;
-                                        LocalVar := LocalVar + 1;
-                                      END; }
-}
-CODE
-  BEGIN
-  END.`;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+    { 2 ;   ; Name ; Text50 ;
+                             OnValidate=VAR
+                                          LocalVar@1000 : Integer;
+                                        BEGIN
+                                          LocalVar := 1;
+                                          LocalVar := LocalVar + 1;
+                                        END; }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -1019,22 +1139,26 @@ CODE
 
     it('should find field references from usage inside field trigger', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-  { 2 ;   ; Amount ; Decimal ;
-                              OnValidate=BEGIN
-                                           Amount := Amount * 2;
-                                         END; }
-}
-CODE
-  PROCEDURE DoSomething();
-  BEGIN
-    Amount := 100;
-  END;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+    { 2 ;   ; Amount ; Decimal ;
+                                OnValidate=BEGIN
+                                             Amount := Amount * 2;
+                                           END; }
+  }
+  CODE
+  {
+    PROCEDURE DoSomething();
+    BEGIN
+      Amount := 100;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -1054,23 +1178,27 @@ CODE
 
     it('should find references in nested statements inside field trigger', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-  { 2 ;   ; Status ; Option ;
-                             OnValidate=BEGIN
-                                          IF Status = 1 THEN
-                                            Status := 2;
-                                        END; }
-}
-CODE
-  PROCEDURE DoSomething();
-  BEGIN
-    Status := 0;
-  END;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+    { 2 ;   ; Status ; Option ;
+                               OnValidate=BEGIN
+                                            IF Status = 1 THEN
+                                              Status := 2;
+                                          END; }
+  }
+  CODE
+  {
+    PROCEDURE DoSomething();
+    BEGIN
+      Status := 0;
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 
@@ -1087,26 +1215,30 @@ CODE
 
     it('should handle field trigger with procedure call', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1 ;   ; No ; Code10 }
-  { 2 ;   ; Name ; Text50 ;
-                           OnValidate=BEGIN
-                                        ValidateName(Name);
-                                      END; }
-}
-CODE
-  PROCEDURE ValidateName(Value : Text[50]);
-  BEGIN
-  END;
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+    { 2 ;   ; Name ; Text50 ;
+                             OnValidate=BEGIN
+                                          ValidateName(Name);
+                                        END; }
+  }
+  CODE
+  {
+    PROCEDURE ValidateName(Value : Text[50]);
+    BEGIN
+    END;
 
-  PROCEDURE DoSomething();
-  BEGIN
-    ValidateName('Test');
-  END;
+    PROCEDURE DoSomething();
+    BEGIN
+      ValidateName('Test');
+    END;
 
-  BEGIN
-  END.`;
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
 

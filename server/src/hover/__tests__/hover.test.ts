@@ -3,7 +3,6 @@
  */
 
 import { HoverProvider } from '../hoverProvider';
-import { BUILTIN_FUNCTIONS, RECORD_METHODS } from '../../completion/builtins';
 import { SymbolTable } from '../../symbols/symbolTable';
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../../parser/parser';

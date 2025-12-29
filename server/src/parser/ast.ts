@@ -57,6 +57,10 @@ export interface Property extends ASTNode {
   type: 'Property';
   name: string;
   value: string;
+  /** For property triggers (OnRun, OnValidate, etc.), stores the parsed trigger body */
+  triggerBody?: Statement[];
+  /** Variables declared in property trigger VAR section (rare but possible) */
+  triggerVariables?: VariableDeclaration[];
 }
 
 /**

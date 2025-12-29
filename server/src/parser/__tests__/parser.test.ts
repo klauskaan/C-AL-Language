@@ -2465,8 +2465,9 @@ describe('Parser - Property Value Whitespace Preservation', () => {
 
       expect(ast.object?.properties?.properties).toHaveLength(1);
       expect(ast.object?.properties?.properties[0].name).toBe('OnRun');
-      // The critical test: should be "BEGIN END" not "BEGINEND"
-      expect(ast.object?.properties?.properties[0].value).toBe('BEGIN END');
+      // Property triggers are now parsed as statements, value is 'BEGIN...END'
+      expect(ast.object?.properties?.properties[0].value).toBe('BEGIN...END');
+      expect(ast.object?.properties?.properties[0].triggerBody).toBeDefined();
     });
 
     it('should preserve whitespace in multi-keyword property values', () => {
@@ -2481,9 +2482,13 @@ describe('Parser - Property Value Whitespace Preservation', () => {
       const ast = parser.parse();
 
       expect(ast.object?.properties?.properties[0].name).toBe('OnInsert');
-      // Should preserve spaces between all tokens
-      expect(ast.object?.properties?.properties[0].value).toContain('BEGIN IF');
-      expect(ast.object?.properties?.properties[0].value).not.toContain('BEGINIF');
+      // Property triggers are now parsed as statements
+      expect(ast.object?.properties?.properties[0].value).toBe('BEGIN...END');
+      expect(ast.object?.properties?.properties[0].triggerBody).toBeDefined();
+      // Verify the trigger contains an IF statement with Customer references
+      const triggerJSON = JSON.stringify(ast.object?.properties?.properties[0].triggerBody);
+      expect(triggerJSON).toContain('IF');
+      expect(triggerJSON).toContain('Customer');
     });
 
     it('should preserve spacing between operators and identifiers', () => {
@@ -2497,9 +2502,15 @@ describe('Parser - Property Value Whitespace Preservation', () => {
 
       const ast = parser.parse();
 
-      const value = ast.object?.properties?.properties[0].value || '';
-      expect(value).toContain('x :=');
-      expect(value).toContain('y +');
+      // Property triggers are now parsed as statements, not text
+      const prop = ast.object?.properties?.properties[0];
+      expect(prop?.value).toBe('BEGIN...END');
+      expect(prop?.triggerBody).toBeDefined();
+      // The trigger body should contain the assignment statement
+      const triggerJSON = JSON.stringify(prop?.triggerBody);
+      expect(triggerJSON).toContain('x');
+      expect(triggerJSON).toContain('y');
+      expect(triggerJSON).toContain('z');
     });
   });
 
@@ -2657,7 +2668,9 @@ describe('Parser - Property Value Whitespace Preservation', () => {
       expect(ast.object?.properties?.properties[0].value).toBe('Yes');
       // Lexer strips quotes from string literals
       expect(ast.object?.properties?.properties[1].value).toBe('Customer');
-      expect(ast.object?.properties?.properties[2].value).toBe('BEGIN END');
+      // Property triggers now have value 'BEGIN...END' and a parsed triggerBody
+      expect(ast.object?.properties?.properties[2].value).toBe('BEGIN...END');
+      expect(ast.object?.properties?.properties[2].triggerBody).toBeDefined();
       expect(ast.object?.properties?.properties[3].value).toBe('21');
     });
   });
@@ -2697,9 +2710,8 @@ describe('Parser - Property Value Whitespace Preservation', () => {
     });
 
     it('should handle BEGIN END trigger property', () => {
-      // Test trigger property at object-level. Note: The parser stops at the
-      // first semicolon, so nested statements with internal semicolons need
-      // more advanced parsing. This test verifies simple BEGIN END case.
+      // Property triggers are now fully parsed as statement bodies,
+      // not just text values. The value is set to 'BEGIN...END' as a marker.
       const code = `OBJECT Table 18 Customer {
         PROPERTIES {
           OnRun=BEGIN END;
@@ -2712,10 +2724,10 @@ describe('Parser - Property Value Whitespace Preservation', () => {
 
       const prop = ast.object?.properties?.properties[0];
       expect(prop?.name).toBe('OnRun');
-      const value = prop?.value || '';
-      // Key test: whitespace between BEGIN and END is preserved
-      expect(value).toBe('BEGIN END');
-      expect(value).not.toBe('BEGINEND');
+      // Property triggers now have value 'BEGIN...END' and a parsed triggerBody
+      expect(prop?.value).toBe('BEGIN...END');
+      expect(prop?.triggerBody).toBeDefined();
+      expect(Array.isArray(prop?.triggerBody)).toBe(true);
     });
   });
 });

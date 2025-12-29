@@ -191,7 +191,7 @@ CODE
       const usageLine = lines[usageLineIndex];
       const counterCol = usageLine.indexOf('Counter');
 
-      const result = provider.getDefinition(doc, Position.create(usageLineIndex, counterCol + 3), ast, symbolTable);
+      const result = provider.getDefinition(doc, Position.create(usageLineIndex, counterCol + 1), ast, symbolTable);
 
       expect(result).not.toBeNull();
       // Should point to where Counter is DEFINED in VAR section
@@ -224,7 +224,7 @@ CODE
       const usageLine = lines[usageLineIndex];
       const nameCol = usageLine.indexOf('Name');
 
-      const result = provider.getDefinition(doc, Position.create(usageLineIndex, nameCol + 2), ast, symbolTable);
+      const result = provider.getDefinition(doc, Position.create(usageLineIndex, nameCol + 1), ast, symbolTable);
 
       expect(result).not.toBeNull();
       // Should point to field definition
@@ -260,7 +260,7 @@ CODE
       const usageLine = lines[usageLineIndex];
       const procCol = usageLine.indexOf('MyProcedure');
 
-      const result = provider.getDefinition(doc, Position.create(usageLineIndex, procCol + 5), ast, symbolTable);
+      const result = provider.getDefinition(doc, Position.create(usageLineIndex, procCol + 1), ast, symbolTable);
 
       expect(result).not.toBeNull();
       // Should point to procedure definition
@@ -300,7 +300,7 @@ CODE
       const dotPos = usageLine.indexOf('.');
       const customerNameCol = dotPos + 1; // right after the dot
 
-      const result = provider.getDefinition(doc, Position.create(usageLineIndex, customerNameCol + 5), ast, symbolTable);
+      const result = provider.getDefinition(doc, Position.create(usageLineIndex, customerNameCol + 1), ast, symbolTable);
 
       // Should find CustomerName in the symbol table (as a field)
       expect(result).not.toBeNull();

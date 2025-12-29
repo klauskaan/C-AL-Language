@@ -195,9 +195,22 @@ export class Parser {
     const idToken = this.consume(TokenType.Integer, 'Expected object ID');
     const objectId = this.parseInteger(idToken);
 
-    // Object Name (can be quoted or unquoted)
-    const nameToken = this.advance();
-    const objectName = nameToken.value;
+    // Object Name (can be quoted or unquoted, may contain multiple tokens)
+    // If quoted (String token), it's a single token
+    // If unquoted, consume all tokens until we hit the opening brace
+    let objectName = '';
+
+    if (this.check(TokenType.String)) {
+      // Quoted name - single token
+      objectName = this.advance().value;
+    } else {
+      // Unquoted name - consume all tokens until left brace
+      const nameParts: string[] = [];
+      while (!this.check(TokenType.LeftBrace) && !this.isAtEnd()) {
+        nameParts.push(this.advance().value);
+      }
+      objectName = nameParts.join(' ').trim();
+    }
 
     return { startToken, objectKind, objectId, objectName };
   }
@@ -260,7 +273,35 @@ export class Parser {
 
     this.consume(TokenType.Equal, 'Expected =');
 
-    // Property value - read until semicolon, preserving whitespace
+    // Check if this is a property trigger (value starts with BEGIN)
+    // Property triggers: OnRun, OnValidate, OnLookup, OnInit, OnOpenPage, etc.
+    if (this.check(TokenType.Begin)) {
+      // Parse as trigger body
+      const triggerVariables: VariableDeclaration[] = [];
+
+      // Some triggers can have VAR section (rare)
+      if (this.check(TokenType.Var)) {
+        this.parseVariableDeclarations(triggerVariables);
+      }
+
+      // Parse the BEGIN...END block and extract its statements
+      const block = this.parseBlock();
+      const triggerBody = block.statements;
+
+      const endToken = this.consume(TokenType.Semicolon, 'Expected ;');
+
+      return {
+        type: 'Property',
+        name,
+        value: 'BEGIN...END', // Keep a simplified value for display
+        triggerBody,
+        triggerVariables: triggerVariables.length > 0 ? triggerVariables : undefined,
+        startToken,
+        endToken
+      };
+    }
+
+    // Regular property value - read until semicolon, preserving whitespace
     let value = '';
     let lastToken: Token | null = null;
 
@@ -628,6 +669,19 @@ export class Parser {
       try {
         // Check for AL-only tokens before procedure/trigger declarations
         this.skipALOnlyTokens();
+
+        // Skip attributes like [External], [Integration], etc.
+        // These are attributes in square brackets before procedure declarations
+        while (this.check(TokenType.LeftBracket)) {
+          this.advance(); // consume [
+          // Skip until closing ]
+          while (!this.check(TokenType.RightBracket) && !this.isAtEnd()) {
+            this.advance();
+          }
+          if (this.check(TokenType.RightBracket)) {
+            this.advance(); // consume ]
+          }
+        }
 
         // Check for LOCAL keyword before PROCEDURE/FUNCTION
         let isLocal = false;
@@ -1723,7 +1777,8 @@ export class Parser {
            this.check(TokenType.Function) ||
            this.check(TokenType.Local) ||
            this.check(TokenType.Trigger) ||
-           this.check(TokenType.Begin);
+           this.check(TokenType.Begin) ||
+           this.check(TokenType.LeftBracket);  // Attributes like [External] before procedures
   }
 
   private advance(): Token {

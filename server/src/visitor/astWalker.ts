@@ -309,9 +309,23 @@ export class ASTWalker {
 
   private walkProperty(node: Property, visitor: Partial<ASTVisitor>): void {
     if (visitor.visitProperty) {
-      visitor.visitProperty(node);
+      const result = visitor.visitProperty(node);
+      if (result === false) {
+        return;
+      }
     }
-    // Property has no child AST nodes to traverse
+
+    // Property triggers (OnRun, OnValidate, etc.) may have trigger variables and body
+    if (node.triggerVariables) {
+      for (const variable of node.triggerVariables) {
+        this.walk(variable, visitor);
+      }
+    }
+    if (node.triggerBody) {
+      for (const statement of node.triggerBody) {
+        this.walk(statement, visitor);
+      }
+    }
   }
 
   private walkFieldDeclaration(node: FieldDeclaration, visitor: Partial<ASTVisitor>): void {

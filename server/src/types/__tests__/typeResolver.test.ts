@@ -10,11 +10,9 @@ import { DataType, VariableDeclaration } from '../../parser/ast';
 import { Token, TokenType } from '../../lexer/tokens';
 import {
   resolveType,
-  resolveVariableType,
-  TypeResolverOptions
+  resolveVariableType
 } from '../typeResolver';
 import {
-  Type,
   PrimitiveType,
   PrimitiveName,
   RecordType,

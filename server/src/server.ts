@@ -17,7 +17,9 @@ import {
   SignatureHelpParams,
   Location,
   DefinitionParams,
-  ReferenceParams
+  ReferenceParams,
+  CodeLens,
+  CodeLensParams
 } from 'vscode-languageserver/node';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -32,6 +34,7 @@ import { HoverProvider } from './hover';
 import { SignatureHelpProvider } from './signatureHelp';
 import { DefinitionProvider } from './definition';
 import { ReferenceProvider } from './references';
+import { CodeLensProvider } from './codelens';
 import { SymbolTable } from './symbols/symbolTable';
 
 // Create a connection for the server
@@ -57,6 +60,9 @@ const definitionProvider = new DefinitionProvider();
 
 // Reference provider
 const referenceProvider = new ReferenceProvider();
+
+// CodeLens provider
+const codeLensProvider = new CodeLensProvider();
 
 // Cache for parsed documents (includes symbol table and parse errors)
 interface ParsedDocument {
@@ -88,11 +94,14 @@ connection.onInitialize((_params: InitializeParams) => {
         retriggerCharacters: [',']
       },
       definitionProvider: true,
-      referencesProvider: true
+      referencesProvider: true,
+      codeLensProvider: {
+        resolveProvider: false
+      }
     }
   };
 
-  connection.console.log('Capabilities registered: semanticTokens, completion, hover, signatureHelp, definition, references');
+  connection.console.log('Capabilities registered: semanticTokens, completion, hover, signatureHelp, definition, references, codeLens');
   return result;
 });
 
@@ -252,6 +261,23 @@ connection.onReferences((params: ReferenceParams): Location[] => {
   } catch (error) {
     const msg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
     connection.console.error(`Error getting references: ${msg}`);
+    return [];
+  }
+});
+
+// Handle CodeLens requests
+connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
+  const document = documents.get(params.textDocument.uri);
+  if (!document) {
+    return [];
+  }
+
+  try {
+    const { ast } = parseDocument(document);
+    return codeLensProvider.getCodeLenses(document, ast);
+  } catch (error) {
+    const msg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
+    connection.console.error(`Error getting code lenses: ${msg}`);
     return [];
   }
 });
