@@ -44,7 +44,7 @@
       {
         "language": "cal",
         "scopeName": "source.cal",
-        "path": "./syntaxes/cal.tmLanguage.json",
+        "path": "./syntaxes/.cal.tmLanguage.json.disabled",
         "tokenTypes": {
           "identifier.quoted.double.cal": "string"
         }
@@ -99,7 +99,24 @@
           ]
         }
       }
-    ]
+    ],
+    "configuration": {
+      "title": "C/AL Language Support",
+      "properties": {
+        "cal.languageServer.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the C/AL Language Server. Provides IntelliSense, hover information, go-to-definition, find references, and semantic highlighting. Requires window reload after changing.",
+          "scope": "window"
+        },
+        "cal.semanticHighlighting.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable semantic highlighting from the Language Server. When disabled, only TextMate grammar highlighting is used. Useful for debugging highlighting issues.",
+          "scope": "window"
+        }
+      }
+    }
   },
   "main": "./out/extension.js",
   "scripts": {
@@ -109,7 +126,11 @@
     "test": "node ./out/test/runTest.js",
     "postinstall": "cd server && npm install",
     "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix"
+    "lint:fix": "eslint . --ext .ts --fix",
+    "mode": "node toggle-highlighting-mode.js",
+    "mode:textmate": "node toggle-highlighting-mode.js textmate",
+    "mode:semantic": "node toggle-highlighting-mode.js semantic",
+    "mode:both": "node toggle-highlighting-mode.js both"
   },
   "dependencies": {
     "vscode-languageclient": "^8.1.0",

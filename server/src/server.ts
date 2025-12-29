@@ -73,17 +73,24 @@ interface ParsedDocument {
 }
 const documentCache = new Map<string, ParsedDocument>();
 
-connection.onInitialize((_params: InitializeParams) => {
+connection.onInitialize((params: InitializeParams) => {
   connection.console.log('C/AL Language Server initializing...');
+
+  // Check if semantic highlighting is enabled via initialization options
+  const initOptions = params.initializationOptions as { semanticHighlighting?: boolean } | undefined;
+  const semanticHighlightingEnabled = initOptions?.semanticHighlighting ?? true;
+
+  connection.console.log(`Semantic highlighting: ${semanticHighlightingEnabled ? 'enabled' : 'disabled'}`);
 
   const result: InitializeResult = {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
-      semanticTokensProvider: {
+      // Only register semantic tokens provider if enabled
+      semanticTokensProvider: semanticHighlightingEnabled ? {
         legend: getSemanticTokensLegend(),
         full: true,
         range: false
-      },
+      } : undefined,
       completionProvider: {
         triggerCharacters: ['.', ':'],
         resolveProvider: false
