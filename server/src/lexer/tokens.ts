@@ -23,6 +23,7 @@ export enum TokenType {
   MenuSuite = 'MENUSUITE',
 
   // Keywords - Sections
+  ObjectProperties = 'OBJECT_PROPERTIES',
   Properties = 'PROPERTIES',
   Fields = 'FIELDS',
   Keys = 'KEYS',

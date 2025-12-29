@@ -219,11 +219,9 @@ export class Parser {
    * Skip OBJECT-PROPERTIES section if present (it's metadata, not code)
    */
   private skipObjectPropertiesSection(): void {
-    if (this.check(TokenType.Object) && this.checkNext(TokenType.Minus)) {
+    if (this.check(TokenType.ObjectProperties)) {
       // Skip OBJECT-PROPERTIES { ... }
-      this.advance(); // OBJECT
-      this.advance(); // -
-      this.advance(); // PROPERTIES
+      this.advance(); // OBJECT-PROPERTIES
       if (this.check(TokenType.LeftBrace)) {
         this.advance(); // {
         // Skip until matching }

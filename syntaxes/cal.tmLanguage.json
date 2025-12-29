@@ -139,10 +139,12 @@
       "patterns": [
         {
           "name": "meta.section.object-properties.cal",
-          "begin": "^\\s*(OBJECT-PROPERTIES)\\s*$",
+          "begin": "^\\s*(OBJECT)(-)(PROPERTIES)\\s*$",
           "end": "^\\s*\\}\\s*$",
           "beginCaptures": {
-            "1": { "name": "storage.modifier.cal" }
+            "1": { "name": "storage.modifier.cal" },
+            "2": { "name": "storage.modifier.cal" },
+            "3": { "name": "storage.modifier.cal" }
           },
           "endCaptures": {
             "0": { "name": "punctuation.section.block.end.cal" }
@@ -511,9 +513,13 @@
           "match": "^\\s*(PROPERTIES|FIELDS|KEYS|FIELDGROUPS|CODE|ELEMENTS|CONTROLS|SECTIONS|DATASET|REQUESTPAGE|LABELS)(?=\\s*$)"
         },
         {
-          "comment": "OBJECT-PROPERTIES section keyword - special case with hyphen",
-          "name": "storage.modifier.section.cal",
-          "match": "^\\s*(OBJECT-PROPERTIES)(?=\\s*$)"
+          "comment": "OBJECT-PROPERTIES section keyword - special case with hyphen, explicitly scope all parts to prevent operator highlighting",
+          "match": "^\\s*(OBJECT)(-)(PROPERTIES)(?=\\s*$)",
+          "captures": {
+            "1": { "name": "storage.modifier.section.cal" },
+            "2": { "name": "storage.modifier.section.cal" },
+            "3": { "name": "storage.modifier.section.cal" }
+          }
         },
         {
           "comment": "Procedure attributes",
@@ -549,8 +555,9 @@
     "operators": {
       "patterns": [
         {
+          "comment": "Arithmetic operators - negative lookbehind/ahead prevents matching hyphens in OBJECT-PROPERTIES",
           "name": "keyword.operator.arithmetic.cal",
-          "match": "\\+|-|\\*|/|\\b(DIV|MOD)\\b"
+          "match": "\\+|\\*|/|(?<![A-Z])-(?![A-Z])|\\b(DIV|MOD)\\b"
         },
         {
           "name": "keyword.operator.comparison.cal",

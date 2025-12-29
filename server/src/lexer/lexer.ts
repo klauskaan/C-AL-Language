@@ -347,6 +347,33 @@ export class Lexer {
       this.advance();
     }
 
+    // Special case: Check for OBJECT-PROPERTIES compound keyword
+    if (value.toUpperCase() === 'OBJECT' && this.currentChar() === '-') {
+      const savedPos = this.position;
+      const savedLine = this.line;
+      const savedColumn = this.column;
+
+      this.advance(); // skip '-'
+
+      // Check if PROPERTIES follows
+      let nextWord = '';
+      while (this.isIdentifierPart(this.currentChar())) {
+        nextWord += this.currentChar();
+        this.advance();
+      }
+
+      if (nextWord.toUpperCase() === 'PROPERTIES') {
+        // Found OBJECT-PROPERTIES, emit as single token
+        this.addToken(TokenType.ObjectProperties, value + '-' + nextWord, startPos, this.position, startLine, startColumn);
+        return;
+      }
+
+      // Not OBJECT-PROPERTIES, restore position and process OBJECT normally
+      this.position = savedPos;
+      this.line = savedLine;
+      this.column = savedColumn;
+    }
+
     // Check if it's a keyword (case-insensitive)
     const lowerValue = value.toLowerCase();
 
