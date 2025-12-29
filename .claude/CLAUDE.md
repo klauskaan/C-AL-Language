@@ -249,9 +249,30 @@ gh issue close <number>
 ```
 
 ### Commit Messages
-- Reference issues: `fix: resolve parser error with TEMPORARY keyword (#123)`
-- Use conventional commits: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `perf:`
+- **Format:** Use conventional commits: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `perf:`
+- **Issue references:** Use `Fixes #123` or `Closes #123` to auto-close issues when pushed
+- **Claude attribution:** Always include when Claude assists with the commit:
+  ```
+  🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+  Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+  ```
+  This makes GitHub show both you and Claude as co-authors in the commit header
 - Include context for future maintainers
+
+**Example commit message:**
+```
+fix: resolve parser error with TEMPORARY keyword
+
+Replace implicit fallback logic with explicit type checking.
+Add error handling for unexpected operator types.
+
+Fixes #25
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+```
 
 ### Pull Request Workflow
 1. Create feature branch: `git checkout -b feature/description`
