@@ -64,18 +64,68 @@ export function getSemanticTokensLegend(): { tokenTypes: string[], tokenModifier
  * TextMate grammar scopes them differently for bracket matching purposes.
  */
 export class SemanticTokensProvider {
+  private inObjectProperties = false;
+  private inProperties = false;
+  private propertiesBraceDepth = 0;
+  private inPropertyValue = false; // Tracks if we're currently in a property value (after = and before ;)
+
   /**
    * Build semantic tokens from tokens and AST
    */
   public buildSemanticTokens(tokens: Token[], ast: CALDocument, builder: SemanticTokensBuilder): void {
+    // Reset state for each document
+    this.inObjectProperties = false;
+    this.inProperties = false;
+    this.propertiesBraceDepth = 0;
+    this.inPropertyValue = false;
+
     // Process all tokens and assign semantic token types
-    for (const token of tokens) {
-      this.processToken(token, builder);
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i];
+      const nextToken = i + 1 < tokens.length ? tokens[i + 1] : null;
+
+      // Track OBJECT-PROPERTIES and PROPERTIES context
+      this.updatePropertiesContext(token);
+
+      this.processToken(token, builder, nextToken);
     }
   }
 
-  private processToken(token: Token, builder: SemanticTokensBuilder): void {
-    const tokenType = this.mapTokenTypeToSemantic(token);
+  /**
+   * Update context tracking for OBJECT-PROPERTIES and PROPERTIES sections
+   */
+  private updatePropertiesContext(token: Token): void {
+    // Check if we're entering an OBJECT-PROPERTIES section
+    if (token.type === TokenType.ObjectProperties) {
+      this.inObjectProperties = true;
+      return;
+    }
+
+    // Check if we're entering a PROPERTIES section
+    if (token.type === TokenType.Properties) {
+      this.inProperties = true;
+      return;
+    }
+
+    // Track brace depth when inside either section
+    if (this.inObjectProperties || this.inProperties) {
+      if (token.type === TokenType.LeftBrace) {
+        this.propertiesBraceDepth++;
+      } else if (token.type === TokenType.RightBrace) {
+        this.propertiesBraceDepth--;
+
+        // Exit sections when we close them (when depth returns to 0)
+        if (this.propertiesBraceDepth === 0) {
+          this.inObjectProperties = false;
+          this.inProperties = false;
+        }
+      }
+    }
+  }
+
+
+  private processToken(token: Token, builder: SemanticTokensBuilder, nextToken: Token | null): void {
+    const tokenType = this.mapTokenTypeToSemantic(token, nextToken);
 
     if (tokenType === null) {
       return; // Skip tokens we don't want to highlight semantically
@@ -95,8 +145,19 @@ export class SemanticTokensProvider {
    *
    * IMPORTANT: Quoted identifiers are mapped to 'variable' type, making them
    * appear the same as regular identifiers despite having different TextMate scopes.
+   *
+   * Context-aware mapping:
+   * - In OBJECT-PROPERTIES: Date, Time, Modified, etc. are property names (not types)
+   * - In PROPERTIES: Treated normally (identifiers remain as variables)
+   * - Property values after = are strings (in OBJECT-PROPERTIES)
    */
-  private mapTokenTypeToSemantic(token: Token): number | null {
+  private mapTokenTypeToSemantic(token: Token, nextToken: Token | null): number | null {
+    // Special handling for OBJECT-PROPERTIES context only
+    // PROPERTIES sections are treated normally (no special property name handling)
+    if (this.inObjectProperties && this.propertiesBraceDepth > 0) {
+      return this.mapObjectPropertyToken(token, nextToken);
+    }
+
     switch (token.type) {
       // Keywords
       case TokenType.Object:
@@ -220,5 +281,88 @@ export class SemanticTokensProvider {
       default:
         return null;
     }
+  }
+
+  /**
+   * Map tokens inside OBJECT-PROPERTIES sections
+   *
+   * In OBJECT-PROPERTIES, the pattern is: PropertyName=PropertyValue; or PropertyName PropertyName=PropertyValue;
+   * - Property names (left of =) should be Property type (including multi-word names like "Version List")
+   * - Property values (right of =, before ;) should be String type - INCLUDING separators like :, -, ., ,
+   * - This includes Date, Time, Modified, Version List, etc.
+   */
+  private mapObjectPropertyToken(token: Token, nextToken: Token | null): number | null {
+    // Check if this is part of a property name (immediately before = or another identifier that precedes =)
+    const isPropertyName = this.isPropertyName(token, nextToken);
+    if (isPropertyName) {
+      return SemanticTokenTypes.Property;
+    }
+
+    // Handle = and ; to track property value state
+    if (token.type === TokenType.Equal) {
+      this.inPropertyValue = true; // Start of property value
+      return null; // Don't color the = itself
+    }
+
+    if (token.type === TokenType.Semicolon) {
+      this.inPropertyValue = false; // End of property value
+      return null; // Don't color the ; itself
+    }
+
+    // If we're in a property value, color EVERYTHING as String (including separators)
+    if (this.inPropertyValue) {
+      // All value parts including numbers, identifiers, and separators -> String
+      if (token.type === TokenType.Integer ||
+          token.type === TokenType.Decimal ||
+          token.type === TokenType.Identifier ||
+          token.type === TokenType.True ||
+          token.type === TokenType.False ||
+          token.type === TokenType.String ||
+          token.type === TokenType.Minus ||    // - in dates like 24-03-19
+          token.type === TokenType.Colon ||    // : in times like 12:00:00
+          token.type === TokenType.Dot ||      // . in versions like NAVW114.00
+          token.type === TokenType.Comma) {    // , in lists
+        return SemanticTokenTypes.String;
+      }
+    }
+
+    // Skip other tokens
+    return null;
+  }
+
+  /**
+   * Check if a token is part of a property name in OBJECT-PROPERTIES
+   *
+   * Property names can be:
+   * - Single word: Date, Time, Modified, etc.
+   * - Multi-word: Version List, etc.
+   *
+   * A token is a property name if:
+   * 1. It's directly before = (next token is =)
+   * 2. It's a type keyword before another identifier that comes before =
+   */
+  private isPropertyName(token: Token, nextToken: Token | null): boolean {
+    // Types like Date, Time, Modified, Version are property names when followed by = or another identifier
+    if (token.type === TokenType.Date_Type ||
+        token.type === TokenType.Time_Type ||
+        token.type === TokenType.Identifier ||
+        token.type === TokenType.QuotedIdentifier) {
+
+      // Case 1: Directly before = (single-word property)
+      if (nextToken && nextToken.type === TokenType.Equal) {
+        return true;
+      }
+
+      // Case 2: Before another identifier (part of multi-word property like "Version List")
+      // Continue checking through identifiers until we find =
+      if (nextToken && (nextToken.type === TokenType.Identifier ||
+                        nextToken.type === TokenType.QuotedIdentifier ||
+                        nextToken.type === TokenType.Date_Type ||
+                        nextToken.type === TokenType.Time_Type)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

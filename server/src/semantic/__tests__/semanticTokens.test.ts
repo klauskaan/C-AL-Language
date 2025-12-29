@@ -3519,6 +3519,589 @@ END;
         expect(variables.length).toBeGreaterThan(5);
       });
     });
+
+    describe('OBJECT-PROPERTIES Semantic Highlighting', () => {
+      /**
+       * Regression Tests for OBJECT-PROPERTIES semantic highlighting
+       *
+       * Problem: In OBJECT-PROPERTIES sections, property names like "Date" and "Time"
+       * are incorrectly treated as data types (SemanticTokenTypes.Type) instead of
+       * property names (SemanticTokenTypes.Property).
+       *
+       * Expected Behavior (matching TextMate grammar):
+       * - Left of `=`: Property names → SemanticTokenTypes.Property
+       * - Right of `=`: String values → SemanticTokenTypes.String or null
+       *
+       * Current Behavior (INCORRECT):
+       * - "Date" in "Date=24-03-19;" → SemanticTokenTypes.Type (wrong!)
+       * - "Time" in "Time=12:00:00;" → SemanticTokenTypes.Type (wrong!)
+       * - Property values tokenized as numbers/operators (wrong!)
+       */
+
+      describe('Property Name Tokenization', () => {
+        it('should tokenize Date as Property in OBJECT-PROPERTIES, not Type', () => {
+          const code = `OBJECT Codeunit 1003 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=24-03-19;
+  }
+}`;
+          const semanticType = findSemanticType(code, 'Date');
+
+          // CURRENTLY FAILS: Returns SemanticTokenTypes.Type
+          // SHOULD BE: SemanticTokenTypes.Property
+          expect(semanticType).toBe(SemanticTokenTypes.Property);
+        });
+
+        it('should tokenize Time as Property in OBJECT-PROPERTIES, not Type', () => {
+          const code = `OBJECT Codeunit 1003 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Time=12:00:00;
+  }
+}`;
+          const semanticType = findSemanticType(code, 'Time');
+
+          // CURRENTLY FAILS: Returns SemanticTokenTypes.Type
+          // SHOULD BE: SemanticTokenTypes.Property
+          expect(semanticType).toBe(SemanticTokenTypes.Property);
+        });
+
+        it('should tokenize Version as Property in OBJECT-PROPERTIES', () => {
+          const code = `OBJECT Codeunit 1003 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Version List=NAVW114.00;
+  }
+}`;
+          const { builder } = buildSemanticTokens(code);
+
+          // Find "Version" token
+          const versionTokens = builder.tokens.filter(t =>
+            t.tokenType === SemanticTokenTypes.Property ||
+            t.tokenType === SemanticTokenTypes.Variable
+          );
+
+          // "Version" should be a Property, not Type
+          const hasVersionAsProperty = versionTokens.some(t => {
+            const tokens = tokenizeCode(code);
+            const lexerToken = tokens.find(lt =>
+              lt.line - 1 === t.line &&
+              lt.column - 1 === t.char &&
+              lt.value === 'Version'
+            );
+            return lexerToken !== undefined;
+          });
+
+          expect(hasVersionAsProperty).toBe(true);
+        });
+
+        it('should tokenize List as Property in Version List property', () => {
+          const code = `OBJECT Codeunit 1003 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Version List=NAVW114.00;
+  }
+}`;
+          const { builder } = buildSemanticTokens(code);
+
+          // Find "List" token
+          const listTokens = builder.tokens.filter(t =>
+            t.tokenType === SemanticTokenTypes.Property ||
+            t.tokenType === SemanticTokenTypes.Variable
+          );
+
+          // "List" should be a Property
+          const hasListAsProperty = listTokens.some(t => {
+            const tokens = tokenizeCode(code);
+            const lexerToken = tokens.find(lt =>
+              lt.line - 1 === t.line &&
+              lt.column - 1 === t.char &&
+              lt.value === 'List'
+            );
+            return lexerToken !== undefined;
+          });
+
+          expect(hasListAsProperty).toBe(true);
+        });
+
+        it('should tokenize Modified as Property in OBJECT-PROPERTIES', () => {
+          const code = `OBJECT Codeunit 1003 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=24-03-19;
+    Time=12:00:00;
+    Modified=Yes;
+  }
+}`;
+          const semanticType = findSemanticType(code, 'Modified');
+          expect(semanticType).toBe(SemanticTokenTypes.Property);
+        });
+
+        it('should handle multiple properties in OBJECT-PROPERTIES section', () => {
+          const code = `OBJECT Codeunit 1003 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=24-03-19;
+    Time=12:00:00;
+    Version List=NAVW114.00;
+    Modified=Yes;
+  }
+}`;
+          const { builder } = buildSemanticTokens(code);
+
+          // Count property tokens
+          const propertyTokens = builder.getTokensOfType(SemanticTokenTypes.Property);
+
+          // Should have at least: Date, Time, Version, List, Modified (5+ property names)
+          // Note: May have more if other identifiers are also properties
+          expect(propertyTokens.length).toBeGreaterThanOrEqual(5);
+        });
+      });
+
+      describe('Property Value Handling', () => {
+        it('should not tokenize property values as separate operators', () => {
+          const code = `OBJECT Codeunit 1003 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=24-03-19;
+  }
+}`;
+          const { builder, tokens } = buildSemanticTokens(code);
+
+          // Find tokens on the Date property line
+          const lexerTokens = tokens.filter(t => t.line === 5);
+          const semanticTokens = builder.tokens.filter(t => t.line === 4); // 0-indexed
+
+          // The hyphens in "24-03-19" should NOT be separate operator tokens
+          // They should be part of a string value or skipped
+          const operatorTokens = semanticTokens.filter(t =>
+            t.tokenType === SemanticTokenTypes.Operator
+          );
+
+          // Should not have multiple operator tokens from the date value
+          // (The = sign might be an operator, but the hyphens should not be)
+          expect(operatorTokens.length).toBeLessThanOrEqual(1);
+        });
+
+        it('should handle colon in Time property value', () => {
+          const code = `OBJECT Codeunit 1003 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Time=12:00:00;
+  }
+}`;
+          const { builder, tokens } = buildSemanticTokens(code);
+
+          // Find tokens on the Time property line
+          const semanticTokens = builder.tokens.filter(t => t.line === 4); // 0-indexed
+
+          // The colons in "12:00:00" should NOT be separate tokens
+          // The entire value should be a string or skipped
+          const numberTokens = semanticTokens.filter(t =>
+            t.tokenType === SemanticTokenTypes.Number
+          );
+
+          // Should not have multiple number tokens from time parts
+          expect(numberTokens.length).toBeLessThanOrEqual(1);
+        });
+
+        it('should handle Version List value with dots and numbers', () => {
+          const code = `OBJECT Codeunit 1003 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Version List=NAVW114.00;
+  }
+}`;
+          const { builder } = buildSemanticTokens(code);
+
+          // The value "NAVW114.00" should be a string or variable, not parsed as parts
+          const stringTokens = builder.getTokensOfType(SemanticTokenTypes.String);
+          const variableTokens = builder.getTokensOfType(SemanticTokenTypes.Variable);
+
+          // Should have string tokens for the value or it should be a variable
+          const hasValueToken = stringTokens.length > 0 || variableTokens.length > 0;
+          expect(hasValueToken).toBe(true);
+        });
+      });
+
+      describe('Context-Aware Type vs Property Distinction', () => {
+        it('should tokenize Date as Type in variable declarations', () => {
+          const code = `PROCEDURE Test();
+VAR
+  MyDate : Date;
+BEGIN
+END;`;
+          const semanticType = findSemanticType(code, 'Date');
+
+          // In variable declaration context, Date SHOULD be Type
+          expect(semanticType).toBe(SemanticTokenTypes.Type);
+        });
+
+        it('should tokenize Time as Type in variable declarations', () => {
+          const code = `PROCEDURE Test();
+VAR
+  MyTime : Time;
+BEGIN
+END;`;
+          const semanticType = findSemanticType(code, 'Time');
+
+          // In variable declaration context, Time SHOULD be Type
+          expect(semanticType).toBe(SemanticTokenTypes.Type);
+        });
+
+        it('should differentiate Date in OBJECT-PROPERTIES vs CODE section', () => {
+          const code = `OBJECT Codeunit 1003 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=24-03-19;
+  }
+  PROPERTIES
+  {
+    TableNo=1001;
+  }
+  CODE
+  {
+    VAR
+      MyDate : Date;
+
+    BEGIN
+    END;
+  }
+}`;
+          const { builder, tokens } = buildSemanticTokens(code);
+
+          // Find both Date tokens
+          const dateTokens = tokens.filter(t => t.value === 'Date');
+
+          // Should have 2 Date tokens: one in OBJECT-PROPERTIES, one in CODE
+          expect(dateTokens.length).toBe(2);
+
+          // First Date (OBJECT-PROPERTIES) should be Property
+          const firstDate = dateTokens[0];
+          const firstSemantic = builder.getTokenAt(firstDate.line - 1, firstDate.column - 1);
+          expect(firstSemantic?.tokenType).toBe(SemanticTokenTypes.Property);
+
+          // Second Date (CODE/VAR) should be Type
+          const secondDate = dateTokens[1];
+          const secondSemantic = builder.getTokenAt(secondDate.line - 1, secondDate.column - 1);
+          expect(secondSemantic?.tokenType).toBe(SemanticTokenTypes.Type);
+        });
+      });
+
+      describe('Real-World OBJECT-PROPERTIES Examples', () => {
+        it('should correctly highlight complete OBJECT-PROPERTIES from NAV standard object', () => {
+          const code = `OBJECT Codeunit 1003 Job Task-Indent
+{
+  OBJECT-PROPERTIES
+  {
+    Date=24-03-19;
+    Time=12:00:00;
+    Version List=NAVW114.00;
+  }
+  PROPERTIES
+  {
+    TableNo=1001;
+  }
+}`;
+          const { builder } = buildSemanticTokens(code);
+
+          // Should have property tokens for: Date, Time, Version, List
+          const propertyTokens = builder.getTokensOfType(SemanticTokenTypes.Property);
+          expect(propertyTokens.length).toBeGreaterThanOrEqual(4);
+
+          // Should NOT have Date or Time as Type tokens in OBJECT-PROPERTIES section
+          const tokens = tokenizeCode(code);
+          const objectPropsSection = tokens.slice(
+            tokens.findIndex(t => t.type === TokenType.ObjectProperties),
+            tokens.findIndex(t => t.type === TokenType.Properties)
+          );
+
+          const dateInObjProps = objectPropsSection.find(t => t.value === 'Date');
+          const timeInObjProps = objectPropsSection.find(t => t.value === 'Time');
+
+          if (dateInObjProps) {
+            const dateSemantic = builder.getTokenAt(
+              dateInObjProps.line - 1,
+              dateInObjProps.column - 1
+            );
+            expect(dateSemantic?.tokenType).not.toBe(SemanticTokenTypes.Type);
+          }
+
+          if (timeInObjProps) {
+            const timeSemantic = builder.getTokenAt(
+              timeInObjProps.line - 1,
+              timeInObjProps.column - 1
+            );
+            expect(timeSemantic?.tokenType).not.toBe(SemanticTokenTypes.Type);
+          }
+        });
+
+        it('should handle OBJECT-PROPERTIES without values', () => {
+          const code = `OBJECT Codeunit 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+  }
+}`;
+          const { builder } = buildSemanticTokens(code);
+
+          // Should successfully parse even with empty OBJECT-PROPERTIES
+          expect(builder.tokens.length).toBeGreaterThan(0);
+        });
+
+        it('should handle mixed property types in OBJECT-PROPERTIES', () => {
+          const code = `OBJECT Page 21 Customer Card
+{
+  OBJECT-PROPERTIES
+  {
+    Date=15-09-20;
+    Time=12:00:00;
+    Version List=NAVW114.00,NAVNA14.00;
+    Modified=Yes;
+  }
+}`;
+          const { builder } = buildSemanticTokens(code);
+
+          const propertyTokens = builder.getTokensOfType(SemanticTokenTypes.Property);
+
+          // Should have: Date, Time, Version, List, Modified
+          expect(propertyTokens.length).toBeGreaterThanOrEqual(5);
+        });
+      });
+
+      describe('OBJECT-PROPERTIES vs PROPERTIES Distinction', () => {
+        it('should distinguish OBJECT-PROPERTIES from PROPERTIES section', () => {
+          const code = `OBJECT Table 18 Customer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=24-03-19;
+    Time=12:00:00;
+  }
+  PROPERTIES
+  {
+    DataCaptionFields=No.,Name;
+    LookupPageID=Page22;
+  }
+}`;
+          const { builder, tokens } = buildSemanticTokens(code);
+
+          // OBJECT-PROPERTIES section keywords
+          const objPropsToken = tokens.find(t => t.type === TokenType.ObjectProperties);
+          expect(objPropsToken).toBeDefined();
+
+          // PROPERTIES section keywords
+          const propsToken = tokens.find(t => t.type === TokenType.Properties);
+          expect(propsToken).toBeDefined();
+
+          // Both should be mapped to Keyword semantic type
+          if (objPropsToken) {
+            const objPropsSemantic = builder.getTokenAt(
+              objPropsToken.line - 1,
+              objPropsToken.column - 1
+            );
+            expect(objPropsSemantic?.tokenType).toBe(SemanticTokenTypes.Keyword);
+          }
+
+          if (propsToken) {
+            const propsSemantic = builder.getTokenAt(
+              propsToken.line - 1,
+              propsToken.column - 1
+            );
+            expect(propsSemantic?.tokenType).toBe(SemanticTokenTypes.Keyword);
+          }
+        });
+
+        it('should handle properties in PROPERTIES section correctly', () => {
+          const code = `OBJECT Table 18 Customer
+{
+  PROPERTIES
+  {
+    DataCaptionFields=No.,Name;
+    LookupPageID=Page22;
+  }
+}`;
+          const { builder, tokens } = buildSemanticTokens(code);
+
+          // In PROPERTIES section, property names are treated as regular identifiers (Variable type)
+          // unlike OBJECT-PROPERTIES where they get Property type
+          const dataCaptionToken = tokens.find(t =>
+            t.type === TokenType.Identifier &&
+            t.value === 'DataCaptionFields'
+          );
+
+          expect(dataCaptionToken).toBeDefined();
+
+          if (dataCaptionToken) {
+            const semantic = builder.getTokenAt(dataCaptionToken.line - 1, dataCaptionToken.column - 1);
+            expect(semantic).toBeDefined();
+            // In PROPERTIES section, identifiers should be Variable type, not Property
+            expect(semantic?.tokenType).toBe(SemanticTokenTypes.Variable);
+          }
+        });
+      });
+
+      describe('OBJECT-PROPERTIES Correct Semantic Highlighting (Regression Tests)', () => {
+        it('should tokenize Date as Property (not Type) in OBJECT-PROPERTIES', () => {
+          const code = `OBJECT Codeunit 1003 Job Task-Indent
+{
+  OBJECT-PROPERTIES
+  {
+    Date=24-03-19;
+  }
+}`;
+          const semanticType = findSemanticType(code, 'Date');
+          // Date should be Property in OBJECT-PROPERTIES, not Type
+          expect(semanticType).toBe(SemanticTokenTypes.Property);
+        });
+
+        it('should tokenize Time as Property (not Type) in OBJECT-PROPERTIES', () => {
+          const code = `OBJECT Page 21 Customer Card
+{
+  OBJECT-PROPERTIES
+  {
+    Time=12:00:00;
+  }
+}`;
+          const semanticType = findSemanticType(code, 'Time');
+          // Time should be Property in OBJECT-PROPERTIES, not Type
+          expect(semanticType).toBe(SemanticTokenTypes.Property);
+        });
+
+        it('should tokenize property values as String in OBJECT-PROPERTIES', () => {
+          const code = `OBJECT Table 18 Customer
+{
+  OBJECT-PROPERTIES
+  {
+    Modified=Yes;
+  }
+}`;
+          const { builder, tokens } = buildSemanticTokens(code);
+
+          const yesToken = tokens.find(t => t.value === 'Yes');
+          expect(yesToken).toBeDefined();
+
+          if (yesToken) {
+            const semantic = builder.getTokenAt(yesToken.line - 1, yesToken.column - 1);
+            expect(semantic).toBeDefined();
+            expect(semantic?.tokenType).toBe(SemanticTokenTypes.String);
+          }
+        });
+
+        it('should handle Version List multi-word property name', () => {
+          const code = `OBJECT Codeunit 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Version List=NAVW114.00;
+  }
+}`;
+          const versionType = findSemanticType(code, 'Version');
+          const listType = findSemanticType(code, 'List');
+
+          // Both Version and List should be Property
+          expect(versionType).toBe(SemanticTokenTypes.Property);
+          expect(listType).toBe(SemanticTokenTypes.Property);
+        });
+
+        it('should not tokenize operators in OBJECT-PROPERTIES', () => {
+          const code = `OBJECT Page 21 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=15-09-20;
+  }
+}`;
+          const { builder, tokens } = buildSemanticTokens(code);
+
+          // Find the = operator
+          const equalToken = tokens.find(t =>
+            t.type === TokenType.Equal &&
+            t.line === 5  // Line with Date=
+          );
+
+          expect(equalToken).toBeDefined();
+
+          if (equalToken) {
+            const semantic = builder.getTokenAt(equalToken.line - 1, equalToken.column - 1);
+            // Operators should be skipped in OBJECT-PROPERTIES
+            expect(semantic).toBeUndefined();
+          }
+        });
+
+        it('should still tokenize PROPERTIES section normally', () => {
+          const code = `OBJECT Codeunit 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01-01-20;
+  }
+  PROPERTIES
+  {
+    TableNo=18;
+  }
+}`;
+          const { builder, tokens } = buildSemanticTokens(code);
+
+          // TableNo should have semantic token (it's in PROPERTIES, not OBJECT-PROPERTIES)
+          const tableNoToken = tokens.find(t =>
+            t.type === TokenType.Identifier &&
+            t.value === 'TableNo'
+          );
+
+          expect(tableNoToken).toBeDefined();
+
+          if (tableNoToken) {
+            const semantic = builder.getTokenAt(tableNoToken.line - 1, tableNoToken.column - 1);
+            expect(semantic).toBeDefined(); // SHOULD have semantic token
+            expect(semantic?.tokenType).toBe(SemanticTokenTypes.Variable); // TableNo is an identifier
+          }
+        });
+
+        it('should handle single-line OBJECT-PROPERTIES correctly', () => {
+          const code = `OBJECT Codeunit 1003 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=24-03-19;Time=12:00:00;Modified=Yes;Version List=NAVW114.00;
+  }
+}`;
+          const { builder, tokens } = buildSemanticTokens(code);
+
+          // All property names should be Property type
+          const dateType = findSemanticType(code, 'Date');
+          const timeType = findSemanticType(code, 'Time');
+          const modifiedType = findSemanticType(code, 'Modified');
+          const versionType = findSemanticType(code, 'Version');
+          const listType = findSemanticType(code, 'List');
+
+          expect(dateType).toBe(SemanticTokenTypes.Property);
+          expect(timeType).toBe(SemanticTokenTypes.Property);
+          expect(modifiedType).toBe(SemanticTokenTypes.Property);
+          expect(versionType).toBe(SemanticTokenTypes.Property);
+          expect(listType).toBe(SemanticTokenTypes.Property);
+
+          // All property values should be String type
+          const yesToken = tokens.find(t => t.value === 'Yes' && t.line === 5);
+          expect(yesToken).toBeDefined();
+          if (yesToken) {
+            const semantic = builder.getTokenAt(yesToken.line - 1, yesToken.column - 1);
+            expect(semantic?.tokenType).toBe(SemanticTokenTypes.String);
+          }
+        });
+      });
+    });
   });
 });
 
