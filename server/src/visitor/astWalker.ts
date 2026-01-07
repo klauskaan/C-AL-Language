@@ -55,7 +55,9 @@ import {
   UnaryExpression,
   MemberExpression,
   CallExpression,
-  ArrayAccessExpression
+  ArrayAccessExpression,
+  SetLiteral,
+  RangeExpression
 } from '../parser/ast';
 
 /**
@@ -197,6 +199,12 @@ export class ASTWalker {
         break;
       case 'ArrayAccessExpression':
         this.walkArrayAccessExpression(node as ArrayAccessExpression, visitor);
+        break;
+      case 'SetLiteral':
+        this.walkSetLiteral(node as SetLiteral, visitor);
+        break;
+      case 'RangeExpression':
+        this.walkRangeExpression(node as RangeExpression, visitor);
         break;
 
       default:
@@ -648,5 +656,35 @@ export class ASTWalker {
     }
     this.walkExpression(node.array, visitor);
     this.walkExpression(node.index, visitor);
+  }
+
+  private walkSetLiteral(node: SetLiteral, visitor: Partial<ASTVisitor>): void {
+    if (visitor.visitSetLiteral) {
+      const result = visitor.visitSetLiteral(node);
+      if (result === false) {
+        return;
+      }
+    }
+    // Walk all elements in the set
+    for (const element of node.elements) {
+      this.walkExpression(element, visitor);
+    }
+  }
+
+  private walkRangeExpression(node: RangeExpression, visitor: Partial<ASTVisitor>): void {
+    if (visitor.visitRangeExpression) {
+      const result = visitor.visitRangeExpression(node);
+      if (result === false) {
+        return;
+      }
+    }
+    // Walk start expression (if not null for open-ended [..10])
+    if (node.start) {
+      this.walkExpression(node.start, visitor);
+    }
+    // Walk end expression (if not null for open-ended [10..])
+    if (node.end) {
+      this.walkExpression(node.end, visitor);
+    }
   }
 }

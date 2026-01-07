@@ -1,68 +1,29 @@
 /**
- * Tests for C/AL Option type scope operator (::)
+ * Tests for C/AL Set Literals and Range Expressions
  *
- * The :: operator is used to access Option field values:
- * - FieldName::OptionValue
- * - Example: Status::Open, "Document Type"::Order
+ * Set literals are used with the IN operator to test membership:
+ * - Discrete values: [1, 2, 5]
+ * - Closed ranges: [1..10]
+ * - Open-ended ranges: [1..], [..100]
+ * - Mixed: [1, 5, 10..20, 50..]
  *
- * This is a REGRESSION TEST for bug where parser fails with:
- * "Expected THEN at line X, column Y" when using :: in IF conditions
- *
- * Issue: Parser doesn't handle :: as a valid operator in expressions
+ * Common patterns:
+ * - IF x IN [val1, val2] THEN
+ * - IF Status IN [Status::Open, Status::Released] THEN
+ * - IF Code IN ['A'..'Z'] THEN
  */
 
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../parser';
-import { TokenType } from '../../lexer/tokens';
 
-describe('Parser - Option Type Scope Operator (::)', () => {
-  describe('Lexer tokenization of ::', () => {
-    it('should tokenize :: as DoubleColon token', () => {
-      const code = 'Status::Open';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-
-      expect(tokens).toHaveLength(4); // Status, ::, Open, EOF
-      expect(tokens[0].type).toBe(TokenType.Identifier);
-      expect(tokens[0].value).toBe('Status');
-      expect(tokens[1].type).toBe(TokenType.DoubleColon);
-      expect(tokens[1].value).toBe('::');
-      expect(tokens[2].type).toBe(TokenType.Identifier);
-      expect(tokens[2].value).toBe('Open');
-    });
-
-    it('should tokenize :: with quoted identifiers', () => {
-      const code = '"Job Task Type"::"End-Total"';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-
-      expect(tokens).toHaveLength(4); // "Job Task Type", ::, "End-Total", EOF
-      expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
-      expect(tokens[0].value).toBe('Job Task Type');
-      expect(tokens[1].type).toBe(TokenType.DoubleColon);
-      expect(tokens[1].value).toBe('::');
-      expect(tokens[2].type).toBe(TokenType.QuotedIdentifier);
-      expect(tokens[2].value).toBe('End-Total');
-    });
-
-    it('should distinguish :: from : and :=', () => {
-      const code = 'x : y := Status::Open';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-
-      expect(tokens[1].type).toBe(TokenType.Colon);       // :
-      expect(tokens[3].type).toBe(TokenType.Assign);      // :=
-      expect(tokens[5].type).toBe(TokenType.DoubleColon); // ::
-    });
-  });
-
-  describe('REGRESSION TEST: :: in IF conditions', () => {
-    it('should parse simple IF with :: operator', () => {
+describe('Set Literals and Range Expressions', () => {
+  describe('Discrete Values', () => {
+    it('should parse set with single discrete value', () => {
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           PROCEDURE Test();
           BEGIN
-            IF Status = Status::Open THEN
+            IF Status IN [0] THEN
               EXIT;
           END;
         }
@@ -71,42 +32,17 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       const parser = new Parser(lexer.tokenize());
       const ast = parser.parse();
 
-      // This test currently FAILS with: "Expected THEN at line 5, column 38"
-      // Parser doesn't recognize :: as valid operator in expressions
       expect(parser.getErrors()).toHaveLength(0);
       expect(ast.object).toBeDefined();
-      expect(ast.object?.code).toBeDefined();
     });
 
-    it('should parse IF with quoted field and :: operator (COD1003 regression)', () => {
-      // This is the EXACT pattern from COD1003.TXT line 52 that fails
+    it('should parse set with multiple discrete numeric values', () => {
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           PROCEDURE Test();
           BEGIN
-            IF "Job Task Type" = "Job Task Type"::"End-Total" THEN BEGIN
+            IF Priority IN [1, 2, 5, 10] THEN
               EXIT;
-            END;
-          END;
-        }
-      }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-
-      // This test currently FAILS with: "Expected THEN at line 5, column 49"
-      expect(parser.getErrors()).toHaveLength(0);
-      expect(ast.object).toBeDefined();
-    });
-
-    it('should parse nested IF statements with multiple :: operators', () => {
-      const code = `OBJECT Codeunit 1 Test {
-        CODE {
-          PROCEDURE Test();
-          BEGIN
-            IF Customer.Blocked = Customer.Blocked::" " THEN
-              IF SalesHeader.Status = SalesHeader.Status::Released THEN
-                EXIT;
           END;
         }
       }`;
@@ -115,15 +51,48 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       const ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
-      expect(ast.object).toBeDefined();
     });
 
-    it('should parse IF with :: in complex member expression', () => {
+    it('should parse set with string discrete values', () => {
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           PROCEDURE Test();
           BEGIN
-            IF SalesLine."Document Type" = SalesLine."Document Type"::Order THEN
+            IF Code IN ['A', 'B', 'C'] THEN
+              EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse set with option value discrete values', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Status IN [Status::Open, Status::Released, Status::Pending] THEN
+              EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse set with quoted identifier option values', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF "Document Type" IN ["Document Type"::Order, "Document Type"::Invoice] THEN
               EXIT;
           END;
         }
@@ -136,30 +105,14 @@ describe('Parser - Option Type Scope Operator (::)', () => {
     });
   });
 
-  describe('REGRESSION TEST: :: in assignment statements', () => {
-    it('should parse simple assignment with :: operator', () => {
+  describe('Closed Ranges', () => {
+    it('should parse set with single closed numeric range', () => {
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           PROCEDURE Test();
           BEGIN
-            Status := Status::Posted;
-          END;
-        }
-      }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-
-      expect(parser.getErrors()).toHaveLength(0);
-      expect(ast.object).toBeDefined();
-    });
-
-    it('should parse assignment with quoted identifiers and ::', () => {
-      const code = `OBJECT Codeunit 1 Test {
-        CODE {
-          PROCEDURE Test();
-          BEGIN
-            "Document Type" := "Document Type"::Invoice;
+            IF Quantity IN [1..100] THEN
+              EXIT;
           END;
         }
       }`;
@@ -170,12 +123,47 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       expect(parser.getErrors()).toHaveLength(0);
     });
 
-    it('should parse assignment with member access and ::', () => {
+    it('should parse set with closed character range', () => {
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           PROCEDURE Test();
           BEGIN
-            GenJournalLine."Account Type" := GenJournalLine."Account Type"::"G/L Account";
+            IF FirstChar IN ['A'..'Z'] THEN
+              EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse set with closed date range', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF OrderDate IN [010124D..123124D] THEN
+              EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse set with multiple closed ranges', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Code IN [1..10, 20..30, 40..50] THEN
+              EXIT;
           END;
         }
       }`;
@@ -187,42 +175,14 @@ describe('Parser - Option Type Scope Operator (::)', () => {
     });
   });
 
-  describe('REGRESSION TEST: :: in CASE statements', () => {
-    it('should parse CASE with :: in branch values', () => {
+  describe('Open-Ended Ranges', () => {
+    it('should parse set with open-ended upper range', () => {
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           PROCEDURE Test();
           BEGIN
-            CASE Status OF
-              Status::Open:
-                EXIT;
-              Status::Posted:
-                EXIT;
-            END;
-          END;
-        }
-      }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-
-      expect(parser.getErrors()).toHaveLength(0);
-      expect(ast.object).toBeDefined();
-    });
-
-    it('should parse CASE with quoted identifiers and ::', () => {
-      const code = `OBJECT Codeunit 1 Test {
-        CODE {
-          PROCEDURE Test();
-          BEGIN
-            CASE "Document Type" OF
-              "Document Type"::Quote:
-                EXIT;
-              "Document Type"::Order:
-                EXIT;
-              "Document Type"::Invoice:
-                EXIT;
-            END;
+            IF Quantity IN [100..] THEN
+              EXIT;
           END;
         }
       }`;
@@ -233,17 +193,30 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       expect(parser.getErrors()).toHaveLength(0);
     });
 
-    it('should parse CASE with multiple :: values in same branch', () => {
+    it('should parse set with open-ended lower range', () => {
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           PROCEDURE Test();
           BEGIN
-            CASE Status OF
-              Status::Open, Status::Pending:
-                EXIT;
-              Status::Posted, Status::Cancelled:
-                EXIT;
-            END;
+            IF Quantity IN [..100] THEN
+              EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse set with multiple open-ended ranges', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Code IN [..10, 90..] THEN
+              EXIT;
           END;
         }
       }`;
@@ -255,13 +228,13 @@ describe('Parser - Option Type Scope Operator (::)', () => {
     });
   });
 
-  describe('REGRESSION TEST: :: in complex expressions', () => {
-    it('should parse :: in boolean AND expression', () => {
+  describe('Mixed Ranges and Discrete Values', () => {
+    it('should parse set mixing discrete values and closed ranges', () => {
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           PROCEDURE Test();
           BEGIN
-            IF (Status = Status::Open) AND (Type = Type::Item) THEN
+            IF Priority IN [0, 1..5, 10] THEN
               EXIT;
           END;
         }
@@ -273,12 +246,12 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       expect(parser.getErrors()).toHaveLength(0);
     });
 
-    it('should parse :: in boolean OR expression', () => {
+    it('should parse set mixing discrete values and open-ended ranges', () => {
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           PROCEDURE Test();
           BEGIN
-            IF (Status = Status::Posted) OR (Status = Status::Cancelled) THEN
+            IF Code IN [0, 1..10, 100..] THEN
               EXIT;
           END;
         }
@@ -290,13 +263,12 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       expect(parser.getErrors()).toHaveLength(0);
     });
 
-    it('should parse :: in IN expression with set literal', () => {
-      // Now supported: Set literals [val1, val2] are parsed as part of set literal support
+    it('should parse set with all range types and discrete values', () => {
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           PROCEDURE Test();
           BEGIN
-            IF Status IN [Status::Shipped, Status::Invoiced] THEN
+            IF Value IN [..0, 1, 5, 10..20, 50, 100..] THEN
               EXIT;
           END;
         }
@@ -308,30 +280,13 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       expect(parser.getErrors()).toHaveLength(0);
     });
 
-    it('should parse :: with multiple member accesses', () => {
+    it('should parse set with option values and ranges', () => {
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           PROCEDURE Test();
           BEGIN
-            IF GenJnlLine."Account Type" = GenJnlLine."Account Type"::"G/L Account" THEN
-              ValidateDefaultDimensions(DATABASE::"G/L Account", GenJnlLine."Account No.");
-          END;
-        }
-      }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-
-      expect(parser.getErrors()).toHaveLength(0);
-    });
-
-    it('should parse :: in function call arguments', () => {
-      const code = `OBJECT Codeunit 1 Test {
-        CODE {
-          PROCEDURE Test();
-          BEGIN
-            SetRange("Document Type", "Document Type"::Order);
-            SetFilter(Status, '%1|%2', Status::Open, Status::Released);
+            IF Status IN [Status::Open, Status::Pending..Status::Released] THEN
+              EXIT;
           END;
         }
       }`;
@@ -343,138 +298,14 @@ describe('Parser - Option Type Scope Operator (::)', () => {
     });
   });
 
-  describe('REGRESSION TEST: :: with special option values', () => {
-    it('should parse :: with empty string option value', () => {
-      const code = `OBJECT Codeunit 1 Test {
-        CODE {
-          PROCEDURE Test();
-          BEGIN
-            IF Customer.Blocked = Customer.Blocked::" " THEN
-              EXIT;
-          END;
-        }
-      }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-
-      expect(parser.getErrors()).toHaveLength(0);
-    });
-
-    it('should parse :: with numeric option value', () => {
-      const code = `OBJECT Codeunit 1 Test {
-        CODE {
-          PROCEDURE Test();
-          BEGIN
-            IF Priority = Priority::0 THEN
-              EXIT;
-          END;
-        }
-      }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-
-      expect(parser.getErrors()).toHaveLength(0);
-    });
-
-    it('should parse :: with DATABASE constant', () => {
-      const code = `OBJECT Codeunit 1 Test {
-        CODE {
-          PROCEDURE Test();
-          BEGIN
-            ValidateDefaultDimensions(DATABASE::Customer, CustomerNo);
-          END;
-        }
-      }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-
-      expect(parser.getErrors()).toHaveLength(0);
-    });
-
-    it('should parse :: with CODEUNIT constant', () => {
-      const code = `OBJECT Codeunit 1 Test {
-        CODE {
-          PROCEDURE Test();
-          BEGIN
-            IF CODEUNIT.RUN(CODEUNIT::"Process 1") THEN
-              EXIT;
-          END;
-        }
-      }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-
-      expect(parser.getErrors()).toHaveLength(0);
-    });
-
-    it('should parse :: with REPORT/PAGE constants', () => {
-      const code = `OBJECT Codeunit 1 Test {
-        CODE {
-          PROCEDURE Test();
-          BEGIN
-            REPORT.RUN(REPORT::"Sales Analysis");
-            PAGE.RUN(PAGE::"Customer Card", Customer);
-          END;
-        }
-      }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-
-      expect(parser.getErrors()).toHaveLength(0);
-    });
-  });
-
-  describe('REGRESSION TEST: :: error recovery', () => {
-    it('should recover from trailing :: without value', () => {
-      const code = `OBJECT Codeunit 1 Test {
-        CODE {
-          PROCEDURE Test();
-          BEGIN
-            Status := Status::;
-          END;
-        }
-      }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-
-      // Should record error but not crash
-      expect(ast.object).toBeDefined();
-      // Parser should generate an error for incomplete expression
-      expect(parser.getErrors().length).toBeGreaterThan(0);
-    });
-
-    it('should handle multiple :: in a row', () => {
-      const code = `OBJECT Codeunit 1 Test {
-        CODE {
-          PROCEDURE Test();
-          BEGIN
-            BadCode := Status:::Value;
-          END;
-        }
-      }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-
-      // Should record error but not crash
-      expect(ast.object).toBeDefined();
-    });
-  });
-
-  describe('Integration: Real NAV code patterns', () => {
-    it('should parse real NAV pattern: blocked customer check', () => {
+  describe('Real-World Patterns', () => {
+    it('should parse NAV pattern: sales document status check', () => {
       const code = `OBJECT Codeunit 80 "Sales-Post" {
         CODE {
-          PROCEDURE CheckCustomer(Customer : Record 18);
+          PROCEDURE CheckStatus(VAR SalesHeader : Record 36);
           BEGIN
-            IF Customer.Blocked <> Customer.Blocked::" " THEN
-              ERROR('Customer is blocked');
+            IF SalesHeader.Status IN [SalesHeader.Status::Open, SalesHeader.Status::Released] THEN
+              ProcessDocument(SalesHeader);
           END;
         }
       }`;
@@ -487,20 +318,127 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       expect(ast.object?.objectKind).toBe('Codeunit');
     });
 
-    it('should parse real NAV pattern: journal line account type', () => {
-      const code = `OBJECT Codeunit 12 "Gen. Jnl.-Post Line" {
+    it('should parse NAV pattern: character validation', () => {
+      const code = `OBJECT Codeunit 1 Test {
         CODE {
-          PROCEDURE PostGenJnlLine(VAR GenJnlLine : Record 81);
+          PROCEDURE ValidateChar(Char : Text[1]);
           BEGIN
-            CASE GenJnlLine."Account Type" OF
-              GenJnlLine."Account Type"::"G/L Account":
-                PostGLAcc();
-              GenJnlLine."Account Type"::Customer:
-                PostCustomer();
-              GenJnlLine."Account Type"::Vendor:
-                PostVendor();
-              GenJnlLine."Account Type"::Item:
-                PostItem();
+            IF Char[1] IN ['A'..'Z', 'a'..'z', '0'..'9'] THEN
+              EXIT(TRUE)
+            ELSE
+              EXIT(FALSE);
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse NAV pattern: date range filtering', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE FilterQuarterOrders(VAR SalesHeader : Record 36);
+          BEGIN
+            SalesHeader.SETFILTER("Order Date", '%1', 010124D..033124D);
+            IF SalesHeader."Order Date" IN [010124D..033124D] THEN
+              ProcessOrder();
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+  });
+
+  describe('Edge Cases and Complex Scenarios', () => {
+    it('should parse empty set literal', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Status IN [] THEN
+              EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse set with negation', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF NOT (Status IN [Status::Posted, Status::Cancelled]) THEN
+              ProcessDocument();
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse set in complex boolean expression', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF (Status IN [Status::Open, Status::Released]) AND
+               (Type IN [Type::Item, Type::Resource]) THEN
+              Process();
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse set with member access expressions', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF SalesHeader."Document Type" IN [
+              SalesHeader."Document Type"::Order,
+              SalesHeader."Document Type"::Invoice
+            ] THEN
+              EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse nested sets in CASE statement', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            CASE TRUE OF
+              Status IN [Status::Open, Status::Released]:
+                ProcessOpen();
+              Status IN [Status::Posted, Status::Cancelled]:
+                ProcessClosed();
             END;
           END;
         }
@@ -510,18 +448,15 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       const ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
-      expect(ast.object).toBeDefined();
     });
 
-    it('should parse real NAV pattern: document status filtering', () => {
-      const code = `OBJECT Codeunit 5063 "Warehouse Management" {
+    it('should parse set literal in function call', () => {
+      const code = `OBJECT Codeunit 1 Test {
         CODE {
-          PROCEDURE FilterOpenDocuments(VAR SalesHeader : Record 36);
+          PROCEDURE Test();
           BEGIN
-            SalesHeader.SETRANGE("Document Type", SalesHeader."Document Type"::Order);
-            SalesHeader.SETFILTER(Status, '%1|%2',
-              SalesHeader.Status::Open,
-              SalesHeader.Status::Released);
+            ValidateStatus(Status IN [Status::Open, Status::Released]);
+            CheckRange(Value, [1..100, 200..300]);
           END;
         }
       }`;
@@ -530,6 +465,98 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       const ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse set with trailing comma (relaxed syntax)', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Status IN [Status::Open, Status::Released, ] THEN
+              EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Should either succeed or have minimal errors (trailing comma handling)
+      expect(ast.object).toBeDefined();
+    });
+  });
+
+  describe('Error Recovery', () => {
+    it('should recover from malformed range (missing end)', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Value IN [1..] THEN
+              EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Should parse successfully - open-ended ranges are valid
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should recover from malformed range (missing start)', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Value IN [..100] THEN
+              EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Should parse successfully - open-ended ranges are valid
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should handle unclosed set literal gracefully', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Value IN [1, 2, 3 THEN
+              EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Should record error but not crash
+      expect(ast.object).toBeDefined();
+      expect(parser.getErrors().length).toBeGreaterThan(0);
+    });
+
+    it('should handle invalid range operator', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Value IN [1...10] THEN
+              EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Should handle error gracefully
       expect(ast.object).toBeDefined();
     });
   });

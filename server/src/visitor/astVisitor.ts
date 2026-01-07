@@ -32,7 +32,9 @@ import {
   UnaryExpression,
   MemberExpression,
   CallExpression,
-  ArrayAccessExpression
+  ArrayAccessExpression,
+  SetLiteral,
+  RangeExpression
 } from '../parser/ast';
 
 /**
@@ -227,6 +229,16 @@ export interface ASTVisitor {
    * Visit an ArrayAccessExpression node (array[index])
    */
   visitArrayAccessExpression?(node: ArrayAccessExpression): void | false;
+
+  /**
+   * Visit a SetLiteral node (e.g., [0, 1..5, 10])
+   */
+  visitSetLiteral?(node: SetLiteral): void | false;
+
+  /**
+   * Visit a RangeExpression node (e.g., 1..5)
+   */
+  visitRangeExpression?(node: RangeExpression): void | false;
 
   /**
    * Generic visitor for any ASTNode type.

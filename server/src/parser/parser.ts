@@ -35,7 +35,9 @@ import {
   UnaryExpression,
   MemberExpression,
   CallExpression,
-  ArrayAccessExpression
+  ArrayAccessExpression,
+  SetLiteral,
+  RangeExpression
 } from './ast';
 
 /**
@@ -890,8 +892,11 @@ export class Parser {
         this.advance();
       }
 
-      // Parameter name
-      if (this.check(TokenType.Identifier)) {
+      // Parameter name (can be identifier or keyword used as identifier)
+      if (this.check(TokenType.Identifier) || this.check(TokenType.QuotedIdentifier) ||
+          // Allow keywords to be used as parameter names (e.g., Char, Text, Code, etc.)
+          this.peek().type.toString().endsWith('_Type') ||
+          this.check(TokenType.Char) || this.check(TokenType.Option)) {
         const paramToken = this.advance();
         const paramName = paramToken.value;
 
@@ -1509,15 +1514,36 @@ export class Parser {
   }
 
   private parseComparison(): Expression {
-    return this.parseBinaryExpression(
-      () => this.parseTerm(),
-      false,
-      TokenType.Less,
-      TokenType.LessEqual,
-      TokenType.Greater,
-      TokenType.GreaterEqual,
-      TokenType.In
-    );
+    let left = this.parseTerm();
+
+    while (
+      this.check(TokenType.Less) ||
+      this.check(TokenType.LessEqual) ||
+      this.check(TokenType.Greater) ||
+      this.check(TokenType.GreaterEqual) ||
+      this.check(TokenType.In)
+    ) {
+      const operator = this.advance();
+
+      // Special handling for IN operator - right side can be a set literal [...]
+      let right: Expression;
+      if (operator.type === TokenType.In && this.check(TokenType.LeftBracket)) {
+        right = this.parseSetLiteral();
+      } else {
+        right = this.parseTerm();
+      }
+
+      left = {
+        type: 'BinaryExpression',
+        left,
+        operator: operator.value.toUpperCase(),
+        right,
+        startToken: left.startToken,
+        endToken: right.endToken
+      } as BinaryExpression;
+    }
+
+    return left;
   }
 
   private parseTerm(): Expression {
@@ -1845,6 +1871,96 @@ export class Parser {
       startToken: expr.startToken,
       endToken
     } as ArrayAccessExpression;
+  }
+
+  /**
+   * Parse set literal [element1, element2, start..end, ..max]
+   * Examples:
+   *   [] - empty set
+   *   [1, 2, 3] - discrete values
+   *   [1..10] - closed range
+   *   [..100] - open-ended range (up to 100)
+   *   [1, 5..10, 20] - mixed
+   */
+  private parseSetLiteral(): Expression {
+    const startToken = this.consume(TokenType.LeftBracket, 'Expected [');
+    const elements: (Expression | RangeExpression)[] = [];
+
+    // Empty set
+    if (this.check(TokenType.RightBracket)) {
+      const endToken = this.advance();
+      return {
+        type: 'SetLiteral',
+        elements,
+        startToken,
+        endToken
+      } as SetLiteral;
+    }
+
+    // Parse elements
+    do {
+      // Check for open-ended range: ..end
+      if (this.check(TokenType.DotDot)) {
+        const rangeStart = this.advance();
+        const end = this.parseExpression();
+        elements.push({
+          type: 'RangeExpression',
+          start: null,
+          end,
+          startToken: rangeStart,
+          endToken: end.endToken
+        } as RangeExpression);
+      } else {
+        // Parse start of element or range
+        const start = this.parseExpression();
+
+        // Check if this is a range: start..end or start..
+        if (this.check(TokenType.DotDot)) {
+          this.advance(); // consume '..'
+
+          // Check for closed range (start..end) vs open-ended range (start..)
+          if (!this.check(TokenType.Comma) && !this.check(TokenType.RightBracket)) {
+            // Closed range: start..end
+            const end = this.parseExpression();
+            elements.push({
+              type: 'RangeExpression',
+              start,
+              end,
+              startToken: start.startToken,
+              endToken: end.endToken
+            } as RangeExpression);
+          } else {
+            // Open-ended range: start..
+            elements.push({
+              type: 'RangeExpression',
+              start,
+              end: null,
+              startToken: start.startToken,
+              endToken: this.previous()
+            } as RangeExpression);
+          }
+        } else {
+          // Discrete element
+          elements.push(start);
+        }
+      }
+
+      // Continue if comma present
+      if (this.check(TokenType.Comma)) {
+        this.advance();
+      } else {
+        break;
+      }
+    } while (!this.check(TokenType.RightBracket) && !this.isAtEnd());
+
+    const endToken = this.consume(TokenType.RightBracket, 'Expected ]');
+
+    return {
+      type: 'SetLiteral',
+      elements,
+      startToken,
+      endToken
+    } as SetLiteral;
   }
 
   /**
