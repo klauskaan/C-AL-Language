@@ -13,14 +13,14 @@ OBJECT Table 18 Customer
   }
   FIELDS
   {
-    { 1   ;"No."           ;Code20        }
-    { 2   ;"Name"          ;Text50        }
-    { 3   ;Address        ;Text50        }
-    { 4   ;"Address 2"    ;Text50        }
-    { 5   ;City           ;Text30        }
-    { 6   ;"Phone No."    ;Text30        }
-    { 7   ;"Credit Limit" ;Decimal       }
-    { 8   ;Balance        ;Decimal       }
+    { 1   ;   ;"No."           ;Code20        }
+    { 2   ;   ;"Name"          ;Text50        }
+    { 3   ;   ;Address         ;Text50        }
+    { 4   ;   ;"Address 2"     ;Text50        }
+    { 5   ;   ;City            ;Text30        }
+    { 6   ;   ;"Phone No."     ;Text30        }
+    { 7   ;   ;"Credit Limit"  ;Decimal       }
+    { 8   ;   ;Balance         ;Decimal       }
   }
   KEYS
   {

@@ -1,0 +1,1 @@
+export { DocumentSymbolProvider } from './documentSymbolProvider';

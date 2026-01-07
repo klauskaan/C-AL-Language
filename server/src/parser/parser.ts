@@ -466,11 +466,31 @@ export class Parser {
       };
     }
 
-    // Check for Record <tableId> pattern
-    if (typeName.toUpperCase() === 'RECORD' && this.check(TokenType.Integer)) {
-      const tableIdToken = this.advance();
-      tableId = this.parseInteger(tableIdToken);
-      typeName = `Record ${tableId}`;
+    // Check for object type <ID> patterns (Record, Codeunit, Page, Report, Query, XMLport)
+    const objectTypes = ['RECORD', 'CODEUNIT', 'PAGE', 'REPORT', 'QUERY', 'XMLPORT'];
+    if (objectTypes.includes(typeName.toUpperCase()) && this.check(TokenType.Integer)) {
+      const objectIdToken = this.advance();
+      const objectId = this.parseInteger(objectIdToken);
+      // For Record types, store as tableId for backwards compatibility
+      if (typeName.toUpperCase() === 'RECORD') {
+        tableId = objectId;
+      }
+      typeName = `${typeName} ${objectId}`;
+    }
+
+    // Extract embedded size from type names like Code20, Text100, Decimal5
+    // C/AL NAV exports use embedded sizes in type names
+    // Store the base type name, but also extract length for formatting purposes
+    const sizeMatch = typeName.match(/^([A-Za-z]+)(\d+)$/);
+    if (sizeMatch && !length) {
+      const baseType = sizeMatch[1];
+      const embeddedSize = parseInt(sizeMatch[2], 10);
+      // Only extract if it's a known sized type
+      if (['Code', 'Text', 'Decimal'].some(t => t.toUpperCase() === baseType.toUpperCase())) {
+        length = embeddedSize;
+        // Keep original typeName for compatibility with existing code
+        // (e.g., symbol table expects "Code20" not "Code")
+      }
     }
 
     // Check for length specification [length]

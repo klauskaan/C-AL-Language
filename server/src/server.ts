@@ -19,7 +19,9 @@ import {
   DefinitionParams,
   ReferenceParams,
   CodeLens,
-  CodeLensParams
+  CodeLensParams,
+  DocumentSymbol,
+  DocumentSymbolParams
 } from 'vscode-languageserver/node';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -35,6 +37,7 @@ import { SignatureHelpProvider } from './signatureHelp';
 import { DefinitionProvider } from './definition';
 import { ReferenceProvider } from './references';
 import { CodeLensProvider } from './codelens';
+import { DocumentSymbolProvider } from './documentSymbol';
 import { SymbolTable } from './symbols/symbolTable';
 
 // Create a connection for the server
@@ -63,6 +66,9 @@ const referenceProvider = new ReferenceProvider();
 
 // CodeLens provider
 const codeLensProvider = new CodeLensProvider();
+
+// DocumentSymbol provider (Outline view)
+const documentSymbolProvider = new DocumentSymbolProvider();
 
 // Cache for parsed documents (includes symbol table and parse errors)
 interface ParsedDocument {
@@ -104,11 +110,12 @@ connection.onInitialize((params: InitializeParams) => {
       referencesProvider: true,
       codeLensProvider: {
         resolveProvider: false
-      }
+      },
+      documentSymbolProvider: true
     }
   };
 
-  connection.console.log('Capabilities registered: semanticTokens, completion, hover, signatureHelp, definition, references, codeLens');
+  connection.console.log('Capabilities registered: semanticTokens, completion, hover, signatureHelp, definition, references, codeLens, documentSymbol');
   return result;
 });
 
@@ -285,6 +292,31 @@ connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
   } catch (error) {
     const msg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
     connection.console.error(`Error getting code lenses: ${msg}`);
+    return [];
+  }
+});
+
+// Handle DocumentSymbol requests (Outline view)
+connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] => {
+  connection.console.log(`[DocumentSymbol] Request for: ${params.textDocument.uri}`);
+  const document = documents.get(params.textDocument.uri);
+  if (!document) {
+    connection.console.log('[DocumentSymbol] No document found');
+    return [];
+  }
+
+  try {
+    const { ast } = parseDocument(document);
+    connection.console.log(`[DocumentSymbol] AST parsed, object: ${ast.object?.objectKind || 'none'}`);
+    const symbols = documentSymbolProvider.getDocumentSymbols(document, ast);
+    connection.console.log(`[DocumentSymbol] Returning ${symbols.length} top-level symbols`);
+    if (symbols.length > 0 && symbols[0].children) {
+      connection.console.log(`[DocumentSymbol] Root has ${symbols[0].children.length} children`);
+    }
+    return symbols;
+  } catch (error) {
+    const msg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
+    connection.console.error(`Error getting document symbols: ${msg}`);
     return [];
   }
 });
