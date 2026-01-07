@@ -273,9 +273,9 @@ export class Parser {
 
     this.consume(TokenType.Equal, 'Expected =');
 
-    // Check if this is a property trigger (value starts with BEGIN)
+    // Check if this is a property trigger (value starts with VAR or BEGIN)
     // Property triggers: OnRun, OnValidate, OnLookup, OnInit, OnOpenPage, etc.
-    if (this.check(TokenType.Begin)) {
+    if (this.check(TokenType.Var) || this.check(TokenType.Begin)) {
       // Parse as trigger body
       const triggerVariables: VariableDeclaration[] = [];
 

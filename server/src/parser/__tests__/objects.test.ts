@@ -784,6 +784,56 @@ describe('Parser - Regression Tests', () => {
       expect(onRun?.value).toBe('BEGIN...END');
       expect(onRun?.triggerBody).toBeDefined();
     });
+
+    it('should parse OnRun trigger with VAR section', () => {
+      const code = `OBJECT Codeunit 93 Purch.-Quote to Order
+{
+  PROPERTIES
+  {
+    TableNo=38;
+    OnRun=VAR
+            ConfirmManagement@1001 : Codeunit 27;
+          BEGIN
+            TESTFIELD("Document Type","Document Type"::Quote);
+            IF NOT ConfirmManagement.ConfirmProcess(Text000,TRUE) THEN
+              EXIT;
+          END;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      // Verify PROPERTIES section exists
+      expect(ast.object?.properties).toBeDefined();
+      expect(ast.object?.properties?.properties).toHaveLength(2);
+
+      // Find OnRun property
+      const onRunProperty = ast.object?.properties?.properties.find(p => p.name === 'OnRun');
+      expect(onRunProperty).toBeDefined();
+
+      // Verify trigger variables were parsed
+      expect(onRunProperty?.triggerVariables).toBeDefined();
+      expect(onRunProperty?.triggerVariables?.length).toBe(1);
+      expect(onRunProperty?.triggerVariables?.[0].name).toBe('ConfirmManagement');
+      expect(onRunProperty?.triggerVariables?.[0].dataType?.typeName).toBe('Codeunit 27');
+
+      // Verify trigger body was parsed
+      expect(onRunProperty?.triggerBody).toBeDefined();
+      expect(onRunProperty?.triggerBody?.length).toBeGreaterThan(0);
+
+      // Verify trigger body contains expected statements
+      const triggerJSON = JSON.stringify(onRunProperty?.triggerBody);
+      expect(triggerJSON).toContain('TESTFIELD');
+      expect(triggerJSON).toContain('ConfirmManagement');
+      expect(triggerJSON).toContain('EXIT');
+    });
   });
 });
 
