@@ -376,8 +376,36 @@ export class Parser {
     this.consume(TokenType.Semicolon, 'Expected ;');
 
     // Field name (can be quoted or unquoted)
-    const nameToken = this.advance();
-    const fieldName = nameToken.value;
+    // For unquoted names, read all tokens until semicolon to handle special chars like periods
+    // Format: { FieldNo ; FieldClass ; FieldName ... ; DataType ; ... }
+    let fieldName = '';
+
+    if (this.check(TokenType.QuotedIdentifier)) {
+      // Quoted name - single token (e.g., "No.")
+      const nameToken = this.advance();
+      fieldName = nameToken.value;
+    } else {
+      // Unquoted name - read everything between semicolons
+      // This handles all special characters: periods, slashes, Unicode, etc.
+      // Examples: No., Job No., Update Std. Gen. Jnl. Lines
+      const startPos = this.peek();
+      const nameParts: string[] = [];
+
+      // Consume all tokens until we hit the next semicolon
+      while (!this.check(TokenType.Semicolon) && !this.isAtEnd()) {
+        nameParts.push(this.advance().value);
+      }
+
+      // Join tokens with single space, then trim leading/trailing whitespace
+      // This normalizes field names (spaces around periods, e.g., 'No .')
+      fieldName = nameParts.join(' ').trim();
+
+      // Validate field name is not empty
+      if (fieldName === '') {
+        this.recordError('Field name cannot be empty', startPos);
+        fieldName = '<missing>'; // Placeholder for error recovery
+      }
+    }
 
     this.consume(TokenType.Semicolon, 'Expected ;');
 

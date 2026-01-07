@@ -58,9 +58,60 @@ Root/
 │   │   ├── signatureHelp/ # Parameter hints
 │   │   └── semanticTokens/# Semantic highlighting (v0.3.0+)
 │   └── performance/       # Performance benchmarks (v0.4.9+)
+├── test/
+│   ├── fixtures/          # Synthetic test files (for commits)
+│   └── REAL/              # ⚠️ CONFIDENTIAL - Real NAV exports (see below)
 └── .claude/
     ├── skills/            # Domain knowledge (8 skills)
     └── agents/            # Specialized assistants (7 agents)
+```
+
+## Test Data & Copyright
+
+### test/REAL/ - Real NAV Exports ⚠️
+
+**CRITICAL COPYRIGHT & CONFIDENTIALITY RULES:**
+
+1. **NEVER copy code from test/REAL/** - Content is confidential and copyrighted
+2. **NEVER commit test/REAL/ content** - Folder is gitignored for legal reasons
+3. **Objects 6000000+** - These are proprietary 3rd-party solutions, NEVER reference them
+4. **Read-only reference** - Use ONLY for syntax validation during development
+
+**Purpose:**
+- Validate parser against real-world C/AL code patterns
+- Source of truth for C/AL syntax when documentation is unclear
+- Local integration testing ONLY
+
+**Usage Pattern:**
+```bash
+# ✅ ALLOWED: Search for syntax patterns locally
+grep "pattern" test/REAL/TAB*.TXT
+
+# ✅ ALLOWED: Learn field name formats
+# Example: "No.", "Job No.", "Update Std. Gen. Jnl. Lines" have periods
+
+# ❌ FORBIDDEN: Copy code to tests
+# ❌ FORBIDDEN: Commit any REAL/ content
+# ❌ FORBIDDEN: Reference objects 6000000+
+```
+
+**Creating Tests:**
+When you discover syntax patterns in test/REAL/:
+1. **Create synthetic examples** in `test/fixtures/` instead
+2. **Use standard NAV objects only** (< 6000000)
+3. **Write minimal reproductions** - don't copy entire structures
+
+**Example:**
+```typescript
+// ❌ BAD - Copied from REAL
+const realCode = fs.readFileSync('test/REAL/TAB18.TXT');
+
+// ✅ GOOD - Synthetic test based on learned pattern
+const code = `OBJECT Table 18 Customer {
+  FIELDS {
+    { 1 ; ; No. ; Code20 }
+  }
+}`;
 ```
 
 ## Common Commands

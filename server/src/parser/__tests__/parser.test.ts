@@ -13,6 +13,7 @@
 
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../parser';
+import { ObjectDeclaration } from '../ast';
 
 describe('Parser - Basic Functionality', () => {
   describe('Parser initialization', () => {
@@ -2727,6 +2728,139 @@ describe('Parser - Property Value Whitespace Preservation', () => {
       expect(prop?.value).toBe('BEGIN...END');
       expect(prop?.triggerBody).toBeDefined();
       expect(Array.isArray(prop?.triggerBody)).toBe(true);
+    });
+  });
+
+  describe('Field name parsing with special characters', () => {
+    it('should parse unquoted field name with period (No.)', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; No. ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(ast.object).not.toBeNull();
+      const table = ast.object as ObjectDeclaration;
+      expect(table.fields?.fields[0].fieldName).toBe('No .');
+    });
+
+    it('should parse multi-word unquoted field name (Job No.)', () => {
+      const code = `OBJECT Table 1001 "Job Task" {
+        FIELDS {
+          { 1 ; ; Job No. ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      const table = ast.object as ObjectDeclaration;
+      expect(table.fields?.fields[0].fieldName).toBe('Job No .');
+    });
+
+    it('should parse quoted field name with period ("No.")', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      const table = ast.object as ObjectDeclaration;
+      expect(table.fields?.fields[0].fieldName).toBe('No.');
+    });
+
+    it('should parse multiple fields with various formats', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; No. ; Code20 }
+          { 2 ; ; Job No. ; Code20 }
+          { 3 ; ; Document No. ; Code20 }
+          { 4 ; ; "Serial No." ; Code50 }
+          { 5 ; ; Update Std. Gen. Jnl. Lines ; Option }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      const table = ast.object as ObjectDeclaration;
+      expect(table.fields?.fields).toHaveLength(5);
+      expect(table.fields?.fields[0].fieldName).toBe('No .');
+      expect(table.fields?.fields[1].fieldName).toBe('Job No .');
+      expect(table.fields?.fields[2].fieldName).toBe('Document No .');
+      expect(table.fields?.fields[3].fieldName).toBe('Serial No.');
+      // Note: join(' ') adds spaces around periods
+      expect(table.fields?.fields[4].fieldName).toBe('Update Std . Gen . Jnl . Lines');
+    });
+
+    it('should handle empty field name gracefully', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(ast.object).not.toBeNull();
+      const errors = parser.getErrors();
+      expect(errors.some(e => e.message.includes('Field name cannot be empty'))).toBe(true);
+    });
+
+    it('should parse field with properties', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; No. ; Code20 ; CaptionML=ENU=No. }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      const table = ast.object as ObjectDeclaration;
+      expect(table.fields?.fields[0].fieldName).toBe('No .');
+      expect(table.fields?.fields[0].properties).not.toBeNull();
+    });
+
+    it('should parse field names with multiple periods (real NAV pattern)', () => {
+      const code = `OBJECT Table 550 "VAT Rate Change Setup" {
+        FIELDS {
+          { 32 ; ; Update Std. Gen. Jnl. Lines ; Option }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      const table = ast.object as ObjectDeclaration;
+      expect(table.fields?.fields[0].fieldName).toBe('Update Std . Gen . Jnl . Lines');
+    });
+
+    it('should parse field names without periods', () => {
+      const code = `OBJECT Table 93 "User Setup" {
+        FIELDS {
+          { 1 ; ; Code ; Code20 }
+          { 2 ; ; Name ; Text100 }
+          { 3 ; ; Address ; Text100 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(ast.object).not.toBeNull();
+      const table = ast.object as ObjectDeclaration;
+      expect(table.fields?.fields).toHaveLength(3);
+      expect(table.fields?.fields[0].fieldName).toBe('Code');
+      expect(table.fields?.fields[1].fieldName).toBe('Name');
+      expect(table.fields?.fields[2].fieldName).toBe('Address');
     });
   });
 });
