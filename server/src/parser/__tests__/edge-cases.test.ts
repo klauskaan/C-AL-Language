@@ -2184,3 +2184,214 @@ describe('Parser - Edge Case Combinations', () => {
     });
   });
 });
+
+describe('Parser - Multi-line Expressions', () => {
+  describe('Binary operators spanning multiple lines', () => {
+    it('should parse multi-line arithmetic expression in assignment', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestMultiLine@1();
+          VAR
+            Result@1000 : Integer;
+          BEGIN
+            Result :=
+              (10 +
+               20 +
+               30);
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.object).toBeDefined();
+      expect(ast.object?.objectKind).toBe(ObjectKind.Codeunit);
+    });
+
+    it('should parse multi-line comparison expression', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestComparison@1();
+          VAR
+            IsFilter@1000 : Boolean;
+            Value1@1001 : Integer;
+            Value2@1002 : Integer;
+            Value3@1003 : Integer;
+          BEGIN
+            IsFilter :=
+              (Value1 +
+               Value2 +
+               Value3 > 0);
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.object).toBeDefined();
+    });
+
+    it('should parse multi-line function calls with arithmetic', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestFunctionCalls@1();
+          VAR
+            Result@1000 : Integer;
+            Text@1001 : Text;
+          BEGIN
+            Result :=
+              (STRPOS(Text,'a') +
+               STRPOS(Text,'b') +
+               STRPOS(Text,'c') > 0);
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.object).toBeDefined();
+    });
+
+    it('should parse deeply nested multi-line expression', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestNested@1();
+          VAR
+            Result@1000 : Decimal;
+            Value1@1001 : Decimal;
+            Value2@1002 : Decimal;
+            Value3@1003 : Decimal;
+            Value4@1004 : Decimal;
+            Value5@1005 : Decimal;
+            Value6@1006 : Decimal;
+          BEGIN
+            Result :=
+              ((Value1 + Value2) *
+               (Value3 - Value4) /
+               (Value5 + Value6));
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.object).toBeDefined();
+    });
+
+    it('should parse multi-line expression in IF condition', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestIfCondition@1();
+          VAR
+            Value1@1000 : Integer;
+            Value2@1001 : Integer;
+            Value3@1002 : Integer;
+          BEGIN
+            IF (Value1 +
+                Value2 +
+                Value3 > 100) THEN
+              Message('High');
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.object).toBeDefined();
+    });
+
+    it('should parse multi-line expression in function parameter', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestFunctionParam@1();
+          VAR
+            Value1@1000 : Integer;
+            Value2@1001 : Integer;
+            Value3@1002 : Integer;
+          BEGIN
+            DoSomething(
+              Value1 +
+              Value2 +
+              Value3);
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.object).toBeDefined();
+    });
+
+    it('should parse complex multi-line expression like COD9.TXT line 705', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE TestComplexExpression@1();
+          VAR
+            IsFilter@1000 : Boolean;
+            Expression@1001 : Text;
+          BEGIN
+            IsFilter :=
+              (STRPOS(Expression,'..') +
+               STRPOS(Expression,'|') +
+               STRPOS(Expression,'<') +
+               STRPOS(Expression,'>') +
+               STRPOS(Expression,'&') +
+               STRPOS(Expression,'=') > 0);
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.object).toBeDefined();
+    });
+  });
+
+  describe('Reserved keywords as parameter names (COD2.TXT issue)', () => {
+    it('should parse procedure with Code as parameter name', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          LOCAL PROCEDURE InsertSourceCode@1(VAR SourceCodeDefCode@1000 : Code[10];Code@1001 : Code[10];Description@1002 : Text[50]);
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.object).toBeDefined();
+    });
+
+    it('should parse procedure with Description as parameter name', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          LOCAL PROCEDURE InsertStandardText@4(Code@1000 : Code[20];Description@1001 : Text[50]);
+          BEGIN
+          END;
+          }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(ast).toBeDefined();
+      expect(ast.object).toBeDefined();
+    });
+  });
+});

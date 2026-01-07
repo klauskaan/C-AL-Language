@@ -392,7 +392,40 @@ export class Lexer {
     }
 
     // Check regular C/AL keywords
-    const tokenType = KEYWORDS.get(lowerValue) || TokenType.Identifier;
+    let tokenType = KEYWORDS.get(lowerValue) || TokenType.Identifier;
+
+    // Context-aware handling for data type keywords that can also be identifiers
+    // Keywords like "Code", "Text", "Date", "Time" can be:
+    // 1. Section keywords (CODE section) or data type keywords
+    // 2. Data types (Code[20], Text[50], etc.) - should REMAIN as keywords
+    // 3. Identifiers/parameter names (Code@1001) - should become IDENTIFIER
+    // We need to distinguish based on context
+    const dataTypeKeywords = [TokenType.Code, TokenType.Text, TokenType.Date_Type, TokenType.Time];
+    if (dataTypeKeywords.includes(tokenType)) {
+      const nextChar = this.currentChar();
+      const prevToken = this.tokens.length > 0 ? this.tokens[this.tokens.length - 1] : null;
+
+      // Check if this is a parameter/variable NAME (followed by @number)
+      // Pattern: "Code@1001" or ";Code@1001" or "(Code@1001"
+      // In these cases, treat as IDENTIFIER
+      if (nextChar === '@') {
+        tokenType = TokenType.Identifier;
+      }
+      // If followed by '[' and preceded by a colon, it's a data type declaration like ": Code[20]"
+      // Keep as keyword (don't convert to identifier)
+      else if (nextChar === '[' && prevToken && prevToken.type === TokenType.Colon) {
+        // This is a data type: keep as keyword
+        // Example: "Param : Code[20]"
+      }
+      // If followed by '[' but NOT after colon, might be array access or other context
+      // For safety, convert to identifier
+      else if (nextChar === '[') {
+        tokenType = TokenType.Identifier;
+      }
+      // For CODE specifically, check if it's a section header
+      // CODE section would be at object level, not in parameter/variable contexts
+      // The parser handles CODE { ... } correctly even if lexed as identifier
+    }
 
     this.addToken(tokenType, value, startPos, this.position, startLine, startColumn);
 
