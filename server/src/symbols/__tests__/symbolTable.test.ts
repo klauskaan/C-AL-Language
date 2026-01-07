@@ -120,6 +120,7 @@ function createMockParameter(name: string, typeName: string, offset: number = 0)
     name,
     dataType: createMockDataType(typeName),
     isVar: false,
+    isTemporary: false,
     startToken,
     endToken: startToken
   };

@@ -90,6 +90,7 @@ export interface DataType extends ASTNode {
   length?: number;
   tableId?: number;  // For Record types
   optionString?: string;  // For Option types
+  isTemporary?: boolean;  // For ARRAY OF TEMPORARY patterns
 }
 
 /**
@@ -158,6 +159,7 @@ export interface ParameterDeclaration extends ASTNode {
   name: string;
   dataType: DataType;
   isVar: boolean;  // VAR parameter (pass by reference)
+  isTemporary: boolean;  // TEMPORARY parameter modifier
 }
 
 /**

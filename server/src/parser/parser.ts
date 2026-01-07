@@ -480,9 +480,20 @@ export class Parser {
       this.consume(TokenType.RightBracket, 'Expected ]');
 
       // Expect OF keyword
+      let hasTemporary = false;
       if (this.check(TokenType.Of)) {
         this.advance();
+
+        // Check for TEMPORARY keyword before element type
+        // This handles: ARRAY [4] OF TEMPORARY Record 48
+        if (this.check(TokenType.Temporary)) {
+          hasTemporary = true;
+          this.advance();
+        }
+
         const elementType = this.parseDataType();
+
+        // Don't include TEMPORARY in type name - it's tracked separately in isTemporary flag
         typeName = `ARRAY[${arraySize}] OF ${elementType.typeName}`;
       }
 
@@ -491,6 +502,7 @@ export class Parser {
         typeName,
         length: arraySize,
         tableId,
+        isTemporary: hasTemporary,
         startToken,
         endToken: this.previous()
       };
@@ -801,6 +813,12 @@ export class Parser {
         }
 
         const dataType = this.parseDataType();
+
+        // Also check if TEMPORARY is part of ARRAY OF TEMPORARY pattern (stored in dataType)
+        if (!isTemporary && dataType.isTemporary) {
+          isTemporary = true;
+        }
+
         this.consume(TokenType.Semicolon, 'Expected ;');
 
         variables.push({
@@ -904,10 +922,23 @@ export class Parser {
         this.skipAutoNumberSuffix();
 
         // Colon and type
+        let isTemporary = false;
         let dataType: DataType | null = null;
         if (this.check(TokenType.Colon)) {
           this.advance();
+
+          // Check for TEMPORARY keyword before data type
+          if (this.check(TokenType.Temporary)) {
+            isTemporary = true;
+            this.advance();
+          }
+
           dataType = this.parseDataType();
+
+          // Also check if TEMPORARY is part of ARRAY OF TEMPORARY pattern (stored in dataType)
+          if (!isTemporary && dataType && dataType.isTemporary) {
+            isTemporary = true;
+          }
         }
 
         parameters.push({
@@ -915,6 +946,7 @@ export class Parser {
           name: paramName,
           dataType: dataType || { type: 'DataType', typeName: 'Variant', startToken: paramToken, endToken: paramToken },
           isVar,
+          isTemporary,
           startToken: paramToken,
           endToken: this.previous()
         });

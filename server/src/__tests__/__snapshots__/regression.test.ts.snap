@@ -3108,6 +3108,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "INTEGER",
                 "value": "85",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "AccSchedLine",
               "startToken": {
@@ -3151,6 +3152,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "INTEGER",
                 "value": "334",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "ColumnLayout",
               "startToken": {
@@ -3166,34 +3168,35 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             {
               "dataType": {
                 "endToken": {
-                  "column": 147,
-                  "endOffset": 1861,
+                  "column": 164,
+                  "endOffset": 1872,
                   "line": 36,
-                  "startOffset": 1852,
-                  "type": "TEMPORARY",
-                  "value": "TEMPORARY",
+                  "startOffset": 1869,
+                  "type": "INTEGER",
+                  "value": "197",
                 },
                 "length": undefined,
                 "startToken": {
-                  "column": 147,
-                  "endOffset": 1861,
+                  "column": 157,
+                  "endOffset": 1868,
                   "line": 36,
-                  "startOffset": 1852,
-                  "type": "TEMPORARY",
-                  "value": "TEMPORARY",
+                  "startOffset": 1862,
+                  "type": "RECORD",
+                  "value": "Record",
                 },
-                "tableId": undefined,
+                "tableId": 197,
                 "type": "DataType",
-                "typeName": "TEMPORARY",
+                "typeName": "Record 197",
               },
               "endToken": {
-                "column": 147,
-                "endOffset": 1861,
+                "column": 164,
+                "endOffset": 1872,
                 "line": 36,
-                "startOffset": 1852,
-                "type": "TEMPORARY",
-                "value": "TEMPORARY",
+                "startOffset": 1869,
+                "type": "INTEGER",
+                "value": "197",
               },
+              "isTemporary": true,
               "isVar": true,
               "name": "TempAccSchedKPIBuffer2",
               "startToken": {
@@ -11708,6 +11711,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "INTEGER",
                 "value": "85",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "AccSchedLine",
               "startToken": {
@@ -11751,6 +11755,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "INTEGER",
                 "value": "334",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "ColumnLayout",
               "startToken": {
@@ -11794,6 +11799,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "INTEGER",
                 "value": "197",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "AccSchedKPIBuffer",
               "startToken": {
@@ -14570,6 +14576,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "INTEGER",
                 "value": "15",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "GLAcc",
               "startToken": {
@@ -14613,6 +14620,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "INTEGER",
                 "value": "85",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "AccSchedLine",
               "startToken": {
@@ -14656,6 +14664,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "INTEGER",
                 "value": "334",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "ColumnLayout",
               "startToken": {
@@ -14699,6 +14708,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "INTEGER",
                 "value": "197",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "AccSchedKPIBuffer",
               "startToken": {
@@ -16038,6 +16048,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
                 "type": "INTEGER",
                 "value": "38",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "PurchaseHeader",
               "startToken": {
@@ -16081,6 +16092,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
                 "type": "BOOLEAN",
                 "value": "Boolean",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "IsHandled",
               "startToken": {
@@ -23024,6 +23036,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "INTEGER",
                 "value": "5900",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "ServHeader",
               "startToken": {
@@ -23298,6 +23311,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "INTEGER",
                 "value": "5900",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "ServHeader",
               "startToken": {
@@ -23471,6 +23485,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "INTEGER",
                 "value": "5900",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "ServHeader",
               "startToken": {
@@ -23561,6 +23576,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "INTEGER",
                 "value": "5900",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "ServiceHeader",
               "startToken": {
@@ -23651,6 +23667,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "INTEGER",
                 "value": "5900",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "ServiceHeader",
               "startToken": {
@@ -23741,6 +23758,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "INTEGER",
                 "value": "5900",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "ServiceHeader",
               "startToken": {
@@ -23831,6 +23849,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "INTEGER",
                 "value": "5900",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "ServiceHeader",
               "startToken": {
@@ -23921,6 +23940,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "INTEGER",
                 "value": "5900",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "ServiceHeader",
               "startToken": {
@@ -23964,6 +23984,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "INTEGER",
                 "value": "5902",
               },
+              "isTemporary": false,
               "isVar": true,
               "name": "ServiceLine",
               "startToken": {
@@ -29002,6 +29023,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "DataExchDefCode",
               "startToken": {
@@ -29045,6 +29067,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "DataExchLineDefCode",
               "startToken": {
@@ -29088,6 +29111,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "INTEGER_TYPE",
                 "value": "Integer",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "ColumnNo",
               "startToken": {
@@ -29131,6 +29155,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "NewName",
               "startToken": {
@@ -29174,6 +29199,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "BOOLEAN",
                 "value": "Boolean",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "NewShow",
               "startToken": {
@@ -29217,6 +29243,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "OPTION",
                 "value": "Option",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "DataType",
               "startToken": {
@@ -29260,6 +29287,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "DataTypeFormatting",
               "startToken": {
@@ -29303,6 +29331,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "DataFormattingCulture",
               "startToken": {
@@ -29346,6 +29375,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "NewDescription",
               "startToken": {
@@ -30341,6 +30371,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "DataExchDefCode",
               "startToken": {
@@ -30384,6 +30415,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "DataExchLineDefCode",
               "startToken": {
@@ -30427,6 +30459,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "INTEGER_TYPE",
                 "value": "Integer",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "ColumnNo",
               "startToken": {
@@ -30470,6 +30503,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "NewName",
               "startToken": {
@@ -30513,6 +30547,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "OPTION",
                 "value": "Option",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "DataType",
               "startToken": {
@@ -30556,6 +30591,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "DataFormat",
               "startToken": {
@@ -30599,6 +30635,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "INTEGER_TYPE",
                 "value": "Integer",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "NewLength",
               "startToken": {
@@ -30642,6 +30679,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "NewConstant",
               "startToken": {
@@ -31740,6 +31778,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "DataExchDefCode",
               "startToken": {
@@ -31783,6 +31822,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "DataExchLineDefCode",
               "startToken": {
@@ -31826,6 +31866,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "INTEGER_TYPE",
                 "value": "Integer",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "ColumnNo",
               "startToken": {
@@ -31869,6 +31910,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "NewName",
               "startToken": {
@@ -31912,6 +31954,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "NewDescription",
               "startToken": {
@@ -31955,6 +31998,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "BOOLEAN",
                 "value": "Boolean",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "NewShow",
               "startToken": {
@@ -31998,6 +32042,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "OPTION",
                 "value": "Option",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "DataType",
               "startToken": {
@@ -32041,6 +32086,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "DataFormat",
               "startToken": {
@@ -32084,6 +32130,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "RIGHT_BRACKET",
                 "value": "]",
               },
+              "isTemporary": false,
               "isVar": false,
               "name": "DataFormattingCulture",
               "startToken": {

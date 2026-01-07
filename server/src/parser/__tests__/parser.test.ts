@@ -1668,6 +1668,227 @@ describe('Parser - TEMPORARY Variables', () => {
   });
 });
 
+describe('Parser - TEMPORARY Parameters', () => {
+  it('should parse VAR parameter with TEMPORARY modifier', () => {
+    const code = `OBJECT Codeunit 9 Test {
+      CODE {
+        PROCEDURE GetCellData@1(VAR TempBuffer@1000 : TEMPORARY Record 197);
+        BEGIN
+        END;
+      }
+    }`;
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer.tokenize());
+
+    const ast = parser.parse();
+
+    expect(ast.object?.code?.procedures).toHaveLength(1);
+    const procedure = ast.object?.code?.procedures[0];
+    expect(procedure?.parameters).toHaveLength(1);
+    expect(procedure?.parameters[0].name).toBe('TempBuffer');
+    expect(procedure?.parameters[0].isVar).toBe(true);
+    expect(procedure?.parameters[0].isTemporary).toBe(true);
+    expect(procedure?.parameters[0].dataType.typeName).toContain('Record');
+  });
+
+  it('should parse multiple parameters with mixed TEMPORARY modifiers', () => {
+    const code = `OBJECT Codeunit 9 Test {
+      CODE {
+        PROCEDURE GetCellDataWithDimensions@46(VAR AccSchedLine@1000 : Record 85;VAR ColumnLayout@1001 : Record 334;VAR TempAccSchedKPIBuffer2@1002 : TEMPORARY Record 197);
+        BEGIN
+        END;
+      }
+    }`;
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer.tokenize());
+
+    const ast = parser.parse();
+
+    expect(ast.object?.code?.procedures).toHaveLength(1);
+    const procedure = ast.object?.code?.procedures[0];
+    expect(procedure?.parameters).toHaveLength(3);
+
+    // First parameter: VAR but not TEMPORARY
+    expect(procedure?.parameters[0].name).toBe('AccSchedLine');
+    expect(procedure?.parameters[0].isVar).toBe(true);
+    expect(procedure?.parameters[0].isTemporary).toBe(false);
+    expect(procedure?.parameters[0].dataType.typeName).toContain('Record');
+
+    // Second parameter: VAR but not TEMPORARY
+    expect(procedure?.parameters[1].name).toBe('ColumnLayout');
+    expect(procedure?.parameters[1].isVar).toBe(true);
+    expect(procedure?.parameters[1].isTemporary).toBe(false);
+    expect(procedure?.parameters[1].dataType.typeName).toContain('Record');
+
+    // Third parameter: VAR and TEMPORARY
+    expect(procedure?.parameters[2].name).toBe('TempAccSchedKPIBuffer2');
+    expect(procedure?.parameters[2].isVar).toBe(true);
+    expect(procedure?.parameters[2].isTemporary).toBe(true);
+    expect(procedure?.parameters[2].dataType.typeName).toContain('Record');
+  });
+
+  it('should parse TEMPORARY parameter without VAR', () => {
+    const code = `OBJECT Codeunit 50000 Test {
+      CODE {
+        PROCEDURE ProcessTemp@1(TempRec@1000 : TEMPORARY Record 18);
+        BEGIN
+        END;
+      }
+    }`;
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer.tokenize());
+
+    const ast = parser.parse();
+
+    expect(ast.object?.code?.procedures).toHaveLength(1);
+    const procedure = ast.object?.code?.procedures[0];
+    expect(procedure?.parameters).toHaveLength(1);
+    expect(procedure?.parameters[0].name).toBe('TempRec');
+    expect(procedure?.parameters[0].isVar).toBe(false);
+    expect(procedure?.parameters[0].isTemporary).toBe(true);
+    expect(procedure?.parameters[0].dataType.typeName).toContain('Record');
+  });
+
+  it('should parse regular parameter without TEMPORARY', () => {
+    const code = `OBJECT Codeunit 50000 Test {
+      CODE {
+        PROCEDURE Process@1(Customer@1000 : Record 18);
+        BEGIN
+        END;
+      }
+    }`;
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer.tokenize());
+
+    const ast = parser.parse();
+
+    expect(ast.object?.code?.procedures).toHaveLength(1);
+    const procedure = ast.object?.code?.procedures[0];
+    expect(procedure?.parameters).toHaveLength(1);
+    expect(procedure?.parameters[0].name).toBe('Customer');
+    expect(procedure?.parameters[0].isVar).toBe(false);
+    expect(procedure?.parameters[0].isTemporary).toBe(false);
+    expect(procedure?.parameters[0].dataType.typeName).toContain('Record');
+  });
+
+  it('should parse ARRAY OF TEMPORARY Record variable', () => {
+    const code = `OBJECT Codeunit 5802 Test {
+      CODE {
+        VAR
+          TempInvtPostBuf@1029 : ARRAY [4] OF TEMPORARY Record 48;
+
+        PROCEDURE TestProc();
+        BEGIN
+        END;
+      }
+    }`;
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer.tokenize());
+
+    const ast = parser.parse();
+
+    expect(ast.object?.code?.variables).toHaveLength(1);
+    const variable = ast.object?.code?.variables[0];
+    expect(variable?.name).toBe('TempInvtPostBuf');
+    expect(variable?.isTemporary).toBe(true);
+    expect(variable?.dataType.typeName).toContain('ARRAY[4] OF Record');
+  });
+
+  it('should parse ARRAY OF TEMPORARY Record parameter', () => {
+    const code = `OBJECT Codeunit 5802 Test {
+      CODE {
+        PROCEDURE ProcessBuffers@1(VAR TempBuffers@1000 : ARRAY [10] OF TEMPORARY Record 48);
+        BEGIN
+        END;
+      }
+    }`;
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer.tokenize());
+
+    const ast = parser.parse();
+
+    expect(ast.object?.code?.procedures).toHaveLength(1);
+    const procedure = ast.object?.code?.procedures[0];
+    expect(procedure?.parameters).toHaveLength(1);
+    expect(procedure?.parameters[0].name).toBe('TempBuffers');
+    expect(procedure?.parameters[0].isVar).toBe(true);
+    expect(procedure?.parameters[0].isTemporary).toBe(true);
+    expect(procedure?.parameters[0].dataType.typeName).toContain('ARRAY[10] OF Record');
+  });
+});
+
+describe('Parser - Object TEMPORARY Properties', () => {
+  it('should parse Page with SourceTableTemporary property', () => {
+    const code = `OBJECT Page 1801 "Data Migration Overview" {
+      PROPERTIES {
+        SourceTable=Table1799;
+        SourceTableTemporary=Yes;
+      }
+    }`;
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer.tokenize());
+
+    const ast = parser.parse();
+
+    expect(ast.object).not.toBeNull();
+    expect(ast.object?.objectKind).toBe('Page');
+    expect(ast.object?.objectId).toBe(1801);
+    expect(ast.object?.properties).toBeDefined();
+
+    const properties = ast.object?.properties?.properties ?? [];
+    expect(properties.length).toBeGreaterThan(0);
+
+    const sourceTableTempProp = properties.find(p => p.name === 'SourceTableTemporary');
+    expect(sourceTableTempProp).toBeDefined();
+    expect(sourceTableTempProp?.value).toBe('Yes');
+  });
+
+  it('should parse Report with SourceTableTemporary property', () => {
+    const code = `OBJECT Report 90000 "Test Report" {
+      PROPERTIES {
+        SourceTable=Table79;
+        SourceTableTemporary=Yes;
+      }
+    }`;
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer.tokenize());
+
+    const ast = parser.parse();
+
+    expect(ast.object).not.toBeNull();
+    expect(ast.object?.objectKind).toBe('Report');
+    expect(ast.object?.objectId).toBe(90000);
+    expect(ast.object?.properties).toBeDefined();
+
+    const properties = ast.object?.properties?.properties ?? [];
+    expect(properties.length).toBeGreaterThan(0);
+
+    const sourceTableTempProp = properties.find(p => p.name === 'SourceTableTemporary');
+    expect(sourceTableTempProp).toBeDefined();
+    expect(sourceTableTempProp?.value).toBe('Yes');
+  });
+
+  it('should parse XMLPort table element with Temporary property', () => {
+    const code = `OBJECT XMLport 1000 "SEPA CT pain.001.001.03" {
+      ELEMENTS {
+        { [{d5795d0e-830f-4790-bb93-6f0304a6f8f9}];  ;Document ;Element ;Table ;
+                                SourceTable=Table81;
+                                Temporary=Yes }
+      }
+    }`;
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer.tokenize());
+
+    const ast = parser.parse();
+
+    expect(ast.object).not.toBeNull();
+    expect(ast.object?.objectKind).toBe('XMLport');
+    expect(ast.object?.objectId).toBe(1000);
+    // Note: XMLPort element properties are parsed as part of ELEMENTS section
+    // The parser should handle the Temporary=Yes property in the element definition
+  });
+});
+
 describe('Parser - Field Properties', () => {
   describe('Simple field properties', () => {
     it('should parse field with CaptionML property', () => {
