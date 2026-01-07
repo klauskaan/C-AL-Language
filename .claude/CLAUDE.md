@@ -66,6 +66,9 @@ Root/
     └── agents/            # Specialized assistants (7 agents)
 ```
 
+## Bugs and features
+Regression tests should be written (by agents) before solving issues.
+
 ## Test Data & Copyright
 
 ### test/REAL/ - Real NAV Exports ⚠️
@@ -75,7 +78,8 @@ Root/
 1. **NEVER copy code from test/REAL/** - Content is confidential and copyrighted
 2. **NEVER commit test/REAL/ content** - Folder is gitignored for legal reasons
 3. **Objects 6000000+** - These are proprietary 3rd-party solutions, NEVER reference them
-4. **Read-only reference** - Use ONLY for syntax validation during development
+4. **Read-only reference** - Use ONLY for syntax validation during development. DO use it to find variants and corner cases.
+5. **Use agents** - Use swarms of agents to seach test/REAL/**
 
 **Purpose:**
 - Validate parser against real-world C/AL code patterns
