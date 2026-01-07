@@ -1368,6 +1368,11 @@ export class Parser {
       }
     }
 
+    // Consume optional semicolon after statements
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
     return {
       type: 'CaseBranch',
       values,
@@ -1829,10 +1834,16 @@ export class Parser {
 
     this.advance(); // consume ::
 
-    // Check if there's a valid identifier or quoted identifier after ::
-    if (!this.check(TokenType.Identifier) &&
-        !this.check(TokenType.QuotedIdentifier) &&
-        !this.check(TokenType.Integer)) { // Allow numeric option values like Priority::0
+    // Accept any token after :: except delimiters (C/AL allows keywords, identifiers, etc.)
+    // Reject semicolons, operators, and other structural tokens that can't be option values
+    if (this.isAtEnd() ||
+        this.check(TokenType.Semicolon) ||
+        this.check(TokenType.Comma) ||
+        this.check(TokenType.RightParen) ||
+        this.check(TokenType.RightBracket) ||
+        this.check(TokenType.Then) ||
+        this.check(TokenType.Do) ||
+        this.check(TokenType.Of)) {
       this.recordError('Expected identifier after :: operator', this.peek());
       return expr;
     }

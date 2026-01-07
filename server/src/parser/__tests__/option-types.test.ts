@@ -532,5 +532,77 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       expect(parser.getErrors()).toHaveLength(0);
       expect(ast.object).toBeDefined();
     });
+
+    it('should parse CASE with unquoted identifier after ::', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            ColumnLayout : Record 334;
+          BEGIN
+            CASE ColumnLayout."Ledger Entry Type" OF
+              ColumnLayout."Ledger Entry Type"::Entries:
+                EXIT;
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse CASE with quoted identifier value after ::', () => {
+      const code = `OBJECT Codeunit 9 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            Col : Record 334;
+          BEGIN
+            CASE Col.Type OF
+              Col.Type::"Value 1":
+                EXIT;
+              Col.Type::"Value 2":
+                EXIT;
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse CASE with multiple qualified enum branches', () => {
+      const code = `OBJECT Codeunit 9 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            ColumnLayout : Record 334;
+            AmountType : Option;
+          BEGIN
+            CASE ColumnLayout."Ledger Entry Type" OF
+              ColumnLayout."Ledger Entry Type"::Entries:
+                EXIT;
+              ColumnLayout."Ledger Entry Type"::"Budget Entries":
+                BEGIN
+                  CASE AmountType OF
+                    AmountType::"Net Amount":
+                      EXIT;
+                    AmountType::"Credit Amount":
+                      EXIT;
+                  END;
+                END;
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+      expect(parser.getErrors()).toHaveLength(0);
+    });
   });
 });
