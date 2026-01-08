@@ -754,7 +754,21 @@ export class Parser {
 
     // Parse VAR section if present
     if (this.check(TokenType.Var)) {
-      this.parseVariableDeclarations(variables);
+      try {
+        this.parseVariableDeclarations(variables);
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Skip tokens until we find a procedure/function/trigger
+          while (!this.check(TokenType.Procedure) && !this.check(TokenType.Function) &&
+                 !this.check(TokenType.Trigger) && !this.check(TokenType.Begin) &&
+                 !this.isAtEnd()) {
+            this.advance();
+          }
+        } else {
+          throw error;
+        }
+      }
     }
 
     // Parse procedures and triggers
@@ -852,6 +866,13 @@ export class Parser {
           isTemporary = true;
         }
 
+        // Check for INDATASET modifier (specific to page variables)
+        let isInDataSet = false;
+        if (this.check(TokenType.InDataSet)) {
+          isInDataSet = true;
+          this.advance();
+        }
+
         this.consume(TokenType.Semicolon, 'Expected ;');
 
         variables.push({
@@ -859,6 +880,7 @@ export class Parser {
           name: nameToken.value,
           dataType,
           isTemporary,
+          isInDataSet,
           startToken,
           endToken: this.previous()
         });

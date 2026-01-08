@@ -139,6 +139,7 @@ export interface VariableDeclaration extends ASTNode {
   name: string;
   dataType: DataType;
   isTemporary?: boolean;
+  isInDataSet?: boolean;
 }
 
 /**

@@ -100,6 +100,7 @@ export enum TokenType {
   With = 'WITH',
   Array = 'ARRAY',
   Temporary = 'TEMPORARY',
+  InDataSet = 'INDATASET',
 
   // Operators
   Plus = 'PLUS',              // +
@@ -244,7 +245,8 @@ export const KEYWORDS: Map<string, TokenType> = new Map([
   ['in', TokenType.In],
   ['with', TokenType.With],
   ['array', TokenType.Array],
-  ['temporary', TokenType.Temporary]
+  ['temporary', TokenType.Temporary],
+  ['indataset', TokenType.InDataSet]
 ]);
 
 /**

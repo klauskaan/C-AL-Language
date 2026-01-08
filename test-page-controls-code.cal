@@ -1,0 +1,13 @@
+OBJECT Page 6510 Test {
+  PROPERTIES {
+    CaptionML=ENU=Test Page;
+  }
+  CONTROLS {
+    { 1 ; Container ; ContentArea }
+  }
+  CODE {
+    VAR
+      TotalItemTrackingLine@1003 : Record 336;
+      ItemTrackingCode@1005 : Record 6502;
+  }
+}
