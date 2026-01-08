@@ -58,6 +58,7 @@ export class Parser {
   private current: number = 0;
   private errors: ParseError[] = [];
   private skippedRegions: SkippedRegion[] = [];
+  private braceDepth: number = 0; // Track scope depth for section keyword detection
 
   constructor(tokens: Token[]) {
     // Filter out EOF token for easier parsing
@@ -153,7 +154,7 @@ export class Parser {
           keys = this.parseKeySection();
         } else if (token.type === TokenType.FieldGroups) {
           fieldGroups = this.parseFieldGroupSection();
-        } else if (token.type === TokenType.Code) {
+        } else if (this.isCodeSectionKeyword()) {
           code = this.parseCodeSection();
         } else if (token.type === TokenType.Controls ||
                    token.type === TokenType.Actions ||
@@ -321,6 +322,13 @@ export class Parser {
         break;
       }
 
+      // Stop at RIGHT_BRACE when depth is 0 (end of PROPERTIES section)
+      // This handles properties like ActionList=ACTIONS {...} that are the last property
+      // and don't have a trailing semicolon before the PROPERTIES closing brace
+      if (this.check(TokenType.RightBrace) && braceDepth === 0 && value.length > 0) {
+        break;
+      }
+
       // Stop if we encounter a section keyword (ACTIONS, CONTROLS, DATAITEMS, etc) at depth 0
       // UNLESS this is the first token (meaning it's a property like ActionList=ACTIONS { ... })
       if (braceDepth === 0 && value.length > 0 &&
@@ -339,6 +347,14 @@ export class Parser {
         braceDepth++;
       } else if (currentToken.type === TokenType.RightBrace) {
         braceDepth--;
+        // Safety: if depth goes negative, we've consumed too many closing braces
+        // This means we've exited the property value and should stop
+        if (braceDepth < 0) {
+          // Back up one token since we consumed the brace that closes the PROPERTIES section
+          this.current--;
+          braceDepth = 0;
+          break;
+        }
       }
 
       // If there's a gap between tokens, add a space
@@ -350,7 +366,14 @@ export class Parser {
       lastToken = currentToken;
     }
 
-    const endToken = this.consume(TokenType.Semicolon, 'Expected ;');
+    // Consume semicolon if present, but it's optional for the last property in a section
+    let endToken: Token;
+    if (this.check(TokenType.Semicolon)) {
+      endToken = this.advance();
+    } else {
+      // No semicolon - this must be the last property before closing brace
+      endToken = lastToken || startToken;
+    }
 
     return {
       type: 'Property',
@@ -2091,7 +2114,16 @@ export class Parser {
   }
 
   private advance(): Token {
-    if (!this.isAtEnd()) this.current++;
+    if (!this.isAtEnd()) {
+      const token = this.tokens[this.current];
+      // Track brace depth for scope-aware section keyword detection
+      if (token.type === TokenType.LeftBrace) {
+        this.braceDepth++;
+      } else if (token.type === TokenType.RightBrace) {
+        this.braceDepth--;
+      }
+      this.current++;
+    }
     return this.previous();
   }
 
@@ -2278,26 +2310,21 @@ export class Parser {
    * This method consumes the section keyword and its entire content block.
    */
   private skipUnsupportedSection(sectionType: TokenType): void {
+    // Remember the brace depth BEFORE entering this section
+    // Section keywords appear at depth 1 (inside OBJECT { ... })
+    const sectionDepth = this.braceDepth;
+
     // Consume the section keyword (CONTROLS, ACTIONS, etc.)
     this.advance();
 
-    // Consume the opening brace
-    if (!this.check(TokenType.LeftBrace)) {
-      return; // No content block, nothing to skip
-    }
-    this.advance();
-
-    // Skip everything until we find the matching closing brace
-    // Track brace depth to handle nested structures
-    let braceDepth = 1;
-
-    while (!this.isAtEnd() && braceDepth > 0) {
+    // Skip tokens until we reach another section keyword at the SAME depth
+    while (!this.isAtEnd()) {
       const token = this.peek();
 
-      if (token.type === TokenType.LeftBrace) {
-        braceDepth++;
-      } else if (token.type === TokenType.RightBrace) {
-        braceDepth--;
+      // Check if we've reached a new section at the same object level
+      // Must be back at the same brace depth where we started
+      if (this.braceDepth === sectionDepth && this.isSectionKeyword(token.type)) {
+        break; // Stop at the next section
       }
 
       this.advance();
@@ -2305,6 +2332,68 @@ export class Parser {
 
     // Note: We don't record an error here because these sections are intentionally skipped
     // Full parsing support for these sections would be a future enhancement
+  }
+
+  /**
+   * Check if the current token is a real CODE section (not Code as field name/type).
+   * Looks ahead to see if CODE is followed by a left brace '{'.
+   * Uses lookahead without advancing parser state.
+   *
+   * Note: The lexer already skips whitespace/newlines, so the next token
+   * is immediately available at this.current + 1.
+   */
+  private isCodeSectionKeyword(): boolean {
+    const currentToken = this.peek();
+    if (currentToken.type !== TokenType.Code) {
+      return false;
+    }
+
+    // Look ahead to the next token (lexer already skipped whitespace)
+    const nextIndex = this.current + 1;
+
+    // Check if next token is a left brace
+    return nextIndex < this.tokens.length && this.tokens[nextIndex].type === TokenType.LeftBrace;
+  }
+
+  /**
+   * Check if a token type represents an object section keyword.
+   *
+   * IMPORTANT: The lexer sometimes tokenizes keywords even when they appear in other contexts:
+   * - "Code" in "Variant Code" (inside PROPERTIES section!)
+   * - "Code" in "Item Tracking Code" (captions)
+   * - "Code" in "Code[20]" (data types)
+   *
+   * For CODE specifically, we MUST check that it's followed by '{' to distinguish
+   * the section keyword from false positives.
+   */
+  private isSectionKeyword(type: TokenType): boolean {
+    // Non-CODE section keywords are unambiguous
+    if (type === TokenType.Properties ||
+        type === TokenType.Fields ||
+        type === TokenType.Keys ||
+        type === TokenType.FieldGroups ||
+        type === TokenType.Controls ||
+        type === TokenType.Actions ||
+        type === TokenType.DataItems ||
+        type === TokenType.Elements ||
+        type === TokenType.RequestForm) {
+      return true;
+    }
+
+    // Special case for CODE: must be followed by '{'
+    // The lexer never emits Whitespace/NewLine tokens (they're skipped),
+    // so the next token is always immediately at this.current + 1
+    if (type === TokenType.Code) {
+      const nextIndex = this.current + 1;
+      // Bounds check and verify next token is LEFT_BRACE
+      if (nextIndex < this.tokens.length) {
+        return this.tokens[nextIndex].type === TokenType.LeftBrace;
+      }
+      // CODE at end of file is not a section keyword
+      return false;
+    }
+
+    return false;
   }
 
   /**
@@ -2375,4 +2464,18 @@ export interface SkippedRegion {
   endToken: Token;        // Last token in skipped region
   tokenCount: number;     // Number of tokens skipped
   reason: string;         // Why this region was skipped (e.g., "Error recovery")
+}
+
+/**
+ * Helper function to parse C/AL code
+ * Used in tests to easily parse code snippets and get AST + errors
+ */
+export function parseCode(code: string): { ast: CALDocument | null; errors: ParseError[] } {
+  const { Lexer } = require('../lexer/lexer');
+  const lexer = new Lexer(code);
+  const tokens = lexer.tokenize();
+  const parser = new Parser(tokens);
+  const ast = parser.parse();
+  const errors = parser.getErrors();
+  return { ast, errors };
 }
