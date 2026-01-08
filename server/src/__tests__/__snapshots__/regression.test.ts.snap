@@ -71003,7 +71003,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "TableRelation",
                 },
                 "type": "Property",
-                "value": "Data Exch. Line Def.CodeWHERE(DataExch.DefCode=FIELD(DataExch.DefCode))",
+                "value": "Data Exch. Line Def.Code WHERE (Data Exch. Def Code=FIELD(Data Exch. Def Code))",
               },
               {
                 "endToken": {
@@ -73510,7 +73510,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
                   "value": "CaptionML",
                 },
                 "type": "Property",
-                "value": "ENU=PostCode",
+                "value": "ENU=Post Code",
               },
               {
                 "endToken": {
@@ -73681,7 +73681,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
                   "value": "CalcFormula",
                 },
                 "type": "Property",
-                "value": "Sum(Customer Ledger Entry.AmountWHERE(CustomerNo.=FIELD(No.),PostingDate=FIELD(DateFilter)))",
+                "value": "Sum(Customer Ledger Entry.Amount WHERE (Customer No.=FIELD(No.), Posting Date=FIELD(Date Filter)))",
               },
               {
                 "endToken": {
@@ -73831,7 +73831,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
                   "value": "CaptionML",
                 },
                 "type": "Property",
-                "value": "ENU=CreditLimit",
+                "value": "ENU=Credit Limit",
               },
               {
                 "endToken": {
@@ -74047,7 +74047,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
                   "value": "CaptionML",
                 },
                 "type": "Property",
-                "value": "ENU=LastModified",
+                "value": "ENU=Last Modified",
               },
               {
                 "endToken": {
@@ -74155,7 +74155,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
                   "value": "CaptionML",
                 },
                 "type": "Property",
-                "value": "ENU=CustomerType",
+                "value": "ENU=Customer Type",
               },
               {
                 "endToken": {
@@ -74284,7 +74284,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
                   "value": "CaptionML",
                 },
                 "type": "Property",
-                "value": "ENU=TotalSales",
+                "value": "ENU=Total Sales",
               },
               {
                 "endToken": {
@@ -74326,7 +74326,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
                   "value": "CalcFormula",
                 },
                 "type": "Property",
-                "value": "Sum(Sales Line.AmountWHERE(Sell-toCustomerNo.=FIELD(No.)))",
+                "value": "Sum(Sales Line.Amount WHERE (Sell-to Customer No.=FIELD(No.)))",
               },
               {
                 "endToken": {
@@ -74476,7 +74476,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
                   "value": "CaptionML",
                 },
                 "type": "Property",
-                "value": "ENU=DateFilter",
+                "value": "ENU=Date Filter",
               },
             ],
             "startToken": {
@@ -74563,7 +74563,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
                   "value": "CaptionML",
                 },
                 "type": "Property",
-                "value": "ENU=SalespersonCode",
+                "value": "ENU=Salesperson Code",
               },
               {
                 "endToken": {
@@ -74779,7 +74779,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
                   "value": "CaptionML",
                 },
                 "type": "Property",
-                "value": "ENU=PhoneNo.",
+                "value": "ENU=Phone No.",
               },
               {
                 "endToken": {
@@ -74800,7 +74800,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
                   "value": "ExtendedDatatype",
                 },
                 "type": "Property",
-                "value": "PhoneNo.",
+                "value": "Phone No.",
               },
             ],
             "startToken": {

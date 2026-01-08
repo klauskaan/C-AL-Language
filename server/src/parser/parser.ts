@@ -315,10 +315,11 @@ export class Parser {
     let value = '';
     let lastToken: Token | null = null;
     let braceDepth = 0;
+    let bracketDepth = 0;
 
     while (!this.isAtEnd()) {
-      // Stop at semicolon, but only if not inside curly braces
-      if (this.check(TokenType.Semicolon) && braceDepth === 0) {
+      // Stop at semicolon, but only if not inside curly braces or square brackets
+      if (this.check(TokenType.Semicolon) && braceDepth === 0 && bracketDepth === 0) {
         break;
       }
 
@@ -354,6 +355,17 @@ export class Parser {
           this.current--;
           braceDepth = 0;
           break;
+        }
+      }
+
+      // Track bracket depth to handle array literals like OptionOrdinalValues=[1;2;3;4;5]
+      if (currentToken.type === TokenType.LeftBracket) {
+        bracketDepth++;
+      } else if (currentToken.type === TokenType.RightBracket) {
+        bracketDepth--;
+        // Safety: if depth goes negative, something went wrong
+        if (bracketDepth < 0) {
+          bracketDepth = 0;
         }
       }
 
@@ -639,10 +651,41 @@ export class Parser {
             // This is a field trigger (OnValidate, OnLookup, etc.)
             return { type: 'trigger' as const, trigger: this.parseFieldTrigger(name, startToken) };
           } else {
-            // Regular property - read value until semicolon
+            // Regular property - read value until semicolon, tracking bracket depth for arrays
             let value = '';
-            while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
-              value += this.advance().value;
+            let bracketDepth = 0;
+            let lastToken: Token | null = null;
+
+            while (!this.isAtEnd()) {
+              // Stop at semicolon only if not inside brackets
+              if (this.check(TokenType.Semicolon) && bracketDepth === 0) {
+                break;
+              }
+
+              // Stop at right brace when not inside brackets (end of field properties)
+              if (this.check(TokenType.RightBrace) && bracketDepth === 0) {
+                break;
+              }
+
+              const currentToken = this.advance();
+
+              // Track bracket depth
+              if (currentToken.type === TokenType.LeftBracket) {
+                bracketDepth++;
+              } else if (currentToken.type === TokenType.RightBracket) {
+                bracketDepth--;
+                if (bracketDepth < 0) {
+                  bracketDepth = 0;
+                }
+              }
+
+              // Preserve whitespace between tokens
+              if (lastToken !== null && currentToken.startOffset > lastToken.endOffset) {
+                value += ' ';
+              }
+
+              value += currentToken.value;
+              lastToken = currentToken;
             }
 
             if (this.check(TokenType.Semicolon)) {
