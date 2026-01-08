@@ -3088,6 +3088,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "85",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 68,
                   "endOffset": 1779,
@@ -3132,6 +3133,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "334",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 102,
                   "endOffset": 1813,
@@ -3176,6 +3178,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "197",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 157,
                   "endOffset": 1868,
@@ -3232,6 +3235,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Integer",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 29,
                   "endOffset": 1920,
@@ -11692,6 +11696,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "85",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 67,
                   "endOffset": 3423,
@@ -11736,6 +11741,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "334",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 97,
                   "endOffset": 3453,
@@ -11780,6 +11786,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "197",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 137,
                   "endOffset": 3493,
@@ -11836,6 +11843,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "15",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 20,
                   "endOffset": 3535,
@@ -11880,6 +11888,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "1103",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 23,
                   "endOffset": 3569,
@@ -11924,6 +11933,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "841",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 24,
                   "endOffset": 3606,
@@ -11968,6 +11978,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Boolean",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 27,
                   "endOffset": 3646,
@@ -26755,6 +26766,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "15",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 60,
                   "endOffset": 7672,
@@ -26799,6 +26811,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "85",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 94,
                   "endOffset": 7706,
@@ -26843,6 +26856,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "334",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 124,
                   "endOffset": 7736,
@@ -26887,6 +26901,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "197",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 164,
                   "endOffset": 7776,
@@ -26943,6 +26958,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "365",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 32,
                   "endOffset": 7830,
@@ -26987,6 +27003,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "250",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 32,
                   "endOffset": 7873,
@@ -27031,6 +27048,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "251",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 38,
                   "endOffset": 7922,
@@ -27075,6 +27093,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "252",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 42,
                   "endOffset": 7975,
@@ -27119,6 +27138,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "253",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 40,
                   "endOffset": 8026,
@@ -27163,6 +27183,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Text",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 21,
                   "endOffset": 8057,
@@ -27207,6 +27228,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Net Amount,Debit Amount,Credit Amount",
                 },
                 "length": undefined,
+                "optionString": "Net Amount,Debit Amount,Credit Amount",
                 "startToken": {
                   "column": 25,
                   "endOffset": 8123,
@@ -27251,6 +27273,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Decimal",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 26,
                   "endOffset": 8158,
@@ -35669,6 +35692,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "1103",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 66,
                   "endOffset": 16666,
@@ -35713,6 +35737,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "85",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 102,
                   "endOffset": 16702,
@@ -35757,6 +35782,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "334",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 132,
                   "endOffset": 16732,
@@ -35801,6 +35827,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "197",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 172,
                   "endOffset": 16772,
@@ -35857,6 +35884,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "1104",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 24,
                   "endOffset": 16818,
@@ -35901,6 +35929,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "1109",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 30,
                   "endOffset": 16861,
@@ -35945,6 +35974,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Net Amount,Debit Amount,Credit Amount",
                 },
                 "length": undefined,
+                "optionString": "Net Amount,Debit Amount,Credit Amount",
                 "startToken": {
                   "column": 25,
                   "endOffset": 16932,
@@ -35989,6 +36019,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Boolean",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 26,
                   "endOffset": 16967,
@@ -36033,6 +36064,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Decimal",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 22,
                   "endOffset": 16998,
@@ -36077,6 +36109,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Decimal",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 26,
                   "endOffset": 17033,
@@ -40940,6 +40973,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "841",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 68,
                   "endOffset": 21315,
@@ -40984,6 +41018,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "85",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 103,
                   "endOffset": 21350,
@@ -41028,6 +41063,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "334",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 133,
                   "endOffset": 21380,
@@ -41072,6 +41108,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "197",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 173,
                   "endOffset": 21420,
@@ -41128,6 +41165,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "365",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 32,
                   "endOffset": 21474,
@@ -41172,6 +41210,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "256",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 40,
                   "endOffset": 21525,
@@ -41216,6 +41255,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "252",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 42,
                   "endOffset": 21578,
@@ -41260,6 +41300,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Text",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 21,
                   "endOffset": 21609,
@@ -41304,6 +41345,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Net Amount,Debit Amount,Credit Amount",
                 },
                 "length": undefined,
+                "optionString": "Net Amount,Debit Amount,Credit Amount",
                 "startToken": {
                   "column": 25,
                   "endOffset": 21675,
@@ -41348,6 +41390,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Decimal",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 26,
                   "endOffset": 21710,
@@ -42253,6 +42296,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "]",
                 },
                 "length": 250,
+                "optionString": undefined,
                 "startToken": {
                   "column": 65,
                   "endOffset": 24479,
@@ -42297,6 +42341,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "85",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 95,
                   "endOffset": 24511,
@@ -42341,6 +42386,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "334",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 125,
                   "endOffset": 24541,
@@ -42385,6 +42431,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "197",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 165,
                   "endOffset": 24581,
@@ -42441,6 +42488,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "197",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 49,
                   "endOffset": 24652,
@@ -42485,6 +42533,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Text",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 36,
                   "endOffset": 24698,
@@ -42529,6 +42578,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Decimal",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 20,
                   "endOffset": 24727,
@@ -43859,6 +43909,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "197",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 99,
                   "endOffset": 25395,
@@ -43903,6 +43954,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "197",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 162,
                   "endOffset": 25458,
@@ -43947,6 +43999,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Text",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 191,
                   "endOffset": 25485,
@@ -44017,6 +44070,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "197",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 101,
                   "endOffset": 26282,
@@ -44061,6 +44115,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "85",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 132,
                   "endOffset": 26313,
@@ -44105,6 +44160,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "334",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 162,
                   "endOffset": 26343,
@@ -44149,6 +44205,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                   "value": "Integer",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 189,
                   "endOffset": 26371,
@@ -44218,6 +44275,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "value": "DAN=Der er indtastet en ulovlig v�rdi eller et ikke-eksisterende r�kkenr.;ENU=You have entered an illegal value or a nonexistent row number.",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 28,
               "endOffset": 284,
@@ -44262,6 +44320,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "value": "@@@={Locked};DAN=%1\\\\ %2 %3 %4.;ENU=%1\\\\ %2 %3 %4.",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 25,
               "endOffset": 463,
@@ -44306,6 +44365,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "value": "DAN=Fejlen opstod, da programmet fors�gte at beregne:\\;ENU=The error occurred when the program tried to calculate:\\",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 31,
               "endOffset": 558,
@@ -44350,6 +44410,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "value": "@@@="%1 = Row No., %2= Line No., %3 = Totaling";DAN="Kontoskemalinje: R�kkenr. = %1, Linjenr. = %2, I alt = %3\\";ENU="Acc. Sched. Line: Row No. = %1, Line No. = %2, Totaling = %3\\"",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 30,
               "endOffset": 717,
@@ -44394,6 +44455,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "value": "@@@="%1 = Column No., %2= Line No., %3 = Formula";DAN="Kontoskemakolonne: Kolonnenr. = %1, Linjenr. = %2, Formel = %3";ENU="Acc. Sched. Column: Column No. = %1, Line No. = %2, Formula  = %3"",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 24,
               "endOffset": 935,
@@ -44438,6 +44500,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "value": "DAN=P� grund af cirkul�re referencer kan programmet ikke beregne en formel.;ENU=Because of circular references, the program cannot calculate a formula.",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 29,
               "endOffset": 1168,
@@ -44482,6 +44545,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "value": "84",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 27,
               "endOffset": 1357,
@@ -44526,6 +44590,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "value": "85",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 30,
               "endOffset": 1398,
@@ -44570,6 +44635,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "value": "197",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 46,
               "endOffset": 1455,
@@ -44614,6 +44680,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "value": "8",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 33,
               "endOffset": 1502,
@@ -44658,6 +44725,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "value": "Date",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 24,
               "endOffset": 1534,
@@ -44702,6 +44770,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "value": "Date",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 22,
               "endOffset": 1562,
@@ -44746,6 +44815,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "value": "Integer",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 24,
               "endOffset": 1595,
@@ -44790,6 +44860,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "value": "Integer",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 36,
               "endOffset": 1640,
@@ -44834,6 +44905,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "value": "Integer",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 36,
               "endOffset": 1685,
@@ -45159,6 +45231,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
                   "value": "38",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 75,
                   "endOffset": 1285,
@@ -45203,6 +45276,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
                   "value": "Boolean",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 106,
                   "endOffset": 1317,
@@ -45272,6 +45346,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
               "value": "DAN=Skal rekvisitionen �ndres til en ordre?;ENU=Do you want to convert the quote to an order?",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 22,
               "endOffset": 862,
@@ -45316,6 +45391,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
               "value": "DAN=Rekvisition %1 er �ndret til ordre %2;ENU=Quote number %1 has been converted to order number %2.",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 22,
               "endOffset": 991,
@@ -45360,6 +45436,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
               "value": "38",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 31,
               "endOffset": 1133,
@@ -45404,6 +45481,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
               "value": "96",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 32,
               "endOffset": 1178,
@@ -46476,6 +46554,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
                   "value": "27",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 38,
                   "endOffset": 251,
@@ -46520,6 +46599,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
                   "value": "Boolean",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 30,
                   "endOffset": 293,
@@ -51010,6 +51090,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                   "value": "5902",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 23,
                   "endOffset": 718,
@@ -51054,6 +51135,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                   "value": "290",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 43,
                   "endOffset": 774,
@@ -51098,6 +51180,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                   "value": "290",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 43,
                   "endOffset": 829,
@@ -52156,6 +52239,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                   "value": "5900",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 46,
                   "endOffset": 2681,
@@ -52431,6 +52515,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                   "value": "5900",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 60,
                   "endOffset": 3203,
@@ -52605,6 +52690,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                   "value": "5900",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 59,
                   "endOffset": 3385,
@@ -52696,6 +52782,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                   "value": "5900",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 74,
                   "endOffset": 3542,
@@ -52787,6 +52874,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                   "value": "5900",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 73,
                   "endOffset": 3671,
@@ -52878,6 +52966,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                   "value": "5900",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 73,
                   "endOffset": 3800,
@@ -52969,6 +53058,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                   "value": "5900",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 72,
                   "endOffset": 3928,
@@ -53060,6 +53150,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                   "value": "5900",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 63,
                   "endOffset": 4047,
@@ -53104,6 +53195,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                   "value": "5902",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 98,
                   "endOffset": 4082,
@@ -53173,6 +53265,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
               "value": "@@@=Example: There is nothing to release for Order 12345.;DAN=Der er ikke noget at frigive for %1 %2.;ENU=There is nothing to release for %1 %2.",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 22,
               "endOffset": 372,
@@ -53217,6 +53310,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
               "value": "5900",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 28,
               "endOffset": 555,
@@ -53261,6 +53355,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
               "value": "313",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 24,
               "endOffset": 592,
@@ -53305,6 +53400,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
               "value": "5770",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 33,
               "endOffset": 639,
@@ -53708,6 +53804,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-343-check-credit-limit
               "value": "Boolean",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 26,
               "endOffset": 1315,
@@ -53752,6 +53849,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-343-check-credit-limit
               "value": "Boolean",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 33,
               "endOffset": 1357,
@@ -54330,6 +54428,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
                   "value": "1227",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 30,
                   "endOffset": 5345,
@@ -54374,6 +54473,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
                   "value": "1235",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 31,
                   "endOffset": 5388,
@@ -54432,6 +54532,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
               "value": "Boolean",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 33,
               "endOffset": 5209,
@@ -54476,6 +54577,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
               "value": "Boolean",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 44,
               "endOffset": 5261,
@@ -55488,6 +55590,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                   "value": "1797",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 33,
                   "endOffset": 10251,
@@ -55719,6 +55822,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
               "value": "6100",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 34,
               "endOffset": 9366,
@@ -55763,6 +55867,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
               "value": "Notification",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 34,
               "endOffset": 9418,
@@ -55807,6 +55912,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
               "value": "Text",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 26,
               "endOffset": 9449,
@@ -55851,6 +55957,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
               "value": "]",
             },
             "length": 250,
+            "optionString": undefined,
             "startToken": {
               "column": 33,
               "endOffset": 9497,
@@ -55895,6 +56002,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
               "value": "ENU=This page shows the status of a data migration. It's empty because you have not migrated data.",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 44,
               "endOffset": 9566,
@@ -55939,6 +56047,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
               "value": "ENU=Start data migration",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 36,
               "endOffset": 9714,
@@ -55983,6 +56092,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
               "value": "ENU=Data migration is in progress. Refresh the page to update the migration status.",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 9788,
@@ -56027,6 +56137,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
               "value": "Boolean",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 39,
               "endOffset": 9921,
@@ -56071,6 +56182,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
               "value": "ENU=Learn more",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 27,
               "endOffset": 9958,
@@ -56115,6 +56227,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
               "value": " ,Review and fix errors,Review and post,Review and Delete",
             },
             "length": undefined,
+            "optionString": " ,Review and fix errors,Review and post,Review and Delete",
             "startToken": {
               "column": 23,
               "endOffset": 10058,
@@ -56159,6 +56272,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
               "value": "Text",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 25,
               "endOffset": 10088,
@@ -58980,6 +59094,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                   "value": "2000000058",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 49,
                   "endOffset": 511,
@@ -59024,6 +59139,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                   "value": "1798",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 48,
                   "endOffset": 579,
@@ -59068,6 +59184,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                   "value": "]",
                 },
                 "length": 10,
+                "optionString": undefined,
                 "startToken": {
                   "column": 41,
                   "endOffset": 630,
@@ -60098,6 +60215,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
               "value": "Decimal",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 32,
               "endOffset": 925,
@@ -60131,6 +60249,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
                   "value": "21",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 30,
                   "endOffset": 972,
@@ -60175,6 +60294,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
                   "value": "Decimal",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 27,
                   "endOffset": 1011,
@@ -60383,6 +60503,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
               "value": "ENU=The customer %1 has been created.",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 22,
               "endOffset": 805,
@@ -60427,6 +60548,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
               "value": "Integer",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 28,
               "endOffset": 882,
@@ -60492,6 +60614,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
               "value": "Code20",
             },
             "length": 20,
+            "optionString": undefined,
             "startToken": {
               "column": 33,
               "endOffset": 257,
@@ -60538,6 +60661,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
               "value": "Text50",
             },
             "length": 50,
+            "optionString": undefined,
             "startToken": {
               "column": 33,
               "endOffset": 306,
@@ -60584,6 +60708,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
               "value": "Text50",
             },
             "length": 50,
+            "optionString": undefined,
             "startToken": {
               "column": 33,
               "endOffset": 355,
@@ -60630,6 +60755,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
               "value": "Text50",
             },
             "length": 50,
+            "optionString": undefined,
             "startToken": {
               "column": 33,
               "endOffset": 404,
@@ -60676,6 +60802,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
               "value": "Text30",
             },
             "length": 30,
+            "optionString": undefined,
             "startToken": {
               "column": 33,
               "endOffset": 453,
@@ -60722,6 +60849,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
               "value": "Text30",
             },
             "length": 30,
+            "optionString": undefined,
             "startToken": {
               "column": 33,
               "endOffset": 502,
@@ -60768,6 +60896,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
               "value": "Decimal",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 33,
               "endOffset": 552,
@@ -60814,6 +60943,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
               "value": "Decimal",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 33,
               "endOffset": 601,
@@ -62085,6 +62215,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 20,
+                "optionString": undefined,
                 "startToken": {
                   "column": 50,
                   "endOffset": 2728,
@@ -62129,6 +62260,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 20,
+                "optionString": undefined,
                 "startToken": {
                   "column": 86,
                   "endOffset": 2764,
@@ -62173,6 +62305,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "Integer",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 111,
                   "endOffset": 2792,
@@ -62217,6 +62350,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 250,
+                "optionString": undefined,
                 "startToken": {
                   "column": 134,
                   "endOffset": 2812,
@@ -62261,6 +62395,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "Boolean",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 159,
                   "endOffset": 2840,
@@ -62305,6 +62440,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "Option",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 183,
                   "endOffset": 2863,
@@ -62349,6 +62485,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 100,
+                "optionString": undefined,
                 "startToken": {
                   "column": 216,
                   "endOffset": 2894,
@@ -62393,6 +62530,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 10,
+                "optionString": undefined,
                 "startToken": {
                   "column": 255,
                   "endOffset": 2933,
@@ -62437,6 +62575,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 50,
+                "optionString": undefined,
                 "startToken": {
                   "column": 286,
                   "endOffset": 2964,
@@ -63433,6 +63572,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 20,
+                "optionString": undefined,
                 "startToken": {
                   "column": 59,
                   "endOffset": 3509,
@@ -63477,6 +63617,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 20,
+                "optionString": undefined,
                 "startToken": {
                   "column": 95,
                   "endOffset": 3545,
@@ -63521,6 +63662,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "Integer",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 120,
                   "endOffset": 3573,
@@ -63565,6 +63707,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 250,
+                "optionString": undefined,
                 "startToken": {
                   "column": 143,
                   "endOffset": 3593,
@@ -63609,6 +63752,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "Option",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 169,
                   "endOffset": 3621,
@@ -63653,6 +63797,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 100,
+                "optionString": undefined,
                 "startToken": {
                   "column": 194,
                   "endOffset": 3644,
@@ -63697,6 +63842,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "Integer",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 221,
                   "endOffset": 3674,
@@ -63741,6 +63887,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 30,
+                "optionString": undefined,
                 "startToken": {
                   "column": 248,
                   "endOffset": 3698,
@@ -64840,6 +64987,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 20,
+                "optionString": undefined,
                 "startToken": {
                   "column": 59,
                   "endOffset": 4168,
@@ -64884,6 +65032,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 20,
+                "optionString": undefined,
                 "startToken": {
                   "column": 95,
                   "endOffset": 4204,
@@ -64928,6 +65077,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "Integer",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 120,
                   "endOffset": 4232,
@@ -64972,6 +65122,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 250,
+                "optionString": undefined,
                 "startToken": {
                   "column": 143,
                   "endOffset": 4252,
@@ -65016,6 +65167,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 50,
+                "optionString": undefined,
                 "startToken": {
                   "column": 175,
                   "endOffset": 4284,
@@ -65060,6 +65212,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "Boolean",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 199,
                   "endOffset": 4311,
@@ -65104,6 +65257,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "Option",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 223,
                   "endOffset": 4334,
@@ -65148,6 +65302,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 100,
+                "optionString": undefined,
                 "startToken": {
                   "column": 248,
                   "endOffset": 4357,
@@ -65192,6 +65347,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "]",
                 },
                 "length": 10,
+                "optionString": undefined,
                 "startToken": {
                   "column": 287,
                   "endOffset": 4396,
@@ -66111,6 +66267,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "1222",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 26,
                   "endOffset": 4941,
@@ -67089,6 +67246,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Boolean",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 43,
               "endOffset": 5419,
@@ -67122,6 +67280,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "1222",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 26,
                   "endOffset": 5460,
@@ -67830,6 +67989,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Boolean",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 53,
               "endOffset": 5919,
@@ -67863,6 +68023,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "1222",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 26,
                   "endOffset": 5960,
@@ -68266,6 +68427,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Boolean",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 33,
               "endOffset": 6239,
@@ -68299,6 +68461,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "1222",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 26,
                   "endOffset": 6280,
@@ -68702,6 +68865,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Boolean",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 35,
               "endOffset": 6462,
@@ -68735,6 +68899,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "1222",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 26,
                   "endOffset": 6503,
@@ -69516,6 +69681,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "Text",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 67,
                   "endOffset": 6730,
@@ -69572,6 +69738,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "1223",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 29,
                   "endOffset": 6775,
@@ -70243,6 +70410,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Boolean",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 35,
               "endOffset": 7170,
@@ -70276,6 +70444,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "1227",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 30,
                   "endOffset": 7215,
@@ -70334,6 +70503,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "ENU=The %1 that you are about to delete is used for one or more %2, which will also be deleted. \\\\Do you want to continue?",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 36,
               "endOffset": 2532,
@@ -70418,6 +70588,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Code20",
             },
             "length": 20,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 1038,
@@ -70526,6 +70697,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Integer",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 1188,
@@ -70634,6 +70806,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Text250",
             },
             "length": 250,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 1317,
@@ -70680,6 +70853,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Boolean",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 1370,
@@ -70726,6 +70900,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Option",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 1422,
@@ -70813,6 +70988,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Text100",
             },
             "length": 100,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 1516,
@@ -70859,6 +71035,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Text10",
             },
             "length": 10,
+            "optionString": undefined,
             "startToken": {
               "column": 40,
               "endOffset": 1571,
@@ -70905,6 +71082,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Text100",
             },
             "length": 100,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 1622,
@@ -70951,6 +71129,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Code20",
             },
             "length": 20,
+            "optionString": undefined,
             "startToken": {
               "column": 41,
               "endOffset": 1678,
@@ -71059,6 +71238,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Integer",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 1889,
@@ -71105,6 +71285,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Text30",
             },
             "length": 30,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 1941,
@@ -71151,6 +71332,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Text250",
             },
             "length": 250,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 1995,
@@ -71197,6 +71379,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Text30",
             },
             "length": 30,
+            "optionString": undefined,
             "startToken": {
               "column": 41,
               "endOffset": 2051,
@@ -71243,6 +71426,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Boolean",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 38,
               "endOffset": 2102,
@@ -71289,6 +71473,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Text1",
             },
             "length": 1,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 2152,
@@ -71335,6 +71520,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Option",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 2206,
@@ -71422,6 +71608,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "value": "Boolean",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 39,
               "endOffset": 2286,
@@ -72621,6 +72808,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "1225",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 44,
                   "endOffset": 326,
@@ -72665,6 +72853,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                   "value": "1223",
                 },
                 "length": undefined,
+                "optionString": undefined,
                 "startToken": {
                   "column": 41,
                   "endOffset": 379,
@@ -72796,6 +72985,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
               "value": "Code20",
             },
             "length": 20,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 501,
@@ -72904,6 +73094,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
               "value": "Text100",
             },
             "length": 100,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 639,
@@ -73284,6 +73475,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
               "value": "Text50",
             },
             "length": 50,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 1103,
@@ -73371,6 +73563,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
               "value": "Text30",
             },
             "length": 30,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 1178,
@@ -73458,6 +73651,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
               "value": "Code20",
             },
             "length": 20,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 1250,
@@ -73587,6 +73781,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
               "value": "Decimal",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 1485,
@@ -73779,6 +73974,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
               "value": "Decimal",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 2113,
@@ -73908,6 +74104,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
               "value": "Boolean",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 2334,
@@ -73995,6 +74192,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
               "value": "DateTime",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 2410,
@@ -74103,6 +74301,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
               "value": "Option",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 2554,
@@ -74232,6 +74431,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
               "value": "Decimal",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 2817,
@@ -74403,6 +74603,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
               "value": "Date",
             },
             "length": undefined,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 3232,
@@ -74511,6 +74712,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
               "value": "Code10",
             },
             "length": 10,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 3388,
@@ -74619,6 +74821,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
               "value": "Text80",
             },
             "length": 80,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 3551,
@@ -74727,6 +74930,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
               "value": "Text30",
             },
             "length": 30,
+            "optionString": undefined,
             "startToken": {
               "column": 37,
               "endOffset": 3702,

@@ -616,11 +616,65 @@ export class Parser {
       this.advance(); // consume the string value
     }
 
+    // Handle DotNet with assembly-qualified type
+    // Format: DotNet "'assembly'.Namespace.Type" (entire thing in double quotes = QuotedIdentifier)
+    // Examples:
+    //   DotNet "'mscorlib'.System.DateTime"
+    //   DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode"
+    //   DotNet "'mscorlib'.System.Collections.Generic.Dictionary`2"
+    //   DotNet "'Microsoft.Dynamics.Nav.Ncl'.Microsoft.Dynamics.Nav.Runtime.WebServiceActionContext+StatusCode"
+    //
+    // The lexer tokenizes the entire "'assembly'.Type" as a single QuotedIdentifier token.
+    // We need to parse its value to extract assembly reference and type name.
+    if (typeName.toUpperCase() === 'DOTNET' && this.check(TokenType.QuotedIdentifier)) {
+      const quotedTypeToken = this.advance(); // consume the entire "'assembly'.Type" string
+      const fullTypeSpec = quotedTypeToken.value; // e.g., "'mscorlib'.System.DateTime"
+
+      // Parse the value: 'assembly'.Type.Name
+      // Assembly reference is between the first pair of single quotes
+      const assemblyMatch = fullTypeSpec.match(/^'([^']+)'\./);
+
+      if (!assemblyMatch) {
+        this.recordError('Invalid DotNet type format, expected \'assembly\'.TypeName', this.peek());
+        return {
+          type: 'DataType',
+          typeName: 'DotNet',
+          startToken,
+          endToken: this.previous()
+        };
+      }
+
+      const assemblyReference = assemblyMatch[1]; // Extract assembly name (without quotes)
+      const dotNetTypeName = fullTypeSpec.substring(assemblyMatch[0].length); // Everything after 'assembly'.
+
+      return {
+        type: 'DataType',
+        typeName: 'DotNet',
+        assemblyReference,
+        dotNetTypeName,
+        startToken,
+        endToken: this.previous()
+      };
+    }
+
+    // Handle enum-style single-quoted option strings
+    // When the type is a single-quoted string like 'Label,Presentation,Calculation',
+    // the lexer emits a STRING token, which becomes the typeName directly.
+    // Example: LinkBaseType@1000 : 'Label,Presentation,Calculation,Reference';
+    // If typeName contains commas and doesn't look like a standard type name,
+    // it's likely an inline option string - populate optionString field.
+    let optionString: string | undefined;
+    if (typeName.includes(',') && !typeName.includes('.')) {
+      // This looks like an inline option string (e.g., 'Open,Pending,Posted')
+      optionString = typeName;
+    }
+
     return {
       type: 'DataType',
       typeName,
       length,
       tableId,
+      optionString,
       startToken,
       endToken: this.previous()
     };

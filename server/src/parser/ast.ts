@@ -89,8 +89,10 @@ export interface DataType extends ASTNode {
   typeName: string;
   length?: number;
   tableId?: number;  // For Record types
-  optionString?: string;  // For Option types
+  optionString?: string;  // For Option types (e.g., 'Open,Pending,Posted')
   isTemporary?: boolean;  // For ARRAY OF TEMPORARY patterns
+  assemblyReference?: string;  // For DotNet types - assembly name/version/culture/token
+  dotNetTypeName?: string;  // For DotNet types - full .NET type path (e.g., 'System.String', 'System.Collections.Generic.Dictionary`2')
 }
 
 /**
