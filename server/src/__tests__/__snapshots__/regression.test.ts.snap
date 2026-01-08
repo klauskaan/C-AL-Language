@@ -3252,6 +3252,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "LastDataLineNo",
               "startToken": {
@@ -11855,6 +11856,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "GLAcc",
               "startToken": {
@@ -11898,6 +11900,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "CostType",
               "startToken": {
@@ -11941,6 +11944,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "CFAccount",
               "startToken": {
@@ -11984,6 +11988,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "IsExpression",
               "startToken": {
@@ -26958,6 +26963,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "AnalysisViewEntry",
               "startToken": {
@@ -27001,6 +27007,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "GLEntryDimensions",
               "startToken": {
@@ -27044,6 +27051,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "GLBudgetEntryDimensions",
               "startToken": {
@@ -27087,6 +27095,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "AnalysisViewEntryDimensions",
               "startToken": {
@@ -27130,6 +27139,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "AnalysisViewBudgEntryDims",
               "startToken": {
@@ -27173,6 +27183,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "Filter",
               "startToken": {
@@ -27216,6 +27227,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "AmountType",
               "startToken": {
@@ -27259,6 +27271,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "AmountToAdd",
               "startToken": {
@@ -35864,6 +35877,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "CostEntry",
               "startToken": {
@@ -35907,6 +35921,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "CostBudgetEntry",
               "startToken": {
@@ -35950,6 +35965,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "AmountType",
               "startToken": {
@@ -35993,6 +36009,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "TestBalance",
               "startToken": {
@@ -36036,6 +36053,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "Balance",
               "startToken": {
@@ -36079,6 +36097,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "AmountToAdd",
               "startToken": {
@@ -41129,6 +41148,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "AnalysisViewEntry",
               "startToken": {
@@ -41172,6 +41192,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "CFForecastEntryDimensions",
               "startToken": {
@@ -41215,6 +41236,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "AnalysisViewEntryDimensions",
               "startToken": {
@@ -41258,6 +41280,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "Filter",
               "startToken": {
@@ -41301,6 +41324,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "AmountType",
               "startToken": {
@@ -41344,6 +41368,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "AmountToAdd",
               "startToken": {
@@ -42436,6 +42461,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": true,
               "name": "TempAccSchedKPIBufferDim",
               "startToken": {
@@ -42479,6 +42505,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "SrcAccSchedLineFilter",
               "startToken": {
@@ -42522,6 +42549,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "Value",
               "startToken": {
@@ -44210,6 +44238,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "IllegalValErr",
           "startToken": {
@@ -44253,6 +44282,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "GeneralErr",
           "startToken": {
@@ -44296,6 +44326,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "ErrorOccurredErr",
           "startToken": {
@@ -44339,6 +44370,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "AccSchedLineErr",
           "startToken": {
@@ -44382,6 +44414,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "ColumnErr",
           "startToken": {
@@ -44425,6 +44458,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "CircularRefErr",
           "startToken": {
@@ -44468,6 +44502,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "AccSchedName",
           "startToken": {
@@ -44511,6 +44546,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "AccScheduleLine",
           "startToken": {
@@ -44554,6 +44590,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": true,
           "name": "TempAccSchedKPIBuffer",
           "startToken": {
@@ -44597,6 +44634,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "AccSchedManagement",
           "startToken": {
@@ -44640,6 +44678,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "StartDate",
           "startToken": {
@@ -44683,6 +44722,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "EndDate",
           "startToken": {
@@ -44726,6 +44766,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "CallLevel",
           "startToken": {
@@ -44769,6 +44810,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "CallingAccSchedLineID",
           "startToken": {
@@ -44812,6 +44854,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "CallingColumnLayoutID",
           "startToken": {
@@ -45249,6 +45292,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "Text000",
           "startToken": {
@@ -45292,6 +45336,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "Text001",
           "startToken": {
@@ -45335,6 +45380,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "PurchOrderHeader",
           "startToken": {
@@ -45378,6 +45424,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "PurchQuoteToOrder",
           "startToken": {
@@ -46449,6 +46496,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "ConfirmManagement",
               "startToken": {
@@ -46492,6 +46540,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "IsHandled",
               "startToken": {
@@ -50981,6 +51030,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "ServLine",
               "startToken": {
@@ -51024,6 +51074,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": true,
               "name": "TempVATAmountLine0",
               "startToken": {
@@ -51067,6 +51118,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": true,
               "name": "TempVATAmountLine1",
               "startToken": {
@@ -53141,6 +53193,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "Text001",
           "startToken": {
@@ -53184,6 +53237,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "ServiceHeader",
           "startToken": {
@@ -53227,6 +53281,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "InvtSetup",
           "startToken": {
@@ -53270,6 +53325,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "WhseServiceRelease",
           "startToken": {
@@ -56733,6 +56789,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "AllObjWithCaption",
               "startToken": {
@@ -56776,6 +56833,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "DataMigrationMgt",
               "startToken": {
@@ -56819,6 +56877,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "DummyCode",
               "startToken": {
@@ -57881,6 +57940,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "CustLedgerEntry",
               "startToken": {
@@ -57924,6 +57984,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "TotalBalance",
               "startToken": {
@@ -58131,6 +58192,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "Text001",
           "startToken": {
@@ -58174,6 +58236,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "CustomerCount",
           "startToken": {
@@ -63857,6 +63920,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "DataExchDef",
               "startToken": {
@@ -64867,6 +64931,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "DataExchDef",
               "startToken": {
@@ -65607,6 +65672,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "DataExchDef",
               "startToken": {
@@ -66042,6 +66108,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "DataExchDef",
               "startToken": {
@@ -66477,6 +66544,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "DataExchDef",
               "startToken": {
@@ -67313,6 +67381,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "DataExchColDef",
               "startToken": {
@@ -68016,6 +68085,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "DataExchLineDef",
               "startToken": {
@@ -68073,6 +68143,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
             "type": "SEMICOLON",
             "value": ";",
           },
+          "isInDataSet": false,
           "isTemporary": false,
           "name": "DeleteFieldMappingQst",
           "startToken": {
@@ -70359,6 +70430,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "DataExchFieldMapping",
               "startToken": {
@@ -70402,6 +70474,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
+              "isInDataSet": false,
               "isTemporary": false,
               "name": "DataExchColumnDef",
               "startToken": {

@@ -748,27 +748,18 @@ export class Parser {
       this.advance();
     }
 
+    // Skip whitespace and newlines
+    while (this.check(TokenType.Whitespace) || this.check(TokenType.NewLine)) {
+      this.advance();
+    }
+
     const variables: VariableDeclaration[] = [];
     const procedures: ProcedureDeclaration[] = [];
     const triggers: TriggerDeclaration[] = [];
 
     // Parse VAR section if present
     if (this.check(TokenType.Var)) {
-      try {
-        this.parseVariableDeclarations(variables);
-      } catch (error) {
-        if (error instanceof ParseError) {
-          this.errors.push(error);
-          // Skip tokens until we find a procedure/function/trigger
-          while (!this.check(TokenType.Procedure) && !this.check(TokenType.Function) &&
-                 !this.check(TokenType.Trigger) && !this.check(TokenType.Begin) &&
-                 !this.isAtEnd()) {
-            this.advance();
-          }
-        } else {
-          throw error;
-        }
-      }
+      this.parseVariableDeclarations(variables);
     }
 
     // Parse procedures and triggers
