@@ -69,6 +69,63 @@ Root/
 ## Bugs and features
 Regression tests should be written (by agents) before solving issues.
 
+## Issue Management Workflow
+
+We use GitHub issues to track all work - bugs, features, improvements, and technical debt.
+
+### When to Create Issues
+
+**Always create an issue when you discover work that falls outside current scope:**
+- Bugs found during other work
+- Feature ideas during implementation
+- Performance optimizations identified
+- Refactoring opportunities noticed
+- Documentation gaps discovered
+- Technical debt accumulation
+
+**Create issues immediately** - don't let valuable context get lost!
+
+### Using the GitHub Issues Agent
+
+**IMPORTANT:** Use the `github-issues` agent (not manual issue creation) to:
+1. **Check for duplicates** - Agent searches existing issues before creating
+2. **Update existing issues** - Adds new context to duplicates instead of creating noise
+3. **Maintain quality** - Ensures consistent formatting, proper labels, code references
+4. **Save context** - Keeps issue management out of main conversation
+
+**Usage pattern:**
+```typescript
+// Discover something out of scope
+Task(subagent_type='general-purpose', prompt=`
+  Create GitHub issue for [problem description].
+  Context: [current work context]
+  Code locations: [relevant files]
+`)
+```
+
+**Agent will:**
+- Search for similar existing issues
+- Either create new issue OR add comment to existing one
+- Return issue link and summary
+- Use proper labels and formatting
+
+### Issue Tracking Philosophy
+
+- **Create early** - Capture ideas when fresh, refine later
+- **Use agents** - Delegate issue management to save main context
+- **Link related work** - Cross-reference issues, PRs, code locations
+- **Keep focused** - One issue per logical unit of work
+
+### Don't Block on Issues
+
+If something's out of scope:
+1. Use agent to create/update issue
+2. Get issue link back
+3. Continue with current work
+4. Address issue in future iteration
+
+This keeps momentum while ensuring nothing gets lost.
+
 ## Test Data & Copyright
 
 ### test/REAL/ - Real NAV Exports ⚠️
@@ -191,6 +248,7 @@ Delegate specialized work to agents (saves main context):
 - `performance-specialist` - Performance optimization (Opus)
 - `test-writer` - Write comprehensive tests (Sonnet)
 - `refactoring-guide` - Strategic refactoring (Opus)
+- `github-issues` - Create/update issues with duplicate detection (Haiku)
 - `general-purpose` - Research, analysis, multi-step tasks (Haiku/Sonnet)
 - `Explore` - Fast codebase exploration (Quick/Medium/Very thorough)
 
@@ -211,6 +269,7 @@ Delegate specialized work to agents (saves main context):
 - ✅ **Research tasks** - Git history, codebase structure, dependencies
 - ✅ **Code reviews** - Separate agents for different aspects
 - ✅ **Running tests** - ALWAYS delegate to test-runner agent
+- ✅ **Creating issues** - Use github-issues agent for duplicate detection
 
 #### Real Example from Recent Session
 **Task:** Fix 54 failing tests across 3 test suites
