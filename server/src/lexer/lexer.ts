@@ -448,6 +448,11 @@ export class Lexer {
       case TokenType.Keys:
       case TokenType.FieldGroups:
       case TokenType.Code:
+      case TokenType.Controls:
+      case TokenType.Actions:
+      case TokenType.DataItems:
+      case TokenType.Elements:
+      case TokenType.RequestForm:
         // Section keywords - prepare for section content
         // The actual SECTION_LEVEL context is pushed when we see the opening brace
         // For now, stay in OBJECT_LEVEL or current context

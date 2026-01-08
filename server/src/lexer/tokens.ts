@@ -29,6 +29,11 @@ export enum TokenType {
   Keys = 'KEYS',
   FieldGroups = 'FIELDGROUPS',
   Code = 'CODE',
+  Controls = 'CONTROLS',
+  Actions = 'ACTIONS',
+  DataItems = 'DATAITEMS',
+  Elements = 'ELEMENTS',
+  RequestForm = 'REQUESTFORM',
 
   // Keywords - Data Types
   Boolean = 'BOOLEAN',
@@ -170,6 +175,11 @@ export const KEYWORDS: Map<string, TokenType> = new Map([
   ['keys', TokenType.Keys],
   ['fieldgroups', TokenType.FieldGroups],
   ['code', TokenType.Code],
+  ['controls', TokenType.Controls],
+  ['actions', TokenType.Actions],
+  ['dataitems', TokenType.DataItems],
+  ['elements', TokenType.Elements],
+  ['requestform', TokenType.RequestForm],
 
   // Data types
   ['boolean', TokenType.Boolean],

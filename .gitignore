@@ -4,6 +4,7 @@ out/
 *.tsbuildinfo
 
 test/REAL/
+validation-report.md
 
 # Auto Claude data directory
 .auto-claude/

@@ -1,0 +1,54 @@
+OBJECT Page 343 Check Credit Limit
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    PageType=ConfirmationDialog;
+    SourceTable=Table18;
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 24      ;1   ;ActionGroup;
+                      CaptionML=[DAN=&Debitor;
+                                 ENU=&Customer];
+                      Image=Customer }
+      { 25      ;2   ;Action    ;
+                      ShortCutKey=Shift+F7;
+                      CaptionML=[DAN=Kort;
+                                 ENU=Card];
+                      RunObject=Page 21;
+                      Image=EditLines }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 2   ;1   ;Field     ;
+                ApplicationArea=#Basic,#Suite;
+                CaptionClass=Text;
+                MultiLine=Yes }
+
+    { 6   ;1   ;Field     ;
+                CaptionML=[DAN=Vis ikke denne meddelelse igen.;
+                           ENU=Do not show this message again.];
+                SourceExpr=HideMessage;
+                Visible=HideMessageVisible }
+  }
+  CODE
+  {
+    VAR
+      HideMessage@1000 : Boolean;
+      HideMessageVisible@1001 : Boolean;
+
+    BEGIN
+    END.
+  }
+}

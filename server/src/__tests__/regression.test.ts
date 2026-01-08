@@ -44,7 +44,7 @@ describe('Regression Suite - Real C/AL Files', () => {
   // Ensure we have fixtures to test
   it('should have regression fixtures available', () => {
     expect(files.length).toBeGreaterThan(0);
-    expect(files.length).toBe(9); // We expect 9 fixture files
+    expect(files.length).toBe(10); // We expect 10 fixture files
   });
 
   /**

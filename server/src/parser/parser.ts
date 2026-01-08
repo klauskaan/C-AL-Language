@@ -155,6 +155,14 @@ export class Parser {
           fieldGroups = this.parseFieldGroupSection();
         } else if (token.type === TokenType.Code) {
           code = this.parseCodeSection();
+        } else if (token.type === TokenType.Controls ||
+                   token.type === TokenType.Actions ||
+                   token.type === TokenType.DataItems ||
+                   token.type === TokenType.Elements ||
+                   token.type === TokenType.RequestForm) {
+          // Skip unsupported sections (CONTROLS, ACTIONS, DATAITEMS, ELEMENTS, REQUESTFORM)
+          // These sections have complex nested structures that aren't fully parsed yet
+          this.skipUnsupportedSection(token.type);
         } else {
           break;
         }
@@ -302,11 +310,36 @@ export class Parser {
     }
 
     // Regular property value - read until semicolon, preserving whitespace
+    // Special handling: ActionList/DataItemTable properties can have nested ACTIONS/DATAITEMS blocks
     let value = '';
     let lastToken: Token | null = null;
+    let braceDepth = 0;
 
-    while (!this.check(TokenType.Semicolon) && !this.isAtEnd()) {
+    while (!this.isAtEnd()) {
+      // Stop at semicolon, but only if not inside curly braces
+      if (this.check(TokenType.Semicolon) && braceDepth === 0) {
+        break;
+      }
+
+      // Stop if we encounter a section keyword (ACTIONS, CONTROLS, DATAITEMS, etc) at depth 0
+      // UNLESS this is the first token (meaning it's a property like ActionList=ACTIONS { ... })
+      if (braceDepth === 0 && value.length > 0 &&
+          (this.check(TokenType.Actions) ||
+           this.check(TokenType.Controls) ||
+           this.check(TokenType.DataItems) ||
+           this.check(TokenType.Elements) ||
+           this.check(TokenType.RequestForm))) {
+        break;
+      }
+
       const currentToken = this.advance();
+
+      // Track brace depth to handle nested structures like ActionList=ACTIONS { ... }
+      if (currentToken.type === TokenType.LeftBrace) {
+        braceDepth++;
+      } else if (currentToken.type === TokenType.RightBrace) {
+        braceDepth--;
+      }
 
       // If there's a gap between tokens, add a space
       if (lastToken !== null && currentToken.startOffset > lastToken.endOffset) {
@@ -2224,6 +2257,41 @@ export class Parser {
     while (this.checkAndReportALOnlyToken()) {
       // Keep consuming AL-only tokens until we find a valid C/AL token
     }
+  }
+
+  /**
+   * Skip an unsupported section (CONTROLS, ACTIONS, DATAITEMS, ELEMENTS, REQUESTFORM).
+   * These sections have complex nested structures with @ numbering that aren't fully parsed yet.
+   * This method consumes the section keyword and its entire content block.
+   */
+  private skipUnsupportedSection(sectionType: TokenType): void {
+    // Consume the section keyword (CONTROLS, ACTIONS, etc.)
+    this.advance();
+
+    // Consume the opening brace
+    if (!this.check(TokenType.LeftBrace)) {
+      return; // No content block, nothing to skip
+    }
+    this.advance();
+
+    // Skip everything until we find the matching closing brace
+    // Track brace depth to handle nested structures
+    let braceDepth = 1;
+
+    while (!this.isAtEnd() && braceDepth > 0) {
+      const token = this.peek();
+
+      if (token.type === TokenType.LeftBrace) {
+        braceDepth++;
+      } else if (token.type === TokenType.RightBrace) {
+        braceDepth--;
+      }
+
+      this.advance();
+    }
+
+    // Note: We don't record an error here because these sections are intentionally skipped
+    // Full parsing support for these sections would be a future enhancement
   }
 
   /**
