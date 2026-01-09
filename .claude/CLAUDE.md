@@ -93,16 +93,6 @@ Detective investigation adds ~15K tokens upfront. Skip for simple cases:
 
 ---
 
-## Detailed Workflow Documentation
-
-For detailed workflows, see:
-- [Bug Fixing Workflow](workflows/bug-fixing.md) - Detective-first approach
-- [Code Review Process](workflows/code-review.md) - Three-agent review pattern
-- [Agent Coordination](workflows/agent-coordination.md) - How agents work together
-- [Issue Management](workflows/issue-management.md) - Proactive issue tracking
-
----
-
 ## Available Agents (Specialized Assistants)
 
 ### Core Agents (Use Constantly)
@@ -210,9 +200,8 @@ Root/
 │   ├── fixtures/          # Synthetic test files (for commits)
 │   └── REAL/              # ⚠️ CONFIDENTIAL - Real NAV exports (see below)
 └── .claude/
-    ├── skills/            # Domain knowledge (8 skills)
-    ├── agents/            # Specialized assistants
-    └── workflows/         # Detailed workflow documentation
+    ├── skills/            # Domain knowledge (9 skills)
+    └── agents/            # Specialized assistants
 ```
 
 ### Bugs and Features
@@ -307,15 +296,43 @@ See [Highlighting Test Modes](docs/highlighting-test-modes.md) for full guide.
 
 ---
 
+## Mandatory Skill Checks
+
+**BEFORE starting these tasks, invoke the corresponding skill:**
+
+| Task | Skill to Invoke | Why |
+|------|-----------------|-----|
+| Adding new syntax/keyword | `/cal-al-boundaries` | Verify it's not AL-only |
+| Modifying parser/lexer | `/cal-syntax` | Get accurate syntax rules |
+| Non-trivial bug fix or feature | `/agent-workflows` | Get correct workflow pattern |
+| Working with C/AL text exports | `/cal-object-format` | Understand context-dependent syntax |
+| Writing/modifying tests | `/cal-testing-guide` | Follow testing patterns |
+
+**Example:**
+```
+User: "Add support for ENUM keyword"
+Claude: [Invokes /cal-al-boundaries]
+        → Skill shows ENUM is AL-only (BC 15+)
+        → Decline with explanation
+```
+
+---
+
 ## Available Skills (Domain Knowledge)
 
 Use `/` commands to access specialized knowledge:
 
-- `cal-basics` - Project structure, C/AL vs AL distinction
+### Workflow Skills (Invoke Proactively)
+- `agent-workflows` - Bug investigation, implementation patterns, code review, issue management
+
+### C/AL Language Skills (Invoke Before Language Changes)
 - `cal-syntax` - Keywords, operators, data types, @ numbering
 - `cal-al-boundaries` - What NOT to add (AL-only features)
-- `cal-extension-dev` - Architecture, testing, development guidelines
 - `cal-object-format` - C/AL text export format, curly brace context
+
+### Development Skills (Reference as Needed)
+- `cal-basics` - Project structure, C/AL vs AL distinction
+- `cal-extension-dev` - Architecture, testing, development guidelines
 - `cal-testing-guide` - Jest testing, snapshots, performance tests
 - `cal-parser-development` - Lexer, parser, visitor pattern, AST
 - `cal-provider-development` - LSP providers, symbol table, semantic tokens
