@@ -178,18 +178,30 @@ export interface CodeSection extends ASTNode {
 }
 
 /**
+ * Variable modifiers that can appear after data type declarations.
+ * Order in real NAV exports: INDATASET → WITHEVENTS → RUNONCLIENT → SECURITYFILTERING
+ * Note: TEMPORARY appears before the data type, not after.
+ */
+export interface VariableModifiers {
+  /** TEMPORARY modifier - variable is stored in memory only */
+  isTemporary?: boolean;
+  /** INDATASET modifier - for page variables bound to dataset fields (variables only, not parameters) */
+  isInDataSet?: boolean;
+  /** WITHEVENTS modifier - for Automation/DotNet variables with event handlers */
+  withEvents?: boolean;
+  /** RUNONCLIENT modifier - for DotNet variables that execute on client */
+  runOnClient?: boolean;
+  /** SECURITYFILTERING(value) modifier - for Record/Query variables (Filtered|Ignored|Validated|Disallowed) */
+  securityFiltering?: string;
+}
+
+/**
  * Variable declaration
  */
-export interface VariableDeclaration extends ASTNode {
+export interface VariableDeclaration extends ASTNode, VariableModifiers {
   type: 'VariableDeclaration';
   name: string;
   dataType: DataType;
-  isTemporary?: boolean;
-  isInDataSet?: boolean;
-  runOnClient?: boolean;
-  withEvents?: boolean;
-  /** SECURITYFILTERING modifier value (Filtered, Ignored, Validated, Disallowed) for Record/Query variables */
-  securityFiltering?: string;
 }
 
 /**
@@ -205,12 +217,26 @@ export interface ProcedureDeclaration extends ASTNode {
   body: Statement[];
 }
 
-export interface ParameterDeclaration extends ASTNode {
+/**
+ * Parameter modifiers - subset of VariableModifiers.
+ * Note: INDATASET is NOT valid on parameters (only on page variables).
+ */
+export interface ParameterModifiers {
+  /** TEMPORARY modifier - parameter is stored in memory only */
+  isTemporary?: boolean;
+  /** WITHEVENTS modifier - for Automation/DotNet parameters with event handlers */
+  withEvents?: boolean;
+  /** RUNONCLIENT modifier - for DotNet parameters that execute on client */
+  runOnClient?: boolean;
+  /** SECURITYFILTERING(value) modifier - for Record/Query parameters */
+  securityFiltering?: string;
+}
+
+export interface ParameterDeclaration extends ASTNode, ParameterModifiers {
   type: 'ParameterDeclaration';
   name: string;
   dataType: DataType;
   isVar: boolean;  // VAR parameter (pass by reference)
-  isTemporary?: boolean;  // TEMPORARY parameter modifier
 }
 
 /**

@@ -14,6 +14,7 @@ import {
   FieldGroup,
   CodeSection,
   VariableDeclaration,
+  VariableModifiers,
   ProcedureDeclaration,
   ParameterDeclaration,
   TriggerDeclaration,
@@ -1031,57 +1032,72 @@ export class Parser {
           isTemporary = true;
         }
 
-        // Check for INDATASET modifier (specific to page variables)
-        let isInDataSet: boolean | undefined;
-        if (this.check(TokenType.InDataSet)) {
-          isInDataSet = true;
-          this.advance();
-        }
-
-        // Check for RUNONCLIENT modifier (for DotNet variables)
-        let runOnClient: boolean | undefined;
-        if (this.check(TokenType.RunOnClient)) {
-          runOnClient = true;
-          this.advance();
-        }
-
-        // Check for WITHEVENTS modifier (for Automation variables)
-        let withEvents: boolean | undefined;
-        if (this.check(TokenType.WithEvents)) {
-          withEvents = true;
-          this.advance();
-        }
-
-        // Check for SECURITYFILTERING modifier (NAV 2013 R2+) for Record/Query variables
-        // Syntax: SECURITYFILTERING(Filtered|Ignored|Validated|Disallowed)
-        let securityFiltering: string | undefined;
-        if (this.check(TokenType.SecurityFiltering)) {
-          this.advance();
-          this.consume(TokenType.LeftParen, 'Expected ( after SECURITYFILTERING');
-          // The value is an identifier (Filtered, Ignored, Validated, Disallowed)
-          const valueToken = this.consume(TokenType.Identifier, 'Expected security filtering value');
-          securityFiltering = valueToken.value;
-          this.consume(TokenType.RightParen, 'Expected ) after security filtering value');
-        }
+        // Parse post-type modifiers (INDATASET, WITHEVENTS, RUNONCLIENT, SECURITYFILTERING)
+        const modifiers = this.parsePostTypeModifiers(true); // true = include INDATASET for variables
 
         this.consume(TokenType.Semicolon, 'Expected ;');
 
-        variables.push({
+        const variable: VariableDeclaration = {
           type: 'VariableDeclaration',
           name: nameToken.value,
           dataType,
-          isTemporary,
-          isInDataSet,
-          runOnClient,
-          withEvents,
-          securityFiltering,
           startToken,
           endToken: this.previous()
-        });
+        };
+
+        // Only assign modifiers that are set (avoid undefined properties)
+        if (isTemporary) variable.isTemporary = isTemporary;
+        if (modifiers.isInDataSet) variable.isInDataSet = modifiers.isInDataSet;
+        if (modifiers.withEvents) variable.withEvents = modifiers.withEvents;
+        if (modifiers.runOnClient) variable.runOnClient = modifiers.runOnClient;
+        if (modifiers.securityFiltering) variable.securityFiltering = modifiers.securityFiltering;
+
+        variables.push(variable);
       } else {
         break;
       }
     }
+  }
+
+  /**
+   * Parse post-type variable modifiers in canonical order.
+   * Order: INDATASET → WITHEVENTS → RUNONCLIENT → SECURITYFILTERING
+   * Note: NAV always exports WITHEVENTS before RUNONCLIENT when both are present.
+   * @param includeInDataSet - Whether to parse INDATASET (only valid for variables, not parameters)
+   */
+  private parsePostTypeModifiers(includeInDataSet: boolean): VariableModifiers {
+    const modifiers: VariableModifiers = {};
+
+    // INDATASET modifier (only for page variables, not parameters)
+    if (includeInDataSet && this.check(TokenType.InDataSet)) {
+      modifiers.isInDataSet = true;
+      this.advance();
+    }
+
+    // WITHEVENTS and RUNONCLIENT modifiers (for Automation/DotNet variables)
+    // Real NAV exports WITHEVENTS before RUNONCLIENT, but we accept both orders
+    // for lenient parsing (semantic validation is C/SIDE's responsibility)
+    for (let i = 0; i < 2; i++) {
+      if (this.check(TokenType.WithEvents) && !modifiers.withEvents) {
+        modifiers.withEvents = true;
+        this.advance();
+      } else if (this.check(TokenType.RunOnClient) && !modifiers.runOnClient) {
+        modifiers.runOnClient = true;
+        this.advance();
+      }
+    }
+
+    // SECURITYFILTERING modifier (NAV 2013 R2+) for Record/Query variables
+    // Syntax: SECURITYFILTERING(Filtered|Ignored|Validated|Disallowed)
+    if (this.check(TokenType.SecurityFiltering)) {
+      this.advance();
+      this.consume(TokenType.LeftParen, 'Expected ( after SECURITYFILTERING');
+      const valueToken = this.consume(TokenType.Identifier, 'Expected security filtering value');
+      modifiers.securityFiltering = valueToken.value;
+      this.consume(TokenType.RightParen, 'Expected ) after security filtering value');
+    }
+
+    return modifiers;
   }
 
   private parseProcedure(isLocal: boolean = false): ProcedureDeclaration {
@@ -1187,6 +1203,10 @@ export class Parser {
           }
         }
 
+        // Parse post-type modifiers (WITHEVENTS, RUNONCLIENT, SECURITYFILTERING)
+        // Note: INDATASET is NOT valid on parameters (only on page variables)
+        const modifiers = this.parsePostTypeModifiers(false); // false = exclude INDATASET for parameters
+
         const param: ParameterDeclaration = {
           type: 'ParameterDeclaration',
           name: paramName,
@@ -1196,9 +1216,11 @@ export class Parser {
           endToken: this.previous()
         };
 
-        if (isTemporary) {
-          param.isTemporary = isTemporary;
-        }
+        // Only assign modifiers that are set (avoid undefined properties)
+        if (isTemporary) param.isTemporary = isTemporary;
+        if (modifiers.withEvents) param.withEvents = modifiers.withEvents;
+        if (modifiers.runOnClient) param.runOnClient = modifiers.runOnClient;
+        if (modifiers.securityFiltering) param.securityFiltering = modifiers.securityFiltering;
 
         parameters.push(param);
       }

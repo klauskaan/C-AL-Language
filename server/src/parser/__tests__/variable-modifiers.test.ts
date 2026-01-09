@@ -95,8 +95,12 @@ describe('Parser - Variable Modifiers', () => {
       const parser = new Parser(lexer.tokenize());
       const ast = parser.parse();
 
-      // Parameters don't support modifiers in the same way, but shouldn't crash
+      expect(parser.getErrors()).toHaveLength(0);
       expect(ast.object).toBeDefined();
+
+      const proc = ast.object!.code!.procedures[0];
+      expect(proc.parameters).toHaveLength(1);
+      expect(proc.parameters[0].runOnClient).toBe(true);
     });
   });
 
@@ -592,6 +596,198 @@ describe('Parser - Variable Modifiers', () => {
       expect(variable.runOnClient).toBe(true);
       expect(variable.withEvents).toBeUndefined();
       expect(variable.isInDataSet).toBeUndefined();
+    });
+  });
+
+  describe('Parameter modifiers', () => {
+    it('should parse VAR parameter with RUNONCLIENT', () => {
+      // Pattern from COD3021.TXT line 38
+      const code = `OBJECT Codeunit 3021 Test {
+        CODE {
+          PROCEDURE GetAppSource@1(VAR DotNetAppSource2@1000 : DotNet "'Microsoft.Dynamics.Nav.ClientExtensions'.AppSource" RUNONCLIENT);
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const proc = ast.object!.code!.procedures[0];
+      expect(proc.parameters[0].isVar).toBe(true);
+      expect(proc.parameters[0].runOnClient).toBe(true);
+    });
+
+    it('should parse non-VAR parameter with RUNONCLIENT', () => {
+      // Pattern from COD3021.TXT line 43
+      const code = `OBJECT Codeunit 3021 Test {
+        CODE {
+          PROCEDURE SetAppSource@5(DotNetAppSource2@1000 : DotNet "'Microsoft.Dynamics.Nav.ClientExtensions'.AppSource" RUNONCLIENT);
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const proc = ast.object!.code!.procedures[0];
+      expect(proc.parameters[0].isVar).toBe(false);
+      expect(proc.parameters[0].runOnClient).toBe(true);
+    });
+
+    it('should parse parameter with WITHEVENTS RUNONCLIENT combined', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE TestProc@1(MyParam@1000 : DotNet "'Test'.TestClass" WITHEVENTS RUNONCLIENT);
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const proc = ast.object!.code!.procedures[0];
+      expect(proc.parameters[0].withEvents).toBe(true);
+      expect(proc.parameters[0].runOnClient).toBe(true);
+    });
+
+    it('should parse multiple parameters with different modifiers', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE TestProc@1(Param1@1000 : DotNet "'Test'.Class1" RUNONCLIENT;Param2@1001 : Integer;Param3@1002 : DotNet "'Test'.Class2" WITHEVENTS);
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const proc = ast.object!.code!.procedures[0];
+      expect(proc.parameters).toHaveLength(3);
+      expect(proc.parameters[0].runOnClient).toBe(true);
+      expect(proc.parameters[0].withEvents).toBeUndefined();
+      expect(proc.parameters[1].runOnClient).toBeUndefined();
+      expect(proc.parameters[2].withEvents).toBe(true);
+    });
+
+    it('should parse parameter with SECURITYFILTERING', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE TestProc@1(VAR Cust@1000 : Record 18 SECURITYFILTERING(Filtered));
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const proc = ast.object!.code!.procedures[0];
+      expect(proc.parameters[0].securityFiltering).toBe('Filtered');
+    });
+
+    it('should parse parameter without modifiers', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE TestProc@1(MyParam@1000 : DotNet "'Test'.TestClass");
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const proc = ast.object!.code!.procedures[0];
+      expect(proc.parameters[0].runOnClient).toBeUndefined();
+      expect(proc.parameters[0].withEvents).toBeUndefined();
+    });
+  });
+
+  describe('WITHEVENTS RUNONCLIENT combined (variable order)', () => {
+    it('should parse WITHEVENTS followed by RUNONCLIENT on variable', () => {
+      // Pattern from PAG1306.TXT, PAG1310.TXT - real-world order is always WITHEVENTS RUNONCLIENT
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            UserTours@1019 : DotNet "'Microsoft.Dynamics.Nav.ClientExtensions'.UserTours" WITHEVENTS RUNONCLIENT;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.withEvents).toBe(true);
+      expect(variable.runOnClient).toBe(true);
+    });
+
+    it('should handle CameraProvider pattern from real NAV files', () => {
+      // Pattern from PAG1310.TXT line 541
+      const code = `OBJECT Page 1310 Test {
+        CODE {
+          VAR
+            CameraProvider@1007 : DotNet "'Microsoft.Dynamics.Nav.ClientExtensions, Version=14.0.0.0'.CameraProvider" WITHEVENTS RUNONCLIENT;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.name).toBe('CameraProvider');
+      expect(variable.withEvents).toBe(true);
+      expect(variable.runOnClient).toBe(true);
+    });
+
+    it('should accept reversed order RUNONCLIENT WITHEVENTS (lenient parsing)', () => {
+      // Parser is lenient and accepts both orders, though NAV only exports WITHEVENTS RUNONCLIENT.
+      // This tests that the parser doesn't crash or reject reversed order.
+      // Semantic validation (if needed) is C/SIDE's responsibility.
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            MyVar@1 : DotNet "'Test'.TestClass" RUNONCLIENT WITHEVENTS;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Parser accepts both modifiers regardless of order
+      expect(parser.getErrors()).toHaveLength(0);
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.runOnClient).toBe(true);
+      expect(variable.withEvents).toBe(true);
+    });
+
+    it('should accept reversed order on parameters (lenient parsing)', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE TestProc@1(MyParam@1000 : DotNet "'Test'.TestClass" RUNONCLIENT WITHEVENTS);
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const proc = ast.object!.code!.procedures[0];
+      expect(proc.parameters[0].runOnClient).toBe(true);
+      expect(proc.parameters[0].withEvents).toBe(true);
     });
   });
 });

@@ -113,7 +113,9 @@ CustomerSalesYTD."SECURITYFILTERING"(SECURITYFILTER::Filtered);
 
 ### Other Variable Modifiers
 
-Modifier order after data type: `TEMPORARY` → `INDATASET` → `RUNONCLIENT` → `WITHEVENTS` → `SECURITYFILTERING`
+Modifier order after data type: `TEMPORARY` → `INDATASET` → `WITHEVENTS` → `RUNONCLIENT` → `SECURITYFILTERING`
+
+**Note:** When both WITHEVENTS and RUNONCLIENT are present, NAV always exports them as `WITHEVENTS RUNONCLIENT` (31 occurrences found in real NAV exports, 0 in reversed order).
 
 ```cal
 VAR

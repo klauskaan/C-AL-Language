@@ -2993,11 +2993,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "LastDataLineNo",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 1905,
@@ -3007,7 +3003,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "LastDataLineNo",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -11580,11 +11575,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "GLAcc",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 3521,
@@ -11594,7 +11585,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "GLAcc",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -11628,11 +11618,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "CostType",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 3555,
@@ -11642,7 +11628,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "CostType",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -11676,11 +11661,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "CFAccount",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 3592,
@@ -11690,7 +11671,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "CFAccount",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -11724,11 +11704,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "IsExpression",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 3631,
@@ -11738,7 +11714,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "IsExpression",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -26682,11 +26657,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "AnalysisViewEntry",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 7816,
@@ -26696,7 +26667,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "AnalysisViewEntry",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -26730,11 +26700,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "GLEntryDimensions",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 7860,
@@ -26744,7 +26710,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "GLEntryDimensions",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -26778,11 +26743,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "GLBudgetEntryDimensions",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 7909,
@@ -26792,7 +26753,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "GLBudgetEntryDimensions",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -26826,11 +26786,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "AnalysisViewEntryDimensions",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 7962,
@@ -26840,7 +26796,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "AnalysisViewEntryDimensions",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -26874,11 +26829,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "AnalysisViewBudgEntryDims",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 8013,
@@ -26888,7 +26839,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "AnalysisViewBudgEntryDims",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -26922,11 +26872,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "Filter",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 8045,
@@ -26936,7 +26882,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "Filter",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -26970,11 +26915,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "AmountType",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 8076,
@@ -26984,7 +26925,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "AmountType",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -27018,11 +26958,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "AmountToAdd",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 8143,
@@ -27032,7 +26968,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "AmountToAdd",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -35367,11 +35302,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "CostEntry",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 16804,
@@ -35381,7 +35312,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "CostEntry",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -35415,11 +35345,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "CostBudgetEntry",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 16847,
@@ -35429,7 +35355,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "CostBudgetEntry",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -35463,11 +35388,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "AmountType",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 16885,
@@ -35477,7 +35398,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "AmountType",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -35511,11 +35431,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "TestBalance",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 16952,
@@ -35525,7 +35441,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "TestBalance",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -35559,11 +35474,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "Balance",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 16983,
@@ -35573,7 +35484,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "Balance",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -35607,11 +35517,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "AmountToAdd",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 17018,
@@ -35621,7 +35527,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "AmountToAdd",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -40641,11 +40546,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "AnalysisViewEntry",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 21460,
@@ -40655,7 +40556,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "AnalysisViewEntry",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -40689,11 +40589,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "CFForecastEntryDimensions",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 21512,
@@ -40703,7 +40599,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "CFForecastEntryDimensions",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -40737,11 +40632,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "AnalysisViewEntryDimensions",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 21565,
@@ -40751,7 +40642,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "AnalysisViewEntryDimensions",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -40785,11 +40675,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "Filter",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 21597,
@@ -40799,7 +40685,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "Filter",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -40833,11 +40718,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "AmountType",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 21628,
@@ -40847,7 +40728,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "AmountType",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -40881,11 +40761,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "AmountToAdd",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 21695,
@@ -40895,7 +40771,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "AmountToAdd",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -41877,11 +41752,8 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
               "isTemporary": true,
               "name": "TempAccSchedKPIBufferDim",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 24628,
@@ -41891,7 +41763,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "TempAccSchedKPIBufferDim",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -41925,11 +41796,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "SrcAccSchedLineFilter",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 24686,
@@ -41939,7 +41806,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "SrcAccSchedLineFilter",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -41973,11 +41839,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "Value",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 24712,
@@ -41987,7 +41849,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "value": "Value",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -43528,11 +43389,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "IllegalValErr",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 267,
@@ -43542,7 +43399,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "value": "IllegalValErr",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -43576,11 +43432,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "GeneralErr",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 446,
@@ -43590,7 +43442,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "value": "GeneralErr",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -43624,11 +43475,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "ErrorOccurredErr",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 541,
@@ -43638,7 +43485,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "value": "ErrorOccurredErr",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -43672,11 +43518,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "AccSchedLineErr",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 700,
@@ -43686,7 +43528,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "value": "AccSchedLineErr",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -43720,11 +43561,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "ColumnErr",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 918,
@@ -43734,7 +43571,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "value": "ColumnErr",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -43768,11 +43604,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "CircularRefErr",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1151,
@@ -43782,7 +43614,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "value": "CircularRefErr",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -43816,11 +43647,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "AccSchedName",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1343,
@@ -43830,7 +43657,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "value": "AccSchedName",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -43864,11 +43690,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "AccScheduleLine",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1384,
@@ -43878,7 +43700,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "value": "AccScheduleLine",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -43912,11 +43733,8 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
           "isTemporary": true,
           "name": "TempAccSchedKPIBuffer",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1431,
@@ -43926,7 +43744,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "value": "TempAccSchedKPIBuffer",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -43960,11 +43777,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "AccSchedManagement",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1486,
@@ -43974,7 +43787,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "value": "AccSchedManagement",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -44008,11 +43820,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "StartDate",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1522,
@@ -44022,7 +43830,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "value": "StartDate",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -44056,11 +43863,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "EndDate",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1550,
@@ -44070,7 +43873,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "value": "EndDate",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -44104,11 +43906,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "CallLevel",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1580,
@@ -44118,7 +43916,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "value": "CallLevel",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -44152,11 +43949,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "CallingAccSchedLineID",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1625,
@@ -44166,7 +43959,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "value": "CallingAccSchedLineID",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -44200,11 +43992,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "CallingColumnLayoutID",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1670,
@@ -44214,7 +44002,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
             "value": "CallingColumnLayoutID",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
       ],
     },
@@ -44621,11 +44408,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "Text000",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 845,
@@ -44635,7 +44418,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
             "value": "Text000",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -44669,11 +44451,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "Text001",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 974,
@@ -44683,7 +44461,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
             "value": "Text001",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -44717,11 +44494,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "PurchOrderHeader",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1119,
@@ -44731,7 +44504,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
             "value": "PurchOrderHeader",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -44765,11 +44537,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "PurchQuoteToOrder",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1162,
@@ -44779,7 +44547,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
             "value": "PurchQuoteToOrder",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
       ],
     },
@@ -45841,11 +45608,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "ConfirmManagement",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 13,
                 "endOffset": 235,
@@ -45855,7 +45618,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
                 "value": "ConfirmManagement",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -45889,11 +45651,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "IsHandled",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 13,
                 "endOffset": 278,
@@ -45903,7 +45661,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
                 "value": "IsHandled",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
           "type": "Property",
@@ -50242,11 +49999,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "ServLine",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 704,
@@ -50256,7 +50009,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "value": "ServLine",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -50290,11 +50042,8 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
               "isTemporary": true,
               "name": "TempVATAmountLine0",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 750,
@@ -50304,7 +50053,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "value": "TempVATAmountLine0",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -50338,11 +50086,8 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
               "isTemporary": true,
               "name": "TempVATAmountLine1",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 805,
@@ -50352,7 +50097,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "value": "TempVATAmountLine1",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -52129,11 +51873,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "Text001",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 355,
@@ -52143,7 +51883,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
             "value": "Text001",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -52177,11 +51916,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "ServiceHeader",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 541,
@@ -52191,7 +51926,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
             "value": "ServiceHeader",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -52225,11 +51959,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "InvtSetup",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 578,
@@ -52239,7 +51969,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
             "value": "InvtSetup",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -52273,11 +52002,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "WhseServiceRelease",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 623,
@@ -52287,7 +52012,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
             "value": "WhseServiceRelease",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
       ],
     },
@@ -52680,11 +52404,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-343-check-credit-limit
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "HideMessage",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1300,
@@ -52694,7 +52414,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-343-check-credit-limit
             "value": "HideMessage",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -52728,11 +52447,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-343-check-credit-limit
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "HideMessageVisible",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1342,
@@ -52742,7 +52457,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-343-check-credit-limit
             "value": "HideMessageVisible",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
       ],
     },
@@ -53289,11 +53003,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "DataExchLineDef",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 5331,
@@ -53303,7 +53013,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
                 "value": "DataExchLineDef",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -53337,11 +53046,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "GetFileStructure",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 5374,
@@ -53351,7 +53056,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
                 "value": "GetFileStructure",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -53399,11 +53103,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "DataFormatRequired",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 5194,
@@ -53413,7 +53113,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
             "value": "DataFormatRequired",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -53447,11 +53146,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "DataFormattingCultureRequired",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 5246,
@@ -53461,7 +53156,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
             "value": "DataFormattingCultureRequired",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
       ],
     },
@@ -54421,11 +54115,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "DataMigrationError",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 10237,
@@ -54435,7 +54125,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                 "value": "DataMigrationError",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -54635,11 +54324,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "DataMigrationFacade",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9350,
@@ -54649,7 +54334,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "value": "DataMigrationFacade",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -54683,11 +54367,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "RefreshNotification",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9398,
@@ -54697,7 +54377,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "value": "RefreshNotification",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -54732,10 +54411,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "value": ";",
           },
           "isInDataSet": true,
-          "isTemporary": undefined,
           "name": "StatusStyle",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9437,
@@ -54745,7 +54421,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "value": "StatusStyle",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -54780,10 +54455,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "value": ";",
           },
           "isInDataSet": true,
-          "isTemporary": undefined,
           "name": "TableNameToMigrate",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9485,
@@ -54793,7 +54465,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "value": "TableNameToMigrate",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -54827,11 +54498,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "DashboardEmptyNotificationMsg",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9549,
@@ -54841,7 +54508,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "value": "DashboardEmptyNotificationMsg",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -54875,11 +54541,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "StartDataMigrationMsg",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9697,
@@ -54889,7 +54551,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "value": "StartDataMigrationMsg",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -54923,11 +54584,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "RefreshNotificationMsg",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9771,
@@ -54937,7 +54594,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "value": "RefreshNotificationMsg",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -54971,11 +54627,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "RefreshNotificationShown",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9906,
@@ -54985,7 +54637,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "value": "RefreshNotificationShown",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -55019,11 +54670,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "LearnMoreTxt",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9941,
@@ -55033,7 +54680,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "value": "LearnMoreTxt",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -55067,11 +54713,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "NextTask",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9991,
@@ -55081,7 +54723,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "value": "NextTask",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -55115,11 +54756,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "ErrorStyle",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 10076,
@@ -55129,7 +54766,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             "value": "ErrorStyle",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
       ],
     },
@@ -57940,11 +57576,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "AllObjWithCaption",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 24,
                 "endOffset": 497,
@@ -57954,7 +57586,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                 "value": "AllObjWithCaption",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -57988,11 +57619,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "DataMigrationMgt",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 24,
                 "endOffset": 563,
@@ -58002,7 +57629,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                 "value": "DataMigrationMgt",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -58036,11 +57662,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "DummyCode",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 24,
                 "endOffset": 618,
@@ -58050,7 +57672,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                 "value": "DummyCode",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
           "type": "Property",
@@ -59083,11 +58704,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "CustLedgerEntry",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 958,
@@ -59097,7 +58714,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
                 "value": "CustLedgerEntry",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -59131,11 +58747,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "TotalBalance",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 996,
@@ -59145,7 +58757,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
                 "value": "TotalBalance",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -59322,11 +58933,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "Text001",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 788,
@@ -59336,7 +58943,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
             "value": "Text001",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
         {
           "dataType": {
@@ -59370,11 +58976,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "CustomerCount",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 867,
@@ -59384,7 +58986,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
             "value": "CustomerCount",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
       ],
     },
@@ -64982,11 +64583,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "DataExchDef",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 4927,
@@ -64996,7 +64593,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "value": "DataExchDef",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -65977,11 +65573,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "DataExchDef",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 5446,
@@ -65991,7 +65583,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "value": "DataExchDef",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -66702,11 +66293,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "DataExchDef",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 5946,
@@ -66716,7 +66303,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "value": "DataExchDef",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -67122,11 +66708,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "DataExchDef",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 6266,
@@ -67136,7 +66718,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "value": "DataExchDef",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -67542,11 +67123,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "DataExchDef",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 6489,
@@ -67556,7 +67133,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "value": "DataExchDef",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -68362,11 +67938,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "DataExchColDef",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 6761,
@@ -68376,7 +67948,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "value": "DataExchColDef",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -69050,11 +68621,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "DataExchLineDef",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 7201,
@@ -69064,7 +68631,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "value": "DataExchLineDef",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
         },
@@ -69112,11 +68678,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
             "type": "SEMICOLON",
             "value": ";",
           },
-          "isInDataSet": undefined,
-          "isTemporary": undefined,
           "name": "DeleteFieldMappingQst",
-          "runOnClient": undefined,
-          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 2515,
@@ -69126,7 +68688,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
             "value": "DeleteFieldMappingQst",
           },
           "type": "VariableDeclaration",
-          "withEvents": undefined,
         },
       ],
     },
@@ -71420,11 +70981,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "DataExchFieldMapping",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 16,
                 "endOffset": 312,
@@ -71434,7 +70991,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "value": "DataExchFieldMapping",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
             {
               "dataType": {
@@ -71468,11 +71024,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "isInDataSet": undefined,
-              "isTemporary": undefined,
               "name": "DataExchColumnDef",
-              "runOnClient": undefined,
-              "securityFiltering": undefined,
               "startToken": {
                 "column": 16,
                 "endOffset": 365,
@@ -71482,7 +71034,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "value": "DataExchColumnDef",
               },
               "type": "VariableDeclaration",
-              "withEvents": undefined,
             },
           ],
           "type": "Property",
