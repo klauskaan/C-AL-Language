@@ -329,9 +329,11 @@ export class Lexer {
         return;
       }
     } else if (!isDecimal && this.currentChar() === 'T') {
-      // Time literal: HHMMSS[ms]T (at least 6 digits)
+      // Time literal: HHMMSS[ms]T (at least 6 digits) or 0T (undefined time)
       const valueLength = value.length;
-      if (valueLength >= Lexer.MIN_TIME_DIGITS) {
+      const isValidTimeLength = valueLength >= Lexer.MIN_TIME_DIGITS ||
+                                valueLength === Lexer.UNDEFINED_DATE_DIGITS; // 0T is valid
+      if (isValidTimeLength) {
         value += this.currentChar();
         this.advance();
         this.addToken(TokenType.Time, value, startPos, this.position, startLine, startColumn);

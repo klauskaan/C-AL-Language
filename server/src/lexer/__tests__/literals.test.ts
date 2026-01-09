@@ -148,6 +148,31 @@ describe('Lexer - Date/Time/DateTime Literals', () => {
       expect(tokens[0].value).toBe('000000T');
     });
 
+    it('should tokenize undefined time (0T)', () => {
+      const code = '0T';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens).toHaveLength(2); // Time literal + EOF
+      expect(tokens[0].type).toBe(TokenType.Time);
+      expect(tokens[0].value).toBe('0T');
+    });
+
+    it('should tokenize 0T in IF statement', () => {
+      const code = 'IF "Starting Time" <> 0T THEN';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // IF, quoted identifier, <>, 0T, THEN, EOF
+      expect(tokens[0].type).toBe(TokenType.If);
+      expect(tokens[1].type).toBe(TokenType.QuotedIdentifier);
+      expect(tokens[1].value).toBe('Starting Time');
+      expect(tokens[2].type).toBe(TokenType.NotEqual);
+      expect(tokens[3].type).toBe(TokenType.Time);
+      expect(tokens[3].value).toBe('0T');
+      expect(tokens[4].type).toBe(TokenType.Then);
+    });
+
     it('should NOT tokenize 5-digit number + T as time', () => {
       const code = '12345T';
       const lexer = new Lexer(code);
