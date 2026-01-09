@@ -357,29 +357,21 @@ export class Lexer {
 
     // Special case: Check for OBJECT-PROPERTIES compound keyword
     if (value.toUpperCase() === 'OBJECT' && this.currentChar() === '-') {
-      const savedPos = this.position;
-      const savedLine = this.line;
-      const savedColumn = this.column;
-
-      this.advance(); // skip '-'
-
-      // Check if PROPERTIES follows
-      let nextWord = '';
-      while (this.isIdentifierPart(this.currentChar())) {
-        nextWord += this.currentChar();
-        this.advance();
-      }
-
-      if (nextWord.toUpperCase() === 'PROPERTIES') {
-        // Found OBJECT-PROPERTIES, emit as single token
-        this.addToken(TokenType.ObjectProperties, value + '-' + nextWord, startPos, this.position, startLine, startColumn);
+      if (this.tryCompoundToken(value, '-', 'PROPERTIES', TokenType.ObjectProperties, startPos, startLine, startColumn)) {
         return;
       }
+    }
 
-      // Not OBJECT-PROPERTIES, restore position and process OBJECT normally
-      this.position = savedPos;
-      this.line = savedLine;
-      this.column = savedColumn;
+    // Special case: Check for Format/Evaluate compound property name
+    // This is handled at lexer-level (not parser-level) because:
+    // 1. It's a syntactic token, not semantic interpretation
+    // 2. Matches existing OBJECT-PROPERTIES pattern
+    // 3. Simplifies parser property name handling
+    // Format/Evaluate is the ONLY C/AL property name containing '/' (XMLport-specific)
+    if (value.toUpperCase() === 'FORMAT' && this.currentChar() === '/') {
+      if (this.tryCompoundToken(value, '/', 'EVALUATE', TokenType.Identifier, startPos, startLine, startColumn)) {
+        return;
+      }
     }
 
     // Check if it's a keyword (case-insensitive)
@@ -737,6 +729,59 @@ export class Lexer {
       this.position++;
       this.column++;
     }
+  }
+
+  /**
+   * Try to recognize a compound token (e.g., OBJECT-PROPERTIES, Format/Evaluate)
+   *
+   * Uses lookahead with state restoration to check if the current position matches
+   * a compound token pattern. If successful, emits the token and returns true.
+   * If not, restores lexer state and returns false.
+   *
+   * @param firstWord - The first word already scanned (e.g., "OBJECT", "Format")
+   * @param separator - The separator character (e.g., "-", "/")
+   * @param expectedSecond - The expected second word (case-insensitive, e.g., "PROPERTIES", "EVALUATE")
+   * @param tokenType - The token type to emit if match succeeds
+   * @param startPos - Start position of the first word
+   * @param startLine - Start line of the first word
+   * @param startColumn - Start column of the first word
+   * @returns true if compound token recognized and emitted, false otherwise
+   */
+  private tryCompoundToken(
+    firstWord: string,
+    separator: string,
+    expectedSecond: string,
+    tokenType: TokenType,
+    startPos: number,
+    startLine: number,
+    startColumn: number
+  ): boolean {
+    // Save lexer state for potential restoration
+    const savedPos = this.position;
+    const savedLine = this.line;
+    const savedColumn = this.column;
+
+    this.advance(); // skip separator
+
+    // Scan the next word
+    let nextWord = '';
+    while (this.isIdentifierPart(this.currentChar())) {
+      nextWord += this.currentChar();
+      this.advance();
+    }
+
+    // Check if it matches the expected second word (case-insensitive)
+    if (nextWord.toUpperCase() === expectedSecond.toUpperCase()) {
+      // Match! Emit compound token
+      this.addToken(tokenType, firstWord + separator + nextWord, startPos, this.position, startLine, startColumn);
+      return true;
+    }
+
+    // No match - restore lexer state and return false
+    this.position = savedPos;
+    this.line = savedLine;
+    this.column = savedColumn;
+    return false;
   }
 
   private addToken(

@@ -578,4 +578,78 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
       expect(optionOrdinalValues?.value).toBe('[1;2;3;4;5]');
     });
   });
+
+  describe('REGRESSION: Properties with slash in name (Format/Evaluate)', () => {
+    it('should parse Format/Evaluate property in XMLport', () => {
+      const code = `OBJECT XMLport 1225 Test {
+        PROPERTIES {
+          Encoding=UTF-8;
+          Format/Evaluate=XML Format/Evaluate;
+        }
+        ELEMENTS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object?.properties?.properties).toHaveLength(2);
+
+      const formatEval = ast.object?.properties?.properties.find(
+        (p: Property) => p.name === 'Format/Evaluate'
+      );
+      expect(formatEval).toBeDefined();
+      expect(formatEval?.value).toBe('XML Format/Evaluate');
+    });
+
+    it('should parse Format/Evaluate with C/SIDE value', () => {
+      const code = `OBJECT XMLport 1660 Test {
+        PROPERTIES {
+          Format/Evaluate=C/SIDE Format/Evaluate;
+        }
+        ELEMENTS {
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const formatEval = ast.object?.properties?.properties.find(
+        (p: Property) => p.name === 'Format/Evaluate'
+      );
+      expect(formatEval).toBeDefined();
+      expect(formatEval?.value).toBe('C/SIDE Format/Evaluate');
+    });
+
+    it('should parse regular properties without slashes', () => {
+      // Verify we didn't break normal property parsing
+      const code = `OBJECT Table 50000 Test {
+        PROPERTIES {
+          DataPerCompany=Yes;
+          Permissions=TableData 18=rm;
+        }
+        FIELDS {
+          { 1 ; ; No ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const dataProp = ast.object?.properties?.properties.find(
+        (p: Property) => p.name === 'DataPerCompany'
+      );
+      expect(dataProp?.value).toBe('Yes');
+
+      const permProp = ast.object?.properties?.properties.find(
+        (p: Property) => p.name === 'Permissions'
+      );
+      expect(permProp?.value).toBe('TableData 18=rm');
+    });
+  });
 });

@@ -74778,6 +74778,27 @@ exports[`Regression Suite - Real C/AL Files Fixture: xmlport-1225-data-exch-def-
           "type": "Property",
           "value": "UTF-8",
         },
+        {
+          "endToken": {
+            "column": 40,
+            "endOffset": 198,
+            "line": 12,
+            "startOffset": 197,
+            "type": "SEMICOLON",
+            "value": ";",
+          },
+          "name": "Format/Evaluate",
+          "startToken": {
+            "column": 5,
+            "endOffset": 177,
+            "line": 12,
+            "startOffset": 162,
+            "type": "IDENTIFIER",
+            "value": "Format/Evaluate",
+          },
+          "type": "Property",
+          "value": "XML Format/Evaluate",
+        },
       ],
       "startToken": {
         "column": 3,
