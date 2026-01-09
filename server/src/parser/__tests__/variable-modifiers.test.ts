@@ -192,6 +192,183 @@ describe('Parser - Variable Modifiers', () => {
     });
   });
 
+  describe('SECURITYFILTERING modifier', () => {
+    it('should parse Record variable with SECURITYFILTERING(Filtered)', () => {
+      // Pattern from COD40.TXT line 31
+      const code = `OBJECT Codeunit 40 Test {
+        CODE {
+          VAR
+            User@1003 : Record 2000000120 SECURITYFILTERING(Filtered);
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object).toBeDefined();
+
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.name).toBe('User');
+      expect(variable.dataType.typeName).toBe('Record 2000000120');
+      expect(variable.securityFiltering).toBe('Filtered');
+    });
+
+    it('should parse Record variable with SECURITYFILTERING(Ignored)', () => {
+      // Pattern from COD5051.TXT
+      const code = `OBJECT Codeunit 5051 Test {
+        CODE {
+          VAR
+            InteractionLogEntry@1000 : Record 5065 SECURITYFILTERING(Ignored);
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.securityFiltering).toBe('Ignored');
+    });
+
+    it('should parse Query variable with SECURITYFILTERING', () => {
+      // Pattern from TAB18.TXT
+      const code = `OBJECT Table 18 Customer {
+        CODE {
+          VAR
+            CustLedgEntryRemainAmtQuery@1000 : Query 21 SECURITYFILTERING(Filtered);
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.dataType.typeName).toBe('Query 21');
+      expect(variable.securityFiltering).toBe('Filtered');
+    });
+
+    it('should parse multiple Record variables with SECURITYFILTERING', () => {
+      // Pattern from PAG344.TXT
+      const code = `OBJECT Page 344 Test {
+        CODE {
+          VAR
+            Cust@1023 : Record 18 SECURITYFILTERING(Filtered);
+            Vend@1024 : Record 23 SECURITYFILTERING(Filtered);
+            SalesShptHeader@1025 : Record 110 SECURITYFILTERING(Filtered);
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object!.code!.variables).toHaveLength(3);
+      expect(ast.object!.code!.variables[0].securityFiltering).toBe('Filtered');
+      expect(ast.object!.code!.variables[1].securityFiltering).toBe('Filtered');
+      expect(ast.object!.code!.variables[2].securityFiltering).toBe('Filtered');
+    });
+
+    it('should parse Record variable without SECURITYFILTERING', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Customer@1 : Record 18;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.securityFiltering).toBeUndefined();
+    });
+
+    it('should parse TEMPORARY Record with SECURITYFILTERING', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            TempCust@1 : TEMPORARY Record 18 SECURITYFILTERING(Filtered);
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.isTemporary).toBe(true);
+      expect(variable.securityFiltering).toBe('Filtered');
+    });
+
+    it('should recognize SECURITYFILTERING keyword case-insensitively', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            User@1 : Record 18 SecurityFiltering(Filtered);
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.securityFiltering).toBe('Filtered');
+    });
+
+    it('should accept any identifier as SECURITYFILTERING value (lenient parsing)', () => {
+      // Parser accepts any value - semantic validation is C/SIDE's responsibility
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Customer@1 : Record 18 SECURITYFILTERING(InvalidValue);
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Parser should not reject invalid values - that's C/SIDE's job
+      expect(parser.getErrors()).toHaveLength(0);
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.securityFiltering).toBe('InvalidValue');
+    });
+
+    it('should report error for SECURITYFILTERING without parentheses', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Customer@1 : Record 18 SECURITYFILTERING;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      parser.parse();
+
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].message).toContain('Expected ( after SECURITYFILTERING');
+    });
+
+    it('should report error for SECURITYFILTERING with missing closing paren', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Customer@1 : Record 18 SECURITYFILTERING(Filtered;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      parser.parse();
+
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThan(0);
+    });
+  });
+
   describe('Combined modifiers', () => {
     it('should parse TEMPORARY and RUNONCLIENT together', () => {
       const code = `OBJECT Codeunit 1 Test {
@@ -347,6 +524,16 @@ describe('Parser - Variable Modifiers', () => {
       expect(tokens).toHaveLength(2); // WITHEVENTS + EOF
       expect(tokens[0].type).toBe('WITHEVENTS');
       expect(tokens[0].value).toBe('WITHEVENTS');
+    });
+
+    it('should recognize SECURITYFILTERING as keyword token', () => {
+      const code = 'SECURITYFILTERING';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens).toHaveLength(2); // SECURITYFILTERING + EOF
+      expect(tokens[0].type).toBe('SECURITYFILTERING');
+      expect(tokens[0].value).toBe('SECURITYFILTERING');
     });
 
     it('should recognize keywords case-insensitively', () => {

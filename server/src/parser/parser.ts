@@ -1009,6 +1009,18 @@ export class Parser {
           this.advance();
         }
 
+        // Check for SECURITYFILTERING modifier (NAV 2013 R2+) for Record/Query variables
+        // Syntax: SECURITYFILTERING(Filtered|Ignored|Validated|Disallowed)
+        let securityFiltering: string | undefined;
+        if (this.check(TokenType.SecurityFiltering)) {
+          this.advance();
+          this.consume(TokenType.LeftParen, 'Expected ( after SECURITYFILTERING');
+          // The value is an identifier (Filtered, Ignored, Validated, Disallowed)
+          const valueToken = this.consume(TokenType.Identifier, 'Expected security filtering value');
+          securityFiltering = valueToken.value;
+          this.consume(TokenType.RightParen, 'Expected ) after security filtering value');
+        }
+
         this.consume(TokenType.Semicolon, 'Expected ;');
 
         variables.push({
@@ -1019,6 +1031,7 @@ export class Parser {
           isInDataSet,
           runOnClient,
           withEvents,
+          securityFiltering,
           startToken,
           endToken: this.previous()
         });

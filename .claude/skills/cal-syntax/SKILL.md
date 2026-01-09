@@ -80,6 +80,49 @@ VAR
 PROCEDURE Calculate@1(Param@1000 : Integer) : Decimal;
 ```
 
+## Variable Modifiers (NAV 2013+)
+
+### SECURITYFILTERING (NAV 2013 R2+)
+
+Controls security filtering behavior for Record and Query variables. This modifier determines how record-level security is applied when accessing data.
+
+**As a variable modifier:**
+```cal
+VAR
+  User@1003 : Record 2000000120 SECURITYFILTERING(Filtered);
+  CustQuery@1000 : Query 21 SECURITYFILTERING(Filtered);
+  LogEntry@1000 : Record 5065 SECURITYFILTERING(Ignored);
+```
+
+**Valid values:**
+- `Filtered` - Apply security filters (enforces record-level security)
+- `Ignored` - Bypass security filters (use with caution)
+- `Validated` - Apply validation (documented but rarely used)
+- `Disallowed` - Prevent access (documented but rarely used)
+
+**As a property/method on RecordRef (runtime control):**
+```cal
+// Property assignment
+RecRef."SECURITYFILTERING" := SECURITYFILTER::Filtered;
+
+// Method call on Record variable
+CustomerSalesYTD."SECURITYFILTERING"(SECURITYFILTER::Filtered);
+```
+
+**SECURITYFILTER enum values:** `SECURITYFILTER::Filtered`, `SECURITYFILTER::Ignored`, `SECURITYFILTER::Validated`, `SECURITYFILTER::Disallowed`
+
+### Other Variable Modifiers
+
+Modifier order after data type: `TEMPORARY` → `INDATASET` → `RUNONCLIENT` → `WITHEVENTS` → `SECURITYFILTERING`
+
+```cal
+VAR
+  TempCustomer@1000 : TEMPORARY Record 18;           // In-memory only
+  ShowAmount@1001 : Boolean INDATASET;               // Page variable binding
+  DotNetVar@1002 : DotNet "..." RUNONCLIENT;         // Client-side .NET
+  AutoVar@1003 : Automation "..." WITHEVENTS;        // Event handling
+```
+
 ## Procedure Syntax
 
 ```cal

@@ -605,4 +605,98 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       expect(parser.getErrors()).toHaveLength(0);
     });
   });
+
+  describe('SECURITYFILTER enum patterns (NAV 2013 R2+)', () => {
+    // These tests verify the dual usage of SECURITYFILTERING:
+    // 1. As a variable modifier (tested in variable-modifiers.test.ts)
+    // 2. As a property/method with SECURITYFILTER enum (tested here)
+
+    it('should parse SECURITYFILTER::Filtered enum access', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            FilterValue : Integer;
+          BEGIN
+            FilterValue := SECURITYFILTER::Filtered;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse SECURITYFILTER::Ignored enum access', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            FilterValue : Integer;
+          BEGIN
+            FilterValue := SECURITYFILTER::Ignored;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse RecRef."SECURITYFILTERING" property assignment', () => {
+      // Pattern from COD703.TXT: RecRef."SECURITYFILTERING" := SECURITYFILTER::Filtered;
+      const code = `OBJECT Codeunit 703 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            RecRef : RecordRef;
+          BEGIN
+            RecRef."SECURITYFILTERING" := SECURITYFILTER::Filtered;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse Record."SECURITYFILTERING" method call', () => {
+      // Pattern from TAB18.TXT: CustomerSalesYTD."SECURITYFILTERING"("SECURITYFILTERING");
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            CustomerSalesYTD : Query 21;
+          BEGIN
+            CustomerSalesYTD."SECURITYFILTERING"(SECURITYFILTER::Filtered);
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+
+    it('should parse xRecRef."SECURITYFILTERING" pattern', () => {
+      // Pattern from COD423.TXT: xRecRef."SECURITYFILTERING" := SECURITYFILTER::Filtered;
+      const code = `OBJECT Codeunit 423 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            xRecRef : RecordRef;
+          BEGIN
+            xRecRef."SECURITYFILTERING" := SECURITYFILTER::Filtered;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+      expect(parser.getErrors()).toHaveLength(0);
+    });
+  });
 });

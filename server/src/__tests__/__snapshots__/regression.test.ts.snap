@@ -2997,6 +2997,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "LastDataLineNo",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 1905,
@@ -11583,6 +11584,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "GLAcc",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 3521,
@@ -11630,6 +11632,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "CostType",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 3555,
@@ -11677,6 +11680,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "CFAccount",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 3592,
@@ -11724,6 +11728,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "IsExpression",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 3631,
@@ -26681,6 +26686,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "AnalysisViewEntry",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 7816,
@@ -26728,6 +26734,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "GLEntryDimensions",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 7860,
@@ -26775,6 +26782,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "GLBudgetEntryDimensions",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 7909,
@@ -26822,6 +26830,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "AnalysisViewEntryDimensions",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 7962,
@@ -26869,6 +26878,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "AnalysisViewBudgEntryDims",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 8013,
@@ -26916,6 +26926,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "Filter",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 8045,
@@ -26963,6 +26974,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "AmountType",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 8076,
@@ -27010,6 +27022,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "AmountToAdd",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 8143,
@@ -35358,6 +35371,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "CostEntry",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 16804,
@@ -35405,6 +35419,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "CostBudgetEntry",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 16847,
@@ -35452,6 +35467,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "AmountType",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 16885,
@@ -35499,6 +35515,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "TestBalance",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 16952,
@@ -35546,6 +35563,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "Balance",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 16983,
@@ -35593,6 +35611,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "AmountToAdd",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 17018,
@@ -40626,6 +40645,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "AnalysisViewEntry",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 21460,
@@ -40673,6 +40693,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "CFForecastEntryDimensions",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 21512,
@@ -40720,6 +40741,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "AnalysisViewEntryDimensions",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 21565,
@@ -40767,6 +40789,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "Filter",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 21597,
@@ -40814,6 +40837,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "AmountType",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 21628,
@@ -40861,6 +40885,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "AmountToAdd",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 21695,
@@ -41856,6 +41881,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": true,
               "name": "TempAccSchedKPIBufferDim",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 24628,
@@ -41903,6 +41929,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "SrcAccSchedLineFilter",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 24686,
@@ -41950,6 +41977,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
               "isTemporary": undefined,
               "name": "Value",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 24712,
@@ -43504,6 +43532,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
           "isTemporary": undefined,
           "name": "IllegalValErr",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 267,
@@ -43551,6 +43580,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
           "isTemporary": undefined,
           "name": "GeneralErr",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 446,
@@ -43598,6 +43628,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
           "isTemporary": undefined,
           "name": "ErrorOccurredErr",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 541,
@@ -43645,6 +43676,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
           "isTemporary": undefined,
           "name": "AccSchedLineErr",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 700,
@@ -43692,6 +43724,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
           "isTemporary": undefined,
           "name": "ColumnErr",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 918,
@@ -43739,6 +43772,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
           "isTemporary": undefined,
           "name": "CircularRefErr",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1151,
@@ -43786,6 +43820,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
           "isTemporary": undefined,
           "name": "AccSchedName",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1343,
@@ -43833,6 +43868,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
           "isTemporary": undefined,
           "name": "AccScheduleLine",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1384,
@@ -43880,6 +43916,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
           "isTemporary": true,
           "name": "TempAccSchedKPIBuffer",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1431,
@@ -43927,6 +43964,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
           "isTemporary": undefined,
           "name": "AccSchedManagement",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1486,
@@ -43974,6 +44012,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
           "isTemporary": undefined,
           "name": "StartDate",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1522,
@@ -44021,6 +44060,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
           "isTemporary": undefined,
           "name": "EndDate",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1550,
@@ -44068,6 +44108,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
           "isTemporary": undefined,
           "name": "CallLevel",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1580,
@@ -44115,6 +44156,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
           "isTemporary": undefined,
           "name": "CallingAccSchedLineID",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1625,
@@ -44162,6 +44204,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
           "isTemporary": undefined,
           "name": "CallingColumnLayoutID",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1670,
@@ -44582,6 +44625,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
           "isTemporary": undefined,
           "name": "Text000",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 845,
@@ -44629,6 +44673,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
           "isTemporary": undefined,
           "name": "Text001",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 974,
@@ -44676,6 +44721,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
           "isTemporary": undefined,
           "name": "PurchOrderHeader",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1119,
@@ -44723,6 +44769,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
           "isTemporary": undefined,
           "name": "PurchQuoteToOrder",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1162,
@@ -45798,6 +45845,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
               "isTemporary": undefined,
               "name": "ConfirmManagement",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 13,
                 "endOffset": 235,
@@ -45845,6 +45893,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
               "isTemporary": undefined,
               "name": "IsHandled",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 13,
                 "endOffset": 278,
@@ -50197,6 +50246,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
               "isTemporary": undefined,
               "name": "ServLine",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 704,
@@ -50244,6 +50294,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
               "isTemporary": true,
               "name": "TempVATAmountLine0",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 750,
@@ -50291,6 +50342,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
               "isTemporary": true,
               "name": "TempVATAmountLine1",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 805,
@@ -52081,6 +52133,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
           "isTemporary": undefined,
           "name": "Text001",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 355,
@@ -52128,6 +52181,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
           "isTemporary": undefined,
           "name": "ServiceHeader",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 541,
@@ -52175,6 +52229,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
           "isTemporary": undefined,
           "name": "InvtSetup",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 578,
@@ -52222,6 +52277,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
           "isTemporary": undefined,
           "name": "WhseServiceRelease",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 623,
@@ -52628,6 +52684,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-343-check-credit-limit
           "isTemporary": undefined,
           "name": "HideMessage",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1300,
@@ -52675,6 +52732,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-343-check-credit-limit
           "isTemporary": undefined,
           "name": "HideMessageVisible",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 1342,
@@ -53235,6 +53293,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
               "isTemporary": undefined,
               "name": "DataExchLineDef",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 5331,
@@ -53282,6 +53341,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
               "isTemporary": undefined,
               "name": "GetFileStructure",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 5374,
@@ -53343,6 +53403,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
           "isTemporary": undefined,
           "name": "DataFormatRequired",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 5194,
@@ -53390,6 +53451,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
           "isTemporary": undefined,
           "name": "DataFormattingCultureRequired",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 5246,
@@ -54363,6 +54425,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
               "isTemporary": undefined,
               "name": "DataMigrationError",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 10237,
@@ -54576,6 +54639,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
           "isTemporary": undefined,
           "name": "DataMigrationFacade",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9350,
@@ -54623,6 +54687,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
           "isTemporary": undefined,
           "name": "RefreshNotification",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9398,
@@ -54670,6 +54735,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
           "isTemporary": undefined,
           "name": "StatusStyle",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9437,
@@ -54717,6 +54783,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
           "isTemporary": undefined,
           "name": "TableNameToMigrate",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9485,
@@ -54764,6 +54831,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
           "isTemporary": undefined,
           "name": "DashboardEmptyNotificationMsg",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9549,
@@ -54811,6 +54879,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
           "isTemporary": undefined,
           "name": "StartDataMigrationMsg",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9697,
@@ -54858,6 +54927,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
           "isTemporary": undefined,
           "name": "RefreshNotificationMsg",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9771,
@@ -54905,6 +54975,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
           "isTemporary": undefined,
           "name": "RefreshNotificationShown",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9906,
@@ -54952,6 +55023,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
           "isTemporary": undefined,
           "name": "LearnMoreTxt",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9941,
@@ -54999,6 +55071,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
           "isTemporary": undefined,
           "name": "NextTask",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 9991,
@@ -55046,6 +55119,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
           "isTemporary": undefined,
           "name": "ErrorStyle",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 10076,
@@ -57870,6 +57944,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
               "isTemporary": undefined,
               "name": "AllObjWithCaption",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 24,
                 "endOffset": 497,
@@ -57917,6 +57992,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
               "isTemporary": undefined,
               "name": "DataMigrationMgt",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 24,
                 "endOffset": 563,
@@ -57964,6 +58040,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
               "isTemporary": undefined,
               "name": "DummyCode",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 24,
                 "endOffset": 618,
@@ -59010,6 +59087,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
               "isTemporary": undefined,
               "name": "CustLedgerEntry",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 958,
@@ -59057,6 +59135,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
               "isTemporary": undefined,
               "name": "TotalBalance",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 996,
@@ -59247,6 +59326,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
           "isTemporary": undefined,
           "name": "Text001",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 788,
@@ -59294,6 +59374,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
           "isTemporary": undefined,
           "name": "CustomerCount",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 867,
@@ -64905,6 +64986,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "isTemporary": undefined,
               "name": "DataExchDef",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 4927,
@@ -65899,6 +65981,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "isTemporary": undefined,
               "name": "DataExchDef",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 5446,
@@ -66623,6 +66706,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "isTemporary": undefined,
               "name": "DataExchDef",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 5946,
@@ -67042,6 +67126,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "isTemporary": undefined,
               "name": "DataExchDef",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 6266,
@@ -67461,6 +67546,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "isTemporary": undefined,
               "name": "DataExchDef",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 6489,
@@ -68280,6 +68366,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "isTemporary": undefined,
               "name": "DataExchColDef",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 6761,
@@ -68967,6 +69054,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "isTemporary": undefined,
               "name": "DataExchLineDef",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 7,
                 "endOffset": 7201,
@@ -69028,6 +69116,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
           "isTemporary": undefined,
           "name": "DeleteFieldMappingQst",
           "runOnClient": undefined,
+          "securityFiltering": undefined,
           "startToken": {
             "column": 7,
             "endOffset": 2515,
@@ -71335,6 +71424,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "isTemporary": undefined,
               "name": "DataExchFieldMapping",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 16,
                 "endOffset": 312,
@@ -71382,6 +71472,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
               "isTemporary": undefined,
               "name": "DataExchColumnDef",
               "runOnClient": undefined,
+              "securityFiltering": undefined,
               "startToken": {
                 "column": 16,
                 "endOffset": 365,

@@ -144,6 +144,8 @@ export interface VariableDeclaration extends ASTNode {
   isInDataSet?: boolean;
   runOnClient?: boolean;
   withEvents?: boolean;
+  /** SECURITYFILTERING modifier value (Filtered, Ignored, Validated, Disallowed) for Record/Query variables */
+  securityFiltering?: string;
 }
 
 /**
