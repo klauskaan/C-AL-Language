@@ -1014,9 +1014,13 @@ export class Parser {
   private parseVariableDeclarations(variables: VariableDeclaration[]): void {
     this.consume(TokenType.Var, 'Expected VAR');
 
-    while (!this.isCodeSectionBoundary() && !this.isAtEnd()) {
-      // Check BEFORE advancing (matches parseParameters pattern at line 1185)
-      if (this.canBeUsedAsIdentifier()) {
+    while (!this.isAtEnd()) {
+      // Check for section boundaries FIRST (before checking if it's a valid identifier)
+      // This prevents treating CODE, PROCEDURE, etc. as variable names
+      if (this.isVariableSectionBoundary()) {
+        // Exit the VAR section when we hit an actual boundary
+        break;
+      } else if (this.canBeUsedAsIdentifier()) {
         const startToken = this.peek();
         const nameToken = this.advance();
 
@@ -1061,9 +1065,49 @@ export class Parser {
 
         variables.push(variable);
       } else {
-        break;
+        // Non-identifier found where a variable name is expected
+        // Issue #53: Record error when reserved keyword is used as variable name, but only
+        // if the syntax matches a variable declaration attempt (i.e., followed by @number or colon)
+        const token = this.peek();
+        const nextToken = this.peekAhead(1);
+        const isAttemptedVarDecl = this.isVariableDeclarationAttempt(nextToken);
+
+        if (isAttemptedVarDecl) {
+          // Someone is trying to use a reserved keyword as a variable name
+          this.recordError(`Cannot use reserved keyword '${token.value}' as variable name`, token);
+
+          // Error recovery: skip past this bad declaration and continue
+          while (!this.isAtEnd() &&
+                 !this.check(TokenType.Semicolon) &&
+                 !this.isVariableSectionBoundary()) {
+            this.advance();
+          }
+          if (this.check(TokenType.Semicolon)) {
+            this.advance(); // consume semicolon
+          }
+          continue; // Try to parse next variable
+        }
+        break; // Not a variable declaration attempt, exit VAR section
       }
     }
+  }
+
+  /**
+   * Checks if the next token suggests this is an attempted variable declaration
+   * with an invalid identifier. Used to distinguish between malformed variable
+   * declarations (which should report an error) and legitimate section boundaries.
+   *
+   * A token is considered a variable declaration attempt if followed by:
+   * - A colon (:) indicating the type separator
+   * - An @ symbol indicating auto-numbering syntax
+   *
+   * @param nextToken The token following the current (invalid) identifier
+   * @returns true if this looks like a variable declaration attempt
+   */
+  private isVariableDeclarationAttempt(nextToken: Token | undefined): boolean {
+    if (!nextToken) return false;
+    return nextToken.type === TokenType.Colon ||
+           (nextToken.type === TokenType.Unknown && nextToken.value === '@');
   }
 
   /**
@@ -2510,6 +2554,28 @@ export class Parser {
            this.check(TokenType.LeftBracket);  // Attributes like [External] before procedures
   }
 
+  /**
+   * Checks if the current token marks the end of a variable declaration section.
+   * Variable sections terminate when encountering structural keywords like PROCEDURE,
+   * CODE, or closing braces.
+   *
+   * Unlike isCodeSectionBoundary(), this excludes BEGIN because we want to report
+   * an error if someone tries to use BEGIN as a variable name, rather than silently
+   * treating it as the end of the VAR section.
+   *
+   * @returns true if at a boundary token, false otherwise
+   */
+  private isVariableSectionBoundary(): boolean {
+    return this.check(TokenType.Procedure) ||
+           this.check(TokenType.Function) ||
+           this.check(TokenType.Local) ||
+           this.check(TokenType.Trigger) ||
+           this.check(TokenType.Event) ||
+           this.check(TokenType.Code) ||  // CODE section keyword
+           this.check(TokenType.RightBrace) ||  // End of object or section
+           this.check(TokenType.LeftBracket);  // Attributes like [External] before procedures
+  }
+
   private advance(): Token {
     if (!this.isAtEnd()) {
       const token = this.tokens[this.current];
@@ -2560,6 +2626,28 @@ export class Parser {
       return this.peek();
     }
     return this.tokens[this.current - 1];
+  }
+
+  /**
+   * Peek ahead at a token at the specified offset from the current position.
+   * Does not advance the parser position.
+   *
+   * @param offset Number of tokens to look ahead (1 = next token, 2 = token after next, etc.)
+   * @returns Token at the offset position, or undefined if out of bounds
+   * @example
+   * // Check if next token is a colon
+   * const nextToken = this.peekAhead(1);
+   * if (nextToken?.type === TokenType.Colon) { ... }
+   */
+  private peekAhead(offset: number): Token | undefined {
+    if (offset < 0) {
+      return undefined; // Invalid: negative offset not supported
+    }
+    const index = this.current + offset;
+    if (index >= this.tokens.length) {
+      return undefined;
+    }
+    return this.tokens[index];
   }
 
   /**
