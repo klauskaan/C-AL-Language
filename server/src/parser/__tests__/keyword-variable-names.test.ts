@@ -735,4 +735,932 @@ describe('Parser - Keywords as Variable Names', () => {
       expect(procedures[0].variables[0].name).toBe('Object');
     });
   });
+
+  /**
+   * New Data Type Keywords as Variable Names
+   *
+   * Tests support for 7 additional data type keywords used as variable names.
+   * These keywords are frequently used in real NAV code (occurrence counts verified
+   * via analysis of test/REAL/ directory, Jan 2026):
+   * - FieldRef: 211 occurrences
+   * - RecordRef: 99 occurrences
+   * - RecordID: 17 occurrences
+   * - Duration: 5 occurrences
+   * - BigInteger: 3 occurrences
+   * - Fields: 2 occurrences
+   * - Byte: 1 occurrence
+   * - Object: already tested above
+   *
+   * See: Issue #54 - Add support for data type keywords as variable names
+   */
+
+  describe('FieldRef variable name', () => {
+    it('should parse FieldRef variable in procedure VAR', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      FieldRef@1000 : FieldRef;
+    BEGIN
+      FieldRef.VALUE := 'Test';
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].variables).toHaveLength(1);
+      expect(procedures[0].variables[0].name).toBe('FieldRef');
+      expect(procedures[0].variables[0].dataType.typeName).toBe('FieldRef');
+    });
+
+    it('should parse FieldRef as parameter name', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(FieldRef@1000 : FieldRef);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+      expect(procedures[0].parameters[0].name).toBe('FieldRef');
+      expect(procedures[0].parameters[0].dataType.typeName).toBe('FieldRef');
+    });
+  });
+
+  describe('RecordRef variable name', () => {
+    it('should parse RecordRef variable in procedure VAR', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      RecordRef@1000 : RecordRef;
+    BEGIN
+      RecordRef.OPEN(18);
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].variables).toHaveLength(1);
+      expect(procedures[0].variables[0].name).toBe('RecordRef');
+      expect(procedures[0].variables[0].dataType.typeName).toBe('RecordRef');
+    });
+
+    it('should parse RecordRef as parameter name', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(RecordRef@1000 : RecordRef);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+      expect(procedures[0].parameters[0].name).toBe('RecordRef');
+      expect(procedures[0].parameters[0].dataType.typeName).toBe('RecordRef');
+    });
+  });
+
+  describe('RecordID variable name', () => {
+    it('should parse RecordID variable in procedure VAR', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      RecordID@1000 : RecordID;
+    BEGIN
+      RecordID := Customer.RECORDID;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].variables).toHaveLength(1);
+      expect(procedures[0].variables[0].name).toBe('RecordID');
+      expect(procedures[0].variables[0].dataType.typeName).toBe('RecordID');
+    });
+
+    it('should parse RecordID as parameter name', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(RecordID@1000 : RecordID);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+      expect(procedures[0].parameters[0].name).toBe('RecordID');
+      expect(procedures[0].parameters[0].dataType.typeName).toBe('RecordID');
+    });
+  });
+
+  describe('Duration variable name', () => {
+    it('should parse Duration variable in procedure VAR', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Duration@1000 : Duration;
+    BEGIN
+      Duration := CURRENTDATETIME - StartTime;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].variables).toHaveLength(1);
+      expect(procedures[0].variables[0].name).toBe('Duration');
+      expect(procedures[0].variables[0].dataType.typeName).toBe('Duration');
+    });
+
+    it('should parse Duration as parameter name', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(Duration@1000 : Duration);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+      expect(procedures[0].parameters[0].name).toBe('Duration');
+      expect(procedures[0].parameters[0].dataType.typeName).toBe('Duration');
+    });
+  });
+
+  describe('BigInteger variable name', () => {
+    it('should parse BigInteger variable in procedure VAR', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      BigInteger@1000 : BigInteger;
+    BEGIN
+      BigInteger := 9223372036854775807;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].variables).toHaveLength(1);
+      expect(procedures[0].variables[0].name).toBe('BigInteger');
+      expect(procedures[0].variables[0].dataType.typeName).toBe('BigInteger');
+    });
+
+    it('should parse BigInteger as parameter name', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(BigInteger@1000 : BigInteger);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+      expect(procedures[0].parameters[0].name).toBe('BigInteger');
+      expect(procedures[0].parameters[0].dataType.typeName).toBe('BigInteger');
+    });
+  });
+
+  describe('Fields variable name', () => {
+    it('should parse Fields variable in procedure VAR', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Fields@1000 : Integer;
+    BEGIN
+      Fields := Customer.COUNT;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].variables).toHaveLength(1);
+      expect(procedures[0].variables[0].name).toBe('Fields');
+      expect(procedures[0].variables[0].dataType.typeName).toBe('Integer');
+    });
+
+    it('should parse Fields as parameter name', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(Fields@1000 : Integer);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+      expect(procedures[0].parameters[0].name).toBe('Fields');
+      expect(procedures[0].parameters[0].dataType.typeName).toBe('Integer');
+    });
+  });
+
+  describe('Byte variable name', () => {
+    it('should parse Byte variable in procedure VAR', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Byte@1000 : Byte;
+    BEGIN
+      Byte := 255;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].variables).toHaveLength(1);
+      expect(procedures[0].variables[0].name).toBe('Byte');
+      expect(procedures[0].variables[0].dataType.typeName).toBe('Byte');
+    });
+
+    it('should parse Byte as parameter name', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(Byte@1000 : Byte);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+      expect(procedures[0].parameters[0].name).toBe('Byte');
+      expect(procedures[0].parameters[0].dataType.typeName).toBe('Byte');
+    });
+  });
+
+  describe('Multiple new data type keyword variables', () => {
+    it('should parse all 7 new data type keywords together in same VAR block', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      FieldRef@1000 : FieldRef;
+      RecordRef@1001 : RecordRef;
+      RecordID@1002 : RecordID;
+      Duration@1003 : Duration;
+      BigInteger@1004 : BigInteger;
+      Fields@1005 : Integer;
+      Byte@1006 : Byte;
+    BEGIN
+      RecordRef.OPEN(18);
+      FieldRef := RecordRef.FIELD(1);
+      RecordID := RecordRef.RECORDID;
+      Duration := CURRENTDATETIME - StartTime;
+      BigInteger := 9223372036854775807;
+      Fields := RecordRef.FIELDCOUNT;
+      Byte := 255;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+
+      const proc = procedures[0];
+      expect(proc.variables).toHaveLength(7);
+
+      expect(proc.variables[0].name).toBe('FieldRef');
+      expect(proc.variables[0].dataType.typeName).toBe('FieldRef');
+
+      expect(proc.variables[1].name).toBe('RecordRef');
+      expect(proc.variables[1].dataType.typeName).toBe('RecordRef');
+
+      expect(proc.variables[2].name).toBe('RecordID');
+      expect(proc.variables[2].dataType.typeName).toBe('RecordID');
+
+      expect(proc.variables[3].name).toBe('Duration');
+      expect(proc.variables[3].dataType.typeName).toBe('Duration');
+
+      expect(proc.variables[4].name).toBe('BigInteger');
+      expect(proc.variables[4].dataType.typeName).toBe('BigInteger');
+
+      expect(proc.variables[5].name).toBe('Fields');
+      expect(proc.variables[5].dataType.typeName).toBe('Integer');
+
+      expect(proc.variables[6].name).toBe('Byte');
+      expect(proc.variables[6].dataType.typeName).toBe('Byte');
+    });
+  });
+
+  /**
+   * New Keyword Variable Names with C/AL Modifiers
+   *
+   * Tests support for the 7 new data type keywords combined with C/AL modifiers:
+   * - VAR modifier: Pass-by-reference parameters
+   * - TEMPORARY modifier: Temporary Record variables
+   * - SECURITYFILTERING modifier: Security filtering on Record variables
+   *
+   * These tests validate adversarial reviewer findings about untested modifier
+   * combinations with the new keywords (FieldRef, RecordRef, RecordID, Duration,
+   * BigInteger, Fields, Byte).
+   *
+   * See: Adversarial review findings for Issue #54
+   */
+
+  describe('New keyword variable names with VAR modifier', () => {
+    it('should parse FieldRef with VAR modifier in parameter', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(VAR FieldRef@1000 : FieldRef);
+    BEGIN
+      FieldRef.VALUE := 'Modified';
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+
+      const param = procedures[0].parameters[0];
+      expect(param.name).toBe('FieldRef');
+      expect(param.isVar).toBe(true);
+      expect(param.dataType.typeName).toBe('FieldRef');
+    });
+
+    it('should parse RecordRef with VAR modifier in parameter', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(VAR RecordRef@1000 : RecordRef);
+    BEGIN
+      RecordRef.OPEN(18);
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+
+      const param = procedures[0].parameters[0];
+      expect(param.name).toBe('RecordRef');
+      expect(param.isVar).toBe(true);
+      expect(param.dataType.typeName).toBe('RecordRef');
+    });
+
+    it('should parse RecordID with VAR modifier in parameter', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(VAR RecordID@1000 : RecordID);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+
+      const param = procedures[0].parameters[0];
+      expect(param.name).toBe('RecordID');
+      expect(param.isVar).toBe(true);
+      expect(param.dataType.typeName).toBe('RecordID');
+    });
+
+    it('should parse Duration with VAR modifier in parameter', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(VAR Duration@1000 : Duration);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+
+      const param = procedures[0].parameters[0];
+      expect(param.name).toBe('Duration');
+      expect(param.isVar).toBe(true);
+      expect(param.dataType.typeName).toBe('Duration');
+    });
+
+    it('should parse BigInteger with VAR modifier in parameter', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(VAR BigInteger@1000 : BigInteger);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+
+      const param = procedures[0].parameters[0];
+      expect(param.name).toBe('BigInteger');
+      expect(param.isVar).toBe(true);
+      expect(param.dataType.typeName).toBe('BigInteger');
+    });
+
+    it('should parse multiple new keywords with VAR modifier together', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(VAR FieldRef@1000 : FieldRef;VAR RecordRef@1001 : RecordRef;VAR Duration@1002 : Duration;VAR Byte@1003 : Byte);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(4);
+
+      // Check all parameters have VAR modifier and correct names
+      expect(procedures[0].parameters[0].name).toBe('FieldRef');
+      expect(procedures[0].parameters[0].isVar).toBe(true);
+
+      expect(procedures[0].parameters[1].name).toBe('RecordRef');
+      expect(procedures[0].parameters[1].isVar).toBe(true);
+
+      expect(procedures[0].parameters[2].name).toBe('Duration');
+      expect(procedures[0].parameters[2].isVar).toBe(true);
+
+      expect(procedures[0].parameters[3].name).toBe('Byte');
+      expect(procedures[0].parameters[3].isVar).toBe(true);
+    });
+  });
+
+  describe('New keyword variable names with TEMPORARY modifier', () => {
+    it('should parse FieldRef with TEMPORARY modifier', () => {
+      // Note: TEMPORARY FieldRef is not semantically valid in C/AL
+      // (TEMPORARY only applies to Record types), but we test parser
+      // handling if such syntax appears
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      FieldRef@1000 : TEMPORARY FieldRef;
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      // Parser should handle it (semantic validation is separate concern)
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].variables).toHaveLength(1);
+
+      const variable = procedures[0].variables[0];
+      expect(variable.name).toBe('FieldRef');
+      expect(variable.isTemporary).toBe(true);
+    });
+
+    it('should parse RecordRef with TEMPORARY modifier', () => {
+      // Note: TEMPORARY RecordRef is not semantically valid in C/AL
+      // Testing parser robustness
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      RecordRef@1000 : TEMPORARY RecordRef;
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].variables).toHaveLength(1);
+
+      const variable = procedures[0].variables[0];
+      expect(variable.name).toBe('RecordRef');
+      expect(variable.isTemporary).toBe(true);
+    });
+
+    it('should parse RecordID with TEMPORARY Record type', () => {
+      // Valid scenario: Variable named RecordID with TEMPORARY Record type
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      RecordID@1000 : TEMPORARY Record 18;
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].variables).toHaveLength(1);
+
+      const variable = procedures[0].variables[0];
+      expect(variable.name).toBe('RecordID');
+      expect(variable.isTemporary).toBe(true);
+      expect(variable.dataType.typeName).toBe('Record 18');
+    });
+
+    it('should parse Fields with TEMPORARY Record type', () => {
+      // Valid scenario: Variable named Fields with TEMPORARY Record type
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Fields@1000 : TEMPORARY Record 2000000041;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object!.code!.variables).toHaveLength(1);
+
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.name).toBe('Fields');
+      expect(variable.isTemporary).toBe(true);
+      expect(variable.dataType.typeName).toBe('Record 2000000041');
+    });
+  });
+
+  describe('New keyword variable names with SECURITYFILTERING modifier', () => {
+    it('should parse RecordID with SECURITYFILTERING modifier', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      RecordID@1000 : Record 18 SECURITYFILTERING(Filtered);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].variables).toHaveLength(1);
+
+      const variable = procedures[0].variables[0];
+      expect(variable.name).toBe('RecordID');
+      expect(variable.securityFiltering).toBe('Filtered');
+      expect(variable.dataType.typeName).toBe('Record 18');
+    });
+
+    it('should parse Fields with SECURITYFILTERING modifier', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Fields@1000 : Record 2000000041 SECURITYFILTERING(Filtered);
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object!.code!.variables).toHaveLength(1);
+
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.name).toBe('Fields');
+      expect(variable.securityFiltering).toBe('Filtered');
+      expect(variable.dataType.typeName).toBe('Record 2000000041');
+    });
+
+    it('should parse RecordRef with SECURITYFILTERING modifier', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      RecordRef@1000 : Record 2000000026 SECURITYFILTERING(Disallowed);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].variables).toHaveLength(1);
+
+      const variable = procedures[0].variables[0];
+      expect(variable.name).toBe('RecordRef');
+      expect(variable.securityFiltering).toBe('Disallowed');
+    });
+  });
+
+  describe('New keyword variable names with combined modifiers', () => {
+    it('should parse RecordID with TEMPORARY and SECURITYFILTERING modifiers', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      RecordID@1000 : TEMPORARY Record 18 SECURITYFILTERING(Filtered);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].variables).toHaveLength(1);
+
+      const variable = procedures[0].variables[0];
+      expect(variable.name).toBe('RecordID');
+      expect(variable.isTemporary).toBe(true);
+      expect(variable.securityFiltering).toBe('Filtered');
+      expect(variable.dataType.typeName).toBe('Record 18');
+    });
+
+    it('should parse Fields with TEMPORARY and SECURITYFILTERING modifiers', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Fields@1000 : TEMPORARY Record 2000000041 SECURITYFILTERING(Validated);
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object!.code!.variables).toHaveLength(1);
+
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.name).toBe('Fields');
+      expect(variable.isTemporary).toBe(true);
+      expect(variable.securityFiltering).toBe('Validated');
+      expect(variable.dataType.typeName).toBe('Record 2000000041');
+    });
+
+    it('should parse VAR parameter with RecordRef name and Record type with SECURITYFILTERING', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(VAR RecordRef@1000 : Record 18 SECURITYFILTERING(Filtered));
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+
+      const param = procedures[0].parameters[0];
+      expect(param.name).toBe('RecordRef');
+      expect(param.isVar).toBe(true);
+      expect(param.securityFiltering).toBe('Filtered');
+      expect(param.dataType.typeName).toBe('Record 18');
+    });
+  });
 });

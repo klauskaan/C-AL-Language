@@ -2687,7 +2687,14 @@ export class Parser {
       TokenType.Code,       // e.g., "Code" section keyword but can be used as name
       TokenType.Date_Type,  // e.g., "Date" parameter name
       TokenType.Time_Type,  // e.g., "Time" parameter name
-      // Add more as needed based on real-world usage
+      // Issue #54: Add data type keywords verified in test/REAL/
+      TokenType.FieldRef,   // e.g., "FieldRef" parameter name (211 occurrences)
+      TokenType.RecordRef,  // e.g., "RecordRef" parameter name (99 occurrences)
+      TokenType.RecordID,   // e.g., "RecordID" parameter name (17 occurrences)
+      TokenType.Duration,   // e.g., "Duration" parameter name (5 occurrences)
+      TokenType.BigInteger, // e.g., "BigInteger" parameter name (3 occurrences)
+      TokenType.Fields,     // e.g., "Fields" parameter name (2 occurrences)
+      TokenType.Byte,       // e.g., "Byte" parameter name (1 occurrence)
     ];
 
     return allowedKeywordsAsIdentifiers.includes(type);
