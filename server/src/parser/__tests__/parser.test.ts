@@ -13,7 +13,7 @@
 
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../parser';
-import { ObjectDeclaration } from '../ast';
+import { ObjectDeclaration, CaseStatement, RangeExpression, Literal } from '../ast';
 
 describe('Parser - Basic Functionality', () => {
   describe('Parser initialization', () => {
@@ -3082,6 +3082,220 @@ describe('Parser - Property Value Whitespace Preservation', () => {
       expect(table.fields?.fields[0].fieldName).toBe('Code');
       expect(table.fields?.fields[1].fieldName).toBe('Name');
       expect(table.fields?.fields[2].fieldName).toBe('Address');
+    });
+  });
+
+  describe('CASE statement range expressions', () => {
+    it('should parse simple integer range in CASE branch', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE GetCategory(n : Integer) : Text;
+          BEGIN
+            CASE n OF
+              1..10:
+                EXIT('Low');
+              11..100:
+                EXIT('Medium');
+              ELSE
+                EXIT('High');
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+      expect(parser.getErrors()).toHaveLength(0);
+
+      // Verify the AST structure
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const caseStmt = proc?.body?.[0] as CaseStatement;
+      expect(caseStmt.type).toBe('CaseStatement');
+      expect(caseStmt.branches).toHaveLength(2);
+
+      // First branch: 1..10
+      const branch1 = caseStmt.branches[0];
+      expect(branch1.values).toHaveLength(1);
+      expect(branch1.values[0].type).toBe('RangeExpression');
+      const range1 = branch1.values[0] as RangeExpression;
+      expect(range1.start?.type).toBe('Literal');
+      expect(range1.end?.type).toBe('Literal');
+      expect((range1.start as Literal).value).toBe(1);
+      expect((range1.end as Literal).value).toBe(10);
+
+      // Second branch: 11..100
+      const branch2 = caseStmt.branches[1];
+      expect(branch2.values).toHaveLength(1);
+      expect(branch2.values[0].type).toBe('RangeExpression');
+      const range2 = branch2.values[0] as RangeExpression;
+      expect(range2.start?.type).toBe('Literal');
+      expect(range2.end?.type).toBe('Literal');
+      expect((range2.start as Literal).value).toBe(11);
+      expect((range2.end as Literal).value).toBe(100);
+    });
+
+    it('should parse mixed discrete values and ranges in CASE branch', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE CheckValue(n : Integer) : Boolean;
+          BEGIN
+            CASE n OF
+              1, 3..5, 10, 20..30:
+                EXIT(TRUE);
+              ELSE
+                EXIT(FALSE);
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(parser.getErrors()).toHaveLength(0);
+
+      // Verify the branch has 4 values: 1, 3..5, 10, 20..30
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const caseStmt = proc?.body?.[0] as CaseStatement;
+      expect(caseStmt.branches[0].values).toHaveLength(4);
+
+      // Discrete: 1
+      expect(caseStmt.branches[0].values[0].type).toBe('Literal');
+      // Range: 3..5
+      expect(caseStmt.branches[0].values[1].type).toBe('RangeExpression');
+      // Discrete: 10
+      expect(caseStmt.branches[0].values[2].type).toBe('Literal');
+      // Range: 20..30
+      expect(caseStmt.branches[0].values[3].type).toBe('RangeExpression');
+    });
+
+    it('should parse character range in CASE branch', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE IsUpperCase(c : Char) : Boolean;
+          BEGIN
+            CASE c OF
+              'A'..'Z':
+                EXIT(TRUE);
+              ELSE
+                EXIT(FALSE);
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(parser.getErrors()).toHaveLength(0);
+
+      // Verify range expression
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const caseStmt = proc?.body?.[0] as CaseStatement;
+      expect(caseStmt.branches[0].values[0].type).toBe('RangeExpression');
+      const range = caseStmt.branches[0].values[0] as RangeExpression;
+      expect(range.start?.type).toBe('Literal');
+      expect(range.end?.type).toBe('Literal');
+      expect((range.start as Literal).value).toBe('A');
+      expect((range.end as Literal).value).toBe('Z');
+    });
+
+    it('should parse multiple range branches in CASE statement', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE GetTimeOfDay(Hour : Integer) : Text;
+          BEGIN
+            CASE Hour OF
+              0..10:
+                EXIT('Morning');
+              11:
+                EXIT('Late Morning');
+              12..13:
+                EXIT('Noon');
+              14..18:
+                EXIT('Afternoon');
+              19..23:
+                EXIT('Evening');
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(parser.getErrors()).toHaveLength(0);
+
+      // Verify 5 branches
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const caseStmt = proc?.body?.[0] as CaseStatement;
+      expect(caseStmt.branches).toHaveLength(5);
+
+      // Verify types: Range, Discrete, Range, Range, Range
+      expect(caseStmt.branches[0].values[0].type).toBe('RangeExpression');
+      expect(caseStmt.branches[1].values[0].type).toBe('Literal');
+      expect(caseStmt.branches[2].values[0].type).toBe('RangeExpression');
+      expect(caseStmt.branches[3].values[0].type).toBe('RangeExpression');
+      expect(caseStmt.branches[4].values[0].type).toBe('RangeExpression');
+    });
+
+    it('should recover from malformed range expression (missing end)', () => {
+      // Malformed: 1.. without end value before colon
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            CASE x OF
+              1..:
+                EXIT;
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      // Should not throw - parser should recover
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+
+      // Should have parse errors due to malformed range
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('should recover from malformed range expression (missing start)', () => {
+      // Malformed: ..10 (open-ended start is valid in set literals but not typical in CASE)
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            CASE x OF
+              ..10:
+                EXIT;
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      // Should not throw - parser should recover
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+
+      // May have errors or may parse as valid (depending on implementation)
+      // The key assertion is that it doesn't crash
     });
   });
 });

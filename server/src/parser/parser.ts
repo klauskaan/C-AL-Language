@@ -1559,11 +1559,11 @@ export class Parser {
     const branchStart = this.peek();
     const values: Expression[] = [];
 
-    // Parse value(s)
-    values.push(this.parseExpression());
+    // Parse value(s), including range expressions (e.g., 1..10)
+    values.push(this.parseCaseValue());
     while (this.check(TokenType.Comma)) {
       this.advance();
-      values.push(this.parseExpression());
+      values.push(this.parseCaseValue());
     }
 
     // Colon
@@ -1593,6 +1593,29 @@ export class Parser {
       startToken: branchStart,
       endToken: this.previous()
     };
+  }
+
+  /**
+   * Parse a single CASE value, which may be a discrete value or a range expression
+   * Examples: 1, 'A', Status::Open, 1..10, 'A'..'Z'
+   */
+  private parseCaseValue(): Expression {
+    const expr = this.parseExpression();
+
+    // Check for range expression (e.g., 1..10)
+    if (this.check(TokenType.DotDot)) {
+      this.advance(); // consume ..
+      const endExpr = this.parseExpression();
+      return {
+        type: 'RangeExpression',
+        start: expr,
+        end: endExpr,
+        startToken: expr.startToken,
+        endToken: endExpr.endToken
+      } as RangeExpression;
+    }
+
+    return expr;
   }
 
   /**
