@@ -19,6 +19,7 @@ export class Lexer {
   private static readonly DATE_DIGITS_SHORT = 6;    // MMDDYY format
   private static readonly DATE_DIGITS_LONG = 8;     // MMDDYYYY format
   private static readonly UNDEFINED_DATE_DIGITS = 1; // 0D (undefined date)
+  private static readonly UNDEFINED_DATE = '0D';    // Undefined date literal value
   private static readonly MIN_TIME_DIGITS = 6;      // HHMMSS minimum
   private static readonly MIN_CONTEXT_STACK_SIZE = 1; // Context stack minimum
 
@@ -310,8 +311,9 @@ export class Lexer {
         value += this.currentChar();
         this.advance();
 
-        // Check if followed by time (DT format)
-        if (this.isDigit(this.currentChar())) {
+        // Check if followed by time (DT format) or undefined datetime (0DT)
+        const isUndefinedDateTime = value === Lexer.UNDEFINED_DATE && this.currentChar() === 'T';
+        if (this.isDigit(this.currentChar()) || isUndefinedDateTime) {
           // Scan time part
           while (this.isDigit(this.currentChar())) {
             value += this.currentChar();

@@ -250,6 +250,42 @@ describe('Lexer - Date/Time/DateTime Literals', () => {
       expect(tokens[0].type).toBe(TokenType.DateTime);
       expect(tokens[0].value).toBe('060120D000000T');
     });
+
+    it('should tokenize undefined datetime literal (0DT)', () => {
+      const code = '0DT';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens).toHaveLength(2); // DateTime literal + EOF
+      expect(tokens[0].type).toBe(TokenType.DateTime);
+      expect(tokens[0].value).toBe('0DT');
+    });
+
+    it('should tokenize undefined datetime in comparison', () => {
+      const code = 'IF MyDateTime = 0DT THEN';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // IF, MyDateTime, =, 0DT, THEN, EOF
+      expect(tokens[0].type).toBe(TokenType.If);
+      expect(tokens[1].type).toBe(TokenType.Identifier);
+      expect(tokens[2].type).toBe(TokenType.Equal);
+      expect(tokens[3].type).toBe(TokenType.DateTime);
+      expect(tokens[3].value).toBe('0DT');
+      expect(tokens[4].type).toBe(TokenType.Then);
+    });
+
+    it('should not consume digits after 0DT', () => {
+      const code = '0DT123';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // 0DT, 123, EOF
+      expect(tokens[0].type).toBe(TokenType.DateTime);
+      expect(tokens[0].value).toBe('0DT');
+      expect(tokens[1].type).toBe(TokenType.Integer);
+      expect(tokens[1].value).toBe('123');
+    });
   });
 
   describe('Edge cases and validation', () => {

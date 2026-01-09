@@ -167,8 +167,10 @@ Escaped apostrophe: `''` (double single quote)
 ### Dates and Times
 - Date: `MMDDYY[YY]D` - Example: `060120D` = June 1, 2020
 - Undefined date: `0D`
-- Time: `HHMMSS[MS]T`
-- DateTime: Combined format
+- Time: `HHMMSS[MS]T` - Example: `120000T` = 12:00:00
+- Undefined time: `0T`
+- DateTime: `MMDDYY[YY]DHHMMSS[MS]T` - Example: `060120D120000T`
+- Undefined DateTime: `0DT`
 
 ### Boolean
 `TRUE`, `FALSE`
