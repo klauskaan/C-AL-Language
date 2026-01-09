@@ -1087,10 +1087,7 @@ export class Parser {
       }
 
       // Parameter name (can be identifier or keyword used as identifier)
-      if (this.check(TokenType.Identifier) || this.check(TokenType.QuotedIdentifier) ||
-          // Allow keywords to be used as parameter names (e.g., Char, Text, Code, etc.)
-          this.peek().type.toString().endsWith('_Type') ||
-          this.check(TokenType.Char) || this.check(TokenType.Option)) {
+      if (this.canBeUsedAsIdentifier()) {
         const paramToken = this.advance();
         const paramName = paramToken.value;
 
@@ -2271,6 +2268,48 @@ export class Parser {
       return this.peek();
     }
     return this.tokens[this.current - 1];
+  }
+
+  /**
+   * Check if the current token can be used as an identifier/name in parameter/variable context.
+   * In C/AL, many keywords can be repurposed as identifiers when used as names.
+   * For example: "Table", "Page", "Report", "Record", "Code", "Text" etc.
+   */
+  private canBeUsedAsIdentifier(): boolean {
+    const token = this.peek();
+    const type = token.type;
+
+    // Obviously valid identifiers
+    if (type === TokenType.Identifier || type === TokenType.QuotedIdentifier) {
+      return true;
+    }
+
+    // Data type keywords that end with _Type (e.g., Code_Type, Integer_Type)
+    if (type.toString().endsWith('_Type')) {
+      return true;
+    }
+
+    // Keywords that are commonly used as identifiers
+    // This includes object types, data types, and other keywords that C/AL allows as names
+    const allowedKeywordsAsIdentifiers = [
+      TokenType.Table,      // e.g., "Table" parameter name
+      TokenType.Page,       // e.g., "Page" parameter name
+      TokenType.Report,     // e.g., "Report" parameter name
+      TokenType.Codeunit,   // e.g., "Codeunit" parameter name
+      TokenType.Query,      // e.g., "Query" parameter name
+      TokenType.XMLport,    // e.g., "XMLport" parameter name
+      TokenType.Record,     // e.g., "Record" parameter name
+      TokenType.Char,       // e.g., "Char" parameter name
+      TokenType.Option,     // e.g., "Option" parameter name
+      TokenType.Text,       // e.g., "Text" parameter name
+      TokenType.Boolean,    // e.g., "Boolean" parameter name
+      TokenType.Code,       // e.g., "Code" section keyword but can be used as name
+      TokenType.Date_Type,  // e.g., "Date" parameter name
+      TokenType.Time_Type,  // e.g., "Time" parameter name
+      // Add more as needed based on real-world usage
+    ];
+
+    return allowedKeywordsAsIdentifiers.includes(type);
   }
 
   private consume(type: TokenType, message: string): Token {
