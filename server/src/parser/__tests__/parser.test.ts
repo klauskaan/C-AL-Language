@@ -1570,7 +1570,7 @@ describe('Parser - TEMPORARY Variables', () => {
 
     expect(ast.object?.code?.variables).toHaveLength(1);
     expect(ast.object?.code?.variables[0].name).toBe('Customer');
-    expect(ast.object?.code?.variables[0].isTemporary).toBe(false);
+    expect(ast.object?.code?.variables[0].isTemporary).toBeUndefined();
     expect(ast.object?.code?.variables[0].dataType.typeName).toContain('Record');
   });
 
@@ -1618,11 +1618,11 @@ describe('Parser - TEMPORARY Variables', () => {
     expect(ast.object?.code?.variables[0].name).toBe('TempCust');
     expect(ast.object?.code?.variables[0].isTemporary).toBe(true);
     expect(ast.object?.code?.variables[1].name).toBe('RegularCust');
-    expect(ast.object?.code?.variables[1].isTemporary).toBe(false);
+    expect(ast.object?.code?.variables[1].isTemporary).toBeUndefined();
     expect(ast.object?.code?.variables[2].name).toBe('TempItem');
     expect(ast.object?.code?.variables[2].isTemporary).toBe(true);
     expect(ast.object?.code?.variables[3].name).toBe('Counter');
-    expect(ast.object?.code?.variables[3].isTemporary).toBe(false);
+    expect(ast.object?.code?.variables[3].isTemporary).toBeUndefined();
   });
 
   it('should parse TEMPORARY variable in local procedure variables', () => {
@@ -1711,13 +1711,13 @@ describe('Parser - TEMPORARY Parameters', () => {
     // First parameter: VAR but not TEMPORARY
     expect(procedure?.parameters[0].name).toBe('AccSchedLine');
     expect(procedure?.parameters[0].isVar).toBe(true);
-    expect(procedure?.parameters[0].isTemporary).toBe(false);
+    expect(procedure?.parameters[0].isTemporary).toBeUndefined();
     expect(procedure?.parameters[0].dataType.typeName).toContain('Record');
 
     // Second parameter: VAR but not TEMPORARY
     expect(procedure?.parameters[1].name).toBe('ColumnLayout');
     expect(procedure?.parameters[1].isVar).toBe(true);
-    expect(procedure?.parameters[1].isTemporary).toBe(false);
+    expect(procedure?.parameters[1].isTemporary).toBeUndefined();
     expect(procedure?.parameters[1].dataType.typeName).toContain('Record');
 
     // Third parameter: VAR and TEMPORARY
@@ -1767,7 +1767,7 @@ describe('Parser - TEMPORARY Parameters', () => {
     expect(procedure?.parameters).toHaveLength(1);
     expect(procedure?.parameters[0].name).toBe('Customer');
     expect(procedure?.parameters[0].isVar).toBe(false);
-    expect(procedure?.parameters[0].isTemporary).toBe(false);
+    expect(procedure?.parameters[0].isTemporary).toBeUndefined();
     expect(procedure?.parameters[0].dataType.typeName).toContain('Record');
   });
 

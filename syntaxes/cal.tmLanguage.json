@@ -495,7 +495,7 @@
         {
           "comment": "Other keywords - negative lookahead prevents matching in hyphenated identifiers",
           "name": "keyword.other.cal",
-          "match": "\\b(PROCEDURE|FUNCTION|TRIGGER|LOCAL|GLOBAL|VAR|CONST|ARRAY|TEMPORARY|SECURITYFILTERING|INTERNALEVENT|INTEGRATIONEVENT|BUSINESSEVENT|EVENT|WITHEVENTS)(?!-|[A-Za-z0-9_])\\b"
+          "match": "\\b(PROCEDURE|FUNCTION|TRIGGER|LOCAL|GLOBAL|VAR|CONST|ARRAY|TEMPORARY|INDATASET|SECURITYFILTERING|INTERNALEVENT|INTEGRATIONEVENT|BUSINESSEVENT|EVENT|WITHEVENTS|RUNONCLIENT)(?!-|[A-Za-z0-9_])\\b"
         },
         {
           "comment": "Logical operators - negative lookahead prevents matching in hyphenated identifiers",

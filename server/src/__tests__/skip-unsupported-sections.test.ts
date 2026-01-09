@@ -313,7 +313,7 @@ describe('Parser - skipUnsupportedSection with BEGIN...END blocks', () => {
     expect(result.ast?.object?.code?.variables?.[0].isTemporary).toBe(true);
     expect(result.ast?.object?.code?.variables?.[1].isTemporary).toBe(true);
     expect(result.ast?.object?.code?.variables?.[2].isTemporary).toBe(true);
-    expect(result.ast?.object?.code?.variables?.[3].isTemporary).toBe(false);
+    expect(result.ast?.object?.code?.variables?.[3].isTemporary).toBeUndefined();
   });
 
   it('should handle INDATASET modifier with @ numbering after skipped sections', () => {
@@ -349,7 +349,7 @@ describe('Parser - skipUnsupportedSection with BEGIN...END blocks', () => {
     expect(result.ast?.object?.code?.variables?.[0].name).toBe('DescriptionIndent');
     expect(result.ast?.object?.code?.variables?.[0].isInDataSet).toBe(true);
     expect(result.ast?.object?.code?.variables?.[1].isInDataSet).toBe(true);
-    expect(result.ast?.object?.code?.variables?.[2].isInDataSet).toBe(false);
+    expect(result.ast?.object?.code?.variables?.[2].isInDataSet).toBeUndefined();
   });
 
   it('should handle TABLE objects with CODE section', () => {

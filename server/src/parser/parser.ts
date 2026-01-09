@@ -974,7 +974,7 @@ export class Parser {
         this.consume(TokenType.Colon, 'Expected :');
 
         // Check for TEMPORARY keyword before data type
-        let isTemporary = false;
+        let isTemporary: boolean | undefined;
         if (this.check(TokenType.Temporary)) {
           isTemporary = true;
           this.advance();
@@ -988,9 +988,23 @@ export class Parser {
         }
 
         // Check for INDATASET modifier (specific to page variables)
-        let isInDataSet = false;
+        let isInDataSet: boolean | undefined;
         if (this.check(TokenType.InDataSet)) {
           isInDataSet = true;
+          this.advance();
+        }
+
+        // Check for RUNONCLIENT modifier (for DotNet variables)
+        let runOnClient: boolean | undefined;
+        if (this.check(TokenType.RunOnClient)) {
+          runOnClient = true;
+          this.advance();
+        }
+
+        // Check for WITHEVENTS modifier (for Automation variables)
+        let withEvents: boolean | undefined;
+        if (this.check(TokenType.WithEvents)) {
+          withEvents = true;
           this.advance();
         }
 
@@ -1002,6 +1016,8 @@ export class Parser {
           dataType,
           isTemporary,
           isInDataSet,
+          runOnClient,
+          withEvents,
           startToken,
           endToken: this.previous()
         });
@@ -1095,7 +1111,7 @@ export class Parser {
         this.skipAutoNumberSuffix();
 
         // Colon and type
-        let isTemporary = false;
+        let isTemporary: boolean | undefined;
         let dataType: DataType | null = null;
         if (this.check(TokenType.Colon)) {
           this.advance();
@@ -1114,15 +1130,20 @@ export class Parser {
           }
         }
 
-        parameters.push({
+        const param: ParameterDeclaration = {
           type: 'ParameterDeclaration',
           name: paramName,
           dataType: dataType || { type: 'DataType', typeName: 'Variant', startToken: paramToken, endToken: paramToken },
           isVar,
-          isTemporary,
           startToken: paramToken,
           endToken: this.previous()
-        });
+        };
+
+        if (isTemporary) {
+          param.isTemporary = isTemporary;
+        }
+
+        parameters.push(param);
       }
 
       // Skip semicolon between parameters

@@ -142,6 +142,8 @@ export interface VariableDeclaration extends ASTNode {
   dataType: DataType;
   isTemporary?: boolean;
   isInDataSet?: boolean;
+  runOnClient?: boolean;
+  withEvents?: boolean;
 }
 
 /**
@@ -162,7 +164,7 @@ export interface ParameterDeclaration extends ASTNode {
   name: string;
   dataType: DataType;
   isVar: boolean;  // VAR parameter (pass by reference)
-  isTemporary: boolean;  // TEMPORARY parameter modifier
+  isTemporary?: boolean;  // TEMPORARY parameter modifier
 }
 
 /**
