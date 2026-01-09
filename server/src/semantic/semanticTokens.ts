@@ -193,6 +193,7 @@ export class SemanticTokensProvider {
       case TokenType.Local:
       case TokenType.Var:
       case TokenType.Trigger:
+      case TokenType.Event:
       case TokenType.Begin:
       case TokenType.End:
       case TokenType.True:

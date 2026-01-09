@@ -207,6 +207,7 @@ function createMockAST(options: {
     variables: options.globalVariables || [],
     procedures: options.procedures || [],
     triggers: options.triggers || [],
+    events: [],
     startToken,
     endToken
   } : null;

@@ -80,6 +80,7 @@ export enum TokenType {
   Local = 'LOCAL',
   Var = 'VAR',
   Trigger = 'TRIGGER',
+  Event = 'EVENT',
 
   // Keywords - Blocks
   Begin = 'BEGIN',
@@ -230,6 +231,7 @@ export const KEYWORDS: Map<string, TokenType> = new Map([
   ['local', TokenType.Local],
   ['var', TokenType.Var],
   ['trigger', TokenType.Trigger],
+  ['event', TokenType.Event],
 
   // Blocks
   ['begin', TokenType.Begin],

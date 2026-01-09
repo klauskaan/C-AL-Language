@@ -18,6 +18,7 @@ import {
   ProcedureDeclaration,
   ParameterDeclaration,
   TriggerDeclaration,
+  EventDeclaration,
   Statement,
   BlockStatement,
   IfStatement,
@@ -931,13 +932,14 @@ export class Parser {
     const variables: VariableDeclaration[] = [];
     const procedures: ProcedureDeclaration[] = [];
     const triggers: TriggerDeclaration[] = [];
+    const events: EventDeclaration[] = [];
 
     // Parse VAR section if present
     if (this.check(TokenType.Var)) {
       this.parseVariableDeclarations(variables);
     }
 
-    // Parse procedures and triggers
+    // Parse procedures, triggers, and events
     while (!this.isAtEnd()) {
       try {
         // Check for AL-only tokens before procedure/trigger declarations
@@ -970,6 +972,8 @@ export class Parser {
           procedures.push(this.parseProcedure(isLocal));
         } else if (this.check(TokenType.Trigger)) {
           triggers.push(this.parseTrigger());
+        } else if (this.check(TokenType.Event)) {
+          events.push(this.parseEvent());
         } else if (this.check(TokenType.Begin)) {
           // Main code block (documentation trigger) - skip for now
           break;
@@ -979,9 +983,10 @@ export class Parser {
       } catch (error) {
         if (error instanceof ParseError) {
           this.errors.push(error);
-          // Skip to next procedure/trigger/end
+          // Skip to next procedure/trigger/event/end
           while (!this.check(TokenType.Procedure) && !this.check(TokenType.Function) &&
-                 !this.check(TokenType.Trigger) && !this.check(TokenType.Begin) && !this.isAtEnd()) {
+                 !this.check(TokenType.Trigger) && !this.check(TokenType.Event) &&
+                 !this.check(TokenType.Begin) && !this.isAtEnd()) {
             this.advance();
           }
         } else {
@@ -995,6 +1000,7 @@ export class Parser {
       variables,
       procedures,
       triggers,
+      events,
       startToken,
       endToken: this.previous()
     };
@@ -1349,6 +1355,106 @@ export class Parser {
       startToken,
       endToken: this.previous()
     };
+  }
+
+  /**
+   * Parse an EVENT declaration for DotNet control add-in event handlers
+   * Syntax: EVENT SubscriberName@Number::EventName@Number(parameters);
+   * Example: EVENT CameraProvider@1001::PictureAvailable@10(PictureName@1001 : Text;PictureFilePath@1000 : Text);
+   */
+  private parseEvent(): EventDeclaration {
+    const startToken = this.consume(TokenType.Event, 'Expected EVENT');
+
+    // Parse subscriber name (e.g., "CameraProvider@1001" or "WebPageViewer@-2")
+    const subscriberName = this.parseEventQualifiedName();
+
+    // Expect :: scope resolution operator
+    this.consume(TokenType.DoubleColon, 'Expected ::');
+
+    // Parse event name (e.g., "PictureAvailable@10" or "ControlAddInReady@8")
+    const eventName = this.parseEventQualifiedName();
+
+    // Parse parameters (reuse existing parameter parsing)
+    const parameters = this.parseProcedureParameters();
+
+    // Consume semicolon after event declaration
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    // Parse local variables
+    const variables: VariableDeclaration[] = [];
+    if (this.check(TokenType.Var)) {
+      this.parseVariableDeclarations(variables);
+    }
+
+    // Parse event body
+    const body: Statement[] = [];
+    if (this.check(TokenType.Begin)) {
+      const block = this.parseBlock();
+      body.push(...block.statements);
+    }
+
+    // Skip semicolon after END
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    return {
+      type: 'EventDeclaration',
+      subscriberName,
+      eventName,
+      parameters,
+      variables,
+      body,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  /**
+   * Parse an event-qualified name which includes @number suffix.
+   * Unlike procedure names, EVENT names retain the @number suffix because it's part
+   * of the event identity (e.g., "CameraProvider@1001" refers to a specific control).
+   * Examples: "CameraProvider@1001", "WebPageViewer@-2", "PictureAvailable@10"
+   */
+  private parseEventQualifiedName(): string {
+    // Validate that we have an identifier-like token
+    if (!this.canBeUsedAsIdentifier()) {
+      this.recordError(`Expected identifier for event name, found '${this.peek().value}'`, this.peek());
+      // Try to recover by returning empty string
+      return '';
+    }
+
+    // Get the identifier part
+    const nameToken = this.advance();
+    let name = nameToken.value;
+
+    // Check for @number suffix (@ is tokenized as Unknown with value '@')
+    // Can be negative like @-2
+    if (this.check(TokenType.Unknown) && this.peek().value === '@') {
+      this.advance(); // consume @
+      // Handle optional negative sign
+      if (this.check(TokenType.Minus)) {
+        name += '@-';
+        this.advance();
+        // Expect integer after minus
+        if (this.check(TokenType.Integer)) {
+          name += this.advance().value;
+        } else {
+          this.recordError(`Expected number after @- in event name`, this.peek());
+        }
+      } else if (this.check(TokenType.Integer)) {
+        // Positive number
+        name += '@';
+        name += this.advance().value;
+      } else {
+        this.recordError(`Expected number after @ in event name`, this.peek());
+        name += '@';
+      }
+    }
+
+    return name;
   }
 
   private parseBlock(): BlockStatement {
@@ -2397,6 +2503,7 @@ export class Parser {
            this.check(TokenType.Function) ||
            this.check(TokenType.Local) ||
            this.check(TokenType.Trigger) ||
+           this.check(TokenType.Event) ||
            this.check(TokenType.Begin) ||
            this.check(TokenType.Code) ||  // CODE section keyword
            this.check(TokenType.LeftBracket);  // Attributes like [External] before procedures

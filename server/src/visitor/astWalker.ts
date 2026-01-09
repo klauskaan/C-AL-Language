@@ -36,6 +36,7 @@ import {
   ProcedureDeclaration,
   ParameterDeclaration,
   TriggerDeclaration,
+  EventDeclaration,
   DataType,
   Statement,
   BlockStatement,
@@ -142,6 +143,9 @@ export class ASTWalker {
         break;
       case 'TriggerDeclaration':
         this.walkTriggerDeclaration(node as TriggerDeclaration, visitor);
+        break;
+      case 'EventDeclaration':
+        this.walkEventDeclaration(node as EventDeclaration, visitor);
         break;
       case 'DataType':
         this.walkDataType(node as DataType, visitor);
@@ -313,6 +317,9 @@ export class ASTWalker {
     for (const trigger of node.triggers) {
       this.walk(trigger, visitor);
     }
+    for (const event of node.events) {
+      this.walk(event, visitor);
+    }
   }
 
   // ============================================
@@ -425,6 +432,27 @@ export class ASTWalker {
     for (const variable of node.variables) {
       this.walk(variable, visitor);
     }
+    for (const stmt of node.body) {
+      this.walkStatement(stmt, visitor);
+    }
+  }
+
+  private walkEventDeclaration(node: EventDeclaration, visitor: Partial<ASTVisitor>): void {
+    if (visitor.visitEventDeclaration) {
+      const result = visitor.visitEventDeclaration(node);
+      if (result === false) {
+        return;
+      }
+    }
+    // Walk event parameters
+    for (const param of node.parameters) {
+      this.walk(param, visitor);
+    }
+    // Walk local variables
+    for (const variable of node.variables) {
+      this.walk(variable, visitor);
+    }
+    // Walk body statements
     for (const stmt of node.body) {
       this.walkStatement(stmt, visitor);
     }

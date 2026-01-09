@@ -15,6 +15,7 @@ import {
   ProcedureDeclaration,
   ParameterDeclaration,
   TriggerDeclaration,
+  EventDeclaration,
   DataType,
   BlockStatement,
   IfStatement,
@@ -138,6 +139,11 @@ export interface ASTVisitor {
    * Visit a TriggerDeclaration node (e.g., OnInsert, OnValidate)
    */
   visitTriggerDeclaration?(node: TriggerDeclaration): void | false;
+
+  /**
+   * Visit an EventDeclaration node (DotNet control add-in event handler)
+   */
+  visitEventDeclaration?(node: EventDeclaration): void | false;
 
   /**
    * Visit a DataType node (type specification)

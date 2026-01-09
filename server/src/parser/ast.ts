@@ -175,6 +175,7 @@ export interface CodeSection extends ASTNode {
   variables: VariableDeclaration[];
   procedures: ProcedureDeclaration[];
   triggers: TriggerDeclaration[];
+  events: EventDeclaration[];
 }
 
 /**
@@ -245,6 +246,19 @@ export interface ParameterDeclaration extends ASTNode, ParameterModifiers {
 export interface TriggerDeclaration extends ASTNode {
   type: 'TriggerDeclaration';
   name: string;
+  variables: VariableDeclaration[];
+  body: Statement[];
+}
+
+/**
+ * Event declaration for DotNet control add-in event handlers
+ * Syntax: EVENT SubscriberName@Number::EventName@Number(parameters);
+ */
+export interface EventDeclaration extends ASTNode {
+  type: 'EventDeclaration';
+  subscriberName: string;  // e.g., "CameraProvider@1001"
+  eventName: string;       // e.g., "PictureAvailable@10"
+  parameters: ParameterDeclaration[];
   variables: VariableDeclaration[];
   body: Statement[];
 }

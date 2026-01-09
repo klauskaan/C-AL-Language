@@ -4,6 +4,7 @@ import {
   VariableDeclaration,
   ProcedureDeclaration,
   TriggerDeclaration,
+  EventDeclaration,
   FieldDeclaration
 } from '../parser/ast';
 import { Type } from '../types/types';
@@ -244,6 +245,47 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
     // Add local variables to trigger scope
     for (const variable of node.variables) {
       triggerScope.addSymbol({
+        name: variable.name,
+        kind: 'variable',
+        token: variable.startToken,
+        type: variable.dataType.typeName
+      });
+    }
+
+    // Restore previous scope
+    this.currentScope = prevScope;
+
+    // Return false to prevent walker from re-traversing children
+    return false;
+  }
+
+  /**
+   * Visit an EventDeclaration node and add its parameters and local variables to a child scope.
+   * Event handlers are similar to procedures but are triggered by DotNet control add-in events.
+   */
+  visitEventDeclaration(node: EventDeclaration): void | false {
+    // Create child scope for event body
+    const eventScope = new Scope(this.currentScope);
+    eventScope.startOffset = node.startToken.startOffset;
+    eventScope.endOffset = node.endToken.endOffset;
+
+    // Switch to event scope, handle parameters and variables, then restore
+    const prevScope = this.currentScope;
+    this.currentScope = eventScope;
+
+    // Add parameters to event scope
+    for (const param of node.parameters) {
+      eventScope.addSymbol({
+        name: param.name,
+        kind: 'parameter',
+        token: param.startToken,
+        type: param.dataType.typeName
+      });
+    }
+
+    // Add local variables to event scope
+    for (const variable of node.variables) {
+      eventScope.addSymbol({
         name: variable.name,
         kind: 'variable',
         token: variable.startToken,

@@ -34,7 +34,6 @@
 
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../parser';
-import { DataType } from '../ast';
 
 describe('Parser - DotNet Assembly-Qualified Types', () => {
   describe('DotNet with full assembly qualification', () => {
@@ -438,8 +437,151 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
       const ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
-      // EVENT parsing may not be fully implemented, but should not crash
-      expect(ast.object).toBeDefined();
+      expect(ast.object!.code!.events).toHaveLength(1);
+      const event = ast.object!.code!.events[0];
+      expect(event.subscriberName).toBe('Chart@-1160030001');
+      expect(event.eventName).toBe('DataPointClicked@1');
+      expect(event.parameters).toHaveLength(1);
+      expect(event.parameters[0].name).toBe('point');
+      expect(event.parameters[0].dataType.typeName).toBe('DotNet');
+    });
+
+    it('should parse EVENT with multiple parameters', () => {
+      // Pattern from PAG9070.TXT - CameraProvider event
+      const code = `OBJECT Page 1 Test {
+        CODE {
+          VAR
+            CameraProvider@1001 : DotNet "'Microsoft.Dynamics.Nav.ClientExtensions'.CameraProvider" WITHEVENTS RUNONCLIENT;
+
+          EVENT CameraProvider@1001::PictureAvailable@10(PictureName@1001 : Text;PictureFilePath@1000 : Text);
+          VAR
+            IncomingDocument@1002 : Record 130;
+          BEGIN
+            IncomingDocument.CreateIncomingDocumentFromServerFile(PictureName,PictureFilePath);
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object!.code!.events).toHaveLength(1);
+      const event = ast.object!.code!.events[0];
+      expect(event.subscriberName).toBe('CameraProvider@1001');
+      expect(event.eventName).toBe('PictureAvailable@10');
+      expect(event.parameters).toHaveLength(2);
+      expect(event.parameters[0].name).toBe('PictureName');
+      expect(event.parameters[1].name).toBe('PictureFilePath');
+      expect(event.variables).toHaveLength(1);
+      expect(event.variables[0].name).toBe('IncomingDocument');
+      expect(event.body.length).toBeGreaterThan(0);
+    });
+
+    it('should parse EVENT with empty body', () => {
+      // Pattern from PAG9980.TXT - DocumentReady event with empty body
+      const code = `OBJECT Page 1 Test {
+        CODE {
+          EVENT WebPageViewer@-2::DocumentReady@9();
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object!.code!.events).toHaveLength(1);
+      const event = ast.object!.code!.events[0];
+      expect(event.subscriberName).toBe('WebPageViewer@-2');
+      expect(event.eventName).toBe('DocumentReady@9');
+      expect(event.parameters).toHaveLength(0);
+      expect(event.variables).toHaveLength(0);
+      expect(event.body).toHaveLength(0);
+    });
+
+    it('should parse multiple EVENT declarations', () => {
+      // Pattern from PAG9980.TXT - Multiple events for same control add-in
+      const code = `OBJECT Page 1 Test {
+        CODE {
+          EVENT WebPageViewer@-2::ControlAddInReady@8(callbackUrl@1000 : Text);
+          BEGIN
+          END;
+
+          EVENT WebPageViewer@-2::DocumentReady@9();
+          BEGIN
+          END;
+
+          EVENT WebPageViewer@-2::Callback@10(data@1000 : Text);
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object!.code!.events).toHaveLength(3);
+      expect(ast.object!.code!.events[0].eventName).toBe('ControlAddInReady@8');
+      expect(ast.object!.code!.events[1].eventName).toBe('DocumentReady@9');
+      expect(ast.object!.code!.events[2].eventName).toBe('Callback@10');
+    });
+
+    it('should report error for EVENT without identifier', () => {
+      // Edge case: EVENT keyword not followed by identifier
+      const code = `OBJECT Page 1 Test {
+        CODE {
+          EVENT ::Method@1();
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      parser.parse();
+
+      // Should report error for missing identifier
+      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(parser.getErrors()[0].message).toContain('identifier');
+    });
+
+    it('should handle EVENT without @ suffix', () => {
+      // EVENT without @number - should still parse (@ is optional syntactically)
+      const code = `OBJECT Page 1 Test {
+        CODE {
+          EVENT CameraProvider::PictureAvailable();
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Should parse without errors - @number is optional
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object!.code!.events).toHaveLength(1);
+      expect(ast.object!.code!.events[0].subscriberName).toBe('CameraProvider');
+      expect(ast.object!.code!.events[0].eventName).toBe('PictureAvailable');
+    });
+
+    it('should report error for EVENT with missing :: separator', () => {
+      const code = `OBJECT Page 1 Test {
+        CODE {
+          EVENT CameraProvider@1001 PictureAvailable@10();
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      parser.parse();
+
+      // Should report error for missing ::
+      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(parser.getErrors()[0].message).toContain('::');
     });
 
     it('should parse multiple DotNet variables with mixed patterns', () => {

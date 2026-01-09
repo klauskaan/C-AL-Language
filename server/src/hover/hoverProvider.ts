@@ -36,7 +36,7 @@ const OBJECT_TYPE_KEYWORDS = new Set([
 
 /** Keywords that represent declarations */
 const DECLARATION_KEYWORDS = new Set([
-  'procedure', 'function', 'local', 'var', 'trigger'
+  'procedure', 'function', 'local', 'var', 'trigger', 'event'
 ]);
 
 /** Keywords that represent operators */
@@ -193,7 +193,8 @@ function getDeclarationDescription(keyword: string): string {
     'function': 'Alias for PROCEDURE (same functionality).',
     'local': 'Marks a procedure as local (not visible outside the object).',
     'var': 'Declares variables or marks parameters as passed by reference.',
-    'trigger': 'Declares an event handler triggered by system events.'
+    'trigger': 'Declares an event handler triggered by system events.',
+    'event': 'Declares a handler for DotNet control add-in events (NAV 2016+).'
   };
   return descriptions[keyword] || '';
 }

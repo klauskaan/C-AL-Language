@@ -20,6 +20,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
         "type": "RIGHT_PAREN",
         "value": ")",
       },
+      "events": [],
       "procedures": [
         {
           "body": [
@@ -44126,6 +44127,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
         "type": "SEMICOLON",
         "value": ";",
       },
+      "events": [],
       "procedures": [
         {
           "body": [
@@ -45719,6 +45721,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
         "type": "SEMICOLON",
         "value": ";",
       },
+      "events": [],
       "procedures": [
         {
           "body": [
@@ -52360,6 +52363,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-343-check-credit-limit
         "type": "SEMICOLON",
         "value": ";",
       },
+      "events": [],
       "procedures": [],
       "startToken": {
         "column": 3,
@@ -52600,6 +52604,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
         "type": "SEMICOLON",
         "value": ";",
       },
+      "events": [],
       "procedures": [
         {
           "body": [
@@ -53341,6 +53346,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
         "type": "RIGHT_PAREN",
         "value": ")",
       },
+      "events": [],
       "procedures": [
         {
           "body": [],
@@ -57751,6 +57757,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
         "type": "SEMICOLON",
         "value": ";",
       },
+      "events": [],
       "procedures": [
         {
           "body": [
@@ -59566,6 +59573,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
         "type": "SEMICOLON",
         "value": ";",
       },
+      "events": [],
       "procedures": [
         {
           "body": [
@@ -71092,6 +71100,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-5342-option-initvalue
         "type": "LEFT_BRACE",
         "value": "{",
       },
+      "events": [],
       "procedures": [],
       "startToken": {
         "column": 3,
@@ -74362,6 +74371,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-apostrophe-in-descrip
         "type": "LEFT_BRACE",
         "value": "{",
       },
+      "events": [],
       "procedures": [],
       "startToken": {
         "column": 3,
@@ -74709,6 +74719,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: xmlport-1225-data-exch-def-
         "type": "LEFT_BRACE",
         "value": "{",
       },
+      "events": [],
       "procedures": [],
       "startToken": {
         "column": 3,
