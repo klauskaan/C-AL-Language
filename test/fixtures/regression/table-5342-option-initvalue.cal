@@ -1,0 +1,54 @@
+OBJECT Table 5342 CRM Contact
+{
+  OBJECT-PROPERTIES
+  {
+    Date=22-11-17;
+    Time=12:00:00;
+    Version List=NAVW111.00;
+  }
+  PROPERTIES
+  {
+    TableType=CRM;
+    ExternalName=contact;
+    CaptionML=[DAN=CRM Contact;
+               ENU=CRM Contact];
+  }
+  FIELDS
+  {
+    { 1   ;   ;ContactId           ;GUID          ;ExternalName=contactid;
+                                                   ExternalType=Uniqueidentifier;
+                                                   CaptionML=[DAN=Contact;
+                                                              ENU=Contact] }
+    { 3   ;   ;CustomerSizeCode    ;Option        ;InitValue=DefaultValue;
+                                                   ExternalName=customersizecode;
+                                                   ExternalType=Picklist;
+                                                   OptionOrdinalValues=1;
+                                                   CaptionML=[DAN=Customer Size;
+                                                              ENU=Customer Size];
+                                                   OptionCaptionML=[DAN=Default Value;
+                                                                    ENU=Default Value];
+                                                   OptionString=DefaultValue }
+    { 4   ;   ;CustomerTypeCode    ;Option        ;InitValue=DefaultValue;
+                                                   ExternalName=customertypecode;
+                                                   ExternalType=Picklist;
+                                                   OptionOrdinalValues=1;
+                                                   CaptionML=[DAN=Relationship Type;
+                                                              ENU=Relationship Type];
+                                                   OptionCaptionML=[DAN=Default Value;
+                                                                    ENU=Default Value];
+                                                   OptionString=DefaultValue }
+  }
+  KEYS
+  {
+    {    ;ContactId                               ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}

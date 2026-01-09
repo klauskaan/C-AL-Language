@@ -1,0 +1,22 @@
+OBJECT Table 5342 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;Field1      ;Code10        ;Description=This is John's field }
+    { 2   ;   ;Field2      ;Option        ;InitValue=DefaultValue;
+                                           OptionString=DefaultValue }
+  }
+  KEYS
+  {
+    {    ;Field1                                  ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}

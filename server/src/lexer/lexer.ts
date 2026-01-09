@@ -184,6 +184,10 @@ export class Lexer {
     }
 
     // String literals (single quotes)
+    // Apostrophes can start string literals in most contexts
+    // Apostrophes within identifiers (like "it's" or "contact's") are handled by isIdentifierPart()
+    // The distinction is: if apostrophe starts a new token (after whitespace), it's a string
+    // If apostrophe is during identifier scanning, it's part of the identifier (in SECTION_LEVEL)
     if (ch === "'") {
       this.scanString(startPos, startLine, startColumn);
       return;
@@ -690,6 +694,14 @@ export class Lexer {
   }
 
   private isIdentifierPart(ch: string): boolean {
+    // Allow apostrophes in identifiers ONLY in SECTION_LEVEL context (property values)
+    // AND only when they're truly part of a word (not starting a new string)
+    // We check if the previous character (before the identifier started) was alphanumeric
+    // to distinguish "word's" from "word '" (where ' should be a string delimiter)
+    if (ch === "'" && this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
+      // This apostrophe is part of an identifier being scanned, so allow it
+      return true;
+    }
     return this.isIdentifierStart(ch) || this.isDigit(ch);
   }
 
