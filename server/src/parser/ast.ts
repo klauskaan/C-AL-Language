@@ -82,17 +82,61 @@ export interface FieldDeclaration extends ASTNode {
 }
 
 /**
- * Data type information
+ * Data type information for variable, parameter, and field declarations.
+ *
+ * @example
+ * // Simple type
+ * { typeName: 'Integer' }
+ *
+ * // Sized type
+ * { typeName: 'Text50', length: 50 }
+ *
+ * // Single-dimensional array
+ * { typeName: 'ARRAY[10] OF Integer', length: 10, dimensions: [10] }
+ *
+ * // Multi-dimensional array
+ * { typeName: 'ARRAY[9,2] OF Decimal', length: 9, dimensions: [9, 2] }
+ *
+ * // Record type
+ * { typeName: 'Record 18', tableId: 18 }
  */
 export interface DataType extends ASTNode {
   type: 'DataType';
+
+  /** Full type name as it appears in source (e.g., 'ARRAY[9,2] OF Decimal', 'Record 18', 'Text50') */
   typeName: string;
+
+  /**
+   * Size or first dimension of the type.
+   * - For sized types (Text, Code): the size (e.g., 50 for Text50)
+   * - For single-dimension arrays: the array size
+   * - For multi-dimensional arrays: the first dimension (for backwards compatibility)
+   * @deprecated For multi-dimensional arrays, use `dimensions[0]` instead
+   */
   length?: number;
-  tableId?: number;  // For Record types
-  optionString?: string;  // For Option types (e.g., 'Open,Pending,Posted')
-  isTemporary?: boolean;  // For ARRAY OF TEMPORARY patterns
-  assemblyReference?: string;  // For DotNet types - assembly name/version/culture/token
-  dotNetTypeName?: string;  // For DotNet types - full .NET type path (e.g., 'System.String', 'System.Collections.Generic.Dictionary`2')
+
+  /**
+   * Array dimension sizes for ARRAY types.
+   * - Single-dimension: [10] for ARRAY[10]
+   * - Multi-dimensional: [9, 2] for ARRAY[9,2], [10, 4, 4] for ARRAY[10,4,4]
+   * - Only present for ARRAY types
+   */
+  dimensions?: number[];
+
+  /** Table ID for Record types (e.g., 18 for 'Record 18') */
+  tableId?: number;
+
+  /** Option values for Option types (e.g., 'Open,Pending,Posted') */
+  optionString?: string;
+
+  /** Whether the TEMPORARY modifier is present (for ARRAY OF TEMPORARY patterns) */
+  isTemporary?: boolean;
+
+  /** Assembly reference for DotNet types - assembly name/version/culture/token */
+  assemblyReference?: string;
+
+  /** Full .NET type path for DotNet types (e.g., 'System.String', 'System.Collections.Generic.Dictionary`2') */
+  dotNetTypeName?: string;
 }
 
 /**

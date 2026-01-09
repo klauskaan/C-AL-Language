@@ -98,7 +98,7 @@ describe('Integration - COD1003.TXT Auto-Numbering Issues', () => {
       const parameters = indentProc?.parameters || [];
       expect(parameters).toHaveLength(1);
       expect(parameters[0].name).toBe('JobNo');
-      expect(parameters[0].dataType?.typeName).toBe('Code');
+      expect(parameters[0].dataType?.typeName).toBe('Code[20]');
       expect(parameters[0].dataType?.length).toBe(20);
     });
 
@@ -141,7 +141,7 @@ describe('Integration - COD1003.TXT Auto-Numbering Issues', () => {
       const jtNoVar = globalVariables.find((v: any) => v.name === 'JTNo');
       expect(jtNoVar).toBeDefined();
       expect(jtNoVar?.name).toBe('JTNo');
-      expect(jtNoVar?.dataType?.typeName).toBe('ARRAY[10] OF Code');
+      expect(jtNoVar?.dataType?.typeName).toBe('ARRAY[10] OF Code[20]');
 
       // Verify array type
       const arrayType = jtNoVar?.dataType;
@@ -178,7 +178,7 @@ describe('Integration - COD1003.TXT Auto-Numbering Issues', () => {
 
       const jtNoVar = globalVariables.find((v: any) => v.name === 'JTNo');
       expect(jtNoVar).toBeDefined();
-      expect(jtNoVar?.dataType?.typeName).toBe('ARRAY[10] OF Code');
+      expect(jtNoVar?.dataType?.typeName).toBe('ARRAY[10] OF Code[20]');
 
       const iVar = globalVariables.find((v: any) => v.name === 'i');
       expect(iVar).toBeDefined();

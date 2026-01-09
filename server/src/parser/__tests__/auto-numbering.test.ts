@@ -73,7 +73,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
       const parameters = procedures[0].parameters || [];
       expect(parameters).toHaveLength(1);
       expect(parameters[0].name).toBe('JobNo');
-      expect(parameters[0].dataType?.typeName).toBe('Code');
+      expect(parameters[0].dataType?.typeName).toBe('Code[20]');
     });
 
     it('should parse procedure with [External] attribute and @number', () => {
@@ -216,7 +216,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
       const variables = procedures[0].variables || [];
       expect(variables).toHaveLength(1);
       expect(variables[0].name).toBe('JTNo');
-      expect(variables[0].dataType?.typeName).toBe('ARRAY[10] OF Code');
+      expect(variables[0].dataType?.typeName).toBe('ARRAY[10] OF Code[20]');
     });
 
     it('should parse multiple local variables with @numbers', () => {

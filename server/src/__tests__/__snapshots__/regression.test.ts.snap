@@ -41679,7 +41679,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Text",
+                "typeName": "Text[250]",
               },
               "endToken": {
                 "column": 73,
@@ -54769,7 +54769,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             },
             "tableId": undefined,
             "type": "DataType",
-            "typeName": "Text",
+            "typeName": "Text[250]",
           },
           "endToken": {
             "column": 52,
@@ -58026,7 +58026,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Code",
+                "typeName": "Code[10]",
               },
               "endToken": {
                 "column": 49,
@@ -61009,7 +61009,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Code",
+                "typeName": "Code[20]",
               },
               "endToken": {
                 "column": 57,
@@ -61053,7 +61053,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Code",
+                "typeName": "Code[20]",
               },
               "endToken": {
                 "column": 93,
@@ -61141,7 +61141,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Text",
+                "typeName": "Text[250]",
               },
               "endToken": {
                 "column": 142,
@@ -61273,7 +61273,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Text",
+                "typeName": "Text[100]",
               },
               "endToken": {
                 "column": 224,
@@ -61317,7 +61317,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Text",
+                "typeName": "Text[10]",
               },
               "endToken": {
                 "column": 262,
@@ -61361,7 +61361,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Text",
+                "typeName": "Text[50]",
               },
               "endToken": {
                 "column": 293,
@@ -62336,7 +62336,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Code",
+                "typeName": "Code[20]",
               },
               "endToken": {
                 "column": 66,
@@ -62380,7 +62380,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Code",
+                "typeName": "Code[20]",
               },
               "endToken": {
                 "column": 102,
@@ -62468,7 +62468,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Text",
+                "typeName": "Text[250]",
               },
               "endToken": {
                 "column": 151,
@@ -62556,7 +62556,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Text",
+                "typeName": "Text[100]",
               },
               "endToken": {
                 "column": 202,
@@ -62644,7 +62644,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Text",
+                "typeName": "Text[30]",
               },
               "endToken": {
                 "column": 255,
@@ -63722,7 +63722,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Code",
+                "typeName": "Code[20]",
               },
               "endToken": {
                 "column": 66,
@@ -63766,7 +63766,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Code",
+                "typeName": "Code[20]",
               },
               "endToken": {
                 "column": 102,
@@ -63854,7 +63854,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Text",
+                "typeName": "Text[250]",
               },
               "endToken": {
                 "column": 151,
@@ -63898,7 +63898,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Text",
+                "typeName": "Text[50]",
               },
               "endToken": {
                 "column": 182,
@@ -64030,7 +64030,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Text",
+                "typeName": "Text[100]",
               },
               "endToken": {
                 "column": 256,
@@ -64074,7 +64074,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Text",
+                "typeName": "Text[10]",
               },
               "endToken": {
                 "column": 294,

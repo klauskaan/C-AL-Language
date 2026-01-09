@@ -539,6 +539,44 @@ export class Parser {
   }
 
   /**
+   * Maximum number of dimensions allowed for arrays.
+   * C/AL typically supports up to 10 dimensions.
+   */
+  private static readonly MAX_ARRAY_DIMENSIONS = 10;
+
+  /**
+   * Parse comma-separated array dimensions from within brackets.
+   * Handles patterns like [10], [9,2], [10,4,4].
+   * Assumes the opening '[' has already been consumed.
+   *
+   * @returns Array of dimension sizes
+   */
+  private parseArrayDimensions(): number[] {
+    const dimensions: number[] = [];
+
+    // Parse first dimension (required)
+    const firstSizeToken = this.consume(TokenType.Integer, 'Expected array size');
+    dimensions.push(this.parseInteger(firstSizeToken, 'array size'));
+
+    // Parse additional dimensions separated by commas
+    while (this.check(TokenType.Comma)) {
+      this.advance(); // consume ','
+      const dimToken = this.consume(TokenType.Integer, 'Expected array dimension');
+      dimensions.push(this.parseInteger(dimToken, 'array dimension'));
+    }
+
+    // Validate dimension count
+    if (dimensions.length > Parser.MAX_ARRAY_DIMENSIONS) {
+      this.recordError(
+        `Array cannot have more than ${Parser.MAX_ARRAY_DIMENSIONS} dimensions (found ${dimensions.length})`,
+        this.peek()
+      );
+    }
+
+    return dimensions;
+  }
+
+  /**
    * Parse data type specification
    * Supports: simple types, sized types, Record types, ARRAY types, TextConst
    * @returns DataType node with type information
@@ -551,11 +589,12 @@ export class Parser {
     let length: number | undefined;
     let tableId: number | undefined;
 
-    // Check for ARRAY[n] OF Type pattern
+    // Check for ARRAY[n] OF Type or ARRAY[n,m,...] OF Type pattern (multi-dimensional)
     if (typeName.toUpperCase() === 'ARRAY' && this.check(TokenType.LeftBracket)) {
       this.advance(); // consume '['
-      const sizeToken = this.consume(TokenType.Integer, 'Expected array size');
-      const arraySize = this.parseInteger(sizeToken, 'array size');
+
+      const dimensions = this.parseArrayDimensions();
+
       this.consume(TokenType.RightBracket, 'Expected ]');
 
       // Expect OF keyword
@@ -572,14 +611,16 @@ export class Parser {
 
         const elementType = this.parseDataType();
 
-        // Don't include TEMPORARY in type name - it's tracked separately in isTemporary flag
-        typeName = `ARRAY[${arraySize}] OF ${elementType.typeName}`;
+        // Build typeName with all dimensions
+        const dimensionStr = dimensions.join(',');
+        typeName = `ARRAY[${dimensionStr}] OF ${elementType.typeName}`;
       }
 
       return {
         type: 'DataType',
         typeName,
-        length: arraySize,
+        length: dimensions[0], // Keep first dimension for backwards compatibility
+        dimensions, // Store all dimensions
         tableId,
         isTemporary: hasTemporary,
         startToken,
@@ -614,12 +655,14 @@ export class Parser {
       }
     }
 
-    // Check for length specification [length]
+    // Check for length specification [length] - e.g., Text[30], Code[20]
     if (this.check(TokenType.LeftBracket)) {
       this.advance();
       const lengthToken = this.consume(TokenType.Integer, 'Expected length');
       length = this.parseInteger(lengthToken, 'string/code length');
       this.consume(TokenType.RightBracket, 'Expected ]');
+      // Include bracket notation in typeName for proper display
+      typeName = `${typeName}[${length}]`;
     }
 
     // Handle TextConst with string value: TextConst 'ENU=...'
