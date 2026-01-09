@@ -247,6 +247,24 @@ export interface ExitStatement extends Statement {
 }
 
 /**
+ * WITH-DO statement for record scope shortening
+ *
+ * Syntax: WITH record DO statement
+ *
+ * Creates a scope where fields of the record can be accessed without
+ * qualification (e.g., "No." instead of Customer."No.").
+ *
+ * Note: C/AL supports only single-variable WITH (not multi-variable like Pascal)
+ *
+ * Available: NAV 2009+
+ */
+export interface WithStatement extends Statement {
+  type: 'WithStatement';
+  record: Expression;  // Single record variable or expression
+  body: Statement;     // Block or single statement
+}
+
+/**
  * Expressions
  */
 export interface Expression extends ASTNode {

@@ -48,6 +48,7 @@ import {
   AssignmentStatement,
   CallStatement,
   ExitStatement,
+  WithStatement,
   Expression,
   Identifier,
   Literal,
@@ -176,6 +177,9 @@ export class ASTWalker {
         break;
       case 'ExitStatement':
         this.walkExitStatement(node as ExitStatement, visitor);
+        break;
+      case 'WithStatement':
+        this.walkWithStatement(node as WithStatement, visitor);
         break;
 
       // Expressions
@@ -573,6 +577,17 @@ export class ASTWalker {
     if (node.value) {
       this.walkExpression(node.value, visitor);
     }
+  }
+
+  private walkWithStatement(node: WithStatement, visitor: Partial<ASTVisitor>): void {
+    if (visitor.visitWithStatement) {
+      const result = visitor.visitWithStatement(node);
+      if (result === false) {
+        return;
+      }
+    }
+    this.walkExpression(node.record, visitor);
+    this.walkStatement(node.body, visitor);
   }
 
   // ============================================

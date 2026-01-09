@@ -26,6 +26,7 @@ import {
   CaseStatement,
   CaseBranch,
   ExitStatement,
+  WithStatement,
   AssignmentStatement,
   CallStatement,
   Expression,
@@ -1046,7 +1047,7 @@ export class Parser {
     const body: Statement[] = [];
     if (this.check(TokenType.Begin)) {
       const block = this.parseBlock();
-      body.push(block);
+      body.push(...block.statements);
     }
 
     // Skip semicolon after END
@@ -1332,6 +1333,11 @@ export class Parser {
       return this.parseExitStatement();
     }
 
+    // WITH statement
+    if (this.check(TokenType.With)) {
+      return this.parseWithStatement();
+    }
+
     // BEGIN block
     if (this.check(TokenType.Begin)) {
       return this.parseBlock();
@@ -1610,6 +1616,51 @@ export class Parser {
     return {
       type: 'ExitStatement',
       value,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  /**
+   * Parse WITH-DO statement
+   *
+   * Syntax: WITH record DO statement
+   *
+   * The WITH statement creates a temporary scope where fields of the record
+   * can be accessed without qualification. For example:
+   *   WITH Customer DO
+   *     "No." := '1000';  // Same as Customer."No." := '1000';
+   *
+   * Supports nesting: inner WITH takes precedence for field resolution.
+   * Note: C/AL only supports single-variable WITH (not multi-variable).
+   */
+  private parseWithStatement(): WithStatement {
+    const startToken = this.consume(TokenType.With, 'Expected WITH');
+
+    // Parse record expression (variable or complex expression)
+    const record = this.parseExpression();
+
+    // DO keyword
+    this.consume(TokenType.Do, 'Expected DO');
+
+    // Parse body (can be BEGIN-END block or single statement)
+    const body = this.check(TokenType.Begin)
+      ? this.parseBlock()
+      : this.parseStatement();
+
+    if (!body) {
+      throw new ParseError('Expected statement after DO', this.peek());
+    }
+
+    // Optional semicolon after WITH statement
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    return {
+      type: 'WithStatement',
+      record,
+      body,
       startToken,
       endToken: this.previous()
     };

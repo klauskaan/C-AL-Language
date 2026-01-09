@@ -26,6 +26,7 @@ import {
   AssignmentStatement,
   CallStatement,
   ExitStatement,
+  WithStatement,
   Identifier,
   Literal,
   BinaryExpression,
@@ -193,6 +194,11 @@ export interface ASTVisitor {
    * Visit an ExitStatement node (EXIT with optional value)
    */
   visitExitStatement?(node: ExitStatement): void | false;
+
+  /**
+   * Visit a WithStatement node (WITH...DO)
+   */
+  visitWithStatement?(node: WithStatement): void | false;
 
   // Expressions
   /**
