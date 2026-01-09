@@ -138,6 +138,7 @@ export class Parser {
     let keys: KeySection | null = null;
     let fieldGroups: FieldGroupSection | null = null;
     let code: CodeSection | null = null;
+    let objectLevelVariables: VariableDeclaration[] = [];
 
     while (!this.isAtEnd()) {
       // Check for AL-only tokens at section level
@@ -154,8 +155,16 @@ export class Parser {
           keys = this.parseKeySection();
         } else if (token.type === TokenType.FieldGroups) {
           fieldGroups = this.parseFieldGroupSection();
+        } else if (token.type === TokenType.Var) {
+          // Parse object-level VAR section
+          // These variables should be included in the CODE section
+          this.parseVariableDeclarations(objectLevelVariables);
         } else if (this.isCodeSectionKeyword()) {
           code = this.parseCodeSection();
+          // Prepend object-level variables to code section variables
+          if (objectLevelVariables.length > 0 && code) {
+            code.variables = [...objectLevelVariables, ...code.variables];
+          }
         } else if (token.type === TokenType.Controls ||
                    token.type === TokenType.Actions ||
                    token.type === TokenType.DataItems ||
@@ -2207,6 +2216,7 @@ export class Parser {
            this.check(TokenType.Local) ||
            this.check(TokenType.Trigger) ||
            this.check(TokenType.Begin) ||
+           this.check(TokenType.Code) ||  // CODE section keyword
            this.check(TokenType.LeftBracket);  // Attributes like [External] before procedures
   }
 

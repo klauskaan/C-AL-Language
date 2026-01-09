@@ -399,12 +399,20 @@ export class Lexer {
     let tokenType = KEYWORDS.get(lowerValue) || TokenType.Identifier;
 
     // Context-aware handling for data type keywords that can also be identifiers
-    // Keywords like "Code", "Text", "Date", "Time" can be:
+    // Keywords like "Code", "Text", "Date", "Time", "RecordID", "Record", etc. can be:
     // 1. Section keywords (CODE section) or data type keywords
-    // 2. Data types (Code[20], Text[50], etc.) - should REMAIN as keywords
-    // 3. Identifiers/parameter names (Code@1001) - should become IDENTIFIER
+    // 2. Data types (Code[20], Text[50], Record 18, RecordID, etc.) - should REMAIN as keywords
+    // 3. Identifiers/parameter names (Code@1001, RecordID@1000) - should become IDENTIFIER
     // We need to distinguish based on context
-    const dataTypeKeywords = [TokenType.Code, TokenType.Text, TokenType.Date_Type, TokenType.Time];
+    const dataTypeKeywords = [
+      TokenType.Code, TokenType.Text, TokenType.Date_Type, TokenType.Time,
+      TokenType.RecordID, TokenType.RecordRef, TokenType.FieldRef,
+      TokenType.Record, TokenType.Boolean, TokenType.Integer_Type,
+      TokenType.Decimal_Type, TokenType.Code_Type, TokenType.Time_Type,
+      TokenType.DateTime_Type, TokenType.BigInteger, TokenType.BigText,
+      TokenType.BLOB, TokenType.GUID, TokenType.Duration, TokenType.Option,
+      TokenType.Char, TokenType.Byte, TokenType.TextConst
+    ];
     if (dataTypeKeywords.includes(tokenType)) {
       const nextChar = this.currentChar();
       const prevToken = this.tokens.length > 0 ? this.tokens[this.tokens.length - 1] : null;
