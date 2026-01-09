@@ -354,10 +354,29 @@ export interface CallExpression extends Expression {
   arguments: Expression[];
 }
 
+/**
+ * Array access expression for single or multi-dimensional array indexing.
+ *
+ * @example
+ * // Single-dimensional: arr[5]
+ * { array: Identifier('arr'), indices: [Literal(5)] }
+ *
+ * // Multi-dimensional: Matrix[1,2,3]
+ * { array: Identifier('Matrix'), indices: [Literal(1), Literal(2), Literal(3)] }
+ *
+ * // Complex expressions: arr[i + 1, Type::Member]
+ * { array: Identifier('arr'), indices: [BinaryExpression, MemberExpression] }
+ */
 export interface ArrayAccessExpression extends Expression {
   type: 'ArrayAccessExpression';
+  /** The array being accessed */
   array: Expression;
-  index: Expression;
+  /**
+   * Array indices for single or multi-dimensional access.
+   * For `arr[i,j,k]`, this contains [i, j, k].
+   * @since 0.4.7 - Changed from singular `index: Expression` to support multi-dimensional arrays
+   */
+  indices: Expression[];
 }
 
 export interface SetLiteral extends Expression {

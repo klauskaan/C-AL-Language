@@ -542,7 +542,7 @@ export class Parser {
    * Maximum number of dimensions allowed for arrays.
    * C/AL typically supports up to 10 dimensions.
    */
-  private static readonly MAX_ARRAY_DIMENSIONS = 10;
+  private static readonly MAX_ARRAY_DIMENSIONS = 10 as const;
 
   /**
    * Parse comma-separated array dimensions from within brackets.
@@ -2221,6 +2221,7 @@ export class Parser {
 
   /**
    * Parse array access if present
+   * Supports multi-dimensional arrays: arr[1], arr[i,j], arr[1,2,3]
    */
   private parseArrayAccessIfPresent(expr: Expression): Expression {
     if (!this.check(TokenType.LeftBracket)) {
@@ -2228,13 +2229,23 @@ export class Parser {
     }
 
     this.advance();
-    const indexExpr = this.parseExpression();
+    const indices: Expression[] = [];
+
+    // Parse first index
+    indices.push(this.parseExpression());
+
+    // Parse additional indices (comma-separated for multi-dimensional arrays)
+    while (this.check(TokenType.Comma)) {
+      this.advance();  // consume comma
+      indices.push(this.parseExpression());
+    }
+
     const endToken = this.consume(TokenType.RightBracket, 'Expected ]');
 
     return {
       type: 'ArrayAccessExpression',
       array: expr,
-      index: indexExpr,
+      indices,
       startToken: expr.startToken,
       endToken
     } as ArrayAccessExpression;

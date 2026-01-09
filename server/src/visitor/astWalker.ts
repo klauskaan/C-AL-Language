@@ -670,7 +670,10 @@ export class ASTWalker {
       }
     }
     this.walkExpression(node.array, visitor);
-    this.walkExpression(node.index, visitor);
+    // Walk all indices for multi-dimensional array access
+    for (const index of node.indices) {
+      this.walkExpression(index, visitor);
+    }
   }
 
   private walkSetLiteral(node: SetLiteral, visitor: Partial<ASTVisitor>): void {

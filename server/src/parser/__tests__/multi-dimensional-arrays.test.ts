@@ -19,6 +19,7 @@
 
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../parser';
+import { ArrayAccessExpression, AssignmentStatement } from '../ast';
 
 describe('Parser - Multi-Dimensional Arrays', () => {
   describe('Single-dimension arrays (baseline)', () => {
@@ -828,6 +829,206 @@ describe('Parser - Multi-Dimensional Arrays', () => {
       expect(parser.getErrors()).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.dimensions).toHaveLength(10);
+    });
+  });
+
+  describe('Multi-dimensional array ACCESS expressions', () => {
+    it('should parse single-dimension array access', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            MyArray@1 : ARRAY [10] OF Integer;
+
+          PROCEDURE TestProc();
+          BEGIN
+            MyArray[1] := 5;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const proc = ast.object?.code?.procedures[0];
+      expect(proc).toBeDefined();
+      const stmt = proc?.body?.[0];
+      expect(stmt).toBeDefined();
+      expect(stmt!.type).toBe('AssignmentStatement');
+      const assignStmt = stmt as AssignmentStatement;
+      expect(assignStmt.target.type).toBe('ArrayAccessExpression');
+      const arrayAccess = assignStmt.target as ArrayAccessExpression;
+      expect(arrayAccess.indices).toHaveLength(1);
+    });
+
+    it('should parse two-dimensional array access', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Matrix@1 : ARRAY [9,2] OF Decimal;
+
+          PROCEDURE TestProc();
+          BEGIN
+            Matrix[1,2] := 3.14;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const proc = ast.object?.code?.procedures[0];
+      expect(proc).toBeDefined();
+      const stmt = proc?.body?.[0];
+      expect(stmt).toBeDefined();
+      expect(stmt!.type).toBe('AssignmentStatement');
+      const assignStmt = stmt as AssignmentStatement;
+      expect(assignStmt.target.type).toBe('ArrayAccessExpression');
+      const arrayAccess = assignStmt.target as ArrayAccessExpression;
+      expect(arrayAccess.indices).toHaveLength(2);
+    });
+
+    it('should parse three-dimensional array access (like COD1008)', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            JobLedgAmounts@1 : ARRAY [10,4,4] OF Decimal;
+
+          PROCEDURE TestProc();
+          BEGIN
+            JobLedgAmounts[1,2,3] := 100.0;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const proc = ast.object?.code?.procedures[0];
+      expect(proc).toBeDefined();
+      const stmt = proc?.body?.[0];
+      expect(stmt).toBeDefined();
+      expect(stmt!.type).toBe('AssignmentStatement');
+      const assignStmt = stmt as AssignmentStatement;
+      expect(assignStmt.target.type).toBe('ArrayAccessExpression');
+      const arrayAccess = assignStmt.target as ArrayAccessExpression;
+      expect(arrayAccess.indices).toHaveLength(3);
+    });
+
+    it('should parse array access with complex expressions in indices', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            JobLedgAmounts@1 : ARRAY [10,4,4] OF Decimal;
+            EntryTypeParm@2 : Integer;
+            TypeParm@3 : Integer;
+
+          PROCEDURE TestProc();
+          BEGIN
+            JobLedgAmounts[1 + EntryTypeParm, 1 + TypeParm, 1] := 100.0;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const proc = ast.object?.code?.procedures[0];
+      expect(proc).toBeDefined();
+      const stmt = proc?.body?.[0];
+      expect(stmt).toBeDefined();
+      expect(stmt!.type).toBe('AssignmentStatement');
+      const assignStmt = stmt as AssignmentStatement;
+      expect(assignStmt.target.type).toBe('ArrayAccessExpression');
+      const arrayAccess = assignStmt.target as ArrayAccessExpression;
+      expect(arrayAccess.indices).toHaveLength(3);
+      // First index should be a binary expression (1 + EntryTypeParm)
+      expect(arrayAccess.indices[0].type).toBe('BinaryExpression');
+    });
+
+    it('should parse array access with option member in index', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Values@1 : ARRAY [10,4,4] OF Decimal;
+
+          PROCEDURE TestProc();
+          BEGIN
+            Values[1, 2, AmountType::TotalCost] := 50.0;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const proc = ast.object?.code?.procedures[0];
+      expect(proc).toBeDefined();
+      const stmt = proc?.body?.[0];
+      expect(stmt).toBeDefined();
+      expect(stmt!.type).toBe('AssignmentStatement');
+      const assignStmt = stmt as AssignmentStatement;
+      expect(assignStmt.target.type).toBe('ArrayAccessExpression');
+      const arrayAccess = assignStmt.target as ArrayAccessExpression;
+      expect(arrayAccess.indices).toHaveLength(3);
+      // Third index should be a member expression (AmountType::TotalCost)
+      expect(arrayAccess.indices[2].type).toBe('MemberExpression');
+    });
+
+    it('should parse array access on right-hand side of assignment', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Matrix@1 : ARRAY [3,3] OF Integer;
+            Value@2 : Integer;
+
+          PROCEDURE TestProc();
+          BEGIN
+            Value := Matrix[1,2];
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const proc = ast.object?.code?.procedures[0];
+      expect(proc).toBeDefined();
+      const stmt = proc?.body?.[0];
+      expect(stmt).toBeDefined();
+      expect(stmt!.type).toBe('AssignmentStatement');
+      const assignStmt = stmt as AssignmentStatement;
+      expect(assignStmt.value.type).toBe('ArrayAccessExpression');
+      const arrayAccess = assignStmt.value as ArrayAccessExpression;
+      expect(arrayAccess.indices).toHaveLength(2);
+    });
+
+    it('should parse nested array access in function call arguments', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Data@1 : ARRAY [5,5] OF Decimal;
+
+          PROCEDURE TestProc();
+          BEGIN
+            ProcessValue(Data[1,2]);
+          END;
+
+          PROCEDURE ProcessValue(Val : Decimal);
+          BEGIN
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
     });
   });
 });
