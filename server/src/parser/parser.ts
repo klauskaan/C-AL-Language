@@ -68,10 +68,11 @@ export class Parser {
   /**
    * Safely parse an integer from a token, recording an error if invalid
    */
-  private parseInteger(token: Token): number {
+  private parseInteger(token: Token, context?: string): number {
     const value = parseInt(token.value, 10);
     if (isNaN(value)) {
-      this.recordError(`Invalid integer value: ${token.value}`, token);
+      const contextMsg = context ? ` (expected ${context})` : '';
+      this.recordError(`Invalid integer value: ${token.value}${contextMsg}`, token);
       return 0;
     }
     return value;
@@ -213,7 +214,7 @@ export class Parser {
 
     // Object ID
     const idToken = this.consume(TokenType.Integer, 'Expected object ID');
-    const objectId = this.parseInteger(idToken);
+    const objectId = this.parseInteger(idToken, 'object ID');
 
     // Object Name (can be quoted or unquoted, may contain multiple tokens)
     // If quoted (String token), it's a single token
@@ -439,7 +440,7 @@ export class Parser {
 
     // Field number
     const fieldNoToken = this.consume(TokenType.Integer, 'Expected field number');
-    const fieldNo = this.parseInteger(fieldNoToken);
+    const fieldNo = this.parseInteger(fieldNoToken, 'field number in FIELDS section');
 
     this.consume(TokenType.Semicolon, 'Expected ;');
 
@@ -481,7 +482,7 @@ export class Parser {
 
       // Validate field name is not empty
       if (fieldName === '') {
-        this.recordError('Field name cannot be empty', startPos);
+        this.recordError('Field name cannot be empty (in FIELDS section)', startPos);
         fieldName = '<missing>'; // Placeholder for error recovery
       }
     }
@@ -553,7 +554,7 @@ export class Parser {
     if (typeName.toUpperCase() === 'ARRAY' && this.check(TokenType.LeftBracket)) {
       this.advance(); // consume '['
       const sizeToken = this.consume(TokenType.Integer, 'Expected array size');
-      const arraySize = this.parseInteger(sizeToken);
+      const arraySize = this.parseInteger(sizeToken, 'array size');
       this.consume(TokenType.RightBracket, 'Expected ]');
 
       // Expect OF keyword
@@ -589,7 +590,7 @@ export class Parser {
     const objectTypes = ['RECORD', 'CODEUNIT', 'PAGE', 'REPORT', 'QUERY', 'XMLPORT'];
     if (objectTypes.includes(typeName.toUpperCase()) && this.check(TokenType.Integer)) {
       const objectIdToken = this.advance();
-      const objectId = this.parseInteger(objectIdToken);
+      const objectId = this.parseInteger(objectIdToken, 'table/page/report ID');
       // For Record types, store as tableId for backwards compatibility
       if (typeName.toUpperCase() === 'RECORD') {
         tableId = objectId;
@@ -616,7 +617,7 @@ export class Parser {
     if (this.check(TokenType.LeftBracket)) {
       this.advance();
       const lengthToken = this.consume(TokenType.Integer, 'Expected length');
-      length = this.parseInteger(lengthToken);
+      length = this.parseInteger(lengthToken, 'string/code length');
       this.consume(TokenType.RightBracket, 'Expected ]');
     }
 
@@ -1131,7 +1132,7 @@ export class Parser {
       if (this.check(TokenType.Semicolon)) {
         this.advance();
       } else if (!this.check(TokenType.RightParen)) {
-        this.recordError('Unexpected token in parameter list', this.peek());
+        this.recordError(`Unexpected token '${this.peek().value}' in parameter list (expected ';' or ')')`, this.peek());
         this.advance();
       }
     }
@@ -2019,7 +2020,7 @@ export class Parser {
         this.check(TokenType.Then) ||
         this.check(TokenType.Do) ||
         this.check(TokenType.Of)) {
-      this.recordError('Expected identifier after :: operator', this.peek());
+      this.recordError(`Expected identifier after :: operator, got '${this.peek().value}'`, this.peek());
       return expr;
     }
 
@@ -2274,7 +2275,9 @@ export class Parser {
 
   private consume(type: TokenType, message: string): Token {
     if (this.check(type)) return this.advance();
-    throw new ParseError(message, this.peek());
+    const current = this.peek();
+    const enhancedMessage = `${message}, but found '${current.value}' (${current.type})`;
+    throw new ParseError(enhancedMessage, current);
   }
 
   public getErrors(): ParseError[] {
