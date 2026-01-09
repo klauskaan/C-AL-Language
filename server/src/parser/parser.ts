@@ -1015,10 +1015,11 @@ export class Parser {
     this.consume(TokenType.Var, 'Expected VAR');
 
     while (!this.isCodeSectionBoundary() && !this.isAtEnd()) {
-      const startToken = this.peek();
-      const nameToken = this.advance();
+      // Check BEFORE advancing (matches parseParameters pattern at line 1185)
+      if (this.canBeUsedAsIdentifier()) {
+        const startToken = this.peek();
+        const nameToken = this.advance();
 
-      if (nameToken.type === TokenType.Identifier || nameToken.type === TokenType.QuotedIdentifier) {
         // Skip @number if present (C/AL auto-numbering)
         this.skipAutoNumberSuffix();
 
@@ -2583,6 +2584,7 @@ export class Parser {
     // Keywords that are commonly used as identifiers
     // This includes object types, data types, and other keywords that C/AL allows as names
     const allowedKeywordsAsIdentifiers = [
+      TokenType.Object,     // Variable name for Record 2000000001 (Object table)
       TokenType.Table,      // e.g., "Table" parameter name
       TokenType.Page,       // e.g., "Page" parameter name
       TokenType.Report,     // e.g., "Report" parameter name
