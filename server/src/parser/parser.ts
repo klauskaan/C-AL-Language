@@ -2541,27 +2541,15 @@ export class Parser {
   }
 
   /**
-   * Check if current token marks end of variable declarations
-   */
-  private isCodeSectionBoundary(): boolean {
-    return this.check(TokenType.Procedure) ||
-           this.check(TokenType.Function) ||
-           this.check(TokenType.Local) ||
-           this.check(TokenType.Trigger) ||
-           this.check(TokenType.Event) ||
-           this.check(TokenType.Begin) ||
-           this.check(TokenType.Code) ||  // CODE section keyword
-           this.check(TokenType.LeftBracket);  // Attributes like [External] before procedures
-  }
-
-  /**
    * Checks if the current token marks the end of a variable declaration section.
    * Variable sections terminate when encountering structural keywords like PROCEDURE,
    * CODE, or closing braces.
    *
-   * Unlike isCodeSectionBoundary(), this excludes BEGIN because we want to report
-   * an error if someone tries to use BEGIN as a variable name, rather than silently
-   * treating it as the end of the VAR section.
+   * This excludes BEGIN so we can report an error if someone tries to use BEGIN
+   * as a variable name, rather than silently treating it as the end of the VAR section.
+   * This also excludes LEFT_BRACKET to avoid treating array type syntax like Text[50]
+   * as a section boundary (attributes like [External] only appear before procedures,
+   * after VAR sections).
    *
    * @returns true if at a boundary token, false otherwise
    */
@@ -2572,8 +2560,10 @@ export class Parser {
            this.check(TokenType.Trigger) ||
            this.check(TokenType.Event) ||
            this.check(TokenType.Code) ||  // CODE section keyword
-           this.check(TokenType.RightBrace) ||  // End of object or section
-           this.check(TokenType.LeftBracket);  // Attributes like [External] before procedures
+           this.check(TokenType.RightBrace);  // End of object or section
+    // Note: LEFT_BRACKET (for attributes like [External]) should NOT be checked here
+    // because LEFT_BRACKET also appears in data type syntax like Text[50] or Record[*]
+    // within VAR sections. Those attributes only appear after VAR sections, before procedures.
   }
 
   private advance(): Token {
@@ -2664,8 +2654,11 @@ export class Parser {
       return true;
     }
 
-    // Data type keywords that end with _Type (e.g., Code_Type, Integer_Type)
-    if (type.toString().endsWith('_Type')) {
+    // Data type keywords that end with _TYPE (e.g., CODE_TYPE, INTEGER_TYPE, DATE_TYPE, TIME_TYPE)
+    // Issue #52: Fixed case sensitivity - TokenType enum values are UPPERCASE
+    // INVARIANT: Only data type token values should end with _TYPE suffix
+    // All _TYPE tokens are valid as variable names in C/AL
+    if (type.toString().endsWith('_TYPE')) {
       return true;
     }
 
@@ -2685,8 +2678,7 @@ export class Parser {
       TokenType.Text,       // e.g., "Text" parameter name
       TokenType.Boolean,    // e.g., "Boolean" parameter name
       TokenType.Code,       // e.g., "Code" section keyword but can be used as name
-      TokenType.Date_Type,  // e.g., "Date" parameter name
-      TokenType.Time_Type,  // e.g., "Time" parameter name
+      // Note: Date_Type and Time_Type removed - now covered by _TYPE suffix check (Issue #52)
       // Issue #54: Add data type keywords verified in test/REAL/
       TokenType.FieldRef,   // e.g., "FieldRef" parameter name (211 occurrences)
       TokenType.RecordRef,  // e.g., "RecordRef" parameter name (99 occurrences)
