@@ -49,6 +49,7 @@ import {
   AssignmentStatement,
   CallStatement,
   ExitStatement,
+  EmptyStatement,
   WithStatement,
   Expression,
   Identifier,
@@ -181,6 +182,9 @@ export class ASTWalker {
         break;
       case 'ExitStatement':
         this.walkExitStatement(node as ExitStatement, visitor);
+        break;
+      case 'EmptyStatement':
+        this.walkEmptyStatement(node as EmptyStatement, visitor);
         break;
       case 'WithStatement':
         this.walkWithStatement(node as WithStatement, visitor);
@@ -605,6 +609,13 @@ export class ASTWalker {
     if (node.value) {
       this.walkExpression(node.value, visitor);
     }
+  }
+
+  private walkEmptyStatement(node: EmptyStatement, visitor: Partial<ASTVisitor>): void {
+    if (visitor.visitEmptyStatement) {
+      visitor.visitEmptyStatement(node);
+    }
+    // EmptyStatement has no child nodes to traverse
   }
 
   private walkWithStatement(node: WithStatement, visitor: Partial<ASTVisitor>): void {

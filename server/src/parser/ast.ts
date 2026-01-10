@@ -333,6 +333,15 @@ export interface ExitStatement extends Statement {
 }
 
 /**
+ * Empty statement represented by a standalone semicolon.
+ * Valid in C/AL after THEN, DO, ELSE keywords: IF cond THEN; or WHILE cond DO;
+ * Used when the statement body is intentionally empty (e.g., IF Rec.FINDLAST THEN;)
+ */
+export interface EmptyStatement extends Statement {
+  type: 'EmptyStatement';
+}
+
+/**
  * WITH-DO statement for record scope shortening
  *
  * Syntax: WITH record DO statement

@@ -27,6 +27,7 @@ import {
   AssignmentStatement,
   CallStatement,
   ExitStatement,
+  EmptyStatement,
   WithStatement,
   Identifier,
   Literal,
@@ -200,6 +201,11 @@ export interface ASTVisitor {
    * Visit an ExitStatement node (EXIT with optional value)
    */
   visitExitStatement?(node: ExitStatement): void | false;
+
+  /**
+   * Visit an EmptyStatement node (standalone semicolon)
+   */
+  visitEmptyStatement?(node: EmptyStatement): void | false;
 
   /**
    * Visit a WithStatement node (WITH...DO)

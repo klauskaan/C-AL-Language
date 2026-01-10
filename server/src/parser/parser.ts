@@ -28,6 +28,7 @@ import {
   CaseStatement,
   CaseBranch,
   ExitStatement,
+  EmptyStatement,
   WithStatement,
   AssignmentStatement,
   CallStatement,
@@ -1773,6 +1774,9 @@ export class Parser {
     let thenBranch: Statement;
     if (this.check(TokenType.Begin)) {
       thenBranch = this.parseBlock();
+    } else if (this.check(TokenType.Semicolon)) {
+      // Empty statement: IF condition THEN;
+      thenBranch = this.parseEmptyStatement();
     } else if (!this.isStatementStarter()) {
       this.recordError('Expected statement after THEN', this.peek());
       thenBranch = this.createEmptyBlock(this.previous());
@@ -1790,6 +1794,9 @@ export class Parser {
       this.advance();
       if (this.check(TokenType.Begin)) {
         elseBranch = this.parseBlock();
+      } else if (this.check(TokenType.Semicolon)) {
+        // Empty statement: IF condition THEN ... ELSE;
+        elseBranch = this.parseEmptyStatement();
       } else if (!this.isStatementStarter()) {
         this.recordError('Expected statement after ELSE', this.peek());
         elseBranch = this.createEmptyBlock(this.previous());
@@ -1835,6 +1842,9 @@ export class Parser {
     let body: Statement;
     if (this.check(TokenType.Begin)) {
       body = this.parseBlock();
+    } else if (this.check(TokenType.Semicolon)) {
+      // Empty statement: WHILE condition DO;
+      body = this.parseEmptyStatement();
     } else if (!this.isStatementStarter()) {
       this.recordError('Expected statement after DO', this.peek());
       body = this.createEmptyBlock(this.previous());
@@ -1934,6 +1944,9 @@ export class Parser {
     let body: Statement;
     if (this.check(TokenType.Begin)) {
       body = this.parseBlock();
+    } else if (this.check(TokenType.Semicolon)) {
+      // Empty statement: FOR i := 1 TO 10 DO;
+      body = this.parseEmptyStatement();
     } else if (!this.isStatementStarter()) {
       this.recordError('Expected statement after DO', this.peek());
       body = this.createEmptyBlock(this.previous());
@@ -2109,6 +2122,24 @@ export class Parser {
   }
 
   /**
+   * Parse empty statement (standalone semicolon)
+   *
+   * Used for intentionally empty statement bodies in control flow:
+   * - IF condition THEN;
+   * - WHILE condition DO;
+   * - FOR i := 1 TO 10 DO;
+   * - WITH record DO;
+   */
+  private parseEmptyStatement(): EmptyStatement {
+    const semicolon = this.consume(TokenType.Semicolon, 'Expected ;');
+    return {
+      type: 'EmptyStatement',
+      startToken: semicolon,
+      endToken: semicolon
+    };
+  }
+
+  /**
    * Parse WITH-DO statement
    *
    * Syntax: WITH record DO statement
@@ -2134,6 +2165,9 @@ export class Parser {
     let body: Statement;
     if (this.check(TokenType.Begin)) {
       body = this.parseBlock();
+    } else if (this.check(TokenType.Semicolon)) {
+      // Empty statement: WITH record DO;
+      body = this.parseEmptyStatement();
     } else if (!this.isStatementStarter()) {
       this.recordError('Expected statement after DO', this.peek());
       body = this.createEmptyBlock(this.previous());
