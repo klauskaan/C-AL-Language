@@ -2671,9 +2671,135 @@ export class Parser {
   }
 
   /**
-   * Check if the current token can be used as an identifier/name in parameter/variable context.
-   * In C/AL, many keywords can be repurposed as identifiers when used as names.
-   * For example: "Table", "Page", "Report", "Record", "Code", "Text" etc.
+   * Determines if a keyword token can be used as an identifier (variable/parameter name) in C/AL.
+   *
+   * C/AL is context-sensitive - many keywords that are reserved in control flow contexts
+   * can be repurposed as identifiers when declaring variables or parameters. This method
+   * implements that contextual recognition.
+   *
+   * ## When Called
+   * - During variable declaration parsing (VAR sections)
+   * - During parameter declaration parsing (procedure signatures)
+   * - After consuming the identifier position in declarations
+   *
+   * ## Allowed Keywords Pattern
+   *
+   * C/AL allows certain keywords as identifiers because developers often want to name
+   * variables after the concepts they represent:
+   *
+   * **Examples:**
+   * ```cal
+   * VAR
+   *   Date@1000 : Date;              // Variable named "Date" of type Date
+   *   FieldRef@1001 : FieldRef;      // Variable named "FieldRef" of type FieldRef
+   *   Table@1002 : Record 2000000026; // Variable named "Table" for Table Information
+   *   Integer@1003 : Text[50];       // Variable named "Integer" of type Text
+   * ```
+   *
+   * ## Keyword Categories
+   *
+   * ### 1. Data Type Keywords (auto-recognized via _TYPE suffix)
+   * These TokenType enum values end with uppercase `_TYPE` suffix and are automatically allowed:
+   * - `INTEGER_TYPE`, `DECIMAL_TYPE`, `CODE_TYPE`, `DATE_TYPE`, `TIME_TYPE`, `DATETIME_TYPE`, etc.
+   * - **Convention:** All data type token enum values MUST end with uppercase `_TYPE` suffix
+   * - **Performance:** Efficient suffix check using `type.toString().endsWith('_TYPE')`
+   *
+   * ### 2. Explicitly Allowed Keywords (ALLOWED_KEYWORDS_AS_IDENTIFIERS constant)
+   * Keywords stored in the Set at line 51, including:
+   *
+   * **Object types:** Table, Page, Report, Codeunit, Query, XMLport, Object
+   * - Common for variables holding object IDs or references
+   * - Example: `Table@1 : Record 2000000026;` (Table Information table)
+   *
+   * **Data type names:** Record, Char, Option, Text, Boolean, Code
+   * - Frequently used as variable names in metadata/reflection code
+   * - Example: `Record@1 : Integer;` (variable holding a record count)
+   *
+   * **Complex type keywords:** FieldRef, RecordRef, RecordID, Duration, BigInteger, Fields
+   * - Used extensively in reflection and advanced scenarios
+   * - Example: `FieldRef@1000 : FieldRef;` (211 occurrences in real NAV code)
+   *
+   * **Other keywords:** Byte
+   * - Less common but valid in specific contexts
+   *
+   * ### 3. NOT Allowed - Control Flow & Structural Keywords
+   * These keywords are fundamental to C/AL syntax and cannot be identifiers:
+   *
+   * **Control flow:** IF, THEN, ELSE, FOR, WHILE, REPEAT, UNTIL, DO, TO, DOWNTO
+   * **Blocks:** BEGIN, END, CASE, OF, EXIT
+   * **Declarations:** VAR, PROCEDURE, FUNCTION, LOCAL
+   * **Sections:** KEYS, CONTROLS, PROPERTIES, CODE
+   *
+   * **Example (invalid):**
+   * ```cal
+   * VAR
+   *   IF@1000 : Integer;    // ERROR: Cannot use reserved keyword
+   *   FOR@1001 : Text[10];  // ERROR: Cannot use reserved keyword
+   * ```
+   *
+   * ## Cross-References
+   * - **ALLOWED_KEYWORDS_AS_IDENTIFIERS constant** (line 51): Set of explicitly allowed keywords
+   * - **Lexer TokenType enum** (server/src/lexer/tokens.ts): Defines all token types including _TYPE suffix
+   * - **Tests** (server/src/parser/__tests__/keyword-variable-names.test.ts): Comprehensive test coverage
+   *
+   * ## Addition Guidelines
+   *
+   * To safely add a new keyword as an allowed identifier:
+   *
+   * 1. **Verify it's used in real NAV code:**
+   *    - Check test/REAL/ directory for usage patterns (never copy proprietary objects 6000000+)
+   *    - Confirm it's a C/AL pattern (not AL-only feature from Business Central)
+   *
+   * 2. **Choose the right approach:**
+   *    - **Data type keywords:** Add to lexer with `_TYPE` suffix (automatically recognized)
+   *    - **Other keywords:** Add to ALLOWED_KEYWORDS_AS_IDENTIFIERS Set (line 51)
+   *
+   * 3. **Add comprehensive tests:**
+   *    ```typescript
+   *    // Add to keyword-variable-names.test.ts
+   *    it('should parse NewKeyword as variable name', () => {
+   *      const code = `OBJECT Codeunit 50000 Test
+   *{
+   *  CODE
+   *  {
+   *    VAR
+   *      NewKeyword@1000 : Integer;
+   *  }
+   *}`;
+   *
+   *      const lexer = new Lexer(code);
+   *      const tokens = lexer.tokenize();
+   *      const parser = new Parser(tokens);
+   *      const ast = parser.parse();
+   *
+   *      expect(parser.getErrors()).toHaveLength(0);
+   *      expect(ast.object?.code?.variables).toHaveLength(1);
+   *      expect(ast.object?.code?.variables[0].name).toBe('NewKeyword');
+   *    });
+   *    ```
+   *
+   * 4. **Test with modifiers:**
+   *    - VAR modifier: `VAR NewKeyword@1000 : Type`
+   *    - TEMPORARY modifier: `NewKeyword@1000 : TEMPORARY Record 18`
+   *    - SECURITYFILTERING: `NewKeyword@1000 : Record 18 SECURITYFILTERING(Filtered)`
+   *
+   * 5. **Verify no regressions:**
+   *    ```bash
+   *    cd server && npm test -- keyword-variable-names.test.ts
+   *    ```
+   *
+   * ## Implementation Notes
+   *
+   * - **Case insensitive:** C/AL is case-insensitive; lexer normalizes to UPPERCASE
+   * - **Context matters:** Same token may be keyword in one context, identifier in another
+   * - **Performance:** O(1) lookup using Set for ALLOWED_KEYWORDS_AS_IDENTIFIERS
+   * - **Type safety:** Returns boolean - caller must validate further if needed
+   *
+   * @returns `true` if the current token can be used as an identifier, `false` otherwise
+   *
+   * @see ALLOWED_KEYWORDS_AS_IDENTIFIERS - Set of explicitly allowed keyword tokens (line 51)
+   * @see TokenType - Lexer token definitions (server/src/lexer/tokens.ts)
+   * @see keyword-variable-names.test.ts - Comprehensive test coverage and usage examples
    */
   private canBeUsedAsIdentifier(): boolean {
     const token = this.peek();
