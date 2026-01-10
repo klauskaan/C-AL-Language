@@ -1689,6 +1689,77 @@ export class Parser {
     return this.parseAssignmentOrCall();
   }
 
+  /**
+   * Check if the current token can start a valid statement.
+   *
+   * This helper is used to detect empty statement bodies in control flow constructs.
+   * Returns true if the current token can legally begin a statement.
+   *
+   * Statement starters include:
+   * - Control flow keywords: IF, WHILE, REPEAT, FOR, CASE, EXIT, WITH, BEGIN
+   * - Identifiers (regular and quoted) for assignments/calls
+   * - Keywords allowed as identifiers (object types, data types, AL-only keywords)
+   *
+   * Returns false for:
+   * - Statement terminators: END, ELSE, UNTIL
+   * - Declaration keywords: PROCEDURE, VAR, LOCAL
+   * - End-of-file
+   *
+   * @returns true if current token can start a statement
+   */
+  private isStatementStarter(): boolean {
+    const token = this.peek();
+
+    // Control flow keywords
+    if (token.type === TokenType.If ||
+        token.type === TokenType.While ||
+        token.type === TokenType.Repeat ||
+        token.type === TokenType.For ||
+        token.type === TokenType.Case ||
+        token.type === TokenType.Exit ||
+        token.type === TokenType.With ||
+        token.type === TokenType.Begin) {
+      return true;
+    }
+
+    // Regular identifiers
+    if (token.type === TokenType.Identifier ||
+        token.type === TokenType.QuotedIdentifier) {
+      return true;
+    }
+
+    // Keywords allowed as identifiers (can start assignment/call)
+    if (ALLOWED_KEYWORDS_AS_IDENTIFIERS.has(token.type)) {
+      return true;
+    }
+
+    // AL-only keywords can be used as identifiers in C/AL
+    if (token.type === TokenType.ALOnlyKeyword ||
+        token.type === TokenType.ALOnlyAccessModifier) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Create an empty block statement at the given token position.
+   *
+   * Used for error recovery when a control flow statement is missing its body.
+   * Creates a valid but empty BlockStatement node to maintain AST integrity.
+   *
+   * @param token Token where the empty block should be positioned
+   * @returns Empty BlockStatement
+   */
+  private createEmptyBlock(token: Token): BlockStatement {
+    return {
+      type: 'BlockStatement',
+      statements: [],
+      startToken: token,
+      endToken: token
+    };
+  }
+
   private parseIfStatement(): IfStatement {
     const startToken = this.consume(TokenType.If, 'Expected IF');
 
@@ -1699,25 +1770,46 @@ export class Parser {
     this.consume(TokenType.Then, 'Expected THEN');
 
     // Parse then branch
-    const thenBranch = this.check(TokenType.Begin)
-      ? this.parseBlock()
-      : this.parseStatement();
-
-    if (!thenBranch) {
-      throw new ParseError('Expected statement after THEN', this.peek());
+    let thenBranch: Statement;
+    if (this.check(TokenType.Begin)) {
+      thenBranch = this.parseBlock();
+    } else if (!this.isStatementStarter()) {
+      this.recordError('Expected statement after THEN', this.peek());
+      thenBranch = this.createEmptyBlock(this.previous());
+    } else {
+      const stmt = this.parseStatement();
+      if (!stmt) {
+        throw new ParseError('Expected statement after THEN', this.peek());
+      }
+      thenBranch = stmt;
     }
 
     // Parse optional else branch
     let elseBranch: Statement | null = null;
     if (this.check(TokenType.Else)) {
       this.advance();
-      elseBranch = this.check(TokenType.Begin)
-        ? this.parseBlock()
-        : this.parseStatement();
-
-      if (!elseBranch) {
-        throw new ParseError('Expected statement after ELSE', this.peek());
+      if (this.check(TokenType.Begin)) {
+        elseBranch = this.parseBlock();
+      } else if (!this.isStatementStarter()) {
+        this.recordError('Expected statement after ELSE', this.peek());
+        elseBranch = this.createEmptyBlock(this.previous());
+      } else {
+        const stmt = this.parseStatement();
+        if (!stmt) {
+          throw new ParseError('Expected statement after ELSE', this.peek());
+        }
+        elseBranch = stmt;
       }
+    }
+
+    // Consume END for error recovery: when the final branch is a synthetic empty block
+    // (created because there was no statement), we need to consume the following END
+    let endToken = this.previous();
+    const finalBranch = elseBranch || thenBranch;
+    if (finalBranch?.type === 'BlockStatement' &&
+        finalBranch.startToken?.type !== TokenType.Begin &&
+        this.check(TokenType.End)) {
+      endToken = this.consume(TokenType.End, 'Expected END');
     }
 
     return {
@@ -1726,7 +1818,7 @@ export class Parser {
       thenBranch,
       elseBranch,
       startToken,
-      endToken: this.previous()
+      endToken
     };
   }
 
@@ -1740,12 +1832,27 @@ export class Parser {
     this.consume(TokenType.Do, 'Expected DO');
 
     // Parse body
-    const body = this.check(TokenType.Begin)
-      ? this.parseBlock()
-      : this.parseStatement();
+    let body: Statement;
+    if (this.check(TokenType.Begin)) {
+      body = this.parseBlock();
+    } else if (!this.isStatementStarter()) {
+      this.recordError('Expected statement after DO', this.peek());
+      body = this.createEmptyBlock(this.previous());
+    } else {
+      const stmt = this.parseStatement();
+      if (!stmt) {
+        throw new ParseError('Expected statement after DO', this.peek());
+      }
+      body = stmt;
+    }
 
-    if (!body) {
-      throw new ParseError('Expected statement after DO', this.peek());
+    // Consume END for error recovery: when the body is a synthetic empty block
+    // (created because there was no statement), we need to consume the following END
+    let endToken = this.previous();
+    if (body?.type === 'BlockStatement' &&
+        body.startToken?.type !== TokenType.Begin &&
+        this.check(TokenType.End)) {
+      endToken = this.consume(TokenType.End, 'Expected END');
     }
 
     return {
@@ -1753,7 +1860,7 @@ export class Parser {
       condition,
       body,
       startToken,
-      endToken: this.previous()
+      endToken
     };
   }
 
@@ -1824,12 +1931,27 @@ export class Parser {
     this.consume(TokenType.Do, 'Expected DO');
 
     // Parse body
-    const body = this.check(TokenType.Begin)
-      ? this.parseBlock()
-      : this.parseStatement();
+    let body: Statement;
+    if (this.check(TokenType.Begin)) {
+      body = this.parseBlock();
+    } else if (!this.isStatementStarter()) {
+      this.recordError('Expected statement after DO', this.peek());
+      body = this.createEmptyBlock(this.previous());
+    } else {
+      const stmt = this.parseStatement();
+      if (!stmt) {
+        throw new ParseError('Expected statement after DO', this.peek());
+      }
+      body = stmt;
+    }
 
-    if (!body) {
-      throw new ParseError('Expected statement after DO', this.peek());
+    // Consume END for error recovery: when the body is a synthetic empty block
+    // (created because there was no statement), we need to consume the following END
+    let endToken = this.previous();
+    if (body?.type === 'BlockStatement' &&
+        body.startToken?.type !== TokenType.Begin &&
+        this.check(TokenType.End)) {
+      endToken = this.consume(TokenType.End, 'Expected END');
     }
 
     return {
@@ -1840,7 +1962,7 @@ export class Parser {
       downto,
       body,
       startToken,
-      endToken: this.previous()
+      endToken
     };
   }
 
@@ -2009,12 +2131,27 @@ export class Parser {
     this.consume(TokenType.Do, 'Expected DO');
 
     // Parse body (can be BEGIN-END block or single statement)
-    const body = this.check(TokenType.Begin)
-      ? this.parseBlock()
-      : this.parseStatement();
+    let body: Statement;
+    if (this.check(TokenType.Begin)) {
+      body = this.parseBlock();
+    } else if (!this.isStatementStarter()) {
+      this.recordError('Expected statement after DO', this.peek());
+      body = this.createEmptyBlock(this.previous());
+    } else {
+      const stmt = this.parseStatement();
+      if (!stmt) {
+        throw new ParseError('Expected statement after DO', this.peek());
+      }
+      body = stmt;
+    }
 
-    if (!body) {
-      throw new ParseError('Expected statement after DO', this.peek());
+    // Consume END for error recovery: when the body is a synthetic empty block
+    // (created because there was no statement), we need to consume the following END
+    let endToken = this.previous();
+    if (body?.type === 'BlockStatement' &&
+        body.startToken?.type !== TokenType.Begin &&
+        this.check(TokenType.End)) {
+      endToken = this.consume(TokenType.End, 'Expected END');
     }
 
     // Optional semicolon after WITH statement
@@ -2027,7 +2164,7 @@ export class Parser {
       record,
       body,
       startToken,
-      endToken: this.previous()
+      endToken
     };
   }
 
