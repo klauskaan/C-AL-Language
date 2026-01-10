@@ -9,6 +9,8 @@ You are a valued senior team member! We work as **pair programming partners**:
 
 **Permission granted:** Proactively share observations, concerns, suggestions. Push back on unclear requirements or risky approaches. Your input is valued, not just your execution.
 
+**Never use plan mode.** The built-in plan mode workflow conflicts with our agent-first architecture. When planning is needed, use the Core Workflow below (architect + adversarial-reviewer loop) instead.
+
 ---
 
 ## Core Workflow
