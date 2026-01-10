@@ -1777,6 +1777,10 @@ export class Parser {
     } else if (this.check(TokenType.Semicolon)) {
       // Empty statement: IF condition THEN;
       thenBranch = this.parseEmptyStatement();
+    } else if (this.check(TokenType.End) || this.check(TokenType.Else)) {
+      // Empty body is valid - create EmptyStatement (don't consume END/ELSE)
+      const startToken = this.previous();
+      thenBranch = { type: 'EmptyStatement', startToken, endToken: startToken };
     } else if (!this.isStatementStarter()) {
       this.recordError('Expected statement after THEN', this.peek());
       thenBranch = this.createEmptyBlock(this.previous());
@@ -1797,6 +1801,10 @@ export class Parser {
       } else if (this.check(TokenType.Semicolon)) {
         // Empty statement: IF condition THEN ... ELSE;
         elseBranch = this.parseEmptyStatement();
+      } else if (this.check(TokenType.End)) {
+        // Empty body is valid - create EmptyStatement (don't consume END)
+        const startToken = this.previous();
+        elseBranch = { type: 'EmptyStatement', startToken, endToken: startToken };
       } else if (!this.isStatementStarter()) {
         this.recordError('Expected statement after ELSE', this.peek());
         elseBranch = this.createEmptyBlock(this.previous());
@@ -1809,14 +1817,28 @@ export class Parser {
       }
     }
 
-    // Consume END for error recovery: when the final branch is a synthetic empty block
-    // (created because there was no statement), we need to consume the following END
+    // Consume END after empty body or error recovery:
+    // - EmptyStatement from END: IF THEN END; (consume END, valid empty body)
+    // - EmptyStatement from semicolon: IF THEN; (don't consume END, already have semicolon)
+    // - BlockStatement (not BEGIN-END): error recovery synthetic block
     let endToken = this.previous();
     const finalBranch = elseBranch || thenBranch;
-    if (finalBranch?.type === 'BlockStatement' &&
-        finalBranch.startToken?.type !== TokenType.Begin &&
-        this.check(TokenType.End)) {
+    // Only consume END if the EmptyStatement wasn't created from an explicit semicolon
+    const isExplicitSemicolon = this.previous().type === TokenType.Semicolon;
+    if (finalBranch?.type === 'EmptyStatement' && !isExplicitSemicolon && this.check(TokenType.End)) {
       endToken = this.consume(TokenType.End, 'Expected END');
+      // Also consume the trailing semicolon if present
+      if (this.check(TokenType.Semicolon)) {
+        this.advance();
+      }
+    } else if (finalBranch?.type === 'BlockStatement' &&
+               finalBranch.startToken?.type !== TokenType.Begin &&
+               this.check(TokenType.End)) {
+      endToken = this.consume(TokenType.End, 'Expected END');
+      // Also consume the trailing semicolon if present
+      if (this.check(TokenType.Semicolon)) {
+        this.advance();
+      }
     }
 
     return {
@@ -1845,6 +1867,10 @@ export class Parser {
     } else if (this.check(TokenType.Semicolon)) {
       // Empty statement: WHILE condition DO;
       body = this.parseEmptyStatement();
+    } else if (this.check(TokenType.End)) {
+      // Empty body is valid - create EmptyStatement (don't consume END)
+      const startToken = this.previous();
+      body = { type: 'EmptyStatement', startToken, endToken: startToken };
     } else if (!this.isStatementStarter()) {
       this.recordError('Expected statement after DO', this.peek());
       body = this.createEmptyBlock(this.previous());
@@ -1856,13 +1882,26 @@ export class Parser {
       body = stmt;
     }
 
-    // Consume END for error recovery: when the body is a synthetic empty block
-    // (created because there was no statement), we need to consume the following END
+    // Consume END after empty body or error recovery:
+    // - EmptyStatement from END: WHILE DO END; (consume END, valid empty body)
+    // - EmptyStatement from semicolon: WHILE DO; (don't consume END, already have semicolon)
+    // - BlockStatement (not BEGIN-END): error recovery synthetic block
     let endToken = this.previous();
-    if (body?.type === 'BlockStatement' &&
-        body.startToken?.type !== TokenType.Begin &&
-        this.check(TokenType.End)) {
+    const isExplicitSemicolon = this.previous().type === TokenType.Semicolon;
+    if (body?.type === 'EmptyStatement' && !isExplicitSemicolon && this.check(TokenType.End)) {
       endToken = this.consume(TokenType.End, 'Expected END');
+      // Also consume the trailing semicolon if present
+      if (this.check(TokenType.Semicolon)) {
+        this.advance();
+      }
+    } else if (body?.type === 'BlockStatement' &&
+               body.startToken?.type !== TokenType.Begin &&
+               this.check(TokenType.End)) {
+      endToken = this.consume(TokenType.End, 'Expected END');
+      // Also consume the trailing semicolon if present
+      if (this.check(TokenType.Semicolon)) {
+        this.advance();
+      }
     }
 
     return {
@@ -1947,6 +1986,10 @@ export class Parser {
     } else if (this.check(TokenType.Semicolon)) {
       // Empty statement: FOR i := 1 TO 10 DO;
       body = this.parseEmptyStatement();
+    } else if (this.check(TokenType.End)) {
+      // Empty body is valid - create EmptyStatement (don't consume END)
+      const startToken = this.previous();
+      body = { type: 'EmptyStatement', startToken, endToken: startToken };
     } else if (!this.isStatementStarter()) {
       this.recordError('Expected statement after DO', this.peek());
       body = this.createEmptyBlock(this.previous());
@@ -1958,13 +2001,26 @@ export class Parser {
       body = stmt;
     }
 
-    // Consume END for error recovery: when the body is a synthetic empty block
-    // (created because there was no statement), we need to consume the following END
+    // Consume END after empty body or error recovery:
+    // - EmptyStatement from END: FOR DO END; (consume END, valid empty body)
+    // - EmptyStatement from semicolon: FOR DO; (don't consume END, already have semicolon)
+    // - BlockStatement (not BEGIN-END): error recovery synthetic block
     let endToken = this.previous();
-    if (body?.type === 'BlockStatement' &&
-        body.startToken?.type !== TokenType.Begin &&
-        this.check(TokenType.End)) {
+    const isExplicitSemicolon = this.previous().type === TokenType.Semicolon;
+    if (body?.type === 'EmptyStatement' && !isExplicitSemicolon && this.check(TokenType.End)) {
       endToken = this.consume(TokenType.End, 'Expected END');
+      // Also consume the trailing semicolon if present
+      if (this.check(TokenType.Semicolon)) {
+        this.advance();
+      }
+    } else if (body?.type === 'BlockStatement' &&
+               body.startToken?.type !== TokenType.Begin &&
+               this.check(TokenType.End)) {
+      endToken = this.consume(TokenType.End, 'Expected END');
+      // Also consume the trailing semicolon if present
+      if (this.check(TokenType.Semicolon)) {
+        this.advance();
+      }
     }
 
     return {
@@ -2038,6 +2094,13 @@ export class Parser {
     if (this.check(TokenType.Begin)) {
       const block = this.parseBlock();
       statements.push(...block.statements);
+    } else if (this.check(TokenType.End) || this.check(TokenType.Else) ||
+               this.check(TokenType.Integer) || this.check(TokenType.Decimal) ||
+               this.check(TokenType.String)) {
+      // Empty branch is valid - next case value, ELSE, or END
+      // Don't consume the token, create EmptyStatement
+      const startToken = this.previous();
+      statements.push({ type: 'EmptyStatement', startToken, endToken: startToken });
     } else {
       const stmt = this.parseStatement();
       if (stmt) {
@@ -2168,6 +2231,10 @@ export class Parser {
     } else if (this.check(TokenType.Semicolon)) {
       // Empty statement: WITH record DO;
       body = this.parseEmptyStatement();
+    } else if (this.check(TokenType.End)) {
+      // Empty body is valid - create EmptyStatement (don't consume END)
+      const startToken = this.previous();
+      body = { type: 'EmptyStatement', startToken, endToken: startToken };
     } else if (!this.isStatementStarter()) {
       this.recordError('Expected statement after DO', this.peek());
       body = this.createEmptyBlock(this.previous());
@@ -2179,18 +2246,31 @@ export class Parser {
       body = stmt;
     }
 
-    // Consume END for error recovery: when the body is a synthetic empty block
-    // (created because there was no statement), we need to consume the following END
+    // Consume END after empty body or error recovery:
+    // - EmptyStatement from END: WITH DO END; (consume END, valid empty body)
+    // - EmptyStatement from semicolon: WITH DO; (don't consume END, already have semicolon)
+    // - BlockStatement (not BEGIN-END): error recovery synthetic block
     let endToken = this.previous();
-    if (body?.type === 'BlockStatement' &&
-        body.startToken?.type !== TokenType.Begin &&
-        this.check(TokenType.End)) {
+    const isExplicitSemicolon = this.previous().type === TokenType.Semicolon;
+    if (body?.type === 'EmptyStatement' && !isExplicitSemicolon && this.check(TokenType.End)) {
       endToken = this.consume(TokenType.End, 'Expected END');
-    }
-
-    // Optional semicolon after WITH statement
-    if (this.check(TokenType.Semicolon)) {
-      this.advance();
+      // Also consume the trailing semicolon if present
+      if (this.check(TokenType.Semicolon)) {
+        this.advance();
+      }
+    } else if (body?.type === 'BlockStatement' &&
+               body.startToken?.type !== TokenType.Begin &&
+               this.check(TokenType.End)) {
+      endToken = this.consume(TokenType.End, 'Expected END');
+      // Also consume the trailing semicolon if present
+      if (this.check(TokenType.Semicolon)) {
+        this.advance();
+      }
+    } else {
+      // Optional semicolon after WITH statement (when not already consumed above)
+      if (this.check(TokenType.Semicolon)) {
+        this.advance();
+      }
     }
 
     return {
