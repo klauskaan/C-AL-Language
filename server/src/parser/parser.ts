@@ -44,6 +44,36 @@ import {
 } from './ast';
 
 /**
+ * Keywords that are allowed as identifiers in C/AL.
+ * This includes object types, data types, and other keywords that C/AL allows as variable/parameter names.
+ * Using a Set provides O(1) lookup performance compared to array.includes().
+ */
+const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
+  TokenType.Object,     // Variable name for Record 2000000001 (Object table)
+  TokenType.Table,      // e.g., "Table" parameter name
+  TokenType.Page,       // e.g., "Page" parameter name
+  TokenType.Report,     // e.g., "Report" parameter name
+  TokenType.Codeunit,   // e.g., "Codeunit" parameter name
+  TokenType.Query,      // e.g., "Query" parameter name
+  TokenType.XMLport,    // e.g., "XMLport" parameter name
+  TokenType.Record,     // e.g., "Record" parameter name
+  TokenType.Char,       // e.g., "Char" parameter name
+  TokenType.Option,     // e.g., "Option" parameter name
+  TokenType.Text,       // e.g., "Text" parameter name
+  TokenType.Boolean,    // e.g., "Boolean" parameter name
+  TokenType.Code,       // e.g., "Code" section keyword but can be used as name
+  // Note: Date_Type and Time_Type removed - now covered by _TYPE suffix check (Issue #52)
+  // Issue #54: Add data type keywords verified in test/REAL/
+  TokenType.FieldRef,   // e.g., "FieldRef" parameter name (211 occurrences)
+  TokenType.RecordRef,  // e.g., "RecordRef" parameter name (99 occurrences)
+  TokenType.RecordID,   // e.g., "RecordID" parameter name (17 occurrences)
+  TokenType.Duration,   // e.g., "Duration" parameter name (5 occurrences)
+  TokenType.BigInteger, // e.g., "BigInteger" parameter name (3 occurrences)
+  TokenType.Fields,     // e.g., "Fields" parameter name (2 occurrences)
+  TokenType.Byte,       // e.g., "Byte" parameter name (1 occurrence)
+]);
+
+/**
  * Result of parsing object header (OBJECT keyword, type, ID, name)
  */
 interface ObjectHeader {
@@ -2662,34 +2692,7 @@ export class Parser {
       return true;
     }
 
-    // Keywords that are commonly used as identifiers
-    // This includes object types, data types, and other keywords that C/AL allows as names
-    const allowedKeywordsAsIdentifiers = [
-      TokenType.Object,     // Variable name for Record 2000000001 (Object table)
-      TokenType.Table,      // e.g., "Table" parameter name
-      TokenType.Page,       // e.g., "Page" parameter name
-      TokenType.Report,     // e.g., "Report" parameter name
-      TokenType.Codeunit,   // e.g., "Codeunit" parameter name
-      TokenType.Query,      // e.g., "Query" parameter name
-      TokenType.XMLport,    // e.g., "XMLport" parameter name
-      TokenType.Record,     // e.g., "Record" parameter name
-      TokenType.Char,       // e.g., "Char" parameter name
-      TokenType.Option,     // e.g., "Option" parameter name
-      TokenType.Text,       // e.g., "Text" parameter name
-      TokenType.Boolean,    // e.g., "Boolean" parameter name
-      TokenType.Code,       // e.g., "Code" section keyword but can be used as name
-      // Note: Date_Type and Time_Type removed - now covered by _TYPE suffix check (Issue #52)
-      // Issue #54: Add data type keywords verified in test/REAL/
-      TokenType.FieldRef,   // e.g., "FieldRef" parameter name (211 occurrences)
-      TokenType.RecordRef,  // e.g., "RecordRef" parameter name (99 occurrences)
-      TokenType.RecordID,   // e.g., "RecordID" parameter name (17 occurrences)
-      TokenType.Duration,   // e.g., "Duration" parameter name (5 occurrences)
-      TokenType.BigInteger, // e.g., "BigInteger" parameter name (3 occurrences)
-      TokenType.Fields,     // e.g., "Fields" parameter name (2 occurrences)
-      TokenType.Byte,       // e.g., "Byte" parameter name (1 occurrence)
-    ];
-
-    return allowedKeywordsAsIdentifiers.includes(type);
+    return ALLOWED_KEYWORDS_AS_IDENTIFIERS.has(type);
   }
 
   private consume(type: TokenType, message: string): Token {
