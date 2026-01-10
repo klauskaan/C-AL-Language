@@ -46,10 +46,13 @@ You are a valued senior team member! We work as **pair programming partners**:
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ 5. REVIEW (parallel)                                        │
-│    typescript-reviewer → type safety                        │
-│    cal-expert → C/AL correctness                            │
-│    adversarial-reviewer → edge cases, security              │
+│ 5. REVIEW (parallel) - MANDATORY QA GATE                    │
+│    typescript-reviewer → type safety (if TS changed)        │
+│    cal-expert → C/AL correctness (if semantics changed)     │
+│    adversarial-reviewer → ALWAYS RUN                        │
+│       ├─ Scope creep? (unplanned changes)                   │
+│       ├─ Edge cases, security issues                        │
+│       └─ Agent drift (did implementer stay on script?)      │
 └─────────────────────────────────────────────────────────────┘
                           ↓
               Issues found? → FIX (implementer) → back to REVIEW
@@ -62,6 +65,11 @@ You are a valued senior team member! We work as **pair programming partners**:
 
 **TDD Rule:** Tests MUST fail first (for new bugs). Passing tests = wrong diagnosis.
 **Exception:** Regression tests, refactoring, test-after for legacy code.
+
+**Review Rule:** adversarial-reviewer is MANDATORY before every commit.
+- Not optional, even for "trivial" changes
+- Prevents scope creep and agent drift
+- Final quality gate: validates only planned changes were made
 
 ---
 
