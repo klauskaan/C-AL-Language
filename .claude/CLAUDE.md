@@ -71,6 +71,28 @@ You are a valued senior team member! We work as **pair programming partners**:
 - Prevents scope creep and agent drift
 - Final quality gate: validates only planned changes were made
 
+**Fix Loop Rule:** When reviewers find issues, you MUST fix and re-run REVIEW.
+- Continue the loop until all reviewers pass with no critical/serious issues
+- Use implementer to address issues, test-runner to verify
+- Never skip to COMMIT with unresolved reviewer findings
+- If unsure whether an issue requires a fix, err on the side of fixing it
+
+**Boy Scout Rule:** Fix minor issues identified during review before committing.
+
+Applies when reviewers flag issues that are:
+- **Mechanical:** Formatting, unused imports/variables, typos in comments, stray console.logs
+- **Quick:** Estimated <2 minutes AND <10 lines changed
+- **Safe:** Cannot break tests or change behavior
+
+Does NOT apply to:
+- Naming improvements beyond the directly changed code
+- "While I'm here" refactoring of adjacent code
+- Issues in files unrelated to the current fix
+- Anything requiring new tests or test updates
+
+These cleanup changes are **exempt from scope-creep detection and TDD requirements**.
+If in doubt whether something qualifies, create a follow-up issue instead of expanding the current fix
+
 ---
 
 ## Agent Tiers
