@@ -71,6 +71,8 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
   TokenType.BigInteger, // e.g., "BigInteger" parameter name (3 occurrences)
   TokenType.Fields,     // e.g., "Fields" parameter name (2 occurrences)
   TokenType.Byte,       // e.g., "Byte" parameter name (1 occurrence)
+  TokenType.ALOnlyKeyword,         // Enum, Interface, Extends, Implements can be variable names
+  TokenType.ALOnlyAccessModifier,  // Internal, Protected, Public can be variable names
 ]);
 
 /**
@@ -1557,8 +1559,89 @@ export class Parser {
   }
 
   private parseStatement(): Statement | null {
-    // Check for AL-only tokens at statement level
-    this.skipALOnlyTokens();
+    // Check for AL-only access modifiers and other non-keyword AL-only features
+    // We do NOT universally check for ALOnlyKeyword here because keywords like ENUM, INTERFACE
+    // can be used as identifiers in statements (e.g., "Enum := 1").
+    // However, we DO check for suspicious patterns that suggest AL-only constructs
+    // (e.g., "ENUM Type { }" which looks like an enum declaration).
+    const token = this.peek();
+    if (token.type === TokenType.ALOnlyAccessModifier) {
+      // Look ahead to distinguish between:
+      // - "Public.FINDFIRST" (variable used with member access)
+      // - "Public := ..." (variable used in assignment)
+      // - "Public PROCEDURE ..." (access modifier - NOT supported)
+      const nextToken = this.peekNextMeaningfulToken(1);
+      const isIdentifierUsage = nextToken?.type === TokenType.Dot ||
+                                 nextToken?.type === TokenType.Assign ||
+                                 nextToken?.type === TokenType.PlusAssign ||
+                                 nextToken?.type === TokenType.MinusAssign ||
+                                 nextToken?.type === TokenType.MultiplyAssign ||
+                                 nextToken?.type === TokenType.DivideAssign ||
+                                 nextToken?.type === TokenType.LeftParen ||
+                                 nextToken?.type === TokenType.DoubleColon ||
+                                 nextToken?.type === TokenType.LeftBracket;
+
+      if (!isIdentifierUsage && nextToken?.type !== TokenType.Semicolon) {
+        // It's not being used as an identifier - probably an access modifier
+        this.recordError(
+          `AL-only access modifier '${token.value}' is not supported in C/AL. Use LOCAL instead.`,
+          token
+        );
+        this.advance();
+        return null;
+      }
+    }
+    if (token.type === TokenType.TernaryOperator) {
+      this.recordError(
+        `AL-only ternary operator (? :) is not supported in C/AL. Use IF-THEN-ELSE instead.`,
+        token
+      );
+      this.advance();
+      return null;
+    }
+    if (token.type === TokenType.PreprocessorDirective) {
+      this.recordError(
+        `AL-only preprocessor directive '${token.value}' is not supported in C/AL`,
+        token
+      );
+      this.advance();
+      return null;
+    }
+
+    // Check for AL-only keyword constructs (e.g., "ENUM Type { }" or "INTERFACE IName { }")
+    // These are distinguished from identifier usage by lookahead pattern detection.
+    // When an ALOnlyKeyword appears at statement level, it's likely a construct declaration.
+    // Valid uses of ALOnlyKeywords are: Enum := 1; or MyProc(Enum) or Enum += 1; or Enum[1]
+    // Invalid constructs are: ENUM Type { } or INTERFACE IFoo { }
+    if (token.type === TokenType.ALOnlyKeyword) {
+      // Look ahead to distinguish between:
+      // - "ENUM := ..." (variable used in assignment)
+      // - "ENUM += ..." (variable used in compound assignment)
+      // - "ENUM(" (variable used in function call)
+      // - "ENUM.Method" (variable used with member access)
+      // - "ENUM[1]" (variable used in array access)
+      // - "ENUM Test { }" (type declaration - NOT supported)
+      const nextToken = this.peekNextMeaningfulToken(1);
+      const isAssignmentOrCall = nextToken?.type === TokenType.Assign ||
+                                  nextToken?.type === TokenType.PlusAssign ||
+                                  nextToken?.type === TokenType.MinusAssign ||
+                                  nextToken?.type === TokenType.MultiplyAssign ||
+                                  nextToken?.type === TokenType.DivideAssign ||
+                                  nextToken?.type === TokenType.LeftParen ||
+                                  nextToken?.type === TokenType.Dot ||
+                                  nextToken?.type === TokenType.DoubleColon ||
+                                  nextToken?.type === TokenType.LeftBracket;
+
+      if (!isAssignmentOrCall && nextToken?.type !== TokenType.Semicolon) {
+        // It's not an assignment, call, or semicolon - probably a construct declaration
+        this.recordError(
+          `AL-only keyword '${token.value}' is not supported in C/AL`,
+          token
+        );
+        this.advance();
+        return null;
+      }
+    }
 
     const _startToken = this.peek();
 
@@ -2241,8 +2324,38 @@ export class Parser {
   }
 
   private parsePrimary(): Expression {
-    // Check for AL-only tokens in expression context (e.g., ternary operator)
-    this.skipALOnlyTokens();
+    // Check for AL-only tokens that are genuinely invalid in expressions
+    // (TernaryOperator and PreprocessorDirective), but NOT ALOnlyKeyword
+    // because keywords like ENUM, INTERFACE can be used as identifiers in expressions
+    const token = this.peek();
+    if (token.type === TokenType.TernaryOperator) {
+      this.recordError(
+        `AL-only ternary operator (? :) is not supported in C/AL. Use IF-THEN-ELSE instead.`,
+        token
+      );
+      this.advance();
+      return {
+        type: 'Identifier',
+        name: '?',
+        isQuoted: false,
+        startToken: token,
+        endToken: token
+      } as Identifier;
+    }
+    if (token.type === TokenType.PreprocessorDirective) {
+      this.recordError(
+        `AL-only preprocessor directive '${token.value}' is not supported in C/AL`,
+        token
+      );
+      this.advance();
+      return {
+        type: 'Identifier',
+        name: token.value,
+        isQuoted: false,
+        startToken: token,
+        endToken: token
+      } as Identifier;
+    }
 
     // Try to parse as literal
     const literal = this.parseLiteral();
@@ -2259,12 +2372,15 @@ export class Parser {
     }
 
     // Identifier (with optional member access and function calls)
-    if (this.check(TokenType.Identifier) || this.check(TokenType.QuotedIdentifier)) {
+    // Also handle keywords that can be used as identifiers
+    if (this.check(TokenType.Identifier) ||
+        this.check(TokenType.QuotedIdentifier) ||
+        this.canBeUsedAsIdentifier()) {
       return this.parseIdentifierExpression();
     }
 
     // Fallback - consume token and return identifier
-    // This handles keywords used as identifiers (e.g., CODEUNIT, DATABASE, REPORT in expressions)
+    // This handles other keywords used as identifiers (e.g., CODEUNIT, DATABASE, REPORT in expressions)
     const fallbackToken = this.advance();
     const expr: Expression = {
       type: 'Identifier',
@@ -2668,6 +2784,28 @@ export class Parser {
       return undefined;
     }
     return this.tokens[index];
+  }
+
+  /**
+   * Peek ahead N meaningful tokens, skipping whitespace and newline tokens.
+   * Used for pattern detection in lookahead checks.
+   * @param skipCount How many meaningful tokens to skip (1 = next meaningful token, 2 = second meaningful token, etc.)
+   * @returns The Nth meaningful token, or undefined if not found
+   */
+  private peekNextMeaningfulToken(skipCount: number): Token | undefined {
+    let meaningfulCount = 0;
+    let i = 1; // Start from current + 1
+    while (this.current + i < this.tokens.length) {
+      const token = this.tokens[this.current + i];
+      if (token.type !== TokenType.Whitespace && token.type !== TokenType.NewLine) {
+        meaningfulCount++;
+        if (meaningfulCount === skipCount) {
+          return token;
+        }
+      }
+      i++;
+    }
+    return undefined;
   }
 
   /**

@@ -1548,6 +1548,654 @@ describe('Parser - Keywords as Variable Names', () => {
   });
 
   /**
+   * AL-Only Keywords as Variable Names (TDD - EXPECTED TO FAIL)
+   *
+   * Tests support for using AL-only keywords (ENUM, INTERFACE, EXTENDS, IMPLEMENTS)
+   * as variable names in VAR sections. These are AL-only language keywords, not
+   * supported as language constructs in C/AL, but they CAN be used as identifiers
+   * in variable/parameter contexts.
+   *
+   * Context: In C/AL, keywords that are AL-only language constructs (like ENUM
+   * for defining enumerations) should be rejected as language features, but can
+   * be reused as variable/parameter names just like other C/AL keywords.
+   *
+   * Examples from potential NAV code:
+   * - Enum@1 : Integer (variable to store an enum-like value)
+   * - Interface@1 : Text (variable to store interface name)
+   * - Extends@1 : Boolean (variable indicating extension status)
+   * - Implements@1 : Record 18 (variable holding implementation data)
+   *
+   * IMPORTANT: These tests are EXPECTED TO FAIL initially (TDD workflow).
+   * They demonstrate the bug where AL-only keywords are rejected even in
+   * identifier contexts where they should be allowed.
+   */
+  describe('AL-Only Keywords as Variable Names (TDD - EXPECTED TO FAIL)', () => {
+    describe('ENUM as variable name', () => {
+      it('should parse ENUM variable in procedure VAR', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Enum@1000 : Integer;
+    BEGIN
+      Enum := 1;
+    END;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        expect(ast.object).not.toBeNull();
+
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+
+        const proc = procedures[0];
+        expect(proc.name).toBe('TestProc');
+        expect(proc.variables).toHaveLength(1);
+
+        const variable = proc.variables[0];
+        expect(variable.name).toBe('Enum');
+        expect(variable.dataType.typeName).toBe('Integer');
+      });
+
+      it('should parse ENUM variable in global VAR section', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Enum@1000 : Integer;
+      Customer@1001 : Record 18;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        expect(ast.object).not.toBeNull();
+        expect(ast.object?.code?.variables).toHaveLength(2);
+
+        const enumVar = ast.object!.code!.variables[0];
+        expect(enumVar.name).toBe('Enum');
+        expect(enumVar.dataType.typeName).toBe('Integer');
+      });
+
+      it('should parse ENUM with compound assignment (+=)', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Enum@1000 : Integer;
+    BEGIN
+      Enum += 1;
+    END;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        expect(ast.object).not.toBeNull();
+
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+
+        const proc = procedures[0];
+        expect(proc.name).toBe('TestProc');
+        expect(proc.body).toBeDefined();
+      });
+
+      it('should parse ENUM with other compound assignments (-=, *=, /=)', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Enum@1000 : Integer;
+    BEGIN
+      Enum -= 1;
+      Enum *= 2;
+      Enum /= 3;
+    END;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        expect(ast.object).not.toBeNull();
+      });
+
+      it('should parse ENUM with array access', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Enum@1000 : ARRAY [10] OF Integer;
+    BEGIN
+      Enum[1] := 5;
+    END;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        expect(ast.object).not.toBeNull();
+
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+
+        const proc = procedures[0];
+        expect(proc.name).toBe('TestProc');
+        expect(proc.variables).toHaveLength(1);
+        expect(proc.variables[0].name).toBe('Enum');
+      });
+    });
+
+    describe('INTERFACE as variable name', () => {
+      it('should parse INTERFACE variable in procedure VAR', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Interface@1000 : Text;
+    BEGIN
+      Interface := 'ICustomer';
+    END;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+
+        const procedures = ast.object?.code?.procedures || [];
+        const proc = procedures[0];
+        expect(proc.variables).toHaveLength(1);
+
+        const variable = proc.variables[0];
+        expect(variable.name).toBe('Interface');
+        expect(variable.dataType.typeName).toBe('Text');
+      });
+
+      it('should parse INTERFACE variable in global VAR section', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Interface@1000 : Text[50];
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        expect(ast.object!.code!.variables).toHaveLength(1);
+
+        const variable = ast.object!.code!.variables[0];
+        expect(variable.name).toBe('Interface');
+        expect(variable.dataType.typeName).toBe('Text[50]');
+      });
+    });
+
+    describe('EXTENDS as variable name', () => {
+      it('should parse EXTENDS variable in procedure VAR', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Extends@1000 : Boolean;
+    BEGIN
+      Extends := TRUE;
+    END;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+
+        const procedures = ast.object?.code?.procedures || [];
+        const proc = procedures[0];
+        expect(proc.variables).toHaveLength(1);
+
+        const variable = proc.variables[0];
+        expect(variable.name).toBe('Extends');
+        expect(variable.dataType.typeName).toBe('Boolean');
+      });
+    });
+
+    describe('IMPLEMENTS as variable name', () => {
+      it('should parse IMPLEMENTS variable in procedure VAR', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Implements@1000 : Record 18;
+    BEGIN
+      Implements.FINDFIRST;
+    END;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+
+        const procedures = ast.object?.code?.procedures || [];
+        const proc = procedures[0];
+        expect(proc.variables).toHaveLength(1);
+
+        const variable = proc.variables[0];
+        expect(variable.name).toBe('Implements');
+        expect(variable.dataType.typeName).toBe('Record 18');
+      });
+    });
+
+    describe('AL-only access modifiers as variable names', () => {
+      it('should parse INTERNAL as variable name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Internal@1000 : Integer;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        expect(ast.object!.code!.variables).toHaveLength(1);
+
+        const variable = ast.object!.code!.variables[0];
+        expect(variable.name).toBe('Internal');
+        expect(variable.dataType.typeName).toBe('Integer');
+      });
+
+      it('should parse PROTECTED as variable name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Protected@1000 : Text;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        expect(ast.object!.code!.variables).toHaveLength(1);
+
+        const variable = ast.object!.code!.variables[0];
+        expect(variable.name).toBe('Protected');
+        expect(variable.dataType.typeName).toBe('Text');
+      });
+
+      it('should parse PUBLIC as variable name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Public@1000 : Boolean;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        expect(ast.object!.code!.variables).toHaveLength(1);
+
+        const variable = ast.object!.code!.variables[0];
+        expect(variable.name).toBe('Public');
+        expect(variable.dataType.typeName).toBe('Boolean');
+      });
+
+      it('should parse Public with member access in statement position', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Public@1000 : Record 18;
+    BEGIN
+      Public.FINDFIRST;
+    END;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        expect(ast.object).not.toBeNull();
+
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+
+        const proc = procedures[0];
+        expect(proc.name).toBe('TestProc');
+        expect(proc.variables).toHaveLength(1);
+        expect(proc.variables[0].name).toBe('Public');
+      });
+
+      it('should parse Protected with compound assignment in statement position', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Protected@1000 : Integer;
+    BEGIN
+      Protected += 10;
+    END;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        expect(ast.object).not.toBeNull();
+      });
+
+      it('should parse Internal with array access in statement position', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Internal@1000 : ARRAY [5] OF Integer;
+    BEGIN
+      Internal[1] := 100;
+    END;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        expect(ast.object).not.toBeNull();
+
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+
+        const proc = procedures[0];
+        expect(proc.variables).toHaveLength(1);
+        expect(proc.variables[0].name).toBe('Internal');
+      });
+    });
+
+    describe('Multiple AL-only keywords as variables', () => {
+      it('should parse all AL-only keywords together in same VAR block', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Enum@1000 : Integer;
+      Interface@1001 : Text;
+      Extends@1002 : Boolean;
+      Implements@1003 : Record 18;
+    BEGIN
+    END;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+
+        const procedures = ast.object?.code?.procedures || [];
+        const proc = procedures[0];
+        expect(proc.variables).toHaveLength(4);
+
+        expect(proc.variables[0].name).toBe('Enum');
+        expect(proc.variables[1].name).toBe('Interface');
+        expect(proc.variables[2].name).toBe('Extends');
+        expect(proc.variables[3].name).toBe('Implements');
+      });
+
+      it('should parse AL-only access modifiers together in same VAR block', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Internal@1000 : Integer;
+      Protected@1001 : Text;
+      Public@1002 : Boolean;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        expect(ast.object!.code!.variables).toHaveLength(3);
+
+        expect(ast.object!.code!.variables[0].name).toBe('Internal');
+        expect(ast.object!.code!.variables[1].name).toBe('Protected');
+        expect(ast.object!.code!.variables[2].name).toBe('Public');
+      });
+    });
+
+    describe('AL-only keywords with C/AL modifiers', () => {
+      it('should parse ENUM with TEMPORARY modifier', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Enum@1000 : TEMPORARY Record 18;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        const variable = ast.object!.code!.variables[0];
+        expect(variable.name).toBe('Enum');
+        expect(variable.isTemporary).toBe(true);
+        expect(variable.dataType.typeName).toBe('Record 18');
+      });
+
+      it('should parse INTERFACE with VAR modifier as parameter', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(VAR Interface@1000 : Text);
+    BEGIN
+    END;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+        expect(procedures[0].parameters).toHaveLength(1);
+
+        const param = procedures[0].parameters[0];
+        expect(param.name).toBe('Interface');
+        expect(param.isVar).toBe(true);
+        expect(param.dataType.typeName).toBe('Text');
+      });
+    });
+
+    describe('Case insensitivity for AL-only keywords as variables', () => {
+      it('should parse AL-only keyword variable names case-insensitively', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      enum@1000 : Integer;
+      INTERFACE@1001 : Text;
+      eXtEnDs@1002 : Boolean;
+  }
+}`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        expect(ast.object!.code!.variables).toHaveLength(3);
+
+        // Variable names preserve original casing from source
+        expect(ast.object!.code!.variables[0].name).toBe('enum');
+        expect(ast.object!.code!.variables[1].name).toBe('INTERFACE');
+        expect(ast.object!.code!.variables[2].name).toBe('eXtEnDs');
+      });
+    });
+  });
+
+  /**
+   * Regression Tests: AL-Only Language Constructs Still Rejected
+   *
+   * These tests verify that AL-only language constructs (ENUM declarations,
+   * INTERFACE declarations, etc.) are STILL properly rejected as syntax errors.
+   * Only the use of these keywords as variable/parameter NAMES should be allowed.
+   */
+  describe('Regression: AL-Only Language Constructs Still Rejected', () => {
+    it('should reject ENUM declaration syntax', () => {
+      const code = `ENUM 50000 MyEnum { }`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      parser.parse();
+      const errors = parser.getErrors();
+
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].message).toContain("AL-only keyword 'ENUM'");
+      expect(errors[0].message).toContain('not supported in C/AL');
+    });
+
+    it('should reject INTERFACE declaration syntax', () => {
+      const code = `INTERFACE IMyInterface { }`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      parser.parse();
+      const errors = parser.getErrors();
+
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].message).toContain("AL-only keyword 'INTERFACE'");
+      expect(errors[0].message).toContain('not supported in C/AL');
+    });
+
+    it('should reject INTERNAL access modifier on procedures', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    INTERNAL PROCEDURE TestProc@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      parser.parse();
+      const errors = parser.getErrors();
+
+      expect(errors.length).toBeGreaterThan(0);
+      const internalError = errors.find(e => e.message.includes("'INTERNAL'"));
+      expect(internalError).toBeDefined();
+      expect(internalError!.message).toContain('AL-only access modifier');
+      expect(internalError!.message).toContain('not supported in C/AL');
+    });
+  });
+
+  /**
    * Bug Fix Validation (Issues #52, #53)
    *
    * Issue #52: Fixed _TYPE suffix check - Date_Type and Time_Type now recognized via suffix
