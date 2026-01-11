@@ -291,12 +291,12 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "BlockStatement",
               },
               "endToken": {
-                "column": 7,
-                "endOffset": 2103,
+                "column": 10,
+                "endOffset": 2104,
                 "line": 45,
-                "startOffset": 2100,
-                "type": "END",
-                "value": "END",
+                "startOffset": 2103,
+                "type": "SEMICOLON",
+                "value": ";",
               },
               "record": {
                 "endToken": {
@@ -2690,27 +2690,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                       "type": "SEMICOLON",
                       "value": ";",
                     },
-                    "expression": {
-                      "endToken": {
-                        "column": 12,
-                        "endOffset": 3325,
-                        "line": 77,
-                        "startOffset": 3324,
-                        "type": "SEMICOLON",
-                        "value": ";",
-                      },
-                      "isQuoted": false,
-                      "name": ";",
-                      "startToken": {
-                        "column": 12,
-                        "endOffset": 3325,
-                        "line": 77,
-                        "startOffset": 3324,
-                        "type": "SEMICOLON",
-                        "value": ";",
-                      },
-                      "type": "Identifier",
-                    },
                     "startToken": {
                       "column": 12,
                       "endOffset": 3325,
@@ -2719,18 +2698,18 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                       "type": "SEMICOLON",
                       "value": ";",
                     },
-                    "type": "CallStatement",
+                    "type": "EmptyStatement",
                   },
                 ],
                 "type": "BlockStatement",
               },
               "endToken": {
-                "column": 7,
-                "endOffset": 3336,
+                "column": 10,
+                "endOffset": 3337,
                 "line": 78,
-                "startOffset": 3333,
-                "type": "END",
-                "value": "END",
+                "startOffset": 3336,
+                "type": "SEMICOLON",
+                "value": ";",
               },
               "record": {
                 "endToken": {
@@ -6604,27 +6583,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                       "type": "SEMICOLON",
                       "value": ";",
                     },
-                    "expression": {
-                      "endToken": {
-                        "column": 12,
-                        "endOffset": 5411,
-                        "line": 125,
-                        "startOffset": 5410,
-                        "type": "SEMICOLON",
-                        "value": ";",
-                      },
-                      "isQuoted": false,
-                      "name": ";",
-                      "startToken": {
-                        "column": 12,
-                        "endOffset": 5411,
-                        "line": 125,
-                        "startOffset": 5410,
-                        "type": "SEMICOLON",
-                        "value": ";",
-                      },
-                      "type": "Identifier",
-                    },
                     "startToken": {
                       "column": 12,
                       "endOffset": 5411,
@@ -6633,7 +6591,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                       "type": "SEMICOLON",
                       "value": ";",
                     },
-                    "type": "CallStatement",
+                    "type": "EmptyStatement",
                   },
                   {
                     "condition": {
@@ -8966,27 +8924,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                             "type": "SEMICOLON",
                             "value": ";",
                           },
-                          "expression": {
-                            "endToken": {
-                              "column": 14,
-                              "endOffset": 6503,
-                              "line": 146,
-                              "startOffset": 6502,
-                              "type": "SEMICOLON",
-                              "value": ";",
-                            },
-                            "isQuoted": false,
-                            "name": ";",
-                            "startToken": {
-                              "column": 14,
-                              "endOffset": 6503,
-                              "line": 146,
-                              "startOffset": 6502,
-                              "type": "SEMICOLON",
-                              "value": ";",
-                            },
-                            "type": "Identifier",
-                          },
                           "startToken": {
                             "column": 14,
                             "endOffset": 6503,
@@ -8995,7 +8932,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                             "type": "SEMICOLON",
                             "value": ";",
                           },
-                          "type": "CallStatement",
+                          "type": "EmptyStatement",
                         },
                       ],
                       "type": "BlockStatement",
@@ -9011,27 +8948,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                       "type": "SEMICOLON",
                       "value": ";",
                     },
-                    "expression": {
-                      "endToken": {
-                        "column": 12,
-                        "endOffset": 6517,
-                        "line": 147,
-                        "startOffset": 6516,
-                        "type": "SEMICOLON",
-                        "value": ";",
-                      },
-                      "isQuoted": false,
-                      "name": ";",
-                      "startToken": {
-                        "column": 12,
-                        "endOffset": 6517,
-                        "line": 147,
-                        "startOffset": 6516,
-                        "type": "SEMICOLON",
-                        "value": ";",
-                      },
-                      "type": "Identifier",
-                    },
                     "startToken": {
                       "column": 12,
                       "endOffset": 6517,
@@ -9040,7 +8956,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                       "type": "SEMICOLON",
                       "value": ";",
                     },
-                    "type": "CallStatement",
+                    "type": "EmptyStatement",
                   },
                   {
                     "condition": {
@@ -11069,27 +10985,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                       "type": "SEMICOLON",
                       "value": ";",
                     },
-                    "expression": {
-                      "endToken": {
-                        "column": 12,
-                        "endOffset": 7581,
-                        "line": 167,
-                        "startOffset": 7580,
-                        "type": "SEMICOLON",
-                        "value": ";",
-                      },
-                      "isQuoted": false,
-                      "name": ";",
-                      "startToken": {
-                        "column": 12,
-                        "endOffset": 7581,
-                        "line": 167,
-                        "startOffset": 7580,
-                        "type": "SEMICOLON",
-                        "value": ";",
-                      },
-                      "type": "Identifier",
-                    },
                     "startToken": {
                       "column": 12,
                       "endOffset": 7581,
@@ -11098,7 +10993,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                       "type": "SEMICOLON",
                       "value": ";",
                     },
-                    "type": "CallStatement",
+                    "type": "EmptyStatement",
                   },
                 ],
                 "type": "BlockStatement",
@@ -11315,27 +11210,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "expression": {
-                "endToken": {
-                  "column": 10,
-                  "endOffset": 7593,
-                  "line": 168,
-                  "startOffset": 7592,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "isQuoted": false,
-                "name": ";",
-                "startToken": {
-                  "column": 10,
-                  "endOffset": 7593,
-                  "line": 168,
-                  "startOffset": 7592,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "type": "Identifier",
-              },
               "startToken": {
                 "column": 10,
                 "endOffset": 7593,
@@ -11344,7 +11218,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "type": "CallStatement",
+              "type": "EmptyStatement",
             },
           ],
           "endToken": {
@@ -13833,27 +13707,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                               "type": "SEMICOLON",
                               "value": ";",
                             },
-                            "expression": {
-                              "endToken": {
-                                "column": 16,
-                                "endOffset": 11324,
-                                "line": 244,
-                                "startOffset": 11323,
-                                "type": "SEMICOLON",
-                                "value": ";",
-                              },
-                              "isQuoted": false,
-                              "name": ";",
-                              "startToken": {
-                                "column": 16,
-                                "endOffset": 11324,
-                                "line": 244,
-                                "startOffset": 11323,
-                                "type": "SEMICOLON",
-                                "value": ";",
-                              },
-                              "type": "Identifier",
-                            },
                             "startToken": {
                               "column": 16,
                               "endOffset": 11324,
@@ -13862,7 +13715,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                               "type": "SEMICOLON",
                               "value": ";",
                             },
-                            "type": "CallStatement",
+                            "type": "EmptyStatement",
                           },
                           {
                             "endToken": {
@@ -17101,27 +16954,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                               "type": "SEMICOLON",
                               "value": ";",
                             },
-                            "expression": {
-                              "endToken": {
-                                "column": 16,
-                                "endOffset": 10136,
-                                "line": 219,
-                                "startOffset": 10135,
-                                "type": "SEMICOLON",
-                                "value": ";",
-                              },
-                              "isQuoted": false,
-                              "name": ";",
-                              "startToken": {
-                                "column": 16,
-                                "endOffset": 10136,
-                                "line": 219,
-                                "startOffset": 10135,
-                                "type": "SEMICOLON",
-                                "value": ";",
-                              },
-                              "type": "Identifier",
-                            },
                             "startToken": {
                               "column": 16,
                               "endOffset": 10136,
@@ -17130,7 +16962,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                               "type": "SEMICOLON",
                               "value": ";",
                             },
-                            "type": "CallStatement",
+                            "type": "EmptyStatement",
                           },
                           {
                             "endToken": {
@@ -22282,27 +22114,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                               "type": "SEMICOLON",
                               "value": ";",
                             },
-                            "expression": {
-                              "endToken": {
-                                "column": 16,
-                                "endOffset": 16507,
-                                "line": 343,
-                                "startOffset": 16506,
-                                "type": "SEMICOLON",
-                                "value": ";",
-                              },
-                              "isQuoted": false,
-                              "name": ";",
-                              "startToken": {
-                                "column": 16,
-                                "endOffset": 16507,
-                                "line": 343,
-                                "startOffset": 16506,
-                                "type": "SEMICOLON",
-                                "value": ";",
-                              },
-                              "type": "Identifier",
-                            },
                             "startToken": {
                               "column": 16,
                               "endOffset": 16507,
@@ -22311,7 +22122,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                               "type": "SEMICOLON",
                               "value": ";",
                             },
-                            "type": "CallStatement",
+                            "type": "EmptyStatement",
                           },
                           {
                             "endToken": {
@@ -26081,27 +25892,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                               "type": "SEMICOLON",
                               "value": ";",
                             },
-                            "expression": {
-                              "endToken": {
-                                "column": 16,
-                                "endOffset": 13651,
-                                "line": 290,
-                                "startOffset": 13650,
-                                "type": "SEMICOLON",
-                                "value": ";",
-                              },
-                              "isQuoted": false,
-                              "name": ";",
-                              "startToken": {
-                                "column": 16,
-                                "endOffset": 13651,
-                                "line": 290,
-                                "startOffset": 13650,
-                                "type": "SEMICOLON",
-                                "value": ";",
-                              },
-                              "type": "Identifier",
-                            },
                             "startToken": {
                               "column": 16,
                               "endOffset": 13651,
@@ -26110,7 +25900,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                               "type": "SEMICOLON",
                               "value": ";",
                             },
-                            "type": "CallStatement",
+                            "type": "EmptyStatement",
                           },
                           {
                             "endToken": {
@@ -29194,12 +28984,12 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                       "type": "BlockStatement",
                     },
                     "endToken": {
-                      "column": 9,
-                      "endOffset": 18172,
+                      "column": 12,
+                      "endOffset": 18173,
                       "line": 380,
-                      "startOffset": 18169,
-                      "type": "END",
-                      "value": "END",
+                      "startOffset": 18172,
+                      "type": "SEMICOLON",
+                      "value": ";",
                     },
                     "record": {
                       "endToken": {
@@ -31375,27 +31165,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "expression": {
-                "endToken": {
-                  "column": 10,
-                  "endOffset": 19414,
-                  "line": 413,
-                  "startOffset": 19413,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "isQuoted": false,
-                "name": ";",
-                "startToken": {
-                  "column": 10,
-                  "endOffset": 19414,
-                  "line": 413,
-                  "startOffset": 19413,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "type": "Identifier",
-              },
               "startToken": {
                 "column": 10,
                 "endOffset": 19414,
@@ -31404,7 +31173,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "type": "CallStatement",
+              "type": "EmptyStatement",
             },
             {
               "condition": {
@@ -33448,12 +33217,12 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                       "type": "BlockStatement",
                     },
                     "endToken": {
-                      "column": 9,
-                      "endOffset": 20476,
+                      "column": 12,
+                      "endOffset": 20477,
                       "line": 434,
-                      "startOffset": 20473,
-                      "type": "END",
-                      "value": "END",
+                      "startOffset": 20476,
+                      "type": "SEMICOLON",
+                      "value": ";",
                     },
                     "record": {
                       "endToken": {
@@ -34998,27 +34767,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "expression": {
-                "endToken": {
-                  "column": 10,
-                  "endOffset": 21228,
-                  "line": 452,
-                  "startOffset": 21227,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "isQuoted": false,
-                "name": ";",
-                "startToken": {
-                  "column": 10,
-                  "endOffset": 21228,
-                  "line": 452,
-                  "startOffset": 21227,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "type": "Identifier",
-              },
               "startToken": {
                 "column": 10,
                 "endOffset": 21228,
@@ -35027,7 +34775,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "type": "CallStatement",
+              "type": "EmptyStatement",
             },
           ],
           "endToken": {
@@ -37552,27 +37300,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                         "type": "SEMICOLON",
                         "value": ";",
                       },
-                      "expression": {
-                        "endToken": {
-                          "column": 14,
-                          "endOffset": 24337,
-                          "line": 517,
-                          "startOffset": 24336,
-                          "type": "SEMICOLON",
-                          "value": ";",
-                        },
-                        "isQuoted": false,
-                        "name": ";",
-                        "startToken": {
-                          "column": 14,
-                          "endOffset": 24337,
-                          "line": 517,
-                          "startOffset": 24336,
-                          "type": "SEMICOLON",
-                          "value": ";",
-                        },
-                        "type": "Identifier",
-                      },
                       "startToken": {
                         "column": 14,
                         "endOffset": 24337,
@@ -37581,7 +37308,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                         "type": "SEMICOLON",
                         "value": ";",
                       },
-                      "type": "CallStatement",
+                      "type": "EmptyStatement",
                     },
                     {
                       "endToken": {
@@ -40115,27 +39842,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                         "type": "SEMICOLON",
                         "value": ";",
                       },
-                      "expression": {
-                        "endToken": {
-                          "column": 14,
-                          "endOffset": 23348,
-                          "line": 495,
-                          "startOffset": 23347,
-                          "type": "SEMICOLON",
-                          "value": ";",
-                        },
-                        "isQuoted": false,
-                        "name": ";",
-                        "startToken": {
-                          "column": 14,
-                          "endOffset": 23348,
-                          "line": 495,
-                          "startOffset": 23347,
-                          "type": "SEMICOLON",
-                          "value": ";",
-                        },
-                        "type": "Identifier",
-                      },
                       "startToken": {
                         "column": 14,
                         "endOffset": 23348,
@@ -40144,7 +39850,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                         "type": "SEMICOLON",
                         "value": ";",
                       },
-                      "type": "CallStatement",
+                      "type": "EmptyStatement",
                     },
                     {
                       "endToken": {
@@ -40242,27 +39948,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "expression": {
-                "endToken": {
-                  "column": 12,
-                  "endOffset": 24397,
-                  "line": 519,
-                  "startOffset": 24396,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "isQuoted": false,
-                "name": ";",
-                "startToken": {
-                  "column": 12,
-                  "endOffset": 24397,
-                  "line": 519,
-                  "startOffset": 24396,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "type": "Identifier",
-              },
               "startToken": {
                 "column": 12,
                 "endOffset": 24397,
@@ -40271,7 +39956,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "type": "CallStatement",
+              "type": "EmptyStatement",
             },
           ],
           "endToken": {
@@ -42904,12 +42589,12 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 "type": "BlockStatement",
               },
               "endToken": {
-                "column": 7,
-                "endOffset": 26161,
+                "column": 10,
+                "endOffset": 26162,
                 "line": 554,
-                "startOffset": 26158,
-                "type": "END",
-                "value": "END",
+                "startOffset": 26161,
+                "type": "SEMICOLON",
+                "value": ";",
               },
               "record": {
                 "endToken": {
@@ -48114,27 +47799,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                       "type": "SEMICOLON",
                       "value": ";",
                     },
-                    "expression": {
-                      "endToken": {
-                        "column": 12,
-                        "endOffset": 1827,
-                        "line": 56,
-                        "startOffset": 1826,
-                        "type": "SEMICOLON",
-                        "value": ";",
-                      },
-                      "isQuoted": false,
-                      "name": ";",
-                      "startToken": {
-                        "column": 12,
-                        "endOffset": 1827,
-                        "line": 56,
-                        "startOffset": 1826,
-                        "type": "SEMICOLON",
-                        "value": ";",
-                      },
-                      "type": "Identifier",
-                    },
                     "startToken": {
                       "column": 12,
                       "endOffset": 1827,
@@ -48143,7 +47807,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                       "type": "SEMICOLON",
                       "value": ";",
                     },
-                    "type": "CallStatement",
+                    "type": "EmptyStatement",
                   },
                   {
                     "endToken": {
@@ -49867,12 +49531,12 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "BlockStatement",
               },
               "endToken": {
-                "column": 7,
-                "endOffset": 2599,
+                "column": 10,
+                "endOffset": 2600,
                 "line": 73,
-                "startOffset": 2596,
-                "type": "END",
-                "value": "END",
+                "startOffset": 2599,
+                "type": "SEMICOLON",
+                "value": ";",
               },
               "record": {
                 "endToken": {
@@ -50882,12 +50546,12 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
                 "type": "BlockStatement",
               },
               "endToken": {
-                "column": 7,
-                "endOffset": 3107,
+                "column": 10,
+                "endOffset": 3108,
                 "line": 89,
-                "startOffset": 3104,
-                "type": "END",
-                "value": "END",
+                "startOffset": 3107,
+                "type": "SEMICOLON",
+                "value": ";",
               },
               "record": {
                 "endToken": {
@@ -53993,27 +53657,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "expression": {
-                "endToken": {
-                  "column": 10,
-                  "endOffset": 10576,
-                  "line": 252,
-                  "startOffset": 10575,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "isQuoted": false,
-                "name": ";",
-                "startToken": {
-                  "column": 10,
-                  "endOffset": 10576,
-                  "line": 252,
-                  "startOffset": 10575,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "type": "Identifier",
-              },
               "startToken": {
                 "column": 10,
                 "endOffset": 10576,
@@ -54022,7 +53665,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "type": "CallStatement",
+              "type": "EmptyStatement",
             },
           ],
           "endToken": {
@@ -58299,27 +57942,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "expression": {
-                "endToken": {
-                  "column": 10,
-                  "endOffset": 1284,
-                  "line": 47,
-                  "startOffset": 1283,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "isQuoted": false,
-                "name": ";",
-                "startToken": {
-                  "column": 10,
-                  "endOffset": 1284,
-                  "line": 47,
-                  "startOffset": 1283,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "type": "Identifier",
-              },
               "startToken": {
                 "column": 10,
                 "endOffset": 1284,
@@ -58328,7 +57950,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "type": "CallStatement",
+              "type": "EmptyStatement",
             },
             {
               "condition": {
@@ -58521,27 +58143,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "expression": {
-                "endToken": {
-                  "column": 10,
-                  "endOffset": 1367,
-                  "line": 50,
-                  "startOffset": 1366,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "isQuoted": false,
-                "name": ";",
-                "startToken": {
-                  "column": 10,
-                  "endOffset": 1367,
-                  "line": 50,
-                  "startOffset": 1366,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "type": "Identifier",
-              },
               "startToken": {
                 "column": 10,
                 "endOffset": 1367,
@@ -58550,7 +58151,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "type": "CallStatement",
+              "type": "EmptyStatement",
             },
             {
               "endToken": {
@@ -65122,27 +64723,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                         "type": "SEMICOLON",
                         "value": ";",
                       },
-                      "expression": {
-                        "endToken": {
-                          "column": 11,
-                          "endOffset": 5739,
-                          "line": 151,
-                          "startOffset": 5738,
-                          "type": "SEMICOLON",
-                          "value": ";",
-                        },
-                        "isQuoted": false,
-                        "name": ";",
-                        "startToken": {
-                          "column": 11,
-                          "endOffset": 5739,
-                          "line": 151,
-                          "startOffset": 5738,
-                          "type": "SEMICOLON",
-                          "value": ";",
-                        },
-                        "type": "Identifier",
-                      },
                       "startToken": {
                         "column": 11,
                         "endOffset": 5739,
@@ -65151,7 +64731,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                         "type": "SEMICOLON",
                         "value": ";",
                       },
-                      "type": "CallStatement",
+                      "type": "EmptyStatement",
                     },
                   ],
                   "type": "CaseBranch",
@@ -66151,27 +65731,6 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "expression": {
-                "endToken": {
-                  "column": 10,
-                  "endOffset": 6189,
-                  "line": 165,
-                  "startOffset": 6188,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "isQuoted": false,
-                "name": ";",
-                "startToken": {
-                  "column": 10,
-                  "endOffset": 6189,
-                  "line": 165,
-                  "startOffset": 6188,
-                  "type": "SEMICOLON",
-                  "value": ";",
-                },
-                "type": "Identifier",
-              },
               "startToken": {
                 "column": 10,
                 "endOffset": 6189,
@@ -66180,7 +65739,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
                 "type": "SEMICOLON",
                 "value": ";",
               },
-              "type": "CallStatement",
+              "type": "EmptyStatement",
             },
           ],
           "endToken": {

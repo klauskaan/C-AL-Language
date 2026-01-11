@@ -1686,6 +1686,12 @@ export class Parser {
       return this.parseBlock();
     }
 
+    // Bare semicolon (empty statement) - must check before parseAssignmentOrCall
+    // because parseAssignmentOrCall will try to parse the semicolon as an identifier
+    if (this.check(TokenType.Semicolon)) {
+      return this.parseEmptyStatement();
+    }
+
     // Assignment or procedure call
     return this.parseAssignmentOrCall();
   }
@@ -1817,37 +1823,13 @@ export class Parser {
       }
     }
 
-    // Consume END after empty body or error recovery:
-    // - EmptyStatement from END: IF THEN END; (consume END, valid empty body)
-    // - EmptyStatement from semicolon: IF THEN; (don't consume END, already have semicolon)
-    // - BlockStatement (not BEGIN-END): error recovery synthetic block
-    let endToken = this.previous();
-    const finalBranch = elseBranch || thenBranch;
-    // Only consume END if the EmptyStatement wasn't created from an explicit semicolon
-    const isExplicitSemicolon = this.previous().type === TokenType.Semicolon;
-    if (finalBranch?.type === 'EmptyStatement' && !isExplicitSemicolon && this.check(TokenType.End)) {
-      endToken = this.consume(TokenType.End, 'Expected END');
-      // Also consume the trailing semicolon if present
-      if (this.check(TokenType.Semicolon)) {
-        this.advance();
-      }
-    } else if (finalBranch?.type === 'BlockStatement' &&
-               finalBranch.startToken?.type !== TokenType.Begin &&
-               this.check(TokenType.End)) {
-      endToken = this.consume(TokenType.End, 'Expected END');
-      // Also consume the trailing semicolon if present
-      if (this.check(TokenType.Semicolon)) {
-        this.advance();
-      }
-    }
-
     return {
       type: 'IfStatement',
       condition,
       thenBranch,
       elseBranch,
       startToken,
-      endToken
+      endToken: this.previous()
     };
   }
 
@@ -1882,34 +1864,12 @@ export class Parser {
       body = stmt;
     }
 
-    // Consume END after empty body or error recovery:
-    // - EmptyStatement from END: WHILE DO END; (consume END, valid empty body)
-    // - EmptyStatement from semicolon: WHILE DO; (don't consume END, already have semicolon)
-    // - BlockStatement (not BEGIN-END): error recovery synthetic block
-    let endToken = this.previous();
-    const isExplicitSemicolon = this.previous().type === TokenType.Semicolon;
-    if (body?.type === 'EmptyStatement' && !isExplicitSemicolon && this.check(TokenType.End)) {
-      endToken = this.consume(TokenType.End, 'Expected END');
-      // Also consume the trailing semicolon if present
-      if (this.check(TokenType.Semicolon)) {
-        this.advance();
-      }
-    } else if (body?.type === 'BlockStatement' &&
-               body.startToken?.type !== TokenType.Begin &&
-               this.check(TokenType.End)) {
-      endToken = this.consume(TokenType.End, 'Expected END');
-      // Also consume the trailing semicolon if present
-      if (this.check(TokenType.Semicolon)) {
-        this.advance();
-      }
-    }
-
     return {
       type: 'WhileStatement',
       condition,
       body,
       startToken,
-      endToken
+      endToken: this.previous()
     };
   }
 
@@ -2001,28 +1961,6 @@ export class Parser {
       body = stmt;
     }
 
-    // Consume END after empty body or error recovery:
-    // - EmptyStatement from END: FOR DO END; (consume END, valid empty body)
-    // - EmptyStatement from semicolon: FOR DO; (don't consume END, already have semicolon)
-    // - BlockStatement (not BEGIN-END): error recovery synthetic block
-    let endToken = this.previous();
-    const isExplicitSemicolon = this.previous().type === TokenType.Semicolon;
-    if (body?.type === 'EmptyStatement' && !isExplicitSemicolon && this.check(TokenType.End)) {
-      endToken = this.consume(TokenType.End, 'Expected END');
-      // Also consume the trailing semicolon if present
-      if (this.check(TokenType.Semicolon)) {
-        this.advance();
-      }
-    } else if (body?.type === 'BlockStatement' &&
-               body.startToken?.type !== TokenType.Begin &&
-               this.check(TokenType.End)) {
-      endToken = this.consume(TokenType.End, 'Expected END');
-      // Also consume the trailing semicolon if present
-      if (this.check(TokenType.Semicolon)) {
-        this.advance();
-      }
-    }
-
     return {
       type: 'ForStatement',
       variable,
@@ -2031,7 +1969,7 @@ export class Parser {
       downto,
       body,
       startToken,
-      endToken
+      endToken: this.previous()
     };
   }
 
@@ -2246,31 +2184,9 @@ export class Parser {
       body = stmt;
     }
 
-    // Consume END after empty body or error recovery:
-    // - EmptyStatement from END: WITH DO END; (consume END, valid empty body)
-    // - EmptyStatement from semicolon: WITH DO; (don't consume END, already have semicolon)
-    // - BlockStatement (not BEGIN-END): error recovery synthetic block
-    let endToken = this.previous();
-    const isExplicitSemicolon = this.previous().type === TokenType.Semicolon;
-    if (body?.type === 'EmptyStatement' && !isExplicitSemicolon && this.check(TokenType.End)) {
-      endToken = this.consume(TokenType.End, 'Expected END');
-      // Also consume the trailing semicolon if present
-      if (this.check(TokenType.Semicolon)) {
-        this.advance();
-      }
-    } else if (body?.type === 'BlockStatement' &&
-               body.startToken?.type !== TokenType.Begin &&
-               this.check(TokenType.End)) {
-      endToken = this.consume(TokenType.End, 'Expected END');
-      // Also consume the trailing semicolon if present
-      if (this.check(TokenType.Semicolon)) {
-        this.advance();
-      }
-    } else {
-      // Optional semicolon after WITH statement (when not already consumed above)
-      if (this.check(TokenType.Semicolon)) {
-        this.advance();
-      }
+    // Optional semicolon after WITH statement
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
     }
 
     return {
@@ -2278,7 +2194,7 @@ export class Parser {
       record,
       body,
       startToken,
-      endToken
+      endToken: this.previous()
     };
   }
 
