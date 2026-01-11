@@ -23,6 +23,14 @@ export class Lexer {
   private static readonly MIN_TIME_DIGITS = 6;      // HHMMSS minimum
   private static readonly MIN_CONTEXT_STACK_SIZE = 1; // Context stack minimum
 
+  // Unicode range constants for extended Latin identifiers
+  // NAV C/SIDE supports extended Latin characters (validated by multilingual.cal fixture)
+  private static readonly LATIN_1_SUPPLEMENT_START = 0x00C0;  // À
+  private static readonly LATIN_1_SUPPLEMENT_END = 0x00FF;    // ÿ
+  private static readonly LATIN_EXTENDED_A_START = 0x0100;    // Ā
+  private static readonly LATIN_EXTENDED_A_END = 0x017F;      // ſ
+  // Excluded from identifiers: U+00D7 (×), U+00F7 (÷)
+
   private input: string;
   private position: number = 0;
   private line: number = 1;
@@ -703,19 +711,46 @@ export class Lexer {
   }
 
   private isIdentifierStart(ch: string): boolean {
-    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch === '_';
+    // ASCII fast path
+    if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch === '_') {
+      return true;
+    }
+    // Extended Latin characters (for multilingual NAV identifiers)
+    const code = ch.charCodeAt(0);
+    return this.isExtendedLatinLetter(code);
   }
 
   private isIdentifierPart(ch: string): boolean {
-    // Allow apostrophes in identifiers ONLY in SECTION_LEVEL context (property values)
-    // AND only when they're truly part of a word (not starting a new string)
-    // We check if the previous character (before the identifier started) was alphanumeric
-    // to distinguish "word's" from "word '" (where ' should be a string delimiter)
+    // Context-sensitive apostrophe handling
     if (ch === "'" && this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
-      // This apostrophe is part of an identifier being scanned, so allow it
       return true;
     }
-    return this.isIdentifierStart(ch) || this.isDigit(ch);
+    // ASCII fast path
+    if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch === '_' || this.isDigit(ch)) {
+      return true;
+    }
+    // Extended Latin characters
+    const code = ch.charCodeAt(0);
+    return this.isExtendedLatinLetter(code);
+  }
+
+  /**
+   * Check if character is an extended Latin letter (accented characters in European languages).
+   * Includes Latin-1 Supplement (U+00C0-U+00FF) and Latin Extended-A (U+0100-U+017F).
+   * Excludes math operators: × (U+00D7) and ÷ (U+00F7).
+   * @param code The character code from charCodeAt()
+   * @returns true if the character is a valid extended Latin letter for identifiers
+   */
+  private isExtendedLatinLetter(code: number): boolean {
+    // Latin-1 Supplement: U+00C0-U+00FF (excluding × and ÷)
+    if (code >= Lexer.LATIN_1_SUPPLEMENT_START && code <= Lexer.LATIN_1_SUPPLEMENT_END) {
+      return code !== 0x00D7 && code !== 0x00F7;
+    }
+    // Latin Extended-A: U+0100-U+017F
+    if (code >= Lexer.LATIN_EXTENDED_A_START && code <= Lexer.LATIN_EXTENDED_A_END) {
+      return true;
+    }
+    return false;
   }
 
   private currentChar(): string {
