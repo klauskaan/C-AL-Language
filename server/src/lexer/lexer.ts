@@ -34,8 +34,9 @@ export class Lexer {
   /**
    * Property names that contain executable code (trigger properties).
    * These are the ONLY properties where BEGIN/END should enter CODE_BLOCK context.
+   * Source: NAV 2013-2018 C/AL Language Reference
    */
-  private static readonly TRIGGER_PROPERTIES: Set<string> = new Set([
+  private static readonly TRIGGER_PROPERTIES: ReadonlySet<string> = new Set<string>([
     'oninsert', 'onmodify', 'ondelete', 'onrename',
     'onvalidate', 'onlookup',
     'onrun',
@@ -65,6 +66,9 @@ export class Lexer {
   private lastPropertyName: string = '';
   private inPropertyValue: boolean = false;
 
+  // Track if we just saw a section keyword (FIELDS, PROPERTIES, etc.)
+  private lastWasSectionKeyword: boolean = false;
+
   constructor(input: string) {
     this.input = input;
   }
@@ -80,8 +84,10 @@ export class Lexer {
     this.contextStack.length = 0;
     this.contextStack.push(LexerContext.NORMAL);
     this.braceDepth = 0;
+    // Reset property tracking state
     this.lastPropertyName = '';
     this.inPropertyValue = false;
+    this.lastWasSectionKeyword = false;
 
     while (this.position < this.input.length) {
       this.scanToken();
@@ -141,8 +147,11 @@ export class Lexer {
     this.addToken(TokenType.LeftBrace, '{', startPos, this.position, startLine, startColumn);
 
     // Push SECTION_LEVEL context when we see opening brace at object level
-    if (this.getCurrentContext() === LexerContext.OBJECT_LEVEL && this.braceDepth === 1) {
+    // OR when we just saw a section keyword (FIELDS, PROPERTIES, etc.)
+    if ((this.getCurrentContext() === LexerContext.OBJECT_LEVEL && this.braceDepth === 1) ||
+        this.lastWasSectionKeyword) {
       this.pushContext(LexerContext.SECTION_LEVEL);
+      this.lastWasSectionKeyword = false;
     }
   }
 
@@ -485,10 +494,20 @@ export class Lexer {
     this.addToken(tokenType, value, startPos, this.position, startLine, startColumn);
 
     // Track identifier as potential property name for BEGIN/END context decisions
-    // Only track if NOT currently in a property value (i.e., this is the property NAME, not the value)
-    // Track in any context since properties can appear in various locations
-    if (!this.inPropertyValue && tokenType === TokenType.Identifier) {
+    // Only track at SECTION_LEVEL where properties exist - NOT in CODE_BLOCK where = is comparison
+    // This prevents UNTIL x = 0 from corrupting property tracking state
+    // NOTE: Context coupling is intentional - C/AL properties only exist in PROPERTIES/FIELDS/KEYS sections
+    if (!this.inPropertyValue &&
+        tokenType === TokenType.Identifier &&
+        this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
       this.lastPropertyName = value;
+    }
+
+    // Reset section keyword flag for non-section identifiers
+    // Section keywords (FIELDS, PROPERTIES, etc.) will re-set this flag in updateContextForKeyword()
+    // This condition is always true here (scanIdentifier never produces LeftBrace), but prevents future bugs
+    if (tokenType !== TokenType.LeftBrace) {
+      this.lastWasSectionKeyword = false;
     }
 
     // Update context based on keywords
@@ -518,9 +537,9 @@ export class Lexer {
       case TokenType.DataItems:
       case TokenType.Elements:
       case TokenType.RequestForm:
-        // Section keywords - prepare for section content
+        // Section keywords - mark that we're expecting a section
         // The actual SECTION_LEVEL context is pushed when we see the opening brace
-        // For now, stay in OBJECT_LEVEL or current context
+        this.lastWasSectionKeyword = true;
         break;
 
       case TokenType.Begin:
@@ -594,8 +613,12 @@ export class Lexer {
         break;
       case '=':
         this.addToken(TokenType.Equal, ch, startPos, this.position, startLine, startColumn);
-        // Enter property value mode - BEGIN/END handling depends on property name
-        if (this.lastPropertyName !== '') {
+        // Enter property value mode ONLY at SECTION_LEVEL
+        // In CODE_BLOCK, = is a comparison operator, not property assignment
+        // DEPENDENCY: lastPropertyName is set by scanIdentifier() when an identifier is scanned
+        // Pattern: PropertyName = Value
+        if (this.lastPropertyName !== '' &&
+            this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
           this.inPropertyValue = true;
         }
         break;

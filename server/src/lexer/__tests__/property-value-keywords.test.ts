@@ -423,12 +423,15 @@ describe('Lexer - Property Value Keywords vs Code Triggers', () => {
       const testCases = ['Begin', 'BEGIN', 'begin'];
 
       testCases.forEach(beginVariant => {
-        const code = `{ 1 ; ; MyField ; Option ; InitValue=${beginVariant}; }`;
+        const code = `FIELDS
+{
+  { 1 ; ; MyField ; Option ; InitValue=${beginVariant}; }
+}`;
         const lexer = new Lexer(code);
         const tokens = lexer.tokenize();
 
         const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
-        expect(rightBraces.length).toBe(1);
+        expect(rightBraces.length).toBe(2); // FIELDS + field
 
         const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
         expect(unknownTokens).toHaveLength(0);
