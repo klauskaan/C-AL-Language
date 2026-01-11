@@ -31,6 +31,27 @@ export class Lexer {
   private static readonly LATIN_EXTENDED_A_END = 0x017F;      // ſ
   // Excluded from identifiers: U+00D7 (×), U+00F7 (÷)
 
+  /**
+   * Property names that contain executable code (trigger properties).
+   * These are the ONLY properties where BEGIN/END should enter CODE_BLOCK context.
+   */
+  private static readonly TRIGGER_PROPERTIES: Set<string> = new Set([
+    'oninsert', 'onmodify', 'ondelete', 'onrename',
+    'onvalidate', 'onlookup',
+    'onrun',
+    'oninit', 'onopenpage', 'onclosepage', 'onfindrecord', 'onnextrecord',
+    'onaftergetrecord', 'onnewrecord', 'oninsertrecord', 'onmodifyrecord',
+    'ondeleterecord', 'onqueryclosepage', 'onaftergetcurrrecord', 'onactivate',
+    'onaction', 'onassistedit', 'ondrilldown',
+    'oninitreport', 'onprereport', 'onpostreport',
+    'onpredataitem', 'onpostdataitem',
+    'oninitxmlport', 'onprexmlport', 'onpostxmlport', 'onprexmlitem',
+    'onafterassignfield', 'onbeforepassfield',
+    'onafterassignvariable', 'onbeforepassvariable',
+    'onafterinitrecord', 'onafterinsertrecord', 'onbeforeinsertrecord',
+    'onbeforeopen',
+  ]);
+
   private input: string;
   private position: number = 0;
   private line: number = 1;
@@ -39,6 +60,10 @@ export class Lexer {
   private readonly contextStack: LexerContext[] = [LexerContext.NORMAL];
   private braceDepth: number = 0;
   private contextUnderflowDetected: boolean = false;
+
+  // Property tracking for BEGIN/END context decisions
+  private lastPropertyName: string = '';
+  private inPropertyValue: boolean = false;
 
   constructor(input: string) {
     this.input = input;
@@ -55,6 +80,8 @@ export class Lexer {
     this.contextStack.length = 0;
     this.contextStack.push(LexerContext.NORMAL);
     this.braceDepth = 0;
+    this.lastPropertyName = '';
+    this.inPropertyValue = false;
 
     while (this.position < this.input.length) {
       this.scanToken();
@@ -89,6 +116,13 @@ export class Lexer {
     } else {
       this.contextUnderflowDetected = true;
     }
+  }
+
+  /**
+   * Check if a property name is a trigger property (contains executable code).
+   */
+  private isTriggerProperty(propertyName: string): boolean {
+    return Lexer.TRIGGER_PROPERTIES.has(propertyName.toLowerCase());
   }
 
   /**
@@ -139,6 +173,11 @@ export class Lexer {
           this.contextUnderflowDetected = false;
         }
       }
+
+      // Reset property tracking (standardized order: inPropertyValue first, then lastPropertyName)
+      this.inPropertyValue = false;
+      this.lastPropertyName = '';
+
       return true;
     }
     return false;
@@ -445,6 +484,13 @@ export class Lexer {
 
     this.addToken(tokenType, value, startPos, this.position, startLine, startColumn);
 
+    // Track identifier as potential property name for BEGIN/END context decisions
+    // Only track if NOT currently in a property value (i.e., this is the property NAME, not the value)
+    // Track in any context since properties can appear in various locations
+    if (!this.inPropertyValue && tokenType === TokenType.Identifier) {
+      this.lastPropertyName = value;
+    }
+
     // Update context based on keywords
     this.updateContextForKeyword(tokenType);
   }
@@ -478,19 +524,30 @@ export class Lexer {
         break;
 
       case TokenType.Begin:
-        // Only push CODE_BLOCK when in appropriate context for actual code blocks
-        // Prevents "begin" appearing in property values from corrupting context stack
-        const currentContext = this.getCurrentContext();
-        if (currentContext === LexerContext.NORMAL ||
-            currentContext === LexerContext.SECTION_LEVEL ||
-            currentContext === LexerContext.CODE_BLOCK) {
-          this.pushContext(LexerContext.CODE_BLOCK);
+        // Only push CODE_BLOCK for ACTUAL code blocks, not property values
+        // If we're in a property value, only enter CODE_BLOCK if it's a trigger property
+        if (this.inPropertyValue) {
+          if (this.isTriggerProperty(this.lastPropertyName)) {
+            this.pushContext(LexerContext.CODE_BLOCK);
+          }
+          // Otherwise: BEGIN is just a property value identifier, don't change context
+        } else {
+          // Not in property value - use original context-based logic
+          const currentContext = this.getCurrentContext();
+          if (currentContext === LexerContext.NORMAL ||
+              currentContext === LexerContext.SECTION_LEVEL ||
+              currentContext === LexerContext.CODE_BLOCK) {
+            this.pushContext(LexerContext.CODE_BLOCK);
+          }
         }
         break;
 
       case TokenType.End:
-        // END closes a code block
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
+        // Only pop CODE_BLOCK if we're actually in one
+        // In property values for non-triggers, END is just an identifier value
+        if (this.inPropertyValue && !this.isTriggerProperty(this.lastPropertyName)) {
+          // END is just a property value, don't change context
+        } else if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
           this.popContext();
           this.contextUnderflowDetected = false;
         }
@@ -537,6 +594,10 @@ export class Lexer {
         break;
       case '=':
         this.addToken(TokenType.Equal, ch, startPos, this.position, startLine, startColumn);
+        // Enter property value mode - BEGIN/END handling depends on property name
+        if (this.lastPropertyName !== '') {
+          this.inPropertyValue = true;
+        }
         break;
       case '<':
         if (this.currentChar() === '=') {
@@ -578,6 +639,9 @@ export class Lexer {
         break;
       case ';':
         this.addToken(TokenType.Semicolon, ch, startPos, this.position, startLine, startColumn);
+        // End of property value
+        this.inPropertyValue = false;
+        this.lastPropertyName = '';
         break;
       case ',':
         this.addToken(TokenType.Comma, ch, startPos, this.position, startLine, startColumn);
