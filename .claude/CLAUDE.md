@@ -29,7 +29,7 @@ You are a valued senior team member! We work as **pair programming partners**:
 │    architect → creates plan with agent assignments          │
 │    adversarial-reviewer → critiques plan                    │
 │    Loop until reviewer explicitly approves the plan         │
-│    Max 3 iterations, then escalate to user                  │
+│    Use Feedback Resolution Protocol                         │
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -63,6 +63,7 @@ You are a valued senior team member! We work as **pair programming partners**:
 │       ├─ Edge cases, security issues                        │
 │       └─ Agent drift (did implementer stay on script?)      │
 │                                                             │
+│    Use Feedback Resolution Protocol to disposition findings │
 │    Design flaw found? → back to step 2 (re-plan)            │
 └─────────────────────────────────────────────────────────────┘
                           ↓
@@ -74,6 +75,35 @@ You are a valued senior team member! We work as **pair programming partners**:
 └─────────────────────────────────────────────────────────────┘
 ```
 
+**Checkpoint Decision Tables:**
+
+Use these to determine next step at each workflow checkpoint.
+
+| After Step | Condition | Decision |
+|------------|-----------|----------|
+| INVESTIGATE | Root cause is clear and localized | Proceed to PLAN |
+| INVESTIGATE | Multiple possible causes identified | Deepen investigation OR proceed with hypotheses noted |
+| INVESTIGATE | Contradicts user's stated assumption | Pause, confirm with user |
+| INVESTIGATE | Conflicting existing test/behavior found | Confirm intent with user OR investigate why conflict exists |
+| PLAN | Reviewer explicitly approves | Proceed to WRITE TESTS |
+| PLAN | Reviewer finds gap in approach | Revise plan, re-submit |
+| PLAN | Reviewer discovers conflicting existing behavior | Back to INVESTIGATE |
+| PLAN | Cannot converge after 3 revision cycles | Escalate to user with both positions |
+| TDD | Tests fail as expected | Proceed to IMPLEMENT |
+| TDD | Tests pass immediately | STOP - misdiagnosis, back to INVESTIGATE |
+| TDD | Tests cannot be written (unclear spec) | Back to PLAN for clarification |
+| TDD | Existing tests need modification | Confirm behavior change is intended |
+| IMPLEMENT | Tests pass, matches plan | Proceed to REVIEW |
+| IMPLEMENT | Tests pass, minor deviations | Proceed to REVIEW, flag deviations |
+| IMPLEMENT | Tests fail, fix <20 lines, matches plan | Fix and retry |
+| IMPLEMENT | Tests fail, fix contradicts plan | Back to PLAN |
+| IMPLEMENT | Tests fail, wrong root cause revealed | Back to INVESTIGATE |
+| REVIEW | All feedback dispositioned, reviewer approves | Proceed to COMMIT |
+| REVIEW | ACCEPT-FIX items remain | Fix and request re-review |
+| REVIEW | Missing test coverage identified | Add tests (ACCEPT-FIX), re-review |
+| REVIEW | Design flaw found | Back to PLAN |
+| REVIEW | Scope creep detected | Revert unplanned changes, re-review |
+
 **TDD Rule:** Tests MUST fail first (for new bugs). Passing tests = wrong diagnosis.
 **Exception:** Regression tests, refactoring, test-after for legacy code.
 
@@ -82,11 +112,42 @@ You are a valued senior team member! We work as **pair programming partners**:
 - Prevents scope creep and agent drift
 - Final quality gate: validates only planned changes were made
 
-**Fix Loop Rule:** When reviewers find issues, you MUST fix and re-run REVIEW.
-- Continue the loop until all reviewers pass with no critical/serious issues
-- Use implementer to address issues, test-runner to verify
-- Never skip to COMMIT with unresolved reviewer findings
-- If unsure whether an issue requires a fix, err on the side of fixing it
+**Feedback Resolution Protocol:**
+
+When reviewers provide feedback, use this structured process:
+
+*Step 1: Reviewer classifies severity*
+| Severity | Definition | Disposition Constraints |
+|----------|------------|------------------------|
+| **CRITICAL** | Blocks correctness, security, or causes regression | Must ACCEPT-FIX |
+| **SERIOUS** | Significant issue but not blocking | Must ACCEPT-FIX or justify deferral |
+| **MINOR** | Improvement, style, nice-to-have | Any disposition valid |
+
+*Step 2: Reviewee dispositions each item*
+| Disposition | When to Use | Creates Artifact? |
+|-------------|-------------|-------------------|
+| **ACCEPT-FIX** | Valid and actionable now | Code change |
+| **ACCEPT-PARTIAL** | Part valid, remainder deferred/dismissed | Code change + issue (optional) |
+| **ACCEPT-DEFER** | Valid but out of scope | GitHub issue (tracked) |
+| **ACKNOWLEDGE** | Valid observation, no change warranted | None (comment only) |
+| **DISMISS** | Incorrect or not applicable | None (must explain reasoning) |
+
+*Step 3: Resolution*
+- Each item is evaluated independently
+- DISMISS requires specific technical reasoning
+- Reviewer may challenge DISMISS; if unresolved after one rebuttal, escalate to user
+- Loop exits when: ALL items dispositioned AND no ACCEPT-FIX items remain AND reviewer states **"APPROVED: Proceed to [next step]"**
+
+*Response Format:*
+```
+### Feedback Response
+| Item | Severity | Disposition | Rationale | Action |
+|------|----------|-------------|-----------|--------|
+| [quote] | CRITICAL | ACCEPT-FIX | [why] | [what changed] |
+| [quote] | MINOR | DISMISS | [why not applicable] | None |
+
+**Request:** RE-REVIEW / APPROVED items only, ready to proceed
+```
 
 **Re-Plan Rule:** When implementation reveals fundamental problems, go back and re-plan.
 
@@ -95,6 +156,8 @@ Loop back to step 2 (PLAN) when:
 - Tests still fail and the fix would contradict the original design
 - Reviewer finds a design flaw (not just a bug) in the implementation
 - The implementation causes regressions the plan did not anticipate
+
+See Checkpoint Decision Tables above for complete decision criteria.
 
 **Precedence:** If reviewer finds BOTH design flaws AND minor bugs, go to step 2 immediately. Do not fix minor bugs first - they may be invalidated by the new design, causing wasted work.
 
@@ -108,12 +171,32 @@ Continue to REVIEW when:
 - Only minor adjustments were needed from the original approach
 - Issues are localized bugs, not systemic design problems
 
-**Loop Limits:** These counters track different failure modes and reset appropriately:
-- **PLAN iterations:** Max 3 per planning session. Resets when entering step 2 from a different step.
-- **Re-plan count:** Max 2 returns to PLAN from later steps (4 or 5) for the same issue. Does NOT reset.
-- **Implementation attempts:** Max 3 tries within step 4. Resets when re-entering step 4 after re-planning.
+**Loop Governance:**
 
-If any limit is reached, pause and escalate to user with a summary of what keeps failing.
+Loops are governed by the Feedback Resolution Protocol, not hard iteration counts.
+
+*Iteration Definition:* One iteration = one complete feedback-response cycle within the current step.
+- PLAN step: architect submits → reviewer responds → architect revises = 1 iteration
+- REVIEW step: reviewer provides feedback → implementer addresses → re-review = 1 iteration
+
+*Progress Indicators* (at least one should improve each iteration):
+- [ ] Number of open ACCEPT-FIX items decreasing
+- [ ] Tests moving from fail to pass
+- [ ] Implementation converging toward plan
+- [ ] No new CRITICAL/SERIOUS issues discovered
+
+*Stall Detection:* If NO progress indicators improve for 2 consecutive iterations, escalate to user with:
+- What was attempted
+- What keeps failing
+- Specific decision or input needed
+
+*Escalation Triggers:*
+- DISMISS disputed after one good-faith rebuttal
+- Same feedback appears 3+ times without resolution
+- Circular dependencies (fix A breaks B, fix B breaks A)
+- Progress stalls (no improvement for 2 iterations)
+
+Before escalating, attempt ONE good-faith resolution proposal. Escalate only if that fails.
 
 **Boy Scout Rule:** Fix minor issues identified during review before committing.
 
@@ -183,10 +266,20 @@ Invoke these skills BEFORE starting work:
 - **AL:** Business Central 2019+ (NOT supported)
 - **Never add AL-only features** - causes NAV compilation errors
 
-### test/REAL/ - Confidential
-- **NEVER copy or commit** content from test/REAL/
-- **Objects 6000000+** are proprietary - never reference
-- Create **synthetic fixtures** in test/fixtures/ instead
+### test/REAL/ - Proprietary NAV Objects
+
+Real NAV C/AL objects (gitignored). **Read freely for analysis; never copy to committed files.**
+
+| Action | Allowed? |
+|--------|----------|
+| Read/parse files | Yes |
+| Reference file:line in conversations | Yes |
+| Quote fragments to illustrate parsing issues | Yes |
+| Copy content to test/fixtures/ or any committed file | No |
+| Quote in GitHub issues, PRs, or commit messages | No |
+| Use object IDs 6000000+ in fixtures | No |
+
+Create synthetic fixtures in test/fixtures/ that mimic structure without copying actual code.
 
 ---
 
@@ -248,3 +341,16 @@ cd server && npm run perf:standard    # Standard suite
 | `/cal-parser-development` | Lexer/parser internals |
 | `/cal-provider-development` | LSP provider patterns |
 | `/cal-dev-guide` | Testing, development workflow |
+
+---
+
+## Workflow Learnings
+
+**Validated Practices (from Controls keyword fix):**
+1. **adversarial-reviewer in PLAN phase** - Catches conflicting assumptions before implementation
+2. **TDD validation** - Tests MUST fail first or diagnosis is wrong
+3. **Mandatory adversarial-reviewer before COMMIT** - Final quality gate catches gaps
+4. **Re-review after fixes** - Ensures fixes don't introduce new issues
+5. **code-detective for non-obvious issues** - Deep investigation prevents wasted work
+
+**Future Addition:** `/workflow-example` skill with Controls fix walkthrough (TODO)
