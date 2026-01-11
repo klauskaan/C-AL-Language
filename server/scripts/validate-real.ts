@@ -1,7 +1,8 @@
-import { readdirSync, readFileSync, writeFileSync } from 'fs';
+import { readdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { Lexer } from '../src/lexer/lexer';
 import { Parser } from '../src/parser/parser';
+import { readFileWithEncoding } from '../src/utils/encoding';
 
 interface ValidationResult {
   file: string;
@@ -25,7 +26,7 @@ function validateAllRealFiles(): ValidationResult[] {
 
   for (const file of files) {
     const filePath = join(realDir, file);
-    const content = readFileSync(filePath, 'utf-8');
+    const { content } = readFileWithEncoding(filePath);
     const lineCount = content.split('\n').length;
 
     const startTime = Date.now();
