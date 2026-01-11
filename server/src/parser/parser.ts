@@ -3385,6 +3385,7 @@ export class Parser {
         case TokenType.Keys:
         case TokenType.FieldGroups:
         case TokenType.Code:
+        case TokenType.Controls:
         case TokenType.Procedure:
         case TokenType.Function:
         case TokenType.Trigger:

@@ -28,6 +28,7 @@
 
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../parser';
+import { ObjectKind } from '../ast';
 
 describe('Parser - Keywords as Variable Names', () => {
   describe('Object variable name', () => {
@@ -3426,6 +3427,130 @@ describe('Parser - Keywords as Variable Names', () => {
       expect(procedures[0].parameters[5].dataType.dimensions).toBeDefined();
       expect(procedures[0].parameters[5].dataType.dimensions!.length).toBeGreaterThan(0);
       expect(procedures[0].parameters[6].name).toBe('Byte');
+    });
+  });
+
+  /**
+   * REGRESSION TEST: CONTROLS Section vs Controls Variable
+   *
+   * This test verifies that the parser can correctly distinguish between:
+   * 1. CONTROLS as a section keyword (in Page objects)
+   * 2. Controls as a variable name (in VAR sections)
+   *
+   * This is critical because CONTROLS appears as a recovery point in synchronize(),
+   * and we need to ensure that doesn't prevent Controls from being used as a
+   * variable name in CODE sections.
+   *
+   * Context: The parser must handle these contextually - recognizing CONTROLS as
+   * a section keyword when followed by { }, but allowing Controls as a variable
+   * name when followed by @ in VAR sections.
+   */
+  describe('Controls section vs Controls variable disambiguation', () => {
+    it('should handle both CONTROLS section and Controls variable in same Page', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/11/26;
+    Time=12:00:00;
+  }
+  PROPERTIES
+  {
+    CaptionML=ENU=Test Page;
+  }
+  CONTROLS
+  {
+    { 1   ;Container ;
+                Name=ContentArea;
+                ContainerType=ContentArea }
+  }
+  CODE
+  {
+    VAR
+      Controls@1000 : Integer;
+
+    PROCEDURE TestProc@1();
+    BEGIN
+      Controls := 42;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      // Verify no parse errors
+      expect(parser.getErrors()).toHaveLength(0);
+
+      // Verify the page was parsed successfully
+      expect(ast.object).toBeDefined();
+      expect(ast.object?.objectKind).toBe(ObjectKind.Page);
+      expect(ast.object?.objectId).toBe(50000);
+
+      // Verify Controls variable in CODE section was correctly parsed
+      // (not confused with CONTROLS section keyword)
+      const globalVars = ast.object?.code?.variables || [];
+      expect(globalVars).toHaveLength(1);
+      expect(globalVars[0].name).toBe('Controls');
+      expect(globalVars[0].dataType.typeName).toBe('Integer');
+
+      // Verify procedure was parsed
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].name).toBe('TestProc');
+    });
+
+    it('should parse Controls variable in procedure VAR', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Controls@1000 : Integer;
+    BEGIN
+      Controls := 123;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].variables).toHaveLength(1);
+      expect(procedures[0].variables[0].name).toBe('Controls');
+      expect(procedures[0].variables[0].dataType.typeName).toBe('Integer');
+    });
+
+    it('should parse Controls as parameter name', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(Controls@1000 : Integer);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+      expect(procedures[0].parameters[0].name).toBe('Controls');
+      expect(procedures[0].parameters[0].dataType.typeName).toBe('Integer');
     });
   });
 });
