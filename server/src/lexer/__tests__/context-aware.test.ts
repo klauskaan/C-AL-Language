@@ -412,5 +412,81 @@ END`;
       const propsIndex = tokens.findIndex(t => t.type === TokenType.Properties);
       expect(tokens[propsIndex + 1].type).toBe(TokenType.LeftBrace);
     });
+
+    it('should not push OBJECT_LEVEL context when "object" appears in property values', () => {
+      // Bug: When "object" appears in Description property, lexer incorrectly
+      // pushes OBJECT_LEVEL context, corrupting subsequent apostrophe handling
+      const code = `OBJECT Table 5385 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;Field1  ;Text50  ;Description=Reference to the object with which it works. }
+    { 2   ;   ;Field2  ;Text50  ;Description=The note's content. }
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Find Field2's Description property
+      // The apostrophe in "note's" should be part of the property value text,
+      // NOT treated as a string delimiter
+
+      // Strategy: Look for tokens after the second field number
+      const field2Index = tokens.findIndex((t, i) =>
+        t.type === TokenType.Integer &&
+        t.value === '2' &&
+        i > 10 // Skip object ID and first field
+      );
+
+      expect(field2Index).toBeGreaterThan(0);
+
+      // After field 2, we should find Description= followed by property value tokens
+      // The critical test: there should be NO string tokens with just "s content."
+      // (which would indicate the apostrophe was treated as a string delimiter)
+
+      // If the bug is present:
+      // - "note's" would be split: "note" + ' (string start) + "s content." + (incomplete)
+      // - We'd see a STRING token containing "s content."
+
+      // If correctly parsed:
+      // - The entire Description value is tokenized as identifiers/text
+      // - No STRING token should appear in this field definition
+
+      // Find the closing brace of Field2
+      let braceDepth = 0;
+      let inField2 = false;
+      let field2Tokens: any[] = [];
+
+      for (let i = field2Index; i < tokens.length; i++) {
+        if (tokens[i].type === TokenType.LeftBrace) {
+          braceDepth++;
+          inField2 = true;
+        }
+        if (inField2) {
+          field2Tokens.push(tokens[i]);
+        }
+        if (tokens[i].type === TokenType.RightBrace) {
+          braceDepth--;
+          if (braceDepth === 0) {
+            break;
+          }
+        }
+      }
+
+      // Check for the bug signature: STRING token containing "s content."
+      // or similar fragment that indicates apostrophe was treated as delimiter
+      const stringTokensInField2 = field2Tokens.filter(t => t.type === TokenType.String);
+
+      // The bug would create a STRING token because apostrophe is treated as string start
+      // We expect NO string tokens in this field definition (all property values should be
+      // tokenized as identifiers or other non-string tokens)
+      expect(stringTokensInField2.length).toBe(0);
+
+      // Additional check: The entire field definition should parse without errors
+      // and maintain balanced braces
+      const leftBraces = tokens.filter(t => t.type === TokenType.LeftBrace).length;
+      const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace).length;
+      expect(leftBraces).toBe(rightBraces);
+    });
   });
 });

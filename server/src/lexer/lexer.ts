@@ -447,8 +447,11 @@ export class Lexer {
   private updateContextForKeyword(tokenType: TokenType): void {
     switch (tokenType) {
       case TokenType.Object:
-        // After OBJECT keyword, we're at object level
-        this.pushContext(LexerContext.OBJECT_LEVEL);
+        // Only push OBJECT_LEVEL when in NORMAL context (at document start)
+        // Prevents "object" appearing in property values from corrupting context stack
+        if (this.getCurrentContext() === LexerContext.NORMAL) {
+          this.pushContext(LexerContext.OBJECT_LEVEL);
+        }
         break;
 
       case TokenType.Properties:
@@ -467,8 +470,14 @@ export class Lexer {
         break;
 
       case TokenType.Begin:
-        // BEGIN starts a code block where braces are comments
-        this.pushContext(LexerContext.CODE_BLOCK);
+        // Only push CODE_BLOCK when in appropriate context for actual code blocks
+        // Prevents "begin" appearing in property values from corrupting context stack
+        const currentContext = this.getCurrentContext();
+        if (currentContext === LexerContext.NORMAL ||
+            currentContext === LexerContext.SECTION_LEVEL ||
+            currentContext === LexerContext.CODE_BLOCK) {
+          this.pushContext(LexerContext.CODE_BLOCK);
+        }
         break;
 
       case TokenType.End:
