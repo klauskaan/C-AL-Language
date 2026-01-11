@@ -26654,7 +26654,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Net Amount,Debit Amount,Credit Amount",
+                "typeName": "'Net Amount,Debit Amount,Credit Amount'",
               },
               "endToken": {
                 "column": 64,
@@ -35085,7 +35085,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Net Amount,Debit Amount,Credit Amount",
+                "typeName": "'Net Amount,Debit Amount,Credit Amount'",
               },
               "endToken": {
                 "column": 64,
@@ -40352,7 +40352,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
                 },
                 "tableId": undefined,
                 "type": "DataType",
-                "typeName": "Net Amount,Debit Amount,Credit Amount",
+                "typeName": "'Net Amount,Debit Amount,Credit Amount'",
               },
               "endToken": {
                 "column": 64,
@@ -54310,7 +54310,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
             },
             "tableId": undefined,
             "type": "DataType",
-            "typeName": " ,Review and fix errors,Review and post,Review and Delete",
+            "typeName": "' ,Review and fix errors,Review and post,Review and Delete'",
           },
           "endToken": {
             "column": 82,

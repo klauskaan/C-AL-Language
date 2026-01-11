@@ -293,6 +293,142 @@ describe('Parser - Keywords as Variable Names', () => {
     });
   });
 
+  describe('Controls variable name', () => {
+    it('should parse Controls as local variable with Integer type', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Controls@1000 : Integer;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object!.code!.variables).toHaveLength(1);
+
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.name).toBe('Controls');
+      expect(variable.dataType.typeName).toBe('Integer');
+    });
+
+    it('should parse Controls as local variable with Option type', () => {
+      // Real NAV usage from PAG6510.TXT
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Controls@1003 : 'Handle,Invoice,Quantity,Reclass,Tracking';
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object!.code!.variables).toHaveLength(1);
+
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.name).toBe('Controls');
+      expect(variable.dataType.typeName).toBe("'Handle,Invoice,Quantity,Reclass,Tracking'");
+    });
+
+    it('should parse Controls as parameter in procedure signature', () => {
+      // Real NAV usage from PAG6510.TXT line 1255
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE SetControls@13(Controls@1000 : 'Handle,Invoice,Quantity,Reclass,Tracking');
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+
+      const param = procedures[0].parameters[0];
+      expect(param.name).toBe('Controls');
+      expect(param.dataType.typeName).toBe("'Handle,Invoice,Quantity,Reclass,Tracking'");
+    });
+
+    it('should parse Controls with VAR modifier as parameter', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(VAR Controls@1000 : Integer);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures[0].parameters).toHaveLength(1);
+
+      const param = procedures[0].parameters[0];
+      expect(param.name).toBe('Controls');
+      expect(param.isVar).toBe(true);
+      expect(param.dataType.typeName).toBe('Integer');
+    });
+
+    it('should parse multiple Controls variables in same VAR block', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Controls@1000 : Integer;
+      ControlsOption@1001 : 'Handle,Invoice,Quantity';
+      ControlsText@1002 : Text[50];
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const proc = procedures[0];
+      expect(proc.variables).toHaveLength(3);
+
+      expect(proc.variables[0].name).toBe('Controls');
+      expect(proc.variables[0].dataType.typeName).toBe('Integer');
+      expect(proc.variables[1].name).toBe('ControlsOption');
+      expect(proc.variables[1].dataType.typeName).toBe("'Handle,Invoice,Quantity'");
+      expect(proc.variables[2].name).toBe('ControlsText');
+      expect(proc.variables[2].dataType.typeName).toBe('Text[50]');
+    });
+  });
+
   describe('Multiple keyword variables', () => {
     it('should parse multiple keyword variables in same VAR block', () => {
       const code = `OBJECT Codeunit 50000 Test
@@ -2580,24 +2716,23 @@ describe('Parser - Keywords as Variable Names', () => {
     // generating an error. This is intentional behavior from Issue #53 (error recovery).
     // These keywords can still be used as parameter names in procedure definitions.
 
-    // Section keywords (AL-only reserved)
-    it('should reject CONTROLS as variable name', () => {
-      const code = `OBJECT Codeunit 50000 Test
+    // CONTROLS section parsing - ensure CONTROLS as section keyword still works
+    it('should parse CONTROLS section in Page objects', () => {
+      const code = `OBJECT Page 1 Test
 {
-  CODE
+  CONTROLS
   {
-    VAR
-      CONTROLS@1000 : Integer;
   }
 }`;
 
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
       const parser = new Parser(tokens);
-      parser.parse();
-      const errors = parser.getErrors();
+      const ast = parser.parse();
 
-      expect(errors.length).toBeGreaterThan(0);
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object).toBeDefined();
+      expect(ast.object!.objectKind).toBe('Page');
     });
 
     it('should reject KEYS as variable name', () => {

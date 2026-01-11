@@ -63,6 +63,7 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
   TokenType.Text,       // e.g., "Text" parameter name
   TokenType.Boolean,    // e.g., "Boolean" parameter name
   TokenType.Code,       // e.g., "Code" section keyword but can be used as name
+  TokenType.Controls,   // e.g., "Controls" section keyword but can be used as name (like Code)
   // Note: Date_Type and Time_Type removed - now covered by _TYPE suffix check (Issue #52)
   // Issue #54: Add data type keywords verified in test/REAL/
   TokenType.FieldRef,   // e.g., "FieldRef" parameter name (211 occurrences)
@@ -756,6 +757,11 @@ export class Parser {
     if (typeName.includes(',') && !typeName.includes('.')) {
       // This looks like an inline option string (e.g., 'Open,Pending,Posted')
       optionString = typeName;
+      // For STRING tokens representing option types, preserve the quotes in typeName
+      // The lexer strips quotes, but we need them in the AST for display/round-tripping
+      if (typeToken.type === TokenType.String) {
+        typeName = `'${typeName}'`;
+      }
     }
 
     return {
@@ -1643,8 +1649,6 @@ export class Parser {
         return null;
       }
     }
-
-    const _startToken = this.peek();
 
     // IF statement
     if (this.check(TokenType.If)) {
@@ -2848,11 +2852,6 @@ export class Parser {
     return this.peek().type === type;
   }
 
-  private checkNext(type: TokenType): boolean {
-    if (this.current + 1 >= this.tokens.length) return false;
-    return this.tokens[this.current + 1].type === type;
-  }
-
   /**
    * Checks if the current token marks the end of a variable declaration section.
    * Variable sections terminate when encountering structural keywords like PROCEDURE,
@@ -3272,7 +3271,7 @@ export class Parser {
    * These sections have complex nested structures with @ numbering that aren't fully parsed yet.
    * This method consumes the section keyword and its entire content block.
    */
-  private skipUnsupportedSection(sectionType: TokenType): void {
+  private skipUnsupportedSection(_sectionType: TokenType): void {
     // Remember the brace depth BEFORE entering this section
     // Section keywords appear at depth 1 (inside OBJECT { ... })
     const sectionDepth = this.braceDepth;
@@ -3330,12 +3329,11 @@ export class Parser {
    * the section keyword from false positives.
    */
   private isSectionKeyword(type: TokenType): boolean {
-    // Non-CODE section keywords are unambiguous
+    // Non-CODE/CONTROLS section keywords are unambiguous
     if (type === TokenType.Properties ||
         type === TokenType.Fields ||
         type === TokenType.Keys ||
         type === TokenType.FieldGroups ||
-        type === TokenType.Controls ||
         type === TokenType.Actions ||
         type === TokenType.DataItems ||
         type === TokenType.Elements ||
@@ -3343,16 +3341,16 @@ export class Parser {
       return true;
     }
 
-    // Special case for CODE: must be followed by '{'
+    // Special case for CODE and CONTROLS: must be followed by '{'
     // The lexer never emits Whitespace/NewLine tokens (they're skipped),
     // so the next token is always immediately at this.current + 1
-    if (type === TokenType.Code) {
+    if (type === TokenType.Code || type === TokenType.Controls) {
       const nextIndex = this.current + 1;
       // Bounds check and verify next token is LEFT_BRACE
       if (nextIndex < this.tokens.length) {
         return this.tokens[nextIndex].type === TokenType.LeftBrace;
       }
-      // CODE at end of file is not a section keyword
+      // CODE/CONTROLS at end of file is not a section keyword
       return false;
     }
 
