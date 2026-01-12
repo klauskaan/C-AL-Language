@@ -68,6 +68,7 @@ export class SemanticTokensProvider {
   private inProperties = false;
   private propertiesBraceDepth = 0;
   private inPropertyValue = false; // Tracks if we're currently in a property value (after = and before ;)
+  private bracketDepth: number = 0; // Tracks [] bracket depth to handle CaptionML=[DAN=...;ENU=...]
 
   /**
    * Build semantic tokens from tokens and AST
@@ -78,6 +79,7 @@ export class SemanticTokensProvider {
     this.inProperties = false;
     this.propertiesBraceDepth = 0;
     this.inPropertyValue = false;
+    this.bracketDepth = 0;
 
     // Process all tokens and assign semantic token types
     for (let i = 0; i < tokens.length; i++) {
@@ -118,6 +120,8 @@ export class SemanticTokensProvider {
         if (this.propertiesBraceDepth === 0) {
           this.inObjectProperties = false;
           this.inProperties = false;
+          // Reset bracket depth when exiting property sections
+          this.bracketDepth = 0;
         }
       }
     }
@@ -305,8 +309,23 @@ export class SemanticTokensProvider {
       return null; // Don't color the = itself
     }
 
+    // Track bracket depth for multi-language properties like CaptionML=[DAN=...;ENU=...]
+    if (token.type === TokenType.LeftBracket && this.inPropertyValue) {
+      this.bracketDepth++;
+      return null; // Don't color the bracket itself
+    }
+
+    if (token.type === TokenType.RightBracket && this.inPropertyValue && this.bracketDepth > 0) {
+      this.bracketDepth--;
+      return null; // Don't color the bracket itself
+    }
+
+    // Only reset inPropertyValue on semicolon when NOT inside brackets
+    // Brackets are used in multi-language properties like CaptionML=[DAN=...;ENU=...]
     if (token.type === TokenType.Semicolon) {
-      this.inPropertyValue = false; // End of property value
+      if (this.bracketDepth === 0) {
+        this.inPropertyValue = false; // End of property value (only when not inside brackets)
+      }
       return null; // Don't color the ; itself
     }
 

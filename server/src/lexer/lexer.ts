@@ -92,6 +92,7 @@ export class Lexer {
   // Property tracking for BEGIN/END context decisions
   private lastPropertyName: string = '';
   private inPropertyValue: boolean = false;
+  private bracketDepth: number = 0;
 
   // Track if we just saw a section keyword (FIELDS, PROPERTIES, etc.)
   private lastWasSectionKeyword: boolean = false;
@@ -118,6 +119,7 @@ export class Lexer {
     // Reset property tracking state
     this.lastPropertyName = '';
     this.inPropertyValue = false;
+    this.bracketDepth = 0;
     this.lastWasSectionKeyword = false;
     // Reset column tracking state
     this.currentSectionType = null;
@@ -325,6 +327,7 @@ export class Lexer {
       // Reset property tracking (standardized order: inPropertyValue first, then lastPropertyName)
       this.inPropertyValue = false;
       this.lastPropertyName = '';
+      this.bracketDepth = 0;
 
       // Reset column tracking when closing a field definition
       this.fieldDefColumn = FieldDefColumn.NONE;
@@ -862,9 +865,12 @@ export class Lexer {
         break;
       case ';':
         this.addToken(TokenType.Semicolon, ch, startPos, this.position, startLine, startColumn);
-        // End of property value
-        this.inPropertyValue = false;
-        this.lastPropertyName = '';
+        // End of property value (only if not inside brackets)
+        // Brackets are used in multi-language properties like CaptionML=[DAN=...;ENU=...]
+        if (this.bracketDepth === 0) {
+          this.inPropertyValue = false;
+          this.lastPropertyName = '';
+        }
         // Advance column tracking
         if (this.fieldDefColumn !== FieldDefColumn.NONE) {
           switch (this.fieldDefColumn) {
@@ -895,9 +901,17 @@ export class Lexer {
         break;
       case '[':
         this.addToken(TokenType.LeftBracket, ch, startPos, this.position, startLine, startColumn);
+        // Track bracket depth when in property value (for CaptionML, etc.)
+        if (this.inPropertyValue) {
+          this.bracketDepth++;
+        }
         break;
       case ']':
         this.addToken(TokenType.RightBracket, ch, startPos, this.position, startLine, startColumn);
+        // Decrement bracket depth when in property value, but never go negative
+        if (this.inPropertyValue && this.bracketDepth > 0) {
+          this.bracketDepth--;
+        }
         break;
       case '?':
         // Ternary operator is not supported in C/AL
