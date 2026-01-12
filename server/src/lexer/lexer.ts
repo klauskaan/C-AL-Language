@@ -12,6 +12,33 @@ enum LexerContext {
 }
 
 /**
+ * Column position tracking for field definitions
+ * Used to distinguish field name positions from property values
+ *
+ * Column meanings are section-specific:
+ *
+ * FIELDS: { FieldNo ; Reserved ; FieldName ; DataType ; Properties }
+ *   COL_1-4: Structural columns (protect from BEGIN/END context changes)
+ *   PROPERTIES: Field properties (allow triggers)
+ *
+ * KEYS: { ; FieldList ; Properties }
+ *   COL_1-2: Structural columns (reserved ; field list)
+ *   COL_3+: Properties section (allow triggers if they existed)
+ *
+ * CONTROLS: { ID ; Type ; SubType ; Properties }
+ *   COL_1-3: Structural columns
+ *   COL_4+: Properties section (allow triggers)
+ */
+enum FieldDefColumn {
+  NONE,       // Not in field definition
+  COL_1,      // FIELDS: FieldNo | KEYS: Reserved | CONTROLS: ID
+  COL_2,      // FIELDS: Reserved | KEYS: FieldList | CONTROLS: Type
+  COL_3,      // FIELDS: FieldName | KEYS: Properties start | CONTROLS: SubType
+  COL_4,      // FIELDS: DataType | CONTROLS: Properties start
+  PROPERTIES  // FIELDS: After DataType, in properties section
+}
+
+/**
  * Lexer for C/AL language
  */
 export class Lexer {
@@ -69,6 +96,10 @@ export class Lexer {
   // Track if we just saw a section keyword (FIELDS, PROPERTIES, etc.)
   private lastWasSectionKeyword: boolean = false;
 
+  // Column position tracking for field definitions
+  private currentSectionType: 'FIELDS' | 'KEYS' | 'CONTROLS' | null = null;
+  private fieldDefColumn: FieldDefColumn = FieldDefColumn.NONE;
+
   constructor(input: string) {
     this.input = input;
   }
@@ -88,6 +119,9 @@ export class Lexer {
     this.lastPropertyName = '';
     this.inPropertyValue = false;
     this.lastWasSectionKeyword = false;
+    // Reset column tracking state
+    this.currentSectionType = null;
+    this.fieldDefColumn = FieldDefColumn.NONE;
 
     while (this.position < this.input.length) {
       this.scanToken();
@@ -132,6 +166,45 @@ export class Lexer {
   }
 
   /**
+   * Check if current column should be protected from BEGIN/END context changes.
+   * Section-aware protection:
+   * - FIELDS: Protect COL_1-4 (structural columns)
+   * - KEYS: Protect COL_1-2 (structural columns)
+   * - CONTROLS: Protect COL_1-3 (structural columns)
+   */
+  private shouldProtectFromBeginEnd(): boolean {
+    if (this.fieldDefColumn === FieldDefColumn.NONE) {
+      return false;
+    }
+
+    switch (this.currentSectionType) {
+      case 'FIELDS':
+        // Protect all structural columns (COL_1-4)
+        return this.fieldDefColumn === FieldDefColumn.COL_1 ||
+               this.fieldDefColumn === FieldDefColumn.COL_2 ||
+               this.fieldDefColumn === FieldDefColumn.COL_3 ||
+               this.fieldDefColumn === FieldDefColumn.COL_4;
+
+      case 'KEYS':
+        // Protect only COL_1-2 (reserved ; field list)
+        // COL_3+ is properties section (allow triggers if they existed)
+        return this.fieldDefColumn === FieldDefColumn.COL_1 ||
+               this.fieldDefColumn === FieldDefColumn.COL_2;
+
+      case 'CONTROLS':
+        // Protect COL_1-3 (ID ; Type ; SubType)
+        // COL_4+ is properties section (allow triggers)
+        return this.fieldDefColumn === FieldDefColumn.COL_1 ||
+               this.fieldDefColumn === FieldDefColumn.COL_2 ||
+               this.fieldDefColumn === FieldDefColumn.COL_3;
+
+      default:
+        // No protection for unknown section types
+        return false;
+    }
+  }
+
+  /**
    * Scan left brace '{' - handles both structural delimiters and block comments
    * In CODE_BLOCK context, braces start comments; otherwise they are structural delimiters
    */
@@ -152,6 +225,14 @@ export class Lexer {
         this.lastWasSectionKeyword) {
       this.pushContext(LexerContext.SECTION_LEVEL);
       this.lastWasSectionKeyword = false;
+    }
+
+    // Start column tracking when opening a field/key/control definition
+    if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
+        (this.currentSectionType === 'FIELDS' ||
+         this.currentSectionType === 'KEYS' ||
+         this.currentSectionType === 'CONTROLS')) {
+      this.fieldDefColumn = FieldDefColumn.COL_1;
     }
   }
 
@@ -181,11 +262,16 @@ export class Lexer {
         if (this.contextUnderflowDetected) {
           this.contextUnderflowDetected = false;
         }
+        // Reset section tracking when exiting section context
+        this.currentSectionType = null;
       }
 
       // Reset property tracking (standardized order: inPropertyValue first, then lastPropertyName)
       this.inPropertyValue = false;
       this.lastPropertyName = '';
+
+      // Reset column tracking when closing a field definition
+      this.fieldDefColumn = FieldDefColumn.NONE;
 
       return true;
     }
@@ -527,22 +613,45 @@ export class Lexer {
         }
         break;
 
-      case TokenType.Properties:
       case TokenType.Fields:
-      case TokenType.Keys:
-      case TokenType.FieldGroups:
-      case TokenType.Code:
-      case TokenType.Controls:
-      case TokenType.Actions:
-      case TokenType.DataItems:
-      case TokenType.Elements:
-      case TokenType.RequestForm:
         // Section keywords - mark that we're expecting a section
         // The actual SECTION_LEVEL context is pushed when we see the opening brace
         this.lastWasSectionKeyword = true;
+        this.currentSectionType = 'FIELDS';
+        break;
+
+      case TokenType.Keys:
+        this.lastWasSectionKeyword = true;
+        this.currentSectionType = 'KEYS';
+        break;
+
+      case TokenType.Controls:
+        this.lastWasSectionKeyword = true;
+        this.currentSectionType = 'CONTROLS';
+        break;
+
+      case TokenType.Properties:
+      case TokenType.FieldGroups:
+      case TokenType.Code:
+      case TokenType.Actions:
+      case TokenType.DataItems:
+      case TokenType.RequestForm:
+        // Section keywords without column tracking
+        this.lastWasSectionKeyword = true;
+        this.currentSectionType = null;
         break;
 
       case TokenType.Begin:
+        // Guard: Don't push CODE_BLOCK if BEGIN appears in structural columns
+        // Section-aware protection:
+        // - FIELDS: Protect COL_1-4 (structural)
+        // - KEYS: Protect COL_1-2 (structural)
+        // - CONTROLS: Protect COL_1-3 (structural)
+        if (this.shouldProtectFromBeginEnd()) {
+          // BEGIN is part of structure (likely in field/key/control name), not code
+          break;
+        }
+
         // Only push CODE_BLOCK for ACTUAL code blocks, not property values
         // If we're in a property value, only enter CODE_BLOCK if it's a trigger property
         if (this.inPropertyValue) {
@@ -562,6 +671,13 @@ export class Lexer {
         break;
 
       case TokenType.End:
+        // Guard: Don't pop CODE_BLOCK if END appears in structural columns
+        // Section-aware protection (same logic as BEGIN)
+        if (this.shouldProtectFromBeginEnd()) {
+          // END is part of structure (likely in field/key/control name), not code
+          break;
+        }
+
         // Only pop CODE_BLOCK if we're actually in one
         // In property values for non-triggers, END is just an identifier value
         if (this.inPropertyValue && !this.isTriggerProperty(this.lastPropertyName)) {
@@ -665,6 +781,24 @@ export class Lexer {
         // End of property value
         this.inPropertyValue = false;
         this.lastPropertyName = '';
+        // Advance column tracking
+        if (this.fieldDefColumn !== FieldDefColumn.NONE) {
+          switch (this.fieldDefColumn) {
+            case FieldDefColumn.COL_1:
+              this.fieldDefColumn = FieldDefColumn.COL_2;
+              break;
+            case FieldDefColumn.COL_2:
+              this.fieldDefColumn = FieldDefColumn.COL_3;
+              break;
+            case FieldDefColumn.COL_3:
+              this.fieldDefColumn = FieldDefColumn.COL_4;
+              break;
+            case FieldDefColumn.COL_4:
+              this.fieldDefColumn = FieldDefColumn.PROPERTIES;
+              break;
+            // Stay in PROPERTIES after that
+          }
+        }
         break;
       case ',':
         this.addToken(TokenType.Comma, ch, startPos, this.position, startLine, startColumn);
