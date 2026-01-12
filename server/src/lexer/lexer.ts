@@ -683,6 +683,11 @@ export class Lexer {
         break;
 
       case TokenType.Fields:
+        // Guard: Don't mark as section keyword if appearing in property value
+        // Prevents section keywords in property values from corrupting context
+        if (this.inPropertyValue) {
+          break;
+        }
         // Section keywords - mark that we're expecting a section
         // The actual SECTION_LEVEL context is pushed when we see the opening brace
         this.lastWasSectionKeyword = true;
@@ -690,26 +695,46 @@ export class Lexer {
         break;
 
       case TokenType.Keys:
+        // Guard: Don't mark as section keyword if appearing in property value
+        if (this.inPropertyValue) {
+          break;
+        }
         this.lastWasSectionKeyword = true;
         this.currentSectionType = 'KEYS';
         break;
 
       case TokenType.Controls:
+        // Guard: Don't mark as section keyword if appearing in property value
+        if (this.inPropertyValue) {
+          break;
+        }
         this.lastWasSectionKeyword = true;
         this.currentSectionType = 'CONTROLS';
         break;
 
       case TokenType.Elements:
+        // Guard: Don't mark as section keyword if appearing in property value
+        if (this.inPropertyValue) {
+          break;
+        }
         this.lastWasSectionKeyword = true;
         this.currentSectionType = 'ELEMENTS';
         break;
 
       case TokenType.DataItems:
+        // Guard: Don't mark as section keyword if appearing in property value
+        if (this.inPropertyValue) {
+          break;
+        }
         this.lastWasSectionKeyword = true;
         this.currentSectionType = 'DATAITEMS';
         break;
 
       case TokenType.Actions:
+        // Guard: Don't mark as section keyword if appearing in property value
+        if (this.inPropertyValue) {
+          break;
+        }
         this.lastWasSectionKeyword = true;
         this.currentSectionType = 'ACTIONS';
         break;
@@ -721,6 +746,11 @@ export class Lexer {
         // Guard: Don't mark as section keyword if appearing in structural columns
         // Prevents section keywords in field/key/control names from corrupting context
         if (this.shouldProtectFromSectionKeyword()) {
+          break;
+        }
+        // Guard: Don't mark as section keyword if appearing in property value
+        // Prevents section keywords in property values (e.g., "SWIFT Code" in CaptionML) from corrupting context
+        if (this.inPropertyValue) {
           break;
         }
         // Section keywords without column tracking
