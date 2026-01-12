@@ -1054,6 +1054,13 @@ export class Parser {
     this.consume(TokenType.Var, 'Expected VAR');
 
     while (!this.isAtEnd()) {
+      // Skip stray semicolons (empty VAR block artifacts from NAV exports)
+      // This handles patterns like "VAR ; BEGIN" or "VAR ;;; x : Integer;"
+      if (this.check(TokenType.Semicolon)) {
+        this.advance();
+        continue;
+      }
+
       // Check for section boundaries FIRST (before checking if it's a valid identifier)
       // This prevents treating CODE, PROCEDURE, etc. as variable names
       if (this.isVariableSectionBoundary()) {
