@@ -26,7 +26,7 @@ enum LexerContext {
  *   COL_3+: Properties section (allow triggers if they existed)
  *
  * CONTROLS: { ID ; Type ; SubType ; Properties }
- *   COL_1-3: Structural columns
+ *   COL_1-3: Structural columns (ID ; Type ; SubType)
  *   COL_4+: Properties section (allow triggers)
  */
 enum FieldDefColumn {
@@ -97,7 +97,7 @@ export class Lexer {
   private lastWasSectionKeyword: boolean = false;
 
   // Column position tracking for field definitions
-  private currentSectionType: 'FIELDS' | 'KEYS' | 'CONTROLS' | null = null;
+  private currentSectionType: 'FIELDS' | 'KEYS' | 'CONTROLS' | 'ELEMENTS' | 'DATAITEMS' | 'ACTIONS' | null = null;
   private fieldDefColumn: FieldDefColumn = FieldDefColumn.NONE;
 
   constructor(input: string) {
@@ -171,6 +171,9 @@ export class Lexer {
    * - FIELDS: Protect COL_1-4 (structural columns)
    * - KEYS: Protect COL_1-2 (structural columns)
    * - CONTROLS: Protect COL_1-3 (structural columns)
+   * - ELEMENTS: Protect COL_1-4 (structural columns)
+   * - DATAITEMS: Protect COL_1-4 (structural columns)
+   * - ACTIONS: TBD - needs column investigation
    */
   private shouldProtectFromBeginEnd(): boolean {
     if (this.fieldDefColumn === FieldDefColumn.NONE) {
@@ -179,6 +182,8 @@ export class Lexer {
 
     switch (this.currentSectionType) {
       case 'FIELDS':
+      case 'ELEMENTS':
+      case 'DATAITEMS':
         // Protect all structural columns (COL_1-4)
         return this.fieldDefColumn === FieldDefColumn.COL_1 ||
                this.fieldDefColumn === FieldDefColumn.COL_2 ||
@@ -192,8 +197,54 @@ export class Lexer {
                this.fieldDefColumn === FieldDefColumn.COL_2;
 
       case 'CONTROLS':
-        // Protect COL_1-3 (ID ; Type ; SubType)
+      case 'ACTIONS':
+        // Protect COL_1-3 (ID ; Type ; SubType/ActionType)
         // COL_4+ is properties section (allow triggers)
+        return this.fieldDefColumn === FieldDefColumn.COL_1 ||
+               this.fieldDefColumn === FieldDefColumn.COL_2 ||
+               this.fieldDefColumn === FieldDefColumn.COL_3;
+
+      default:
+        // No protection for unknown section types
+        return false;
+    }
+  }
+
+  /**
+   * Check if current column should be protected from section keyword context changes.
+   * Prevents section keywords (PROPERTIES, FIELDGROUPS, CODE, etc.) appearing in
+   * structural columns from corrupting lexer context.
+   * Section-aware protection:
+   * - FIELDS: Protect COL_1-4 (structural columns)
+   * - KEYS: Protect COL_1-2 (structural columns)
+   * - CONTROLS: Protect COL_1-3 (structural columns)
+   * - ELEMENTS: Protect COL_1-4 (structural columns)
+   * - DATAITEMS: Protect COL_1-4 (structural columns)
+   * - ACTIONS: Protect COL_1-3 (structural columns)
+   */
+  private shouldProtectFromSectionKeyword(): boolean {
+    if (this.fieldDefColumn === FieldDefColumn.NONE) {
+      return false;
+    }
+
+    switch (this.currentSectionType) {
+      case 'FIELDS':
+      case 'ELEMENTS':
+      case 'DATAITEMS':
+        // Protect all structural columns (COL_1-4)
+        return this.fieldDefColumn === FieldDefColumn.COL_1 ||
+               this.fieldDefColumn === FieldDefColumn.COL_2 ||
+               this.fieldDefColumn === FieldDefColumn.COL_3 ||
+               this.fieldDefColumn === FieldDefColumn.COL_4;
+
+      case 'KEYS':
+        // Protect only COL_1-2 (reserved ; field list)
+        return this.fieldDefColumn === FieldDefColumn.COL_1 ||
+               this.fieldDefColumn === FieldDefColumn.COL_2;
+
+      case 'CONTROLS':
+      case 'ACTIONS':
+        // Protect COL_1-3 (ID ; Type ; SubType/ActionType)
         return this.fieldDefColumn === FieldDefColumn.COL_1 ||
                this.fieldDefColumn === FieldDefColumn.COL_2 ||
                this.fieldDefColumn === FieldDefColumn.COL_3;
@@ -227,11 +278,16 @@ export class Lexer {
       this.lastWasSectionKeyword = false;
     }
 
-    // Start column tracking when opening a field/key/control definition
+    // Start column tracking when opening a field/key/control/element/dataitem/action definition
+    // ONLY if we're not already in one (prevents nested braces from resetting column tracking)
     if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
+        this.fieldDefColumn === FieldDefColumn.NONE &&
         (this.currentSectionType === 'FIELDS' ||
          this.currentSectionType === 'KEYS' ||
-         this.currentSectionType === 'CONTROLS')) {
+         this.currentSectionType === 'CONTROLS' ||
+         this.currentSectionType === 'ELEMENTS' ||
+         this.currentSectionType === 'DATAITEMS' ||
+         this.currentSectionType === 'ACTIONS')) {
       this.fieldDefColumn = FieldDefColumn.COL_1;
     }
   }
@@ -577,6 +633,16 @@ export class Lexer {
       // The parser handles CODE { ... } correctly even if lexed as identifier
     }
 
+    // Downgrade section keywords to identifiers when in protected columns
+    // Prevents section keywords in field/key/control names from corrupting context
+    const sectionKeywords = [
+      TokenType.Code, TokenType.Properties, TokenType.FieldGroups,
+      TokenType.Actions, TokenType.DataItems, TokenType.Elements, TokenType.RequestForm
+    ];
+    if (sectionKeywords.includes(tokenType) && this.shouldProtectFromSectionKeyword()) {
+      tokenType = TokenType.Identifier;
+    }
+
     this.addToken(tokenType, value, startPos, this.position, startLine, startColumn);
 
     // Track identifier as potential property name for BEGIN/END context decisions
@@ -630,12 +696,30 @@ export class Lexer {
         this.currentSectionType = 'CONTROLS';
         break;
 
+      case TokenType.Elements:
+        this.lastWasSectionKeyword = true;
+        this.currentSectionType = 'ELEMENTS';
+        break;
+
+      case TokenType.DataItems:
+        this.lastWasSectionKeyword = true;
+        this.currentSectionType = 'DATAITEMS';
+        break;
+
+      case TokenType.Actions:
+        this.lastWasSectionKeyword = true;
+        this.currentSectionType = 'ACTIONS';
+        break;
+
       case TokenType.Properties:
       case TokenType.FieldGroups:
       case TokenType.Code:
-      case TokenType.Actions:
-      case TokenType.DataItems:
       case TokenType.RequestForm:
+        // Guard: Don't mark as section keyword if appearing in structural columns
+        // Prevents section keywords in field/key/control names from corrupting context
+        if (this.shouldProtectFromSectionKeyword()) {
+          break;
+        }
         // Section keywords without column tracking
         this.lastWasSectionKeyword = true;
         this.currentSectionType = null;
