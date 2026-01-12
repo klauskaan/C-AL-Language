@@ -107,6 +107,12 @@ Use these to determine next step at each workflow checkpoint.
 **TDD Rule:** Tests MUST fail first (for new bugs). Passing tests = wrong diagnosis.
 **Exception:** Regression tests, refactoring, test-after for legacy code.
 
+**TDD for New Features:** Tests fail because the code doesn't exist yet. The PLAN phase provides the design; tests encode that design as assertions.
+- **Outside-In:** Start with acceptance criteria from the plan, drill down to units
+- **Inside-Out:** Start with core logic units from the plan, compose upward
+- Choose based on what's clearest: user-facing behavior (outside-in) or internal logic (inside-out)
+- If tests pass immediately for a new feature, investigate: either existing code already satisfies the requirement (design overlap) or the tests are asserting the wrong thing
+
 **Review Rule:** adversarial-reviewer is MANDATORY before every commit.
 - Not optional, even for "trivial" changes
 - Prevents scope creep and agent drift
@@ -148,6 +154,18 @@ When reviewers provide feedback, use this structured process:
 
 **Request:** RE-REVIEW / APPROVED items only, ready to proceed
 ```
+
+**Visibility Rule:** After completing any feedback resolution loop, report ALL items to the user in the standard format table above. This is non-negotiable - the user needs full visibility into what reviewers found and how it was handled. Do not filter or summarize away "minor" items.
+
+The workflow continues after reporting - do not wait for user acknowledgment. If the user provides feedback at any point, treat it as a new iteration entering the Feedback Resolution Protocol, same as reviewer feedback.
+
+**Issue Creation Bias:** When dispositioning feedback, bias toward creating GitHub issues:
+- MINOR items that are valid but out-of-scope → ACCEPT-DEFER (create issue), not ACKNOWLEDGE
+- Only use DISMISS for genuinely incorrect or inapplicable observations
+- When a reviewer explicitly flags an item as "should be tracked," the reviewee should either ACCEPT-DEFER or provide a clear reason why tracking is unnecessary
+- ACKNOWLEDGE is appropriate for meta-observations that don't prescribe a specific action, such as "this area is particularly complex" or "consider revisiting if requirements change"
+
+*Boundary with Boy Scout Rule:* Issue Creation Bias applies to items that do NOT qualify for Boy Scout Rule. For Boy Scout-eligible items (mechanical, quick, safe), fix inline. For Boy Scout-excluded items (different files, requires tests, "while I'm here" refactoring), ACCEPT-DEFER to track.
 
 **Re-Plan Rule:** When implementation reveals fundamental problems, go back and re-plan.
 
@@ -352,5 +370,3 @@ cd server && npm run perf:standard    # Standard suite
 3. **Mandatory adversarial-reviewer before COMMIT** - Final quality gate catches gaps
 4. **Re-review after fixes** - Ensures fixes don't introduce new issues
 5. **code-detective for non-obvious issues** - Deep investigation prevents wasted work
-
-**Future Addition:** `/workflow-example` skill with Controls fix walkthrough (TODO)
