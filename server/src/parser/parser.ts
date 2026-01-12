@@ -28,6 +28,7 @@ import {
   CaseStatement,
   CaseBranch,
   ExitStatement,
+  BreakStatement,
   EmptyStatement,
   WithStatement,
   AssignmentStatement,
@@ -1687,6 +1688,11 @@ export class Parser {
       return this.parseExitStatement();
     }
 
+    // BREAK statement
+    if (this.check(TokenType.Break)) {
+      return this.parseBreakStatement();
+    }
+
     // WITH statement
     if (this.check(TokenType.With)) {
       return this.parseWithStatement();
@@ -1714,7 +1720,7 @@ export class Parser {
    * Returns true if the current token can legally begin a statement.
    *
    * Statement starters include:
-   * - Control flow keywords: IF, WHILE, REPEAT, FOR, CASE, EXIT, WITH, BEGIN
+   * - Control flow keywords: IF, WHILE, REPEAT, FOR, CASE, EXIT, BREAK, WITH, BEGIN
    * - Identifiers (regular and quoted) for assignments/calls
    * - Keywords allowed as identifiers (object types, data types, AL-only keywords)
    *
@@ -1735,6 +1741,7 @@ export class Parser {
         token.type === TokenType.For ||
         token.type === TokenType.Case ||
         token.type === TokenType.Exit ||
+        token.type === TokenType.Break ||
         token.type === TokenType.With ||
         token.type === TokenType.Begin) {
       return true;
@@ -2128,6 +2135,25 @@ export class Parser {
     return {
       type: 'ExitStatement',
       value,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  /**
+   * Parses a BREAK statement.
+   * Syntax: BREAK;
+   * Note: Unlike EXIT, BREAK takes no value and only exits the innermost loop.
+   */
+  private parseBreakStatement(): BreakStatement {
+    const startToken = this.consume(TokenType.Break, 'Expected BREAK');
+
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    return {
+      type: 'BreakStatement',
       startToken,
       endToken: this.previous()
     };

@@ -333,6 +333,18 @@ export interface ExitStatement extends Statement {
 }
 
 /**
+ * BREAK statement - exits the innermost loop.
+ * Unlike EXIT, BREAK takes no value and only affects loop control flow.
+ * Valid in: FOR, WHILE, REPEAT-UNTIL loops.
+ * Note: Parser accepts BREAK syntactically but does not validate loop context.
+ * Semantic validation (ensuring BREAK appears within a loop) is deferred.
+ */
+export interface BreakStatement extends Statement {
+  type: 'BreakStatement';
+  // NO value field - BREAK takes no arguments (critical difference from ExitStatement)
+}
+
+/**
  * Empty statement represented by a standalone semicolon.
  * Valid in C/AL after THEN, DO, ELSE keywords: IF cond THEN; or WHILE cond DO;
  * Used when the statement body is intentionally empty (e.g., IF Rec.FINDLAST THEN;)
