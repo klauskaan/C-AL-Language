@@ -683,6 +683,11 @@ export class Lexer {
         break;
 
       case TokenType.Fields:
+        // Guard: Don't mark as section keyword if appearing inside code blocks
+        // Prevents section keywords in trigger code (e.g., variable "Fields" in "Fields := RecordRef.FIELDCOUNT") from corrupting context
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
+          break;
+        }
         // Guard: Don't mark as section keyword if appearing in property value
         // Prevents section keywords in property values from corrupting context
         if (this.inPropertyValue) {
@@ -695,6 +700,11 @@ export class Lexer {
         break;
 
       case TokenType.Keys:
+        // Guard: Don't mark as section keyword if appearing inside code blocks
+        // Prevents section keywords in trigger code (e.g., variable "Keys" in "Keys := RecordRef.KEYCOUNT") from corrupting context
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
+          break;
+        }
         // Guard: Don't mark as section keyword if appearing in property value
         if (this.inPropertyValue) {
           break;
@@ -704,6 +714,11 @@ export class Lexer {
         break;
 
       case TokenType.Controls:
+        // Guard: Don't mark as section keyword if appearing inside code blocks
+        // Prevents section keywords in trigger code (e.g., variable "Controls" in trigger) from corrupting context
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
+          break;
+        }
         // Guard: Don't mark as section keyword if appearing in property value
         if (this.inPropertyValue) {
           break;
@@ -713,6 +728,11 @@ export class Lexer {
         break;
 
       case TokenType.Elements:
+        // Guard: Don't mark as section keyword if appearing inside code blocks
+        // Prevents section keywords in trigger code (e.g., variable "Elements" in trigger) from corrupting context
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
+          break;
+        }
         // Guard: Don't mark as section keyword if appearing in property value
         if (this.inPropertyValue) {
           break;
@@ -722,6 +742,11 @@ export class Lexer {
         break;
 
       case TokenType.DataItems:
+        // Guard: Don't mark as section keyword if appearing inside code blocks
+        // Prevents section keywords in trigger code (e.g., variable "DataItems" in trigger) from corrupting context
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
+          break;
+        }
         // Guard: Don't mark as section keyword if appearing in property value
         if (this.inPropertyValue) {
           break;
@@ -731,6 +756,11 @@ export class Lexer {
         break;
 
       case TokenType.Actions:
+        // Guard: Don't mark as section keyword if appearing inside code blocks
+        // Prevents section keywords in trigger code (e.g., variable "Actions" in trigger) from corrupting context
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
+          break;
+        }
         // Guard: Don't mark as section keyword if appearing in property value
         if (this.inPropertyValue) {
           break;
@@ -743,6 +773,11 @@ export class Lexer {
       case TokenType.FieldGroups:
       case TokenType.Code:
       case TokenType.RequestForm:
+        // Guard: Don't mark as section keyword if appearing inside code blocks
+        // Prevents section keywords in trigger code (e.g., variable "Code" in "TimeBalanceLine.SETRANGE(Code)") from corrupting context
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
+          break;
+        }
         // Guard: Don't mark as section keyword if appearing in structural columns
         // Prevents section keywords in field/key/control names from corrupting context
         if (this.shouldProtectFromSectionKeyword()) {

@@ -281,6 +281,45 @@ describe('Lexer - Field Names Containing BEGIN/END Keywords', () => {
       const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
       expect(unknownTokens).toHaveLength(0);
     });
+
+    it('should handle "Actual Hours Begin" field with OnValidate, CaptionML, and CharAllowed', () => {
+      // REAL BUG from TAB6005550.TXT lines 228-236
+      // Maximum complexity: Field name with BEGIN keyword + OnValidate trigger + CaptionML with semicolons + CharAllowed
+      // CharAllowed property contains special characters including '}' which must not corrupt brace depth
+      const code = `FIELDS
+{
+  { 20  ;   ;Actual Hours Begin  ;Text10        ;OnValidate=BEGIN
+                                                            VALIDATE("Hours");
+                                                          END;
+
+                                             CaptionML=[DAN=Faktiske timer start;
+                                                        DEU=Istzeitstundenbeginn des Tages;
+                                                        ENU=Actual Hours Begin];
+                                             CharAllowed=09..::++-- }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // CRITICAL: The closing } of the field must be RightBrace, not Unknown
+      const unknownBraces = tokens.filter(t => t.type === TokenType.Unknown && t.value === '}');
+
+      if (unknownBraces.length > 0) {
+        const details = unknownBraces.map(t => `line ${t.line}:${t.column}`).join(', ');
+        throw new Error(
+          `BUG DETECTED: Found ${unknownBraces.length} Unknown brace tokens at ${details}. ` +
+          `Field name "Actual Hours Begin" corrupted brace depth tracking.`
+        );
+      }
+
+      // Should have ZERO unknown braces - all } should be recognized as RightBrace
+      expect(unknownBraces).toHaveLength(0);
+
+      // Verify brace balance
+      const leftBraces = tokens.filter(t => t.type === TokenType.LeftBrace).length;
+      const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace).length;
+      expect(leftBraces).toBe(rightBraces);
+      expect(rightBraces).toBe(2); // FIELDS section + field definition
+    });
   });
 
   describe('Multiple fields with keyword names in sequence', () => {
