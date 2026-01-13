@@ -73,6 +73,7 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
   TokenType.Duration,   // e.g., "Duration" parameter name (5 occurrences)
   TokenType.BigInteger, // e.g., "BigInteger" parameter name (3 occurrences)
   TokenType.Fields,     // e.g., "Fields" parameter name (2 occurrences)
+  TokenType.Keys,       // e.g., "Keys" section keyword but can be used as name (like Fields, Controls)
   TokenType.Byte,       // e.g., "Byte" parameter name (1 occurrence)
   TokenType.ALOnlyKeyword,         // Enum, Interface, Extends, Implements can be variable names
   TokenType.ALOnlyAccessModifier,  // Internal, Protected, Public can be variable names

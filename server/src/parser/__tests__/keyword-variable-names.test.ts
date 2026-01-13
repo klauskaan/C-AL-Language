@@ -2736,7 +2736,9 @@ describe('Parser - Keywords as Variable Names', () => {
       expect(ast.object!.objectKind).toBe('Page');
     });
 
-    it('should reject KEYS as variable name', () => {
+    it('should parse Keys as variable name (not reject)', () => {
+      // KEYS is a section keyword like FIELDS, FIELDGROUPS, PROPERTIES
+      // but it can also be used as a variable name, similar to Controls and Fields
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -2749,10 +2751,13 @@ describe('Parser - Keywords as Variable Names', () => {
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
       const parser = new Parser(tokens);
-      parser.parse();
+      const ast = parser.parse();
       const errors = parser.getErrors();
 
-      expect(errors.length).toBeGreaterThan(0);
+      expect(errors).toHaveLength(0);
+      expect(ast.object!.code!.variables).toHaveLength(1);
+      expect(ast.object!.code!.variables[0].name).toBe('KEYS');
+      expect(ast.object!.code!.variables[0].dataType.typeName).toBe('Integer');
     });
 
     it('should reject CASE as variable name', () => {
@@ -3912,6 +3917,187 @@ describe('Parser - Keywords as Variable Names', () => {
       // Empty statement after THEN should still be recognized
       expect(ifStmt.type).toBe('IfStatement');
       expect(ifStmt.thenBranch.type).toBe('EmptyStatement');
+    });
+  });
+
+  describe('Keys variable name', () => {
+    it('should parse Keys as local variable with DotNet type', () => {
+      // Real NAV usage from COD6711.TXT line 18
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Keys@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.Dictionary\`2";
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object!.code!.variables).toHaveLength(1);
+
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.name).toBe('Keys');
+      expect(variable.dataType.typeName).toBe('DotNet');
+      expect(variable.dataType.assemblyReference).toBe('mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089');
+      expect(variable.dataType.dotNetTypeName).toBe('System.Collections.Generic.Dictionary`2');
+    });
+
+    it('should parse Keys as procedure parameter', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(Keys@1000 : Integer);
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].parameters).toHaveLength(1);
+
+      const param = procedures[0].parameters[0];
+      expect(param.name).toBe('Keys');
+      expect(param.dataType.typeName).toBe('Integer');
+    });
+
+    it('should parse Keys in global VAR section', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Keys@1000 : Integer;
+
+    PROCEDURE TestProc@1();
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object!.code!.variables).toHaveLength(1);
+
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.name).toBe('Keys');
+      expect(variable.dataType.typeName).toBe('Integer');
+    });
+
+    it('should handle both KEYS section and Keys variable in same Table', () => {
+      // Disambiguation test: KEYS section keyword vs Keys variable name
+      // Similar to Controls section vs Controls variable test
+      const code = `OBJECT Table 50000 TestTable
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/13/26;
+    Time=12:00:00;
+  }
+  PROPERTIES
+  {
+    CaptionML=ENU=Test Table;
+  }
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        }
+    { 2   ;   ;Name                ;Text50        }
+  }
+  KEYS
+  {
+    {    ;No.                                     ;Clustered=Yes }
+  }
+  CODE
+  {
+    VAR
+      Keys@1000 : Integer;
+
+    PROCEDURE GetKeyCount@1();
+    BEGIN
+      Keys := 42;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      // Verify no parse errors
+      expect(parser.getErrors()).toHaveLength(0);
+
+      // Verify the table was parsed successfully
+      expect(ast.object).toBeDefined();
+      expect(ast.object?.objectKind).toBe(ObjectKind.Table);
+      expect(ast.object?.objectId).toBe(50000);
+
+      // Verify KEYS section was recognized (disambiguation - both KEYS section and Keys variable coexist)
+      expect(ast.object?.keys).toBeDefined();
+
+      // Verify Keys variable in CODE section was correctly parsed
+      // (not confused with KEYS section keyword)
+      const globalVars = ast.object?.code?.variables || [];
+      expect(globalVars).toHaveLength(1);
+      expect(globalVars[0].name).toBe('Keys');
+      expect(globalVars[0].dataType.typeName).toBe('Integer');
+
+      // Verify procedure was parsed
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].name).toBe('GetKeyCount');
+    });
+
+    it('should parse Keys variable used in assignment expression', () => {
+      // Tests lexer guard coordination - Keys should be treated as identifier
+      // in variable contexts, even though KEYS is a section keyword
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Keys@1000 : Integer;
+      RecRef@1001 : RecordRef;
+
+    PROCEDURE CountKeys@1();
+    BEGIN
+      Keys := RecRef.KEYCOUNT;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object!.code!.variables).toHaveLength(2);
+
+      const keysVar = ast.object!.code!.variables[0];
+      expect(keysVar.name).toBe('Keys');
+      expect(keysVar.dataType.typeName).toBe('Integer');
+
+      // Verify procedure was parsed successfully
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].name).toBe('CountKeys');
     });
   });
 });
