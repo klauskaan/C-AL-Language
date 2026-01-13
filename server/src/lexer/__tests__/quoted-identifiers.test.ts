@@ -209,14 +209,15 @@ describe('Lexer - Quoted Identifiers', () => {
       expect(tokens[0].value).toBe('Multi');
     });
 
-    it('should not allow strings to span multiple lines', () => {
+    it('should allow strings to span multiple lines', () => {
       const code = "'Multi\nLine'";
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
-      // Should stop at newline and emit Unknown (error token)
-      expect(tokens[0].type).toBe(TokenType.Unknown);
-      expect(tokens[0].value).toBe('Multi');
+      // Multi-line strings are valid in C/AL (e.g., TextConst declarations)
+      expect(tokens[0].type).toBe(TokenType.String);
+      expect(tokens[0].value).toBe('Multi\nLine');
+      expect(tokens[1].type).toBe(TokenType.EOF);
     });
 
     it('should handle adjacent quotes correctly', () => {

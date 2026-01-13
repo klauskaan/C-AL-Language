@@ -462,8 +462,19 @@ export class Lexer {
           break;
         }
       } else if (ch === '\n' || ch === '\r') {
-        // Unclosed string - newline before closing quote
-        break;
+        // Multi-line strings are valid in C/AL - consume newline and track position
+        // Note: Cannot use handleNewLine() here because we need to capture newline chars in value
+        // Handle CRLF as a single logical newline
+        if (ch === '\r' && this.peek() === '\n') {
+          value += '\r\n';
+          this.advance();
+          this.advance();
+        } else {
+          value += ch;
+          this.advance();
+        }
+        this.line++;
+        this.column = 1;
       } else {
         value += ch;
         this.advance();
