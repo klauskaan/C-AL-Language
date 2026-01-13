@@ -251,16 +251,20 @@ describe('Lexer - Property Value Keywords vs Code Triggers', () => {
       const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
       expect(unknownTokens).toHaveLength(0);
 
-      // Verify BEGIN and END tokens exist
-      // The lexer tokenizes all "Begin"/"End" occurrences as BEGIN/END tokens:
-      // - OptionString=Begin,End  -> 2 tokens (property values)
-      // - OnValidate=BEGIN...END  -> 2 tokens (code keywords)
-      // Total: 3 BEGIN tokens (Begin from OptionString + Begin from InitValue + BEGIN from OnValidate)
-      //        2 END tokens (End from OptionString + END from OnValidate)
+      // Verify BEGIN and END tokens are only for trigger code, not property values
+      // NEW BEHAVIOR (after bug fix): The lexer distinguishes between:
+      // - OptionString=Begin,End  -> IDENTIFIER tokens (property values)
+      // - InitValue=Begin         -> IDENTIFIER token (property value)
+      // - OnValidate=BEGIN...END  -> BEGIN/END keywords (code delimiters)
+      // Total: 1 BEGIN token (OnValidate), 1 END token (OnValidate)
       const beginTokens = tokens.filter(t => t.type === TokenType.Begin);
       const endTokens = tokens.filter(t => t.type === TokenType.End);
-      expect(beginTokens.length).toBe(3); // OptionString Begin + InitValue Begin + OnValidate BEGIN
-      expect(endTokens.length).toBe(2); // OptionString End + OnValidate END
+      expect(beginTokens.length).toBe(1); // Only OnValidate BEGIN (not property values)
+      expect(endTokens.length).toBe(1); // Only OnValidate END (not property values)
+
+      // Verify "Begin" and "End" in property values are IDENTIFIER tokens
+      const identifiers = tokens.filter(t => t.type === TokenType.Identifier && (t.value === 'Begin' || t.value === 'End'));
+      expect(identifiers.length).toBe(3); // OptionString Begin, OptionString End, InitValue Begin
     });
 
     it('should handle multiple fields with mix of property values and triggers', () => {

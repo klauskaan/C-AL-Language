@@ -380,7 +380,7 @@ export class Parser {
 
       // Stop if we encounter a section keyword (ACTIONS, CONTROLS, DATAITEMS, etc) at depth 0
       // UNLESS this is the first token (meaning it's a property like ActionList=ACTIONS { ... })
-      if (braceDepth === 0 && value.length > 0 &&
+      if (braceDepth === 0 && bracketDepth === 0 && value.length > 0 &&
           (this.check(TokenType.Actions) ||
            this.check(TokenType.Controls) ||
            this.check(TokenType.DataItems) ||

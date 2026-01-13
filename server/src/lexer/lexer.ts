@@ -647,13 +647,26 @@ export class Lexer {
       // The parser handles CODE { ... } correctly even if lexed as identifier
     }
 
-    // Downgrade section keywords to identifiers when in protected columns
-    // Prevents section keywords in field/key/control names from corrupting context
+    // Downgrade section keywords to identifiers when in protected columns or inside brackets
+    // Prevents section keywords in field/key/control names or ML property values from corrupting context
     const sectionKeywords = [
       TokenType.Code, TokenType.Properties, TokenType.FieldGroups,
       TokenType.Actions, TokenType.DataItems, TokenType.Elements, TokenType.RequestForm
     ];
-    if (sectionKeywords.includes(tokenType) && this.shouldProtectFromSectionKeyword()) {
+    if (sectionKeywords.includes(tokenType) && (this.shouldProtectFromSectionKeyword() || this.bracketDepth > 0)) {
+      tokenType = TokenType.Identifier;
+    }
+
+    // Downgrade BEGIN/END to identifiers when inside brackets OR in non-trigger property values
+    // Prevents BEGIN/END in property values (e.g., InitValue=Begin or OptionCaptionML=[ENU=Begin,End]) from being treated as code delimiters
+    // BUT: Keep BEGIN/END as keywords for:
+    // - Trigger properties (OnInsert, OnModify, etc.) where they delimit code blocks
+    // - CODE_BLOCK context (actual code, not property values)
+    if ((tokenType === TokenType.Begin || tokenType === TokenType.End) &&
+        (this.bracketDepth > 0 ||
+         (this.inPropertyValue &&
+          !this.isTriggerProperty(this.lastPropertyName) &&
+          this.getCurrentContext() !== LexerContext.CODE_BLOCK))) {
       tokenType = TokenType.Identifier;
     }
 
@@ -814,6 +827,10 @@ export class Lexer {
           // BEGIN is part of structure (likely in field/key/control name), not code
           break;
         }
+        // Guard: BEGIN inside brackets is just text, not code start
+        if (this.bracketDepth > 0) {
+          break;
+        }
 
         // Only push CODE_BLOCK for ACTUAL code blocks, not property values
         // If we're in a property value, only enter CODE_BLOCK if it's a trigger property
@@ -838,6 +855,10 @@ export class Lexer {
         // Section-aware protection (same logic as BEGIN)
         if (this.shouldProtectFromBeginEnd()) {
           // END is part of structure (likely in field/key/control name), not code
+          break;
+        }
+        // Guard: END inside brackets is just text, not code end
+        if (this.bracketDepth > 0) {
           break;
         }
 

@@ -562,4 +562,306 @@ describe('Lexer - Section Keywords in Property Values', () => {
       expect(leftBraces.length).toBe(rightBraces.length);
     });
   });
+
+  describe('REGRESSION: Multi-line ML properties with keywords on continuation lines', () => {
+    it('should tokenize "Actions" in multi-line PromotedActionCategoriesML as IDENTIFIER', () => {
+      // Based on PAG6213182.TXT lines 21-22
+      // BUG: "Actions" on continuation line is tokenized as ACTIONS keyword, corrupting context
+      const code = `PROPERTIES
+{
+  PromotedActionCategoriesML=[DAN=Hjem,Handlinger,Rapporter;
+                              ENU=Home,Actions,Reports];
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Find all tokens with "Actions" value
+      const actionsTokens = tokens.filter(t =>
+        t.value.toUpperCase() === 'ACTIONS'
+      );
+
+      // There should be exactly one "Actions" token
+      expect(actionsTokens.length).toBeGreaterThan(0);
+
+      // All "Actions" tokens inside property value should be IDENTIFIER, not ACTIONS keyword
+      actionsTokens.forEach(token => {
+        expect(token.type).toBe(TokenType.Identifier);
+      });
+
+      // No UNKNOWN tokens
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
+      expect(unknownTokens).toHaveLength(0);
+
+      // Balanced braces
+      const leftBraces = tokens.filter(t => t.type === TokenType.LeftBrace);
+      const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
+      expect(leftBraces.length).toBe(rightBraces.length);
+    });
+
+    it('should tokenize "Begin" and "End" in multi-line OptionCaptionML as IDENTIFIER', () => {
+      // Based on TAB6005575.TXT lines 59-60
+      // BUG: "Begin" and "End" on continuation line are tokenized as BEGIN/END keywords
+      const code = `FIELDS
+{
+  { 4 ; ; "Begin/End" ; Option ;
+    OptionCaptionML=[DAN=Begynd,Slut;
+                     ENU=Begin,End];
+    NotBlank=Yes }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Find "Begin" tokens inside property value (not the InitValue)
+      const beginTokens = tokens.filter(t =>
+        t.value.toUpperCase() === 'BEGIN' && t.line >= 4
+      );
+
+      // Find "End" tokens inside property value
+      const endTokens = tokens.filter(t =>
+        t.value.toUpperCase() === 'END' && t.line === 5
+      );
+
+      // These should be IDENTIFIER tokens, not BEGIN/END keywords
+      beginTokens.forEach(token => {
+        expect(token.type).toBe(TokenType.Identifier);
+      });
+
+      endTokens.forEach(token => {
+        expect(token.type).toBe(TokenType.Identifier);
+      });
+
+      // No UNKNOWN tokens
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
+      expect(unknownTokens).toHaveLength(0);
+
+      // Balanced braces
+      const leftBraces = tokens.filter(t => t.type === TokenType.LeftBrace);
+      const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
+      expect(leftBraces.length).toBe(rightBraces.length);
+    });
+
+    it('should handle "Actions" at start of continuation line after indentation', () => {
+      // Edge case: keyword appears as first non-whitespace token on continuation line
+      const code = `PROPERTIES
+{
+  PromotedActionCategoriesML=[DAN=Start;
+                              ENU=Home,
+                              Actions];
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Find "Actions" token
+      const actionsTokens = tokens.filter(t =>
+        t.value.toUpperCase() === 'ACTIONS'
+      );
+
+      // Should be IDENTIFIER, not ACTIONS keyword
+      actionsTokens.forEach(token => {
+        expect(token.type).toBe(TokenType.Identifier);
+      });
+
+      // No UNKNOWN tokens
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
+      expect(unknownTokens).toHaveLength(0);
+    });
+
+    it('should handle multiple keywords on separate continuation lines', () => {
+      // Multiple section keywords across multiple continuation lines
+      const code = `PROPERTIES
+{
+  TestPropertyML=[DAN=Start,Kode,Slut;
+                  ENU=Begin,
+                  Code,
+                  End,
+                  Actions];
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Find all keyword-like tokens inside property value
+      const beginTokens = tokens.filter(t => t.value.toUpperCase() === 'BEGIN');
+      const codeTokens = tokens.filter(t => t.value.toUpperCase() === 'CODE');
+      const endTokens = tokens.filter(t => t.value.toUpperCase() === 'END');
+      const actionsTokens = tokens.filter(t => t.value.toUpperCase() === 'ACTIONS');
+
+      // All should be IDENTIFIER tokens
+      [...beginTokens, ...codeTokens, ...endTokens, ...actionsTokens].forEach(token => {
+        expect(token.type).toBe(TokenType.Identifier);
+      });
+
+      // No UNKNOWN tokens
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
+      expect(unknownTokens).toHaveLength(0);
+    });
+
+    it('should not corrupt context after multi-line property with keyword', () => {
+      // Test that subsequent properties are parsed correctly
+      const code = `PROPERTIES
+{
+  PageType=Card;
+  PromotedActionCategoriesML=[DAN=Hjem;
+                              ENU=Home,Actions];
+  InsertAllowed=No;
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Verify "InsertAllowed" property is parsed correctly after multi-line property
+      const insertAllowedTokens = tokens.filter(t =>
+        t.value === 'InsertAllowed'
+      );
+      expect(insertAllowedTokens.length).toBeGreaterThan(0);
+      expect(insertAllowedTokens[0].type).toBe(TokenType.Identifier);
+
+      // No UNKNOWN tokens
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
+      expect(unknownTokens).toHaveLength(0);
+
+      // Balanced braces
+      const leftBraces = tokens.filter(t => t.type === TokenType.LeftBrace);
+      const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
+      expect(leftBraces.length).toBe(rightBraces.length);
+    });
+
+    it('should handle real NAV pattern: PAG6213182.TXT PromotedActionCategoriesML', () => {
+      // Exact real-world pattern from failing file
+      const code = `OBJECT Page 6213182 Test
+{
+  PROPERTIES
+  {
+    PageType=Card;
+    PromotedActionCategoriesML=[DAN=Hjem,Handlinger,Rapporter,Medarbejdere,Sag;
+                                ENU=Home,Actions,Reports,Employees,Jobs];
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Find "Actions" token on continuation line
+      const actionsTokens = tokens.filter(t =>
+        t.value === 'Actions' && t.line === 7
+      );
+
+      // Should be IDENTIFIER, not ACTIONS keyword
+      expect(actionsTokens.length).toBeGreaterThan(0);
+      actionsTokens.forEach(token => {
+        expect(token.type).toBe(TokenType.Identifier);
+      });
+
+      // Critical: no UNKNOWN tokens
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
+      if (unknownTokens.length > 0) {
+        const unknownDetails = unknownTokens.map(t =>
+          `"${t.value}" at line ${t.line}:${t.column}`
+        );
+        throw new Error(
+          `BUG: "Actions" keyword on continuation line corrupted context. ` +
+          `Found ${unknownTokens.length} UNKNOWN tokens: ${unknownDetails.join(', ')}`
+        );
+      }
+      expect(unknownTokens).toHaveLength(0);
+
+      // Balanced braces
+      const leftBraces = tokens.filter(t => t.type === TokenType.LeftBrace);
+      const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
+      expect(leftBraces.length).toBe(rightBraces.length);
+    });
+
+    it('should handle real NAV pattern: TAB6005575.TXT OptionCaptionML with Begin/End', () => {
+      // Exact real-world pattern from failing file
+      const code = `OBJECT Table 6005575 Test
+{
+  FIELDS
+  {
+    { 4 ; ; "Begin/End" ; Option ;
+      InitValue=Begin;
+      CaptionML=[DAN=Begynd/Slut;
+                 ENU=Begin/End];
+      OptionCaptionML=[DAN=Begynd,Slut;
+                       ENU=Begin,End];
+      OptionString=Begin,End;
+      NotBlank=Yes }
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Find "Begin" and "End" tokens on continuation line (line 10)
+      const continuationLineTokens = tokens.filter(t => t.line === 10);
+      const beginTokens = continuationLineTokens.filter(t =>
+        t.value === 'Begin'
+      );
+      const endTokens = continuationLineTokens.filter(t =>
+        t.value === 'End'
+      );
+
+      // Should be IDENTIFIER tokens
+      beginTokens.forEach(token => {
+        expect(token.type).toBe(TokenType.Identifier);
+      });
+      endTokens.forEach(token => {
+        expect(token.type).toBe(TokenType.Identifier);
+      });
+
+      // Critical: no UNKNOWN tokens
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
+      if (unknownTokens.length > 0) {
+        const unknownDetails = unknownTokens.map(t =>
+          `"${t.value}" at line ${t.line}:${t.column}`
+        );
+        throw new Error(
+          `BUG: "Begin"/"End" keywords on continuation line corrupted context. ` +
+          `Found ${unknownTokens.length} UNKNOWN tokens: ${unknownDetails.join(', ')}`
+        );
+      }
+      expect(unknownTokens).toHaveLength(0);
+
+      // Balanced braces
+      const leftBraces = tokens.filter(t => t.type === TokenType.LeftBrace);
+      const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
+      expect(leftBraces.length).toBe(rightBraces.length);
+    });
+
+    it('should verify token stream balance for multi-line ML property with keywords', () => {
+      // Comprehensive balance check: all brackets, braces, and structure
+      const code = `OBJECT Page 50000 Test
+{
+  PROPERTIES
+  {
+    PromotedActionCategoriesML=[DAN=Hjem,Handlinger;
+                                ENU=Home,Actions,Reports];
+  }
+  CONTROLS
+  {
+    { 1 ; ; Name ; Field }
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // No UNKNOWN tokens
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
+      expect(unknownTokens).toHaveLength(0);
+
+      // Balanced braces
+      const leftBraces = tokens.filter(t => t.type === TokenType.LeftBrace);
+      const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
+      expect(leftBraces.length).toBe(rightBraces.length);
+      expect(leftBraces.length).toBe(4); // OBJECT, PROPERTIES, CONTROLS, field
+
+      // Balanced brackets
+      const leftBrackets = tokens.filter(t => t.type === TokenType.LeftBracket);
+      const rightBrackets = tokens.filter(t => t.type === TokenType.RightBracket);
+      expect(leftBrackets.length).toBe(rightBrackets.length);
+      expect(leftBrackets.length).toBe(1); // ML property value
+
+      // Verify "Actions" is IDENTIFIER
+      const actionsTokens = tokens.filter(t => t.value === 'Actions');
+      expect(actionsTokens.length).toBeGreaterThan(0);
+      actionsTokens.forEach(token => {
+        expect(token.type).toBe(TokenType.Identifier);
+      });
+    });
+  });
 });

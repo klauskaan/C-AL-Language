@@ -652,4 +652,219 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
       expect(permProp?.value).toBe('TableData 18=rm');
     });
   });
+
+  describe('REGRESSION: Multi-line ML properties with keywords on continuation lines', () => {
+    it('should parse multi-line PromotedActionCategoriesML with "Actions" keyword on continuation line', () => {
+      // Based on PAG6213182.TXT lines 21-22
+      // BUG: "Actions" keyword on continuation line corrupts lexer context
+      const code = `OBJECT Page 6213182 Test {
+        PROPERTIES {
+          PageType=Card;
+          PromotedActionCategoriesML=[DAN=Hjem,Handlinger,Rapporter,Medarbejdere,Sag;
+                                      ENU=Home,Actions,Reports,Employees,Jobs];
+        }
+        CONTROLS {
+          { 1 ; ; Name ; Field }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // This test SHOULD FAIL initially - "Actions" on line 2 of property value corrupts context
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object).toBeDefined();
+
+      const promotedActions = ast.object?.properties?.properties.find(
+        (p: Property) => p.name === 'PromotedActionCategoriesML'
+      );
+      expect(promotedActions).toBeDefined();
+
+      // The value should include the complete multi-line ML property
+      expect(promotedActions?.value).toContain('Actions');
+      expect(promotedActions?.value).toContain('Home');
+      expect(promotedActions?.value).toContain('Jobs');
+    });
+
+    it('should parse multi-line OptionCaptionML with "Begin,End" keywords on continuation line', () => {
+      // Based on TAB6005575.TXT lines 59-60 and TAB6005596.TXT lines 44-45
+      // BUG: "Begin" and "End" keywords on continuation line corrupt lexer context
+      const code = `OBJECT Table 6005575 Test {
+        FIELDS {
+          { 4 ; ; "Begin/End" ; Option ;
+            InitValue=Begin;
+            CaptionML=[DAN=Begynd/Slut;
+                       ENU=Begin/End];
+            OptionCaptionML=[DAN=Begynd,Slut;
+                             ENU=Begin,End];
+            OptionString=Begin,End;
+            NotBlank=Yes }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // This test SHOULD FAIL initially - "Begin" and "End" on continuation line corrupt context
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object).toBeDefined();
+
+      const fieldSection = ast.object?.fields as FieldSection;
+      expect(fieldSection).toBeDefined();
+      expect(fieldSection.fields).toHaveLength(1);
+
+      const field = fieldSection.fields[0] as FieldDeclaration;
+
+      // Verify CaptionML is parsed correctly
+      const captionML = field.properties?.properties?.find(
+        (p: Property) => p.name === 'CaptionML'
+      );
+      expect(captionML).toBeDefined();
+      expect(captionML?.value).toContain('Begin');
+      expect(captionML?.value).toContain('End');
+
+      // Verify OptionCaptionML is parsed correctly
+      const optionCaptionML = field.properties?.properties?.find(
+        (p: Property) => p.name === 'OptionCaptionML'
+      );
+      expect(optionCaptionML).toBeDefined();
+      expect(optionCaptionML?.value).toContain('Begin');
+      expect(optionCaptionML?.value).toContain('End');
+    });
+
+    it('should handle multi-line ML property with "Actions" at start of continuation line', () => {
+      // Edge case: keyword appears as first token after newline+indentation
+      const code = `OBJECT Page 50000 Test {
+        PROPERTIES {
+          PromotedActionCategoriesML=[DAN=Start,Handlinger;
+                                      ENU=Home,
+                                      Actions];
+        }
+        CONTROLS {
+          { 1 ; ; Name ; Field }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // This test SHOULD FAIL initially
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object).toBeDefined();
+
+      const promotedActions = ast.object?.properties?.properties.find(
+        (p: Property) => p.name === 'PromotedActionCategoriesML'
+      );
+      expect(promotedActions).toBeDefined();
+      expect(promotedActions?.value).toContain('Actions');
+    });
+
+    it('should handle multi-line ML property with multiple keywords on continuation lines', () => {
+      // Complex case: multiple keywords across multiple continuation lines
+      const code = `OBJECT Table 50000 Test {
+        FIELDS {
+          { 1 ; ; Status ; Option ;
+            OptionCaptionML=[DAN=Start,Kode,Slut;
+                             ENU=Begin,
+                             Code,
+                             End];
+            OptionString=Begin,Code,End }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // This test SHOULD FAIL initially
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object).toBeDefined();
+
+      const fieldSection = ast.object?.fields as FieldSection;
+      const field = fieldSection.fields[0] as FieldDeclaration;
+
+      const optionCaptionML = field.properties?.properties?.find(
+        (p: Property) => p.name === 'OptionCaptionML'
+      );
+      expect(optionCaptionML).toBeDefined();
+      expect(optionCaptionML?.value).toContain('Begin');
+      expect(optionCaptionML?.value).toContain('Code');
+      expect(optionCaptionML?.value).toContain('End');
+    });
+
+    it('should parse real NAV pattern: PromotedActionCategoriesML from PAG6213182.TXT', () => {
+      // Exact reproduction of real-world error
+      const code = `OBJECT Page 6213182 "Payroll Integration Setup" {
+        PROPERTIES {
+          InsertAllowed=No;
+          DeleteAllowed=No;
+          PageType=Card;
+          PromotedActionCategoriesML=[DAN=Hjem,Handlinger,Rapporter,Medarbejdere,Sag;
+                                      ENU=Home,Actions,Reports,Employees,Jobs];
+        }
+        CONTROLS {
+          { 1 ; ; Name ; Field }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Critical test: parser must not error on "Actions" in continuation line
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object).toBeDefined();
+      expect(ast.object?.properties).toBeDefined();
+
+      // Verify all properties are parsed correctly
+      const pageType = ast.object?.properties?.properties.find(
+        (p: Property) => p.name === 'PageType'
+      );
+      expect(pageType?.value).toBe('Card');
+
+      const promotedActions = ast.object?.properties?.properties.find(
+        (p: Property) => p.name === 'PromotedActionCategoriesML'
+      );
+      expect(promotedActions).toBeDefined();
+      expect(promotedActions?.value).toContain('Actions');
+      expect(promotedActions?.value).toContain('Jobs');
+    });
+
+    it('should parse real NAV pattern: OptionCaptionML with Begin/End from TAB6005575.TXT', () => {
+      // Exact reproduction of real-world error
+      const code = `OBJECT Table 6005575 "Employee Absence" {
+        FIELDS {
+          { 4 ; ; "Begin/End" ; Option ;
+            InitValue=Begin;
+            CaptionML=[DAN=Begynd/Slut;
+                       ENU=Begin/End];
+            OptionCaptionML=[DAN=Begynd,Slut;
+                             ENU=Begin,End];
+            OptionString=Begin,End;
+            NotBlank=Yes }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Critical test: parser must not error on "Begin" and "End" in continuation line
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object).toBeDefined();
+
+      const fieldSection = ast.object?.fields as FieldSection;
+      expect(fieldSection.fields).toHaveLength(1);
+
+      const field = fieldSection.fields[0] as FieldDeclaration;
+      expect(field.fieldName).toContain('Begin/End');
+
+      const optionCaptionML = field.properties?.properties?.find(
+        (p: Property) => p.name === 'OptionCaptionML'
+      );
+      expect(optionCaptionML).toBeDefined();
+
+      // The value must include both "Begin" and "End" without parser errors
+      const value = optionCaptionML?.value || '';
+      expect(value).toContain('Begin');
+      expect(value).toContain('End');
+    });
+  });
 });
