@@ -1764,6 +1764,12 @@ export class Parser {
       return true;
     }
 
+    // Data type keywords (Date_Type, Time_Type, etc.) can start assignment statements
+    // Consistent with canBeUsedAsIdentifier() - _TYPE suffix check
+    if (token.type.toString().endsWith('_TYPE')) {
+      return true;
+    }
+
     return false;
   }
 

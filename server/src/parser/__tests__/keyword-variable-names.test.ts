@@ -3553,4 +3553,365 @@ describe('Parser - Keywords as Variable Names', () => {
       expect(procedures[0].parameters[0].dataType.typeName).toBe('Integer');
     });
   });
+
+  describe('Data type keywords as statement starters (isStatementStarter fix)', () => {
+    // Bug: isStatementStarter() doesn't recognize data type keywords (tokens ending with _TYPE)
+    // as valid statement starters. This causes the parser to treat them as empty statements
+    // when they appear after THEN, DO, ELSE keywords.
+    //
+    // Example: IF condition THEN Date := value;
+    // Expected: AssignmentStatement with target 'Date'
+    // Actual: EmptyStatement (parser thinks THEN has no body)
+    //
+    // Root cause: isStatementStarter() has hardcoded list that excludes data type keywords
+    // Fix needed: Check if token.type.endsWith('_TYPE')
+
+    it('should parse Date assignment after THEN', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Date@1000 : Date;
+      x@1001 : Boolean;
+    BEGIN
+      x := TRUE;
+      IF x THEN
+        Date := TODAY;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      // Test MUST FAIL: Parser should have no errors, but currently treats Date as empty statement
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+
+      const proc = procedures[0];
+      const statements = proc.body as any[];
+      expect(statements).toHaveLength(2);
+
+      // Second statement is the IF statement
+      const ifStmt = statements[1] as any;
+      expect(ifStmt.type).toBe('IfStatement');
+
+      // The THEN branch should be an AssignmentStatement, NOT an EmptyStatement
+      const thenBranch = ifStmt.thenBranch;
+      expect(thenBranch.type).toBe('AssignmentStatement');
+
+      // Verify the assignment target is 'Date'
+      const assignment = thenBranch as any;
+      expect(assignment.target.type).toBe('Identifier');
+      expect(assignment.target.name).toBe('Date');
+    });
+
+    it('should parse Time assignment after THEN', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Time@1000 : Time;
+      x@1001 : Boolean;
+    BEGIN
+      IF x THEN
+        Time := 120000T;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const proc = procedures[0];
+      const statements = proc.body as any[];
+      const ifStmt = statements[0] as any;
+
+      // THEN branch should be AssignmentStatement with Time variable
+      expect(ifStmt.thenBranch.type).toBe('AssignmentStatement');
+      expect(ifStmt.thenBranch.target.name).toBe('Time');
+    });
+
+    it('should parse Integer assignment after THEN', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Integer@1000 : Integer;
+      x@1001 : Boolean;
+    BEGIN
+      IF x THEN
+        Integer := 42;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const proc = procedures[0];
+      const statements = proc.body as any[];
+      const ifStmt = statements[0] as any;
+
+      expect(ifStmt.thenBranch.type).toBe('AssignmentStatement');
+      expect(ifStmt.thenBranch.target.name).toBe('Integer');
+    });
+
+    it('should parse DateTime assignment after THEN', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      DateTime@1000 : DateTime;
+      x@1001 : Boolean;
+    BEGIN
+      IF x THEN
+        DateTime := CURRENTDATETIME;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const proc = procedures[0];
+      const statements = proc.body as any[];
+      const ifStmt = statements[0] as any;
+
+      // THEN branch should be AssignmentStatement with DateTime variable
+      expect(ifStmt.thenBranch.type).toBe('AssignmentStatement');
+      expect(ifStmt.thenBranch.target.name).toBe('DateTime');
+    });
+
+    it('should parse Date assignment after ELSE', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Date@1000 : Date;
+      x@1001 : Boolean;
+      y@1002 : Integer;
+    BEGIN
+      IF x THEN
+        y := 1
+      ELSE
+        Date := TODAY;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const proc = procedures[0];
+      const statements = proc.body as any[];
+      const ifStmt = statements[0] as any;
+
+      // ELSE branch should be AssignmentStatement, not EmptyStatement
+      expect(ifStmt.elseBranch).not.toBeNull();
+      expect(ifStmt.elseBranch.type).toBe('AssignmentStatement');
+      expect(ifStmt.elseBranch.target.name).toBe('Date');
+    });
+
+    it('should parse Date assignment in WHILE loop', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Date@1000 : Date;
+      x@1001 : Boolean;
+    BEGIN
+      WHILE x DO
+        Date := TODAY;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const proc = procedures[0];
+      const statements = proc.body as any[];
+      const whileStmt = statements[0] as any;
+
+      expect(whileStmt.type).toBe('WhileStatement');
+      expect(whileStmt.body.type).toBe('AssignmentStatement');
+      expect(whileStmt.body.target.name).toBe('Date');
+    });
+
+    it('should parse Date assignment in FOR loop', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Date@1000 : Date;
+      i@1001 : Integer;
+    BEGIN
+      FOR i := 1 TO 10 DO
+        Date := TODAY;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const proc = procedures[0];
+      const statements = proc.body as any[];
+      const forStmt = statements[0] as any;
+
+      expect(forStmt.type).toBe('ForStatement');
+      expect(forStmt.body.type).toBe('AssignmentStatement');
+      expect(forStmt.body.target.name).toBe('Date');
+    });
+
+    it('should parse Date assignment in WITH statement', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Date@1000 : Date;
+      Rec@1001 : Record 18;
+    BEGIN
+      WITH Rec DO
+        Date := TODAY;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const proc = procedures[0];
+      const statements = proc.body as any[];
+      const withStmt = statements[0] as any;
+
+      expect(withStmt.type).toBe('WithStatement');
+      expect(withStmt.body.type).toBe('AssignmentStatement');
+      expect(withStmt.body.target.name).toBe('Date');
+    });
+
+    it('should parse nested IF statements with Date assignments', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Date@1000 : Date;
+      x@1001 : Boolean;
+      y@1002 : Boolean;
+    BEGIN
+      IF x THEN
+        IF y THEN
+          Date := TODAY;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const proc = procedures[0];
+      const statements = proc.body as any[];
+      const outerIf = statements[0] as any;
+      const innerIf = outerIf.thenBranch as any;
+
+      expect(outerIf.type).toBe('IfStatement');
+      expect(innerIf.type).toBe('IfStatement');
+      expect(innerIf.thenBranch.type).toBe('AssignmentStatement');
+      expect(innerIf.thenBranch.target.name).toBe('Date');
+    });
+
+    it('should still detect empty statements when intentional', () => {
+      // Regression test: Empty statements should still work
+      // IF TRUE THEN; is valid C/AL (empty body after THEN)
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    BEGIN
+      IF TRUE THEN;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const proc = procedures[0];
+      const statements = proc.body as any[];
+      const ifStmt = statements[0] as any;
+
+      // Empty statement after THEN should still be recognized
+      expect(ifStmt.type).toBe('IfStatement');
+      expect(ifStmt.thenBranch.type).toBe('EmptyStatement');
+    });
+  });
 });
