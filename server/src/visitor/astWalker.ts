@@ -542,7 +542,7 @@ export class ASTWalker {
         return;
       }
     }
-    // Walk the loop variable (which is an Identifier)
+    // Walk the loop variable (Identifier or MemberExpression)
     this.walk(node.variable, visitor);
     this.walkExpression(node.from, visitor);
     this.walkExpression(node.to, visitor);

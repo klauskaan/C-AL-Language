@@ -1926,15 +1926,39 @@ export class Parser {
   private parseForStatement(): ForStatement {
     const startToken = this.consume(TokenType.For, 'Expected FOR');
 
-    // Variable - create proper Identifier node
-    const varToken = this.advance();
-    const variable: Identifier = {
-      type: 'Identifier',
-      name: varToken.value,
-      isQuoted: varToken.type === TokenType.QuotedIdentifier,
-      startToken: varToken,
-      endToken: varToken
-    };
+    // Parse variable expression (can be Identifier or MemberExpression)
+    const variableExpr = this.parseExpression();
+
+    // Validate that the variable is either an Identifier or MemberExpression
+    let variable: Identifier | MemberExpression;
+    if (variableExpr.type === 'Identifier') {
+      variable = variableExpr as Identifier;
+    } else if (variableExpr.type === 'MemberExpression') {
+      const memberExpr = variableExpr as MemberExpression;
+      // Additional validation: ensure the object is a valid lvalue (Identifier or MemberExpression)
+      if (memberExpr.object.type !== 'Identifier' && memberExpr.object.type !== 'MemberExpression') {
+        this.recordError('Invalid FOR loop variable: expected identifier or field reference', this.peek());
+        variable = {
+          type: 'Identifier',
+          name: '<error>',
+          isQuoted: false,
+          startToken: this.previous(),
+          endToken: this.previous()
+        };
+      } else {
+        variable = memberExpr;
+      }
+    } else {
+      // Invalid expression type - record error and create synthetic identifier for recovery
+      this.recordError('Invalid FOR loop variable: expected identifier or field reference', this.peek());
+      variable = {
+        type: 'Identifier',
+        name: '<error>',
+        isQuoted: false,
+        startToken: this.previous(),
+        endToken: this.previous()
+      };
+    }
 
     // :=
     this.consume(TokenType.Assign, 'Expected :=');

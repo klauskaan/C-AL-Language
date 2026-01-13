@@ -61,7 +61,7 @@ class ReferenceCollectorVisitor implements Partial<ASTVisitor> {
   // Note: MemberExpression and ForStatement don't need explicit visitor methods.
   // The walker visits all children automatically:
   // - MemberExpression.property (Identifier) is collected by visitIdentifier
-  // - ForStatement.variable (Identifier) is collected by visitIdentifier
+  // - ForStatement.variable (Identifier or MemberExpression) is collected by visitIdentifier
 
   /**
    * Visit a VariableDeclaration node - collect as a definition

@@ -296,7 +296,12 @@ export interface RepeatStatement extends Statement {
 
 export interface ForStatement extends Statement {
   type: 'ForStatement';
-  variable: Identifier;
+  /**
+   * The loop control variable.
+   * Can be a simple identifier (e.g., FOR i := 1 TO 10)
+   * or a member expression for record field references (e.g., FOR Rec.Field := 1 TO 10)
+   */
+  variable: Identifier | MemberExpression;
   from: Expression;
   to: Expression;
   downto: boolean;
