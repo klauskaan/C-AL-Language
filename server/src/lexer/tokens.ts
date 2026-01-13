@@ -34,6 +34,9 @@ export enum TokenType {
   DataItems = 'DATAITEMS',
   Elements = 'ELEMENTS',
   RequestForm = 'REQUESTFORM',
+  Dataset = 'DATASET',
+  RequestPage = 'REQUESTPAGE',
+  Labels = 'LABELS',
 
   // Keywords - Data Types
   Boolean = 'BOOLEAN',
@@ -186,6 +189,9 @@ export const KEYWORDS: Map<string, TokenType> = new Map([
   ['dataitems', TokenType.DataItems],
   ['elements', TokenType.Elements],
   ['requestform', TokenType.RequestForm],
+  ['dataset', TokenType.Dataset],
+  ['requestpage', TokenType.RequestPage],
+  ['labels', TokenType.Labels],
 
   // Data types
   ['boolean', TokenType.Boolean],

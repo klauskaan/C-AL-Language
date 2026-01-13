@@ -207,9 +207,12 @@ export class Parser {
         } else if (token.type === TokenType.Controls ||
                    token.type === TokenType.Actions ||
                    token.type === TokenType.DataItems ||
+                   token.type === TokenType.Dataset ||
+                   token.type === TokenType.RequestPage ||
+                   token.type === TokenType.Labels ||
                    token.type === TokenType.Elements ||
                    token.type === TokenType.RequestForm) {
-          // Skip unsupported sections (CONTROLS, ACTIONS, DATAITEMS, ELEMENTS, REQUESTFORM)
+          // Skip unsupported sections (CONTROLS, ACTIONS, DATAITEMS, DATASET, REQUESTPAGE, LABELS, ELEMENTS, REQUESTFORM)
           // These sections have complex nested structures that aren't fully parsed yet
           this.skipUnsupportedSection(token.type);
         } else {
@@ -3498,6 +3501,9 @@ export class Parser {
         type === TokenType.FieldGroups ||
         type === TokenType.Actions ||
         type === TokenType.DataItems ||
+        type === TokenType.Dataset ||
+        type === TokenType.RequestPage ||
+        type === TokenType.Labels ||
         type === TokenType.Elements ||
         type === TokenType.RequestForm) {
       return true;

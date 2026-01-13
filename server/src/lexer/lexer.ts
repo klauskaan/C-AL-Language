@@ -99,7 +99,7 @@ export class Lexer {
   private lastWasSectionKeyword: boolean = false;
 
   // Column position tracking for field definitions
-  private currentSectionType: 'FIELDS' | 'KEYS' | 'CONTROLS' | 'ELEMENTS' | 'DATAITEMS' | 'ACTIONS' | null = null;
+  private currentSectionType: 'FIELDS' | 'KEYS' | 'CONTROLS' | 'ELEMENTS' | 'DATAITEMS' | 'ACTIONS' | 'DATASET' | 'REQUESTPAGE' | 'LABELS' | null = null;
   private fieldDefColumn: FieldDefColumn = FieldDefColumn.NONE;
 
   constructor(input: string) {
@@ -657,13 +657,27 @@ export class Lexer {
       // The parser handles CODE { ... } correctly even if lexed as identifier
     }
 
-    // Downgrade section keywords to identifiers when in protected columns or inside brackets
-    // Prevents section keywords in field/key/control names or ML property values from corrupting context
+    // Downgrade section keywords to identifiers when used as parameter/variable names
+    // Pattern: "Dataset@1000", "RequestPage@1001", "Labels@1002" in VAR/PARAMETER sections
+    // These should be IDENTIFIER, not section keywords
+    const reportSectionKeywords = [
+      TokenType.Dataset, TokenType.RequestPage, TokenType.Labels
+    ];
+    if (reportSectionKeywords.includes(tokenType) && this.currentChar() === '@') {
+      tokenType = TokenType.Identifier;
+    }
+
+    // Downgrade section keywords to identifiers when in protected columns, inside brackets, or in CODE_BLOCK
+    // Prevents section keywords in field/key/control names, ML property values, or code blocks from corrupting context
     const sectionKeywords = [
       TokenType.Code, TokenType.Properties, TokenType.FieldGroups,
-      TokenType.Actions, TokenType.DataItems, TokenType.Elements, TokenType.RequestForm
+      TokenType.Actions, TokenType.DataItems, TokenType.Elements, TokenType.RequestForm,
+      TokenType.Dataset, TokenType.RequestPage, TokenType.Labels
     ];
-    if (sectionKeywords.includes(tokenType) && (this.shouldProtectFromSectionKeyword() || this.bracketDepth > 0)) {
+    if (sectionKeywords.includes(tokenType) &&
+        (this.shouldProtectFromSectionKeyword() ||
+         this.bracketDepth > 0 ||
+         this.isInCodeContext())) {
       tokenType = TokenType.Identifier;
     }
 
@@ -801,6 +815,45 @@ export class Lexer {
         }
         this.lastWasSectionKeyword = true;
         this.currentSectionType = 'ACTIONS';
+        break;
+
+      case TokenType.Dataset:
+        // Guard: Don't mark as section keyword if appearing inside code blocks
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
+          break;
+        }
+        // Guard: Don't mark as section keyword if appearing in property value
+        if (this.inPropertyValue) {
+          break;
+        }
+        this.lastWasSectionKeyword = true;
+        this.currentSectionType = 'DATASET';
+        break;
+
+      case TokenType.RequestPage:
+        // Guard: Don't mark as section keyword if appearing inside code blocks
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
+          break;
+        }
+        // Guard: Don't mark as section keyword if appearing in property value
+        if (this.inPropertyValue) {
+          break;
+        }
+        this.lastWasSectionKeyword = true;
+        this.currentSectionType = 'REQUESTPAGE';
+        break;
+
+      case TokenType.Labels:
+        // Guard: Don't mark as section keyword if appearing inside code blocks
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
+          break;
+        }
+        // Guard: Don't mark as section keyword if appearing in property value
+        if (this.inPropertyValue) {
+          break;
+        }
+        this.lastWasSectionKeyword = true;
+        this.currentSectionType = 'LABELS';
         break;
 
       case TokenType.Properties:
