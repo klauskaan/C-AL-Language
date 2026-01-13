@@ -2252,6 +2252,122 @@ describe('Parser - Field Properties', () => {
   });
 });
 
+describe('Parser - Multi-word Property Names', () => {
+  describe('SQL Data Type property', () => {
+    it('should parse SQL Data Type=Integer in field properties', () => {
+      const code = `OBJECT Table 50000 Test {
+        FIELDS {
+          { 1 ; ; TestField ; Code20 ;
+            SQL Data Type=Integer }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      expect(ast.object?.fields).not.toBeNull();
+      expect(ast.object?.fields?.fields).toHaveLength(1);
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.fieldName).toBe('TestField');
+      expect(field?.properties).not.toBeNull();
+      expect(field?.properties?.properties).toHaveLength(1);
+      expect(field?.properties?.properties[0].name).toBe('SQL Data Type');
+      expect(field?.properties?.properties[0].value).toBe('Integer');
+    });
+
+    it('should parse field with both single-word and multi-word properties', () => {
+      const code = `OBJECT Table 50000 Test {
+        FIELDS {
+          { 1 ; ; TestField ; Code20 ;
+            CaptionML=ENU=Test;
+            SQL Data Type=Integer;
+            Numeric=Yes }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.properties).not.toBeNull();
+      expect(field?.properties?.properties).toHaveLength(3);
+
+      expect(field?.properties?.properties[0].name).toBe('CaptionML');
+      expect(field?.properties?.properties[0].value).toBe('ENU=Test');
+
+      expect(field?.properties?.properties[1].name).toBe('SQL Data Type');
+      expect(field?.properties?.properties[1].value).toBe('Integer');
+
+      expect(field?.properties?.properties[2].name).toBe('Numeric');
+      expect(field?.properties?.properties[2].value).toBe('Yes');
+    });
+
+    it('should parse SQL Data Type followed by trigger', () => {
+      const code = `OBJECT Table 50000 Test {
+        FIELDS {
+          { 1 ; ; TestField ; Code20 ;
+            SQL Data Type=Integer;
+            OnValidate=BEGIN
+              MESSAGE('Test');
+            END; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.properties).not.toBeNull();
+      expect(field?.properties?.properties).toHaveLength(1);
+      expect(field?.properties?.properties[0].name).toBe('SQL Data Type');
+      expect(field?.properties?.properties[0].value).toBe('Integer');
+
+      expect(field?.triggers).not.toBeNull();
+      expect(field?.triggers).toHaveLength(1);
+      expect(field?.triggers?.[0].name).toBe('OnValidate');
+    });
+  });
+
+  describe('Regression: single-word properties still work', () => {
+    it('should still parse CaptionML correctly', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 ; CaptionML=ENU=Test }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.properties).not.toBeNull();
+      expect(field?.properties?.properties).toHaveLength(1);
+      expect(field?.properties?.properties[0].name).toBe('CaptionML');
+      expect(field?.properties?.properties[0].value).toBe('ENU=Test');
+    });
+
+    it('should still parse NotBlank correctly', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1 ; ; "No." ; Code20 ; NotBlank=Yes }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+
+      const field = ast.object?.fields?.fields[0];
+      expect(field?.properties?.properties[0].name).toBe('NotBlank');
+      expect(field?.properties?.properties[0].value).toBe('Yes');
+    });
+  });
+});
+
 describe('Parser - Field Triggers', () => {
   describe('OnValidate trigger parsing', () => {
     it('should parse field with OnValidate trigger', () => {

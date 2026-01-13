@@ -324,9 +324,7 @@ export class Parser {
   }
 
   private parseProperty(): Property {
-    const startToken = this.peek();
-    const nameToken = this.advance(); // Property name
-    const name = nameToken.value;
+    const { name, startToken } = this.accumulatePropertyName();
 
     this.consume(TokenType.Equal, 'Expected =');
 
@@ -777,6 +775,65 @@ export class Parser {
   }
 
   /**
+   * Accumulate consecutive tokens that form a property name.
+   * Property names can be multi-word (e.g., "SQL Data Type").
+   *
+   * Algorithm:
+   * 1. If next token after current is EQUAL, return current token only (fast path)
+   * 2. Otherwise, accumulate identifiers until EQUAL is found (max 5 tokens)
+   * 3. Stop on: EQUAL, SEMICOLON, RIGHT_BRACE, section keywords
+   *
+   * @returns Object with accumulated name string and source location tokens
+   */
+  private accumulatePropertyName(): { name: string; startToken: Token; endToken: Token } {
+    const MAX_PROPERTY_NAME_TOKENS = 5; // Covers "SQL Data Type" (3 words)
+
+    const startToken = this.peek();
+    const firstToken = this.advance();
+
+    // Fast path: single-word property name (the common case ~99%)
+    if (this.check(TokenType.Equal)) {
+      return { name: firstToken.value, startToken, endToken: firstToken };
+    }
+
+    // Multi-word property name: accumulate tokens until = found
+    const nameParts: string[] = [firstToken.value];
+    let endToken = firstToken;
+    let lookAhead = 0;
+
+    while (lookAhead < MAX_PROPERTY_NAME_TOKENS - 1 && !this.isAtEnd()) {
+      const current = this.peek();
+
+      // Stop on property value separator
+      if (current.type === TokenType.Equal) {
+        break;
+      }
+
+      // Stop on property/section terminators
+      if (current.type === TokenType.Semicolon ||
+          current.type === TokenType.RightBrace) {
+        break;
+      }
+
+      // Accumulate identifier tokens (property name components)
+      if (current.type === TokenType.Identifier) {
+        nameParts.push(current.value);
+        endToken = this.advance();
+        lookAhead++;
+      } else {
+        // Non-identifier token - stop accumulating
+        break;
+      }
+    }
+
+    return {
+      name: nameParts.join(' '),
+      startToken,
+      endToken
+    };
+  }
+
+  /**
    * Parse field properties and triggers after the data type
    * Field properties follow format: PropertyName=Value;
    * Field triggers follow format: OnValidate=BEGIN...END;
@@ -790,9 +847,7 @@ export class Parser {
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
       const result = this.parseWithRecovery(
         () => {
-          const startToken = this.peek();
-          const nameToken = this.advance(); // Property or trigger name
-          const name = nameToken.value;
+          const { name, startToken } = this.accumulatePropertyName();
 
           this.consume(TokenType.Equal, 'Expected =');
 
