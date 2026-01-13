@@ -105,12 +105,13 @@ describe('Parser - Variable Modifiers', () => {
   });
 
   describe('WITHEVENTS modifier', () => {
-    // TODO: Automation type parsing not yet implemented - skip these tests for now
-    it.skip('should parse Automation variable with WITHEVENTS modifier', () => {
+    // Automation type uses real NAV GUID format
+    it('should parse Automation variable with WITHEVENTS modifier', () => {
+      // Real NAV format with GUIDs for Automation types
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           VAR
-            WordApplication@1 : Automation "'Microsoft Word 15.0 Object Library'.Application" WITHEVENTS;
+            FSO@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Windows Script Host Object Model'.FileSystemObject" WITHEVENTS;
         }
       }`;
       const lexer = new Lexer(code);
@@ -121,16 +122,18 @@ describe('Parser - Variable Modifiers', () => {
       expect(ast.object).toBeDefined();
 
       const variable = ast.object!.code!.variables[0];
-      expect(variable.name).toBe('WordApplication');
+      expect(variable.name).toBe('FSO');
+      expect(variable.dataType.typeName).toBe('Automation');
       expect(variable.withEvents).toBe(true);
       expect(variable.runOnClient).toBeUndefined();
     });
 
-    it.skip('should parse Automation variable without WITHEVENTS', () => {
+    it('should parse Automation variable without WITHEVENTS', () => {
+      // Real NAV format with GUIDs for Automation types
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           VAR
-            ExcelApp@1 : Automation "'Microsoft Excel 15.0 Object Library'.Application";
+            XMLDoc@1 : Automation "{F5078F18-C551-11D3-89B9-0000F81FE221} 3.0:{2933BF80-7B36-11D2-B20E-00C04F983E60}:'Microsoft XML, v3.0'.IXMLDOMNode";
         }
       }`;
       const lexer = new Lexer(code);
@@ -139,6 +142,7 @@ describe('Parser - Variable Modifiers', () => {
 
       expect(parser.getErrors()).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
+      expect(variable.dataType.typeName).toBe('Automation');
       expect(variable.withEvents).toBeUndefined();
     });
 

@@ -746,6 +746,50 @@ export class Parser {
       };
     }
 
+    // Handle Automation COM type reference
+    // Format: Automation "{TypeLibGUID} Version:{ClassGUID}:'TypeLibName'.ClassName"
+    // Example: Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Windows Script Host Object Model'.FileSystemObject"
+    //
+    // The lexer tokenizes the entire "{GUID} Ver:{GUID}:'TypeLib'.Class" as a single QuotedIdentifier token.
+    // We need to parse its value to extract:
+    // - Type Library GUID (in braces)
+    // - Version (e.g., "1.0", "3.0")
+    // - Class GUID (in braces)
+    // - Type Library Name (in single quotes)
+    // - Class Name (after the dot)
+    if (typeName.toUpperCase() === 'AUTOMATION' && this.check(TokenType.QuotedIdentifier)) {
+      const quotedTypeToken = this.advance();
+      const fullTypeSpec = quotedTypeToken.value;
+
+      // Parse: {TypeLibGUID} Version:{ClassGUID}:'TypeLibName'.ClassName
+      // Regex captures: (1) TypeLibGUID, (2) Version, (3) ClassGUID, (4) TypeLibName, (5) ClassName
+      const automationMatch = fullTypeSpec.match(
+        /^\{([^}]+)\}\s+([\d.]+):\{([^}]+)\}:'([^']+)'\.(.+)$/
+      );
+
+      if (!automationMatch) {
+        this.recordError('Invalid Automation type format, expected "{TypeLibGUID} Version:{ClassGUID}:\'TypeLibName\'.ClassName"', quotedTypeToken);
+        return {
+          type: 'DataType',
+          typeName: 'Automation',
+          startToken,
+          endToken: this.previous()
+        };
+      }
+
+      return {
+        type: 'DataType',
+        typeName: 'Automation',
+        automationTypeLibGuid: automationMatch[1],
+        automationVersion: automationMatch[2],
+        automationClassGuid: automationMatch[3],
+        automationTypeLibName: automationMatch[4],
+        automationClassName: automationMatch[5],
+        startToken,
+        endToken: this.previous()
+      };
+    }
+
     // Handle enum-style single-quoted option strings
     // When the type is a single-quoted string like 'Label,Presentation,Calculation',
     // the lexer emits a STRING token, which becomes the typeName directly.

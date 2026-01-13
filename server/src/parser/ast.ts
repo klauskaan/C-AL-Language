@@ -137,6 +137,21 @@ export interface DataType extends ASTNode {
 
   /** Full .NET type path for DotNet types (e.g., 'System.String', 'System.Collections.Generic.Dictionary`2') */
   dotNetTypeName?: string;
+
+  /** Type Library GUID for Automation types (e.g., "F935DC20-1CF0-11D0-ADB9-00C04FD58A0B") */
+  automationTypeLibGuid?: string;
+
+  /** Version string for Automation types (e.g., "1.0", "3.0") */
+  automationVersion?: string;
+
+  /** Class GUID for Automation types (e.g., "0D43FE01-F093-11CF-8940-00A0C9054228") */
+  automationClassGuid?: string;
+
+  /** Type Library Name for Automation types (e.g., "Windows Script Host Object Model") */
+  automationTypeLibName?: string;
+
+  /** Class Name for Automation types (e.g., "FileSystemObject") */
+  automationClassName?: string;
 }
 
 /**
