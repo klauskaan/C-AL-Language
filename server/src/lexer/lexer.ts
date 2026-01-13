@@ -9,6 +9,7 @@ enum LexerContext {
   OBJECT_LEVEL,     // After OBJECT keyword, before first section
   SECTION_LEVEL,    // Inside PROPERTIES/FIELDS/KEYS/FIELDGROUPS/CODE sections
   CODE_BLOCK,       // Inside BEGIN...END blocks (braces are comments here)
+  CASE_BLOCK,       // Inside CASE...END blocks (braces are comments here)
 }
 
 /**
@@ -142,6 +143,15 @@ export class Lexer {
   }
 
   /**
+   * Check if we're in a code execution context where braces are comments
+   * @returns true if in CODE_BLOCK or CASE_BLOCK
+   */
+  private isInCodeContext(): boolean {
+    const context = this.getCurrentContext();
+    return context === LexerContext.CODE_BLOCK || context === LexerContext.CASE_BLOCK;
+  }
+
+  /**
    * Push a new context onto the stack
    */
   private pushContext(context: LexerContext): void {
@@ -259,11 +269,11 @@ export class Lexer {
 
   /**
    * Scan left brace '{' - handles both structural delimiters and block comments
-   * In CODE_BLOCK context, braces start comments; otherwise they are structural delimiters
+   * In CODE_BLOCK or CASE_BLOCK context, braces start comments; otherwise they are structural delimiters
    */
   private scanLeftBrace(startPos: number, startLine: number, startColumn: number): void {
-    // In CODE_BLOCK context, braces are comments
-    if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
+    // In code execution contexts, braces are comments
+    if (this.isInCodeContext()) {
       this.scanBlockComment();
       return;
     }
@@ -296,13 +306,13 @@ export class Lexer {
 
   /**
    * Scan right brace '}' - handles structural delimiters (not comments)
-   * In CODE_BLOCK context, closing braces are part of block comments (handled by scanBlockComment)
+   * In CODE_BLOCK or CASE_BLOCK context, closing braces are part of block comments (handled by scanBlockComment)
    * @returns true if the brace was handled as a structural delimiter, false otherwise
    */
   private scanRightBrace(startPos: number, startLine: number, startColumn: number): boolean {
-    // In CODE_BLOCK context, this closes a comment (handled by scanBlockComment)
+    // In code execution contexts, this closes a comment (handled by scanBlockComment)
     // Otherwise, it's a structural delimiter
-    if (this.getCurrentContext() !== LexerContext.CODE_BLOCK) {
+    if (!this.isInCodeContext()) {
       this.advance();
 
       // Prevent negative braceDepth from unmatched closing braces
@@ -844,17 +854,26 @@ export class Lexer {
           const currentContext = this.getCurrentContext();
           if (currentContext === LexerContext.NORMAL ||
               currentContext === LexerContext.SECTION_LEVEL ||
-              currentContext === LexerContext.CODE_BLOCK) {
+              currentContext === LexerContext.CODE_BLOCK ||
+              currentContext === LexerContext.CASE_BLOCK) {
             this.pushContext(LexerContext.CODE_BLOCK);
           }
         }
         break;
 
+      case TokenType.Case:
+        // Push CASE_BLOCK when in any code execution context
+        // This allows nested CASE statements to each maintain their own context
+        // Guard against malformed input (only push when already in code)
+        const currentCtx = this.getCurrentContext();
+        if (currentCtx === LexerContext.CODE_BLOCK || currentCtx === LexerContext.CASE_BLOCK) {
+          this.pushContext(LexerContext.CASE_BLOCK);
+        }
+        break;
+
       case TokenType.End:
         // Guard: Don't pop CODE_BLOCK if END appears in structural columns
-        // Section-aware protection (same logic as BEGIN)
         if (this.shouldProtectFromBeginEnd()) {
-          // END is part of structure (likely in field/key/control name), not code
           break;
         }
         // Guard: END inside brackets is just text, not code end
@@ -862,11 +881,19 @@ export class Lexer {
           break;
         }
 
-        // Only pop CODE_BLOCK if we're actually in one
         // In property values for non-triggers, END is just an identifier value
         if (this.inPropertyValue && !this.isTriggerProperty(this.lastPropertyName)) {
-          // END is just a property value, don't change context
-        } else if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
+          break;
+        }
+
+        // Pop the appropriate context based on what we're in
+        // The context stack naturally handles nesting:
+        // - BEGIN pushes CODE_BLOCK
+        // - CASE pushes CASE_BLOCK
+        // - END pops whichever is on top
+        const currentContext = this.getCurrentContext();
+        if (currentContext === LexerContext.CODE_BLOCK ||
+            currentContext === LexerContext.CASE_BLOCK) {
           this.popContext();
           this.contextUnderflowDetected = false;
         }
