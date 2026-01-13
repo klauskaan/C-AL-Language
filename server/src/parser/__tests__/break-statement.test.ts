@@ -442,12 +442,15 @@ describe('Parser - BREAK Statement', () => {
       const whileStmt = procedure.body[0] as any;
       const blockStmt = whileStmt.body;
       expect(blockStmt.type).toBe('BlockStatement');
+      // Block contains 4 statements: IF, EmptyStatement, IF, EmptyStatement
+      // (semicolons after END create EmptyStatements)
+      expect(blockStmt.statements).toHaveLength(4);
 
       const firstIfStmt = blockStmt.statements[0];
       const firstBreak = firstIfStmt.thenBranch.statements[0];
       expect(firstBreak.type).toBe('BreakStatement');
 
-      const secondIfStmt = blockStmt.statements[1];
+      const secondIfStmt = blockStmt.statements[2]; // Index 2, not 1 (EmptyStatement at 1)
       const secondBreak = secondIfStmt.thenBranch.statements[0];
       expect(secondBreak.type).toBe('BreakStatement');
     });
