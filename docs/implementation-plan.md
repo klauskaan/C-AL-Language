@@ -1,6 +1,6 @@
 # Implementation Plan: Lazy Trivia Computation & Lexer Validation System
 
-**Status:** In Progress - Revision 9 (Tasks 1, 2, 3, 4, 5, 6, 7 & 8 complete)
+**Status:** In Progress - Revision 10 (Tasks 1, 2, 3, 4, 5, 6, 7, 8 & 9 complete)
 **Created:** 2026-01-14
 **Last Updated:** 2026-01-14
 **Authors:** Architect Agent, Adversarial Reviewer
@@ -8,6 +8,17 @@
 ---
 
 ## Revision Log
+
+### Revision 10 (2026-01-14)
+Task 9 completed - Comment handling policy documented with comprehensive JSDoc and README.
+
+| Update | Details |
+|--------|---------|
+| Task 9 complete | Documentation-only task: enhanced JSDoc on TriviaType and TriviaSpan, created trivia README, updated CLAUDE.md (commit e80ce32) |
+| JSDoc enhancements | TriviaType and TriviaSpan interfaces now explain what trivia includes, why comments are trivia (Roslyn/TypeScript convention), and round-trip preservation requirements |
+| README created | 135-line documentation covering design decisions, API reference, edge cases, and usage examples |
+| Review process | Architect/adversarial-reviewer planning loop (3 SERIOUS issues resolved), implementation, adversarial review (2 SERIOUS issues fixed via Boy Scout Rule) |
+| Verification | TypeScript compilation succeeds, all tests pass, no code behavior changes |
 
 ### Revision 9 (2026-01-14)
 Task 7 completed - Debug trace infrastructure implemented with zero-cost pattern.
@@ -124,7 +135,7 @@ Quick reference for GitHub issues and recommended implementation sequence:
 | Task | Issue | Title | Status | Priority | Dependencies |
 |------|-------|-------|--------|----------|--------------|
 | **Task 7** | [#94](https://github.com/your-repo/issues/94) | Implement Debug Trace Infrastructure | ✅ Complete | Medium | Task 1 |
-| **Task 9** | [#95](https://github.com/your-repo/issues/95) | Document Comment Handling Policy | ⏳ Pending | Low | Task 3 |
+| **Task 9** | [#95](https://github.com/your-repo/issues/95) | Document Comment Handling Policy | ✅ Complete | Low | Task 3 |
 
 ### Phase 5: CI Integration (Optional)
 
