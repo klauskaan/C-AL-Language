@@ -312,6 +312,7 @@ Create synthetic fixtures in test/fixtures/ that mimic structure without copying
 │   ├── types/             # Type definitions
 │   ├── symbols/           # Symbol table
 │   ├── visitor/           # AST visitor pattern
+│   ├── trivia/            # Whitespace and comment handling
 │   ├── providers/         # Base provider class
 │   ├── completion/        # IntelliSense
 │   ├── hover/             # Hover info

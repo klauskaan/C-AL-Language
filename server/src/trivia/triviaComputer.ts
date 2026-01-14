@@ -11,12 +11,48 @@
 import { Token, TokenType } from '../lexer/tokens';
 
 /**
- * Types of trivia that can appear between tokens
+ * Types of trivia that can appear between tokens.
+ *
+ * Trivia encompasses all non-token content that the lexer skips but that
+ * must be preserved for round-trip fidelity. Following the Roslyn/TypeScript
+ * convention, comments are classified as trivia rather than tokens.
+ *
+ * **Categories:**
+ * - `'whitespace'` - Spaces and tabs (horizontal whitespace)
+ *   Example: `"   "`, `"\t\t"`
+ * - `'newline'` - Line terminators (CRLF, LF, or CR)
+ *   Example: `"\r\n"`, `"\n"`
+ * - `'line-comment'` - Double-slash comments extending to end of line
+ *   Example: `"// TODO: refactor this"`
+ * - `'block-comment'` - Multi-line comments using C-style (slash-asterisk) or braces
+ *   Example: C-style comments and `"{ comment }"`
+ *
+ * @see TriviaSpan - The interface representing a classified trivia span
+ * @see parseTriviaSpans - Internal function that classifies trivia text
  */
 export type TriviaType = 'whitespace' | 'newline' | 'line-comment' | 'block-comment';
 
 /**
- * A span of trivia (non-token content) in the source document
+ * A span of trivia (non-token content) in the source document.
+ *
+ * Trivia spans represent the "gaps" between tokens that contain whitespace,
+ * newlines, and comments. These are computed lazily from document positions
+ * rather than being emitted by the lexer.
+ *
+ * **What trivia includes:**
+ * - Horizontal whitespace (spaces, tabs)
+ * - Vertical whitespace (newlines: CRLF, LF, CR)
+ * - Line comments (double slash)
+ * - Block comments (slash-star and brace style)
+ *
+ * **Why comments are trivia:**
+ * Following the Roslyn/TypeScript convention, comments are considered trivia
+ * because they do not affect program semantics. This provides a consistent
+ * model where all non-token content is handled uniformly for round-trip
+ * preservation.
+ *
+ * @see computeTriviaBetween - Extracts trivia between adjacent tokens
+ * @see TriviaType - The classification of trivia content
  */
 export interface TriviaSpan {
   /** Starting offset in the document (inclusive) */
