@@ -1,6 +1,6 @@
 # Implementation Plan: Lazy Trivia Computation & Lexer Validation System
 
-**Status:** In Progress - Revision 8 (Tasks 1, 2, 3, 4, 5, 6 & 8 complete)
+**Status:** In Progress - Revision 9 (Tasks 1, 2, 3, 4, 5, 6, 7 & 8 complete)
 **Created:** 2026-01-14
 **Last Updated:** 2026-01-14
 **Authors:** Architect Agent, Adversarial Reviewer
@@ -8,6 +8,18 @@
 ---
 
 ## Revision Log
+
+### Revision 9 (2026-01-14)
+Task 7 completed - Debug trace infrastructure implemented with zero-cost pattern.
+
+| Update | Details |
+|--------|---------|
+| Task 7 complete | Opt-in trace infrastructure with 35 passing tests, zero-cost pattern using inline guards (commit a0276b8) |
+| Comprehensive instrumentation | All trace points covered: token emissions, context transitions, flag changes, skip events |
+| Trace script | Created lexer-trace.ts with sanitization allowlist for proprietary content protection |
+| Test results | 3141/3142 tests pass, no regressions, 1 flaky performance test skipped |
+| Follow-up issues | Created #104 (callback exception handling), #105 (stream error handling), #106 (compound token traces), #107 (reentrancy docs) |
+| Review process | 2-round adversarial review with feedback resolution protocol |
 
 ### Revision 8 (2026-01-14)
 Task 6 completed - Lexer health report script implemented with comprehensive validation.
@@ -111,7 +123,7 @@ Quick reference for GitHub issues and recommended implementation sequence:
 
 | Task | Issue | Title | Status | Priority | Dependencies |
 |------|-------|-------|--------|----------|--------------|
-| **Task 7** | [#94](https://github.com/your-repo/issues/94) | Implement Debug Trace Infrastructure | ⏳ Pending | Medium | Task 1 |
+| **Task 7** | [#94](https://github.com/your-repo/issues/94) | Implement Debug Trace Infrastructure | ✅ Complete | Medium | Task 1 |
 | **Task 9** | [#95](https://github.com/your-repo/issues/95) | Document Comment Handling Policy | ⏳ Pending | Low | Task 3 |
 
 ### Phase 5: CI Integration (Optional)
@@ -1711,10 +1723,12 @@ process.exit(failed.length > 0 ? 1 : 0);
 
 ## Task 7: Implement Debug Trace Infrastructure
 
+**Status:** ✅ COMPLETE (2026-01-14)
 **Priority:** Medium
 **Effort:** Large (5-6 hours)
 **Dependencies:** Task 1 (uses context state), Task 6 (triggered by health report findings)
 **GitHub Issue:** #94
+**Commit:** a0276b8
 **Required Interfaces:**
 - `LexerContextState` - Task 1
 - `getContextState()` - Task 1
@@ -1733,16 +1747,16 @@ Implement an opt-in tracing system that generates detailed logs of lexer decisio
 
 ### Acceptance Criteria
 
-- [ ] Tracing mechanism added using options object (backward compatible)
-- [ ] Trace includes token emissions with position, type (values optionally sanitized)
-- [ ] Trace includes context transitions with old/new state
-- [ ] Trace includes flag changes (braceDepth, inPropertyValue, etc.)
-- [ ] Trace output is streamed to gitignored file
-- [ ] Trace format is both human-readable and grep-able
-- [ ] NPM script added: `npm run lexer:trace <file>`
-- [ ] Base Lexer has ZERO performance overhead
-- [ ] Trace files include confidentiality warning banner
-- [ ] **NEW:** EOF token creation is traced (special code path)
+- [x] Tracing mechanism added using options object (backward compatible)
+- [x] Trace includes token emissions with position, type (values optionally sanitized)
+- [x] Trace includes context transitions with old/new state
+- [x] Trace includes flag changes (braceDepth, inPropertyValue, etc.)
+- [x] Trace output is streamed to gitignored file
+- [x] Trace format is both human-readable and grep-able
+- [x] NPM script added: `npm run lexer:trace <file>`
+- [x] Base Lexer has ZERO performance overhead
+- [x] Trace files include confidentiality warning banner
+- [x] **NEW:** EOF token creation is traced (special code path)
 
 ### Implementation Notes
 
