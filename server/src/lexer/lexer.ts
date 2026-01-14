@@ -46,6 +46,62 @@ enum FieldDefColumn {
 export type SectionType = 'FIELDS' | 'KEYS' | 'CONTROLS' | 'ELEMENTS' | 'DATAITEMS' | 'ACTIONS' | 'DATASET' | 'REQUESTPAGE' | 'LABELS';
 
 /**
+ * Categories of clean exit validation failures.
+ * Used for categorizing what type of issue caused validation to fail.
+ */
+export enum ExitCategory {
+  STACK_MISMATCH = 'stack-mismatch',
+  UNBALANCED_BRACES = 'unbalanced-braces',
+  UNBALANCED_BRACKETS = 'unbalanced-brackets',
+  INCOMPLETE_PROPERTY = 'incomplete-property',
+  INCOMPLETE_FIELD = 'incomplete-field',
+  CONTEXT_UNDERFLOW = 'context-underflow'
+}
+
+/**
+ * A single clean exit validation violation.
+ */
+export interface ExitViolation {
+  /** Category of this violation */
+  category: ExitCategory;
+  /** Human-readable violation message */
+  message: string;
+  /** Expected value */
+  expected: any;
+  /** Actual value found */
+  actual: any;
+}
+
+/**
+ * Result of clean exit validation.
+ * Contains all validation failures, not just the first one found.
+ */
+export interface CleanExitResult {
+  /** Whether all exit criteria passed */
+  passed: boolean;
+  /** All validation violations (empty if passed) */
+  violations: ExitViolation[];
+  /** Set of unique failure categories (empty if passed) */
+  categories: Set<ExitCategory>;
+}
+
+/**
+ * Options for clean exit validation.
+ */
+export interface CleanExitOptions {
+  /**
+   * If true, ignores contextUnderflowDetected flag.
+   * Use this ONLY when tokenizing Report objects that contain RDLDATA sections.
+   *
+   * WARNING: This option cannot distinguish between legitimate RDLDATA underflow
+   * and actual parsing bugs. The caller must determine if the file being tokenized
+   * is a Report object with an RDLDATA section before enabling this option.
+   * See issue #98 for future object type tracking that would make this safer.
+   */
+  allowRdldataUnderflow?: boolean;
+}
+
+/**
  * Read-only snapshot of lexer internal state for validation and debugging.
  * Context and field column values are returned as strings (not enum values) for API stability.
  *
@@ -168,10 +224,17 @@ export class Lexer {
       this.scanToken();
     }
 
-    // Clean up any incomplete contexts at end of tokenization
-    // If OBJECT was declared but no opening brace found, pop OBJECT_LEVEL
-    while (this.contextStack.length > 1) {
-      this.contextStack.pop();
+    // Clean up any remaining contexts at end of tokenization
+    // Well-formed C/AL objects should end with context stack = ['NORMAL']
+    // For well-formed code: OBJECT_LEVEL and outer SECTION_LEVEL are structural contexts
+    // that don't get explicitly popped, so clean them up here
+    // For malformed code: inner SECTION_LEVELs (unclosed sections) will remain and trigger
+    // STACK_MISMATCH violations in isCleanExit()
+    while (this.contextStack.length > 1 &&
+           (this.contextStack[this.contextStack.length - 1] === LexerContext.OBJECT_LEVEL ||
+            (this.contextStack[this.contextStack.length - 1] === LexerContext.SECTION_LEVEL &&
+             this.braceDepth === 0))) {
+      this.popContext();
     }
 
     this.tokens.push(this.createToken(TokenType.EOF, '', this.position, this.position));
@@ -1457,6 +1520,125 @@ export class Lexer {
       fieldDefColumn: this.fieldDefColumnToString(this.fieldDefColumn),
       currentSectionType: this.currentSectionType,
       contextUnderflowDetected: this.contextUnderflowDetected,
+    };
+  }
+
+  /**
+   * Validates whether the lexer exited in a clean state after tokenization.
+   *
+   * IMPORTANT: This method must be called AFTER tokenize() to produce meaningful
+   * results. Calling it before tokenize() will return passed=true for the initial
+   * state, which is not a useful validation.
+   *
+   * A clean exit indicates that:
+   * - Context stack returned to ['NORMAL']
+   * - All braces and brackets are balanced (depth = 0)
+   * - Not in the middle of parsing a property value
+   * - Not in the middle of parsing a field definition
+   * - No context stack underflow was detected
+   *
+   * This method collects ALL validation failures rather than stopping at
+   * the first one, making it easier to diagnose multi-faceted issues.
+   *
+   * Based on empirical analysis of 7,677 real NAV C/AL files, 99.92% exit
+   * with the canonical clean state.
+   *
+   * @param options - Validation options
+   * @returns CleanExitResult with passed status, all violations, and failure categories
+   *
+   * @example
+   * ```typescript
+   * const lexer = new Lexer(code);
+   * lexer.tokenize();  // MUST call this first
+   * const result = lexer.isCleanExit();
+   * if (!result.passed) {
+   *   for (const v of result.violations) {
+   *     console.error(`${v.category}: ${v.message}`);
+   *   }
+   * }
+   * ```
+   */
+  public isCleanExit(options?: CleanExitOptions): CleanExitResult {
+    const violations: ExitViolation[] = [];
+    const categories = new Set<ExitCategory>();
+    const state = this.getContextState();
+
+    // Check context stack
+    if (state.contextStack.length !== 1 || state.contextStack[0] !== 'NORMAL') {
+      const violation: ExitViolation = {
+        category: ExitCategory.STACK_MISMATCH,
+        message: `Context stack mismatch: expected ['NORMAL'], got ${JSON.stringify(state.contextStack)}`,
+        expected: JSON.stringify(['NORMAL']),
+        actual: JSON.stringify(state.contextStack)
+      };
+      violations.push(violation);
+      categories.add(ExitCategory.STACK_MISMATCH);
+    }
+
+    // Check brace depth
+    if (state.braceDepth !== 0) {
+      const violation: ExitViolation = {
+        category: ExitCategory.UNBALANCED_BRACES,
+        message: `Unbalanced braces: depth is ${state.braceDepth}, expected 0`,
+        expected: 0,
+        actual: state.braceDepth
+      };
+      violations.push(violation);
+      categories.add(ExitCategory.UNBALANCED_BRACES);
+    }
+
+    // Check bracket depth
+    if (state.bracketDepth !== 0) {
+      const violation: ExitViolation = {
+        category: ExitCategory.UNBALANCED_BRACKETS,
+        message: `Unbalanced brackets: depth is ${state.bracketDepth}, expected 0`,
+        expected: 0,
+        actual: state.bracketDepth
+      };
+      violations.push(violation);
+      categories.add(ExitCategory.UNBALANCED_BRACKETS);
+    }
+
+    // Check property value state
+    if (state.inPropertyValue) {
+      const violation: ExitViolation = {
+        category: ExitCategory.INCOMPLETE_PROPERTY,
+        message: 'Incomplete property: still in property value at end of file',
+        expected: false,
+        actual: true
+      };
+      violations.push(violation);
+      categories.add(ExitCategory.INCOMPLETE_PROPERTY);
+    }
+
+    // Check field definition state
+    if (state.fieldDefColumn !== 'NONE') {
+      const violation: ExitViolation = {
+        category: ExitCategory.INCOMPLETE_FIELD,
+        message: `Incomplete field definition: column is ${state.fieldDefColumn}, expected NONE`,
+        expected: 'NONE',
+        actual: state.fieldDefColumn
+      };
+      violations.push(violation);
+      categories.add(ExitCategory.INCOMPLETE_FIELD);
+    }
+
+    // Check context underflow (unless lenient mode enabled)
+    if (state.contextUnderflowDetected && !options?.allowRdldataUnderflow) {
+      const violation: ExitViolation = {
+        category: ExitCategory.CONTEXT_UNDERFLOW,
+        message: 'Context stack underflow detected during tokenization',
+        expected: false,
+        actual: true
+      };
+      violations.push(violation);
+      categories.add(ExitCategory.CONTEXT_UNDERFLOW);
+    }
+
+    return {
+      passed: violations.length === 0,
+      violations,
+      categories
     };
   }
 }
