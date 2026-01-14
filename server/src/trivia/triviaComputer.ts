@@ -350,7 +350,7 @@ function parseTriviaSpans(text: string, baseOffset: number): TriviaResult {
  * @param content - The text inside the braces (without the braces)
  * @returns true if content appears to be code (score >= 2), false if likely a comment
  */
-function looksLikeCode(content: string): boolean {
+export function looksLikeCode(content: string): boolean {
   const trimmed = content.trim();
 
   // Empty or very short content is probably a comment
