@@ -16,3 +16,8 @@ validation-report.md
 .worktrees/
 
 .vscode/
+
+# Lexer health outputs (may contain file references to proprietary content)
+.lexer-health/
+*-trace.txt
+lexer-health-report.md

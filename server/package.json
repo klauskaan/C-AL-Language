@@ -15,7 +15,8 @@
     "perf:update-baseline": "ts-node src/__tests__/performance/utils/updateBaseline.ts",
     "perf:memory": "NODE_OPTIONS='--expose-gc' ts-node src/__tests__/performance/benchmarks/memory.bench.ts",
     "perf:all": "npm run perf:benchmark && npm run perf:memory && npm run perf:compare",
-    "validate:real": "ts-node scripts/validate-real.ts"
+    "validate:real": "ts-node scripts/validate-real.ts",
+    "lexer:health": "ts-node scripts/lexer-health.ts"
   },
   "dependencies": {
     "vscode-languageserver": "^8.1.0",

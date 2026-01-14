@@ -1,0 +1,286 @@
+/**
+ * Lexer Health Report Script
+ *
+ * Validates lexer health across all files in test/REAL:
+ * - Token position validation
+ * - Clean exit validation
+ * - Performance metrics
+ * - Outlier detection
+ *
+ * Exit codes:
+ * - 0: All files pass
+ * - 1: Some files fail
+ * - 2: Empty directory
+ */
+
+import { performance } from 'perf_hooks';
+import { readdirSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { join } from 'path';
+import { Lexer, CleanExitResult } from '../src/lexer/lexer';
+import { validateTokenPositions, ValidationResult } from '../src/validation/positionValidator';
+import { readFileWithEncoding } from '../src/utils/encoding';
+
+interface FileResult {
+  file: string;
+  lines: number;
+  tokenCount: number;
+  tokenizeTime: number;
+  positionValidation: ValidationResult;
+  cleanExit: CleanExitResult;
+}
+
+/**
+ * Calculate percentile value from array of numbers.
+ * Guards against empty arrays to prevent NaN results.
+ *
+ * @param values - Array of numeric values
+ * @param percentile - Percentile to calculate (0-100)
+ * @returns Percentile value, or 0 if array is empty
+ */
+export function calculatePercentile(values: number[], percentile: number): number {
+  if (values.length === 0) return 0;  // Guard against NaN
+  const sorted = [...values].sort((a, b) => a - b);
+  const position = (percentile / 100) * (sorted.length - 1);
+  const index = Math.round(position);
+  return sorted[index];
+}
+
+/**
+ * Detect if filename represents a Report object.
+ * Used to enable RDLDATA underflow allowance in clean exit validation.
+ *
+ * @param filename - Filename to check (e.g., "REP50000.TXT")
+ * @returns true if filename starts with "REP" (case-insensitive)
+ */
+export function isReportFile(filename: string): boolean {
+  const upper = filename.toUpperCase();
+  return upper.startsWith('REP') && !upper.startsWith('REPORT');
+}
+
+function validateAllFiles(): FileResult[] {
+  const realDir = join(__dirname, '../../test/REAL');
+
+  // Check if directory exists before attempting to read
+  if (!existsSync(realDir)) {
+    console.error('Error: test/REAL directory does not exist');
+    console.error('This script requires proprietary NAV object files.');
+    console.error('See README for more information.');
+    process.exit(2);
+  }
+
+  const files = readdirSync(realDir)
+    .filter(f => f.endsWith('.TXT'))
+    .sort();
+
+  if (files.length === 0) {
+    console.warn('No .TXT files found in test/REAL');
+    process.exit(2);  // Exit code 2 for empty directory
+  }
+
+  console.log(`Found ${files.length} files to validate\n`);
+  const results: FileResult[] = [];
+
+  for (const file of files) {
+    const filePath = join(realDir, file);
+
+    try {
+      const { content } = readFileWithEncoding(filePath);
+      const lineCount = content.split('\n').length;
+
+      // Time tokenization with high-precision timer
+      const startTime = performance.now();
+      const lexer = new Lexer(content);
+      const tokens = lexer.tokenize();
+      const tokenizeTime = performance.now() - startTime;
+
+      // Validate token positions
+      const positionValidation = validateTokenPositions(content, tokens);
+
+      // Validate clean exit with RDLDATA allowance for Report files
+      const cleanExit = lexer.isCleanExit({
+        allowRdldataUnderflow: isReportFile(file)
+      });
+
+      results.push({
+        file,
+        lines: lineCount,
+        tokenCount: tokens.length,
+        tokenizeTime,
+        positionValidation,
+        cleanExit
+      });
+    } catch (error) {
+      // Record file read failure as an error result
+      results.push({
+        file,
+        lines: 0,
+        tokenCount: 0,
+        tokenizeTime: 0,
+        positionValidation: {
+          isValid: false,
+          errors: [`Failed to read file: ${error instanceof Error ? error.message : String(error)}`],
+          warnings: []
+        },
+        cleanExit: {
+          passed: false,
+          violations: [],
+          categories: new Set()
+        }
+      });
+      // Continue processing other files
+      continue;
+    }
+
+    // Progress indicator every 100 files
+    if (results.length % 100 === 0) {
+      const failedCount = results.filter(r =>
+        !r.positionValidation.isValid || !r.cleanExit.passed
+      ).length;
+      console.log(`Processed ${results.length}/${files.length} files (${failedCount} with failures)...`);
+    }
+  }
+
+  return results;
+}
+
+function generateMarkdownReport(results: FileResult[]): string {
+  const filesWithPositionErrors = results.filter(r => !r.positionValidation.isValid);
+  const filesWithExitErrors = results.filter(r => !r.cleanExit.passed);
+  const filesWithAnyError = results.filter(r =>
+    !r.positionValidation.isValid || !r.cleanExit.passed
+  );
+
+  const totalLines = results.reduce((sum, r) => sum + r.lines, 0);
+  const totalTokens = results.reduce((sum, r) => sum + r.tokenCount, 0);
+
+  // Guard against division by zero
+  const successRate = results.length > 0
+    ? ((1 - filesWithAnyError.length / results.length) * 100).toFixed(2)
+    : '0.00';
+
+  // Performance metrics
+  const tokenizeTimes = results.map(r => r.tokenizeTime);
+  const p50 = calculatePercentile(tokenizeTimes, 50);
+  const p95 = calculatePercentile(tokenizeTimes, 95);
+  const p99 = calculatePercentile(tokenizeTimes, 99);
+
+  // Outliers: files >2x p95 (strict greater-than)
+  const outlierThreshold = p95 * 2;
+  const outliers = results.filter(r => r.tokenizeTime > outlierThreshold);
+
+  let md = '# Lexer Health Report\n\n';
+  md += `> **WARNING:** This report is generated from proprietary NAV objects in test/REAL/.\n`;
+  md += `> Do not copy file names, object IDs 6000000+, or code fragments to public repositories.\n\n`;
+  md += `**Generated:** ${new Date().toISOString()}\n\n`;
+
+  // Summary section
+  md += '## Summary\n\n';
+  md += `- **Total files:** ${results.length.toLocaleString()}\n`;
+  md += `- **Total lines:** ${totalLines.toLocaleString()}\n`;
+  md += `- **Total tokens:** ${totalTokens.toLocaleString()}\n`;
+  md += `- **Files with position errors:** ${filesWithPositionErrors.length.toLocaleString()}\n`;
+  md += `- **Files with clean exit errors:** ${filesWithExitErrors.length.toLocaleString()}\n`;
+  md += `- **Success rate:** ${successRate}%\n\n`;
+
+  // Performance section
+  md += '## Performance Metrics\n\n';
+  md += `- **p50 (median):** ${p50.toFixed(2)}ms\n`;
+  md += `- **p95:** ${p95.toFixed(2)}ms\n`;
+  md += `- **p99:** ${p99.toFixed(2)}ms\n\n`;
+
+  if (outliers.length > 0) {
+    md += `### Performance Outliers (>${outlierThreshold.toFixed(2)}ms)\n\n`;
+    md += `Found ${outliers.length} file(s) with tokenization time >2x p95:\n\n`;
+    md += '| File | Lines | Time (ms) | Tokens |\n';
+    md += '|------|-------|-----------|--------|\n';
+    outliers
+      .sort((a, b) => b.tokenizeTime - a.tokenizeTime)
+      .forEach(r => {
+        md += `| ${r.file} | ${r.lines.toLocaleString()} | ${r.tokenizeTime.toFixed(2)} | ${r.tokenCount.toLocaleString()} |\n`;
+      });
+    md += '\n';
+  }
+
+  if (filesWithAnyError.length === 0) {
+    md += '## Status\n\n';
+    md += '✅ **All files passed validation!**\n';
+    return md;
+  }
+
+  // Failures section
+  md += '## Failures\n\n';
+  md += `Total files with failures: ${filesWithAnyError.length}\n\n`;
+
+  if (filesWithPositionErrors.length > 0) {
+    md += `### Position Validation Failures (${filesWithPositionErrors.length})\n\n`;
+    filesWithPositionErrors.forEach(r => {
+      md += `#### ${r.file}\n\n`;
+      md += `**Lines:** ${r.lines.toLocaleString()} | **Tokens:** ${r.tokenCount.toLocaleString()} | **Time:** ${r.tokenizeTime.toFixed(2)}ms\n\n`;
+
+      if (r.positionValidation.errors.length > 0) {
+        md += '**Errors:**\n';
+        r.positionValidation.errors.forEach(err => {
+          md += `- ${err}\n`;
+        });
+        md += '\n';
+      }
+
+      if (r.positionValidation.warnings.length > 0) {
+        md += '**Warnings:**\n';
+        r.positionValidation.warnings.forEach(warn => {
+          md += `- ${warn}\n`;
+        });
+        md += '\n';
+      }
+    });
+  }
+
+  if (filesWithExitErrors.length > 0) {
+    md += `### Clean Exit Failures (${filesWithExitErrors.length})\n\n`;
+    filesWithExitErrors.forEach(r => {
+      md += `#### ${r.file}\n\n`;
+      md += `**Lines:** ${r.lines.toLocaleString()} | **Tokens:** ${r.tokenCount.toLocaleString()} | **Time:** ${r.tokenizeTime.toFixed(2)}ms\n\n`;
+
+      md += '**Violations:**\n';
+      r.cleanExit.violations.forEach(v => {
+        md += `- **${v.category}:** ${v.message}\n`;
+        md += `  - Expected: ${JSON.stringify(v.expected)}\n`;
+        md += `  - Actual: ${JSON.stringify(v.actual)}\n`;
+      });
+      md += '\n';
+    });
+  }
+
+  return md;
+}
+
+// Main execution (only when run directly, not imported or in tests)
+if (require.main === module && !process.env.JEST_WORKER_ID) {
+  console.log('Lexer Health Report Tool\n');
+  console.log('Scanning test/REAL directory...\n');
+
+  const startTime = performance.now();
+  const results = validateAllFiles();
+  const totalTime = performance.now() - startTime;
+
+  console.log(`\nValidation complete in ${(totalTime / 1000).toFixed(2)}s`);
+  console.log('Generating report...');
+
+  const report = generateMarkdownReport(results);
+  const reportDir = join(__dirname, '../../.lexer-health');
+  if (!existsSync(reportDir)) {
+    mkdirSync(reportDir, { recursive: true });
+  }
+  const reportPath = join(reportDir, 'lexer-health-report.md');
+  writeFileSync(reportPath, report, 'utf-8');
+
+  const filesWithErrors = results.filter(r =>
+    !r.positionValidation.isValid || !r.cleanExit.passed
+  ).length;
+
+  console.log(`\nReport saved to: .lexer-health/lexer-health-report.md`);
+  console.log(`Files with failures: ${filesWithErrors}/${results.length}`);
+
+  // Exit with appropriate code
+  process.exit(filesWithErrors > 0 ? 1 : 0);
+}
