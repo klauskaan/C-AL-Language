@@ -235,21 +235,26 @@ private contextToString(context: LexerContext): string {
 
 ## Task 2: Establish Clean Exit Criteria Definition
 
+**Status:** ✅ COMPLETED (Commit a72439e)
 **Priority:** High
 **Effort:** Small (2-3 hours)
 **Dependencies:** Task 1
-**GitHub Issue:** #91
+**GitHub Issue:** #91 (closed)
 **Required Interfaces:**
 - `LexerContextState` - Task 1
 - `getContextState()` - Task 1
 
+**Completion Summary:**
+Implemented `isCleanExit()` method on Lexer class with comprehensive validation of 6 exit criteria. Returns ALL violations for easier debugging. Includes lenient mode for RDLDATA underflow in Report objects. Implementation differs from plan (method vs standalone function) but provides better encapsulation. See commit a72439e for details.
+
+**Related Issues:**
+- #98 - Future: Expose object type in LexerContextState
+- #99 - Docs: Update plan (this document) ✅ DONE
+- #100 - Verify package exports
+
 ### Context
 
-The adversarial reviewer identified (Issue #3) that the proposed "clean exit" definition (`contextStack = [NORMAL]`) is incorrect. A well-formed C/AL object file actually exits with the stack containing `OBJECT_LEVEL` because:
-- `OBJECT` keyword pushes `OBJECT_LEVEL`
-- The closing `}` of the object only pops `SECTION_LEVEL`
-
-Using the wrong definition would cause false positives on ALL valid files. We need empirical validation of what the correct end state actually is.
+**✅ COMPLETED:** Empirical analysis of 7,677 real NAV files confirmed that well-formed files exit with `contextStack = ['NORMAL']`. The initial concern about `OBJECT_LEVEL` remaining was incorrect because the lexer's `tokenize()` method includes cleanup logic (lines 233-238 of lexer.ts) that pops structural contexts at EOF.
 
 ### Goal
 
@@ -257,13 +262,13 @@ Empirically determine and document the correct "clean exit" criteria by analyzin
 
 ### Acceptance Criteria
 
-- [ ] Analysis script runs against 100+ successfully-parsing files from test/REAL
-- [ ] Document the ACTUAL exit state observed (context stack, braceDepth, all flags)
-- [ ] Identify any variation patterns (do all files end the same way?)
-- [ ] Define explicit `CleanExitCriteria` interface based on empirical findings
-- [ ] Write tests that verify correct files pass the clean exit check
-- [ ] Write tests that verify known-corrupt states fail the clean exit check
-- [ ] **NEW:** If variance is discovered (files exit differently), document all valid patterns and investigate WHY
+- [x] Analysis script runs against 100+ successfully-parsing files from test/REAL (7,677 files analyzed)
+- [x] Document the ACTUAL exit state observed (context stack, braceDepth, all flags)
+- [x] Identify any variation patterns (99.92% consistent, 6 truncated files, 149 RDLDATA underflow)
+- [x] Define explicit clean exit criteria based on empirical findings (ExitCategory enum, CleanExitResult interface)
+- [x] Write tests that verify correct files pass the clean exit check (19 comprehensive tests)
+- [x] Write tests that verify known-corrupt states fail the clean exit check (all failure categories tested)
+- [x] Variance documented (RDLDATA underflow is expected for Reports, lenient mode provided)
 
 ### Implementation Notes
 
@@ -322,9 +327,33 @@ export interface CleanExitCriteria {
   contextUnderflowDetected: false;
 }
 
-export function isCleanExit(state: LexerContextState): { passed: boolean; reason?: string } {
-  // Implementation based on empirical criteria
-  // Returns detailed reason on failure for diagnostics
+// Note: Implemented as a method on Lexer class, not standalone function
+// lexer.isCleanExit(options?: CleanExitOptions): CleanExitResult
+
+export enum ExitCategory {
+  STACK_MISMATCH = 'stack-mismatch',
+  UNBALANCED_BRACES = 'unbalanced-braces',
+  UNBALANCED_BRACKETS = 'unbalanced-brackets',
+  INCOMPLETE_PROPERTY = 'incomplete-property',
+  INCOMPLETE_FIELD = 'incomplete-field',
+  CONTEXT_UNDERFLOW = 'context-underflow'
+}
+
+export interface ExitViolation {
+  category: ExitCategory;
+  message: string;
+  expected: any;
+  actual: any;
+}
+
+export interface CleanExitResult {
+  passed: boolean;
+  violations: ExitViolation[];
+  categories: Set<ExitCategory>;
+}
+
+export interface CleanExitOptions {
+  allowRdldataUnderflow?: boolean; // For Report objects with RDLDATA sections
 }
 ```
 
@@ -1399,9 +1428,8 @@ Create a script that generates a comprehensive lexer health report in markdown f
 ```typescript
 import { readdirSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
-import { Lexer } from '../src/lexer/lexer';
+import { Lexer, CleanExitResult } from '../src/lexer/lexer';
 import { validateTokenPositions } from '../src/validation/positionValidator';
-import { isCleanExit } from '../src/lexer/cleanExitCriteria';
 import { readFileWithEncoding } from '../src/utils/encoding';
 
 interface LexerHealthResult {
@@ -1457,8 +1485,7 @@ function validateLexerHealth(): LexerHealthResult[] {
     const positionResult = validateTokenPositions(content, tokens);
 
     // Context health
-    const contextState = lexer.getContextState();
-    const contextResult = isCleanExit(contextState);
+    const contextResult = lexer.isCleanExit();
 
     results.push({
       file,
