@@ -1,12 +1,20 @@
 # Implementation Plan: Lazy Trivia Computation & Lexer Validation System
 
-**Status:** Ready for Implementation - Revision 3
+**Status:** In Progress - Revision 4 (Tasks 1 & 5 complete)
 **Created:** 2026-01-14
+**Last Updated:** 2026-01-14
 **Authors:** Architect Agent, Adversarial Reviewer
 
 ---
 
 ## Revision Log
+
+### Revision 4 (2026-01-14)
+Task 5 completed - Dead whitespace-handling code removed from parser.
+
+| Update | Details |
+|--------|---------|
+| Task 5 complete | Simplified `peekNextMeaningfulToken()` and removed dead whitespace loop (commit 16f7c3e) |
 
 ### Revision 3 (2026-01-14)
 Final fix for Unknown token handling.
@@ -49,7 +57,7 @@ Quick reference for GitHub issues and recommended implementation sequence:
 |------|-------|-------|--------|----------|--------------|
 | **Task 1** | [#87](https://github.com/your-repo/issues/87) | Add Lexer State Accessor Methods | ✅ Complete | High | None |
 | **Task 3** | [#88](https://github.com/your-repo/issues/88) | Implement Lazy Trivia Computer Utility | ⏳ Pending | High | None |
-| **Task 5** | [#89](https://github.com/your-repo/issues/89) | Refactor Parser Dead Code | ⏳ Pending | Medium | None |
+| **Task 5** | [#89](https://github.com/your-repo/issues/89) | Refactor Parser Dead Code | ✅ Complete | Medium | None |
 | **Task 8** | [#90](https://github.com/your-repo/issues/90) | Create Lexer Snapshot Tests | ⏳ Pending | Medium | None |
 
 ### Phase 2: Specifications
@@ -1196,11 +1204,41 @@ Remove the dead whitespace-skipping loop while PRESERVING the `peekNextMeaningfu
 
 ### Acceptance Criteria
 
-- [ ] Dead whitespace/newline skipping loop at lines 1070-1073 removed
-- [ ] `peekNextMeaningfulToken()` method PRESERVED (NOT dead code)
-- [ ] All existing tests continue to pass (confirming removed code was truly dead)
-- [ ] No functional changes to parser behavior
-- [ ] **NEW:** Document in code comment why `peekNextMeaningfulToken()` checks for whitespace (future-proofing)
+- [x] Dead whitespace/newline skipping loop at lines 1070-1073 removed
+- [x] `peekNextMeaningfulToken()` method simplified (loop removed, direct index lookup)
+- [x] All existing tests continue to pass (confirming removed code was truly dead)
+- [x] No functional changes to parser behavior
+- [x] Documentation updated with cross-references and clear explanations
+
+### Completion Summary
+
+**Status:** ✅ Complete (2026-01-14)
+**Commit:** `16f7c3e` - fix(parser): remove dead whitespace-skipping code (fixes #89)
+**Test Results:** All 2984 tests pass, 16 skipped, 69 test suites pass
+
+**What Was Implemented:**
+
+1. **Simplified `peekNextMeaningfulToken()` method** (lines 3121-3135)
+   - Changed from loop-based whitespace filtering to direct index lookup
+   - Reduced from 21 lines to 14 lines
+   - Added clear documentation explaining the lexer never emits these token types
+   - Method semantically equivalent since whitespace tokens never exist
+
+2. **Removed dead whitespace loop** (lines 1070-1073)
+   - Deleted 4 lines in `parseCodeSection()` that attempted to skip Whitespace/NewLine tokens
+   - Code was unreachable since lexer never produces these token types
+
+3. **Added documentation cross-references** (lines 3502-3504)
+   - Updated comment in `isSectionKeyword()` to reference `peekNextMeaningfulToken()`
+   - Improves discoverability of the whitespace invariant
+
+**Implementation Differences from Plan:**
+
+The original plan proposed only preserving `peekNextMeaningfulToken()` with added documentation. During adversarial review, it was identified that the method itself contained unnecessary complexity (looping through tokens checking for types that never exist). The final implementation simplified the method to direct index lookup, which is more efficient and clearer.
+
+**Review Findings:**
+
+Adversarial review identified additional similar dead code patterns in the semantic module (test files filtering for whitespace tokens, unused comment token case). These were acknowledged but left out of scope for this issue.
 
 ### Implementation Notes
 
