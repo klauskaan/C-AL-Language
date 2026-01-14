@@ -39,6 +39,53 @@ This plan implements two related features: (1) a lazy trivia computation utility
 
 ---
 
+## Task Index & Implementation Order
+
+Quick reference for GitHub issues and recommended implementation sequence:
+
+### Phase 1: Foundation (Parallelizable)
+
+| Task | Issue | Title | Status | Priority | Dependencies |
+|------|-------|-------|--------|----------|--------------|
+| **Task 1** | [#87](https://github.com/your-repo/issues/87) | Add Lexer State Accessor Methods | ✅ Complete | High | None |
+| **Task 3** | [#88](https://github.com/your-repo/issues/88) | Implement Lazy Trivia Computer Utility | ⏳ Pending | High | None |
+| **Task 5** | [#89](https://github.com/your-repo/issues/89) | Refactor Parser Dead Code | ⏳ Pending | Medium | None |
+| **Task 8** | [#90](https://github.com/your-repo/issues/90) | Create Lexer Snapshot Tests | ⏳ Pending | Medium | None |
+
+### Phase 2: Specifications
+
+| Task | Issue | Title | Status | Priority | Dependencies |
+|------|-------|-------|--------|----------|--------------|
+| **Task 2** | [#91](https://github.com/your-repo/issues/91) | Establish Clean Exit Criteria Definition | ⏳ Pending | High | Task 1 |
+| **Task 4** | [#92](https://github.com/your-repo/issues/92) | Implement Position-Based Validation | ⏳ Pending | High | Task 3 |
+
+### Phase 3: Health Report
+
+| Task | Issue | Title | Status | Priority | Dependencies |
+|------|-------|-------|--------|----------|--------------|
+| **Task 6** | [#93](https://github.com/your-repo/issues/93) | Implement Lexer Health Report Script | ⏳ Pending | High | Tasks 1, 2, 4 |
+
+### Phase 4: Debugging & Documentation
+
+| Task | Issue | Title | Status | Priority | Dependencies |
+|------|-------|-------|--------|----------|--------------|
+| **Task 7** | [#94](https://github.com/your-repo/issues/94) | Implement Debug Trace Infrastructure | ⏳ Pending | Medium | Task 1 |
+| **Task 9** | [#95](https://github.com/your-repo/issues/95) | Document Comment Handling Policy | ⏳ Pending | Low | Task 3 |
+
+### Phase 5: CI Integration (Optional)
+
+| Task | Issue | Title | Status | Priority | Dependencies |
+|------|-------|-------|--------|----------|--------------|
+| **Task 10** | [#96](https://github.com/your-repo/issues/96) | Integrate Lexer Health into CI | ⏳ Pending | Low | Task 6 |
+
+**Legend:**
+- ✅ Complete - Implemented and committed
+- ⏳ Pending - Not yet started
+- 🚧 In Progress - Currently being worked on
+- ⚠️ Blocked - Waiting on dependencies
+
+---
+
 ## Quick Reference: Task Dependencies
 
 For efficient context loading, this table shows which tasks to load together:
@@ -60,10 +107,12 @@ For efficient context loading, this table shows which tasks to load together:
 
 ## Task 1: Add Lexer State Accessor Methods
 
+**Status:** ✅ COMPLETE (2026-01-14)
 **Priority:** High
 **Effort:** Small (1-2 hours)
 **Dependencies:** None (foundation task)
 **GitHub Issue:** #87
+**Commit:** 80bf1e9
 
 ### Context
 
@@ -75,75 +124,90 @@ Add minimal public accessor methods to the Lexer class that expose state informa
 
 ### Acceptance Criteria
 
-- [ ] New `getContextState()` method returns current context stack information
-- [ ] Context state is returned as strings (not raw enum values) for stable API
-- [ ] Method returns all tracking flags: `braceDepth`, `bracketDepth`, `inPropertyValue`, `fieldDefColumn`, `currentSectionType`
-- [ ] Method returns `contextUnderflowDetected` flag for state corruption detection
-- [ ] All existing tests continue to pass
-- [ ] TypeScript compilation succeeds
+- [x] New `getContextState()` method returns current context stack information
+- [x] Context state is returned as strings (not raw enum values) for stable API
+- [x] Method returns all tracking flags: `braceDepth`, `bracketDepth`, `inPropertyValue`, `fieldDefColumn`, `currentSectionType`
+- [x] Method returns `contextUnderflowDetected` flag for state corruption detection
+- [x] All existing tests continue to pass
+- [x] TypeScript compilation succeeds
+
+### Implementation Summary
+
+**Files Modified:**
+- `server/src/lexer/lexer.ts` (+98 lines)
+  - Exported `SectionType` union type (line 46)
+  - Exported `LexerContextState` interface (lines 61-76)
+  - Added `contextToString()` helper method (lines 1403-1413)
+  - Added `fieldDefColumnToString()` helper method (lines 1421-1432)
+  - Added `getContextState()` public method (lines 1450-1460)
+  - Fixed context underflow detection for unmatched END keywords
+  - Added context cleanup for re-tokenization support
+
+- `server/src/lexer/__tests__/lexer.test.ts` (+260 lines)
+  - Added 14 comprehensive test cases covering all acceptance criteria
+  - Tests include edge cases: empty input, malformed input, re-tokenization, underflow detection
+
+**Key Implementation Details:**
+- Used explicit switch/case for enum-to-string conversion (not reverse mapping) to catch corruption early
+- Preserved `SectionType` union type for type safety (not widened to string)
+- Returned fresh snapshot objects (not mutable references to internal state)
+- Implemented flat interface structure (simplified from nested structure in initial plan)
+
+**Test Results:**
+- All 2937 existing tests pass (no regressions)
+- All 14 new tests pass
+- TypeScript compilation succeeds
 
 ### Implementation Notes
 
-**File to modify:** `/home/klaus/Source/C-AL-Language/server/src/lexer/lexer.ts`
+**ACTUAL IMPLEMENTATION (differs from initial plan):**
 
-Add after line 1364 (after `getTokens()` method):
+The implementation used a simplified flat interface structure instead of the nested structure originally planned. This was approved by adversarial reviewer as an improvement.
 
+**Interface structure:**
 ```typescript
-/**
- * Context state information for debugging and validation.
- * Uses string representations for stable API across refactors.
- */
 export interface LexerContextState {
-  /** Current context stack as string array (bottom to top) */
-  stack: string[];
-  /** Stack depth (length of stack) */
-  depth: number;
-  /** Current (topmost) context */
-  current: string;
-  /** Tracking flags */
-  flags: {
-    braceDepth: number;
-    bracketDepth: number;
-    inPropertyValue: boolean;
-    fieldDefColumn: string;
-    currentSectionType: string | null;
-  };
-  /** True if context underflow was detected during tokenization */
+  contextStack: string[];  // Replaces: stack, depth, current
+  braceDepth: number;
+  bracketDepth: number;
+  inPropertyValue: boolean;
+  fieldDefColumn: string;
+  currentSectionType: SectionType | null;  // Preserved union type, not widened to string
   contextUnderflowDetected: boolean;
-}
-
-/**
- * Get current lexer context state for debugging/validation.
- * Call after tokenize() to inspect final state.
- */
-public getContextState(): LexerContextState {
-  return {
-    stack: this.contextStack.map(c => LexerContext[c]),
-    depth: this.contextStack.length,
-    current: LexerContext[this.getCurrentContext()],
-    flags: {
-      braceDepth: this.braceDepth,
-      bracketDepth: this.bracketDepth,
-      inPropertyValue: this.inPropertyValue,
-      fieldDefColumn: FieldDefColumn[this.fieldDefColumn],
-      currentSectionType: this.currentSectionType
-    },
-    contextUnderflowDetected: this.contextUnderflowDetected
-  };
 }
 ```
 
-**Key considerations:**
-- Use `LexerContext[c]` to convert enum to string (e.g., `"NORMAL"`, `"CODE_BLOCK"`)
-- Export the `LexerContextState` interface for consumer typing
-- Do NOT export the internal `LexerContext` enum (keep internal implementation details private)
+**Helper methods for safe enum-to-string conversion:**
+```typescript
+private contextToString(context: LexerContext): string {
+  switch (context) {
+    case LexerContext.NORMAL: return 'NORMAL';
+    case LexerContext.OBJECT_LEVEL: return 'OBJECT_LEVEL';
+    case LexerContext.SECTION_LEVEL: return 'SECTION_LEVEL';
+    case LexerContext.CODE_BLOCK: return 'CODE_BLOCK';
+    case LexerContext.CASE_BLOCK: return 'CASE_BLOCK';
+    default: throw new Error(`Unknown LexerContext value: ${context}`);
+  }
+}
+```
+
+**Key design decisions:**
+- Used explicit switch/case instead of `LexerContext[c]` reverse mapping (safer - throws on unknown values)
+- Flat interface structure (simpler than nested `flags` object)
+- Removed redundant `depth` and `current` fields (computable from `contextStack`)
+- Exported `SectionType` union for type safety
+- All enums converted to strings for API stability
 
 ### Testing Requirements
 
-- Unit test: `getContextState()` returns correct state after tokenizing simple object
-- Unit test: `getContextState()` returns correct state after tokenizing object with code blocks
-- Unit test: `contextUnderflowDetected` is true when context stack underflows
-- Unit test: All flag values are correctly reflected
+- ✅ Unit test: `getContextState()` returns correct state after tokenizing simple object
+- ✅ Unit test: `getContextState()` returns correct state after tokenizing object with code blocks
+- ✅ Unit test: `contextUnderflowDetected` is true when context stack underflows
+- ✅ Unit test: All flag values are correctly reflected
+- ✅ Unit test: Empty input handling
+- ✅ Unit test: Re-tokenization on same instance
+- ✅ Unit test: Context values are strings (not enum numbers)
+- ✅ Unit test: fieldDefColumn is string
 
 ---
 
