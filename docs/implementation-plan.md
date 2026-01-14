@@ -2109,10 +2109,55 @@ Add documentation clarifying that trivia includes both whitespace and comments, 
 
 ### Acceptance Criteria
 
-- [ ] JSDoc comment on `TriviaSpan` interface explains what trivia includes
-- [ ] JSDoc on `TriviaType` lists all trivia categories with examples
-- [ ] README section in `server/src/trivia/` explains the design
-- [ ] Cross-reference from CLAUDE.md architecture section
+- [x] JSDoc comment on `TriviaSpan` interface explains what trivia includes
+- [x] JSDoc on `TriviaType` lists all trivia categories with examples
+- [x] README section in `server/src/trivia/` explains the design
+- [x] Cross-reference from CLAUDE.md architecture section
+
+### Implementation Summary
+
+**Commit:** `e80ce32` - docs(trivia): document comment handling policy (fixes #95)
+
+**Files Modified:**
+- `server/src/trivia/triviaComputer.ts` (+32 lines, -6 lines)
+  - Enhanced `TriviaType` JSDoc (lines 13-32) with comprehensive documentation listing all 4 trivia categories with examples
+  - Enhanced `TriviaSpan` interface JSDoc (lines 35-56) explaining what trivia includes and why comments are trivia (Roslyn/TypeScript convention)
+  - Added cross-references using @see tags to related types and functions
+
+- `server/src/trivia/README.md` (+135 lines, new file)
+  - Overview and definition of trivia
+  - Design decisions section explaining lazy computation and comment handling
+  - Context-dependent brace comments with safeguard explanation
+  - API reference for all exported functions
+  - Edge cases table
+  - Three practical usage examples (token extraction, round-trip validation, warnings)
+  - Cross-references to whitespace-tokenization-discussion.md and implementation-plan.md
+
+- `.claude/CLAUDE.md` (+1 line)
+  - Added `trivia/` entry to architecture section (line 315)
+
+**Key Implementation Details:**
+- Avoided using `/* */` syntax directly in JSDoc comments (causes parser errors)
+- Used descriptive text "C-style (slash-asterisk)" instead of showing literal comment delimiters
+- Fixed broken cross-references during review (removed non-existent roundtrip.test.ts reference)
+- Linked to specific lexer.ts file instead of directory for better navigation
+- README follows established documentation patterns from existing docs
+
+**Review Process:**
+- Architect created detailed implementation plan with explicit specifications
+- Adversarial-reviewer critiqued plan (identified 3 SERIOUS issues in initial plan)
+- Plan revised with concrete JSDoc templates and README structure
+- Implementation completed by implementer agent
+- Adversarial-reviewer found 2 SERIOUS issues (broken cross-references)
+- Boy Scout Rule applied to fix issues before commit
+- All acceptance criteria verified
+
+**Verification:**
+- TypeScript compilation succeeds
+- All existing tests pass (3140 passed, 1 flaky performance test unrelated)
+- JSDoc renders correctly in IDE tooltips
+- README is 135 lines (under 150-line target)
+- No code behavior changes (documentation only)
 
 ### Implementation Notes
 
