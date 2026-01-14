@@ -132,6 +132,48 @@ export interface LexerContextState {
 }
 
 /**
+ * Options for Lexer construction.
+ * All properties are optional to maintain backward compatibility.
+ */
+export interface LexerOptions {
+  /**
+   * Optional trace callback for debugging.
+   * When provided, receives events for every lexer decision.
+   *
+   * PERFORMANCE: The callback is only invoked when provided.
+   * No object construction occurs when tracing is disabled.
+   */
+  trace?: TraceCallback;
+}
+
+/**
+ * Callback function type for trace events.
+ */
+export type TraceCallback = (event: TraceEvent) => void;
+
+/**
+ * Trace event types emitted by the lexer.
+ * - 'token': A token was emitted
+ * - 'context-push': Context was pushed onto stack
+ * - 'context-pop': Context was popped from stack
+ * - 'flag-change': A tracking flag changed value
+ * - 'skip': Content was skipped (whitespace, comments)
+ */
+export type TraceEventType = 'token' | 'context-push' | 'context-pop' | 'flag-change' | 'skip';
+
+/**
+ * A trace event emitted during tokenization.
+ */
+export interface TraceEvent {
+  /** Event type */
+  type: TraceEventType;
+  /** Position in source where event occurred */
+  position: { line: number; column: number; offset: number };
+  /** Event-specific data */
+  data: Record<string, unknown>;
+}
+
+/**
  * Lexer for C/AL language
  */
 export class Lexer {
@@ -190,12 +232,21 @@ export class Lexer {
   // Track if we just saw a section keyword (FIELDS, PROPERTIES, etc.)
   private lastWasSectionKeyword: boolean = false;
 
+  /** Optional trace callback - null/undefined means tracing disabled */
+  private traceCallback?: TraceCallback;
+
   // Column position tracking for field definitions
   private currentSectionType: 'FIELDS' | 'KEYS' | 'CONTROLS' | 'ELEMENTS' | 'DATAITEMS' | 'ACTIONS' | 'DATASET' | 'REQUESTPAGE' | 'LABELS' | null = null;
   private fieldDefColumn: FieldDefColumn = FieldDefColumn.NONE;
 
-  constructor(input: string) {
+  /**
+   * Create a new Lexer instance.
+   * @param input - The source code to tokenize
+   * @param options - Optional configuration (trace callback, etc.)
+   */
+  constructor(input: string, options?: LexerOptions) {
     this.input = input;
+    this.traceCallback = options?.trace;
   }
 
   /**
@@ -237,6 +288,14 @@ export class Lexer {
       this.popContext();
     }
 
+    if (this.traceCallback) {
+      this.traceCallback({
+        type: 'token',
+        position: { line: this.line, column: this.column, offset: this.position },
+        data: { tokenType: 'EOF', value: '' }
+      });
+    }
+
     this.tokens.push(this.createToken(TokenType.EOF, '', this.position, this.position));
     return this.tokens;
   }
@@ -262,7 +321,16 @@ export class Lexer {
    * Push a new context onto the stack
    */
   private pushContext(context: LexerContext): void {
+    const from = this.contextToString(this.getCurrentContext());
     this.contextStack.push(context);
+
+    if (this.traceCallback) {
+      this.traceCallback({
+        type: 'context-push',
+        position: { line: this.line, column: this.column, offset: this.position },
+        data: { from, to: this.contextToString(context) }
+      });
+    }
   }
 
   /**
@@ -271,7 +339,16 @@ export class Lexer {
    */
   private popContext(): void {
     if (this.contextStack.length > Lexer.MIN_CONTEXT_STACK_SIZE) {
+      const from = this.contextToString(this.getCurrentContext());
       this.contextStack.pop();
+
+      if (this.traceCallback) {
+        this.traceCallback({
+          type: 'context-pop',
+          position: { line: this.line, column: this.column, offset: this.position },
+          data: { from, to: this.contextToString(this.getCurrentContext()) }
+        });
+      }
     } else {
       this.contextUnderflowDetected = true;
     }
@@ -386,7 +463,15 @@ export class Lexer {
     }
     // Otherwise, they are structural delimiters
     this.advance();
+    const oldBraceDepth = this.braceDepth;
     this.braceDepth++;
+    if (this.traceCallback) {
+      this.traceCallback({
+        type: 'flag-change',
+        position: { line: startLine, column: startColumn, offset: startPos },
+        data: { flag: 'braceDepth', from: oldBraceDepth, to: this.braceDepth }
+      });
+    }
     this.addToken(TokenType.LeftBrace, '{', startPos, this.position, startLine, startColumn);
 
     // Push SECTION_LEVEL context when we see opening brace at object level
@@ -407,7 +492,15 @@ export class Lexer {
          this.currentSectionType === 'ELEMENTS' ||
          this.currentSectionType === 'DATAITEMS' ||
          this.currentSectionType === 'ACTIONS')) {
+      const oldFieldDefColumn = this.fieldDefColumn;
       this.fieldDefColumn = FieldDefColumn.COL_1;
+      if (this.traceCallback) {
+        this.traceCallback({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'fieldDefColumn', from: 'NONE', to: 'COL_1' }
+        });
+      }
     }
   }
 
@@ -428,23 +521,73 @@ export class Lexer {
         return true;
       }
 
+      const oldBraceDepth = this.braceDepth;
       this.braceDepth--;
+      if (this.traceCallback) {
+        this.traceCallback({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'braceDepth', from: oldBraceDepth, to: this.braceDepth }
+        });
+      }
       this.addToken(TokenType.RightBrace, '}', startPos, this.position, startLine, startColumn);
 
       // Pop context when closing a section
       if (this.braceDepth === 0 && this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
         this.popContext();
         // Reset section tracking when exiting section context
+        const oldSectionType = this.currentSectionType;
         this.currentSectionType = null;
+        if (this.traceCallback && oldSectionType !== null) {
+          this.traceCallback({
+            type: 'flag-change',
+            position: { line: startLine, column: startColumn, offset: startPos },
+            data: { flag: 'currentSectionType', from: oldSectionType, to: null }
+          });
+        }
       }
 
       // Reset property tracking (standardized order: inPropertyValue first, then lastPropertyName)
+      const oldInPropertyValue = this.inPropertyValue;
+      const oldLastPropertyName = this.lastPropertyName;
+      const oldBracketDepth = this.bracketDepth;
       this.inPropertyValue = false;
       this.lastPropertyName = '';
       this.bracketDepth = 0;
+      if (this.traceCallback) {
+        if (oldInPropertyValue !== false) {
+          this.traceCallback({
+            type: 'flag-change',
+            position: { line: startLine, column: startColumn, offset: startPos },
+            data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: false }
+          });
+        }
+        if (oldLastPropertyName !== '') {
+          this.traceCallback({
+            type: 'flag-change',
+            position: { line: startLine, column: startColumn, offset: startPos },
+            data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: '' }
+          });
+        }
+        if (oldBracketDepth !== 0) {
+          this.traceCallback({
+            type: 'flag-change',
+            position: { line: startLine, column: startColumn, offset: startPos },
+            data: { flag: 'bracketDepth', from: oldBracketDepth, to: 0 }
+          });
+        }
+      }
 
       // Reset column tracking when closing a field definition
+      const oldFieldDefColumn = this.fieldDefColumn;
       this.fieldDefColumn = FieldDefColumn.NONE;
+      if (this.traceCallback && oldFieldDefColumn !== FieldDefColumn.NONE) {
+        this.traceCallback({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: 'NONE' }
+        });
+      }
 
       return true;
     }
@@ -807,14 +950,30 @@ export class Lexer {
     if (!this.inPropertyValue &&
         tokenType === TokenType.Identifier &&
         this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
+      const oldLastPropertyName = this.lastPropertyName;
       this.lastPropertyName = value;
+      if (this.traceCallback && oldLastPropertyName !== value) {
+        this.traceCallback({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: value }
+        });
+      }
     }
 
     // Reset section keyword flag for non-section identifiers
     // Section keywords (FIELDS, PROPERTIES, etc.) will re-set this flag in updateContextForKeyword()
     // This condition is always true here (scanIdentifier never produces LeftBrace), but prevents future bugs
     if (tokenType !== TokenType.LeftBrace) {
+      const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
       this.lastWasSectionKeyword = false;
+      if (this.traceCallback && oldLastWasSectionKeyword !== false) {
+        this.traceCallback({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: false }
+        });
+      }
     }
 
     // Update context based on keywords
@@ -847,8 +1006,26 @@ export class Lexer {
         }
         // Section keywords - mark that we're expecting a section
         // The actual SECTION_LEVEL context is pushed when we see the opening brace
+        const oldLastWasSectionKeywordFields = this.lastWasSectionKeyword;
+        const oldCurrentSectionTypeFields = this.currentSectionType;
         this.lastWasSectionKeyword = true;
         this.currentSectionType = 'FIELDS';
+        if (this.traceCallback) {
+          if (oldLastWasSectionKeywordFields !== true) {
+            this.traceCallback({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeywordFields, to: true }
+            });
+          }
+          if (oldCurrentSectionTypeFields !== 'FIELDS') {
+            this.traceCallback({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'currentSectionType', from: oldCurrentSectionTypeFields, to: 'FIELDS' }
+            });
+          }
+        }
         break;
 
       case TokenType.Keys:
@@ -861,8 +1038,28 @@ export class Lexer {
         if (this.inPropertyValue) {
           break;
         }
-        this.lastWasSectionKeyword = true;
-        this.currentSectionType = 'KEYS';
+        {
+          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
+          const oldCurrentSectionType = this.currentSectionType;
+          this.lastWasSectionKeyword = true;
+          this.currentSectionType = 'KEYS';
+          if (this.traceCallback) {
+            if (oldLastWasSectionKeyword !== true) {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+              });
+            }
+            if (oldCurrentSectionType !== 'KEYS') {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'KEYS' }
+              });
+            }
+          }
+        }
         break;
 
       case TokenType.Controls:
@@ -875,8 +1072,28 @@ export class Lexer {
         if (this.inPropertyValue) {
           break;
         }
-        this.lastWasSectionKeyword = true;
-        this.currentSectionType = 'CONTROLS';
+        {
+          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
+          const oldCurrentSectionType = this.currentSectionType;
+          this.lastWasSectionKeyword = true;
+          this.currentSectionType = 'CONTROLS';
+          if (this.traceCallback) {
+            if (oldLastWasSectionKeyword !== true) {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+              });
+            }
+            if (oldCurrentSectionType !== 'CONTROLS') {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'CONTROLS' }
+              });
+            }
+          }
+        }
         break;
 
       case TokenType.Elements:
@@ -889,8 +1106,28 @@ export class Lexer {
         if (this.inPropertyValue) {
           break;
         }
-        this.lastWasSectionKeyword = true;
-        this.currentSectionType = 'ELEMENTS';
+        {
+          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
+          const oldCurrentSectionType = this.currentSectionType;
+          this.lastWasSectionKeyword = true;
+          this.currentSectionType = 'ELEMENTS';
+          if (this.traceCallback) {
+            if (oldLastWasSectionKeyword !== true) {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+              });
+            }
+            if (oldCurrentSectionType !== 'ELEMENTS') {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'ELEMENTS' }
+              });
+            }
+          }
+        }
         break;
 
       case TokenType.DataItems:
@@ -903,8 +1140,28 @@ export class Lexer {
         if (this.inPropertyValue) {
           break;
         }
-        this.lastWasSectionKeyword = true;
-        this.currentSectionType = 'DATAITEMS';
+        {
+          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
+          const oldCurrentSectionType = this.currentSectionType;
+          this.lastWasSectionKeyword = true;
+          this.currentSectionType = 'DATAITEMS';
+          if (this.traceCallback) {
+            if (oldLastWasSectionKeyword !== true) {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+              });
+            }
+            if (oldCurrentSectionType !== 'DATAITEMS') {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'DATAITEMS' }
+              });
+            }
+          }
+        }
         break;
 
       case TokenType.Actions:
@@ -917,8 +1174,28 @@ export class Lexer {
         if (this.inPropertyValue) {
           break;
         }
-        this.lastWasSectionKeyword = true;
-        this.currentSectionType = 'ACTIONS';
+        {
+          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
+          const oldCurrentSectionType = this.currentSectionType;
+          this.lastWasSectionKeyword = true;
+          this.currentSectionType = 'ACTIONS';
+          if (this.traceCallback) {
+            if (oldLastWasSectionKeyword !== true) {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+              });
+            }
+            if (oldCurrentSectionType !== 'ACTIONS') {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'ACTIONS' }
+              });
+            }
+          }
+        }
         break;
 
       case TokenType.Dataset:
@@ -930,8 +1207,28 @@ export class Lexer {
         if (this.inPropertyValue) {
           break;
         }
-        this.lastWasSectionKeyword = true;
-        this.currentSectionType = 'DATASET';
+        {
+          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
+          const oldCurrentSectionType = this.currentSectionType;
+          this.lastWasSectionKeyword = true;
+          this.currentSectionType = 'DATASET';
+          if (this.traceCallback) {
+            if (oldLastWasSectionKeyword !== true) {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+              });
+            }
+            if (oldCurrentSectionType !== 'DATASET') {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'DATASET' }
+              });
+            }
+          }
+        }
         break;
 
       case TokenType.RequestPage:
@@ -943,8 +1240,28 @@ export class Lexer {
         if (this.inPropertyValue) {
           break;
         }
-        this.lastWasSectionKeyword = true;
-        this.currentSectionType = 'REQUESTPAGE';
+        {
+          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
+          const oldCurrentSectionType = this.currentSectionType;
+          this.lastWasSectionKeyword = true;
+          this.currentSectionType = 'REQUESTPAGE';
+          if (this.traceCallback) {
+            if (oldLastWasSectionKeyword !== true) {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+              });
+            }
+            if (oldCurrentSectionType !== 'REQUESTPAGE') {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'REQUESTPAGE' }
+              });
+            }
+          }
+        }
         break;
 
       case TokenType.Labels:
@@ -956,8 +1273,28 @@ export class Lexer {
         if (this.inPropertyValue) {
           break;
         }
-        this.lastWasSectionKeyword = true;
-        this.currentSectionType = 'LABELS';
+        {
+          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
+          const oldCurrentSectionType = this.currentSectionType;
+          this.lastWasSectionKeyword = true;
+          this.currentSectionType = 'LABELS';
+          if (this.traceCallback) {
+            if (oldLastWasSectionKeyword !== true) {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+              });
+            }
+            if (oldCurrentSectionType !== 'LABELS') {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'LABELS' }
+              });
+            }
+          }
+        }
         break;
 
       case TokenType.Properties:
@@ -980,8 +1317,28 @@ export class Lexer {
           break;
         }
         // Section keywords without column tracking
-        this.lastWasSectionKeyword = true;
-        this.currentSectionType = null;
+        {
+          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
+          const oldCurrentSectionType = this.currentSectionType;
+          this.lastWasSectionKeyword = true;
+          this.currentSectionType = null;
+          if (this.traceCallback) {
+            if (oldLastWasSectionKeyword !== true) {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+              });
+            }
+            if (oldCurrentSectionType !== null) {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: null }
+              });
+            }
+          }
+        }
         break;
 
       case TokenType.Begin:
@@ -1099,7 +1456,15 @@ export class Lexer {
         // Pattern: PropertyName = Value
         if (this.lastPropertyName !== '' &&
             this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
+          const oldInPropertyValue = this.inPropertyValue;
           this.inPropertyValue = true;
+          if (this.traceCallback && oldInPropertyValue !== this.inPropertyValue) {
+            this.traceCallback({
+              type: 'flag-change',
+              position: { line: startLine, column: startColumn, offset: startPos },
+              data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.inPropertyValue }
+            });
+          }
         }
         break;
       case '<':
@@ -1145,11 +1510,30 @@ export class Lexer {
         // End of property value (only if not inside brackets)
         // Brackets are used in multi-language properties like CaptionML=[DAN=...;ENU=...]
         if (this.bracketDepth === 0) {
+          const oldInPropertyValue = this.inPropertyValue;
+          const oldLastPropertyName = this.lastPropertyName;
           this.inPropertyValue = false;
           this.lastPropertyName = '';
+          if (this.traceCallback) {
+            if (oldInPropertyValue !== this.inPropertyValue) {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: startLine, column: startColumn, offset: startPos },
+                data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.inPropertyValue }
+              });
+            }
+            if (oldLastPropertyName !== this.lastPropertyName) {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: startLine, column: startColumn, offset: startPos },
+                data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: this.lastPropertyName }
+              });
+            }
+          }
         }
         // Advance column tracking
         if (this.fieldDefColumn !== FieldDefColumn.NONE) {
+          const oldFieldDefColumn = this.fieldDefColumn;
           switch (this.fieldDefColumn) {
             case FieldDefColumn.COL_1:
               this.fieldDefColumn = FieldDefColumn.COL_2;
@@ -1164,6 +1548,13 @@ export class Lexer {
               this.fieldDefColumn = FieldDefColumn.PROPERTIES;
               break;
             // Stay in PROPERTIES after that
+          }
+          if (this.traceCallback && oldFieldDefColumn !== this.fieldDefColumn) {
+            this.traceCallback({
+              type: 'flag-change',
+              position: { line: startLine, column: startColumn, offset: startPos },
+              data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: this.fieldDefColumnToString(this.fieldDefColumn) }
+            });
           }
         }
         break;
@@ -1180,14 +1571,30 @@ export class Lexer {
         this.addToken(TokenType.LeftBracket, ch, startPos, this.position, startLine, startColumn);
         // Track bracket depth when in property value (for CaptionML, etc.)
         if (this.inPropertyValue) {
+          const oldBracketDepth = this.bracketDepth;
           this.bracketDepth++;
+          if (this.traceCallback) {
+            this.traceCallback({
+              type: 'flag-change',
+              position: { line: startLine, column: startColumn, offset: startPos },
+              data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.bracketDepth }
+            });
+          }
         }
         break;
       case ']':
         this.addToken(TokenType.RightBracket, ch, startPos, this.position, startLine, startColumn);
         // Decrement bracket depth when in property value, but never go negative
         if (this.inPropertyValue && this.bracketDepth > 0) {
+          const oldBracketDepth = this.bracketDepth;
           this.bracketDepth--;
+          if (this.traceCallback) {
+            this.traceCallback({
+              type: 'flag-change',
+              position: { line: startLine, column: startColumn, offset: startPos },
+              data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.bracketDepth }
+            });
+          }
         }
         break;
       case '?':
@@ -1201,9 +1608,21 @@ export class Lexer {
   }
 
   private scanLineComment(): void {
+    const startPos = this.position;
+    const startLine = this.line;
+    const startColumn = this.column;
+
     // Skip until end of line
     while (this.position < this.input.length && this.currentChar() !== '\n' && this.currentChar() !== '\r') {
       this.advance();
+    }
+
+    if (this.traceCallback) {
+      this.traceCallback({
+        type: 'skip',
+        position: { line: startLine, column: startColumn, offset: startPos },
+        data: { reason: 'line-comment', length: this.position - startPos }
+      });
     }
   }
 
@@ -1230,6 +1649,14 @@ export class Lexer {
 
     if (!closed) {
       this.addToken(TokenType.Unknown, '{', startPos, this.position, startLine, startColumn);
+    } else {
+      if (this.traceCallback) {
+        this.traceCallback({
+          type: 'skip',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { reason: 'block-comment', length: this.position - startPos }
+        });
+      }
     }
   }
 
@@ -1258,6 +1685,14 @@ export class Lexer {
 
     if (!closed) {
       this.addToken(TokenType.Unknown, '/*', startPos, this.position, startLine, startColumn);
+    } else {
+      if (this.traceCallback) {
+        this.traceCallback({
+          type: 'skip',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { reason: 'c-style-comment', length: this.position - startPos }
+        });
+      }
     }
   }
 
@@ -1282,12 +1717,28 @@ export class Lexer {
   }
 
   private skipWhitespace(): void {
+    const startPos = this.position;
+    const startLine = this.line;
+    const startColumn = this.column;
+
     while (this.isWhitespace(this.currentChar())) {
       this.advance();
+    }
+
+    if (this.traceCallback && this.position > startPos) {
+      this.traceCallback({
+        type: 'skip',
+        position: { line: startLine, column: startColumn, offset: startPos },
+        data: { reason: 'whitespace', length: this.position - startPos }
+      });
     }
   }
 
   private handleNewLine(): void {
+    const startPos = this.position;
+    const startLine = this.line;
+    const startColumn = this.column;
+
     if (this.currentChar() === '\r' && this.peek() === '\n') {
       this.advance();
       this.advance();
@@ -1296,6 +1747,14 @@ export class Lexer {
     }
     this.line++;
     this.column = 1;
+
+    if (this.traceCallback) {
+      this.traceCallback({
+        type: 'skip',
+        position: { line: startLine, column: startColumn, offset: startPos },
+        data: { reason: 'newline', length: this.position - startPos }
+      });
+    }
   }
 
   private isWhitespace(ch: string): boolean {
@@ -1432,6 +1891,14 @@ export class Lexer {
     line: number,
     column: number
   ): void {
+    if (this.traceCallback) {
+      this.traceCallback({
+        type: 'token',
+        position: { line, column, offset: startOffset },
+        data: { tokenType: type, value }
+      });
+    }
+
     this.tokens.push({
       type,
       value,
