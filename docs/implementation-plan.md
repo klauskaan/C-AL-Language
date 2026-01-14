@@ -1,6 +1,6 @@
 # Implementation Plan: Lazy Trivia Computation & Lexer Validation System
 
-**Status:** In Progress - Revision 5 (Tasks 1, 3 & 5 complete)
+**Status:** In Progress - Revision 6 (Tasks 1, 3, 5 & 8 complete)
 **Created:** 2026-01-14
 **Last Updated:** 2026-01-14
 **Authors:** Architect Agent, Adversarial Reviewer
@@ -8,6 +8,13 @@
 ---
 
 ## Revision Log
+
+### Revision 6 (2026-01-14)
+Task 8 completed - Lexer snapshot tests with comprehensive coverage.
+
+| Update | Details |
+|--------|---------|
+| Task 8 complete | 50 snapshot tests covering core structures, context-dependent tokenization, nested blocks, and edge cases (commit 810c1d3) |
 
 ### Revision 5 (2026-01-14)
 Task 3 completed - Trivia computer utility implemented.
@@ -65,7 +72,7 @@ Quick reference for GitHub issues and recommended implementation sequence:
 | **Task 1** | [#87](https://github.com/your-repo/issues/87) | Add Lexer State Accessor Methods | ✅ Complete | High | None |
 | **Task 3** | [#88](https://github.com/your-repo/issues/88) | Implement Lazy Trivia Computer Utility | ✅ Complete | High | None |
 | **Task 5** | [#89](https://github.com/your-repo/issues/89) | Refactor Parser Dead Code | ✅ Complete | Medium | None |
-| **Task 8** | [#90](https://github.com/your-repo/issues/90) | Create Lexer Snapshot Tests | ⏳ Pending | Medium | None |
+| **Task 8** | [#90](https://github.com/your-repo/issues/90) | Create Lexer Snapshot Tests | ✅ Complete | Medium | None |
 
 ### Phase 2: Specifications
 
@@ -1791,10 +1798,12 @@ console.log(`Trace written to: ${outputPath}`);
 
 ## Task 8: Create Lexer Snapshot Tests
 
+**Status:** ✅ COMPLETE (2026-01-14)
 **Priority:** Medium
 **Effort:** Medium (3-4 hours)
 **Dependencies:** None (can parallel with other tasks)
 **GitHub Issue:** #90
+**Commit:** 810c1d3
 
 ### Context
 
@@ -1806,16 +1815,57 @@ Create Jest snapshot tests that capture expected token sequences for representat
 
 ### Acceptance Criteria
 
-- [ ] New test file `server/src/__tests__/lexer/tokenization.snapshot.test.ts`
-- [ ] Snapshots for minimal object (OBJECT Table 18 { ... })
-- [ ] Snapshots for object with PROPERTIES section
-- [ ] Snapshots for object with FIELDS section
-- [ ] Snapshots for object with CODE section and triggers
-- [ ] Snapshots for object with nested BEGIN/END blocks
-- [ ] Snapshots for edge cases (comments, strings, dates)
-- [ ] **NEW:** Snapshots for escaped quotes in strings (`'don''t'`)
-- [ ] Snapshot format shows token type and value (not positions)
-- [ ] Instructions for updating snapshots included in test file
+- [x] New test file `server/src/lexer/__tests__/tokenization.snapshot.test.ts` (co-located with other lexer tests)
+- [x] Snapshots for minimal object (OBJECT Table 18 { ... })
+- [x] Snapshots for object with PROPERTIES section
+- [x] Snapshots for object with FIELDS section
+- [x] Snapshots for object with CODE section and triggers
+- [x] Snapshots for object with nested BEGIN/END blocks
+- [x] Snapshots for edge cases (comments, strings, dates)
+- [x] Snapshots for escaped quotes in strings (`'don''t'`)
+- [x] Snapshot format shows token type and value (not positions)
+- [x] Instructions for updating snapshots included in test file
+
+### Completion Summary
+
+**Status:** ✅ Complete (2026-01-14)
+**Commit:** `810c1d3` - test(lexer): add comprehensive snapshot tests for tokenization (fixes #90)
+**Test Results:** 50 tests passed, comprehensive coverage across all categories
+
+**What Was Implemented:**
+
+1. **Test File** (`server/src/lexer/__tests__/tokenization.snapshot.test.ts`, 557 lines)
+   - Comprehensive JSDoc header with update instructions (`npm test -- -u`)
+   - Helper function `toSnapshot()` converts tokens to compact Type:value format
+   - 50 snapshot tests across 4 categories
+   - Co-located with existing lexer tests (not in separate `__tests__` directory)
+
+2. **Test Categories:**
+   - **Core Object Structures (6 tests):** Minimal objects, OBJECT-PROPERTIES, PROPERTIES, FIELDS, CODE sections, complete tables
+   - **Context-Dependent Tokenization (7 tests):** Keywords as identifiers, braces as structural tokens vs comments, BEGIN/END context handling
+   - **Nested Blocks & Control Flow (9 tests):** Multiple nesting levels, IF/THEN/ELSE, CASE, WHILE, REPEAT, FOR
+   - **Edge Cases (28 tests):** Comments, escaped strings, date/time/datetime literals, quoted identifiers, operators, AL-only keywords
+
+3. **Snapshot Format:**
+   - Compact single-string format: `Type:"value"` per line
+   - Position information excluded for stability across refactoring
+   - JSON.stringify for values to show escaping clearly
+   - Generated snapshot file: `__snapshots__/tokenization.snapshot.test.ts.snap`
+
+4. **Test Name Corrections:**
+   - Fixed misleading test names for brace handling after adversarial review
+   - "braces as structural tokens in PROPERTIES values" (not comments)
+   - "braces as comments in CODE context (swallowed from token stream)" with clarifying comment
+
+**Implementation Notes:**
+
+The test file location was changed from the original acceptance criteria (`server/src/__tests__/lexer/`) to match project conventions (`server/src/lexer/__tests__/`), co-locating with the other 19 existing lexer test files.
+
+Adversarial review identified two SERIOUS issues with misleading test names around brace comment handling, which were fixed before commit. The names now accurately reflect that braces are context-dependent: structural tokens in PROPERTIES, comments (swallowed) in CODE.
+
+**Additional Work:**
+
+Created issue #97 to track additional edge case tests (empty input, malformed literals) identified during review but deferred as out of scope.
 
 ### Implementation Notes
 
