@@ -1,6 +1,6 @@
 # Implementation Plan: Lazy Trivia Computation & Lexer Validation System
 
-**Status:** In Progress - Revision 6 (Tasks 1, 3, 5 & 8 complete)
+**Status:** In Progress - Revision 7 (Tasks 1, 2, 3, 4, 5 & 8 complete)
 **Created:** 2026-01-14
 **Last Updated:** 2026-01-14
 **Authors:** Architect Agent, Adversarial Reviewer
@@ -8,6 +8,15 @@
 ---
 
 ## Revision Log
+
+### Revision 7 (2026-01-14)
+Task 4 completed - Position-based validation implemented with comprehensive edge case handling.
+
+| Update | Details |
+|--------|---------|
+| Task 4 complete | Position validator with 33 tests, special handling for String/QuotedIdentifier/Unknown tokens (commit 0dfb841) |
+| Bug fixed | Empty unclosed string/identifier edge case (critical bug found in adversarial review) |
+| DRY compliance | Imported `looksLikeCode` from triviaComputer instead of duplicating |
 
 ### Revision 6 (2026-01-14)
 Task 8 completed - Lexer snapshot tests with comprehensive coverage.
@@ -79,7 +88,7 @@ Quick reference for GitHub issues and recommended implementation sequence:
 | Task | Issue | Title | Status | Priority | Dependencies |
 |------|-------|-------|--------|----------|--------------|
 | **Task 2** | [#91](https://github.com/your-repo/issues/91) | Establish Clean Exit Criteria Definition | ✅ Complete | High | Task 1 |
-| **Task 4** | [#92](https://github.com/your-repo/issues/92) | Implement Position-Based Validation | ⏳ Pending | High | Task 3 |
+| **Task 4** | [#92](https://github.com/your-repo/issues/92) | Implement Position-Based Validation | ✅ Complete | High | Task 3 |
 
 ### Phase 3: Health Report
 
@@ -743,17 +752,72 @@ export function getTriviaText(
 
 ## Task 4: Implement Position-Based Validation
 
+**Status:** ✅ COMPLETE (2026-01-14)
 **Priority:** High
 **Effort:** Medium (3-4 hours)
 **Dependencies:** Task 3 (uses trivia computer)
-**GitHub Issue:** #92
-**Required Interfaces:**
-- `TriviaSpan`, `TriviaResult`, `TriviaType` - Task 3
-- `computeTriviaBetween()`, `getTriviaText()` - Task 3
-**Source Code Context:**
-- `server/src/lexer/lexer.ts` lines 454-496 (scanString - unclosed string handling)
-- `server/src/lexer/lexer.ts` lines 430-452 (scanQuotedIdentifier - unclosed handling)
-- `server/src/lexer/tokens.ts` (TokenType enum)
+**GitHub Issue:** #92 (closed)
+**Commit:** 0dfb841
+
+### Completion Summary
+
+**Commit:** `0dfb841` - feat(lexer): add position-based validation for tokenization (fixes #92)
+
+**Test Results:** 33 tests passed, all comprehensive coverage, no regressions (3,086 total server tests pass)
+
+**What Was Implemented:**
+
+1. **Position Validator Module** (`server/src/validation/positionValidator.ts`, 348 lines)
+   - `validateTokenPositions(document, tokens)` main validation function
+   - `ValidationResult` interface with detailed error reporting
+   - Helper functions for String, QuotedIdentifier, and Unknown token validation
+   - Trivia validation using imported `looksLikeCode` from triviaComputer
+
+2. **Special Token Handling:**
+   - String tokens: positions include `'...'`, value excludes quotes and processes `''` → `'`
+   - QuotedIdentifier tokens: positions include `"..."`, value excludes quotes (no escape processing)
+   - Unknown tokens from 7 sources with appropriate position/value relationships:
+     - Unclosed strings (positions include opening `'`, value excludes it and is unescaped)
+     - Unclosed quoted identifiers (positions include opening `"`, value excludes it)
+     - Unmatched closing braces
+     - Unrecognized characters (`@`, backtick, etc.)
+     - Unclosed brace comments `{`
+     - Unclosed C-style comments `/*`
+
+3. **Edge Case Handling:**
+   - Empty documents (zero tokens)
+   - Only EOF token
+   - Multi-line strings (LF, CRLF, with escaped quotes)
+   - Empty unclosed strings/identifiers (just `'` or `"`)
+   - Document boundaries validation
+
+4. **Comprehensive Testing** (`server/src/validation/__tests__/positionValidator.test.ts`, 499 lines)
+   - 33 tests covering all acceptance criteria
+   - Edge cases: empty documents, EOF tokens, all Unknown token sources
+   - Multi-line string validation (LF, CRLF, with escapes)
+   - Trivia validation with warning collection
+
+5. **DRY Compliance:**
+   - Imported `looksLikeCode` from `trivia/triviaComputer.ts` (no duplication)
+   - Exported `looksLikeCode` from triviaComputer for reuse
+
+**Implementation Process:**
+
+- Followed TDD: 31 tests written first (all failed), implementation made them pass
+- Adversarial review cycle #1: Plan approved after addressing Unknown token sources
+- Implementation completed: All tests passing
+- Adversarial review cycle #2: Found CRITICAL bug in empty unclosed string edge case
+- Bug fixed: Added length check for single-character delimiters
+- Added 2 more tests for empty unclosed delimiters (total 33 tests)
+- TypeScript review: Cleaned up unused variables
+- Boy Scout fixes: Added JSDoc documentation, fixed capitalization, removed stale comments
+- Re-review: APPROVED
+
+**Key Insights:**
+
+- **Bug Found:** Empty unclosed strings/identifiers (just `'` or `"`) failed validation because they both start AND end with the delimiter character. Fixed with explicit length check.
+- **Robustness:** Validator returns error strings instead of throwing exceptions, making it robust against malformed lexer output
+- **Documentation:** Added JSDoc explaining half-open interval semantics for token offsets
 
 ### Context
 
@@ -778,17 +842,17 @@ Implement position-based validation that verifies tokenization correctness by ch
 
 ### Acceptance Criteria
 
-- [ ] `validateTokenPositions(document, tokens)` function implemented
-- [ ] Verifies each token's value matches `document.slice(startOffset, endOffset)` (with special handling)
-- [ ] Verifies gaps between tokens contain only valid trivia (whitespace/comments)
-- [ ] Returns detailed validation result with pass/fail per token
-- [ ] Identifies exact position of first mismatch
-- [ ] Handles edge case: no tokens (empty document)
-- [ ] Handles edge case: only EOF token
-- [ ] Documents that `endOffset` is exclusive (half-open interval)
-- [ ] **CRITICAL:** Special handling for String tokens with escaped quotes (`''` -> `'`)
-- [ ] **CRITICAL:** Special handling for QuotedIdentifier tokens (positions include quotes, value excludes them)
-- [ ] **CRITICAL (Revision 3):** Special handling for Unknown tokens from unclosed strings/quoted identifiers
+- [x] `validateTokenPositions(document, tokens)` function implemented
+- [x] Verifies each token's value matches `document.slice(startOffset, endOffset)` (with special handling)
+- [x] Verifies gaps between tokens contain only valid trivia (whitespace/comments)
+- [x] Returns detailed validation result with pass/fail per token
+- [x] Identifies exact position of first mismatch
+- [x] Handles edge case: no tokens (empty document)
+- [x] Handles edge case: only EOF token
+- [x] Documents that `endOffset` is exclusive (half-open interval)
+- [x] **CRITICAL:** Special handling for String tokens with escaped quotes (`''` -> `'`)
+- [x] **CRITICAL:** Special handling for QuotedIdentifier tokens (positions include quotes, value excludes them)
+- [x] **CRITICAL (Revision 3):** Special handling for Unknown tokens from unclosed strings/quoted identifiers
 
 ### Implementation Notes
 
