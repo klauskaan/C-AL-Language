@@ -1067,11 +1067,6 @@ export class Parser {
       this.advance();
     }
 
-    // Skip whitespace and newlines
-    while (this.check(TokenType.Whitespace) || this.check(TokenType.NewLine)) {
-      this.advance();
-    }
-
     const variables: VariableDeclaration[] = [];
     const procedures: ProcedureDeclaration[] = [];
     const triggers: TriggerDeclaration[] = [];
@@ -3119,25 +3114,19 @@ export class Parser {
   }
 
   /**
-   * Peek ahead N meaningful tokens, skipping whitespace and newline tokens.
-   * Used for pattern detection in lookahead checks.
-   * @param skipCount How many meaningful tokens to skip (1 = next meaningful token, 2 = second meaningful token, etc.)
-   * @returns The Nth meaningful token, or undefined if not found
+   * Peek ahead N tokens from the current position.
+   * Used for pattern detection in lookahead checks (e.g., AL keyword detection).
+   *
+   * Note: The lexer never emits Whitespace or NewLine tokens (they are skipped
+   * during tokenization), so every token in the array is "meaningful". This method
+   * uses direct index lookup for efficiency.
+   *
+   * @param skipCount How many tokens to skip (1 = next token, 2 = second token, etc.)
+   * @returns The Nth token, or undefined if past end of tokens
    */
   private peekNextMeaningfulToken(skipCount: number): Token | undefined {
-    let meaningfulCount = 0;
-    let i = 1; // Start from current + 1
-    while (this.current + i < this.tokens.length) {
-      const token = this.tokens[this.current + i];
-      if (token.type !== TokenType.Whitespace && token.type !== TokenType.NewLine) {
-        meaningfulCount++;
-        if (meaningfulCount === skipCount) {
-          return token;
-        }
-      }
-      i++;
-    }
-    return undefined;
+    const index = this.current + skipCount;
+    return index < this.tokens.length ? this.tokens[index] : undefined;
   }
 
   /**
@@ -3511,8 +3500,8 @@ export class Parser {
     }
 
     // Special case for CODE and CONTROLS: must be followed by '{'
-    // The lexer never emits Whitespace/NewLine tokens (they're skipped),
-    // so the next token is always immediately at this.current + 1
+    // The lexer never emits Whitespace/NewLine tokens (they're skipped during tokenization).
+    // See also: peekNextMeaningfulToken() which documents this invariant.
     if (type === TokenType.Code || type === TokenType.Controls) {
       const nextIndex = this.current + 1;
       // Bounds check and verify next token is LEFT_BRACE
