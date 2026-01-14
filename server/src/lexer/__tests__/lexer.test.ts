@@ -12,7 +12,7 @@
  * TokenType.Time being defined in tokens.ts.
  */
 
-import { Lexer } from '../lexer';
+import { Lexer, LexerContextState } from '../lexer';
 import { TokenType } from '../tokens';
 
 describe('Lexer - General Functionality', () => {
@@ -502,6 +502,259 @@ describe('Lexer - General Functionality', () => {
 
       expect(tokens[0].type).toBe(TokenType.DateTime);
       expect(tokens[0].value).toBe('010125D120000T');
+    });
+  });
+
+  describe('getContextState()', () => {
+    it('should return context state before first tokenization', () => {
+      const lexer = new Lexer('OBJECT Table 18 Customer');
+      const state = lexer.getContextState();
+
+      expect(state).toBeDefined();
+      expect(state.contextStack).toEqual(['NORMAL']);
+      expect(state.braceDepth).toBe(0);
+      expect(state.bracketDepth).toBe(0);
+      expect(state.inPropertyValue).toBe(false);
+      expect(state.fieldDefColumn).toBe('NONE');
+      expect(state.currentSectionType).toBeNull();
+      expect(state.contextUnderflowDetected).toBe(false);
+    });
+
+    it('should return context state after tokenizing empty input', () => {
+      const lexer = new Lexer('');
+      lexer.tokenize();
+      const state = lexer.getContextState();
+
+      expect(state).toBeDefined();
+      expect(state.contextStack).toEqual(['NORMAL']);
+      expect(state.braceDepth).toBe(0);
+      expect(state.bracketDepth).toBe(0);
+      expect(state.inPropertyValue).toBe(false);
+      expect(state.fieldDefColumn).toBe('NONE');
+      expect(state.currentSectionType).toBeNull();
+      expect(state.contextUnderflowDetected).toBe(false);
+    });
+
+    it('should return context state after tokenizing simple object', () => {
+      const code = `OBJECT Table 18 Customer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=010125D;
+    Time=120000T;
+  }
+}`;
+      const lexer = new Lexer(code);
+      lexer.tokenize();
+      const state = lexer.getContextState();
+
+      expect(state).toBeDefined();
+      expect(state.contextStack).toBeInstanceOf(Array);
+      expect(state.contextStack.every((ctx: string) => typeof ctx === 'string')).toBe(true);
+      expect(state.braceDepth).toBe(0);
+      expect(state.bracketDepth).toBe(0);
+      expect(state.inPropertyValue).toBe(false);
+      expect(state.contextUnderflowDetected).toBe(false);
+    });
+
+    it('should return context state after tokenizing object with code blocks', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=010125D;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            x := 1;
+          END;
+  }
+  CODE
+  {
+    PROCEDURE Test();
+    VAR
+      x : Integer;
+    BEGIN
+      IF x > 0 THEN
+        x := x + 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const lexer = new Lexer(code);
+      lexer.tokenize();
+      const state = lexer.getContextState();
+
+      expect(state).toBeDefined();
+      expect(state.contextStack).toBeInstanceOf(Array);
+      expect(state.braceDepth).toBe(0);
+      expect(state.bracketDepth).toBe(0);
+      expect(state.inPropertyValue).toBe(false);
+      expect(state.contextUnderflowDetected).toBe(false);
+    });
+
+    it('should detect context underflow when it occurs', () => {
+      const code = 'BEGIN END END'; // Extra END causes underflow
+      const lexer = new Lexer(code);
+      lexer.tokenize();
+      const state = lexer.getContextState();
+
+      expect(state).toBeDefined();
+      expect(state.contextUnderflowDetected).toBe(true);
+    });
+
+    it('should reflect all flag values correctly', () => {
+      const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        }
+  }
+}`;
+      const lexer = new Lexer(code);
+      lexer.tokenize();
+      const state = lexer.getContextState();
+
+      expect(state).toBeDefined();
+      expect(typeof state.braceDepth).toBe('number');
+      expect(typeof state.bracketDepth).toBe('number');
+      expect(typeof state.inPropertyValue).toBe('boolean');
+      expect(typeof state.fieldDefColumn).toBe('string');
+      expect(typeof state.contextUnderflowDetected).toBe('boolean');
+    });
+
+    it('should return context values as strings not numbers', () => {
+      const code = 'BEGIN x := 1; END;';
+      const lexer = new Lexer(code);
+      lexer.tokenize();
+      const state = lexer.getContextState();
+
+      expect(state).toBeDefined();
+      expect(state.contextStack).toBeInstanceOf(Array);
+      state.contextStack.forEach((ctx: string) => {
+        expect(typeof ctx).toBe('string');
+        expect(ctx).not.toBeNaN();
+      });
+    });
+
+    it('should return fieldDefColumn as string', () => {
+      const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        }
+  }
+}`;
+      const lexer = new Lexer(code);
+      lexer.tokenize();
+      const state = lexer.getContextState();
+
+      expect(state).toBeDefined();
+      expect(typeof state.fieldDefColumn).toBe('string');
+      expect(['NONE', 'COL_1', 'COL_2', 'COL_3', 'COL_4', 'PROPERTIES']).toContain(state.fieldDefColumn);
+    });
+
+    it('should handle unclosed object/code block - malformed input', () => {
+      const code = `OBJECT Table 18 Customer
+{
+  PROPERTIES
+  {
+    OnValidate=BEGIN
+                 x := 1;
+  }
+}`;
+      const lexer = new Lexer(code);
+      lexer.tokenize();
+      const state = lexer.getContextState();
+
+      expect(state).toBeDefined();
+      expect(state.contextStack).toBeInstanceOf(Array);
+      expect(state.braceDepth).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should handle re-tokenization on same instance', () => {
+      const lexer = new Lexer('OBJECT Table 18 Customer');
+
+      // First tokenization
+      lexer.tokenize();
+      const state1 = lexer.getContextState();
+      expect(state1.contextStack).toBeDefined();
+
+      // Second tokenization (should reset state)
+      lexer.tokenize();
+      const state2 = lexer.getContextState();
+
+      expect(state2).toBeDefined();
+      expect(state2.contextStack).toEqual(['NORMAL']);
+      expect(state2.braceDepth).toBe(0);
+      expect(state2.bracketDepth).toBe(0);
+      expect(state2.inPropertyValue).toBe(false);
+      expect(state2.fieldDefColumn).toBe('NONE');
+      expect(state2.currentSectionType).toBeNull();
+    });
+
+    it('should return currentSectionType as string or null', () => {
+      const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        }
+  }
+}`;
+      const lexer = new Lexer(code);
+      lexer.tokenize();
+      const state = lexer.getContextState();
+
+      expect(state).toBeDefined();
+      const validSections = ['FIELDS', 'KEYS', 'CONTROLS', 'ELEMENTS', 'DATAITEMS', 'ACTIONS', 'DATASET', 'REQUESTPAGE', 'LABELS', null];
+      expect(validSections).toContain(state.currentSectionType);
+    });
+
+    it('should maintain context stack integrity during nested blocks', () => {
+      const code = `BEGIN
+  IF x > 0 THEN BEGIN
+    CASE y OF
+      1: BEGIN z := 1; END;
+      2: BEGIN z := 2; END;
+    END;
+  END;
+END;`;
+      const lexer = new Lexer(code);
+      lexer.tokenize();
+      const state = lexer.getContextState();
+
+      expect(state).toBeDefined();
+      expect(state.contextStack).toBeInstanceOf(Array);
+      expect(state.contextStack.length).toBeGreaterThanOrEqual(1);
+      expect(state.braceDepth).toBe(0);
+    });
+
+    it('should track bracket depth correctly', () => {
+      const code = 'MyArray[Index[1]]';
+      const lexer = new Lexer(code);
+      lexer.tokenize();
+      const state = lexer.getContextState();
+
+      expect(state).toBeDefined();
+      expect(state.bracketDepth).toBe(0); // Should be balanced after tokenization
+    });
+
+    it('should track inPropertyValue flag in PROPERTIES section', () => {
+      const code = `OBJECT Table 18 Customer
+{
+  PROPERTIES
+  {
+    Caption='Customer';
+    DataPerCompany=Yes`;
+      const lexer = new Lexer(code);
+      lexer.tokenize();
+      const state = lexer.getContextState();
+
+      expect(state).toBeDefined();
+      expect(typeof state.inPropertyValue).toBe('boolean');
     });
   });
 });

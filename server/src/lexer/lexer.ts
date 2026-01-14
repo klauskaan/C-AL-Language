@@ -40,6 +40,42 @@ enum FieldDefColumn {
 }
 
 /**
+ * Section types in C/AL object definitions.
+ * Used for tracking current section context during tokenization.
+ */
+export type SectionType = 'FIELDS' | 'KEYS' | 'CONTROLS' | 'ELEMENTS' | 'DATAITEMS' | 'ACTIONS' | 'DATASET' | 'REQUESTPAGE' | 'LABELS';
+
+/**
+ * Read-only snapshot of lexer internal state for validation and debugging.
+ * Context and field column values are returned as strings (not enum values) for API stability.
+ *
+ * Example usage:
+ * ```typescript
+ * const lexer = new Lexer(code);
+ * lexer.tokenize();
+ * const state = lexer.getContextState();
+ * console.log(state.contextStack); // ['NORMAL', 'OBJECT_LEVEL']
+ * console.log(state.braceDepth); // 0
+ * ```
+ */
+export interface LexerContextState {
+  /** Context stack as string array (e.g., ['NORMAL', 'OBJECT_LEVEL', 'SECTION_LEVEL']) */
+  contextStack: string[];
+  /** Current brace nesting depth */
+  braceDepth: number;
+  /** Current bracket nesting depth */
+  bracketDepth: number;
+  /** Whether currently parsing a property value */
+  inPropertyValue: boolean;
+  /** Current field definition column position (e.g., 'NONE', 'COL_1', 'PROPERTIES') */
+  fieldDefColumn: string;
+  /** Current section type (FIELDS, KEYS, CONTROLS, etc.) or null */
+  currentSectionType: SectionType | null;
+  /** Whether a context stack underflow was detected during tokenization */
+  contextUnderflowDetected: boolean;
+}
+
+/**
  * Lexer for C/AL language
  */
 export class Lexer {
@@ -125,9 +161,17 @@ export class Lexer {
     // Reset column tracking state
     this.currentSectionType = null;
     this.fieldDefColumn = FieldDefColumn.NONE;
+    // Reset context underflow flag
+    this.contextUnderflowDetected = false;
 
     while (this.position < this.input.length) {
       this.scanToken();
+    }
+
+    // Clean up any incomplete contexts at end of tokenization
+    // If OBJECT was declared but no opening brace found, pop OBJECT_LEVEL
+    while (this.contextStack.length > 1) {
+      this.contextStack.pop();
     }
 
     this.tokens.push(this.createToken(TokenType.EOF, '', this.position, this.position));
@@ -327,9 +371,6 @@ export class Lexer {
       // Pop context when closing a section
       if (this.braceDepth === 0 && this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
         this.popContext();
-        if (this.contextUnderflowDetected) {
-          this.contextUnderflowDetected = false;
-        }
         // Reset section tracking when exiting section context
         this.currentSectionType = null;
       }
@@ -944,12 +985,8 @@ export class Lexer {
         // - BEGIN pushes CODE_BLOCK
         // - CASE pushes CASE_BLOCK
         // - END pops whichever is on top
-        const currentContext = this.getCurrentContext();
-        if (currentContext === LexerContext.CODE_BLOCK ||
-            currentContext === LexerContext.CASE_BLOCK) {
-          this.popContext();
-          this.contextUnderflowDetected = false;
-        }
+        // Unmatched END outside CODE_BLOCK/CASE_BLOCK will be caught by popContext underflow detection
+        this.popContext();
         break;
     }
   }
@@ -1359,9 +1396,67 @@ export class Lexer {
   }
 
   /**
+   * Convert LexerContext enum value to string name.
+   * Throws error on unknown values to catch corruption early.
+   * @param context The LexerContext enum value
+   * @returns The string name of the context
+   */
+  private contextToString(context: LexerContext): string {
+    switch (context) {
+      case LexerContext.NORMAL: return 'NORMAL';
+      case LexerContext.OBJECT_LEVEL: return 'OBJECT_LEVEL';
+      case LexerContext.SECTION_LEVEL: return 'SECTION_LEVEL';
+      case LexerContext.CODE_BLOCK: return 'CODE_BLOCK';
+      case LexerContext.CASE_BLOCK: return 'CASE_BLOCK';
+      default:
+        throw new Error(`Unknown LexerContext value: ${context}`);
+    }
+  }
+
+  /**
+   * Convert FieldDefColumn enum value to string name.
+   * Throws error on unknown values to catch corruption early.
+   * @param column The FieldDefColumn enum value
+   * @returns The string name of the column
+   */
+  private fieldDefColumnToString(column: FieldDefColumn): string {
+    switch (column) {
+      case FieldDefColumn.NONE: return 'NONE';
+      case FieldDefColumn.COL_1: return 'COL_1';
+      case FieldDefColumn.COL_2: return 'COL_2';
+      case FieldDefColumn.COL_3: return 'COL_3';
+      case FieldDefColumn.COL_4: return 'COL_4';
+      case FieldDefColumn.PROPERTIES: return 'PROPERTIES';
+      default:
+        throw new Error(`Unknown FieldDefColumn value: ${column}`);
+    }
+  }
+
+  /**
    * Get all tokens (for debugging)
    */
   public getTokens(): Token[] {
     return this.tokens;
+  }
+
+  /**
+   * Get current lexer context state for validation and debugging.
+   * Returns a read-only snapshot of internal state with enum values as strings.
+   *
+   * Note: The returned object is a snapshot copy. Modifying it does not affect lexer state.
+   * The string values (e.g., 'NORMAL', 'CODE_BLOCK') are derived from internal enum names.
+   *
+   * @returns A snapshot of the current lexer state
+   */
+  public getContextState(): LexerContextState {
+    return {
+      contextStack: this.contextStack.map(ctx => this.contextToString(ctx)),
+      braceDepth: this.braceDepth,
+      bracketDepth: this.bracketDepth,
+      inPropertyValue: this.inPropertyValue,
+      fieldDefColumn: this.fieldDefColumnToString(this.fieldDefColumn),
+      currentSectionType: this.currentSectionType,
+      contextUnderflowDetected: this.contextUnderflowDetected,
+    };
   }
 }
