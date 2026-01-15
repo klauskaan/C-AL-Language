@@ -1,0 +1,33 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Sanitization Utility Snapshot tests for format stability should maintain stable output format for sanitizeChar 1`] = `
+[
+  "[char sanitized, code 65]",
+  "[char sanitized, code 53]",
+  "[char sanitized, code 64]",
+  "[char sanitized, code 32]",
+  "[char sanitized, code 10]",
+  "[char sanitized, code 248]",
+  "[char sanitized, code 0]",
+]
+`;
+
+exports[`Sanitization Utility Snapshot tests for format stability should maintain stable output format for sanitizeComparison 1`] = `
+[
+  "[token value mismatch: expected 8 chars, got 4 chars]",
+  "[token value mismatch: expected 8 chars, got 4 chars at offset 100]",
+  "[token value mismatch: expected 9 chars, got 8 chars at offset 42]",
+  "[token value mismatch: expected 0 chars, got 0 chars]",
+  "[token value mismatch: expected 1 chars, got 1000 chars]",
+]
+`;
+
+exports[`Sanitization Utility Snapshot tests for format stability should maintain stable output format for sanitizeContent 1`] = `
+[
+  "[content sanitized, 7 chars]",
+  "[content sanitized, 7 chars at offset 42]",
+  "[content sanitized, 31 chars]",
+  "[content sanitized, 0 chars]",
+  "[content sanitized, 1 chars]",
+]
+`;

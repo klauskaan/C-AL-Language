@@ -10,6 +10,7 @@
 
 import { Token, TokenType } from '../lexer/tokens';
 import { looksLikeCode } from '../trivia/triviaComputer';
+import { sanitizeContent, sanitizeComparison } from '../utils/sanitize';
 
 /**
  * Result of position validation
@@ -100,7 +101,7 @@ export function validateTokenPositions(
       if (!triviaResult.isValid) {
         errors.push(
           `Invalid trivia at offset ${lastEndOffset}: ` +
-          `contains non-trivia content "${triviaResult.invalidContent}"`
+          `contains non-trivia content ${sanitizeContent(triviaResult.invalidContent!)}`
         );
         return { isValid: false, errors, warnings };
       }
@@ -138,7 +139,7 @@ export function validateTokenPositions(
     if (token.value !== expectedValue) {
       errors.push(
         `Token value mismatch at offset ${token.startOffset}: ` +
-        `expected "${expectedValue}", got "${token.value}"`
+        sanitizeComparison(expectedValue, token.value, token.startOffset)
       );
       return { isValid: false, errors, warnings };
     }
@@ -164,12 +165,12 @@ function validateStringToken(documentContent: string): string {
   // Positions include delimiters ('...')
   // Value excludes delimiters and has escapes processed ('' -> ')
   if (!documentContent.startsWith("'")) {
-    return `[ERROR: String token missing opening quote: "${documentContent}"]`;
+    return `[ERROR: String token missing opening quote: ${sanitizeContent(documentContent)}]`;
   }
 
   // Handle edge case: empty unclosed string (just "'")
   if (documentContent.length === 1 || !documentContent.endsWith("'")) {
-    return `[ERROR: String token missing closing quote: "${documentContent}"]`;
+    return `[ERROR: String token missing closing quote: ${sanitizeContent(documentContent)}]`;
   }
 
   // Extract content between quotes
@@ -188,12 +189,12 @@ function validateQuotedIdentifierToken(documentContent: string): string {
   // Value excludes delimiters
   // NO escape processing (QuotedIdentifiers don't support "" escapes in C/AL)
   if (!documentContent.startsWith('"')) {
-    return `[ERROR: QuotedIdentifier token missing opening quote: "${documentContent}"]`;
+    return `[ERROR: QuotedIdentifier token missing opening quote: ${sanitizeContent(documentContent)}]`;
   }
 
   // Handle edge case: empty unclosed quoted identifier (just '"')
   if (documentContent.length === 1 || !documentContent.endsWith('"')) {
-    return `[ERROR: QuotedIdentifier token missing closing quote: "${documentContent}"]`;
+    return `[ERROR: QuotedIdentifier token missing closing quote: ${sanitizeContent(documentContent)}]`;
   }
 
   // Extract content between quotes (no escape processing)
@@ -281,7 +282,7 @@ function parseTriviaForValidation(text: string): {
       if (looksLikeCode(content)) {
         warnings.push(
           `Brace content looks like code, not comment: ` +
-          `"${content.substring(0, 30)}${content.length > 30 ? '...' : ''}"`
+          sanitizeContent(content)
         );
       }
 

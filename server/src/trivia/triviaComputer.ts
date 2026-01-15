@@ -9,6 +9,7 @@
  */
 
 import { Token, TokenType } from '../lexer/tokens';
+import { sanitizeContent, sanitizeChar } from '../utils/sanitize';
 
 /**
  * Types of trivia that can appear between tokens.
@@ -297,7 +298,7 @@ function parseTriviaSpans(text: string, baseOffset: number): TriviaResult {
       if (looksLikeCode(content)) {
         warnings.push(
           `Brace content at offset ${startOffset} looks like code, not comment: ` +
-          `"${content.substring(0, 30)}${content.length > 30 ? '...' : ''}"`
+          sanitizeContent(content, { offset: startOffset })
         );
       }
 
@@ -355,7 +356,7 @@ function parseTriviaSpans(text: string, baseOffset: number): TriviaResult {
     // Unexpected character in trivia - emit warning and skip
     warnings.push(
       `Unexpected character in trivia at offset ${startOffset}: ` +
-      `'${remaining[0]}' (code ${remaining.charCodeAt(0)})`
+      sanitizeChar(remaining[0])
     );
     pos++;
   }
