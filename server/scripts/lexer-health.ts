@@ -20,7 +20,8 @@ import { Lexer, CleanExitResult } from '../src/lexer/lexer';
 import { validateTokenPositions, ValidationResult } from '../src/validation/positionValidator';
 import { readFileWithEncoding } from '../src/utils/encoding';
 
-interface FileResult {
+// Exported for testing only
+export interface FileResult {
   file: string;
   lines: number;
   tokenCount: number;
@@ -418,7 +419,7 @@ export function validateAllFiles(): FileResult[] {
   return results;
 }
 
-function generateMarkdownReport(results: FileResult[]): string {
+export function generateMarkdownReport(results: FileResult[]): string {
   const filesWithPositionErrors = results.filter(r => !r.positionValidation.isValid);
   const filesWithExitErrors = results.filter(r => !r.cleanExit.passed);
   const filesWithAnyError = results.filter(r =>
