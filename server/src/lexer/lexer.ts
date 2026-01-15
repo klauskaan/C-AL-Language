@@ -129,6 +129,8 @@ export interface LexerContextState {
   currentSectionType: SectionType | null;
   /** Whether a context stack underflow was detected during tokenization */
   contextUnderflowDetected: boolean;
+  /** Current object type being parsed (TABLE, CODEUNIT, PAGE, etc.) or null if not in object */
+  objectType: 'TABLE' | 'CODEUNIT' | 'PAGE' | 'REPORT' | 'QUERY' | 'XMLPORT' | 'MENUSUITE' | null;
 }
 
 /**
@@ -223,6 +225,7 @@ export class Lexer {
   private readonly contextStack: LexerContext[] = [LexerContext.NORMAL];
   private braceDepth: number = 0;
   private contextUnderflowDetected: boolean = false;
+  private objectTokenIndex: number = -1;
 
   // Property tracking for BEGIN/END context decisions
   private lastPropertyName: string = '';
@@ -270,6 +273,8 @@ export class Lexer {
     this.fieldDefColumn = FieldDefColumn.NONE;
     // Reset context underflow flag
     this.contextUnderflowDetected = false;
+    // Reset object token index
+    this.objectTokenIndex = -1;
 
     while (this.position < this.input.length) {
       this.scanToken();
@@ -990,6 +995,17 @@ export class Lexer {
         // Prevents "object" appearing in property values from corrupting context stack
         if (this.getCurrentContext() === LexerContext.NORMAL) {
           this.pushContext(LexerContext.OBJECT_LEVEL);
+          // Capture token index for lazy object type resolution
+          // tokens.length - 1 because the OBJECT token was just added
+          const oldObjectTokenIndex = this.objectTokenIndex;
+          this.objectTokenIndex = this.tokens.length - 1;
+          if (this.traceCallback && oldObjectTokenIndex !== this.objectTokenIndex) {
+            this.traceCallback({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'objectTokenIndex', from: oldObjectTokenIndex, to: this.objectTokenIndex }
+            });
+          }
         }
         break;
 
@@ -1926,6 +1942,33 @@ export class Lexer {
   }
 
   /**
+   * Resolve the object type from the token following the OBJECT keyword.
+   * Uses lazy evaluation - looks at committed token stream.
+   * @returns Uppercase object type string or null if not determinable
+   */
+  private resolveObjectType(): 'TABLE' | 'CODEUNIT' | 'PAGE' | 'REPORT' | 'QUERY' | 'XMLPORT' | 'MENUSUITE' | null {
+    if (this.objectTokenIndex < 0) {
+      return null;
+    }
+    const typeTokenIndex = this.objectTokenIndex + 1;
+    if (typeTokenIndex >= this.tokens.length) {
+      return null;
+    }
+    const typeToken = this.tokens[typeTokenIndex];
+    // Map TokenType to uppercase string for API consistency
+    switch (typeToken.type) {
+      case TokenType.Table: return 'TABLE';
+      case TokenType.Codeunit: return 'CODEUNIT';
+      case TokenType.Page: return 'PAGE';
+      case TokenType.Report: return 'REPORT';
+      case TokenType.Query: return 'QUERY';
+      case TokenType.XMLport: return 'XMLPORT';
+      case TokenType.MenuSuite: return 'MENUSUITE';
+      default: return null;  // Malformed input or not an object type
+    }
+  }
+
+  /**
    * Convert LexerContext enum value to string name.
    * Throws error on unknown values to catch corruption early.
    * @param context The LexerContext enum value
@@ -1987,6 +2030,7 @@ export class Lexer {
       fieldDefColumn: this.fieldDefColumnToString(this.fieldDefColumn),
       currentSectionType: this.currentSectionType,
       contextUnderflowDetected: this.contextUnderflowDetected,
+      objectType: this.resolveObjectType(),
     };
   }
 
