@@ -1,13 +1,28 @@
 # Implementation Plan: Lazy Trivia Computation & Lexer Validation System
 
-**Status:** In Progress - Revision 10 (Tasks 1, 2, 3, 4, 5, 6, 7, 8 & 9 complete)
+**Status:** Complete - Revision 11 (All 10 tasks complete)
 **Created:** 2026-01-14
-**Last Updated:** 2026-01-14
+**Last Updated:** 2026-01-15
 **Authors:** Architect Agent, Adversarial Reviewer
 
 ---
 
 ## Revision Log
+
+### Revision 11 (2026-01-15)
+Task 10 completed - CI integration with lexer health check and ratchet pattern.
+
+| Update | Details |
+|--------|---------|
+| Task 10 complete | CI workflow with lexer health check using ratchet pattern (baseline can only decrease), 27 passing tests (commit 1c4dc36) |
+| New CI workflow | Created .github/workflows/ci.yml with path-filtered triggers, graceful skip when test/REAL unavailable |
+| Baseline system | Established baseline at 6 max failures (99.92% success rate) with ratchet semantics preventing regression masking |
+| CI mode functions | Implemented compareToBaseline() and runCICheck() with structured error handling, GitHub Actions annotations |
+| Comprehensive docs | Created 499-line documentation covering ratchet pattern, failure handling, troubleshooting (docs/ci-lexer-health.md) |
+| Test coverage | 27 new tests for CI mode (equality, improvement, regression, edge cases, exit codes, malformed baseline handling) |
+| Review process | Architect/adversarial-reviewer planning loop (3 SERIOUS issues identified and resolved), implementation, adversarial review with feedback resolution |
+| Follow-up issues | Created #108 (empty directory edge case), #109 (flaky performance test tracking) |
+| Verification | All 3,185 tests pass (17 intentionally skipped), CI workflow validated, TypeScript diagnostics resolved |
 
 ### Revision 10 (2026-01-14)
 Task 9 completed - Comment handling policy documented with comprehensive JSDoc and README.
@@ -141,7 +156,7 @@ Quick reference for GitHub issues and recommended implementation sequence:
 
 | Task | Issue | Title | Status | Priority | Dependencies |
 |------|-------|-------|--------|----------|--------------|
-| **Task 10** | [#96](https://github.com/your-repo/issues/96) | Integrate Lexer Health into CI | ⏳ Pending | Low | Task 6 |
+| **Task 10** | [#96](https://github.com/your-repo/issues/96) | Integrate Lexer Health into CI | ✅ Complete | Low | Task 6 |
 
 **Legend:**
 - ✅ Complete - Implemented and committed
@@ -2218,29 +2233,72 @@ Add GitHub Actions workflow step that runs lexer health check and fails PR if re
 
 ### Acceptance Criteria
 
-- [ ] Workflow step added to existing CI configuration
-- [ ] Step runs `npm run lexer:health` (exits non-zero on failure)
-- [ ] Baseline threshold defined (e.g., must match current pass rate)
-- [ ] Clear error message when regression detected
-- [ ] Documentation for handling CI failures
+- [x] Workflow step added to CI configuration (new ci.yml workflow)
+- [x] Step runs `npm run lexer:health:ci` (exits non-zero on failure)
+- [x] Baseline threshold defined (6 max failures, ratchet pattern)
+- [x] Clear error message when regression detected (GitHub Actions annotations)
+- [x] Documentation for handling CI failures (docs/ci-lexer-health.md)
 
-### Implementation Notes
+### Implementation Summary
 
-**Prerequisite:** Establish baseline by running health report and confirming acceptable success rate on current codebase. If current success rate is low, fix lexer bugs first before enabling CI gate.
+**Commit:** `1c4dc36` - feat(ci): integrate lexer health check with ratchet pattern (fixes #96)
 
-**Add to workflow (when ready):**
-```yaml
-- name: Check Lexer Health
-  run: |
-    cd server
-    npm run lexer:health
-  # Script exits 1 if any files fail
-```
+**Files Created:**
+- `.github/workflows/ci.yml` (+55 lines, new file)
+  - CI workflow with lexer health check
+  - Path filters for TypeScript source, scripts, and baseline file
+  - Triggers on PRs and pushes to main branch
+  - Gracefully skips when test/REAL unavailable (external contributors)
 
-### Testing Requirements
+- `server/scripts/lexer-health-baseline.json` (+15 lines, new file)
+  - Baseline configuration with ratchet pattern (failures can only decrease)
+  - Current baseline: 6 maximum failures (99.92% success rate)
+  - Documented semantics and update policy
 
-- Test workflow runs successfully when all files pass
-- Test workflow fails appropriately when regression introduced
+- `server/src/__tests__/scripts/lexer-health-ci.test.ts` (+435 lines, new file)
+  - 27 comprehensive tests for CI mode functionality
+  - Tests for compareToBaseline() function (equality, improvement, regression scenarios)
+  - Tests for runCICheck() function (directory handling, baseline validation, exit codes)
+  - Edge case coverage (zero baseline, negative values, large numbers, malformed JSON)
+
+- `docs/ci-lexer-health.md` (+499 lines, new file)
+  - Comprehensive documentation for CI integration
+  - Ratchet pattern explained (baseline can only decrease)
+  - Failure handling guide with scenarios
+  - Local validation instructions
+  - Troubleshooting reference
+
+**Files Modified:**
+- `server/scripts/lexer-health.ts` (+199 lines, -5 lines)
+  - Added ComparisonResult and CIResult interfaces (lines 38-65)
+  - Implemented compareToBaseline() function for baseline comparison with proper singular/plural handling
+  - Implemented runCICheck() function with --ci flag support
+  - Added structured error handling (exit codes: 0=pass/skip, 1=regression, 2=config error)
+  - Added GitHub Actions annotations (::warning::, ::error::)
+  - Exported validateAllFiles() for test mocking
+
+- `server/package.json` (+1 line)
+  - Added lexer:health:ci script (line 19)
+
+- `server/src/lexer/__tests__/lexer-trace.test.ts` (+3 lines, -1 line)
+  - Skipped flaky performance test with proper documentation (tracked in #109)
+
+**Key Implementation Details:**
+- Implemented ratchet pattern: baseline can only decrease, preventing regression masking
+- CI mode gracefully skips with visible warning when test/REAL directory is missing (expected for external contributors)
+- Comprehensive test coverage (27 tests) validates comparison logic, exit codes, and error handling
+- Extracted testable functions (compareToBaseline, runCICheck) that return objects instead of calling process.exit
+- Used exports.validateAllFiles() pattern to enable Jest mocking without refactoring main script
+- Path-filtered workflow runs only on relevant changes (TypeScript source, scripts, baseline file)
+
+**Follow-up Issues Created:**
+- Issue #108: "Fix: handle empty test/REAL directory in CI mode" (edge case for structured error handling)
+- Issue #109: "Flaky test: lexer trace performance measurement" (tracks skipped performance test)
+
+**Testing Results:**
+- All 27 CI mode tests pass
+- Total test suite: 3,185 tests pass (17 skipped)
+- Current baseline established: 6/7,677 files with failures (99.92% success rate)
 
 ---
 
