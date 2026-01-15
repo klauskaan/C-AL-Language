@@ -93,6 +93,95 @@ export function isReportFile(filename: string): boolean {
 }
 
 /**
+ * Format duration in seconds to human-readable string.
+ * Handles hours, minutes, seconds with appropriate precision.
+ *
+ * @param seconds - Duration in seconds (may be fractional)
+ * @returns Formatted string like "1h 5m", "2m 15s", "45s", or "--" for invalid input
+ */
+export function formatDuration(seconds: number): string {
+  // Guard against invalid input
+  if (!Number.isFinite(seconds) || seconds < 0) {
+    return '--';
+  }
+
+  const totalSeconds = Math.round(seconds);
+
+  if (totalSeconds < 60) {
+    return `${totalSeconds}s`;
+  }
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+
+  if (hours > 0) {
+    // Show hours and minutes only (seconds too noisy at this scale)
+    return `${hours}h ${minutes}m`;
+  }
+
+  // Show minutes and seconds
+  return `${minutes}m ${secs}s`;
+}
+
+/**
+ * Calculate estimated time remaining based on current progress.
+ * Returns null when ETA cannot be reliably calculated.
+ *
+ * @param processedCount - Number of items processed so far
+ * @param totalCount - Total number of items to process
+ * @param elapsedMs - Elapsed time in milliseconds
+ * @returns Estimated remaining time in seconds, or null if unreliable
+ */
+export function calculateETA(
+  processedCount: number,
+  totalCount: number,
+  elapsedMs: number
+): number | null {
+  // Guard: Cannot calculate with zero or negative values
+  if (processedCount <= 0 || totalCount <= 0 || elapsedMs <= 0) {
+    return null;
+  }
+
+  // Guard: Reject non-finite inputs (Infinity, NaN)
+  if (!Number.isFinite(processedCount) || !Number.isFinite(totalCount) || !Number.isFinite(elapsedMs)) {
+    return null;
+  }
+
+  // Guard: Don't show ETA until we have stable sample (100+ files)
+  // Early files include JIT warmup and filesystem cache effects
+  if (processedCount < 100) {
+    return null;
+  }
+
+  // Guard: Already complete
+  if (processedCount >= totalCount) {
+    return 0;
+  }
+
+  const remainingCount = totalCount - processedCount;
+  const msPerItem = elapsedMs / processedCount;
+  const remainingMs = remainingCount * msPerItem;
+
+  // Guard: Check for overflow/Infinity before converting to seconds
+  if (!Number.isFinite(remainingMs)) {
+    return null;
+  }
+
+  // Convert to seconds and round to integer
+  const remainingSeconds = Math.round(remainingMs / 1000);
+
+  // Guard: Result should be finite and reasonable
+  // Also reject unreasonably large ETAs (> 1 year = 31536000 seconds)
+  // These indicate edge case math rather than realistic estimates
+  if (!Number.isFinite(remainingSeconds) || remainingSeconds < 0 || remainingSeconds > 31536000) {
+    return null;
+  }
+
+  return remainingSeconds;
+}
+
+/**
  * Compare actual failure count to baseline threshold.
  *
  * Implements "ratchet pattern" - failures can equal or be below baseline (pass),
@@ -253,6 +342,7 @@ export function validateAllFiles(): FileResult[] {
 
   console.log(`Found ${files.length} files to validate\n`);
   const results: FileResult[] = [];
+  const scanStartTime = performance.now();
 
   for (const file of files) {
     const filePath = join(realDir, file);
@@ -306,11 +396,22 @@ export function validateAllFiles(): FileResult[] {
     }
 
     // Progress indicator every 100 files
-    if (results.length % 100 === 0) {
+    if (results.length > 0 && results.length % 100 === 0) {
       const failedCount = results.filter(r =>
         !r.positionValidation.isValid || !r.cleanExit.passed
       ).length;
-      console.log(`Processed ${results.length}/${files.length} files (${failedCount} with failures)...`);
+
+      const elapsedMs = performance.now() - scanStartTime;
+      const elapsedStr = formatDuration(elapsedMs / 1000);
+
+      const eta = calculateETA(results.length, files.length, elapsedMs);
+      const etaStr = eta !== null ? formatDuration(eta) : 'Calculating...';
+
+      console.log(
+        `Processed ${results.length}/${files.length} files ` +
+        `(${failedCount} with failures) - ` +
+        `Elapsed: ${elapsedStr}, ETA: ${etaStr}`
+      );
     }
   }
 
