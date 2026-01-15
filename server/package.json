@@ -3,6 +3,16 @@
   "version": "0.4.6",
   "description": "Language Server for C/AL",
   "main": "./out/server/server.js",
+  "types": "./out/server/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./out/server/index.d.ts",
+      "default": "./out/server/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=12.7.0"
+  },
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
