@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-01-15",
+  "maxFailures": 6,
+  "reason": "Initial baseline established from current lexer state (6 clean exit failures in 7,677 files)",
+  "notes": [
+    "This baseline uses a ratchet pattern - the failure count can only decrease over time, never increase.",
+    "If actual failures < maxFailures, update this file to the new lower value.",
+    "If actual failures > maxFailures, this indicates a lexer regression that must be fixed."
+  ]
+}

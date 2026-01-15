@@ -14,7 +14,7 @@
  */
 
 import { performance } from 'perf_hooks';
-import { readdirSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { Lexer, CleanExitResult } from '../src/lexer/lexer';
 import { validateTokenPositions, ValidationResult } from '../src/validation/positionValidator';
@@ -27,6 +27,41 @@ interface FileResult {
   tokenizeTime: number;
   positionValidation: ValidationResult;
   cleanExit: CleanExitResult;
+}
+
+/**
+ * Result of comparing actual failures to baseline threshold.
+ *
+ * The comparison follows a "ratchet pattern" - failures can only decrease over time,
+ * never increase. This ensures the lexer health improves or stays constant.
+ */
+export interface ComparisonResult {
+  /** Whether the check passed (failures <= baseline) */
+  passed: boolean;
+  /** Actual number of failures detected */
+  actualFailures: number;
+  /** Baseline maximum allowed failures */
+  baselineMax: number;
+  /** Improvement from baseline (positive = fewer failures, negative = regression) */
+  improvement: number;
+  /** Whether baseline file should be updated (improvement detected) */
+  requiresBaselineUpdate: boolean;
+  /** Human-readable message describing the result */
+  message: string;
+}
+
+/**
+ * Result of running CI check.
+ */
+export interface CIResult {
+  /** Exit code for process.exit(): 0=pass/skip, 1=regression, 2=config error */
+  exitCode: number;
+  /** Whether the check was skipped (e.g., test/REAL not found) */
+  skipped: boolean;
+  /** Reason for skip (if skipped=true) */
+  skipReason?: string;
+  /** Comparison result (if not skipped) */
+  comparison: ComparisonResult | null;
 }
 
 /**
@@ -57,7 +92,146 @@ export function isReportFile(filename: string): boolean {
   return upper.startsWith('REP') && !upper.startsWith('REPORT');
 }
 
-function validateAllFiles(): FileResult[] {
+/**
+ * Compare actual failure count to baseline threshold.
+ *
+ * Implements "ratchet pattern" - failures can equal or be below baseline (pass),
+ * but any increase is a regression (fail).
+ *
+ * @param actualFailures - Number of files that failed validation
+ * @param baselineMax - Maximum allowed failures from baseline
+ * @returns Comparison result with pass/fail status and metadata
+ */
+export function compareToBaseline(actualFailures: number, baselineMax: number): ComparisonResult {
+  const improvement = baselineMax - actualFailures;
+  const passed = actualFailures <= baselineMax;
+  const requiresBaselineUpdate = improvement > 0;
+
+  let message: string;
+
+  if (actualFailures === baselineMax) {
+    const failureWord = actualFailures === 1 ? 'failure' : 'failures';
+    message = `Lexer health matches baseline (${actualFailures} ${failureWord})`;
+  } else if (improvement > 0) {
+    const improvementWord = improvement === 1 ? 'failure' : 'failures';
+    message = `Lexer health improvement detected: ${improvement} fewer ${improvementWord} (actual: ${actualFailures}, baseline: ${baselineMax})`;
+  } else {
+    const regressionCount = Math.abs(improvement);
+    const regressionWord = regressionCount === 1 ? 'failure' : 'failures';
+    message = `Lexer health regression: ${regressionCount} additional ${regressionWord} (actual: ${actualFailures}, baseline: ${baselineMax})`;
+  }
+
+  return {
+    passed,
+    actualFailures,
+    baselineMax,
+    improvement,
+    requiresBaselineUpdate,
+    message
+  };
+}
+
+/**
+ * Run CI check mode: validate files and compare to baseline.
+ *
+ * Exit codes:
+ * - 0: Pass (failures <= baseline) or skip (test/REAL not found)
+ * - 1: Regression detected (failures > baseline)
+ * - 2: Configuration error (baseline file issues)
+ *
+ * @returns CI result with exit code and comparison details
+ */
+export function runCICheck(): CIResult {
+  const realDir = join(__dirname, '../../test/REAL');
+
+  // Check if test/REAL exists
+  if (!existsSync(realDir)) {
+    return {
+      exitCode: 0,
+      skipped: true,
+      skipReason: 'test/REAL directory not found - skipping lexer health check',
+      comparison: null
+    };
+  }
+
+  // Load baseline
+  const baselinePath = join(__dirname, 'lexer-health-baseline.json');
+
+  let baselineMax: number;
+  try {
+    if (!existsSync(baselinePath)) {
+      return {
+        exitCode: 2,
+        skipped: false,
+        skipReason: undefined,
+        comparison: {
+          passed: false,
+          actualFailures: 0,
+          baselineMax: 0,
+          improvement: 0,
+          requiresBaselineUpdate: false,
+          message: 'Configuration error: baseline file not found at ' + baselinePath
+        }
+      };
+    }
+
+    const baselineContent = readFileSync(baselinePath, 'utf-8');
+    const baseline = JSON.parse(baselineContent);
+
+    if (typeof baseline.maxFailures !== 'number') {
+      return {
+        exitCode: 2,
+        skipped: false,
+        skipReason: undefined,
+        comparison: {
+          passed: false,
+          actualFailures: 0,
+          baselineMax: 0,
+          improvement: 0,
+          requiresBaselineUpdate: false,
+          message: 'Configuration error: baseline file missing valid maxFailures property (must be a number)'
+        }
+      };
+    }
+
+    baselineMax = baseline.maxFailures;
+  } catch (error) {
+    return {
+      exitCode: 2,
+      skipped: false,
+      skipReason: undefined,
+      comparison: {
+        passed: false,
+        actualFailures: 0,
+        baselineMax: 0,
+        improvement: 0,
+        requiresBaselineUpdate: false,
+        message: `Configuration error: failed to parse baseline file - ${error instanceof Error ? error.message : String(error)}`
+      }
+    };
+  }
+
+  // Run validation
+  // Use exports.validateAllFiles to allow test mocking via jest.spyOn
+  const results = exports.validateAllFiles();
+
+  // Count failures
+  const actualFailures = results.filter((r: FileResult) =>
+    !r.positionValidation.isValid || !r.cleanExit.passed
+  ).length;
+
+  // Compare to baseline
+  const comparison = compareToBaseline(actualFailures, baselineMax);
+
+  return {
+    exitCode: comparison.passed ? 0 : 1,
+    skipped: false,
+    skipReason: undefined,
+    comparison
+  };
+}
+
+export function validateAllFiles(): FileResult[] {
   const realDir = join(__dirname, '../../test/REAL');
 
   // Check if directory exists before attempting to read
@@ -256,6 +430,45 @@ function generateMarkdownReport(results: FileResult[]): string {
 
 // Main execution (only when run directly, not imported or in tests)
 if (require.main === module && !process.env.JEST_WORKER_ID) {
+  const args = process.argv.slice(2);
+  const ciMode = args.includes('--ci');
+
+  if (ciMode) {
+    // CI mode: compare to baseline, emit GitHub Actions annotations
+    console.log('Lexer Health Check - CI Mode\n');
+
+    const result = runCICheck();
+
+    if (result.skipped) {
+      // Emit warning annotation for visibility in GitHub Actions
+      console.log('::warning::' + result.skipReason);
+      console.log('\n' + result.skipReason);
+      process.exit(result.exitCode);
+    }
+
+    if (!result.comparison) {
+      console.error('Internal error: comparison is null but not skipped');
+      process.exit(2);
+    }
+
+    // Display result
+    console.log(result.comparison.message);
+
+    if (result.comparison.requiresBaselineUpdate) {
+      console.log('\n⚠️  Baseline update recommended:');
+      console.log(`   Update maxFailures from ${result.comparison.baselineMax} to ${result.comparison.actualFailures}`);
+      console.log('   in server/scripts/lexer-health-baseline.json');
+    }
+
+    if (!result.comparison.passed) {
+      // Emit error annotation for visibility in GitHub Actions
+      console.log('::error::Lexer health regression detected');
+    }
+
+    process.exit(result.exitCode);
+  }
+
+  // Standard report mode
   console.log('Lexer Health Report Tool\n');
   console.log('Scanning test/REAL directory...\n');
 

@@ -17,6 +17,7 @@
     "perf:all": "npm run perf:benchmark && npm run perf:memory && npm run perf:compare",
     "validate:real": "ts-node scripts/validate-real.ts",
     "lexer:health": "ts-node scripts/lexer-health.ts",
+    "lexer:health:ci": "ts-node scripts/lexer-health.ts --ci",
     "lexer:trace": "ts-node scripts/lexer-trace.ts"
   },
   "dependencies": {
