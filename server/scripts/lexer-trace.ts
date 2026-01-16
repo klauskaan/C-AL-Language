@@ -140,6 +140,11 @@ function formatTraceEvent(event: TraceEvent): string {
       const length = event.data.length ? ` (${event.data.length} chars)` : '';
       return `${pos} SKIP: ${event.data.reason}${length}`;
 
+    case 'attempt-failed':
+      const pattern = `${event.data.firstWord}${event.data.separator}${event.data.expectedSecond}`;
+      const found = event.data.actualSecond === '' ? '(empty)' : `"${event.data.actualSecond}"`;
+      return `${pos} ATTEMPT FAILED: ${pattern} -> got ${found} (${event.data.reason})`;
+
     default:
       return `${pos} ${event.type}: ${JSON.stringify(event.data)}`;
   }

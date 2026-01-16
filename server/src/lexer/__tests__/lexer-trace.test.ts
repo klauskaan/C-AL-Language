@@ -664,4 +664,137 @@ describe('Lexer Trace Infrastructure', () => {
       expect(callCount).toBeGreaterThan(0);
     });
   });
+
+  describe('Compound Token Attempt Failures (TDD - SHOULD FAIL)', () => {
+    it('should emit attempt-failed event when second word does not match (OBJECT-FOO)', () => {
+      const code = 'OBJECT-FOO';
+      const events: TraceEvent[] = [];
+      const traceCallback: TraceCallback = (event) => events.push(event);
+
+      const lexer = new Lexer(code, { trace: traceCallback });
+      lexer.tokenize();
+
+      // Should emit attempt-failed event for compound token mismatch
+      const failureEvents = events.filter(e => e.type === 'attempt-failed');
+      expect(failureEvents.length).toBeGreaterThan(0);
+
+      const objectPropertiesFailure = failureEvents.find(e =>
+        e.data.attempt === 'compound-token' &&
+        e.data.firstWord === 'OBJECT' &&
+        e.data.separator === '-' &&
+        e.data.expectedSecond === 'PROPERTIES' &&
+        e.data.actualSecond === 'FOO' &&
+        e.data.reason === 'mismatch'
+      );
+      expect(objectPropertiesFailure).toBeDefined();
+    });
+
+    it('should emit attempt-failed event when second word is empty (EOF) (OBJECT-)', () => {
+      const code = 'OBJECT-';
+      const events: TraceEvent[] = [];
+      const traceCallback: TraceCallback = (event) => events.push(event);
+
+      const lexer = new Lexer(code, { trace: traceCallback });
+      lexer.tokenize();
+
+      // Should emit attempt-failed event for empty second word
+      const failureEvents = events.filter(e => e.type === 'attempt-failed');
+      expect(failureEvents.length).toBeGreaterThan(0);
+
+      const objectPropertiesFailure = failureEvents.find(e =>
+        e.data.attempt === 'compound-token' &&
+        e.data.firstWord === 'OBJECT' &&
+        e.data.separator === '-' &&
+        e.data.expectedSecond === 'PROPERTIES' &&
+        e.data.actualSecond === '' &&
+        e.data.reason === 'empty-second'
+      );
+      expect(objectPropertiesFailure).toBeDefined();
+    });
+
+    it('should emit attempt-failed event when second word is empty (whitespace) (OBJECT- PROPERTIES)', () => {
+      const code = 'OBJECT- PROPERTIES';
+      const events: TraceEvent[] = [];
+      const traceCallback: TraceCallback = (event) => events.push(event);
+
+      const lexer = new Lexer(code, { trace: traceCallback });
+      lexer.tokenize();
+
+      // Should emit attempt-failed event for empty second word (whitespace after separator)
+      const failureEvents = events.filter(e => e.type === 'attempt-failed');
+      expect(failureEvents.length).toBeGreaterThan(0);
+
+      const objectPropertiesFailure = failureEvents.find(e =>
+        e.data.attempt === 'compound-token' &&
+        e.data.firstWord === 'OBJECT' &&
+        e.data.separator === '-' &&
+        e.data.expectedSecond === 'PROPERTIES' &&
+        e.data.actualSecond === '' &&
+        e.data.reason === 'empty-second'
+      );
+      expect(objectPropertiesFailure).toBeDefined();
+    });
+
+    it('should emit attempt-failed event for Format/Evaluate mismatch (FORMAT/FOO)', () => {
+      const code = 'FORMAT/FOO';
+      const events: TraceEvent[] = [];
+      const traceCallback: TraceCallback = (event) => events.push(event);
+
+      const lexer = new Lexer(code, { trace: traceCallback });
+      lexer.tokenize();
+
+      // Should emit attempt-failed event for compound token mismatch
+      const failureEvents = events.filter(e => e.type === 'attempt-failed');
+      expect(failureEvents.length).toBeGreaterThan(0);
+
+      const formatEvaluateFailure = failureEvents.find(e =>
+        e.data.attempt === 'compound-token' &&
+        e.data.firstWord === 'FORMAT' &&
+        e.data.separator === '/' &&
+        e.data.expectedSecond === 'EVALUATE' &&
+        e.data.actualSecond === 'FOO' &&
+        e.data.reason === 'mismatch'
+      );
+      expect(formatEvaluateFailure).toBeDefined();
+    });
+
+    it('should NOT emit attempt-failed event for successful compound token (OBJECT-PROPERTIES)', () => {
+      const code = 'OBJECT-PROPERTIES';
+      const events: TraceEvent[] = [];
+      const traceCallback: TraceCallback = (event) => events.push(event);
+
+      const lexer = new Lexer(code, { trace: traceCallback });
+      lexer.tokenize();
+
+      // Should NOT have any attempt-failed events for successful compound token
+      const failureEvents = events.filter(e =>
+        e.type === 'attempt-failed' &&
+        e.data.attempt === 'compound-token'
+      );
+      expect(failureEvents.length).toBe(0);
+
+      // Should have token event for OBJECT-PROPERTIES
+      const tokenEvents = events.filter(e => e.type === 'token');
+      const objectPropertiesToken = tokenEvents.find(e =>
+        e.data.tokenType === TokenType.ObjectProperties
+      );
+      expect(objectPropertiesToken).toBeDefined();
+    });
+
+    it('should NOT emit events when no trace callback provided (OBJECT-FOO)', () => {
+      const code = 'OBJECT-FOO';
+
+      // No callback - should not crash
+      expect(() => {
+        const lexer = new Lexer(code);
+        lexer.tokenize();
+      }).not.toThrow();
+
+      // With undefined callback - should not crash
+      expect(() => {
+        const lexer = new Lexer(code, { trace: undefined });
+        lexer.tokenize();
+      }).not.toThrow();
+    });
+  });
 });

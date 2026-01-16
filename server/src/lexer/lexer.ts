@@ -160,8 +160,9 @@ export type TraceCallback = (event: TraceEvent) => void;
  * - 'context-pop': Context was popped from stack
  * - 'flag-change': A tracking flag changed value
  * - 'skip': Content was skipped (whitespace, comments)
+ * - 'attempt-failed': A compound token match attempt failed
  */
-export type TraceEventType = 'token' | 'context-push' | 'context-pop' | 'flag-change' | 'skip';
+export type TraceEventType = 'token' | 'context-push' | 'context-pop' | 'flag-change' | 'skip' | 'attempt-failed';
 
 /**
  * A trace event emitted during tokenization.
@@ -2124,6 +2125,28 @@ export class Lexer {
       // Match! Emit compound token
       this.addToken(tokenType, firstWord + separator + nextWord, startPos, this.position, startLine, startColumn);
       return true;
+    }
+
+    // Emit attempt-failed trace event for debugging
+    if (this.traceCallback && !this.traceCallbackDisabled) {
+      try {
+        const reason = nextWord === '' ? 'empty-second' : 'mismatch';
+        this.traceCallback({
+          type: 'attempt-failed',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: {
+            attempt: 'compound-token',
+            firstWord,
+            separator,
+            expectedSecond,
+            actualSecond: nextWord,
+            reason
+          }
+        });
+      } catch (error) {
+        this.traceCallbackDisabled = true;
+        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+      }
     }
 
     // No match - restore lexer state and return false
