@@ -238,6 +238,12 @@ export class Lexer {
   /** Optional trace callback - null/undefined means tracing disabled */
   private traceCallback?: TraceCallback;
 
+  /**
+   * True if trace callback threw an exception during this tokenization run.
+   * Reset at the start of each tokenize() call (fail-once per tokenization).
+   */
+  private traceCallbackDisabled: boolean = false;
+
   // Column position tracking for field definitions
   private currentSectionType: 'FIELDS' | 'KEYS' | 'CONTROLS' | 'ELEMENTS' | 'DATAITEMS' | 'ACTIONS' | 'DATASET' | 'REQUESTPAGE' | 'LABELS' | null = null;
   private fieldDefColumn: FieldDefColumn = FieldDefColumn.NONE;
@@ -256,6 +262,9 @@ export class Lexer {
    * Tokenize the entire input
    */
   public tokenize(): Token[] {
+    // Reset trace callback state for fresh tokenization
+    this.traceCallbackDisabled = false;
+
     this.tokens.length = 0;
     this.position = 0;
     this.line = 1;
@@ -293,12 +302,17 @@ export class Lexer {
       this.popContext();
     }
 
-    if (this.traceCallback) {
-      this.traceCallback({
-        type: 'token',
-        position: { line: this.line, column: this.column, offset: this.position },
-        data: { tokenType: 'EOF', value: '' }
-      });
+    if (this.traceCallback && !this.traceCallbackDisabled) {
+      try {
+        this.traceCallback({
+          type: 'token',
+          position: { line: this.line, column: this.column, offset: this.position },
+          data: { tokenType: 'EOF', value: '' }
+        });
+      } catch (error) {
+        this.traceCallbackDisabled = true;
+        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+      }
     }
 
     this.tokens.push(this.createToken(TokenType.EOF, '', this.position, this.position));
@@ -329,12 +343,17 @@ export class Lexer {
     const from = this.contextToString(this.getCurrentContext());
     this.contextStack.push(context);
 
-    if (this.traceCallback) {
-      this.traceCallback({
-        type: 'context-push',
-        position: { line: this.line, column: this.column, offset: this.position },
-        data: { from, to: this.contextToString(context) }
-      });
+    if (this.traceCallback && !this.traceCallbackDisabled) {
+      try {
+        this.traceCallback({
+          type: 'context-push',
+          position: { line: this.line, column: this.column, offset: this.position },
+          data: { from, to: this.contextToString(context) }
+        });
+      } catch (error) {
+        this.traceCallbackDisabled = true;
+        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+      }
     }
   }
 
@@ -347,12 +366,17 @@ export class Lexer {
       const from = this.contextToString(this.getCurrentContext());
       this.contextStack.pop();
 
-      if (this.traceCallback) {
-        this.traceCallback({
-          type: 'context-pop',
-          position: { line: this.line, column: this.column, offset: this.position },
-          data: { from, to: this.contextToString(this.getCurrentContext()) }
-        });
+      if (this.traceCallback && !this.traceCallbackDisabled) {
+        try {
+          this.traceCallback({
+            type: 'context-pop',
+            position: { line: this.line, column: this.column, offset: this.position },
+            data: { from, to: this.contextToString(this.getCurrentContext()) }
+          });
+        } catch (error) {
+          this.traceCallbackDisabled = true;
+          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+        }
       }
     } else {
       this.contextUnderflowDetected = true;
@@ -470,12 +494,17 @@ export class Lexer {
     this.advance();
     const oldBraceDepth = this.braceDepth;
     this.braceDepth++;
-    if (this.traceCallback) {
-      this.traceCallback({
-        type: 'flag-change',
-        position: { line: startLine, column: startColumn, offset: startPos },
-        data: { flag: 'braceDepth', from: oldBraceDepth, to: this.braceDepth }
-      });
+    if (this.traceCallback && !this.traceCallbackDisabled) {
+      try {
+        this.traceCallback({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'braceDepth', from: oldBraceDepth, to: this.braceDepth }
+        });
+      } catch (error) {
+        this.traceCallbackDisabled = true;
+        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+      }
     }
     this.addToken(TokenType.LeftBrace, '{', startPos, this.position, startLine, startColumn);
 
@@ -499,12 +528,17 @@ export class Lexer {
          this.currentSectionType === 'ACTIONS')) {
       const oldFieldDefColumn = this.fieldDefColumn;
       this.fieldDefColumn = FieldDefColumn.COL_1;
-      if (this.traceCallback) {
-        this.traceCallback({
-          type: 'flag-change',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'fieldDefColumn', from: 'NONE', to: 'COL_1' }
-        });
+      if (this.traceCallback && !this.traceCallbackDisabled) {
+        try {
+          this.traceCallback({
+            type: 'flag-change',
+            position: { line: startLine, column: startColumn, offset: startPos },
+            data: { flag: 'fieldDefColumn', from: 'NONE', to: 'COL_1' }
+          });
+        } catch (error) {
+          this.traceCallbackDisabled = true;
+          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+        }
       }
     }
   }
@@ -528,12 +562,17 @@ export class Lexer {
 
       const oldBraceDepth = this.braceDepth;
       this.braceDepth--;
-      if (this.traceCallback) {
-        this.traceCallback({
-          type: 'flag-change',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'braceDepth', from: oldBraceDepth, to: this.braceDepth }
-        });
+      if (this.traceCallback && !this.traceCallbackDisabled) {
+        try {
+          this.traceCallback({
+            type: 'flag-change',
+            position: { line: startLine, column: startColumn, offset: startPos },
+            data: { flag: 'braceDepth', from: oldBraceDepth, to: this.braceDepth }
+          });
+        } catch (error) {
+          this.traceCallbackDisabled = true;
+          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+        }
       }
       this.addToken(TokenType.RightBrace, '}', startPos, this.position, startLine, startColumn);
 
@@ -543,12 +582,17 @@ export class Lexer {
         // Reset section tracking when exiting section context
         const oldSectionType = this.currentSectionType;
         this.currentSectionType = null;
-        if (this.traceCallback && oldSectionType !== null) {
-          this.traceCallback({
-            type: 'flag-change',
-            position: { line: startLine, column: startColumn, offset: startPos },
-            data: { flag: 'currentSectionType', from: oldSectionType, to: null }
-          });
+        if (this.traceCallback && !this.traceCallbackDisabled && oldSectionType !== null) {
+          try {
+            this.traceCallback({
+              type: 'flag-change',
+              position: { line: startLine, column: startColumn, offset: startPos },
+              data: { flag: 'currentSectionType', from: oldSectionType, to: null }
+            });
+          } catch (error) {
+            this.traceCallbackDisabled = true;
+            console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+          }
         }
       }
 
@@ -559,39 +603,59 @@ export class Lexer {
       this.inPropertyValue = false;
       this.lastPropertyName = '';
       this.bracketDepth = 0;
-      if (this.traceCallback) {
+      if (this.traceCallback && !this.traceCallbackDisabled) {
         if (oldInPropertyValue !== false) {
-          this.traceCallback({
-            type: 'flag-change',
-            position: { line: startLine, column: startColumn, offset: startPos },
-            data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: false }
-          });
+          try {
+            this.traceCallback({
+              type: 'flag-change',
+              position: { line: startLine, column: startColumn, offset: startPos },
+              data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: false }
+            });
+          } catch (error) {
+            this.traceCallbackDisabled = true;
+            console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+          }
         }
         if (oldLastPropertyName !== '') {
-          this.traceCallback({
-            type: 'flag-change',
-            position: { line: startLine, column: startColumn, offset: startPos },
-            data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: '' }
-          });
+          try {
+            this.traceCallback({
+              type: 'flag-change',
+              position: { line: startLine, column: startColumn, offset: startPos },
+              data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: '' }
+            });
+          } catch (error) {
+            this.traceCallbackDisabled = true;
+            console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+          }
         }
         if (oldBracketDepth !== 0) {
-          this.traceCallback({
-            type: 'flag-change',
-            position: { line: startLine, column: startColumn, offset: startPos },
-            data: { flag: 'bracketDepth', from: oldBracketDepth, to: 0 }
-          });
+          try {
+            this.traceCallback({
+              type: 'flag-change',
+              position: { line: startLine, column: startColumn, offset: startPos },
+              data: { flag: 'bracketDepth', from: oldBracketDepth, to: 0 }
+            });
+          } catch (error) {
+            this.traceCallbackDisabled = true;
+            console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+          }
         }
       }
 
       // Reset column tracking when closing a field definition
       const oldFieldDefColumn = this.fieldDefColumn;
       this.fieldDefColumn = FieldDefColumn.NONE;
-      if (this.traceCallback && oldFieldDefColumn !== FieldDefColumn.NONE) {
-        this.traceCallback({
-          type: 'flag-change',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: 'NONE' }
-        });
+      if (this.traceCallback && !this.traceCallbackDisabled && oldFieldDefColumn !== FieldDefColumn.NONE) {
+        try {
+          this.traceCallback({
+            type: 'flag-change',
+            position: { line: startLine, column: startColumn, offset: startPos },
+            data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: 'NONE' }
+          });
+        } catch (error) {
+          this.traceCallbackDisabled = true;
+          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+        }
       }
 
       return true;
@@ -957,12 +1021,17 @@ export class Lexer {
         this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
       const oldLastPropertyName = this.lastPropertyName;
       this.lastPropertyName = value;
-      if (this.traceCallback && oldLastPropertyName !== value) {
-        this.traceCallback({
-          type: 'flag-change',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: value }
-        });
+      if (this.traceCallback && !this.traceCallbackDisabled && oldLastPropertyName !== value) {
+        try {
+          this.traceCallback({
+            type: 'flag-change',
+            position: { line: startLine, column: startColumn, offset: startPos },
+            data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: value }
+          });
+        } catch (error) {
+          this.traceCallbackDisabled = true;
+          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+        }
       }
     }
 
@@ -972,12 +1041,17 @@ export class Lexer {
     if (tokenType !== TokenType.LeftBrace) {
       const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
       this.lastWasSectionKeyword = false;
-      if (this.traceCallback && oldLastWasSectionKeyword !== false) {
-        this.traceCallback({
-          type: 'flag-change',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: false }
-        });
+      if (this.traceCallback && !this.traceCallbackDisabled && oldLastWasSectionKeyword !== false) {
+        try {
+          this.traceCallback({
+            type: 'flag-change',
+            position: { line: startLine, column: startColumn, offset: startPos },
+            data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: false }
+          });
+        } catch (error) {
+          this.traceCallbackDisabled = true;
+          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+        }
       }
     }
 
@@ -999,12 +1073,17 @@ export class Lexer {
           // tokens.length - 1 because the OBJECT token was just added
           const oldObjectTokenIndex = this.objectTokenIndex;
           this.objectTokenIndex = this.tokens.length - 1;
-          if (this.traceCallback && oldObjectTokenIndex !== this.objectTokenIndex) {
-            this.traceCallback({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'objectTokenIndex', from: oldObjectTokenIndex, to: this.objectTokenIndex }
-            });
+          if (this.traceCallback && !this.traceCallbackDisabled && oldObjectTokenIndex !== this.objectTokenIndex) {
+            try {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'objectTokenIndex', from: oldObjectTokenIndex, to: this.objectTokenIndex }
+              });
+            } catch (error) {
+              this.traceCallbackDisabled = true;
+              console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+            }
           }
         }
         break;
@@ -1026,20 +1105,30 @@ export class Lexer {
         const oldCurrentSectionTypeFields = this.currentSectionType;
         this.lastWasSectionKeyword = true;
         this.currentSectionType = 'FIELDS';
-        if (this.traceCallback) {
+        if (this.traceCallback && !this.traceCallbackDisabled) {
           if (oldLastWasSectionKeywordFields !== true) {
-            this.traceCallback({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeywordFields, to: true }
-            });
+            try {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeywordFields, to: true }
+              });
+            } catch (error) {
+              this.traceCallbackDisabled = true;
+              console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+            }
           }
           if (oldCurrentSectionTypeFields !== 'FIELDS') {
-            this.traceCallback({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'currentSectionType', from: oldCurrentSectionTypeFields, to: 'FIELDS' }
-            });
+            try {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: this.line, column: this.column, offset: this.position },
+                data: { flag: 'currentSectionType', from: oldCurrentSectionTypeFields, to: 'FIELDS' }
+              });
+            } catch (error) {
+              this.traceCallbackDisabled = true;
+              console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+            }
           }
         }
         break;
@@ -1059,20 +1148,30 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'KEYS';
-          if (this.traceCallback) {
+          if (this.traceCallback && !this.traceCallbackDisabled) {
             if (oldLastWasSectionKeyword !== true) {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
             if (oldCurrentSectionType !== 'KEYS') {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'KEYS' }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'KEYS' }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
           }
         }
@@ -1093,20 +1192,30 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'CONTROLS';
-          if (this.traceCallback) {
+          if (this.traceCallback && !this.traceCallbackDisabled) {
             if (oldLastWasSectionKeyword !== true) {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
             if (oldCurrentSectionType !== 'CONTROLS') {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'CONTROLS' }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'CONTROLS' }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
           }
         }
@@ -1127,20 +1236,30 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'ELEMENTS';
-          if (this.traceCallback) {
+          if (this.traceCallback && !this.traceCallbackDisabled) {
             if (oldLastWasSectionKeyword !== true) {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
             if (oldCurrentSectionType !== 'ELEMENTS') {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'ELEMENTS' }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'ELEMENTS' }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
           }
         }
@@ -1161,20 +1280,30 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'DATAITEMS';
-          if (this.traceCallback) {
+          if (this.traceCallback && !this.traceCallbackDisabled) {
             if (oldLastWasSectionKeyword !== true) {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
             if (oldCurrentSectionType !== 'DATAITEMS') {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'DATAITEMS' }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'DATAITEMS' }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
           }
         }
@@ -1195,20 +1324,30 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'ACTIONS';
-          if (this.traceCallback) {
+          if (this.traceCallback && !this.traceCallbackDisabled) {
             if (oldLastWasSectionKeyword !== true) {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
             if (oldCurrentSectionType !== 'ACTIONS') {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'ACTIONS' }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'ACTIONS' }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
           }
         }
@@ -1228,20 +1367,30 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'DATASET';
-          if (this.traceCallback) {
+          if (this.traceCallback && !this.traceCallbackDisabled) {
             if (oldLastWasSectionKeyword !== true) {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
             if (oldCurrentSectionType !== 'DATASET') {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'DATASET' }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'DATASET' }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
           }
         }
@@ -1261,20 +1410,30 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'REQUESTPAGE';
-          if (this.traceCallback) {
+          if (this.traceCallback && !this.traceCallbackDisabled) {
             if (oldLastWasSectionKeyword !== true) {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
             if (oldCurrentSectionType !== 'REQUESTPAGE') {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'REQUESTPAGE' }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'REQUESTPAGE' }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
           }
         }
@@ -1294,20 +1453,30 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'LABELS';
-          if (this.traceCallback) {
+          if (this.traceCallback && !this.traceCallbackDisabled) {
             if (oldLastWasSectionKeyword !== true) {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
             if (oldCurrentSectionType !== 'LABELS') {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'LABELS' }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'LABELS' }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
           }
         }
@@ -1338,20 +1507,30 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = null;
-          if (this.traceCallback) {
+          if (this.traceCallback && !this.traceCallbackDisabled) {
             if (oldLastWasSectionKeyword !== true) {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
             if (oldCurrentSectionType !== null) {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: null }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: this.line, column: this.column, offset: this.position },
+                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: null }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
           }
         }
@@ -1474,12 +1653,17 @@ export class Lexer {
             this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
           const oldInPropertyValue = this.inPropertyValue;
           this.inPropertyValue = true;
-          if (this.traceCallback && oldInPropertyValue !== this.inPropertyValue) {
-            this.traceCallback({
-              type: 'flag-change',
-              position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.inPropertyValue }
-            });
+          if (this.traceCallback && !this.traceCallbackDisabled && oldInPropertyValue !== this.inPropertyValue) {
+            try {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: startLine, column: startColumn, offset: startPos },
+                data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.inPropertyValue }
+              });
+            } catch (error) {
+              this.traceCallbackDisabled = true;
+              console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+            }
           }
         }
         break;
@@ -1530,20 +1714,30 @@ export class Lexer {
           const oldLastPropertyName = this.lastPropertyName;
           this.inPropertyValue = false;
           this.lastPropertyName = '';
-          if (this.traceCallback) {
+          if (this.traceCallback && !this.traceCallbackDisabled) {
             if (oldInPropertyValue !== this.inPropertyValue) {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: startLine, column: startColumn, offset: startPos },
-                data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.inPropertyValue }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: startLine, column: startColumn, offset: startPos },
+                  data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.inPropertyValue }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
             if (oldLastPropertyName !== this.lastPropertyName) {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: startLine, column: startColumn, offset: startPos },
-                data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: this.lastPropertyName }
-              });
+              try {
+                this.traceCallback({
+                  type: 'flag-change',
+                  position: { line: startLine, column: startColumn, offset: startPos },
+                  data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: this.lastPropertyName }
+                });
+              } catch (error) {
+                this.traceCallbackDisabled = true;
+                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              }
             }
           }
         }
@@ -1565,12 +1759,17 @@ export class Lexer {
               break;
             // Stay in PROPERTIES after that
           }
-          if (this.traceCallback && oldFieldDefColumn !== this.fieldDefColumn) {
-            this.traceCallback({
-              type: 'flag-change',
-              position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: this.fieldDefColumnToString(this.fieldDefColumn) }
-            });
+          if (this.traceCallback && !this.traceCallbackDisabled && oldFieldDefColumn !== this.fieldDefColumn) {
+            try {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: startLine, column: startColumn, offset: startPos },
+                data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: this.fieldDefColumnToString(this.fieldDefColumn) }
+              });
+            } catch (error) {
+              this.traceCallbackDisabled = true;
+              console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+            }
           }
         }
         break;
@@ -1589,12 +1788,17 @@ export class Lexer {
         if (this.inPropertyValue) {
           const oldBracketDepth = this.bracketDepth;
           this.bracketDepth++;
-          if (this.traceCallback) {
-            this.traceCallback({
-              type: 'flag-change',
-              position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.bracketDepth }
-            });
+          if (this.traceCallback && !this.traceCallbackDisabled) {
+            try {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: startLine, column: startColumn, offset: startPos },
+                data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.bracketDepth }
+              });
+            } catch (error) {
+              this.traceCallbackDisabled = true;
+              console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+            }
           }
         }
         break;
@@ -1604,12 +1808,17 @@ export class Lexer {
         if (this.inPropertyValue && this.bracketDepth > 0) {
           const oldBracketDepth = this.bracketDepth;
           this.bracketDepth--;
-          if (this.traceCallback) {
-            this.traceCallback({
-              type: 'flag-change',
-              position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.bracketDepth }
-            });
+          if (this.traceCallback && !this.traceCallbackDisabled) {
+            try {
+              this.traceCallback({
+                type: 'flag-change',
+                position: { line: startLine, column: startColumn, offset: startPos },
+                data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.bracketDepth }
+              });
+            } catch (error) {
+              this.traceCallbackDisabled = true;
+              console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+            }
           }
         }
         break;
@@ -1633,12 +1842,17 @@ export class Lexer {
       this.advance();
     }
 
-    if (this.traceCallback) {
-      this.traceCallback({
-        type: 'skip',
-        position: { line: startLine, column: startColumn, offset: startPos },
-        data: { reason: 'line-comment', length: this.position - startPos }
-      });
+    if (this.traceCallback && !this.traceCallbackDisabled) {
+      try {
+        this.traceCallback({
+          type: 'skip',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { reason: 'line-comment', length: this.position - startPos }
+        });
+      } catch (error) {
+        this.traceCallbackDisabled = true;
+        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+      }
     }
   }
 
@@ -1666,12 +1880,17 @@ export class Lexer {
     if (!closed) {
       this.addToken(TokenType.Unknown, '{', startPos, this.position, startLine, startColumn);
     } else {
-      if (this.traceCallback) {
-        this.traceCallback({
-          type: 'skip',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: { reason: 'block-comment', length: this.position - startPos }
-        });
+      if (this.traceCallback && !this.traceCallbackDisabled) {
+        try {
+          this.traceCallback({
+            type: 'skip',
+            position: { line: startLine, column: startColumn, offset: startPos },
+            data: { reason: 'block-comment', length: this.position - startPos }
+          });
+        } catch (error) {
+          this.traceCallbackDisabled = true;
+          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+        }
       }
     }
   }
@@ -1702,12 +1921,17 @@ export class Lexer {
     if (!closed) {
       this.addToken(TokenType.Unknown, '/*', startPos, this.position, startLine, startColumn);
     } else {
-      if (this.traceCallback) {
-        this.traceCallback({
-          type: 'skip',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: { reason: 'c-style-comment', length: this.position - startPos }
-        });
+      if (this.traceCallback && !this.traceCallbackDisabled) {
+        try {
+          this.traceCallback({
+            type: 'skip',
+            position: { line: startLine, column: startColumn, offset: startPos },
+            data: { reason: 'c-style-comment', length: this.position - startPos }
+          });
+        } catch (error) {
+          this.traceCallbackDisabled = true;
+          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+        }
       }
     }
   }
@@ -1741,12 +1965,17 @@ export class Lexer {
       this.advance();
     }
 
-    if (this.traceCallback && this.position > startPos) {
-      this.traceCallback({
-        type: 'skip',
-        position: { line: startLine, column: startColumn, offset: startPos },
-        data: { reason: 'whitespace', length: this.position - startPos }
-      });
+    if (this.traceCallback && !this.traceCallbackDisabled && this.position > startPos) {
+      try {
+        this.traceCallback({
+          type: 'skip',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { reason: 'whitespace', length: this.position - startPos }
+        });
+      } catch (error) {
+        this.traceCallbackDisabled = true;
+        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+      }
     }
   }
 
@@ -1764,12 +1993,17 @@ export class Lexer {
     this.line++;
     this.column = 1;
 
-    if (this.traceCallback) {
-      this.traceCallback({
-        type: 'skip',
-        position: { line: startLine, column: startColumn, offset: startPos },
-        data: { reason: 'newline', length: this.position - startPos }
-      });
+    if (this.traceCallback && !this.traceCallbackDisabled) {
+      try {
+        this.traceCallback({
+          type: 'skip',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { reason: 'newline', length: this.position - startPos }
+        });
+      } catch (error) {
+        this.traceCallbackDisabled = true;
+        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+      }
     }
   }
 
@@ -1907,12 +2141,17 @@ export class Lexer {
     line: number,
     column: number
   ): void {
-    if (this.traceCallback) {
-      this.traceCallback({
-        type: 'token',
-        position: { line, column, offset: startOffset },
-        data: { tokenType: type, value }
-      });
+    if (this.traceCallback && !this.traceCallbackDisabled) {
+      try {
+        this.traceCallback({
+          type: 'token',
+          position: { line, column, offset: startOffset },
+          data: { tokenType: type, value }
+        });
+      } catch (error) {
+        this.traceCallbackDisabled = true;
+        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+      }
     }
 
     this.tokens.push({
