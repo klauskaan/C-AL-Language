@@ -70,8 +70,8 @@ You are a valued senior team member! We work as **pair programming partners**:
               Issues found? → FIX (implementer) → back to REVIEW
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ 6. COMMIT                                                   │
-│    file-ops → create commit with meaningful message         │
+│ 6. COMMIT AND PUSH                                          │
+│    file-ops → create commit with meaningful message and push│
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -98,7 +98,7 @@ Use these to determine next step at each workflow checkpoint.
 | IMPLEMENT | Tests fail, fix <20 lines, matches plan | Fix and retry |
 | IMPLEMENT | Tests fail, fix contradicts plan | Back to PLAN |
 | IMPLEMENT | Tests fail, wrong root cause revealed | Back to INVESTIGATE |
-| REVIEW | All feedback dispositioned, reviewer approves | Proceed to COMMIT |
+| REVIEW | All feedback dispositioned, reviewer approves | Proceed to COMMIT AND PUSH |
 | REVIEW | ACCEPT-FIX items remain | Fix and request re-review |
 | REVIEW | Missing test coverage identified | Add tests (ACCEPT-FIX), re-review |
 | REVIEW | Design flaw found | Back to PLAN |
@@ -252,7 +252,7 @@ If in doubt whether something qualifies, create a follow-up issue instead of exp
 | **typescript-reviewer** | Type safety, TS best practices |
 | **cal-expert** | C/AL correctness, AL prevention |
 | **refactorer** | Code cleanup, pattern application |
-| **file-ops** | Git commits, branches, file management |
+| **file-ops** | Git commits, push to remote, branches, file management |
 
 ### Opus (Hard - deep analysis)
 | Agent | Purpose |
@@ -260,6 +260,21 @@ If in doubt whether something qualifies, create a follow-up issue instead of exp
 | **code-detective** | Root cause investigation, impact analysis |
 | **adversarial-reviewer** | Find bugs, edge cases, security issues |
 | **architect** | Design decisions, architectural reviews |
+
+---
+
+## Known Issues & Workarounds
+
+**Agent Resume Failure (TEMPORARY WORKAROUND)**
+
+**Symptom:** Architect agent (and possibly others) returns 0 tokens with no reply when resumed during review/revision cycles.
+
+**Workaround:** If an agent returns 0 tokens on resume:
+1. Retry the same task WITHOUT the resume parameter (start fresh)
+2. Provide full context in the prompt (investigation findings, plan decisions, current step) since the agent won't have conversation history
+3. Continue the workflow normally
+
+**When to remove this section:** If you notice agents consistently resume successfully without failures, ask Klaus whether this workaround is still needed. This is a temporary measure until the underlying bug is resolved.
 
 ---
 
