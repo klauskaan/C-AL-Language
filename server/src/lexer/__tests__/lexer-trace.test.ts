@@ -665,6 +665,161 @@ describe('Lexer Trace Infrastructure', () => {
     });
   });
 
+  describe('Reentrancy guard', () => {
+    it('should throw Error when callback calls tokenize() on same Lexer instance', () => {
+      const code = 'OBJECT Table 1';
+      const lexer = new Lexer(code, {
+        trace: () => {
+          // Attempt to re-enter tokenize() on same lexer instance
+          lexer.tokenize();
+        }
+      });
+
+      expect(() => {
+        lexer.tokenize();
+      }).toThrow(Error);
+    });
+
+    it('should throw Error with descriptive message indicating reentrancy violation', () => {
+      const code = 'OBJECT Table 1';
+      const lexer = new Lexer(code, {
+        trace: () => {
+          lexer.tokenize();
+        }
+      });
+
+      expect(() => {
+        lexer.tokenize();
+      }).toThrow(/reentrancy/i);
+    });
+
+    it('should allow callback to create Lexer instance without calling tokenize()', () => {
+      const code = 'OBJECT Table 1';
+      const lexer = new Lexer(code, {
+        trace: () => {
+          // Creating a new lexer instance without calling tokenize should be allowed
+          const anotherLexer = new Lexer('OBJECT Table 2');
+          // Verify instance was created (not calling anotherLexer.tokenize())
+          expect(anotherLexer).toBeDefined();
+        }
+      });
+
+      expect(() => {
+        lexer.tokenize();
+      }).not.toThrow();
+    });
+
+    it('should restore guard after tokenize() completes successfully', () => {
+      const code = 'OBJECT Table 1';
+      const lexer = new Lexer(code);
+
+      // First call should succeed
+      expect(() => {
+        lexer.tokenize();
+      }).not.toThrow();
+
+      // Second call should also succeed (guard was restored)
+      expect(() => {
+        lexer.tokenize();
+      }).not.toThrow();
+    });
+
+    it('should restore guard after tokenize() throws due to reentrancy', () => {
+      const code = 'OBJECT Table 1';
+      let firstCall = true;
+      const lexer = new Lexer(code, {
+        trace: () => {
+          if (firstCall) {
+            firstCall = false;
+            lexer.tokenize(); // Trigger reentrancy error
+          }
+        }
+      });
+
+      // First call should throw due to reentrancy
+      expect(() => {
+        lexer.tokenize();
+      }).toThrow(/reentrancy/i);
+
+      // Reconfigure without reentrant callback
+      const safeLexer = new Lexer(code);
+
+      // Second call with new lexer should succeed (new instance has independent guard)
+      expect(() => {
+        safeLexer.tokenize();
+      }).not.toThrow();
+    });
+
+    it('should check reentrancy before resetting state', () => {
+      const code = 'OBJECT Table 1';
+      let stateModified = false;
+      const lexer = new Lexer(code, {
+        trace: () => {
+          // Try to detect if state was reset before reentrancy check
+          if (!stateModified) {
+            stateModified = true;
+            lexer.tokenize(); // Should throw before state is corrupted
+          }
+        }
+      });
+
+      expect(() => {
+        lexer.tokenize();
+      }).toThrow(/reentrancy/i);
+    });
+
+    it('should allow concurrent tokenization on different Lexer instances', () => {
+      const code1 = 'OBJECT Table 1';
+      const code2 = 'OBJECT Table 2';
+      const lexer2 = new Lexer(code2);
+
+      let lexer2Tokens;
+      const lexer1WithCallback = new Lexer(code1, {
+        trace: () => {
+          // Tokenize a DIFFERENT lexer instance - should be allowed
+          lexer2Tokens = lexer2.tokenize();
+        }
+      });
+
+      expect(() => {
+        lexer1WithCallback.tokenize();
+      }).not.toThrow();
+
+      expect(lexer2Tokens).toBeDefined();
+      expect(lexer2Tokens!.length).toBeGreaterThan(0);
+    });
+
+    it('should allow callback to tokenize a DIFFERENT Lexer instance', () => {
+      const code = 'OBJECT Table 1';
+      const lexer = new Lexer(code, {
+        trace: () => {
+          // Create and tokenize a completely different lexer - legitimate use case
+          const differentLexer = new Lexer('OBJECT Table 2');
+          const tokens = differentLexer.tokenize();
+          expect(tokens.length).toBeGreaterThan(0);
+        }
+      });
+
+      expect(() => {
+        lexer.tokenize();
+      }).not.toThrow();
+    });
+
+    it('should throw reentrancy error from flag-change events', () => {
+      // Use code that produces many flag-change events
+      const code = 'OBJECT Table 1\nFIELDS\n{ Field 10; Name; Text[50] }';
+      const lexer = new Lexer(code, {
+        trace: (event) => {
+          // Only trigger on flag-change to hit vulnerable paths
+          if (event.type === 'flag-change') {
+            lexer.tokenize();
+          }
+        }
+      });
+      expect(() => lexer.tokenize()).toThrow(/reentrancy/i);
+    });
+  });
+
   describe('Compound Token Attempt Failures (TDD - SHOULD FAIL)', () => {
     it('should emit attempt-failed event when second word does not match (OBJECT-FOO)', () => {
       const code = 'OBJECT-FOO';

@@ -142,14 +142,162 @@ export interface LexerOptions {
    * Optional trace callback for debugging.
    * When provided, receives events for every lexer decision.
    *
+   * REENTRANCY: Callbacks MUST NOT call `tokenize()` on the same Lexer instance
+   * that is currently executing. Violations throw an error immediately.
+   *
+   * EXCEPTION HANDLING: If the callback throws (except for reentrancy violations),
+   * it will be disabled for the remainder of tokenization (fail-once behavior).
+   * Handle errors within your callback if you need them reported.
+   *
    * PERFORMANCE: The callback is only invoked when provided.
    * No object construction occurs when tracing is disabled.
+   *
+   * @see TraceCallback for full documentation and examples
    */
   trace?: TraceCallback;
 }
 
 /**
- * Callback function type for trace events.
+ * Callback function type for trace events emitted during lexical analysis.
+ *
+ * REENTRANCY CONSTRAINTS
+ * ----------------------
+ * Callbacks MUST NOT call `tokenize()` on the SAME Lexer instance that is currently
+ * executing tokenization. This is enforced with a runtime guard that throws an error
+ * if violated.
+ *
+ * The reentrancy guard is INSTANCE-BASED, not global. Multiple Lexer instances can
+ * tokenize concurrently, even within callbacks from other instances.
+ *
+ * PROHIBITED OPERATIONS
+ * ---------------------
+ * - Calling `tokenize()` on the same Lexer instance (throws error)
+ * - Modifying the Lexer's source text during tokenization (undefined behavior)
+ *
+ * PERMITTED OPERATIONS
+ * --------------------
+ * - Creating new Lexer instances and calling `tokenize()` on them
+ * - Calling `tokenize()` on DIFFERENT Lexer instances (concurrent tokenization)
+ * - Logging events to console, files, or streams
+ * - Accumulating events in arrays or other data structures
+ * - Performing synchronous analysis of event data
+ * - Reading (but not modifying) the Lexer's public state
+ *
+ * SAME VS DIFFERENT INSTANCE BEHAVIOR
+ * -----------------------------------
+ * ```typescript
+ * const lexer1 = new Lexer('source1');
+ * const lexer2 = new Lexer('source2');
+ *
+ * // ❌ INVALID: Reentrancy on same instance
+ * const lexer1 = new Lexer('source1', {
+ *   trace: (event) => {
+ *     lexer1.tokenize(); // THROWS ERROR
+ *   }
+ * });
+ * lexer1.tokenize();
+ *
+ * // ✅ VALID: Different instance
+ * const lexer1 = new Lexer('source1', {
+ *   trace: (event) => {
+ *     lexer2.tokenize(); // OK - different instance
+ *   }
+ * });
+ * lexer1.tokenize();
+ *
+ * // ✅ VALID: New instance
+ * const lexer1 = new Lexer('source1', {
+ *   trace: (event) => {
+ *     const temp = new Lexer('temp source');
+ *     temp.tokenize(); // OK - new instance
+ *   }
+ * });
+ * lexer1.tokenize();
+ * ```
+ *
+ * SYNCHRONOUS EXECUTION
+ * ---------------------
+ * Callbacks SHOULD complete synchronously. Asynchronous operations (promises,
+ * callbacks, timers) are not awaited by the lexer and may not complete before
+ * tokenization finishes.
+ *
+ * If you need async operations:
+ * - Collect events in the callback (synchronously)
+ * - Process them asynchronously after `tokenize()` returns
+ *
+ * EXCEPTION HANDLING
+ * ------------------
+ * - Reentrancy violations: Error is thrown immediately, halting tokenization
+ * - Other exceptions: Callback is disabled for the remainder of tokenization
+ * - Disabled callbacks: No further events are delivered, tokenization continues
+ *
+ * If your callback throws (except for reentrancy violations), it will be silently
+ * disabled to prevent cascading failures. Ensure your callback handles its own
+ * errors if you need them reported.
+ *
+ * EXAMPLES
+ * --------
+ *
+ * Example 1: Simple event logging (CORRECT)
+ * ```typescript
+ * const events: TraceEvent[] = [];
+ * const lexer = new Lexer(source, {
+ *   trace: (event) => {
+ *     events.push(event); // Safe: accumulating data
+ *     console.log(event.type); // Safe: logging
+ *   }
+ * });
+ * lexer.tokenize();
+ * ```
+ *
+ * Example 2: Analyzing nested code (CORRECT)
+ * ```typescript
+ * const lexer = new Lexer(source, {
+ *   trace: (event) => {
+ *     if (event.type === 'token' && event.data.value === 'BEGIN') {
+ *       // Safe: new instance for nested analysis
+ *       const nestedLexer = new Lexer(nestedSource);
+ *       nestedLexer.tokenize();
+ *     }
+ *   }
+ * });
+ * lexer.tokenize();
+ * ```
+ *
+ * Example 3: Reentrancy violation (INCORRECT)
+ * ```typescript
+ * const lexer = new Lexer(source, {
+ *   trace: (event) => {
+ *     // ❌ ERROR: Cannot call tokenize() on same instance
+ *     lexer.tokenize();
+ *     // Throws: "Lexer reentrancy violation: Cannot call tokenize()
+ *     //          while tokenization is already in progress on this instance"
+ *   }
+ * });
+ * lexer.tokenize();
+ * ```
+ *
+ * Example 4: Exception handling (CORRECT)
+ * ```typescript
+ * const lexer = new Lexer(source, {
+ *   trace: (event) => {
+ *     try {
+ *       // Your analysis that might throw
+ *       analyzeEvent(event);
+ *     } catch (error) {
+ *       // Handle error to prevent callback from being disabled
+ *       console.error('Analysis failed:', error);
+ *     }
+ *   }
+ * });
+ * lexer.tokenize();
+ * ```
+ *
+ * @param event - The trace event containing type, position, and event-specific data
+ *
+ * @see TraceEvent for event structure
+ * @see TraceEventType for available event types
+ * @see LexerOptions.trace for how to provide a callback
  */
 export type TraceCallback = (event: TraceEvent) => void;
 
@@ -245,6 +393,12 @@ export class Lexer {
    */
   private traceCallbackDisabled: boolean = false;
 
+  /**
+   * Reentrancy guard to prevent tokenize() from being called recursively on this instance.
+   * This typically occurs when a trace callback calls tokenize() on the same Lexer instance.
+   */
+  private isTokenizing: boolean = false;
+
   // Column position tracking for field definitions
   private currentSectionType: 'FIELDS' | 'KEYS' | 'CONTROLS' | 'ELEMENTS' | 'DATAITEMS' | 'ACTIONS' | 'DATASET' | 'REQUESTPAGE' | 'LABELS' | null = null;
   private fieldDefColumn: FieldDefColumn = FieldDefColumn.NONE;
@@ -263,61 +417,73 @@ export class Lexer {
    * Tokenize the entire input
    */
   public tokenize(): Token[] {
-    // Reset trace callback state for fresh tokenization
-    this.traceCallbackDisabled = false;
-
-    this.tokens.length = 0;
-    this.position = 0;
-    this.line = 1;
-    this.column = 1;
-    this.contextStack.length = 0;
-    this.contextStack.push(LexerContext.NORMAL);
-    this.braceDepth = 0;
-    // Reset property tracking state
-    this.lastPropertyName = '';
-    this.inPropertyValue = false;
-    this.bracketDepth = 0;
-    this.lastWasSectionKeyword = false;
-    // Reset column tracking state
-    this.currentSectionType = null;
-    this.fieldDefColumn = FieldDefColumn.NONE;
-    // Reset context underflow flag
-    this.contextUnderflowDetected = false;
-    // Reset object token index
-    this.objectTokenIndex = -1;
-
-    while (this.position < this.input.length) {
-      this.scanToken();
+    if (this.isTokenizing) {
+      throw new Error(
+        'Lexer reentrancy violation: Cannot call tokenize() while tokenization is already in progress on this instance. ' +
+        'This typically occurs when a trace callback calls tokenize() on the same Lexer instance. ' +
+        'To analyze other code within a callback, create a new Lexer instance instead.'
+      );
     }
+    this.isTokenizing = true;
 
-    // Clean up any remaining contexts at end of tokenization
-    // Well-formed C/AL objects should end with context stack = ['NORMAL']
-    // For well-formed code: OBJECT_LEVEL and outer SECTION_LEVEL are structural contexts
-    // that don't get explicitly popped, so clean them up here
-    // For malformed code: inner SECTION_LEVELs (unclosed sections) will remain and trigger
-    // STACK_MISMATCH violations in isCleanExit()
-    while (this.contextStack.length > 1 &&
-           (this.contextStack[this.contextStack.length - 1] === LexerContext.OBJECT_LEVEL ||
-            (this.contextStack[this.contextStack.length - 1] === LexerContext.SECTION_LEVEL &&
-             this.braceDepth === 0))) {
-      this.popContext();
-    }
+    try {
+      // Reset trace callback state for fresh tokenization
+      this.traceCallbackDisabled = false;
 
-    if (this.traceCallback && !this.traceCallbackDisabled) {
-      try {
-        this.traceCallback({
-          type: 'token',
-          position: { line: this.line, column: this.column, offset: this.position },
-          data: { tokenType: 'EOF', value: '' }
-        });
-      } catch (error) {
-        this.traceCallbackDisabled = true;
-        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+      this.tokens.length = 0;
+      this.position = 0;
+      this.line = 1;
+      this.column = 1;
+      this.contextStack.length = 0;
+      this.contextStack.push(LexerContext.NORMAL);
+      this.braceDepth = 0;
+      // Reset property tracking state
+      this.lastPropertyName = '';
+      this.inPropertyValue = false;
+      this.bracketDepth = 0;
+      this.lastWasSectionKeyword = false;
+      // Reset column tracking state
+      this.currentSectionType = null;
+      this.fieldDefColumn = FieldDefColumn.NONE;
+      // Reset context underflow flag
+      this.contextUnderflowDetected = false;
+      // Reset object token index
+      this.objectTokenIndex = -1;
+
+      while (this.position < this.input.length) {
+        this.scanToken();
       }
-    }
 
-    this.tokens.push(this.createToken(TokenType.EOF, '', this.position, this.position));
-    return this.tokens;
+      // Clean up any remaining contexts at end of tokenization
+      // Well-formed C/AL objects should end with context stack = ['NORMAL']
+      // For well-formed code: OBJECT_LEVEL and outer SECTION_LEVEL are structural contexts
+      // that don't get explicitly popped, so clean them up here
+      // For malformed code: inner SECTION_LEVELs (unclosed sections) will remain and trigger
+      // STACK_MISMATCH violations in isCleanExit()
+      while (this.contextStack.length > 1 &&
+             (this.contextStack[this.contextStack.length - 1] === LexerContext.OBJECT_LEVEL ||
+              (this.contextStack[this.contextStack.length - 1] === LexerContext.SECTION_LEVEL &&
+               this.braceDepth === 0))) {
+        this.popContext();
+      }
+
+      if (this.traceCallback && !this.traceCallbackDisabled) {
+        try {
+          this.traceCallback({
+            type: 'token',
+            position: { line: this.line, column: this.column, offset: this.position },
+            data: { tokenType: 'EOF', value: '' }
+          });
+        } catch (error) {
+          this.handleTraceCallbackError(error);
+        }
+      }
+
+      this.tokens.push(this.createToken(TokenType.EOF, '', this.position, this.position));
+      return this.tokens;
+    } finally {
+      this.isTokenizing = false;
+    }
   }
 
   /**
@@ -338,6 +504,20 @@ export class Lexer {
   }
 
   /**
+   * Handle errors from trace callback invocations.
+   * Reentrancy violations are rethrown to halt tokenization.
+   * Other errors disable the callback for the remainder of tokenization.
+   */
+  private handleTraceCallbackError(error: unknown): void {
+    // Reentrancy violations should propagate and halt tokenization
+    if (error instanceof Error && error.message.includes('reentrancy violation')) {
+      throw error;
+    }
+    this.traceCallbackDisabled = true;
+    console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+  }
+
+  /**
    * Push a new context onto the stack
    */
   private pushContext(context: LexerContext): void {
@@ -352,8 +532,7 @@ export class Lexer {
           data: { from, to: this.contextToString(context) }
         });
       } catch (error) {
-        this.traceCallbackDisabled = true;
-        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+        this.handleTraceCallbackError(error);
       }
     }
   }
@@ -375,8 +554,7 @@ export class Lexer {
             data: { from, to: this.contextToString(this.getCurrentContext()) }
           });
         } catch (error) {
-          this.traceCallbackDisabled = true;
-          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+          this.handleTraceCallbackError(error);
         }
       }
     } else {
@@ -503,8 +681,7 @@ export class Lexer {
           data: { flag: 'braceDepth', from: oldBraceDepth, to: this.braceDepth }
         });
       } catch (error) {
-        this.traceCallbackDisabled = true;
-        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+        this.handleTraceCallbackError(error);
       }
     }
     this.addToken(TokenType.LeftBrace, '{', startPos, this.position, startLine, startColumn);
@@ -537,8 +714,7 @@ export class Lexer {
             data: { flag: 'fieldDefColumn', from: 'NONE', to: 'COL_1' }
           });
         } catch (error) {
-          this.traceCallbackDisabled = true;
-          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+          this.handleTraceCallbackError(error);
         }
       }
     }
@@ -571,8 +747,7 @@ export class Lexer {
             data: { flag: 'braceDepth', from: oldBraceDepth, to: this.braceDepth }
           });
         } catch (error) {
-          this.traceCallbackDisabled = true;
-          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+          this.handleTraceCallbackError(error);
         }
       }
       this.addToken(TokenType.RightBrace, '}', startPos, this.position, startLine, startColumn);
@@ -591,8 +766,7 @@ export class Lexer {
               data: { flag: 'currentSectionType', from: oldSectionType, to: null }
             });
           } catch (error) {
-            this.traceCallbackDisabled = true;
-            console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+            this.handleTraceCallbackError(error);
           }
         }
       }
@@ -613,8 +787,7 @@ export class Lexer {
               data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: false }
             });
           } catch (error) {
-            this.traceCallbackDisabled = true;
-            console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+            this.handleTraceCallbackError(error);
           }
         }
         if (oldLastPropertyName !== '') {
@@ -625,8 +798,7 @@ export class Lexer {
               data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: '' }
             });
           } catch (error) {
-            this.traceCallbackDisabled = true;
-            console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+            this.handleTraceCallbackError(error);
           }
         }
         if (oldBracketDepth !== 0) {
@@ -637,8 +809,7 @@ export class Lexer {
               data: { flag: 'bracketDepth', from: oldBracketDepth, to: 0 }
             });
           } catch (error) {
-            this.traceCallbackDisabled = true;
-            console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+            this.handleTraceCallbackError(error);
           }
         }
       }
@@ -654,8 +825,7 @@ export class Lexer {
             data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: 'NONE' }
           });
         } catch (error) {
-          this.traceCallbackDisabled = true;
-          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+          this.handleTraceCallbackError(error);
         }
       }
 
@@ -1030,8 +1200,7 @@ export class Lexer {
             data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: value }
           });
         } catch (error) {
-          this.traceCallbackDisabled = true;
-          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+          this.handleTraceCallbackError(error);
         }
       }
     }
@@ -1050,8 +1219,7 @@ export class Lexer {
             data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: false }
           });
         } catch (error) {
-          this.traceCallbackDisabled = true;
-          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+          this.handleTraceCallbackError(error);
         }
       }
     }
@@ -1082,8 +1250,7 @@ export class Lexer {
                 data: { flag: 'objectTokenIndex', from: oldObjectTokenIndex, to: this.objectTokenIndex }
               });
             } catch (error) {
-              this.traceCallbackDisabled = true;
-              console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              this.handleTraceCallbackError(error);
             }
           }
         }
@@ -1115,8 +1282,7 @@ export class Lexer {
                 data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeywordFields, to: true }
               });
             } catch (error) {
-              this.traceCallbackDisabled = true;
-              console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              this.handleTraceCallbackError(error);
             }
           }
           if (oldCurrentSectionTypeFields !== 'FIELDS') {
@@ -1127,8 +1293,7 @@ export class Lexer {
                 data: { flag: 'currentSectionType', from: oldCurrentSectionTypeFields, to: 'FIELDS' }
               });
             } catch (error) {
-              this.traceCallbackDisabled = true;
-              console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              this.handleTraceCallbackError(error);
             }
           }
         }
@@ -1158,8 +1323,7 @@ export class Lexer {
                   data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
             if (oldCurrentSectionType !== 'KEYS') {
@@ -1170,8 +1334,7 @@ export class Lexer {
                   data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'KEYS' }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
           }
@@ -1202,8 +1365,7 @@ export class Lexer {
                   data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
             if (oldCurrentSectionType !== 'CONTROLS') {
@@ -1214,8 +1376,7 @@ export class Lexer {
                   data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'CONTROLS' }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
           }
@@ -1246,8 +1407,7 @@ export class Lexer {
                   data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
             if (oldCurrentSectionType !== 'ELEMENTS') {
@@ -1258,8 +1418,7 @@ export class Lexer {
                   data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'ELEMENTS' }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
           }
@@ -1290,8 +1449,7 @@ export class Lexer {
                   data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
             if (oldCurrentSectionType !== 'DATAITEMS') {
@@ -1302,8 +1460,7 @@ export class Lexer {
                   data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'DATAITEMS' }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
           }
@@ -1334,8 +1491,7 @@ export class Lexer {
                   data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
             if (oldCurrentSectionType !== 'ACTIONS') {
@@ -1346,8 +1502,7 @@ export class Lexer {
                   data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'ACTIONS' }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
           }
@@ -1377,8 +1532,7 @@ export class Lexer {
                   data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
             if (oldCurrentSectionType !== 'DATASET') {
@@ -1389,8 +1543,7 @@ export class Lexer {
                   data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'DATASET' }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
           }
@@ -1420,8 +1573,7 @@ export class Lexer {
                   data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
             if (oldCurrentSectionType !== 'REQUESTPAGE') {
@@ -1432,8 +1584,7 @@ export class Lexer {
                   data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'REQUESTPAGE' }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
           }
@@ -1463,8 +1614,7 @@ export class Lexer {
                   data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
             if (oldCurrentSectionType !== 'LABELS') {
@@ -1475,8 +1625,7 @@ export class Lexer {
                   data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'LABELS' }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
           }
@@ -1517,8 +1666,7 @@ export class Lexer {
                   data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
             if (oldCurrentSectionType !== null) {
@@ -1529,8 +1677,7 @@ export class Lexer {
                   data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: null }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
           }
@@ -1662,8 +1809,7 @@ export class Lexer {
                 data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.inPropertyValue }
               });
             } catch (error) {
-              this.traceCallbackDisabled = true;
-              console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              this.handleTraceCallbackError(error);
             }
           }
         }
@@ -1724,8 +1870,7 @@ export class Lexer {
                   data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.inPropertyValue }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
             if (oldLastPropertyName !== this.lastPropertyName) {
@@ -1736,8 +1881,7 @@ export class Lexer {
                   data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: this.lastPropertyName }
                 });
               } catch (error) {
-                this.traceCallbackDisabled = true;
-                console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+                this.handleTraceCallbackError(error);
               }
             }
           }
@@ -1768,8 +1912,7 @@ export class Lexer {
                 data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: this.fieldDefColumnToString(this.fieldDefColumn) }
               });
             } catch (error) {
-              this.traceCallbackDisabled = true;
-              console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              this.handleTraceCallbackError(error);
             }
           }
         }
@@ -1797,8 +1940,7 @@ export class Lexer {
                 data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.bracketDepth }
               });
             } catch (error) {
-              this.traceCallbackDisabled = true;
-              console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              this.handleTraceCallbackError(error);
             }
           }
         }
@@ -1817,8 +1959,7 @@ export class Lexer {
                 data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.bracketDepth }
               });
             } catch (error) {
-              this.traceCallbackDisabled = true;
-              console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+              this.handleTraceCallbackError(error);
             }
           }
         }
@@ -1851,8 +1992,7 @@ export class Lexer {
           data: { reason: 'line-comment', length: this.position - startPos }
         });
       } catch (error) {
-        this.traceCallbackDisabled = true;
-        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+        this.handleTraceCallbackError(error);
       }
     }
   }
@@ -1889,8 +2029,7 @@ export class Lexer {
             data: { reason: 'block-comment', length: this.position - startPos }
           });
         } catch (error) {
-          this.traceCallbackDisabled = true;
-          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+          this.handleTraceCallbackError(error);
         }
       }
     }
@@ -1930,8 +2069,7 @@ export class Lexer {
             data: { reason: 'c-style-comment', length: this.position - startPos }
           });
         } catch (error) {
-          this.traceCallbackDisabled = true;
-          console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+          this.handleTraceCallbackError(error);
         }
       }
     }
@@ -1974,8 +2112,7 @@ export class Lexer {
           data: { reason: 'whitespace', length: this.position - startPos }
         });
       } catch (error) {
-        this.traceCallbackDisabled = true;
-        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+        this.handleTraceCallbackError(error);
       }
     }
   }
@@ -2002,8 +2139,7 @@ export class Lexer {
           data: { reason: 'newline', length: this.position - startPos }
         });
       } catch (error) {
-        this.traceCallbackDisabled = true;
-        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+        this.handleTraceCallbackError(error);
       }
     }
   }
@@ -2144,8 +2280,7 @@ export class Lexer {
           }
         });
       } catch (error) {
-        this.traceCallbackDisabled = true;
-        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+        this.handleTraceCallbackError(error);
       }
     }
 
@@ -2172,8 +2307,7 @@ export class Lexer {
           data: { tokenType: type, value }
         });
       } catch (error) {
-        this.traceCallbackDisabled = true;
-        console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+        this.handleTraceCallbackError(error);
       }
     }
 
