@@ -129,7 +129,11 @@ export interface LexerContextState {
   currentSectionType: SectionType | null;
   /** Whether a context stack underflow was detected during tokenization */
   contextUnderflowDetected: boolean;
-  /** Current object type being parsed (TABLE, CODEUNIT, PAGE, etc.) or null if not in object */
+  /**
+   * Type of the first object in the file (TABLE, CODEUNIT, PAGE, etc.) or null if no OBJECT keyword found.
+   * For files with multiple objects, this reflects the first object only.
+   * When called during tokenization, may be null until after the type token is processed.
+   */
   objectType: 'TABLE' | 'CODEUNIT' | 'PAGE' | 'REPORT' | 'QUERY' | 'XMLPORT' | 'MENUSUITE' | null;
 }
 
