@@ -133,6 +133,11 @@ export interface LexerContextState {
    * Type of the first object in the file (TABLE, CODEUNIT, PAGE, etc.) or null if no OBJECT keyword found.
    * For files with multiple objects, this reflects the first object only.
    * When called during tokenization, may be null until after the type token is processed.
+   *
+   * Known limitation: Returns null when curly braces appear between OBJECT and the type keyword
+   * (e.g., `OBJECT { ... } Table 18`) because the opening brace is interpreted as the object body
+   * delimiter rather than a comment. This edge case does not occur in practice as C/SIDE never
+   * generates exports with this pattern.
    */
   objectType: 'TABLE' | 'CODEUNIT' | 'PAGE' | 'REPORT' | 'QUERY' | 'XMLPORT' | 'MENUSUITE' | null;
 }

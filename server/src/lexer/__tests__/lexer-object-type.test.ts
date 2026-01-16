@@ -284,6 +284,33 @@ OBJECT Table 18 Second
 
       expect(state.objectType).toBeNull();
     });
+
+    it('should return null objectType when curly braces appear between OBJECT and type keyword', () => {
+      // Documented limitation: C/SIDE never generates this pattern
+      // The opening brace is interpreted as the object body delimiter,
+      // so the type token is not in the expected position (index 1 after OBJECT)
+      const code = `OBJECT { unexpected } Table 18 Customer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=010125D;
+  }
+  PROPERTIES
+  {
+    CaptionML=ENU=Customer;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+      const lexer = new Lexer(code);
+      lexer.tokenize();
+      const state = lexer.getContextState();
+
+      expect(state.objectType).toBeNull();
+    });
   });
 
   describe('Object Type Keywords in Code', () => {
