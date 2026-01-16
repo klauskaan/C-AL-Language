@@ -1,4 +1,5 @@
 import { Token, TokenType } from '../lexer/tokens';
+import { sanitizeContent } from '../utils/sanitize';
 import {
   CALDocument,
   ObjectDeclaration,
@@ -111,7 +112,7 @@ export class Parser {
     const value = parseInt(token.value, 10);
     if (isNaN(value)) {
       const contextMsg = context ? ` (expected ${context})` : '';
-      this.recordError(`Invalid integer value: ${token.value}${contextMsg}`, token);
+      this.recordError(`Invalid integer value: ${sanitizeContent(token.value)}${contextMsg}`, token);
       return 0;
     }
     return value;
@@ -1219,7 +1220,7 @@ export class Parser {
 
         if (isAttemptedVarDecl) {
           // Someone is trying to use a reserved keyword as a variable name
-          this.recordError(`Cannot use reserved keyword '${token.value}' as variable name`, token);
+          this.recordError(`Cannot use reserved keyword '${sanitizeContent(token.value)}' as variable name`, token);
 
           // Error recovery: skip past this bad declaration and continue
           while (!this.isAtEnd() &&
@@ -1425,7 +1426,7 @@ export class Parser {
       if (this.check(TokenType.Semicolon)) {
         this.advance();
       } else if (!this.check(TokenType.RightParen)) {
-        this.recordError(`Unexpected token '${this.peek().value}' in parameter list (expected ';' or ')')`, this.peek());
+        this.recordError(`Unexpected token '${sanitizeContent(this.peek().value)}' in parameter list (expected ';' or ')')`, this.peek());
         this.advance();
       }
     }
@@ -1611,7 +1612,7 @@ export class Parser {
   private parseEventQualifiedName(): string {
     // Validate that we have an identifier-like token
     if (!this.canBeUsedAsIdentifier()) {
-      this.recordError(`Expected identifier for event name, found '${this.peek().value}'`, this.peek());
+      this.recordError(`Expected identifier for event name, found '${sanitizeContent(this.peek().value)}'`, this.peek());
       // Try to recover by returning empty string
       return '';
     }
@@ -1697,7 +1698,7 @@ export class Parser {
       if (!isIdentifierUsage && nextToken?.type !== TokenType.Semicolon) {
         // It's not being used as an identifier - probably an access modifier
         this.recordError(
-          `AL-only access modifier '${token.value}' is not supported in C/AL. Use LOCAL instead.`,
+          `AL-only access modifier '${sanitizeContent(token.value)}' is not supported in C/AL. Use LOCAL instead.`,
           token
         );
         this.advance();
@@ -1714,7 +1715,7 @@ export class Parser {
     }
     if (token.type === TokenType.PreprocessorDirective) {
       this.recordError(
-        `AL-only preprocessor directive '${token.value}' is not supported in C/AL`,
+        `AL-only preprocessor directive '${sanitizeContent(token.value)}' is not supported in C/AL`,
         token
       );
       this.advance();
@@ -1748,7 +1749,7 @@ export class Parser {
       if (!isAssignmentOrCall && nextToken?.type !== TokenType.Semicolon) {
         // It's not an assignment, call, or semicolon - probably a construct declaration
         this.recordError(
-          `AL-only keyword '${token.value}' is not supported in C/AL`,
+          `AL-only keyword '${sanitizeContent(token.value)}' is not supported in C/AL`,
           token
         );
         this.advance();
@@ -2676,7 +2677,7 @@ export class Parser {
     }
     if (token.type === TokenType.PreprocessorDirective) {
       this.recordError(
-        `AL-only preprocessor directive '${token.value}' is not supported in C/AL`,
+        `AL-only preprocessor directive '${sanitizeContent(token.value)}' is not supported in C/AL`,
         token
       );
       this.advance();
@@ -2819,7 +2820,7 @@ export class Parser {
         this.check(TokenType.Then) ||
         this.check(TokenType.Do) ||
         this.check(TokenType.Of)) {
-      this.recordError(`Expected identifier after :: operator, got '${this.peek().value}'`, this.peek());
+      this.recordError(`Expected identifier after :: operator, got '${sanitizeContent(this.peek().value)}'`, this.peek());
       return expr;
     }
 
@@ -3283,7 +3284,7 @@ export class Parser {
   private consume(type: TokenType, message: string): Token {
     if (this.check(type)) return this.advance();
     const current = this.peek();
-    const enhancedMessage = `${message}, but found '${current.value}' (${current.type})`;
+    const enhancedMessage = `${message}, but found '${sanitizeContent(current.value)}' (${current.type})`;
     throw new ParseError(enhancedMessage, current);
   }
 
@@ -3376,7 +3377,7 @@ export class Parser {
     switch (token.type) {
       case TokenType.ALOnlyKeyword:
         this.recordError(
-          `AL-only keyword '${token.value}' is not supported in C/AL`,
+          `AL-only keyword '${sanitizeContent(token.value)}' is not supported in C/AL`,
           token
         );
         this.advance(); // Consume the token to continue parsing
@@ -3384,7 +3385,7 @@ export class Parser {
 
       case TokenType.ALOnlyAccessModifier:
         this.recordError(
-          `AL-only access modifier '${token.value}' is not supported in C/AL. Use LOCAL instead.`,
+          `AL-only access modifier '${sanitizeContent(token.value)}' is not supported in C/AL. Use LOCAL instead.`,
           token
         );
         this.advance(); // Consume the token to continue parsing
@@ -3400,7 +3401,7 @@ export class Parser {
 
       case TokenType.PreprocessorDirective:
         this.recordError(
-          `AL-only preprocessor directive '${token.value}' is not supported in C/AL`,
+          `AL-only preprocessor directive '${sanitizeContent(token.value)}' is not supported in C/AL`,
           token
         );
         this.advance(); // Consume the token to continue parsing

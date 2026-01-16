@@ -2286,8 +2286,13 @@ describe('Parser - Keywords as Variable Names', () => {
       const errors = parser.getErrors();
 
       expect(errors.length).toBeGreaterThan(0);
-      expect(errors[0].message).toContain("AL-only keyword 'ENUM'");
-      expect(errors[0].message).toContain('not supported in C/AL');
+      // Error message will be sanitized, check for key phrases
+      const enumError = errors.find(e =>
+        e.message.includes('AL-only keyword') ||
+        e.message.includes('[content sanitized')
+      );
+      expect(enumError).toBeDefined();
+      expect(enumError!.message).toContain('not supported in C/AL');
     });
 
     it('should reject INTERFACE declaration syntax', () => {
@@ -2300,8 +2305,13 @@ describe('Parser - Keywords as Variable Names', () => {
       const errors = parser.getErrors();
 
       expect(errors.length).toBeGreaterThan(0);
-      expect(errors[0].message).toContain("AL-only keyword 'INTERFACE'");
-      expect(errors[0].message).toContain('not supported in C/AL');
+      // Error message will be sanitized, check for key phrases
+      const interfaceError = errors.find(e =>
+        e.message.includes('AL-only keyword') ||
+        e.message.includes('[content sanitized')
+      );
+      expect(interfaceError).toBeDefined();
+      expect(interfaceError!.message).toContain('not supported in C/AL');
     });
 
     it('should reject INTERNAL access modifier on procedures', () => {
@@ -2325,7 +2335,11 @@ describe('Parser - Keywords as Variable Names', () => {
       const errors = parser.getErrors();
 
       expect(errors.length).toBeGreaterThan(0);
-      const internalError = errors.find(e => e.message.includes("'INTERNAL'"));
+      // Error message will be sanitized, check for key phrases
+      const internalError = errors.find(e =>
+        e.message.includes('AL-only access modifier') ||
+        e.message.includes('[content sanitized')
+      );
       expect(internalError).toBeDefined();
       expect(internalError!.message).toContain('AL-only access modifier');
       expect(internalError!.message).toContain('not supported in C/AL');

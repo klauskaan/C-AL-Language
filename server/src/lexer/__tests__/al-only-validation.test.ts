@@ -37,8 +37,10 @@ describe('AL-Only Feature Validation', () => {
         const code = `ENUM 50000 MyEnum { }`;
         const errors = getParseErrors(code);
         expect(errors.length).toBeGreaterThan(0);
-        expect(errors[0].message).toContain("AL-only keyword 'ENUM'");
+        expect(errors[0].message).toContain('AL-only keyword');
         expect(errors[0].message).toContain('not supported in C/AL');
+        // Token value is sanitized
+        expect(errors[0].message).toMatch(/\[content sanitized, \d+ chars\]/);
       });
 
       it('should tokenize ENUM as ALOnlyKeyword', () => {
@@ -54,8 +56,10 @@ describe('AL-Only Feature Validation', () => {
         const code = `INTERFACE IMyInterface { }`;
         const errors = getParseErrors(code);
         expect(errors.length).toBeGreaterThan(0);
-        expect(errors[0].message).toContain("AL-only keyword 'INTERFACE'");
+        expect(errors[0].message).toContain('AL-only keyword');
         expect(errors[0].message).toContain('not supported in C/AL');
+        // Token value is sanitized
+        expect(errors[0].message).toMatch(/\[content sanitized, \d+ chars\]/);
       });
 
       it('should tokenize INTERFACE as ALOnlyKeyword', () => {
@@ -73,7 +77,10 @@ describe('AL-Only Feature Validation', () => {
         const errors = getParseErrors(code);
         expect(errors.length).toBeGreaterThan(0);
         // EXTENDS should appear in errors
-        const extendsError = errors.find(e => e.message.includes("'EXTENDS'"));
+        const extendsError = errors.find(e =>
+          e.message.includes('AL-only keyword') ||
+          e.message.includes('[content sanitized')
+        );
         expect(extendsError).toBeDefined();
         expect(extendsError!.message).toContain('not supported in C/AL');
       });
@@ -93,7 +100,10 @@ describe('AL-Only Feature Validation', () => {
         const errors = getParseErrors(code);
         expect(errors.length).toBeGreaterThan(0);
         // IMPLEMENTS should appear in errors
-        const implementsError = errors.find(e => e.message.includes("'IMPLEMENTS'"));
+        const implementsError = errors.find(e =>
+          e.message.includes('AL-only keyword') ||
+          e.message.includes('[content sanitized')
+        );
         expect(implementsError).toBeDefined();
         expect(implementsError!.message).toContain('not supported in C/AL');
       });
@@ -120,7 +130,10 @@ describe('AL-Only Feature Validation', () => {
         const code = `${keyword} Test { }`;
         const errors = getParseErrors(code);
         expect(errors.length).toBeGreaterThan(0);
-        const keywordError = errors.find(e => e.message.includes(`'${keyword}'`));
+        const keywordError = errors.find(e =>
+          e.message.includes('AL-only keyword') ||
+          e.message.includes('[content sanitized')
+        );
         expect(keywordError).toBeDefined();
         expect(keywordError!.message).toContain('AL-only keyword');
         expect(keywordError!.message).toContain('not supported in C/AL');
@@ -193,7 +206,8 @@ describe('AL-Only Feature Validation', () => {
         const code = 'ENUM Test { }';
         const errors = getParseErrors(code);
         expect(errors.length).toBeGreaterThan(0);
-        expect(errors[0].message).toContain("'ENUM'");
+        // Token value is sanitized
+        expect(errors[0].message).toMatch(/\[content sanitized, \d+ chars\]/);
       });
 
       it('should mention C/AL in error message', () => {
@@ -263,7 +277,10 @@ describe('AL-Only Feature Validation', () => {
 }`;
         const errors = getParseErrors(code);
         expect(errors.length).toBeGreaterThan(0);
-        const internalError = errors.find(e => e.message.includes("'INTERNAL'"));
+        const internalError = errors.find(e =>
+          e.message.includes('AL-only access modifier') ||
+          e.message.includes('[content sanitized')
+        );
         expect(internalError).toBeDefined();
         expect(internalError!.message).toContain('AL-only access modifier');
         expect(internalError!.message).toContain('not supported in C/AL');
@@ -293,7 +310,10 @@ describe('AL-Only Feature Validation', () => {
 }`;
         const errors = getParseErrors(code);
         expect(errors.length).toBeGreaterThan(0);
-        const protectedError = errors.find(e => e.message.includes("'PROTECTED'"));
+        const protectedError = errors.find(e =>
+          e.message.includes('AL-only access modifier') ||
+          e.message.includes('[content sanitized')
+        );
         expect(protectedError).toBeDefined();
         expect(protectedError!.message).toContain('AL-only access modifier');
         expect(protectedError!.message).toContain('not supported in C/AL');
@@ -323,7 +343,10 @@ describe('AL-Only Feature Validation', () => {
 }`;
         const errors = getParseErrors(code);
         expect(errors.length).toBeGreaterThan(0);
-        const publicError = errors.find(e => e.message.includes("'PUBLIC'"));
+        const publicError = errors.find(e =>
+          e.message.includes('AL-only access modifier') ||
+          e.message.includes('[content sanitized')
+        );
         expect(publicError).toBeDefined();
         expect(publicError!.message).toContain('AL-only access modifier');
         expect(publicError!.message).toContain('not supported in C/AL');
@@ -362,7 +385,10 @@ describe('AL-Only Feature Validation', () => {
 }`;
         const errors = getParseErrors(code);
         expect(errors.length).toBeGreaterThan(0);
-        const modifierError = errors.find(e => e.message.includes(`'${modifier}'`));
+        const modifierError = errors.find(e =>
+          e.message.includes('AL-only access modifier') ||
+          e.message.includes('[content sanitized')
+        );
         expect(modifierError).toBeDefined();
         expect(modifierError!.message).toContain('AL-only access modifier');
         expect(modifierError!.message).toContain('not supported in C/AL');
@@ -478,7 +504,10 @@ END;`;
 }`;
         const errors = getParseErrors(code);
         expect(errors.length).toBeGreaterThan(0);
-        const internalError = errors.find(e => e.message.includes("'INTERNAL'"));
+        const internalError = errors.find(e =>
+          e.message.includes('AL-only access modifier') ||
+          e.message.includes('[content sanitized')
+        );
         expect(internalError).toBeDefined();
         expect(internalError!.message).toContain('Use LOCAL instead');
       });
@@ -487,7 +516,10 @@ END;`;
         const code = `PUBLIC PROCEDURE Test();`;
         const errors = getParseErrors(code);
         expect(errors.length).toBeGreaterThan(0);
-        const publicError = errors.find(e => e.message.includes('PUBLIC'));
+        const publicError = errors.find(e =>
+          e.message.includes('AL-only access modifier') ||
+          e.message.includes('[content sanitized')
+        );
         expect(publicError).toBeDefined();
         expect(publicError!.message).toContain('C/AL');
       });
@@ -496,7 +528,10 @@ END;`;
         const code = `PROTECTED PROCEDURE Test();`;
         const errors = getParseErrors(code);
         expect(errors.length).toBeGreaterThan(0);
-        const protectedError = errors.find(e => e.message.includes('PROTECTED'));
+        const protectedError = errors.find(e =>
+          e.message.includes('AL-only access modifier') ||
+          e.message.includes('[content sanitized')
+        );
         expect(protectedError).toBeDefined();
         expect(protectedError!.message).toContain('AL-only');
       });
@@ -992,7 +1027,8 @@ END;`;
         const code = 'eNuM Test { }';
         const errors = getParseErrors(code);
         expect(errors.length).toBeGreaterThan(0);
-        expect(errors[0].message).toContain("'eNuM'");
+        // Token value is sanitized
+        expect(errors[0].message).toMatch(/\[content sanitized, \d+ chars\]/);
       });
     });
 
