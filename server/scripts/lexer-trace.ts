@@ -52,6 +52,11 @@ if (!existsSync(outputDir)) {
 const outputPath = join(outputDir, basename(filePath).replace(/\.[^.]+$/, '-trace.txt'));
 const stream: WriteStream = createWriteStream(outputPath);
 
+stream.on('error', (err) => {
+  console.error(`Failed to write trace file: ${err.message}`);
+  process.exit(1);
+});
+
 // Write confidentiality warning banner
 stream.write('<!-- WARNING: This file contains content from proprietary NAV objects.\n');
 stream.write('     DO NOT commit to version control. -->\n\n');
