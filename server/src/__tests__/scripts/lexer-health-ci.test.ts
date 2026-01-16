@@ -174,6 +174,11 @@ describe('Lexer Health Script - compareToBaseline()', () => {
 describe('Lexer Health Script - runCICheck()', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Default mock for readdirSync - returns non-empty array of .TXT files
+    // Tests that specifically need empty directory behavior will override this
+    const mockReaddirSync = jest.requireMock('fs').readdirSync;
+    mockReaddirSync.mockReturnValue(['FILE1.TXT', 'FILE2.TXT']);
   });
 
   describe('test/REAL directory handling', () => {
@@ -367,6 +372,52 @@ describe('Lexer Health Script - runCICheck()', () => {
 
       // Exit code 2 for configuration/setup errors
       expect(result.exitCode).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('empty directory handling', () => {
+    it('should return exitCode 2 when test/REAL exists but contains no .TXT files', () => {
+      // Mock test/REAL exists, baseline exists
+      (existsSync as jest.Mock).mockImplementation((path: string) => {
+        if (path.includes('test/REAL')) return true;
+        if (path.includes('baseline.json')) return true;
+        return false;
+      });
+
+      // Mock readdirSync to return empty array (no files)
+      const mockReaddirSync = jest.requireMock('fs').readdirSync;
+      mockReaddirSync.mockReturnValue([]);
+
+      const result = runCICheck();
+
+      expect(result.exitCode).toBe(2);
+      expect(result.skipped).toBe(false);
+      expect(result.comparison).not.toBeNull();
+      if (result.comparison) {
+        expect(result.comparison.message).toMatch(/empty|no.*files/i);
+      }
+    });
+
+    it('should return exitCode 2 when directory has only non-.TXT files', () => {
+      // Mock test/REAL exists, baseline exists
+      (existsSync as jest.Mock).mockImplementation((path: string) => {
+        if (path.includes('test/REAL')) return true;
+        if (path.includes('baseline.json')) return true;
+        return false;
+      });
+
+      // Mock readdirSync to return only non-.TXT files
+      const mockReaddirSync = jest.requireMock('fs').readdirSync;
+      mockReaddirSync.mockReturnValue(['README.md', 'config.json', 'image.png']);
+
+      const result = runCICheck();
+
+      expect(result.exitCode).toBe(2);
+      expect(result.skipped).toBe(false);
+      expect(result.comparison).not.toBeNull();
+      if (result.comparison) {
+        expect(result.comparison.message).toMatch(/empty|no.*files/i);
+      }
     });
   });
 

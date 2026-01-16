@@ -12,12 +12,15 @@
  * - calculateETA(): ETA calculation with warmup period
  */
 
+import { existsSync, readdirSync } from 'fs';
 import {
   calculatePercentile,
   isReportFile,
   formatDuration,
   calculateETA,
 } from '../../../scripts/lexer-health';
+
+jest.mock('fs');
 
 describe('Lexer Health Script - calculatePercentile()', () => {
   it('should return 0 for empty arrays (guard against NaN)', () => {
@@ -246,6 +249,28 @@ describe('Lexer Health Script - formatDuration()', () => {
       expect(formatDuration(36000)).toBe('10h 0m'); // 10 hours
       expect(formatDuration(86400)).toBe('24h 0m'); // 24 hours
     });
+  });
+});
+
+describe('Lexer Health Script - validateAllFiles()', () => {
+  beforeEach(() => {
+    jest.resetModules();
+  });
+
+  it('should return empty array when no .TXT files found', () => {
+    // This tests the change from process.exit(2) to return []
+    const mockExistsSync = jest.requireMock('fs').existsSync as jest.MockedFunction<typeof existsSync>;
+    const mockReaddirSync = jest.requireMock('fs').readdirSync as jest.MockedFunction<typeof readdirSync>;
+
+    mockExistsSync.mockReturnValue(true);
+    mockReaddirSync.mockReturnValue([]);
+
+    // Re-require the module after mocking to pick up the mocked fs
+    const { validateAllFiles } = require('../../../scripts/lexer-health');
+    const results = validateAllFiles();
+
+    expect(results).toEqual([]);
+    expect(results.length).toBe(0);
   });
 });
 

@@ -244,6 +244,25 @@ export function runCICheck(): CIResult {
     };
   }
 
+  // Check for empty directory before proceeding
+  const files = readdirSync(realDir).filter(f => f.endsWith('.TXT'));
+
+  if (files.length === 0) {
+    return {
+      exitCode: 2,
+      skipped: false,
+      skipReason: undefined,
+      comparison: {
+        passed: false,
+        actualFailures: 0,
+        baselineMax: 0,
+        improvement: 0,
+        requiresBaselineUpdate: false,
+        message: 'Configuration error: test/REAL directory exists but contains no .TXT files'
+      }
+    };
+  }
+
   // Load baseline
   const baselinePath = join(__dirname, 'lexer-health-baseline.json');
 
@@ -338,7 +357,7 @@ export function validateAllFiles(): FileResult[] {
 
   if (files.length === 0) {
     console.warn('No .TXT files found in test/REAL');
-    process.exit(2);  // Exit code 2 for empty directory
+    return [];  // Let caller handle the empty result
   }
 
   console.log(`Found ${files.length} files to validate\n`);
@@ -573,6 +592,14 @@ if (require.main === module && !process.env.JEST_WORKER_ID) {
   // Standard report mode
   console.log('Lexer Health Report Tool\n');
   console.log('Scanning test/REAL directory...\n');
+
+  // Check for empty directory before validation
+  const realDir = join(__dirname, '../../test/REAL');
+  const txtFiles = readdirSync(realDir).filter(f => f.endsWith('.TXT'));
+  if (txtFiles.length === 0) {
+    console.error('Error: No .TXT files found in test/REAL directory');
+    process.exit(2);
+  }
 
   const startTime = performance.now();
   const results = validateAllFiles();
