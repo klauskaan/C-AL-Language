@@ -312,11 +312,9 @@ describe('generateMarkdownReport', () => {
 
   describe('Performance metrics', () => {
     it('should calculate performance percentiles correctly', () => {
-      // TODO: Issue #115 - Percentile uses Math.round() which may give unexpected results for small datasets
-      // Current behavior: position = (percentile/100) * (length-1), then Math.round(position)
+      // Linear interpolation (R-7 method): position = (percentile/100) * (length-1)
       // For [10, 20, 30, 40, 50]:
-      // - p50: position = 0.5 * 4 = 2.0, Math.round(2.0) = 2, array[2] = 30 (correct median)
-      // - p95: position = 0.95 * 4 = 3.8, Math.round(3.8) = 4, array[4] = 50
+      // - p50: position = 0.5 * 4 = 2.0, lowerIndex === upperIndex, returns sorted[2] = 30
       const results: FileResult[] = [
         createFileResult({ tokenizeTime: 10 }),
         createFileResult({ tokenizeTime: 20 }),
@@ -335,14 +333,11 @@ describe('generateMarkdownReport', () => {
     });
 
     it('should detect performance outliers (>2x p95)', () => {
-      // TODO: Issue #115 - Percentile calculation uses Math.round() which can give unexpected results
-      // Current behavior: position = (percentile/100) * (length-1), then Math.round(position)
-      //
-      // Working fixture to create a detectable outlier:
+      // Linear interpolation (R-7 method) for outlier detection:
       // 100 files: 99 at 10ms, 1 at 500ms
       // Sorted: [10, 10, 10, ..., 10, 500] (99 tens, then 500)
-      // p95 position = (95/100) * 99 = 94.05, Math.round(94.05) = 94
-      // p95 = array[94] = 10ms (since first 99 elements are all 10)
+      // p95 position = (95/100) * 99 = 94.05
+      // Interpolates between array[94]=10 and array[95]=10: result = 10ms
       // outlier threshold = 10 * 2 = 20ms
       // 500ms > 20ms = OUTLIER DETECTED
       const results: FileResult[] = [];

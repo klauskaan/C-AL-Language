@@ -41,20 +41,22 @@ describe('Lexer Health Script - calculatePercentile()', () => {
 
   it('should return correct p95 for dataset 1-100', () => {
     // Dataset: [1, 2, 3, ..., 100]
-    // p95 should be 95 (95th element when sorted)
+    // p95 with linear interpolation: position = 0.95 * (100 - 1) = 94.05
+    // result = values[94] + 0.05 * (values[95] - values[94]) = 95 + 0.05 * 1 = 95.05
     const values = Array.from({ length: 100 }, (_, i) => i + 1);
     const result = calculatePercentile(values, 95);
 
-    expect(result).toBe(95);
+    expect(result).toBeCloseTo(95.05, 2);
   });
 
   it('should return correct p99 for dataset 1-100', () => {
     // Dataset: [1, 2, 3, ..., 100]
-    // p99 should be 99
+    // p99 with linear interpolation: position = 0.99 * (100 - 1) = 98.01
+    // result = values[98] + 0.01 * (values[99] - values[98]) = 99 + 0.01 * 1 = 99.01
     const values = Array.from({ length: 100 }, (_, i) => i + 1);
     const result = calculatePercentile(values, 99);
 
-    expect(result).toBe(99);
+    expect(result).toBeCloseTo(99.01, 2);
   });
 
   it('should return single value for all percentiles when array has one element', () => {
@@ -68,9 +70,9 @@ describe('Lexer Health Script - calculatePercentile()', () => {
   it('should handle two-element array correctly', () => {
     const values = [10, 20];
 
-    // p50 should select the higher value (index 1)
+    // p50 should interpolate between the two values
     const p50 = calculatePercentile(values, 50);
-    expect(p50).toBe(20);
+    expect(p50).toBe(15);
 
     // p0 should select the lower value (index 0)
     const p0 = calculatePercentile(values, 0);
@@ -92,6 +94,182 @@ describe('Lexer Health Script - calculatePercentile()', () => {
 
     // Should return median (30) after internal sorting
     expect(result).toBe(30);
+  });
+
+  describe('linear interpolation behavior', () => {
+    it('should interpolate between two values at p50', () => {
+      // [10, 20] at p50 should return 15 (interpolated midpoint)
+      // Current implementation uses Math.round which would return 20
+      const values = [10, 20];
+      const result = calculatePercentile(values, 50);
+
+      expect(result).toBe(15);
+    });
+
+    it('should interpolate at p95 for skewed dataset', () => {
+      // [10, 10, 10, 100] at p95
+      // Position: (95/100) * (4-1) = 2.85
+      // Interpolate between index 2 (value=10) and index 3 (value=100)
+      // Result: 10 + 0.85 * (100-10) = 10 + 76.5 = 86.5
+      const values = [10, 10, 10, 100];
+      const result = calculatePercentile(values, 95);
+
+      expect(result).toBeCloseTo(86.5, 1);
+    });
+
+    it('should interpolate at p25 for two-value array', () => {
+      // [0, 100] at p25
+      // Position: (25/100) * (2-1) = 0.25
+      // Interpolate between index 0 (value=0) and index 1 (value=100)
+      // Result: 0 + 0.25 * (100-0) = 25
+      const values = [0, 100];
+      const result = calculatePercentile(values, 25);
+
+      expect(result).toBe(25);
+    });
+
+    it('should return exact value when position is integer', () => {
+      // [1, 2, 3, 4, 5] at p25
+      // Position: (25/100) * (5-1) = 1.0 (exact index)
+      // Should return values[1] = 2
+      const values = [1, 2, 3, 4, 5];
+      const result = calculatePercentile(values, 25);
+
+      expect(result).toBe(2);
+    });
+
+    it('should interpolate at p75 for five-value array', () => {
+      // [1, 2, 3, 4, 5] at p75
+      // Position: (75/100) * (5-1) = 3.0 (exact index)
+      // Should return values[3] = 4
+      const values = [1, 2, 3, 4, 5];
+      const result = calculatePercentile(values, 75);
+
+      expect(result).toBe(4);
+    });
+
+    it('should interpolate between non-adjacent values at p50', () => {
+      // [1, 10, 20, 100] at p50
+      // Position: (50/100) * (4-1) = 1.5
+      // Interpolate between index 1 (value=10) and index 2 (value=20)
+      // Result: 10 + 0.5 * (20-10) = 15
+      const values = [1, 10, 20, 100];
+      const result = calculatePercentile(values, 50);
+
+      expect(result).toBe(15);
+    });
+
+    it('should interpolate with fractional position at p33', () => {
+      // [10, 20, 30] at p33
+      // Position: (33/100) * (3-1) = 0.66
+      // Interpolate between index 0 (value=10) and index 1 (value=20)
+      // Result: 10 + 0.66 * (20-10) = 16.6
+      const values = [10, 20, 30];
+      const result = calculatePercentile(values, 33);
+
+      expect(result).toBeCloseTo(16.6, 1);
+    });
+  });
+
+  describe('input validation', () => {
+    it('should throw error for percentile < 0', () => {
+      const values = [10, 20, 30];
+
+      expect(() => calculatePercentile(values, -1)).toThrow();
+      expect(() => calculatePercentile(values, -10)).toThrow();
+    });
+
+    it('should throw error for percentile > 100', () => {
+      const values = [10, 20, 30];
+
+      expect(() => calculatePercentile(values, 101)).toThrow();
+      expect(() => calculatePercentile(values, 150)).toThrow();
+    });
+
+    it('should accept percentile = 0 (valid edge case)', () => {
+      const values = [10, 20, 30];
+
+      expect(() => calculatePercentile(values, 0)).not.toThrow();
+      expect(calculatePercentile(values, 0)).toBe(10);
+    });
+
+    it('should accept percentile = 100 (valid edge case)', () => {
+      const values = [10, 20, 30];
+
+      expect(() => calculatePercentile(values, 100)).not.toThrow();
+      expect(calculatePercentile(values, 100)).toBe(30);
+    });
+
+    it('should filter out NaN values from input array', () => {
+      // [10, NaN, 20] should be treated as [10, 20]
+      // p50 of [10, 20] with interpolation = 15
+      const values = [10, NaN, 20];
+      const result = calculatePercentile(values, 50);
+
+      expect(result).toBe(15);
+      expect(Number.isNaN(result)).toBe(false);
+    });
+
+    it('should filter out multiple NaN values', () => {
+      // [NaN, 10, NaN, 20, NaN, 30, NaN] should be treated as [10, 20, 30]
+      // p50 of [10, 20, 30] = 20
+      const values = [NaN, 10, NaN, 20, NaN, 30, NaN];
+      const result = calculatePercentile(values, 50);
+
+      expect(result).toBe(20);
+    });
+
+    it('should return 0 for array with only NaN values', () => {
+      // After filtering NaN, array is empty -> should return 0
+      const values = [NaN, NaN, NaN];
+      const result = calculatePercentile(values, 50);
+
+      expect(result).toBe(0);
+      expect(Number.isNaN(result)).toBe(false);
+    });
+
+    it('should handle mixed NaN and valid values at boundaries', () => {
+      // [NaN, 100] should be treated as [100]
+      // Any percentile of single-element array = that element
+      const values = [NaN, 100];
+      const result = calculatePercentile(values, 95);
+
+      expect(result).toBe(100);
+    });
+
+    it('should filter out Infinity values from input array', () => {
+      // [10, Infinity, 20] should be treated as [10, 20]
+      // p50 of [10, 20] with interpolation = 15
+      const values = [10, Infinity, 20];
+      const result = calculatePercentile(values, 50);
+
+      expect(result).toBe(15);
+    });
+
+    it('should filter out -Infinity values from input array', () => {
+      // [10, -Infinity, 20] should be treated as [10, 20]
+      // p50 of [10, 20] with interpolation = 15
+      const values = [10, -Infinity, 20];
+      const result = calculatePercentile(values, 50);
+
+      expect(result).toBe(15);
+    });
+
+    it('should filter out both Infinity and -Infinity values', () => {
+      // [Infinity, 10, -Infinity, 20] should be treated as [10, 20]
+      const values = [Infinity, 10, -Infinity, 20];
+      const result = calculatePercentile(values, 50);
+
+      expect(result).toBe(15);
+    });
+
+    it('should return 0 for array with only Infinity values', () => {
+      // After filtering, array is empty -> should return 0
+      const values = [Infinity, -Infinity];
+      const result = calculatePercentile(values, 50);
+
+      expect(result).toBe(0);
+    });
   });
 });
 

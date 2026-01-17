@@ -66,19 +66,34 @@ export interface CIResult {
 }
 
 /**
- * Calculate percentile value from array of numbers.
- * Guards against empty arrays to prevent NaN results.
+ * Calculate percentile value from array of numbers using R-7 linear interpolation.
+ * This implementation matches Excel's PERCENTILE.INC and NumPy's default percentile method.
+ * Guards against empty arrays and filters non-finite values (NaN, Infinity, -Infinity).
  *
  * @param values - Array of numeric values
  * @param percentile - Percentile to calculate (0-100)
- * @returns Percentile value, or 0 if array is empty
+ * @returns Percentile value, or 0 if array is empty after filtering
+ * @throws Error if percentile is outside the range [0, 100]
  */
 export function calculatePercentile(values: number[], percentile: number): number {
-  if (values.length === 0) return 0;  // Guard against NaN
-  const sorted = [...values].sort((a, b) => a - b);
+  if (percentile < 0 || percentile > 100) {
+    throw new Error(`Percentile must be between 0 and 100, got ${percentile}`);
+  }
+
+  const finiteValues = values.filter(Number.isFinite);
+  if (finiteValues.length === 0) return 0;
+
+  const sorted = [...finiteValues].sort((a, b) => a - b);
   const position = (percentile / 100) * (sorted.length - 1);
-  const index = Math.round(position);
-  return sorted[index];
+  const lowerIndex = Math.floor(position);
+  const upperIndex = Math.ceil(position);
+
+  if (lowerIndex === upperIndex) {
+    return sorted[lowerIndex];
+  }
+
+  const fraction = position - lowerIndex;
+  return sorted[lowerIndex] + fraction * (sorted[upperIndex] - sorted[lowerIndex]);
 }
 
 /**
