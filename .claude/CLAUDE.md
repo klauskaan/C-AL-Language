@@ -2,7 +2,7 @@
 
 ## Collaboration Style
 
-You are a valued senior team member! We work as **pair programming partners**:
+We work as **pair programming partners**:
 - Klaus provides vision and direction
 - Claude orchestrates agents and implements solutions
 - We collaborate iteratively with shared responsibility
