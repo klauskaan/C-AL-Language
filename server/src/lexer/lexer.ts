@@ -226,18 +226,38 @@ export interface LexerOptions {
  *
  * SYNCHRONOUS EXECUTION
  * ---------------------
- * Callbacks SHOULD complete synchronously. Asynchronous operations (promises,
- * callbacks, timers) are not awaited by the lexer and may not complete before
- * tokenization finishes.
+ * Callbacks SHOULD complete synchronously for best reliability. The lexer does
+ * NOT await async callbacks - they execute as fire-and-forget.
  *
  * If you need async operations:
  * - Collect events in the callback (synchronously)
  * - Process them asynchronously after `tokenize()` returns
  *
+ * ASYNC CALLBACK SUPPORT
+ * ----------------------
+ * Returning `Promise<void>` is supported for fire-and-forget use cases (telemetry,
+ * async logging). However, tokenization does NOT wait for these promises to settle.
+ *
+ * - Promise rejections are caught and handled gracefully
+ * - The callback is disabled after the first rejection (fail-once semantics)
+ * - Rejections are logged via `console.warn`
+ * - Session tracking prevents stale rejections from affecting subsequent tokenizations
+ *
+ * Example:
+ * ```typescript
+ * const lexer = new Lexer(source, {
+ *   trace: async (event) => {
+ *     await sendToTelemetry(event); // Fire-and-forget, errors caught
+ *   }
+ * });
+ * lexer.tokenize(); // Returns immediately, doesn't wait for telemetry
+ * ```
+ *
  * EXCEPTION HANDLING
  * ------------------
  * - Reentrancy violations: Error is thrown immediately, halting tokenization
- * - Other exceptions: Callback is disabled for the remainder of tokenization
+ * - Sync exceptions: Callback is disabled for the remainder of tokenization
+ * - Async rejections: Callback is disabled, logged via console.warn (no halt)
  * - Disabled callbacks: No further events are delivered, tokenization continues
  *
  * If your callback throws (except for reentrancy violations), it will be silently
@@ -308,7 +328,7 @@ export interface LexerOptions {
  * @see TraceEventType for available event types
  * @see LexerOptions.trace for how to provide a callback
  */
-export type TraceCallback = (event: TraceEvent) => void;
+export type TraceCallback = (event: TraceEvent) => void | Promise<void>;
 
 /**
  * Trace event types emitted by the lexer.
@@ -402,6 +422,9 @@ export class Lexer {
    */
   private traceCallbackDisabled: boolean = false;
 
+  /** Monotonically increasing session ID to detect stale async rejections */
+  private tokenizationSessionId: number = 0;
+
   /**
    * Reentrancy guard to prevent tokenize() from being called recursively on this instance.
    * This typically occurs when a trace callback calls tokenize() on the same Lexer instance.
@@ -436,6 +459,9 @@ export class Lexer {
     this.isTokenizing = true;
 
     try {
+      // Increment session ID to invalidate any pending async rejections
+      this.tokenizationSessionId++;
+
       // Reset trace callback state for fresh tokenization
       this.traceCallbackDisabled = false;
 
@@ -476,17 +502,11 @@ export class Lexer {
         this.popContext();
       }
 
-      if (this.traceCallback && !this.traceCallbackDisabled) {
-        try {
-          this.traceCallback({
-            type: 'token',
-            position: { line: this.line, column: this.column, offset: this.position },
-            data: { tokenType: 'EOF', value: '' }
-          });
-        } catch (error) {
-          this.handleTraceCallbackError(error);
-        }
-      }
+      this.invokeTraceCallback(() => ({
+        type: 'token',
+        position: { line: this.line, column: this.column, offset: this.position },
+        data: { tokenType: 'EOF', value: '' }
+      }));
 
       this.tokens.push(this.createToken(TokenType.EOF, '', this.position, this.position));
       return this.tokens;
@@ -527,23 +547,73 @@ export class Lexer {
   }
 
   /**
+   * Handle async rejection from a trace callback.
+   * Validates session ID to prevent race conditions when tokenize() is called
+   * multiple times while async callbacks are pending.
+   *
+   * Unlike sync errors, async rejections with "reentrancy violation" messages
+   * are NOT rethrown - the tokenization that could have been halted has
+   * already completed by the time the rejection arrives.
+   *
+   * @param error - The rejection reason
+   * @param sessionId - The session ID when the callback was invoked
+   */
+  private handleAsyncRejection(error: unknown, sessionId: number): void {
+    // Stale rejection from previous tokenization - ignore silently
+    if (sessionId !== this.tokenizationSessionId) {
+      return;
+    }
+
+    // Already disabled by a previous rejection in this session - ignore
+    if (this.traceCallbackDisabled) {
+      return;
+    }
+
+    this.traceCallbackDisabled = true;
+    console.warn('Async trace callback rejected and has been disabled for this tokenization:', error);
+  }
+
+  /**
+   * Safely invoke the trace callback with lazy event construction.
+   * Handles both sync exceptions and async rejections.
+   *
+   * @param eventFactory - Factory function that constructs the event (called only if callback enabled)
+   */
+  private invokeTraceCallback(eventFactory: () => TraceEvent): void {
+    if (!this.traceCallback || this.traceCallbackDisabled) {
+      return;
+    }
+
+    const sessionId = this.tokenizationSessionId;
+
+    try {
+      const event = eventFactory();
+      const result = this.traceCallback(event);
+
+      // Check for thenable (Promise-like) return value
+      // Use Promise.resolve() to normalize any thenable to a proper Promise
+      if (result != null && typeof (result as any).then === 'function') {
+        Promise.resolve(result).catch((error) => {
+          this.handleAsyncRejection(error, sessionId);
+        });
+      }
+    } catch (error) {
+      this.handleTraceCallbackError(error);
+    }
+  }
+
+  /**
    * Push a new context onto the stack
    */
   private pushContext(context: LexerContext): void {
     const from = this.contextToString(this.getCurrentContext());
     this.contextStack.push(context);
 
-    if (this.traceCallback && !this.traceCallbackDisabled) {
-      try {
-        this.traceCallback({
-          type: 'context-push',
-          position: { line: this.line, column: this.column, offset: this.position },
-          data: { from, to: this.contextToString(context) }
-        });
-      } catch (error) {
-        this.handleTraceCallbackError(error);
-      }
-    }
+    this.invokeTraceCallback(() => ({
+      type: 'context-push',
+      position: { line: this.line, column: this.column, offset: this.position },
+      data: { from, to: this.contextToString(context) }
+    }));
   }
 
   /**
@@ -555,17 +625,11 @@ export class Lexer {
       const from = this.contextToString(this.getCurrentContext());
       this.contextStack.pop();
 
-      if (this.traceCallback && !this.traceCallbackDisabled) {
-        try {
-          this.traceCallback({
-            type: 'context-pop',
-            position: { line: this.line, column: this.column, offset: this.position },
-            data: { from, to: this.contextToString(this.getCurrentContext()) }
-          });
-        } catch (error) {
-          this.handleTraceCallbackError(error);
-        }
-      }
+      this.invokeTraceCallback(() => ({
+        type: 'context-pop',
+        position: { line: this.line, column: this.column, offset: this.position },
+        data: { from, to: this.contextToString(this.getCurrentContext()) }
+      }));
     } else {
       this.contextUnderflowDetected = true;
     }
@@ -682,17 +746,11 @@ export class Lexer {
     this.advance();
     const oldBraceDepth = this.braceDepth;
     this.braceDepth++;
-    if (this.traceCallback && !this.traceCallbackDisabled) {
-      try {
-        this.traceCallback({
-          type: 'flag-change',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'braceDepth', from: oldBraceDepth, to: this.braceDepth }
-        });
-      } catch (error) {
-        this.handleTraceCallbackError(error);
-      }
-    }
+    this.invokeTraceCallback(() => ({
+      type: 'flag-change',
+      position: { line: startLine, column: startColumn, offset: startPos },
+      data: { flag: 'braceDepth', from: oldBraceDepth, to: this.braceDepth }
+    }));
     this.addToken(TokenType.LeftBrace, '{', startPos, this.position, startLine, startColumn);
 
     // Push SECTION_LEVEL context when we see opening brace at object level
@@ -715,17 +773,11 @@ export class Lexer {
          this.currentSectionType === 'ACTIONS')) {
       const oldFieldDefColumn = this.fieldDefColumn;
       this.fieldDefColumn = FieldDefColumn.COL_1;
-      if (this.traceCallback && !this.traceCallbackDisabled) {
-        try {
-          this.traceCallback({
-            type: 'flag-change',
-            position: { line: startLine, column: startColumn, offset: startPos },
-            data: { flag: 'fieldDefColumn', from: 'NONE', to: 'COL_1' }
-          });
-        } catch (error) {
-          this.handleTraceCallbackError(error);
-        }
-      }
+      this.invokeTraceCallback(() => ({
+        type: 'flag-change',
+        position: { line: startLine, column: startColumn, offset: startPos },
+        data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: 'COL_1' }
+      }));
     }
   }
 
@@ -748,17 +800,11 @@ export class Lexer {
 
       const oldBraceDepth = this.braceDepth;
       this.braceDepth--;
-      if (this.traceCallback && !this.traceCallbackDisabled) {
-        try {
-          this.traceCallback({
-            type: 'flag-change',
-            position: { line: startLine, column: startColumn, offset: startPos },
-            data: { flag: 'braceDepth', from: oldBraceDepth, to: this.braceDepth }
-          });
-        } catch (error) {
-          this.handleTraceCallbackError(error);
-        }
-      }
+      this.invokeTraceCallback(() => ({
+        type: 'flag-change',
+        position: { line: startLine, column: startColumn, offset: startPos },
+        data: { flag: 'braceDepth', from: oldBraceDepth, to: this.braceDepth }
+      }));
       this.addToken(TokenType.RightBrace, '}', startPos, this.position, startLine, startColumn);
 
       // Pop context when closing a section
@@ -767,16 +813,12 @@ export class Lexer {
         // Reset section tracking when exiting section context
         const oldSectionType = this.currentSectionType;
         this.currentSectionType = null;
-        if (this.traceCallback && !this.traceCallbackDisabled && oldSectionType !== null) {
-          try {
-            this.traceCallback({
-              type: 'flag-change',
-              position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'currentSectionType', from: oldSectionType, to: null }
-            });
-          } catch (error) {
-            this.handleTraceCallbackError(error);
-          }
+        if (oldSectionType !== null) {
+          this.invokeTraceCallback(() => ({
+            type: 'flag-change',
+            position: { line: startLine, column: startColumn, offset: startPos },
+            data: { flag: 'currentSectionType', from: oldSectionType, to: null }
+          }));
         }
       }
 
@@ -787,55 +829,37 @@ export class Lexer {
       this.inPropertyValue = false;
       this.lastPropertyName = '';
       this.bracketDepth = 0;
-      if (this.traceCallback && !this.traceCallbackDisabled) {
-        if (oldInPropertyValue !== false) {
-          try {
-            this.traceCallback({
-              type: 'flag-change',
-              position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: false }
-            });
-          } catch (error) {
-            this.handleTraceCallbackError(error);
-          }
-        }
-        if (oldLastPropertyName !== '') {
-          try {
-            this.traceCallback({
-              type: 'flag-change',
-              position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: '' }
-            });
-          } catch (error) {
-            this.handleTraceCallbackError(error);
-          }
-        }
-        if (oldBracketDepth !== 0) {
-          try {
-            this.traceCallback({
-              type: 'flag-change',
-              position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'bracketDepth', from: oldBracketDepth, to: 0 }
-            });
-          } catch (error) {
-            this.handleTraceCallbackError(error);
-          }
-        }
+      if (oldInPropertyValue !== false) {
+        this.invokeTraceCallback(() => ({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: false }
+        }));
+      }
+      if (oldLastPropertyName !== '') {
+        this.invokeTraceCallback(() => ({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: '' }
+        }));
+      }
+      if (oldBracketDepth !== 0) {
+        this.invokeTraceCallback(() => ({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'bracketDepth', from: oldBracketDepth, to: 0 }
+        }));
       }
 
       // Reset column tracking when closing a field definition
       const oldFieldDefColumn = this.fieldDefColumn;
       this.fieldDefColumn = FieldDefColumn.NONE;
-      if (this.traceCallback && !this.traceCallbackDisabled && oldFieldDefColumn !== FieldDefColumn.NONE) {
-        try {
-          this.traceCallback({
-            type: 'flag-change',
-            position: { line: startLine, column: startColumn, offset: startPos },
-            data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: 'NONE' }
-          });
-        } catch (error) {
-          this.handleTraceCallbackError(error);
-        }
+      if (oldFieldDefColumn !== FieldDefColumn.NONE) {
+        this.invokeTraceCallback(() => ({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: 'NONE' }
+        }));
       }
 
       return true;
@@ -1201,16 +1225,12 @@ export class Lexer {
         this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
       const oldLastPropertyName = this.lastPropertyName;
       this.lastPropertyName = value;
-      if (this.traceCallback && !this.traceCallbackDisabled && oldLastPropertyName !== value) {
-        try {
-          this.traceCallback({
-            type: 'flag-change',
-            position: { line: startLine, column: startColumn, offset: startPos },
-            data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: value }
-          });
-        } catch (error) {
-          this.handleTraceCallbackError(error);
-        }
+      if (oldLastPropertyName !== value) {
+        this.invokeTraceCallback(() => ({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: value }
+        }));
       }
     }
 
@@ -1220,16 +1240,12 @@ export class Lexer {
     if (tokenType !== TokenType.LeftBrace) {
       const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
       this.lastWasSectionKeyword = false;
-      if (this.traceCallback && !this.traceCallbackDisabled && oldLastWasSectionKeyword !== false) {
-        try {
-          this.traceCallback({
-            type: 'flag-change',
-            position: { line: startLine, column: startColumn, offset: startPos },
-            data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: false }
-          });
-        } catch (error) {
-          this.handleTraceCallbackError(error);
-        }
+      if (oldLastWasSectionKeyword !== false) {
+        this.invokeTraceCallback(() => ({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: false }
+        }));
       }
     }
 
@@ -1251,16 +1267,12 @@ export class Lexer {
           // tokens.length - 1 because the OBJECT token was just added
           const oldObjectTokenIndex = this.objectTokenIndex;
           this.objectTokenIndex = this.tokens.length - 1;
-          if (this.traceCallback && !this.traceCallbackDisabled && oldObjectTokenIndex !== this.objectTokenIndex) {
-            try {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'objectTokenIndex', from: oldObjectTokenIndex, to: this.objectTokenIndex }
-              });
-            } catch (error) {
-              this.handleTraceCallbackError(error);
-            }
+          if (oldObjectTokenIndex !== this.objectTokenIndex) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'objectTokenIndex', from: oldObjectTokenIndex, to: this.objectTokenIndex }
+            }));
           }
         }
         break;
@@ -1282,29 +1294,19 @@ export class Lexer {
         const oldCurrentSectionTypeFields = this.currentSectionType;
         this.lastWasSectionKeyword = true;
         this.currentSectionType = 'FIELDS';
-        if (this.traceCallback && !this.traceCallbackDisabled) {
-          if (oldLastWasSectionKeywordFields !== true) {
-            try {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeywordFields, to: true }
-              });
-            } catch (error) {
-              this.handleTraceCallbackError(error);
-            }
-          }
-          if (oldCurrentSectionTypeFields !== 'FIELDS') {
-            try {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: this.line, column: this.column, offset: this.position },
-                data: { flag: 'currentSectionType', from: oldCurrentSectionTypeFields, to: 'FIELDS' }
-              });
-            } catch (error) {
-              this.handleTraceCallbackError(error);
-            }
-          }
+        if (oldLastWasSectionKeywordFields !== true) {
+          this.invokeTraceCallback(() => ({
+            type: 'flag-change',
+            position: { line: this.line, column: this.column, offset: this.position },
+            data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeywordFields, to: true }
+          }));
+        }
+        if (oldCurrentSectionTypeFields !== 'FIELDS') {
+          this.invokeTraceCallback(() => ({
+            type: 'flag-change',
+            position: { line: this.line, column: this.column, offset: this.position },
+            data: { flag: 'currentSectionType', from: oldCurrentSectionTypeFields, to: 'FIELDS' }
+          }));
         }
         break;
 
@@ -1323,29 +1325,19 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'KEYS';
-          if (this.traceCallback && !this.traceCallbackDisabled) {
-            if (oldLastWasSectionKeyword !== true) {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
-            if (oldCurrentSectionType !== 'KEYS') {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'KEYS' }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
+          if (oldLastWasSectionKeyword !== true) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+            }));
+          }
+          if (oldCurrentSectionType !== 'KEYS') {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'KEYS' }
+            }));
           }
         }
         break;
@@ -1365,29 +1357,19 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'CONTROLS';
-          if (this.traceCallback && !this.traceCallbackDisabled) {
-            if (oldLastWasSectionKeyword !== true) {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
-            if (oldCurrentSectionType !== 'CONTROLS') {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'CONTROLS' }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
+          if (oldLastWasSectionKeyword !== true) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+            }));
+          }
+          if (oldCurrentSectionType !== 'CONTROLS') {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'CONTROLS' }
+            }));
           }
         }
         break;
@@ -1407,29 +1389,19 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'ELEMENTS';
-          if (this.traceCallback && !this.traceCallbackDisabled) {
-            if (oldLastWasSectionKeyword !== true) {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
-            if (oldCurrentSectionType !== 'ELEMENTS') {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'ELEMENTS' }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
+          if (oldLastWasSectionKeyword !== true) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+            }));
+          }
+          if (oldCurrentSectionType !== 'ELEMENTS') {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'ELEMENTS' }
+            }));
           }
         }
         break;
@@ -1449,29 +1421,19 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'DATAITEMS';
-          if (this.traceCallback && !this.traceCallbackDisabled) {
-            if (oldLastWasSectionKeyword !== true) {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
-            if (oldCurrentSectionType !== 'DATAITEMS') {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'DATAITEMS' }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
+          if (oldLastWasSectionKeyword !== true) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+            }));
+          }
+          if (oldCurrentSectionType !== 'DATAITEMS') {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'DATAITEMS' }
+            }));
           }
         }
         break;
@@ -1491,29 +1453,19 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'ACTIONS';
-          if (this.traceCallback && !this.traceCallbackDisabled) {
-            if (oldLastWasSectionKeyword !== true) {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
-            if (oldCurrentSectionType !== 'ACTIONS') {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'ACTIONS' }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
+          if (oldLastWasSectionKeyword !== true) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+            }));
+          }
+          if (oldCurrentSectionType !== 'ACTIONS') {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'ACTIONS' }
+            }));
           }
         }
         break;
@@ -1532,29 +1484,19 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'DATASET';
-          if (this.traceCallback && !this.traceCallbackDisabled) {
-            if (oldLastWasSectionKeyword !== true) {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
-            if (oldCurrentSectionType !== 'DATASET') {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'DATASET' }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
+          if (oldLastWasSectionKeyword !== true) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+            }));
+          }
+          if (oldCurrentSectionType !== 'DATASET') {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'DATASET' }
+            }));
           }
         }
         break;
@@ -1573,29 +1515,19 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'REQUESTPAGE';
-          if (this.traceCallback && !this.traceCallbackDisabled) {
-            if (oldLastWasSectionKeyword !== true) {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
-            if (oldCurrentSectionType !== 'REQUESTPAGE') {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'REQUESTPAGE' }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
+          if (oldLastWasSectionKeyword !== true) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+            }));
+          }
+          if (oldCurrentSectionType !== 'REQUESTPAGE') {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'REQUESTPAGE' }
+            }));
           }
         }
         break;
@@ -1614,29 +1546,19 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = 'LABELS';
-          if (this.traceCallback && !this.traceCallbackDisabled) {
-            if (oldLastWasSectionKeyword !== true) {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
-            if (oldCurrentSectionType !== 'LABELS') {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'LABELS' }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
+          if (oldLastWasSectionKeyword !== true) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+            }));
+          }
+          if (oldCurrentSectionType !== 'LABELS') {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'LABELS' }
+            }));
           }
         }
         break;
@@ -1666,29 +1588,19 @@ export class Lexer {
           const oldCurrentSectionType = this.currentSectionType;
           this.lastWasSectionKeyword = true;
           this.currentSectionType = null;
-          if (this.traceCallback && !this.traceCallbackDisabled) {
-            if (oldLastWasSectionKeyword !== true) {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
-            if (oldCurrentSectionType !== null) {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: this.line, column: this.column, offset: this.position },
-                  data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: null }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
+          if (oldLastWasSectionKeyword !== true) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+            }));
+          }
+          if (oldCurrentSectionType !== null) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: null }
+            }));
           }
         }
         break;
@@ -1810,16 +1722,12 @@ export class Lexer {
             this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
           const oldInPropertyValue = this.inPropertyValue;
           this.inPropertyValue = true;
-          if (this.traceCallback && !this.traceCallbackDisabled && oldInPropertyValue !== this.inPropertyValue) {
-            try {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: startLine, column: startColumn, offset: startPos },
-                data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.inPropertyValue }
-              });
-            } catch (error) {
-              this.handleTraceCallbackError(error);
-            }
+          if (oldInPropertyValue !== this.inPropertyValue) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: startLine, column: startColumn, offset: startPos },
+              data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.inPropertyValue }
+            }));
           }
         }
         break;
@@ -1870,29 +1778,19 @@ export class Lexer {
           const oldLastPropertyName = this.lastPropertyName;
           this.inPropertyValue = false;
           this.lastPropertyName = '';
-          if (this.traceCallback && !this.traceCallbackDisabled) {
-            if (oldInPropertyValue !== this.inPropertyValue) {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: startLine, column: startColumn, offset: startPos },
-                  data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.inPropertyValue }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
-            if (oldLastPropertyName !== this.lastPropertyName) {
-              try {
-                this.traceCallback({
-                  type: 'flag-change',
-                  position: { line: startLine, column: startColumn, offset: startPos },
-                  data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: this.lastPropertyName }
-                });
-              } catch (error) {
-                this.handleTraceCallbackError(error);
-              }
-            }
+          if (oldInPropertyValue !== this.inPropertyValue) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: startLine, column: startColumn, offset: startPos },
+              data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.inPropertyValue }
+            }));
+          }
+          if (oldLastPropertyName !== this.lastPropertyName) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: startLine, column: startColumn, offset: startPos },
+              data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: this.lastPropertyName }
+            }));
           }
         }
         // Advance column tracking
@@ -1913,16 +1811,12 @@ export class Lexer {
               break;
             // Stay in PROPERTIES after that
           }
-          if (this.traceCallback && !this.traceCallbackDisabled && oldFieldDefColumn !== this.fieldDefColumn) {
-            try {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: startLine, column: startColumn, offset: startPos },
-                data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: this.fieldDefColumnToString(this.fieldDefColumn) }
-              });
-            } catch (error) {
-              this.handleTraceCallbackError(error);
-            }
+          if (oldFieldDefColumn !== this.fieldDefColumn) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: startLine, column: startColumn, offset: startPos },
+              data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: this.fieldDefColumnToString(this.fieldDefColumn) }
+            }));
           }
         }
         break;
@@ -1941,17 +1835,11 @@ export class Lexer {
         if (this.inPropertyValue) {
           const oldBracketDepth = this.bracketDepth;
           this.bracketDepth++;
-          if (this.traceCallback && !this.traceCallbackDisabled) {
-            try {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: startLine, column: startColumn, offset: startPos },
-                data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.bracketDepth }
-              });
-            } catch (error) {
-              this.handleTraceCallbackError(error);
-            }
-          }
+          this.invokeTraceCallback(() => ({
+            type: 'flag-change',
+            position: { line: startLine, column: startColumn, offset: startPos },
+            data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.bracketDepth }
+          }));
         }
         break;
       case ']':
@@ -1960,17 +1848,11 @@ export class Lexer {
         if (this.inPropertyValue && this.bracketDepth > 0) {
           const oldBracketDepth = this.bracketDepth;
           this.bracketDepth--;
-          if (this.traceCallback && !this.traceCallbackDisabled) {
-            try {
-              this.traceCallback({
-                type: 'flag-change',
-                position: { line: startLine, column: startColumn, offset: startPos },
-                data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.bracketDepth }
-              });
-            } catch (error) {
-              this.handleTraceCallbackError(error);
-            }
-          }
+          this.invokeTraceCallback(() => ({
+            type: 'flag-change',
+            position: { line: startLine, column: startColumn, offset: startPos },
+            data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.bracketDepth }
+          }));
         }
         break;
       case '?':
@@ -1993,17 +1875,11 @@ export class Lexer {
       this.advance();
     }
 
-    if (this.traceCallback && !this.traceCallbackDisabled) {
-      try {
-        this.traceCallback({
-          type: 'skip',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: { reason: 'line-comment', length: this.position - startPos }
-        });
-      } catch (error) {
-        this.handleTraceCallbackError(error);
-      }
-    }
+    this.invokeTraceCallback(() => ({
+      type: 'skip',
+      position: { line: startLine, column: startColumn, offset: startPos },
+      data: { reason: 'line-comment', length: this.position - startPos }
+    }));
   }
 
   private scanBlockComment(): void {
@@ -2030,17 +1906,11 @@ export class Lexer {
     if (!closed) {
       this.addToken(TokenType.Unknown, '{', startPos, this.position, startLine, startColumn);
     } else {
-      if (this.traceCallback && !this.traceCallbackDisabled) {
-        try {
-          this.traceCallback({
-            type: 'skip',
-            position: { line: startLine, column: startColumn, offset: startPos },
-            data: { reason: 'block-comment', length: this.position - startPos }
-          });
-        } catch (error) {
-          this.handleTraceCallbackError(error);
-        }
-      }
+      this.invokeTraceCallback(() => ({
+        type: 'skip',
+        position: { line: startLine, column: startColumn, offset: startPos },
+        data: { reason: 'block-comment', length: this.position - startPos }
+      }));
     }
   }
 
@@ -2070,17 +1940,11 @@ export class Lexer {
     if (!closed) {
       this.addToken(TokenType.Unknown, '/*', startPos, this.position, startLine, startColumn);
     } else {
-      if (this.traceCallback && !this.traceCallbackDisabled) {
-        try {
-          this.traceCallback({
-            type: 'skip',
-            position: { line: startLine, column: startColumn, offset: startPos },
-            data: { reason: 'c-style-comment', length: this.position - startPos }
-          });
-        } catch (error) {
-          this.handleTraceCallbackError(error);
-        }
-      }
+      this.invokeTraceCallback(() => ({
+        type: 'skip',
+        position: { line: startLine, column: startColumn, offset: startPos },
+        data: { reason: 'c-style-comment', length: this.position - startPos }
+      }));
     }
   }
 
@@ -2113,16 +1977,12 @@ export class Lexer {
       this.advance();
     }
 
-    if (this.traceCallback && !this.traceCallbackDisabled && this.position > startPos) {
-      try {
-        this.traceCallback({
-          type: 'skip',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: { reason: 'whitespace', length: this.position - startPos }
-        });
-      } catch (error) {
-        this.handleTraceCallbackError(error);
-      }
+    if (this.position > startPos) {
+      this.invokeTraceCallback(() => ({
+        type: 'skip',
+        position: { line: startLine, column: startColumn, offset: startPos },
+        data: { reason: 'whitespace', length: this.position - startPos }
+      }));
     }
   }
 
@@ -2140,17 +2000,11 @@ export class Lexer {
     this.line++;
     this.column = 1;
 
-    if (this.traceCallback && !this.traceCallbackDisabled) {
-      try {
-        this.traceCallback({
-          type: 'skip',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: { reason: 'newline', length: this.position - startPos }
-        });
-      } catch (error) {
-        this.handleTraceCallbackError(error);
-      }
-    }
+    this.invokeTraceCallback(() => ({
+      type: 'skip',
+      position: { line: startLine, column: startColumn, offset: startPos },
+      data: { reason: 'newline', length: this.position - startPos }
+    }));
   }
 
   private isWhitespace(ch: string): boolean {
@@ -2273,25 +2127,19 @@ export class Lexer {
     }
 
     // Emit attempt-failed trace event for debugging
-    if (this.traceCallback && !this.traceCallbackDisabled) {
-      try {
-        const reason = nextWord === '' ? 'empty-second' : 'mismatch';
-        this.traceCallback({
-          type: 'attempt-failed',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: {
-            attempt: 'compound-token',
-            firstWord,
-            separator,
-            expectedSecond,
-            actualSecond: nextWord,
-            reason
-          }
-        });
-      } catch (error) {
-        this.handleTraceCallbackError(error);
+    const reason = nextWord === '' ? 'empty-second' : 'mismatch';
+    this.invokeTraceCallback(() => ({
+      type: 'attempt-failed',
+      position: { line: startLine, column: startColumn, offset: startPos },
+      data: {
+        attempt: 'compound-token',
+        firstWord,
+        separator,
+        expectedSecond,
+        actualSecond: nextWord,
+        reason
       }
-    }
+    }));
 
     // No match - restore lexer state and return false
     this.position = savedPos;
@@ -2308,17 +2156,11 @@ export class Lexer {
     line: number,
     column: number
   ): void {
-    if (this.traceCallback && !this.traceCallbackDisabled) {
-      try {
-        this.traceCallback({
-          type: 'token',
-          position: { line, column, offset: startOffset },
-          data: { tokenType: type, value }
-        });
-      } catch (error) {
-        this.handleTraceCallbackError(error);
-      }
-    }
+    this.invokeTraceCallback(() => ({
+      type: 'token',
+      position: { line, column, offset: startOffset },
+      data: { tokenType: type, value }
+    }));
 
     this.tokens.push({
       type,

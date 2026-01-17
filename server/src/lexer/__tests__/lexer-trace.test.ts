@@ -46,7 +46,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit token events with position, type, and value', () => {
       const code = 'OBJECT';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -69,7 +69,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit EOF token event', () => {
       const code = 'OBJECT';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -94,7 +94,7 @@ describe('Lexer Trace Infrastructure', () => {
         }
       `;
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -118,7 +118,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should include accurate position information for multi-line input', () => {
       const code = 'OBJECT\nTable\n18';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -143,7 +143,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit context-push event for OBJECT context', () => {
       const code = 'OBJECT Table 18';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -161,7 +161,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit context-push event for SECTION_LEVEL', () => {
       const code = 'OBJECT Table 18 { PROPERTIES { } }';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -188,7 +188,7 @@ describe('Lexer Trace Infrastructure', () => {
         }
       `;
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -213,7 +213,7 @@ describe('Lexer Trace Infrastructure', () => {
         }
       `;
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -229,7 +229,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit context-pop events during cleanup loop', () => {
       const code = 'OBJECT Table 18 { PROPERTIES { } }';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -246,7 +246,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit flag-change event for braceDepth', () => {
       const code = '{ }';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -269,7 +269,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit flag-change event for bracketDepth', () => {
       const code = 'OBJECT Table 18 { PROPERTIES { CaptionML=[ENU=Test] } }';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -292,7 +292,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit flag-change event for inPropertyValue', () => {
       const code = 'OBJECT Table 18 { PROPERTIES { Name=Test } }';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -315,7 +315,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit flag-change event for lastPropertyName', () => {
       const code = 'OBJECT Table 18 { PROPERTIES { Name=Test } }';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -338,7 +338,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit flag-change event for lastWasSectionKeyword', () => {
       const code = 'OBJECT Table 18 { FIELDS { } }';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -357,7 +357,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit flag-change event for currentSectionType', () => {
       const code = 'OBJECT Table 18 { FIELDS { } KEYS { } }';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -382,7 +382,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit flag-change event for fieldDefColumn', () => {
       const code = 'OBJECT Table 18 { FIELDS { { 1 ; ; Name ; Code20 } } }';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -415,7 +415,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit skip events for whitespace', () => {
       const code = 'OBJECT   Table';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -430,7 +430,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit skip events for newlines', () => {
       const code = 'OBJECT\nTable';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -445,7 +445,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit skip events for line comments', () => {
       const code = 'OBJECT // comment\nTable';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -460,7 +460,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit skip events for block comments', () => {
       const code = 'BEGIN { comment } END';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -475,7 +475,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit skip events for C-style comments', () => {
       const code = 'OBJECT /* comment */ Table';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -492,7 +492,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit events in logical order', () => {
       const code = 'OBJECT Table 18';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -533,7 +533,7 @@ describe('Lexer Trace Infrastructure', () => {
         }
       `;
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -559,7 +559,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should handle empty input', () => {
       const code = '';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -574,7 +574,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should handle single token input', () => {
       const code = 'OBJECT';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -594,7 +594,7 @@ describe('Lexer Trace Infrastructure', () => {
       const code = `OBJECT Table 18 { PROPERTIES ${opening} ${closing} }`;
 
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       expect(() => {
         const lexer = new Lexer(code, { trace: traceCallback });
@@ -611,7 +611,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should handle malformed input gracefully', () => {
       const code = 'OBJECT Table { { { } }'; // Unbalanced braces
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       expect(() => {
         const lexer = new Lexer(code, { trace: traceCallback });
@@ -824,7 +824,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit attempt-failed event when second word does not match (OBJECT-FOO)', () => {
       const code = 'OBJECT-FOO';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -847,7 +847,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit attempt-failed event when second word is empty (EOF) (OBJECT-)', () => {
       const code = 'OBJECT-';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -870,7 +870,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit attempt-failed event when second word is empty (whitespace) (OBJECT- PROPERTIES)', () => {
       const code = 'OBJECT- PROPERTIES';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -893,7 +893,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should emit attempt-failed event for Format/Evaluate mismatch (FORMAT/FOO)', () => {
       const code = 'FORMAT/FOO';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
@@ -916,7 +916,7 @@ describe('Lexer Trace Infrastructure', () => {
     it('should NOT emit attempt-failed event for successful compound token (OBJECT-PROPERTIES)', () => {
       const code = 'OBJECT-PROPERTIES';
       const events: TraceEvent[] = [];
-      const traceCallback: TraceCallback = (event) => events.push(event);
+      const traceCallback: TraceCallback = (event) => { events.push(event); };
 
       const lexer = new Lexer(code, { trace: traceCallback });
       lexer.tokenize();
