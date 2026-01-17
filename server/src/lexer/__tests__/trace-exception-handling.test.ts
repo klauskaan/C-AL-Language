@@ -282,6 +282,87 @@ describe('Trace callback exception handling', () => {
       const result = lexer.isCleanExit();
       expect(result.passed).toBe(true);
     });
+
+    it('should handle multiple callbacks in same guard block when first throws', () => {
+      // Issue #119: Test that fail-once works WITHIN a single scanRightBrace() call
+      //
+      // When the outer closing brace of a FIELDS section is processed (braceDepth 1->0),
+      // scanRightBrace() invokes multiple callbacks in sequence:
+      // 1. braceDepth change (1->0)
+      // 2. popContext() → context-pop event
+      // 3. currentSectionType change ('FIELDS'->null)
+      //
+      // The fix for #117 ensures invokeTraceCallback() checks traceCallbackDisabled
+      // before EACH invocation. If callback #1 throws, #2 and #3 should be skipped.
+      //
+      // Test strategy: Allow all callbacks until we're at the specific point where
+      // multiple callbacks are pending (braceDepth 1->0), then throw. Verify that
+      // subsequent callbacks within that same scanRightBrace() call were NOT invoked.
+
+      const events: TraceEvent[] = [];
+      let hasThrown = false;
+
+      const traceCallback: TraceCallback = (event: TraceEvent) => {
+        events.push({ ...event } as TraceEvent);
+
+        // Throw when braceDepth changes from 1 to 0 (outer closing brace)
+        // At this point, scanRightBrace() has pending callbacks:
+        // - popContext() → context-pop
+        // - currentSectionType change
+        if (event.type === 'flag-change' &&
+            event.data?.flag === 'braceDepth' &&
+            event.data?.from === 1 &&
+            event.data?.to === 0 &&
+            !hasThrown) {
+          hasThrown = true;
+          throw new Error('Throw on outer brace close');
+        }
+      };
+
+      const code = 'OBJECT Table 1 { FIELDS { } }';
+      const lexer = new Lexer(code, { trace: traceCallback });
+
+      const tokens = lexer.tokenize();
+
+      // Verify tokenization completed
+      expect(tokens).toBeDefined();
+      expect(tokens.length).toBeGreaterThan(0);
+
+      // Verify the throw happened at the expected point
+      expect(hasThrown).toBe(true);
+
+      // CRITICAL: After the throw on braceDepth 1->0, these should NOT have fired:
+      // - context-pop for SECTION_LEVEL (from popContext())
+      // - currentSectionType change from 'FIELDS' to null
+      //
+      // If fail-once didn't work within the guard block, these would have been invoked.
+
+      // Find the index of the throw event
+      const throwEventIndex = events.findIndex(e =>
+        e.type === 'flag-change' &&
+        e.data?.flag === 'braceDepth' &&
+        e.data?.from === 1 &&
+        e.data?.to === 0
+      );
+      expect(throwEventIndex).toBeGreaterThan(-1);
+
+      // No events should have been recorded after the throw
+      const eventsAfterThrow = events.slice(throwEventIndex + 1);
+      expect(eventsAfterThrow).toHaveLength(0);
+
+      // Specifically verify currentSectionType change from 'FIELDS' to null was NOT recorded
+      // (There IS a change from null to 'FIELDS' when entering the section, which is expected)
+      const sectionTypeExitChanges = events.filter(e =>
+        e.type === 'flag-change' &&
+        e.data?.flag === 'currentSectionType' &&
+        e.data?.from === 'FIELDS' &&
+        e.data?.to === null
+      );
+      expect(sectionTypeExitChanges).toHaveLength(0);
+
+      // console.warn should be called exactly once
+      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('Callback state does not leak between Lexer instances', () => {
