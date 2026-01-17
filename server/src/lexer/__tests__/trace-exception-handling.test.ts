@@ -399,4 +399,196 @@ describe('Trace callback exception handling', () => {
       expect(lexer2CallCount).toBeGreaterThan(0);
     });
   });
+
+  describe('console.warn failure handling (issue #120)', () => {
+    /**
+     * Issue #120: If console.warn itself throws (extreme edge case),
+     * the error handler will crash tokenization instead of gracefully failing.
+     *
+     * These tests verify that console.warn is wrapped in try-catch.
+     */
+
+    describe('Sync callback error path', () => {
+      it('should complete tokenization when console.warn throws in handleTraceCallbackError', () => {
+        // Mock console.warn to throw
+        consoleWarnSpy.mockImplementation(() => {
+          throw new Error('console.warn failed');
+        });
+
+        // Callback that throws synchronously
+        const traceCallback: TraceCallback = () => {
+          throw new Error('Test callback error');
+        };
+
+        const code = 'OBJECT Table 1 { OBJECT-PROPERTIES { Date=01/01/01; } }';
+        const lexer = new Lexer(code, { trace: traceCallback });
+
+        // Before #120 fix: console.warn throws, escapes from tokenize(); now completes successfully
+        const tokens = lexer.tokenize();
+
+        // Verify tokenization completed despite console.warn throwing
+        expect(tokens).toBeDefined();
+        expect(Array.isArray(tokens)).toBe(true);
+        expect(tokens.length).toBeGreaterThan(0);
+
+        // Verify tokens are valid
+        expect(tokens[0].type).toBe(TokenType.Object);
+      });
+
+      it('should set traceCallbackDisabled even when console.warn throws', () => {
+        // Mock console.warn to throw
+        consoleWarnSpy.mockImplementation(() => {
+          throw new Error('console.warn failed');
+        });
+
+        let callCount = 0;
+        const traceCallback: TraceCallback = () => {
+          callCount++;
+          if (callCount === 1) {
+            throw new Error('First call error');
+          }
+        };
+
+        const code = 'OBJECT Table 1 { PROPERTIES { } FIELDS { } }';
+        const lexer = new Lexer(code, { trace: traceCallback });
+
+        // Before #120 fix: console.warn throws on first call; now completes successfully
+        lexer.tokenize();
+
+        // Verify callback was only called once (disabled despite console.warn failure)
+        expect(callCount).toBe(1);
+      });
+    });
+
+    describe('Async callback error path', () => {
+      it('should complete tokenization when console.warn throws in handleAsyncRejection', async () => {
+        // Mock console.warn to throw
+        consoleWarnSpy.mockImplementation(() => {
+          throw new Error('console.warn failed');
+        });
+
+        // Callback that returns rejected Promise
+        const traceCallback: TraceCallback = () => {
+          return Promise.reject(new Error('Async callback error')) as any;
+        };
+
+        const code = 'OBJECT Table 1 { OBJECT-PROPERTIES { Date=01/01/01; } }';
+        const lexer = new Lexer(code, { trace: traceCallback });
+
+        // Before #120 fix: console.warn throws asynchronously, may cause unhandled rejection; now completes successfully
+        const tokens = lexer.tokenize();
+
+        // Verify tokenization completed synchronously (doesn't wait for rejection)
+        expect(tokens).toBeDefined();
+        expect(tokens.length).toBeGreaterThan(0);
+
+        // Let async rejection handler run
+        await Promise.resolve();
+
+        // Verify no unhandled rejections escaped
+        // (If console.warn throws in handleAsyncRejection, it becomes an unhandled rejection)
+      });
+
+      it('should not cause unhandled rejection when console.warn throws in async error handler', async () => {
+        // Mock console.warn to throw
+        consoleWarnSpy.mockImplementation(() => {
+          throw new Error('console.warn failed in async handler');
+        });
+
+        // Setup unhandled rejection listener
+        const rejectionHandler = jest.fn();
+        process.on('unhandledRejection', rejectionHandler);
+
+        try {
+          const traceCallback: TraceCallback = () => {
+            return Promise.reject(new Error('Async callback error')) as any;
+          };
+
+          const code = 'OBJECT Table 1';
+          const lexer = new Lexer(code, { trace: traceCallback });
+
+          // Before #120 fix: console.warn throws in async handler, becomes unhandled rejection; now completes successfully
+          lexer.tokenize();
+
+          // Let rejection propagate through event loop
+          await new Promise(resolve => setTimeout(resolve, 10));
+
+          // Before #120 fix: console.warn throw will become unhandled rejection; now handled
+          expect(rejectionHandler).not.toHaveBeenCalled();
+        } finally {
+          process.off('unhandledRejection', rejectionHandler);
+        }
+      });
+
+      it('should set traceCallbackDisabled even when console.warn throws in async path', async () => {
+        // Mock console.warn to throw
+        consoleWarnSpy.mockImplementation(() => {
+          throw new Error('console.warn failed');
+        });
+
+        let callCount = 0;
+        const traceCallback: TraceCallback = () => {
+          callCount++;
+          if (callCount === 1) {
+            return Promise.reject(new Error('First async error')) as any;
+          }
+          return undefined;
+        };
+
+        const code = 'OBJECT Table 1 { PROPERTIES { } FIELDS { } }';
+        const lexer = new Lexer(code, { trace: traceCallback });
+
+        // First tokenization - async rejection occurs
+        lexer.tokenize();
+
+        // Callbacks during synchronous tokenization continue (async rejection is fire-and-forget)
+        expect(callCount).toBeGreaterThan(1);
+
+        // Let async handler run (even though console.warn throws)
+        await Promise.resolve();
+
+        // Second tokenization - callback should be re-enabled (state reset)
+        callCount = 0; // Reset counter
+        const tokens2 = lexer.tokenize();
+
+        // Verify callback was called in second tokenization
+        expect(tokens2.length).toBeGreaterThan(0);
+        expect(callCount).toBeGreaterThan(0);
+      });
+    });
+
+    describe('State verification - defensive flag setting', () => {
+      it('should set traceCallbackDisabled BEFORE calling console.warn in sync path', () => {
+        // Track the order of operations
+        const operations: string[] = [];
+
+        consoleWarnSpy.mockImplementation(() => {
+          operations.push('console.warn');
+          throw new Error('console.warn failed');
+        });
+
+        let callCount = 0;
+        const traceCallback: TraceCallback = () => {
+          callCount++;
+          operations.push(`callback-${callCount}`);
+          if (callCount === 1) {
+            throw new Error('First call error');
+          }
+        };
+
+        const code = 'OBJECT Table 1 { PROPERTIES { } }';
+        const lexer = new Lexer(code, { trace: traceCallback });
+
+        // Before #120 fix: console.warn throws before checking if callback is disabled; now completes successfully
+        lexer.tokenize();
+
+        // Verify operation order
+        expect(operations).toContain('callback-1');
+        expect(operations).toContain('console.warn');
+
+        // Verify callback was only called once (disabled before console.warn attempt)
+        expect(callCount).toBe(1);
+      });
+    });
+  });
 });

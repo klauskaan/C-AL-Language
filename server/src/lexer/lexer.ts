@@ -543,7 +543,12 @@ export class Lexer {
       throw error;
     }
     this.traceCallbackDisabled = true;
-    console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+    // Inline try-catch chosen over helper per #118 discussion - keeps error handling explicit
+    try {
+      console.warn('Trace callback threw an exception and has been disabled for this tokenization:', error);
+    } catch {
+      // If console.warn itself throws, silently ignore - nothing more we can do
+    }
   }
 
   /**
@@ -570,7 +575,12 @@ export class Lexer {
     }
 
     this.traceCallbackDisabled = true;
-    console.warn('Async trace callback rejected and has been disabled for this tokenization:', error);
+    // Inline try-catch chosen over helper per #118 discussion - keeps error handling explicit
+    try {
+      console.warn('Async trace callback rejected and has been disabled for this tokenization:', error);
+    } catch {
+      // If console.warn itself throws, silently ignore - nothing more we can do
+    }
   }
 
   /**
