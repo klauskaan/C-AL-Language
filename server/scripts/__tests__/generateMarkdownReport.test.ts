@@ -8,7 +8,7 @@
  * - Current behavior documented with TODO comments for known issues (#113, #114, #115)
  */
 
-import { generateMarkdownReport, FileResult } from '../lexer-health';
+import { generateMarkdownReport, FileResult, escapeMarkdown } from '../lexer-health';
 import { ExitCategory } from '../../src/lexer/lexer';
 
 // Mock timers for deterministic timestamps
@@ -133,8 +133,6 @@ describe('generateMarkdownReport', () => {
     });
 
     it('should handle special characters - pipe in filename', () => {
-      // TODO: Issue #113 - Pipe characters in filenames break markdown tables
-      // Currently tests CURRENT behavior (will break table if file appears in outliers)
       const filenameWithPipe = 'file|with|pipes.txt';
 
       const results: FileResult[] = [];
@@ -152,15 +150,13 @@ describe('generateMarkdownReport', () => {
 
       const report = generateMarkdownReport(results);
 
-      // Current behavior: filename is inserted as-is in outliers table (breaks markdown)
-      expect(report).toContain(filenameWithPipe);
+      // Pipes should be escaped in markdown table
+      expect(report).toContain('file\\|with\\|pipes.txt');
       expect(report).toContain('Performance Outliers');
       expect(report).toContain('# Lexer Health Report');
     });
 
     it('should handle markdown in error messages', () => {
-      // TODO: #113 - Update when markdown escaping is fixed
-      // Currently tests CURRENT behavior (markdown not escaped)
       const errorWithMarkdown = 'Error: **bold** and _italic_ and `code`';
 
       const results: FileResult[] = [
@@ -176,8 +172,8 @@ describe('generateMarkdownReport', () => {
 
       const report = generateMarkdownReport(results);
 
-      // Current behavior: markdown characters pass through
-      expect(report).toContain(errorWithMarkdown);
+      // Markdown characters should be escaped
+      expect(report).toContain('Error: \\*\\*bold\\*\\* and \\_italic\\_ and \\`code\\`');
       expect(report).toContain('## Failures');
       expect(report).toContain('### Position Validation Failures');
     });
@@ -494,6 +490,94 @@ describe('generateMarkdownReport', () => {
       expect(report).toContain('**stack-mismatch:** Invalid state');
       expect(report).toContain('Expected: "EOF"');
       expect(report).toContain('Actual: "IDENTIFIER"');
+    });
+  });
+
+  describe('escapeMarkdown', () => {
+    it('should escape backslash', () => {
+      expect(escapeMarkdown('test\\value')).toBe('test\\\\value');
+    });
+
+    it('should escape pipe', () => {
+      expect(escapeMarkdown('test|value')).toBe('test\\|value');
+    });
+
+    it('should escape asterisk', () => {
+      expect(escapeMarkdown('test*value')).toBe('test\\*value');
+    });
+
+    it('should escape underscore', () => {
+      expect(escapeMarkdown('test_value')).toBe('test\\_value');
+    });
+
+    it('should escape backtick', () => {
+      expect(escapeMarkdown('test`value')).toBe('test\\`value');
+    });
+
+    it('should escape square brackets', () => {
+      expect(escapeMarkdown('test[value]')).toBe('test\\[value\\]');
+    });
+
+    it('should escape angle brackets', () => {
+      expect(escapeMarkdown('test<value>')).toBe('test\\<value\\>');
+    });
+
+    it('should escape hash', () => {
+      expect(escapeMarkdown('test#value')).toBe('test\\#value');
+    });
+
+    it('should escape backslash FIRST to prevent double-escaping', () => {
+      // Critical test: backslash must be escaped before other characters
+      // If backslash is not escaped first:
+      //   "test\*value" -> "test\\*value" (escape backslash) -> "test\\\*value" (escape asterisk) WRONG!
+      // If backslash IS escaped first:
+      //   "test\*value" -> "test\\*value" (escape backslash) -> "test\\\\*value" (escape asterisk) CORRECT!
+      expect(escapeMarkdown('test\\*value')).toBe('test\\\\\\*value');
+    });
+
+    it('should handle empty string', () => {
+      expect(escapeMarkdown('')).toBe('');
+    });
+
+    it('should handle string with no special characters', () => {
+      expect(escapeMarkdown('test value')).toBe('test value');
+    });
+
+    it('should handle all special characters combined', () => {
+      const input = 'test\\|*_`[]<>#all';
+      const expected = 'test\\\\\\|\\*\\_\\`\\[\\]\\<\\>\\#all';
+      expect(escapeMarkdown(input)).toBe(expected);
+    });
+  });
+
+  describe('JSON.stringify output escaping', () => {
+    it('should escape markdown characters in violation expected/actual values', () => {
+      const results: FileResult[] = [
+        createFileResult({
+          file: 'test.txt',
+          cleanExit: {
+            passed: false,
+            violations: [{
+              category: ExitCategory.STACK_MISMATCH,
+              message: 'Stack mismatch with **markdown**',
+              expected: 'Expected: *asterisk* and `backtick`',
+              actual: 'Actual: _underscore_ and |pipe|'
+            }],
+            categories: new Set([ExitCategory.STACK_MISMATCH])
+          }
+        })
+      ];
+
+      const report = generateMarkdownReport(results);
+
+      // Markdown characters in violation messages should be escaped
+      expect(report).toContain('\\*\\*markdown\\*\\*');
+      expect(report).toContain('\\*asterisk\\* and \\`backtick\\`');
+      expect(report).toContain('\\_underscore\\_ and \\|pipe\\|');
+
+      // Should still contain failure section
+      expect(report).toContain('## Failures');
+      expect(report).toContain('### Clean Exit Failures');
     });
   });
 });

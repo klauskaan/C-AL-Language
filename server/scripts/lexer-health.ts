@@ -126,6 +126,27 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
+ * Escape markdown special characters to prevent rendering issues.
+ * Backslash must be escaped FIRST to avoid double-escaping.
+ *
+ * @param text - Text to escape
+ * @returns Escaped text safe for markdown
+ */
+export function escapeMarkdown(text: string): string {
+  return text
+    .replace(/\\/g, '\\\\')  // Backslash first!
+    .replace(/\|/g, '\\|')
+    .replace(/\*/g, '\\*')
+    .replace(/_/g, '\\_')
+    .replace(/`/g, '\\`')
+    .replace(/\[/g, '\\[')
+    .replace(/\]/g, '\\]')
+    .replace(/</g, '\\<')
+    .replace(/>/g, '\\>')
+    .replace(/#/g, '\\#');
+}
+
+/**
  * Calculate estimated time remaining based on current progress.
  * Returns null when ETA cannot be reliably calculated.
  *
@@ -491,7 +512,7 @@ export function generateMarkdownReport(results: FileResult[]): string {
     outliers
       .sort((a, b) => b.tokenizeTime - a.tokenizeTime)
       .forEach(r => {
-        md += `| ${r.file} | ${r.lines.toLocaleString()} | ${r.tokenizeTime.toFixed(2)} | ${r.tokenCount.toLocaleString()} |\n`;
+        md += `| ${escapeMarkdown(r.file)} | ${r.lines.toLocaleString()} | ${r.tokenizeTime.toFixed(2)} | ${r.tokenCount.toLocaleString()} |\n`;
       });
     md += '\n';
   }
@@ -509,13 +530,13 @@ export function generateMarkdownReport(results: FileResult[]): string {
   if (filesWithPositionErrors.length > 0) {
     md += `### Position Validation Failures (${filesWithPositionErrors.length})\n\n`;
     filesWithPositionErrors.forEach(r => {
-      md += `#### ${r.file}\n\n`;
+      md += `#### ${escapeMarkdown(r.file)}\n\n`;
       md += `**Lines:** ${r.lines.toLocaleString()} | **Tokens:** ${r.tokenCount.toLocaleString()} | **Time:** ${r.tokenizeTime.toFixed(2)}ms\n\n`;
 
       if (r.positionValidation.errors.length > 0) {
         md += '**Errors:**\n';
         r.positionValidation.errors.forEach(err => {
-          md += `- ${err}\n`;
+          md += `- ${escapeMarkdown(err)}\n`;
         });
         md += '\n';
       }
@@ -523,7 +544,7 @@ export function generateMarkdownReport(results: FileResult[]): string {
       if (r.positionValidation.warnings.length > 0) {
         md += '**Warnings:**\n';
         r.positionValidation.warnings.forEach(warn => {
-          md += `- ${warn}\n`;
+          md += `- ${escapeMarkdown(warn)}\n`;
         });
         md += '\n';
       }
@@ -533,14 +554,14 @@ export function generateMarkdownReport(results: FileResult[]): string {
   if (filesWithExitErrors.length > 0) {
     md += `### Clean Exit Failures (${filesWithExitErrors.length})\n\n`;
     filesWithExitErrors.forEach(r => {
-      md += `#### ${r.file}\n\n`;
+      md += `#### ${escapeMarkdown(r.file)}\n\n`;
       md += `**Lines:** ${r.lines.toLocaleString()} | **Tokens:** ${r.tokenCount.toLocaleString()} | **Time:** ${r.tokenizeTime.toFixed(2)}ms\n\n`;
 
       md += '**Violations:**\n';
       r.cleanExit.violations.forEach(v => {
-        md += `- **${v.category}:** ${v.message}\n`;
-        md += `  - Expected: ${JSON.stringify(v.expected)}\n`;
-        md += `  - Actual: ${JSON.stringify(v.actual)}\n`;
+        md += `- **${escapeMarkdown(v.category)}:** ${escapeMarkdown(v.message)}\n`;
+        md += `  - Expected: ${escapeMarkdown(JSON.stringify(v.expected))}\n`;
+        md += `  - Actual: ${escapeMarkdown(JSON.stringify(v.actual))}\n`;
       });
       md += '\n';
     });
