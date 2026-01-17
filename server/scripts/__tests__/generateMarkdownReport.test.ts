@@ -45,33 +45,22 @@ function createFileResult(overrides: Partial<FileResult> = {}): FileResult {
 describe('generateMarkdownReport', () => {
   describe('Empty and edge cases', () => {
     it('should handle zero results (empty input)', () => {
-      // TODO: Issue #114 - "All files passed validation!" appears for empty results (0 files)
-      // This is arguably a bug - zero files doesn't mean "all passed", it means "no files"
-      // Current behavior: filesWithAnyError.length === 0 triggers success message
+      // Fix for issue #114: Empty results should show "No files to validate", not success
       const results: FileResult[] = [];
       const report = generateMarkdownReport(results);
 
       // Should contain header
       expect(report).toContain('# Lexer Health Report');
 
-      // Should show zero counts
-      expect(report).toContain('**Total files:** 0');
-      expect(report).toContain('**Total lines:** 0');
-      expect(report).toContain('**Total tokens:** 0');
+      // Should show warning about no files to validate
+      expect(report).toContain('⚠️ **No files to validate**');
 
-      // Success rate should be 0.00% for empty input (division by zero guard)
-      expect(report).toContain('**Success rate:** 0.00%');
+      // Should NOT show misleading success message
+      expect(report).not.toContain('All files passed validation!');
 
-      // Performance metrics should all be 0.00ms
-      expect(report).toContain('**p50 (median):** 0.00ms');
-      expect(report).toContain('**p95:** 0.00ms');
-      expect(report).toContain('**p99:** 0.00ms');
-
-      // Should not show outliers section
-      expect(report).not.toContain('Performance Outliers');
-
-      // Current behavior: Shows success message even for empty input
-      expect(report).toContain('All files passed validation!');
+      // Should not show summary stats for empty input (early return)
+      expect(report).not.toContain('**Total files:**');
+      expect(report).not.toContain('Performance Metrics');
     });
 
     it('should handle empty violations array edge case', () => {

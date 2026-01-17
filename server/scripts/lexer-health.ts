@@ -489,6 +489,12 @@ export function generateMarkdownReport(results: FileResult[]): string {
   md += `> Do not copy file names, object IDs 6000000+, or code fragments to public repositories.\n\n`;
   md += `**Generated:** ${new Date().toISOString()}\n\n`;
 
+  // Handle empty results - don't show misleading "all passed" message
+  if (results.length === 0) {
+    md += '⚠️ **No files to validate**\n';
+    return md;
+  }
+
   // Summary section
   md += '## Summary\n\n';
   md += `- **Total files:** ${results.length.toLocaleString()}\n`;
