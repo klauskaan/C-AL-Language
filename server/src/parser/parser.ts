@@ -1916,7 +1916,7 @@ export class Parser {
     } else {
       const stmt = this.parseStatement();
       if (!stmt) {
-        throw new ParseError('Expected statement after THEN', this.peek());
+        throw this.createParseError('Expected statement after THEN');
       }
       thenBranch = stmt;
     }
@@ -1940,7 +1940,7 @@ export class Parser {
       } else {
         const stmt = this.parseStatement();
         if (!stmt) {
-          throw new ParseError('Expected statement after ELSE', this.peek());
+          throw this.createParseError('Expected statement after ELSE');
         }
         elseBranch = stmt;
       }
@@ -1982,7 +1982,7 @@ export class Parser {
     } else {
       const stmt = this.parseStatement();
       if (!stmt) {
-        throw new ParseError('Expected statement after DO', this.peek());
+        throw this.createParseError('Expected statement after DO');
       }
       body = stmt;
     }
@@ -2103,7 +2103,7 @@ export class Parser {
     } else {
       const stmt = this.parseStatement();
       if (!stmt) {
-        throw new ParseError('Expected statement after DO', this.peek());
+        throw this.createParseError('Expected statement after DO');
       }
       body = stmt;
     }
@@ -2345,7 +2345,7 @@ export class Parser {
     } else {
       const stmt = this.parseStatement();
       if (!stmt) {
-        throw new ParseError('Expected statement after DO', this.peek());
+        throw this.createParseError('Expected statement after DO');
       }
       body = stmt;
     }
@@ -3005,7 +3005,7 @@ export class Parser {
       case TokenType.Query: return ObjectKind.Query;
       case TokenType.XMLport: return ObjectKind.XMLport;
       case TokenType.MenuSuite: return ObjectKind.MenuSuite;
-      default: throw new ParseError(`Invalid object type: ${type}`, this.peek());
+      default: throw this.createParseError(`Invalid object type: ${type}`);
     }
   }
 
@@ -3285,7 +3285,7 @@ export class Parser {
     if (this.check(type)) return this.advance();
     const current = this.peek();
     const enhancedMessage = `${message}, but found '${sanitizeContent(current.value)}' (${current.type})`;
-    throw new ParseError(enhancedMessage, current);
+    throw this.createParseError(enhancedMessage, current);
   }
 
   public getErrors(): ParseError[] {
@@ -3300,11 +3300,31 @@ export class Parser {
   }
 
   /**
+   * Factory method for creating ParseError instances with sanitized messages.
+   * This is the ONLY allowed site for ParseError construction.
+   * All error messages containing token values MUST go through this factory
+   * to prevent accidental content leakage from test/REAL/ files.
+   *
+   * @param message - Base error message (may already contain sanitized token values)
+   * @param token - Token associated with the error (defaults to current token)
+   * @returns ParseError with sanitized message and location info
+   */
+  private createParseError(message: string, token?: Token): ParseError {
+    const errorToken = token || this.peek();
+    // Apply path sanitization as a safety layer to prevent test/REAL/ leakage
+    // Note: stripPaths only removes file paths, not the entire message content
+    // Token values should already be sanitized by callers using sanitizeContent()
+    const stripPaths = (msg: string) => msg.replace(/test\/REAL\/[^\s]*/g, '<REDACTED>');
+    const sanitizedMessage = stripPaths(message);
+    return new ParseError(sanitizedMessage, errorToken);
+  }
+
+  /**
    * Record an error without throwing - used for error recovery
    */
   private recordError(message: string, token?: Token): void {
-    const errorToken = token || this.peek();
-    this.errors.push(new ParseError(message, errorToken));
+    const error = this.createParseError(message, token);
+    this.errors.push(error);
   }
 
   /**
