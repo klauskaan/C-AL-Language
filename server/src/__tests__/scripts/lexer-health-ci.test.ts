@@ -12,15 +12,11 @@
  * don't exist yet. Implementation will follow after test validation.
  */
 
-import { compareToBaseline, runCICheck, ComparisonResult, CIResult } from '../../../scripts/lexer-health';
+import { compareToBaseline, runCICheck } from '../../../scripts/lexer-health';
 import { existsSync } from 'fs';
-import { join } from 'path';
 
 // Mock filesystem functions
 jest.mock('fs');
-jest.mock('path', () => ({
-  join: (...args: string[]) => args.join('/')
-}));
 
 describe('Lexer Health Script - compareToBaseline()', () => {
   describe('equality and improvement scenarios', () => {
@@ -417,6 +413,68 @@ describe('Lexer Health Script - runCICheck()', () => {
       expect(result.comparison).not.toBeNull();
       if (result.comparison) {
         expect(result.comparison.message).toMatch(/empty|no.*files/i);
+      }
+    });
+  });
+
+  describe('readdirSync error handling', () => {
+    it('should handle EACCES error (permission denied) gracefully', () => {
+      // Mock test/REAL exists, baseline exists
+      (existsSync as jest.Mock).mockImplementation((path: string) => {
+        if (path.includes('test/REAL')) return true;
+        if (path.includes('baseline.json')) return true;
+        return false;
+      });
+
+      // Mock readdirSync to throw EACCES error (permission denied)
+      const mockReaddirSync = jest.requireMock('fs').readdirSync;
+      const permissionError: any = new Error('EACCES: permission denied, scandir \'test/REAL\'');
+      permissionError.code = 'EACCES';
+      permissionError.errno = -13;
+      permissionError.syscall = 'scandir';
+      permissionError.path = 'test/REAL';
+      mockReaddirSync.mockImplementation(() => {
+        throw permissionError;
+      });
+
+      const result = runCICheck();
+
+      expect(mockReaddirSync).toHaveBeenCalled();
+      expect(result.exitCode).toBe(2);
+      expect(result.skipped).toBe(false);
+      expect(result.comparison).not.toBeNull();
+      if (result.comparison) {
+        expect(result.comparison.passed).toBe(false);
+        expect(result.comparison.message).toContain('Configuration error: cannot read test/REAL directory');
+        expect(result.comparison.message).toContain('EACCES');
+      }
+    });
+
+    it('should handle generic readdirSync errors gracefully', () => {
+      // Mock test/REAL exists, baseline exists
+      (existsSync as jest.Mock).mockImplementation((path: string) => {
+        if (path.includes('test/REAL')) return true;
+        if (path.includes('baseline.json')) return true;
+        return false;
+      });
+
+      // Mock readdirSync to throw generic error
+      const mockReaddirSync = jest.requireMock('fs').readdirSync;
+      const genericError = new Error('Too many open files');
+      mockReaddirSync.mockImplementation(() => {
+        throw genericError;
+      });
+
+      const result = runCICheck();
+
+      expect(mockReaddirSync).toHaveBeenCalled();
+      expect(result.exitCode).toBe(2);
+      expect(result.skipped).toBe(false);
+      expect(result.comparison).not.toBeNull();
+      if (result.comparison) {
+        expect(result.comparison.passed).toBe(false);
+        expect(result.comparison.message).toContain('Configuration error: cannot read test/REAL directory');
+        expect(result.comparison.message).toContain('Too many open files');
       }
     });
   });

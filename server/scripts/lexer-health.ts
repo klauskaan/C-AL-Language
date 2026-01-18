@@ -282,7 +282,24 @@ export function runCICheck(): CIResult {
   }
 
   // Check for empty directory before proceeding
-  const files = readdirSync(realDir).filter(hasTxtExtension);
+  let files: string[];
+  try {
+    files = readdirSync(realDir).filter(hasTxtExtension);
+  } catch (error) {
+    return {
+      exitCode: 2,
+      skipped: false,
+      skipReason: undefined,
+      comparison: {
+        passed: false,
+        actualFailures: 0,
+        baselineMax: 0,
+        improvement: 0,
+        requiresBaselineUpdate: false,
+        message: `Configuration error: cannot read test/REAL directory - ${error instanceof Error ? error.message : String(error)}`
+      }
+    };
+  }
 
   if (files.length === 0) {
     return {
