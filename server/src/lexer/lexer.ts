@@ -1298,25 +1298,25 @@ export class Lexer {
         if (this.inPropertyValue) {
           break;
         }
-        // Section keywords - mark that we're expecting a section
-        // The actual SECTION_LEVEL context is pushed when we see the opening brace
-        const oldLastWasSectionKeywordFields = this.lastWasSectionKeyword;
-        const oldCurrentSectionTypeFields = this.currentSectionType;
-        this.lastWasSectionKeyword = true;
-        this.currentSectionType = 'FIELDS';
-        if (oldLastWasSectionKeywordFields !== true) {
-          this.invokeTraceCallback(() => ({
-            type: 'flag-change',
-            position: { line: this.line, column: this.column, offset: this.position },
-            data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeywordFields, to: true }
-          }));
-        }
-        if (oldCurrentSectionTypeFields !== 'FIELDS') {
-          this.invokeTraceCallback(() => ({
-            type: 'flag-change',
-            position: { line: this.line, column: this.column, offset: this.position },
-            data: { flag: 'currentSectionType', from: oldCurrentSectionTypeFields, to: 'FIELDS' }
-          }));
+        {
+          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
+          const oldCurrentSectionType = this.currentSectionType;
+          this.lastWasSectionKeyword = true;
+          this.currentSectionType = 'FIELDS';
+          if (oldLastWasSectionKeyword !== true) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+            }));
+          }
+          if (oldCurrentSectionType !== 'FIELDS') {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'FIELDS' }
+            }));
+          }
         }
         break;
 
