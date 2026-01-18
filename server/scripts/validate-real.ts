@@ -5,7 +5,29 @@ import { Parser } from '../src/parser/parser';
 import { readFileWithEncoding } from '../src/utils/encoding';
 import { hasTxtExtension } from '../src/utils/fileExtensions';
 
-interface ValidationResult {
+/**
+ * Escape markdown special characters to prevent rendering issues.
+ * Backslash must be escaped FIRST to avoid double-escaping.
+ * Note: Use only for display text, not for URL paths in links.
+ *
+ * @param text - Text to escape
+ * @returns Escaped text safe for markdown
+ */
+export function escapeMarkdown(text: string): string {
+  return text
+    .replace(/\\/g, '\\\\')  // Backslash first!
+    .replace(/\|/g, '\\|')
+    .replace(/\*/g, '\\*')
+    .replace(/_/g, '\\_')
+    .replace(/`/g, '\\`')
+    .replace(/\[/g, '\\[')
+    .replace(/\]/g, '\\]')
+    .replace(/</g, '\\<')
+    .replace(/>/g, '\\>')
+    .replace(/#/g, '\\#');
+}
+
+export interface ValidationResult {
   file: string;
   lines: number;
   parseTime: number;
@@ -59,7 +81,14 @@ function validateAllRealFiles(): ValidationResult[] {
   return results;
 }
 
-function generateMarkdownReport(results: ValidationResult[]): string {
+/**
+ * Generate a markdown report from validation results.
+ *
+ * @param results - Array of validation results from parsing C/AL files
+ * @returns Formatted markdown report string
+ */
+// Exported for testing only
+export function generateMarkdownReport(results: ValidationResult[]): string {
   const filesWithErrors = results.filter(r => r.errors.length > 0);
   const totalErrors = filesWithErrors.reduce((sum, r) => sum + r.errors.length, 0);
   const totalTime = results.reduce((sum, r) => sum + r.parseTime, 0);
@@ -102,7 +131,7 @@ function generateMarkdownReport(results: ValidationResult[]): string {
     .sort(([, a], [, b]) => b.errors - a.errors)
     .forEach(([type, stats]) => {
       const avg = (stats.errors / stats.files).toFixed(1);
-      md += `| ${type} | ${stats.files} | ${stats.errors} | ${avg} |\n`;
+      md += `| ${escapeMarkdown(type)} | ${stats.files} | ${stats.errors} | ${avg} |\n`;
     });
   md += '\n';
 
@@ -114,7 +143,7 @@ function generateMarkdownReport(results: ValidationResult[]): string {
     .sort((a, b) => b.errors.length - a.errors.length)
     .slice(0, 20)
     .forEach(r => {
-      md += `| [${r.file}](test/REAL/${r.file}) | ${r.lines.toLocaleString()} | ${r.errors.length} | ${r.parseTime}ms |\n`;
+      md += `| [${escapeMarkdown(r.file)}](test/REAL/${r.file}) | ${r.lines.toLocaleString()} | ${r.errors.length} | ${r.parseTime}ms |\n`;
     });
   md += '\n';
 
@@ -125,11 +154,11 @@ function generateMarkdownReport(results: ValidationResult[]): string {
   filesWithErrors
     .sort((a, b) => b.errors.length - a.errors.length)
     .forEach(r => {
-      md += `### [${r.file}](test/REAL/${r.file}) (${r.errors.length} ${r.errors.length === 1 ? 'error' : 'errors'})\n\n`;
+      md += `### [${escapeMarkdown(r.file)}](test/REAL/${r.file}) (${r.errors.length} ${r.errors.length === 1 ? 'error' : 'errors'})\n\n`;
       md += `**Lines:** ${r.lines.toLocaleString()} | **Parse time:** ${r.parseTime}ms\n\n`;
 
       r.errors.forEach(e => {
-        md += `- **Line ${e.line}:${e.column}** - ${e.message}\n`;
+        md += `- **Line ${e.line}:${e.column}** - ${escapeMarkdown(e.message)}\n`;
       });
       md += '\n';
     });
@@ -137,21 +166,23 @@ function generateMarkdownReport(results: ValidationResult[]): string {
   return md;
 }
 
-// Main execution
-console.log('C/AL Parser Validation Tool\n');
-console.log('Scanning test/REAL directory...\n');
+// Main execution (only when run directly, not imported or in tests)
+if (require.main === module && !process.env.JEST_WORKER_ID) {
+  console.log('C/AL Parser Validation Tool\n');
+  console.log('Scanning test/REAL directory...\n');
 
-const startTime = Date.now();
-const results = validateAllRealFiles();
-const totalTime = Date.now() - startTime;
+  const startTime = Date.now();
+  const results = validateAllRealFiles();
+  const totalTime = Date.now() - startTime;
 
-console.log(`\nValidation complete in ${(totalTime / 1000).toFixed(2)}s`);
-console.log('Generating report...');
+  console.log(`\nValidation complete in ${(totalTime / 1000).toFixed(2)}s`);
+  console.log('Generating report...');
 
-const report = generateMarkdownReport(results);
-const reportPath = join(__dirname, '../../validation-report.md');
-writeFileSync(reportPath, report, 'utf-8');
+  const report = generateMarkdownReport(results);
+  const reportPath = join(__dirname, '../../validation-report.md');
+  writeFileSync(reportPath, report, 'utf-8');
 
-const filesWithErrors = results.filter(r => r.errors.length > 0).length;
-console.log(`\nReport saved to: validation-report.md`);
-console.log(`Files with errors: ${filesWithErrors}/${results.length}`);
+  const filesWithErrors = results.filter(r => r.errors.length > 0).length;
+  console.log(`\nReport saved to: validation-report.md`);
+  console.log(`Files with errors: ${filesWithErrors}/${results.length}`);
+}
