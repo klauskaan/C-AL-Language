@@ -61,6 +61,19 @@ describe('generateMarkdownReport', () => {
       // Should not show summary stats for empty input (early return)
       expect(report).not.toContain('**Total files:**');
       expect(report).not.toContain('Performance Metrics');
+
+      // Snapshot test for complete output structure
+      expect(report).toMatchInlineSnapshot(`
+"# Lexer Health Report
+
+> **WARNING:** This report is generated from proprietary NAV objects in test/REAL/.
+> Do not copy file names, object IDs 6000000+, or code fragments to public repositories.
+
+**Generated:** 2024-01-15T10:00:00.000Z
+
+⚠️ **No files to validate**
+"
+`);
     });
 
     it('should handle empty violations array edge case', () => {
