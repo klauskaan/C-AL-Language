@@ -1271,6 +1271,8 @@ export class Lexer {
       case TokenType.Object:
         // Only push OBJECT_LEVEL when in NORMAL context (at document start)
         // Prevents "object" appearing in property values from corrupting context stack
+        // Only set objectTokenIndex for the first OBJECT in the file.
+        // This ensures objectType reflects the first object only (see LexerContextState.objectType docs).
         if (this.getCurrentContext() === LexerContext.NORMAL) {
           this.pushContext(LexerContext.OBJECT_LEVEL);
           // Capture token index for lazy object type resolution
