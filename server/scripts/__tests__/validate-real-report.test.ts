@@ -67,9 +67,22 @@ describe('generateMarkdownReport (validate-real.ts)', () => {
     });
 
     it('should handle all special characters combined', () => {
-      const input = 'test\\|*_`[]<>#all';
-      const expected = 'test\\\\\\|\\*\\_\\`\\[\\]\\<\\>\\#all';
+      const input = 'test\\|*_`[]<>#~all';
+      const expected = 'test\\\\\\|\\*\\_\\`\\[\\]\\<\\>\\#\\~all';
       expect(escapeMarkdown(input)).toBe(expected);
+    });
+
+    it('should escape single tilde', () => {
+      expect(escapeMarkdown('test~value')).toBe('test\\~value');
+    });
+
+    it('should escape double tilde (strikethrough syntax)', () => {
+      expect(escapeMarkdown('~~deleted~~')).toBe('\\~\\~deleted\\~\\~');
+    });
+
+    it('should handle backslash followed by tilde', () => {
+      // Test backslash BEFORE tilde escaping (backslash must be escaped first)
+      expect(escapeMarkdown('test\\~value')).toBe('test\\\\\\~value');
     });
   });
 

@@ -166,7 +166,8 @@ export function escapeMarkdown(text: string): string {
     .replace(/\]/g, '\\]')
     .replace(/</g, '\\<')
     .replace(/>/g, '\\>')
-    .replace(/#/g, '\\#');
+    .replace(/#/g, '\\#')
+    .replace(/~/g, '\\~');
 }
 
 /**
