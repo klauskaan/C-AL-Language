@@ -87,6 +87,28 @@ describe('fileExtensions utilities', () => {
         expect(hasTxtExtension('/path/to/.txt')).toBe(true);
       });
     });
+
+    describe('non-string input handling', () => {
+      it('should return false for null input', () => {
+        expect(hasTxtExtension(null as unknown as string)).toBe(false);
+      });
+
+      it('should return false for undefined input', () => {
+        expect(hasTxtExtension(undefined as unknown as string)).toBe(false);
+      });
+
+      it('should return false for numeric input', () => {
+        expect(hasTxtExtension(123 as unknown as string)).toBe(false);
+      });
+
+      it('should return false for object input', () => {
+        expect(hasTxtExtension({} as unknown as string)).toBe(false);
+      });
+
+      it('should return false for array input', () => {
+        expect(hasTxtExtension([] as unknown as string)).toBe(false);
+      });
+    });
   });
 
   describe('hasCalExtension', () => {
@@ -173,6 +195,28 @@ describe('fileExtensions utilities', () => {
 
       it('should handle filename with only extension and path', () => {
         expect(hasCalExtension('/path/to/.cal')).toBe(true);
+      });
+    });
+
+    describe('non-string input handling', () => {
+      it('should return false for null input', () => {
+        expect(hasCalExtension(null as unknown as string)).toBe(false);
+      });
+
+      it('should return false for undefined input', () => {
+        expect(hasCalExtension(undefined as unknown as string)).toBe(false);
+      });
+
+      it('should return false for numeric input', () => {
+        expect(hasCalExtension(123 as unknown as string)).toBe(false);
+      });
+
+      it('should return false for object input', () => {
+        expect(hasCalExtension({} as unknown as string)).toBe(false);
+      });
+
+      it('should return false for array input', () => {
+        expect(hasCalExtension([] as unknown as string)).toBe(false);
       });
     });
   });
