@@ -413,9 +413,15 @@ export function validateAllFiles(): FileResult[] {
     process.exit(2);
   }
 
-  const files = readdirSync(realDir)
-    .filter(hasTxtExtension)
-    .sort();
+  let files: string[];
+  try {
+    files = readdirSync(realDir)
+      .filter(hasTxtExtension)
+      .sort();
+  } catch (error) {
+    console.error(`Error: cannot read test/REAL directory - ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(2);
+  }
 
   if (files.length === 0) {
     console.warn('No .TXT files found in test/REAL');
@@ -663,7 +669,13 @@ if (require.main === module && !process.env.JEST_WORKER_ID) {
 
   // Check for empty directory before validation
   const realDir = join(__dirname, '../../test/REAL');
-  const txtFiles = readdirSync(realDir).filter(hasTxtExtension);
+  let txtFiles: string[];
+  try {
+    txtFiles = readdirSync(realDir).filter(hasTxtExtension);
+  } catch (error) {
+    console.error(`Error: cannot read test/REAL directory - ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(2);
+  }
   if (txtFiles.length === 0) {
     console.error('Error: No .TXT files found in test/REAL directory');
     process.exit(2);

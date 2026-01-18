@@ -450,6 +450,85 @@ describe('Lexer Health Script - validateAllFiles()', () => {
     expect(results).toEqual([]);
     expect(results.length).toBe(0);
   });
+
+  describe('readdirSync error handling', () => {
+    let mockExistsSync: jest.MockedFunction<typeof existsSync>;
+    let mockReaddirSync: jest.MockedFunction<typeof readdirSync>;
+    let mockExit: jest.SpyInstance;
+    let mockConsoleError: jest.SpyInstance;
+
+    beforeEach(() => {
+      mockExistsSync = jest.requireMock('fs').existsSync as jest.MockedFunction<typeof existsSync>;
+      mockReaddirSync = jest.requireMock('fs').readdirSync as jest.MockedFunction<typeof readdirSync>;
+      mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number | string) => {
+        throw new Error(`process.exit called with code ${code}`);
+      });
+      mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
+    });
+
+    afterEach(() => {
+      mockExit.mockRestore();
+      mockConsoleError.mockRestore();
+    });
+
+    it('should handle EACCES error (permission denied) by exiting with code 2', () => {
+      // Directory exists, but readdirSync throws permission error
+      mockExistsSync.mockReturnValue(true);
+
+      const permissionError: any = new Error('EACCES: permission denied, scandir \'test/REAL\'');
+      permissionError.code = 'EACCES';
+      permissionError.errno = -13;
+      permissionError.syscall = 'scandir';
+      permissionError.path = 'test/REAL';
+
+      mockReaddirSync.mockImplementation(() => {
+        throw permissionError;
+      });
+
+      const { validateAllFiles } = require('../../../scripts/lexer-health');
+
+      // Should throw because process.exit is mocked to throw
+      expect(() => validateAllFiles()).toThrow('process.exit called with code 2');
+
+      // Verify error logging occurred
+      expect(mockConsoleError).toHaveBeenCalled();
+      expect(mockConsoleError.mock.calls.some((call: unknown[]) =>
+        call.some((arg: unknown) => typeof arg === 'string' && arg.includes('cannot read test/REAL directory'))
+      )).toBe(true);
+
+      // Verify process.exit was called with code 2
+      expect(mockExit).toHaveBeenCalledWith(2);
+    });
+
+    it('should handle generic readdirSync errors by exiting with code 2', () => {
+      // Directory exists, but readdirSync throws generic error
+      mockExistsSync.mockReturnValue(true);
+
+      const genericError = new Error('Too many open files');
+      mockReaddirSync.mockImplementation(() => {
+        throw genericError;
+      });
+
+      const { validateAllFiles } = require('../../../scripts/lexer-health');
+
+      // Should throw because process.exit is mocked to throw
+      expect(() => validateAllFiles()).toThrow('process.exit called with code 2');
+
+      // Verify error logging occurred
+      expect(mockConsoleError).toHaveBeenCalled();
+      expect(mockConsoleError.mock.calls.some((call: unknown[]) =>
+        call.some((arg: unknown) => typeof arg === 'string' && arg.includes('cannot read test/REAL directory'))
+      )).toBe(true);
+
+      // Verify the error message was included
+      expect(mockConsoleError.mock.calls.some((call: unknown[]) =>
+        call.some((arg: unknown) => typeof arg === 'string' && arg.includes('Too many open files'))
+      )).toBe(true);
+
+      // Verify process.exit was called with code 2
+      expect(mockExit).toHaveBeenCalledWith(2);
+    });
+  });
 });
 
 describe('Lexer Health Script - calculateETA()', () => {
