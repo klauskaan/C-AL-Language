@@ -252,6 +252,21 @@ describe('Trace callback exception handling', () => {
       expect(tokens).toBeDefined();
       expect(tokens.length).toBeGreaterThan(0);
     });
+
+    it('should pass the original error object to console.warn, not a wrapper', () => {
+      const specificError = new TypeError('Unique error');
+      const traceCallback: TraceCallback = () => {
+        throw specificError;
+      };
+
+      const code = 'OBJECT Table 1';
+      const lexer = new Lexer(code, { trace: traceCallback });
+      lexer.tokenize();
+
+      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+      const [, errorObject] = consoleWarnSpy.mock.calls[0];
+      expect(errorObject).toBe(specificError); // Reference equality, not just instanceof
+    });
   });
 
   describe('Callback throws during multi-flag section', () => {
