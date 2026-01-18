@@ -28,7 +28,8 @@
     "validate:real": "ts-node scripts/validate-real.ts",
     "lexer:health": "ts-node scripts/lexer-health.ts",
     "lexer:health:ci": "ts-node scripts/lexer-health.ts --ci",
-    "lexer:trace": "ts-node scripts/lexer-trace.ts"
+    "lexer:trace": "ts-node scripts/lexer-trace.ts",
+    "ci:real-guard": "ts-node src/utils/ciRealGuard.ts"
   },
   "dependencies": {
     "vscode-languageserver": "^8.1.0",

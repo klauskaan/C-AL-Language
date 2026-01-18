@@ -297,8 +297,11 @@ describe('Integration - COD1003.TXT Auto-Numbering Issues', () => {
       expect(ast.object?.code?.procedures).toBeDefined();
       expect(ast.object?.code?.variables).toBeDefined();
 
-      // Could use snapshot testing here once parser is fixed
-      // expect(ast).toMatchSnapshot();
+      // SECURITY: Never enable snapshots for tests loading test/REAL/ files
+      // Snapshot would contain proprietary C/AL code from NAV objects (object names,
+      // procedure names, variable names, TextConst values, etc.) which would be
+      // committed to the repository. Use synthetic fixtures in test/fixtures/ instead.
+      // Related: Issue #130 - preventing test/REAL/ content leakage
     });
   });
 
