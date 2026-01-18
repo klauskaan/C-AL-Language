@@ -532,6 +532,42 @@ describe('generateMarkdownReport', () => {
       const expected = 'test\\\\\\|\\*\\_\\`\\[\\]\\<\\>\\#all';
       expect(escapeMarkdown(input)).toBe(expected);
     });
+
+    it('should escape Unix newline (LF)', () => {
+      // Test that actual newline character (0x0A) becomes visible \n
+      expect(escapeMarkdown('line1\nline2')).toBe('line1\\nline2');
+    });
+
+    it('should escape Windows newline (CRLF)', () => {
+      // Test that CRLF becomes single visible \n
+      expect(escapeMarkdown('line1\r\nline2')).toBe('line1\\nline2');
+    });
+
+    it('should escape old Mac newline (CR)', () => {
+      // Test that CR only becomes visible \n
+      expect(escapeMarkdown('line1\rline2')).toBe('line1\\nline2');
+    });
+
+    it('should handle mixed newline types in same string', () => {
+      // Test multiple newline types together
+      expect(escapeMarkdown('a\nb\r\nc\rd')).toBe('a\\nb\\nc\\nd');
+    });
+
+    it('should handle literal backslash followed by actual newline', () => {
+      // CRITICAL: Test escape ordering - backslash must be escaped before newline conversion
+      // Input: literal backslash (0x5C) + actual newline (0x0A)
+      // Step 1: Escape backslash: \ -> \\
+      // Step 2: Convert newline: \n -> \n (visible)
+      // Output string: test\\<visible-\n>value
+      // In JS source: 'test\\\\\\nvalue' (with escaping for string literal)
+      const input = 'test\\\nvalue'; // Literal backslash followed by actual newline
+      expect(escapeMarkdown(input)).toBe('test\\\\\\nvalue');
+    });
+
+    it('should handle string of only newlines', () => {
+      // Edge case: no other content, just newlines
+      expect(escapeMarkdown('\n\n\n')).toBe('\\n\\n\\n');
+    });
   });
 
   describe('JSON.stringify output escaping', () => {
