@@ -1,5 +1,6 @@
 const tseslint = require('@typescript-eslint/eslint-plugin');
 const tsparser = require('@typescript-eslint/parser');
+const localRules = require('eslint-plugin-local-rules');
 
 module.exports = [
   {
@@ -37,6 +38,16 @@ module.exports = [
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-explicit-any': 'off'
+    }
+  },
+  {
+    // Custom rules for parser files
+    files: ['server/src/parser/**/*.ts'],
+    plugins: {
+      'local-rules': localRules
+    },
+    rules: {
+      'local-rules/no-direct-parse-error': 'error'
     }
   }
 ];
