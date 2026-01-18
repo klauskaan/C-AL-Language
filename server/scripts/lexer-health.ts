@@ -7,10 +7,7 @@
  * - Performance metrics
  * - Outlier detection
  *
- * Exit codes:
- * - 0: All files pass
- * - 1: Some files fail
- * - 2: Empty directory
+ * Exit codes: See CI_EXIT_CODES constant for values and meanings.
  */
 
 import { performance } from 'perf_hooks';
@@ -20,6 +17,19 @@ import { Lexer, CleanExitResult } from '../src/lexer/lexer';
 import { validateTokenPositions, ValidationResult } from '../src/validation/positionValidator';
 import { readFileWithEncoding } from '../src/utils/encoding';
 import { hasTxtExtension } from '../src/utils/fileExtensions';
+
+/**
+ * Exit codes for CI/CLI operations.
+ * Used by process.exit() to communicate status to calling process.
+ */
+export const CI_EXIT_CODES = {
+  /** All validations passed or check was skipped */
+  PASS: 0,
+  /** Regression detected (failures exceeded baseline) */
+  REGRESSION: 1,
+  /** Configuration error (missing files, invalid baseline, etc.) */
+  CONFIG_ERROR: 2
+} as const;
 
 // Exported for testing only
 export interface FileResult {
@@ -56,7 +66,7 @@ export interface ComparisonResult {
  * Result of running CI check.
  */
 export interface CIResult {
-  /** Exit code for process.exit(): 0=pass/skip, 1=regression, 2=config error */
+  /** Exit code for process.exit() - see CI_EXIT_CODES */
   exitCode: number;
   /** Whether the check was skipped (e.g., test/REAL not found) */
   skipped: boolean;
@@ -269,10 +279,7 @@ export function compareToBaseline(actualFailures: number, baselineMax: number): 
 /**
  * Run CI check mode: validate files and compare to baseline.
  *
- * Exit codes:
- * - 0: Pass (failures <= baseline) or skip (test/REAL not found)
- * - 1: Regression detected (failures > baseline)
- * - 2: Configuration error (baseline file issues)
+ * Exit codes: Uses CI_EXIT_CODES (PASS=0, REGRESSION=1, CONFIG_ERROR=2).
  *
  * @returns CI result with exit code and comparison details
  */
@@ -282,7 +289,7 @@ export function runCICheck(): CIResult {
   // Check if test/REAL exists
   if (!existsSync(realDir)) {
     return {
-      exitCode: 0,
+      exitCode: CI_EXIT_CODES.PASS,
       skipped: true,
       skipReason: 'test/REAL directory not found - skipping lexer health check',
       comparison: null
@@ -295,7 +302,7 @@ export function runCICheck(): CIResult {
     files = readdirSync(realDir).filter(hasTxtExtension);
   } catch (error) {
     return {
-      exitCode: 2,
+      exitCode: CI_EXIT_CODES.CONFIG_ERROR,
       skipped: false,
       skipReason: undefined,
       comparison: {
@@ -311,7 +318,7 @@ export function runCICheck(): CIResult {
 
   if (files.length === 0) {
     return {
-      exitCode: 2,
+      exitCode: CI_EXIT_CODES.CONFIG_ERROR,
       skipped: false,
       skipReason: undefined,
       comparison: {
@@ -332,7 +339,7 @@ export function runCICheck(): CIResult {
   try {
     if (!existsSync(baselinePath)) {
       return {
-        exitCode: 2,
+        exitCode: CI_EXIT_CODES.CONFIG_ERROR,
         skipped: false,
         skipReason: undefined,
         comparison: {
@@ -351,7 +358,7 @@ export function runCICheck(): CIResult {
 
     if (typeof baseline.maxFailures !== 'number') {
       return {
-        exitCode: 2,
+        exitCode: CI_EXIT_CODES.CONFIG_ERROR,
         skipped: false,
         skipReason: undefined,
         comparison: {
@@ -368,7 +375,7 @@ export function runCICheck(): CIResult {
     baselineMax = baseline.maxFailures;
   } catch (error) {
     return {
-      exitCode: 2,
+      exitCode: CI_EXIT_CODES.CONFIG_ERROR,
       skipped: false,
       skipReason: undefined,
       comparison: {
@@ -395,7 +402,7 @@ export function runCICheck(): CIResult {
   const comparison = compareToBaseline(actualFailures, baselineMax);
 
   return {
-    exitCode: comparison.passed ? 0 : 1,
+    exitCode: comparison.passed ? CI_EXIT_CODES.PASS : CI_EXIT_CODES.REGRESSION,
     skipped: false,
     skipReason: undefined,
     comparison
@@ -410,7 +417,7 @@ export function validateAllFiles(): FileResult[] {
     console.error('Error: test/REAL directory does not exist');
     console.error('This script requires proprietary NAV object files.');
     console.error('See README for more information.');
-    process.exit(2);
+    process.exit(CI_EXIT_CODES.CONFIG_ERROR);
   }
 
   let files: string[];
@@ -420,7 +427,7 @@ export function validateAllFiles(): FileResult[] {
       .sort();
   } catch (error) {
     console.error(`Error: cannot read test/REAL directory - ${error instanceof Error ? error.message : String(error)}`);
-    process.exit(2);
+    process.exit(CI_EXIT_CODES.CONFIG_ERROR);
   }
 
   if (files.length === 0) {
@@ -643,7 +650,7 @@ if (require.main === module && !process.env.JEST_WORKER_ID) {
 
     if (!result.comparison) {
       console.error('Internal error: comparison is null but not skipped');
-      process.exit(2);
+      process.exit(CI_EXIT_CODES.CONFIG_ERROR);
     }
 
     // Display result
@@ -674,11 +681,11 @@ if (require.main === module && !process.env.JEST_WORKER_ID) {
     txtFiles = readdirSync(realDir).filter(hasTxtExtension);
   } catch (error) {
     console.error(`Error: cannot read test/REAL directory - ${error instanceof Error ? error.message : String(error)}`);
-    process.exit(2);
+    process.exit(CI_EXIT_CODES.CONFIG_ERROR);
   }
   if (txtFiles.length === 0) {
     console.error('Error: No .TXT files found in test/REAL directory');
-    process.exit(2);
+    process.exit(CI_EXIT_CODES.CONFIG_ERROR);
   }
 
   const startTime = performance.now();
@@ -704,5 +711,5 @@ if (require.main === module && !process.env.JEST_WORKER_ID) {
   console.log(`Files with failures: ${filesWithErrors}/${results.length}`);
 
   // Exit with appropriate code
-  process.exit(filesWithErrors > 0 ? 1 : 0);
+  process.exit(filesWithErrors > 0 ? CI_EXIT_CODES.REGRESSION : CI_EXIT_CODES.PASS);
 }
