@@ -19,6 +19,7 @@ import { join } from 'path';
 import { Lexer, CleanExitResult } from '../src/lexer/lexer';
 import { validateTokenPositions, ValidationResult } from '../src/validation/positionValidator';
 import { readFileWithEncoding } from '../src/utils/encoding';
+import { hasTxtExtension } from '../src/utils/fileExtensions';
 
 // Exported for testing only
 export interface FileResult {
@@ -281,7 +282,7 @@ export function runCICheck(): CIResult {
   }
 
   // Check for empty directory before proceeding
-  const files = readdirSync(realDir).filter(f => f.endsWith('.TXT'));
+  const files = readdirSync(realDir).filter(hasTxtExtension);
 
   if (files.length === 0) {
     return {
@@ -388,7 +389,7 @@ export function validateAllFiles(): FileResult[] {
   }
 
   const files = readdirSync(realDir)
-    .filter(f => f.endsWith('.TXT'))
+    .filter(hasTxtExtension)
     .sort();
 
   if (files.length === 0) {
@@ -637,7 +638,7 @@ if (require.main === module && !process.env.JEST_WORKER_ID) {
 
   // Check for empty directory before validation
   const realDir = join(__dirname, '../../test/REAL');
-  const txtFiles = readdirSync(realDir).filter(f => f.endsWith('.TXT'));
+  const txtFiles = readdirSync(realDir).filter(hasTxtExtension);
   if (txtFiles.length === 0) {
     console.error('Error: No .TXT files found in test/REAL directory');
     process.exit(2);

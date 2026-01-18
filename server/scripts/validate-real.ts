@@ -3,6 +3,7 @@ import { join } from 'path';
 import { Lexer } from '../src/lexer/lexer';
 import { Parser } from '../src/parser/parser';
 import { readFileWithEncoding } from '../src/utils/encoding';
+import { hasTxtExtension } from '../src/utils/fileExtensions';
 
 interface ValidationResult {
   file: string;
@@ -18,7 +19,7 @@ interface ValidationResult {
 function validateAllRealFiles(): ValidationResult[] {
   const realDir = join(__dirname, '../../test/REAL');
   const files = readdirSync(realDir)
-    .filter(f => f.endsWith('.TXT'))
+    .filter(hasTxtExtension)
     .sort();
 
   console.log(`Found ${files.length} files to validate\n`);

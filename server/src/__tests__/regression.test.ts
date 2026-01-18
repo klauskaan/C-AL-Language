@@ -33,13 +33,14 @@ import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { Lexer } from '../lexer/lexer';
 import { Parser } from '../parser/parser';
+import { hasCalExtension } from '../utils/fileExtensions';
 
 describe('Regression Suite - Real C/AL Files', () => {
   // Resolve path to fixtures directory
   const fixturesDir = join(__dirname, '../../../test/fixtures/regression');
 
   // Discover all .cal files in the fixtures directory
-  const files = readdirSync(fixturesDir).filter(f => f.endsWith('.cal'));
+  const files = readdirSync(fixturesDir).filter(hasCalExtension);
 
   // Ensure we have fixtures to test
   it('should have regression fixtures available', () => {

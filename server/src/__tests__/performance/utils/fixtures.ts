@@ -9,6 +9,7 @@
 
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
+import { hasCalExtension } from '../../../utils/fileExtensions';
 
 /**
  * Cache for loaded fixtures to avoid repeated file reads
@@ -81,7 +82,7 @@ export function loadAllRegressionFixtures(): Map<string, string> {
   const fixturesPath = getRegressionFixturesPath();
 
   try {
-    const files = readdirSync(fixturesPath).filter(f => f.endsWith('.cal'));
+    const files = readdirSync(fixturesPath).filter(hasCalExtension);
 
     for (const file of files) {
       const content = loadRegressionFixture(file);
@@ -101,8 +102,8 @@ export function loadAllRegressionFixtures(): Map<string, string> {
 export function listPerformanceFixtures(): string[] {
   try {
     const fixturesPath = getPerformanceFixturesPath();
-    return readdirSync(fixturesPath).filter(f => f.endsWith('.cal'));
-  } catch (error) {
+    return readdirSync(fixturesPath).filter(hasCalExtension);
+  } catch (_error) {
     return [];
   }
 }
@@ -113,8 +114,8 @@ export function listPerformanceFixtures(): string[] {
 export function listRegressionFixtures(): string[] {
   try {
     const fixturesPath = getRegressionFixturesPath();
-    return readdirSync(fixturesPath).filter(f => f.endsWith('.cal'));
-  } catch (error) {
+    return readdirSync(fixturesPath).filter(hasCalExtension);
+  } catch (_error) {
     return [];
   }
 }
