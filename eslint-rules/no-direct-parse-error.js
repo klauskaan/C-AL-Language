@@ -39,9 +39,11 @@ module.exports = {
       category: 'Best Practices',
       recommended: true,
     },
+    hasSuggestions: true,
     messages: {
       useFactory:
         'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+      suggestUseFactory: 'Replace with this.createParseError(...)',
     },
     schema: [],
   },
@@ -145,6 +147,116 @@ module.exports = {
       return null;
     }
 
+    /**
+     * Checks if a node is inside a Parser class.
+     * Uses dynamic ancestor walking to detect the class context.
+     * Supports both ClassDeclaration and ClassExpression.
+     *
+     * @param {Node} node - The AST node to check
+     * @returns {boolean} True if inside a class named 'Parser' (ClassDeclaration or named ClassExpression)
+     */
+    function isInsideParserClass(node) {
+      const ancestors = context.sourceCode.getAncestors(node);
+
+      for (const ancestor of ancestors) {
+        if (
+          (ancestor.type === 'ClassDeclaration' || ancestor.type === 'ClassExpression') &&
+          ancestor.id &&
+          ancestor.id.name === 'Parser'
+        ) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    /**
+     * Checks if we should offer a suggestion to replace with this.createParseError.
+     * Suggestion is only valid when:
+     * 1. Inside a Parser class (ClassDeclaration or named ClassExpression)
+     * 2. Inside an instance method (MethodDefinition, not static) OR class field arrow function (PropertyDefinition)
+     * 3. Not inside a nested regular function (which loses `this` context)
+     *    - Arrow functions are OK (they preserve `this`)
+     *
+     * @param {Node} node - The NewExpression node
+     * @returns {boolean} True if suggestion should be offered
+     */
+    function shouldOfferSuggestion(node) {
+      // Deferred: Don't offer suggestions for aliased construction
+      // (complex case that requires more sophisticated code transformation)
+      if (node.callee && node.callee.name !== 'ParseError') {
+        return false; // This is an alias like `new PE(...)`, skip suggestion
+      }
+
+      // Must be inside Parser class
+      if (!isInsideParserClass(node)) {
+        return false;
+      }
+
+      const ancestors = context.sourceCode.getAncestors(node);
+
+      // Find the enclosing method or property definition (if any)
+      let enclosingMethodOrProperty = null;
+      for (let i = ancestors.length - 1; i >= 0; i--) {
+        if (ancestors[i].type === 'MethodDefinition' || ancestors[i].type === 'PropertyDefinition') {
+          enclosingMethodOrProperty = ancestors[i];
+          break;
+        }
+      }
+
+      // Must be inside a method or property definition
+      if (!enclosingMethodOrProperty) {
+        return false;
+      }
+
+      // Cannot be a static method or property
+      if (enclosingMethodOrProperty.static) {
+        return false;
+      }
+
+      // For PropertyDefinition, the value must be an ArrowFunctionExpression
+      if (enclosingMethodOrProperty.type === 'PropertyDefinition') {
+        if (enclosingMethodOrProperty.value?.type !== 'ArrowFunctionExpression') {
+          return false; // Only support arrow function class fields
+        }
+      }
+
+      // Check if inside a nested regular function that loses `this`
+      // We need to check all ancestors between the method/property and the node
+      // Regular functions (FunctionDeclaration/FunctionExpression) break `this` binding
+      // Arrow functions preserve `this`, so they're OK
+      //
+      // Note: MethodDefinition.value is a FunctionExpression - this is the method's
+      // own function and should NOT be counted as a nested function
+      let hasNestedRegularFunction = false;
+
+      for (const ancestor of ancestors) {
+        // Skip the method/property definition itself
+        if (ancestor.type === 'MethodDefinition' || ancestor.type === 'PropertyDefinition') {
+          continue;
+        }
+
+        // Check if this ancestor is a regular function or function expression
+        if (
+          ancestor.type === 'FunctionDeclaration' ||
+          ancestor.type === 'FunctionExpression'
+        ) {
+          // Check if this function is the immediate child of the method definition
+          // (which would make it the method's own function, not a nested one)
+          const isMethodFunction = enclosingMethodOrProperty.type === 'MethodDefinition' && enclosingMethodOrProperty.value === ancestor;
+
+          if (!isMethodFunction) {
+            // This is a nested function that breaks `this` binding
+            hasNestedRegularFunction = true;
+            break;
+          }
+        }
+      }
+
+      return !hasNestedRegularFunction;
+    }
+
     // Stack to track current function context
     const functionStack = [];
 
@@ -225,11 +337,31 @@ module.exports = {
           return; // Allowed: inside factory method
         }
 
-        // Report violation
-        context.report({
+        // Build report object
+        const report = {
           node,
           messageId: 'useFactory',
-        });
+        };
+
+        // Add suggestion if context allows
+        if (shouldOfferSuggestion(node)) {
+          const sourceCode = context.sourceCode;
+          const args = node.arguments
+            .map((arg) => sourceCode.getText(arg))
+            .join(', ');
+
+          report.suggest = [
+            {
+              messageId: 'suggestUseFactory',
+              fix(fixer) {
+                return fixer.replaceText(node, `this.createParseError(${args})`);
+              },
+            },
+          ];
+        }
+
+        // Report violation
+        context.report(report);
       },
     };
   },
