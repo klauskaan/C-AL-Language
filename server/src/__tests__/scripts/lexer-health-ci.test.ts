@@ -12,7 +12,7 @@
  * don't exist yet. Implementation will follow after test validation.
  */
 
-import { compareToBaseline, runCICheck } from '../../../scripts/lexer-health';
+import { compareToBaseline, runCICheck, CI_EXIT_CODES } from '../../../scripts/lexer-health';
 import { existsSync } from 'fs';
 
 // Mock filesystem functions
@@ -183,7 +183,7 @@ describe('Lexer Health Script - runCICheck()', () => {
 
       const result = runCICheck();
 
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(CI_EXIT_CODES.PASS);
       expect(result.skipped).toBe(true);
       expect(result.skipReason).toContain('test/REAL');
       expect(result.skipReason).toContain('not found');
@@ -303,7 +303,7 @@ describe('Lexer Health Script - runCICheck()', () => {
 
       const result = runCICheck();
 
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(CI_EXIT_CODES.PASS);
       expect(result.skipped).toBe(true);
     });
 
@@ -328,7 +328,7 @@ describe('Lexer Health Script - runCICheck()', () => {
 
       const result = runCICheck();
 
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(CI_EXIT_CODES.PASS);
       expect(result.comparison?.passed).toBe(true);
     });
 
@@ -353,7 +353,7 @@ describe('Lexer Health Script - runCICheck()', () => {
 
       const result = runCICheck();
 
-      expect(result.exitCode).toBe(1);
+      expect(result.exitCode).toBe(CI_EXIT_CODES.REGRESSION);
       expect(result.comparison?.passed).toBe(false);
     });
 
@@ -386,7 +386,7 @@ describe('Lexer Health Script - runCICheck()', () => {
 
       const result = runCICheck();
 
-      expect(result.exitCode).toBe(2);
+      expect(result.exitCode).toBe(CI_EXIT_CODES.CONFIG_ERROR);
       expect(result.skipped).toBe(false);
       expect(result.comparison).not.toBeNull();
       if (result.comparison) {
@@ -408,7 +408,7 @@ describe('Lexer Health Script - runCICheck()', () => {
 
       const result = runCICheck();
 
-      expect(result.exitCode).toBe(2);
+      expect(result.exitCode).toBe(CI_EXIT_CODES.CONFIG_ERROR);
       expect(result.skipped).toBe(false);
       expect(result.comparison).not.toBeNull();
       if (result.comparison) {
@@ -440,7 +440,7 @@ describe('Lexer Health Script - runCICheck()', () => {
       const result = runCICheck();
 
       expect(mockReaddirSync).toHaveBeenCalled();
-      expect(result.exitCode).toBe(2);
+      expect(result.exitCode).toBe(CI_EXIT_CODES.CONFIG_ERROR);
       expect(result.skipped).toBe(false);
       expect(result.comparison).not.toBeNull();
       if (result.comparison) {
@@ -468,7 +468,7 @@ describe('Lexer Health Script - runCICheck()', () => {
       const result = runCICheck();
 
       expect(mockReaddirSync).toHaveBeenCalled();
-      expect(result.exitCode).toBe(2);
+      expect(result.exitCode).toBe(CI_EXIT_CODES.CONFIG_ERROR);
       expect(result.skipped).toBe(false);
       expect(result.comparison).not.toBeNull();
       if (result.comparison) {
