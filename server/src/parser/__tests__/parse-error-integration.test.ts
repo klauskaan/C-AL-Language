@@ -298,9 +298,8 @@ describe('ParseError Sanitization Integration Tests', () => {
 
   describe('Token Value Sanitization', () => {
     it('should sanitize identifier tokens in syntax errors', () => {
-      // EXPECTED TO FAIL - token type leakage shows '(BEGIN)' after sanitization
-      // Tracked in: #150
       // Verify identifiers appear as [content sanitized, N chars]
+      // Fixed by commit 8e6db8e (sanitizeTokenType)
       // Use reserved keyword where object number expected to trigger parse error
       const code = `OBJECT Report BEGIN TestName
 {
@@ -327,9 +326,8 @@ describe('ParseError Sanitization Integration Tests', () => {
     });
 
     it('should sanitize string literals that appear in errors', () => {
-      // EXPECTED TO FAIL - identifier values appearing in error messages
-      // Tracked in: #149
       // Verify string content is sanitized
+      // Fixed by commit 8e6db8e (sanitizeTokenType)
       // Use invalid object ID (non-numeric) to trigger parse error
       const code = `OBJECT Table xyz TestTable
 {
@@ -395,9 +393,8 @@ describe('ParseError Sanitization Integration Tests', () => {
 
   describe('Error Recovery Sanitization', () => {
     it('should sanitize skipped token values during recovery', () => {
-      // EXPECTED TO FAIL - token type leakage shows '(REPEAT)' after sanitization
-      // Tracked in: #150
       // When parser skips tokens, values should be sanitized
+      // Fixed by commit 8e6db8e (sanitizeTokenType)
       // Use reserved keyword where object number expected to trigger parse error
       const code = `OBJECT Codeunit REPEAT TestUnit
 {
@@ -419,9 +416,8 @@ describe('ParseError Sanitization Integration Tests', () => {
     });
 
     it('should sanitize recovery context messages', () => {
-      // EXPECTED TO FAIL - recovery context may expose field names
-      // Tracked in: #148
       // Recovery messages should not expose token values
+      // Note: This test passes, verify if #148 can be closed
       // Use invalid field number to trigger parse error
       const code = `OBJECT Table 50021 TestTable
 {
@@ -445,9 +441,8 @@ describe('ParseError Sanitization Integration Tests', () => {
     });
 
     it('should sanitize deeply nested error recovery contexts', () => {
-      // EXPECTED TO FAIL - nested recovery may expose control names
-      // Tracked in: #148
       // Test error recovery in complex nested structures
+      // Note: This test passes, verify if #148 can be closed
       // Use invalid object ID (non-numeric) to trigger parse error
       const code = `OBJECT Page abc TestPage
 {
@@ -475,9 +470,8 @@ describe('ParseError Sanitization Integration Tests', () => {
     });
 
     it('should sanitize error messages when recovering from missing delimiters', () => {
-      // EXPECTED TO FAIL - token type leakage shows '(BEGIN)' after sanitization
-      // Tracked in: #150
       // Test recovery from missing braces, semicolons, etc.
+      // Fixed by commit 8e6db8e (sanitizeTokenType)
       // Use reserved keyword as object name to trigger parse error
       const code = `OBJECT Report BEGIN TestName
 {
