@@ -496,4 +496,80 @@ describe('ParseError Sanitization Integration Tests', () => {
       });
     });
   });
+
+  describe('tokenTypeToObjectKind Sanitization (Issue #150)', () => {
+    /**
+     * Issue #150: Token type leakage in tokenTypeToObjectKind()
+     *
+     * When an invalid keyword appears in object type position, parser.ts:3008
+     * throws error with unsanitized TokenType enum value.
+     *
+     * Code path:
+     * 1. parseObjectHeader() at line 251
+     * 2. Line 252: Consumes OBJECT keyword
+     * 3. Line 255: const objectKindToken = this.advance() gets invalid token
+     * 4. Line 256: this.tokenTypeToObjectKind(objectKindToken.type) is called
+     * 5. Line 3008: default case throws error with unsanitized ${type}
+     */
+
+    it('should sanitize BEGIN keyword in object type position', () => {
+      // Triggers tokenTypeToObjectKind() at parser.ts:3008
+      // BEGIN keyword should be sanitized (sensitive token type)
+      const code = `OBJECT BEGIN 50001 TestName { }`;
+
+      const msgs = parseAndCollectErrors(code);
+      expect(msgs.length).toBeGreaterThan(0);
+
+      // BEGIN is a sensitive keyword - should NOT appear in error message
+      expect(msgs[0]).not.toMatch(/\bBEGIN\b/);
+    });
+
+    it('should sanitize PROCEDURE keyword in object type position', () => {
+      // Triggers tokenTypeToObjectKind() at parser.ts:3008
+      // PROCEDURE keyword should be sanitized (sensitive token type)
+      const code = `OBJECT PROCEDURE 50001 TestName { }`;
+
+      const msgs = parseAndCollectErrors(code);
+      expect(msgs.length).toBeGreaterThan(0);
+
+      // PROCEDURE is a sensitive keyword - should NOT appear in error message
+      expect(msgs[0]).not.toMatch(/\bPROCEDURE\b/);
+    });
+
+    it('should sanitize IF keyword in object type position', () => {
+      // Triggers tokenTypeToObjectKind() at parser.ts:3008
+      // IF keyword should be sanitized (sensitive token type)
+      const code = `OBJECT IF 50001 TestName { }`;
+
+      const msgs = parseAndCollectErrors(code);
+      expect(msgs.length).toBeGreaterThan(0);
+
+      // IF is a sensitive keyword - should NOT appear in error message
+      expect(msgs[0]).not.toMatch(/\bIF\b/);
+    });
+
+    it('should sanitize WHILE keyword in object type position', () => {
+      // Triggers tokenTypeToObjectKind() at parser.ts:3008
+      // WHILE keyword should be sanitized (sensitive token type)
+      const code = `OBJECT WHILE 50001 TestName { }`;
+
+      const msgs = parseAndCollectErrors(code);
+      expect(msgs.length).toBeGreaterThan(0);
+
+      // WHILE is a sensitive keyword - should NOT appear in error message
+      expect(msgs[0]).not.toMatch(/\bWHILE\b/);
+    });
+
+    it('should NOT sanitize PLUS operator (safe token type)', () => {
+      // Triggers tokenTypeToObjectKind() at parser.ts:3008
+      // PLUS operator is a SAFE token type - should appear in error message
+      const code = `OBJECT + 50001 TestName { }`;
+
+      const msgs = parseAndCollectErrors(code);
+      expect(msgs.length).toBeGreaterThan(0);
+
+      // PLUS is a safe operator token - SHOULD appear in error message
+      expect(msgs[0]).toContain('PLUS');
+    });
+  });
 });

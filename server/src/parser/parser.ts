@@ -3005,7 +3005,7 @@ export class Parser {
       case TokenType.Query: return ObjectKind.Query;
       case TokenType.XMLport: return ObjectKind.XMLport;
       case TokenType.MenuSuite: return ObjectKind.MenuSuite;
-      default: throw this.createParseError(`Invalid object type: ${type}`);
+      default: throw this.createParseError(`Invalid object type: ${sanitizeTokenType(type as string)}`);
     }
   }
 
