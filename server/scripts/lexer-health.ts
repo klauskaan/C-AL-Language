@@ -12,7 +12,7 @@
 
 import { performance } from 'perf_hooks';
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
 import { Lexer, CleanExitResult } from '../src/lexer/lexer';
 import { validateTokenPositions, ValidationResult } from '../src/validation/positionValidator';
 import { readFileWithEncoding } from '../src/utils/encoding';
@@ -102,6 +102,17 @@ export interface DirectoryValidationResult {
     code?: string;
   };
 }
+
+/**
+ * Result of writing the report to disk.
+ *
+ * Discriminated union - check status field to narrow the type:
+ * - 'success' → reportPath is defined
+ * - 'mkdir_error' | 'write_error' → errorDetails is defined
+ */
+export type WriteReportResult =
+  | { status: 'success'; reportPath: string }
+  | { status: 'mkdir_error' | 'write_error'; errorDetails: { message: string; code?: string } };
 
 /**
  * Calculate percentile value from array of numbers using R-7 linear interpolation.
@@ -234,6 +245,44 @@ export function validateDirectoryForReport(dirPath: string): DirectoryValidation
     status: 'valid',
     files: txtFiles
   };
+}
+
+/**
+ * Write generated report to disk.
+ *
+ * Creates the report directory if needed and writes the report content.
+ * Returns structured result instead of calling process.exit(), enabling testability.
+ *
+ * @param reportPath - Absolute path to report file
+ * @param content - Report content to write
+ * @returns Write result with status and path or error details
+ */
+export function writeReport(reportPath: string, content: string): WriteReportResult {
+  const reportDir = dirname(reportPath);
+
+  // Create directory if needed (mkdirSync recursive is idempotent)
+  try {
+    mkdirSync(reportDir, { recursive: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const code = error instanceof Error && 'code' in error
+      ? (error as NodeJS.ErrnoException).code
+      : undefined;
+    return { status: 'mkdir_error', errorDetails: { message, code } };
+  }
+
+  // Write report file
+  try {
+    writeFileSync(reportPath, content, 'utf-8');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const code = error instanceof Error && 'code' in error
+      ? (error as NodeJS.ErrnoException).code
+      : undefined;
+    return { status: 'write_error', errorDetails: { message, code } };
+  }
+
+  return { status: 'success', reportPath };
 }
 
 /**
@@ -783,25 +832,10 @@ if (require.main === module && !process.env.JEST_WORKER_ID) {
   const reportDir = join(__dirname, '../../.lexer-health');
   const reportPath = join(reportDir, 'lexer-health-report.md');
 
-  // Create report directory if needed
-  // Can throw EACCES if parent directory is not writable
-  try {
-    if (!existsSync(reportDir)) {
-      mkdirSync(reportDir, { recursive: true });
-    }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`Failed to create report directory: ${message}`);
-    process.exit(CI_EXIT_CODES.CONFIG_ERROR);
-  }
-
-  // Write report file
-  // Can throw EACCES, ENOSPC (disk full), EROFS (read-only filesystem)
-  try {
-    writeFileSync(reportPath, report, 'utf-8');
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`Failed to write report: ${message}`);
+  const writeResult = writeReport(reportPath, report);
+  if (writeResult.status !== 'success') {
+    const action = writeResult.status === 'mkdir_error' ? 'create report directory' : 'write report';
+    console.error(`Failed to ${action}: ${writeResult.errorDetails.message}`);
     process.exit(CI_EXIT_CODES.CONFIG_ERROR);
   }
 

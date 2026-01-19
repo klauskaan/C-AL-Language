@@ -14,13 +14,14 @@
  * - calculateETA(): ETA calculation with warmup period
  */
 
-import { existsSync, readdirSync } from 'fs';
+import { existsSync, readdirSync, mkdirSync, writeFileSync } from 'fs';
 import {
   calculatePercentile,
   isReportFile,
   formatDuration,
   calculateETA,
   validateDirectoryForReport,
+  writeReport,
 } from '../../../scripts/lexer-health';
 
 jest.mock('fs');
@@ -1034,4 +1035,371 @@ describe('Lexer Health Script - validateAllFiles() optimization', () => {
 
   // Note: Backward compatibility with undefined parameter is tested at line 511-523
   // in the "should behave identically for undefined and omitted files parameter" test
+});
+
+describe('Lexer Health Script - writeReport()', () => {
+  let mockMkdirSync: jest.MockedFunction<typeof mkdirSync>;
+  let mockWriteFileSync: jest.MockedFunction<typeof writeFileSync>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockMkdirSync = jest.requireMock('fs').mkdirSync as jest.MockedFunction<typeof mkdirSync>;
+    mockWriteFileSync = jest.requireMock('fs').writeFileSync as jest.MockedFunction<typeof writeFileSync>;
+  });
+
+  describe('success cases', () => {
+    it('should return success when directory exists and write succeeds', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+      mockWriteFileSync.mockReturnValue(undefined);
+
+      const result = writeReport('/reports/output.md', 'Test content');
+
+      expect(result.status).toBe('success');
+      if (result.status === 'success') {
+        expect(result.reportPath).toBe('/reports/output.md');
+      }
+      expect(mockMkdirSync).toHaveBeenCalledWith('/reports', { recursive: true });
+      expect(mockWriteFileSync).toHaveBeenCalledWith('/reports/output.md', 'Test content', 'utf-8');
+    });
+
+    it('should return success when directory does not exist and mkdir + write succeed', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+      mockWriteFileSync.mockReturnValue(undefined);
+
+      const result = writeReport('/new/path/report.md', 'Content here');
+
+      expect(result.status).toBe('success');
+      if (result.status === 'success') {
+        expect(result.reportPath).toBe('/new/path/report.md');
+      }
+      expect(mockMkdirSync).toHaveBeenCalledWith('/new/path', { recursive: true });
+      expect(mockWriteFileSync).toHaveBeenCalledWith('/new/path/report.md', 'Content here', 'utf-8');
+    });
+
+    it('should handle nested directory paths correctly', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+      mockWriteFileSync.mockReturnValue(undefined);
+
+      const result = writeReport('/a/b/c/d/e/report.md', 'Deep nesting');
+
+      expect(result.status).toBe('success');
+      if (result.status === 'success') {
+        expect(result.reportPath).toBe('/a/b/c/d/e/report.md');
+      }
+      expect(mockMkdirSync).toHaveBeenCalledWith('/a/b/c/d/e', { recursive: true });
+    });
+
+    it('should handle relative paths by deriving correct directory', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+      mockWriteFileSync.mockReturnValue(undefined);
+
+      const result = writeReport('output/report.md', 'Relative path');
+
+      expect(result.status).toBe('success');
+      if (result.status === 'success') {
+        expect(result.reportPath).toBe('output/report.md');
+      }
+      expect(mockMkdirSync).toHaveBeenCalledWith('output', { recursive: true });
+    });
+
+    it('should handle root directory path correctly', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+      mockWriteFileSync.mockReturnValue(undefined);
+
+      const result = writeReport('/report.md', 'Root level');
+
+      expect(result.status).toBe('success');
+      if (result.status === 'success') {
+        expect(result.reportPath).toBe('/report.md');
+      }
+      expect(mockMkdirSync).toHaveBeenCalledWith('/', { recursive: true });
+    });
+
+    it('should handle filename with no directory component', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+      mockWriteFileSync.mockReturnValue(undefined);
+
+      const result = writeReport('report.md', 'Current directory');
+
+      expect(result.status).toBe('success');
+      if (result.status === 'success') {
+        expect(result.reportPath).toBe('report.md');
+      }
+      // dirname('report.md') returns '.' (current directory)
+      expect(mockMkdirSync).toHaveBeenCalledWith('.', { recursive: true });
+    });
+  });
+
+  describe('mkdir errors', () => {
+    it('should return mkdir_error with EACCES code for permission denied', () => {
+      const permissionError: any = new Error('EACCES: permission denied, mkdir \'/protected/reports\'');
+      permissionError.code = 'EACCES';
+      permissionError.errno = -13;
+      permissionError.syscall = 'mkdir';
+      permissionError.path = '/protected/reports';
+
+      mockMkdirSync.mockImplementation(() => {
+        throw permissionError;
+      });
+
+      const result = writeReport('/protected/reports/output.md', 'Test content');
+
+      expect(result.status).toBe('mkdir_error');
+      if (result.status !== 'success') {
+        expect(result.errorDetails).toBeDefined();
+        expect(result.errorDetails.code).toBe('EACCES');
+        expect(result.errorDetails.message).toContain('permission denied');
+      }
+    });
+
+    it('should return mkdir_error with EROFS code for read-only filesystem', () => {
+      const rofsError: any = new Error('EROFS: read-only file system, mkdir \'/readonly/reports\'');
+      rofsError.code = 'EROFS';
+      rofsError.errno = -30;
+      rofsError.syscall = 'mkdir';
+      rofsError.path = '/readonly/reports';
+
+      mockMkdirSync.mockImplementation(() => {
+        throw rofsError;
+      });
+
+      const result = writeReport('/readonly/reports/output.md', 'Test content');
+
+      expect(result.status).toBe('mkdir_error');
+      if (result.status !== 'success') {
+        expect(result.errorDetails).toBeDefined();
+        expect(result.errorDetails.code).toBe('EROFS');
+        expect(result.errorDetails.message).toContain('read-only file system');
+      }
+    });
+
+    it('should return mkdir_error for generic filesystem errors without code', () => {
+      const genericError = new Error('Out of memory');
+
+      mockMkdirSync.mockImplementation(() => {
+        throw genericError;
+      });
+
+      const result = writeReport('/path/reports/output.md', 'Test content');
+
+      expect(result.status).toBe('mkdir_error');
+      if (result.status !== 'success') {
+        expect(result.errorDetails).toBeDefined();
+        expect(result.errorDetails.message).toBe('Out of memory');
+        expect(result.errorDetails.code).toBeUndefined();
+      }
+    });
+
+    it('should handle non-Error thrown values in mkdir (string)', () => {
+      mockMkdirSync.mockImplementation(() => {
+        throw 'String error from mkdir';
+      });
+
+      const result = writeReport('/path/reports/output.md', 'Test content');
+
+      expect(result.status).toBe('mkdir_error');
+      if (result.status !== 'success') {
+        expect(result.errorDetails).toBeDefined();
+        expect(result.errorDetails.message).toBe('String error from mkdir');
+        expect(result.errorDetails.code).toBeUndefined();
+      }
+    });
+
+    it('should not call writeFileSync when mkdir fails', () => {
+      const mkdirError = new Error('mkdir failed');
+      mockMkdirSync.mockImplementation(() => {
+        throw mkdirError;
+      });
+
+      writeReport('/path/reports/output.md', 'Test content');
+
+      expect(mockWriteFileSync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('write errors', () => {
+    it('should return write_error with EACCES code for permission denied', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+
+      const permissionError: any = new Error('EACCES: permission denied, open \'/reports/output.md\'');
+      permissionError.code = 'EACCES';
+      permissionError.errno = -13;
+      permissionError.syscall = 'open';
+      permissionError.path = '/reports/output.md';
+
+      mockWriteFileSync.mockImplementation(() => {
+        throw permissionError;
+      });
+
+      const result = writeReport('/reports/output.md', 'Test content');
+
+      expect(result.status).toBe('write_error');
+      if (result.status !== 'success') {
+        expect(result.errorDetails).toBeDefined();
+        expect(result.errorDetails.code).toBe('EACCES');
+        expect(result.errorDetails.message).toContain('permission denied');
+      }
+    });
+
+    it('should return write_error with ENOSPC code for disk full', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+
+      const diskFullError: any = new Error('ENOSPC: no space left on device, write');
+      diskFullError.code = 'ENOSPC';
+      diskFullError.errno = -28;
+      diskFullError.syscall = 'write';
+
+      mockWriteFileSync.mockImplementation(() => {
+        throw diskFullError;
+      });
+
+      const result = writeReport('/reports/output.md', 'Test content');
+
+      expect(result.status).toBe('write_error');
+      if (result.status !== 'success') {
+        expect(result.errorDetails).toBeDefined();
+        expect(result.errorDetails.code).toBe('ENOSPC');
+        expect(result.errorDetails.message).toContain('no space left on device');
+      }
+    });
+
+    it('should return write_error with EROFS code for read-only filesystem', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+
+      const rofsError: any = new Error('EROFS: read-only file system, write');
+      rofsError.code = 'EROFS';
+      rofsError.errno = -30;
+      rofsError.syscall = 'write';
+
+      mockWriteFileSync.mockImplementation(() => {
+        throw rofsError;
+      });
+
+      const result = writeReport('/reports/output.md', 'Test content');
+
+      expect(result.status).toBe('write_error');
+      if (result.status !== 'success') {
+        expect(result.errorDetails).toBeDefined();
+        expect(result.errorDetails.code).toBe('EROFS');
+        expect(result.errorDetails.message).toContain('read-only file system');
+      }
+    });
+
+    it('should return write_error for partial failure (mkdir succeeds, write fails)', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+
+      const writeError = new Error('Write failed after mkdir succeeded');
+      mockWriteFileSync.mockImplementation(() => {
+        throw writeError;
+      });
+
+      const result = writeReport('/new/path/output.md', 'Test content');
+
+      expect(result.status).toBe('write_error');
+      if (result.status !== 'success') {
+        expect(result.errorDetails).toBeDefined();
+        expect(result.errorDetails.message).toBe('Write failed after mkdir succeeded');
+      }
+
+      // Verify mkdir was actually called and succeeded
+      expect(mockMkdirSync).toHaveBeenCalledWith('/new/path', { recursive: true });
+      expect(mockWriteFileSync).toHaveBeenCalledWith('/new/path/output.md', 'Test content', 'utf-8');
+    });
+
+    it('should return write_error for generic filesystem errors without code', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+
+      const genericError = new Error('I/O error');
+      mockWriteFileSync.mockImplementation(() => {
+        throw genericError;
+      });
+
+      const result = writeReport('/reports/output.md', 'Test content');
+
+      expect(result.status).toBe('write_error');
+      if (result.status !== 'success') {
+        expect(result.errorDetails).toBeDefined();
+        expect(result.errorDetails.message).toBe('I/O error');
+        expect(result.errorDetails.code).toBeUndefined();
+      }
+    });
+
+    it('should handle non-Error thrown values in write (string)', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+
+      mockWriteFileSync.mockImplementation(() => {
+        throw 'String error from writeFileSync';
+      });
+
+      const result = writeReport('/reports/output.md', 'Test content');
+
+      expect(result.status).toBe('write_error');
+      if (result.status !== 'success') {
+        expect(result.errorDetails).toBeDefined();
+        expect(result.errorDetails.message).toBe('String error from writeFileSync');
+        expect(result.errorDetails.code).toBeUndefined();
+      }
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should handle empty content string', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+      mockWriteFileSync.mockReturnValue(undefined);
+
+      const result = writeReport('/reports/empty.md', '');
+
+      expect(result.status).toBe('success');
+      if (result.status === 'success') {
+        expect(result.reportPath).toBe('/reports/empty.md');
+      }
+      expect(mockWriteFileSync).toHaveBeenCalledWith('/reports/empty.md', '', 'utf-8');
+    });
+
+    it('should handle very long content strings', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+      mockWriteFileSync.mockReturnValue(undefined);
+
+      const longContent = 'A'.repeat(1000000); // 1MB
+      const result = writeReport('/reports/large.md', longContent);
+
+      expect(result.status).toBe('success');
+      if (result.status === 'success') {
+        expect(result.reportPath).toBe('/reports/large.md');
+      }
+      expect(mockWriteFileSync).toHaveBeenCalledWith('/reports/large.md', longContent, 'utf-8');
+    });
+
+    it('should handle content with special characters and newlines', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+      mockWriteFileSync.mockReturnValue(undefined);
+
+      const specialContent = 'Line 1\n\nLine 3\tTab\r\nWindows newline\u2028Line separator';
+      const result = writeReport('/reports/special.md', specialContent);
+
+      expect(result.status).toBe('success');
+      if (result.status === 'success') {
+        expect(result.reportPath).toBe('/reports/special.md');
+      }
+      expect(mockWriteFileSync).toHaveBeenCalledWith('/reports/special.md', specialContent, 'utf-8');
+    });
+
+    it('should handle paths with special characters', () => {
+      mockMkdirSync.mockReturnValue(undefined);
+      mockWriteFileSync.mockReturnValue(undefined);
+
+      const result = writeReport('/reports (2024)/output [draft].md', 'Content');
+
+      expect(result.status).toBe('success');
+      if (result.status === 'success') {
+        expect(result.reportPath).toBe('/reports (2024)/output [draft].md');
+      }
+      expect(mockMkdirSync).toHaveBeenCalledWith('/reports (2024)', { recursive: true });
+    });
+
+    // Note: Windows-style paths (C:\reports\output.md) are not tested because
+    // Node's path.dirname() is platform-specific. On Linux/Mac, backslashes
+    // are not recognized as path separators. The script is primarily used in
+    // CI environments on Linux, so cross-platform path handling is not needed.
+  });
 });
