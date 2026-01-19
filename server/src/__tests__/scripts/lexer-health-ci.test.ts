@@ -542,4 +542,69 @@ describe('Lexer Health Script - runCICheck()', () => {
       }
     });
   });
+
+  describe('optimization - avoiding redundant directory validation (issue #153)', () => {
+    it('should pass pre-validated files to validateAllFiles to avoid double validation', () => {
+      jest.resetModules();
+
+      const mockExistsSync = jest.requireMock('fs').existsSync;
+      const mockReaddirSync = jest.requireMock('fs').readdirSync;
+      const mockReadFileSync = jest.requireMock('fs').readFileSync;
+
+      // Setup: directory exists with one file
+      mockExistsSync.mockReturnValue(true);
+      mockReaddirSync.mockReturnValue(['TAB18.TXT']);
+
+      // Mock readFileSync for baseline and file content
+      mockReadFileSync.mockImplementation((path: string) => {
+        if (path.includes('baseline.json')) {
+          return JSON.stringify({ maxFailures: 10 });
+        }
+        // Return valid C/AL content for the test file
+        return Buffer.from('OBJECT Table 18 Customer\r\n{\r\n}\r\n');
+      });
+
+      // Import fresh module to avoid spy issues
+      const lexerHealth = require('../../../scripts/lexer-health');
+      const validateAllFilesSpy = jest.spyOn(lexerHealth, 'validateAllFiles');
+
+      lexerHealth.runCICheck();
+
+      // The key assertion: validateAllFiles should be called WITH the files array
+      // (not called without arguments, which would trigger redundant validation)
+      expect(validateAllFilesSpy).toHaveBeenCalledTimes(1);
+      expect(validateAllFilesSpy).toHaveBeenCalledWith(['TAB18.TXT']);
+
+      validateAllFilesSpy.mockRestore();
+    });
+
+    it('should call readdirSync exactly once during successful CI run', () => {
+      jest.resetModules();
+
+      const mockExistsSync = jest.requireMock('fs').existsSync;
+      const mockReaddirSync = jest.requireMock('fs').readdirSync;
+      const mockReadFileSync = jest.requireMock('fs').readFileSync;
+
+      // Setup: directory exists with one file
+      mockExistsSync.mockReturnValue(true);
+      mockReaddirSync.mockReturnValue(['TAB18.TXT']);
+
+      // Mock readFileSync for baseline and file content
+      mockReadFileSync.mockImplementation((path: string) => {
+        if (path.includes('baseline.json')) {
+          return JSON.stringify({ maxFailures: 10 });
+        }
+        return Buffer.from('OBJECT Table 18 Customer\r\n{\r\n}\r\n');
+      });
+
+      const { runCICheck } = require('../../../scripts/lexer-health');
+      runCICheck();
+
+      // Before the fix (issue #153), readdirSync was called twice:
+      // 1. In runCICheck's validateDirectoryForReport() call
+      // 2. In validateAllFiles()'s internal validateDirectoryForReport() call
+      // After the fix, it should be called exactly once
+      expect(mockReaddirSync).toHaveBeenCalledTimes(1);
+    });
+  });
 });

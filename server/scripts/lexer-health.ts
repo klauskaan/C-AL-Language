@@ -448,7 +448,8 @@ export function runCICheck(): CIResult {
 
   // Run validation
   // Use exports.validateAllFiles to allow test mocking via jest.spyOn
-  const results = exports.validateAllFiles();
+  // Pass files from dirValidation to skip redundant validation
+  const results = exports.validateAllFiles(dirValidation.files);
 
   // Count failures
   const actualFailures = results.filter((r: FileResult) =>
@@ -466,34 +467,51 @@ export function runCICheck(): CIResult {
   };
 }
 
-export function validateAllFiles(): FileResult[] {
+/**
+ * Validates all C/AL files for lexer health.
+ *
+ * @param files - Optional array of filenames (not full paths) to validate.
+ *                If provided, skips directory validation and uses these files directly.
+ *                If undefined, performs directory validation and discovery.
+ * @returns Array of validation results for each file
+ */
+export function validateAllFiles(files?: string[]): FileResult[] {
   const realDir = join(__dirname, '../../test/REAL');
 
-  // Validate directory
-  const dirValidation = validateDirectoryForReport(realDir);
+  // If files provided, use them directly (skip directory validation)
+  if (files !== undefined) {
+    if (files.length === 0) {
+      console.warn('No .TXT files found in test/REAL');
+      return [];
+    }
+    // Use provided files - continue to processing below
+  } else {
+    // No files provided - perform directory validation
+    const dirValidation = validateDirectoryForReport(realDir);
 
-  // Handle validation errors - preserve existing behavior of calling process.exit()
-  if (dirValidation.status === 'not_found') {
-    console.error('Error: test/REAL directory does not exist');
-    console.error('This script requires proprietary NAV object files.');
-    console.error('See README for more information.');
-    process.exit(CI_EXIT_CODES.CONFIG_ERROR);
-  }
+    // Handle validation errors - preserve existing behavior of calling process.exit()
+    if (dirValidation.status === 'not_found') {
+      console.error('Error: test/REAL directory does not exist');
+      console.error('This script requires proprietary NAV object files.');
+      console.error('See README for more information.');
+      process.exit(CI_EXIT_CODES.CONFIG_ERROR);
+    }
 
-  if (dirValidation.status === 'read_error') {
-    console.error(`Error: cannot read test/REAL directory - ${dirValidation.errorDetails?.message ?? 'unknown error'}`);
-    process.exit(CI_EXIT_CODES.CONFIG_ERROR);
-  }
+    if (dirValidation.status === 'read_error') {
+      console.error(`Error: cannot read test/REAL directory - ${dirValidation.errorDetails?.message ?? 'unknown error'}`);
+      process.exit(CI_EXIT_CODES.CONFIG_ERROR);
+    }
 
-  if (dirValidation.status === 'empty') {
-    console.warn('No .TXT files found in test/REAL');
-    return [];  // Let caller handle the empty result
-  }
+    if (dirValidation.status === 'empty') {
+      console.warn('No .TXT files found in test/REAL');
+      return [];  // Let caller handle the empty result
+    }
 
-  // Get files from validation result
-  const files = dirValidation.files;
-  if (!files) {
-    throw new Error('Internal error: valid status but no files array');
+    // Get files from validation result
+    files = dirValidation.files;
+    if (!files) {
+      throw new Error('Internal error: valid status but no files array');
+    }
   }
 
   console.log(`Found ${files.length} files to validate\n`);
@@ -755,7 +773,7 @@ if (require.main === module && !process.env.JEST_WORKER_ID) {
   }
 
   const startTime = performance.now();
-  const results = validateAllFiles();
+  const results = validateAllFiles(dirValidation.files);
   const totalTime = performance.now() - startTime;
 
   console.log(`\nValidation complete in ${(totalTime / 1000).toFixed(2)}s`);

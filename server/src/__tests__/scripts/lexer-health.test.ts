@@ -450,6 +450,79 @@ describe('Lexer Health Script - validateAllFiles()', () => {
     expect(results.length).toBe(0);
   });
 
+  describe('with files parameter', () => {
+    let mockExistsSync: jest.MockedFunction<typeof existsSync>;
+    let mockReaddirSync: jest.MockedFunction<typeof readdirSync>;
+    let mockReadFileSync: jest.SpyInstance;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockExistsSync = jest.requireMock('fs').existsSync as jest.MockedFunction<typeof existsSync>;
+      mockReaddirSync = jest.requireMock('fs').readdirSync as jest.MockedFunction<typeof readdirSync>;
+      mockReadFileSync = jest.spyOn(require('fs'), 'readFileSync');
+    });
+
+    afterEach(() => {
+      mockReadFileSync.mockRestore();
+    });
+
+    it('should use provided files array instead of re-validating directory', () => {
+      // Mock file content for valid C/AL object
+      mockReadFileSync.mockReturnValue(Buffer.from('OBJECT Table 18 Customer\r\n{\r\n}\r\n'));
+
+      const { validateAllFiles } = require('../../../scripts/lexer-health');
+      const results = validateAllFiles(['TAB18.TXT']);
+
+      // Should NOT call readdirSync since files were provided
+      expect(mockReaddirSync).not.toHaveBeenCalled();
+
+      // Should process the provided file
+      expect(results).toHaveLength(1);
+      expect(results[0].file).toBe('TAB18.TXT');
+    });
+
+    it('should log "No .TXT files found" when provided empty array', () => {
+      const mockConsoleWarn = jest.spyOn(console, 'warn').mockImplementation();
+
+      const { validateAllFiles } = require('../../../scripts/lexer-health');
+      const results = validateAllFiles([]);
+
+      expect(mockConsoleWarn).toHaveBeenCalledWith('No .TXT files found in test/REAL');
+      expect(results).toEqual([]);
+
+      mockConsoleWarn.mockRestore();
+    });
+
+    it('should process all provided files and return FileResult array', () => {
+      // Mock file content for both files
+      mockReadFileSync.mockReturnValue(Buffer.from('OBJECT Table 18 Customer\r\n{\r\n}\r\n'));
+
+      const { validateAllFiles } = require('../../../scripts/lexer-health');
+      const results = validateAllFiles(['TAB18.TXT', 'COD50.TXT']);
+
+      expect(results).toHaveLength(2);
+      expect(results[0].file).toBe('TAB18.TXT');
+      expect(results[1].file).toBe('COD50.TXT');
+
+      // Should NOT call readdirSync
+      expect(mockReaddirSync).not.toHaveBeenCalled();
+    });
+
+    it('should behave identically for undefined and omitted files parameter', () => {
+      // Mock directory validation to succeed
+      mockExistsSync.mockReturnValue(true);
+      mockReaddirSync.mockReturnValue(['TAB18.TXT' as any]);
+      mockReadFileSync.mockReturnValue(Buffer.from('OBJECT Table 18 Customer\r\n{\r\n}\r\n'));
+
+      const { validateAllFiles } = require('../../../scripts/lexer-health');
+      const results = validateAllFiles(undefined);
+
+      // Should validate directory internally (readdirSync IS called)
+      expect(mockReaddirSync).toHaveBeenCalled();
+      expect(results).toHaveLength(1);
+    });
+  });
+
   describe('readdirSync error handling', () => {
     let mockExistsSync: jest.MockedFunction<typeof existsSync>;
     let mockReaddirSync: jest.MockedFunction<typeof readdirSync>;
@@ -944,4 +1017,21 @@ describe('Lexer Health Script - validateDirectoryForReport()', () => {
       expect(result.files).toContain(longFileName);
     });
   });
+});
+
+describe('Lexer Health Script - validateAllFiles() optimization', () => {
+  it('should accept optional files parameter to skip directory validation', () => {
+    // Test that validateAllFiles can be called with a files array
+    const { validateAllFiles } = require('../../../scripts/lexer-health');
+
+    // Mock files array (empty to avoid actual file processing)
+    const mockFiles: string[] = [];
+
+    // Should not throw and should return empty array
+    const result = validateAllFiles(mockFiles);
+    expect(result).toEqual([]);
+  });
+
+  // Note: Backward compatibility with undefined parameter is tested at line 511-523
+  // in the "should behave identically for undefined and omitted files parameter" test
 });
