@@ -763,11 +763,29 @@ if (require.main === module && !process.env.JEST_WORKER_ID) {
 
   const report = generateMarkdownReport(results);
   const reportDir = join(__dirname, '../../.lexer-health');
-  if (!existsSync(reportDir)) {
-    mkdirSync(reportDir, { recursive: true });
-  }
   const reportPath = join(reportDir, 'lexer-health-report.md');
-  writeFileSync(reportPath, report, 'utf-8');
+
+  // Create report directory if needed
+  // Can throw EACCES if parent directory is not writable
+  try {
+    if (!existsSync(reportDir)) {
+      mkdirSync(reportDir, { recursive: true });
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Failed to create report directory: ${message}`);
+    process.exit(CI_EXIT_CODES.CONFIG_ERROR);
+  }
+
+  // Write report file
+  // Can throw EACCES, ENOSPC (disk full), EROFS (read-only filesystem)
+  try {
+    writeFileSync(reportPath, report, 'utf-8');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Failed to write report: ${message}`);
+    process.exit(CI_EXIT_CODES.CONFIG_ERROR);
+  }
 
   const filesWithErrors = results.filter(r =>
     !r.positionValidation.isValid || !r.cleanExit.passed
