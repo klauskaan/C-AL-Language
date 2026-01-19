@@ -17,6 +17,7 @@ import { Lexer, CleanExitResult } from '../src/lexer/lexer';
 import { validateTokenPositions, ValidationResult } from '../src/validation/positionValidator';
 import { readFileWithEncoding } from '../src/utils/encoding';
 import { hasTxtExtension } from '../src/utils/fileExtensions';
+import { escapeMarkdown } from '../src/utils/escapeMarkdown';
 
 /**
  * Exit codes for CI/CLI operations.
@@ -149,35 +150,6 @@ export function formatDuration(seconds: number): string {
 
   // Show minutes and seconds
   return `${minutes}m ${secs}s`;
-}
-
-/**
- * Escape markdown special characters to prevent rendering issues.
- * Backslash must be escaped FIRST to avoid double-escaping.
- * Newlines are replaced with visible \n to preserve list structure.
- *
- * Note: Actual newlines become visible \n, while literal backslash-n
- * sequences get backslash-escaped to \\n.
- *
- * @param text - Text to escape
- * @returns Escaped text safe for markdown
- */
-export function escapeMarkdown(text: string): string {
-  return text
-    .replace(/\\/g, '\\\\')      // Backslash first!
-    .replace(/\r\n/g, '\\n')     // Windows newlines (must be before \r and \n)
-    .replace(/\n/g, '\\n')       // Unix newlines
-    .replace(/\r/g, '\\n')       // Old Mac newlines
-    .replace(/\|/g, '\\|')
-    .replace(/\*/g, '\\*')
-    .replace(/_/g, '\\_')
-    .replace(/`/g, '\\`')
-    .replace(/\[/g, '\\[')
-    .replace(/\]/g, '\\]')
-    .replace(/</g, '\\<')
-    .replace(/>/g, '\\>')
-    .replace(/#/g, '\\#')
-    .replace(/~/g, '\\~');
 }
 
 /**

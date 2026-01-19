@@ -8,7 +8,7 @@
  * - Current behavior documented with TODO comments for known issues (#113, #114, #115)
  */
 
-import { generateMarkdownReport, FileResult, escapeMarkdown } from '../lexer-health';
+import { generateMarkdownReport, FileResult } from '../lexer-health';
 import { ExitCategory } from '../../src/lexer/lexer';
 
 // Mock timers for deterministic timestamps
@@ -487,112 +487,6 @@ describe('generateMarkdownReport', () => {
       expect(report).toContain('**stack-mismatch:** Invalid state');
       expect(report).toContain('Expected: "EOF"');
       expect(report).toContain('Actual: "IDENTIFIER"');
-    });
-  });
-
-  describe('escapeMarkdown', () => {
-    it('should escape backslash', () => {
-      expect(escapeMarkdown('test\\value')).toBe('test\\\\value');
-    });
-
-    it('should escape pipe', () => {
-      expect(escapeMarkdown('test|value')).toBe('test\\|value');
-    });
-
-    it('should escape asterisk', () => {
-      expect(escapeMarkdown('test*value')).toBe('test\\*value');
-    });
-
-    it('should escape underscore', () => {
-      expect(escapeMarkdown('test_value')).toBe('test\\_value');
-    });
-
-    it('should escape backtick', () => {
-      expect(escapeMarkdown('test`value')).toBe('test\\`value');
-    });
-
-    it('should escape square brackets', () => {
-      expect(escapeMarkdown('test[value]')).toBe('test\\[value\\]');
-    });
-
-    it('should escape angle brackets', () => {
-      expect(escapeMarkdown('test<value>')).toBe('test\\<value\\>');
-    });
-
-    it('should escape hash', () => {
-      expect(escapeMarkdown('test#value')).toBe('test\\#value');
-    });
-
-    it('should escape backslash FIRST to prevent double-escaping', () => {
-      // Critical test: backslash must be escaped before other characters
-      // If backslash is not escaped first:
-      //   "test\*value" -> "test\\*value" (escape backslash) -> "test\\\*value" (escape asterisk) WRONG!
-      // If backslash IS escaped first:
-      //   "test\*value" -> "test\\*value" (escape backslash) -> "test\\\\*value" (escape asterisk) CORRECT!
-      expect(escapeMarkdown('test\\*value')).toBe('test\\\\\\*value');
-    });
-
-    it('should handle empty string', () => {
-      expect(escapeMarkdown('')).toBe('');
-    });
-
-    it('should handle string with no special characters', () => {
-      expect(escapeMarkdown('test value')).toBe('test value');
-    });
-
-    it('should handle all special characters combined', () => {
-      const input = 'test\\|*_`[]<>#~all';
-      const expected = 'test\\\\\\|\\*\\_\\`\\[\\]\\<\\>\\#\\~all';
-      expect(escapeMarkdown(input)).toBe(expected);
-    });
-
-    it('should escape Unix newline (LF)', () => {
-      // Test that actual newline character (0x0A) becomes visible \n
-      expect(escapeMarkdown('line1\nline2')).toBe('line1\\nline2');
-    });
-
-    it('should escape Windows newline (CRLF)', () => {
-      // Test that CRLF becomes single visible \n
-      expect(escapeMarkdown('line1\r\nline2')).toBe('line1\\nline2');
-    });
-
-    it('should escape old Mac newline (CR)', () => {
-      // Test that CR only becomes visible \n
-      expect(escapeMarkdown('line1\rline2')).toBe('line1\\nline2');
-    });
-
-    it('should handle mixed newline types in same string', () => {
-      // Test multiple newline types together
-      expect(escapeMarkdown('a\nb\r\nc\rd')).toBe('a\\nb\\nc\\nd');
-    });
-
-    it('should handle literal backslash followed by actual newline', () => {
-      // CRITICAL: Test escape ordering - backslash must be escaped before newline conversion
-      // Input: literal backslash (0x5C) + actual newline (0x0A)
-      // Step 1: Escape backslash: \ -> \\
-      // Step 2: Convert newline: \n -> \n (visible)
-      // Output string: test\\<visible-\n>value
-      // In JS source: 'test\\\\\\nvalue' (with escaping for string literal)
-      const input = 'test\\\nvalue'; // Literal backslash followed by actual newline
-      expect(escapeMarkdown(input)).toBe('test\\\\\\nvalue');
-    });
-
-    it('should handle string of only newlines', () => {
-      // Edge case: no other content, just newlines
-      expect(escapeMarkdown('\n\n\n')).toBe('\\n\\n\\n');
-    });
-
-    it('should escape single tilde', () => {
-      expect(escapeMarkdown('test~value')).toBe('test\\~value');
-    });
-
-    it('should escape double tilde (strikethrough syntax)', () => {
-      expect(escapeMarkdown('~~deleted~~')).toBe('\\~\\~deleted\\~\\~');
-    });
-
-    it('should handle backslash followed by tilde', () => {
-      // Test backslash BEFORE tilde escaping (backslash must be escaped first)
-      expect(escapeMarkdown('test\\~value')).toBe('test\\\\\\~value');
     });
   });
 

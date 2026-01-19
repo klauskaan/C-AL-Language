@@ -11,7 +11,8 @@
  * Tests now verify escaping works correctly.
  */
 
-import { generateMarkdownReport, ValidationResult, escapeMarkdown } from '../validate-real';
+import { generateMarkdownReport, ValidationResult } from '../validate-real';
+import { escapeMarkdown } from '../../src/utils/escapeMarkdown';
 
 // Mock timers for deterministic timestamps
 jest.useFakeTimers();
@@ -31,61 +32,6 @@ function createValidationResult(overrides: Partial<ValidationResult> = {}): Vali
 }
 
 describe('generateMarkdownReport (validate-real.ts)', () => {
-  describe('escapeMarkdown helper', () => {
-    it('should escape pipe character', () => {
-      expect(escapeMarkdown).toBeDefined();
-      expect(escapeMarkdown('test|value')).toBe('test\\|value');
-    });
-
-    it('should escape asterisk', () => {
-      expect(escapeMarkdown('test*value')).toBe('test\\*value');
-    });
-
-    it('should escape underscore', () => {
-      expect(escapeMarkdown('test_value')).toBe('test\\_value');
-    });
-
-    it('should escape square brackets', () => {
-      expect(escapeMarkdown('test[value]')).toBe('test\\[value\\]');
-    });
-
-    it('should escape hash', () => {
-      expect(escapeMarkdown('test#value')).toBe('test\\#value');
-    });
-
-    it('should escape backslash FIRST to prevent double-escaping', () => {
-      // Critical: backslash must be escaped before other characters
-      expect(escapeMarkdown('test\\*value')).toBe('test\\\\\\*value');
-    });
-
-    it('should handle empty string', () => {
-      expect(escapeMarkdown('')).toBe('');
-    });
-
-    it('should handle string with no special characters', () => {
-      expect(escapeMarkdown('test value')).toBe('test value');
-    });
-
-    it('should handle all special characters combined', () => {
-      const input = 'test\\|*_`[]<>#~all';
-      const expected = 'test\\\\\\|\\*\\_\\`\\[\\]\\<\\>\\#\\~all';
-      expect(escapeMarkdown(input)).toBe(expected);
-    });
-
-    it('should escape single tilde', () => {
-      expect(escapeMarkdown('test~value')).toBe('test\\~value');
-    });
-
-    it('should escape double tilde (strikethrough syntax)', () => {
-      expect(escapeMarkdown('~~deleted~~')).toBe('\\~\\~deleted\\~\\~');
-    });
-
-    it('should handle backslash followed by tilde', () => {
-      // Test backslash BEFORE tilde escaping (backslash must be escaped first)
-      expect(escapeMarkdown('test\\~value')).toBe('test\\\\\\~value');
-    });
-  });
-
   describe('Line 105 - Object type in table', () => {
     it('should escape pipe in object type (first 3 chars of filename)', () => {
       // Filename: "T|B12345.TXT" -> object type is "T|B"

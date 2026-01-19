@@ -4,29 +4,7 @@ import { Lexer } from '../src/lexer/lexer';
 import { Parser } from '../src/parser/parser';
 import { readFileWithEncoding } from '../src/utils/encoding';
 import { hasTxtExtension } from '../src/utils/fileExtensions';
-
-/**
- * Escape markdown special characters to prevent rendering issues.
- * Backslash must be escaped FIRST to avoid double-escaping.
- * Note: Use only for display text, not for URL paths in links.
- *
- * @param text - Text to escape
- * @returns Escaped text safe for markdown
- */
-export function escapeMarkdown(text: string): string {
-  return text
-    .replace(/\\/g, '\\\\')  // Backslash first!
-    .replace(/\|/g, '\\|')
-    .replace(/\*/g, '\\*')
-    .replace(/_/g, '\\_')
-    .replace(/`/g, '\\`')
-    .replace(/\[/g, '\\[')
-    .replace(/\]/g, '\\]')
-    .replace(/</g, '\\<')
-    .replace(/>/g, '\\>')
-    .replace(/#/g, '\\#')
-    .replace(/~/g, '\\~');
-}
+import { escapeMarkdown } from '../src/utils/escapeMarkdown';
 
 export interface ValidationResult {
   file: string;
