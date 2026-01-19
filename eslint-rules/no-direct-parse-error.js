@@ -2,10 +2,12 @@
  * ESLint rule: no-direct-parse-error
  *
  * Disallows direct ParseError construction outside factory methods.
+ * Detects both direct usage and aliased construction patterns.
  *
  * Background:
  * - Issue #131: Enforce ParseError factory method pattern
  * - Issue #141: ESLint rule implementation
+ * - Issue #149: Alias detection enhancement
  * - Direct construction bypasses centralized error sanitization
  * - Factory pattern enables consistent content sanitization
  * - Prevents sensitive content leakage in error messages
@@ -13,10 +15,20 @@
  * Valid:
  *   - this.createParseError('message', token)
  *   - Inside functions/methods matching /^create.*Error$/
+ *   - Aliases inside factory methods: const PE = ParseError; return new PE(...)
  *
  * Invalid:
  *   - new ParseError('message', token) in regular methods
  *   - throw new ParseError(...) outside factory methods
+ *   - const PE = ParseError; new PE(...) in regular methods (alias detected)
+ *   - let Err = ParseError; throw new Err(...) outside factories
+ *
+ * Out of scope (intentionally not detected, covered by Jest CI guard):
+ *   - Import aliases: import { ParseError as PE } from './errors'; new PE(...)
+ *   - Chained aliases: const A = ParseError; const B = A; new B(...)
+ *   - Reassignment: let E = Other; E = ParseError; new E(...)
+ *   - Property access: const obj = { PE: ParseError }; new obj.PE(...)
+ *   - Dynamic assignments, destructuring patterns
  */
 
 module.exports = {
@@ -48,13 +60,89 @@ module.exports = {
     }
 
     /**
-     * Checks if the callee is 'ParseError'.
+     * Checks if the callee is 'ParseError' or an alias to it.
+     * Uses ESLint's scope analysis to detect variable assignments.
+     *
+     * Examples:
+     *   - new ParseError('msg', token)           → true (direct)
+     *   - const PE = ParseError; new PE(...)     → true (alias)
+     *   - let Err = ParseError; new Err(...)     → true (alias)
+     *   - (E = ParseError) => new E(...)         → true (default param alias)
+     *
+     * Out of scope (intentionally not detected):
+     *   - const obj = { PE: ParseError }         → false (property)
+     *   - errors.ParseError = ParseError         → false (dynamic)
      *
      * @param {Node} callee - The callee node from NewExpression
-     * @returns {boolean} True if callee is ParseError
+     * @param {object} context - ESLint context
+     * @returns {boolean} True if callee is ParseError or an alias
      */
-    function isParseErrorCallee(callee) {
-      return callee && callee.type === 'Identifier' && callee.name === 'ParseError';
+    function isParseErrorOrAlias(callee, context) {
+      if (!callee || callee.type !== 'Identifier') {
+        return false;
+      }
+
+      // Check if directly named 'ParseError'
+      if (callee.name === 'ParseError') {
+        return true;
+      }
+
+      // Check if it's an alias using scope analysis
+      const scope = context.sourceCode.getScope(callee);
+      const variable = findVariableInScope(scope, callee.name);
+
+      if (!variable) {
+        return false;
+      }
+
+      // Check all definitions of this variable
+      for (const def of variable.defs) {
+        // For variable declarations like: const PE = ParseError
+        if (def.type === 'Variable' && def.node.init) {
+          const init = def.node.init;
+          if (init.type === 'Identifier' && init.name === 'ParseError') {
+            return true;
+          }
+        }
+        // For default parameters like: (E = ParseError) => ...
+        // Note: For parameters, def.node is the containing function, not the parameter itself.
+        // The AssignmentPattern is found at def.name.parent
+        if (def.type === 'Parameter') {
+          const nameParent = def.name?.parent;
+          if (nameParent?.type === 'AssignmentPattern') {
+            const right = nameParent.right;
+            if (right && right.type === 'Identifier' && right.name === 'ParseError') {
+              return true;
+            }
+          }
+        }
+      }
+
+      return false;
+    }
+
+    /**
+     * Finds a variable in the scope chain.
+     * Handles scoping correctly (var/let/const, shadowing).
+     *
+     * @param {Scope} scope - The starting scope
+     * @param {string} name - Variable name to find
+     * @returns {Variable|null} The variable object or null
+     */
+    function findVariableInScope(scope, name) {
+      let currentScope = scope;
+
+      while (currentScope) {
+        const variable = currentScope.variables.find((v) => v.name === name);
+        if (variable) {
+          return variable;
+        }
+
+        // Check upper scope (for closures)
+        currentScope = currentScope.upper;
+      }
+
+      return null;
     }
 
     // Stack to track current function context
@@ -124,8 +212,8 @@ module.exports = {
       },
 
       NewExpression(node) {
-        // Check if this is `new ParseError(...)`
-        if (!isParseErrorCallee(node.callee)) {
+        // Check if this is `new ParseError(...)` or `new PE(...)` where PE is an alias
+        if (!isParseErrorOrAlias(node.callee, context)) {
           return; // Not a ParseError construction
         }
 

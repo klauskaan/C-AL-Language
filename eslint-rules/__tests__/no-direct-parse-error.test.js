@@ -144,6 +144,63 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       options: [],
     },
+
+    // Alias in factory method - allowed (factory method pattern)
+    {
+      code: `
+        function createParseError(msg: string): ParseError {
+          const PE = ParseError;
+          return new PE(msg, null);
+        }
+      `,
+      options: [],
+    },
+
+    // Alias in class factory method - allowed (factory method pattern)
+    {
+      code: `
+        class Parser {
+          createParseError(msg: string): ParseError {
+            const Err = ParseError;
+            return new Err(msg, this.token);
+          }
+        }
+      `,
+      options: [],
+    },
+
+    // Shadowing - inner scope overrides outer alias
+    {
+      code: `
+        const PE = ParseError;
+        {
+          const PE = SomeOtherClass;
+          new PE('msg', token);
+        }
+      `,
+      options: [],
+    },
+
+    // Non-ParseError alias - not our concern
+    {
+      code: `
+        const E = SomeOtherClass;
+        new E('message', token);
+      `,
+      options: [],
+    },
+
+    // Import alias - out of scope (requires ImportBinding analysis)
+    // Note: Not detected by this rule, but caught by Jest CI guard
+    {
+      code: `
+        import { ParseError as PE } from './errors';
+        function handleError() {
+          new PE('message', null);
+        }
+      `,
+      options: [],
+    },
   ],
 
   invalid: [
@@ -308,6 +365,82 @@ ruleTester.run('no-direct-parse-error', rule, {
           };
           return helper();
         }
+      `,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Aliased ParseError with const - basic violation
+    {
+      code: `const PE = ParseError; new PE('message', token);`,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Aliased ParseError with let - basic violation
+    {
+      code: `let Err = ParseError; new Err('message', token);`,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Aliased ParseError with var - basic violation
+    {
+      code: `var E = ParseError; throw new E('error', token);`,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Alias in class method (non-factory) - violation
+    {
+      code: `
+        class Parser {
+          parse() {
+            const E = ParseError;
+            return new E('error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Alias via default parameter - violation
+    {
+      code: `const handleError = (E = ParseError) => new E('msg', null);`,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Multiple aliases in declaration - violation on ParseError alias
+    {
+      code: `
+        const A = ParseError, B = SomethingElse;
+        new A('message', null);
       `,
       errors: [
         {
