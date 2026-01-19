@@ -1,5 +1,28 @@
 {
   "enabledPlugins": {
     "typescript-lsp@claude-plugins-official": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "notify-send -t 7000 'Claude Code' 'Question: Waiting for your answer'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "notify-send -t 5000 'Claude Code' 'Done: Ready for input'"
+          }
+        ]
+      }
+    ]
   }
 }

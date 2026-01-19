@@ -143,6 +143,7 @@ When reviewers provide feedback, use this structured process:
 - DISMISS requires specific technical reasoning
 - Reviewer may challenge DISMISS; if unresolved after one rebuttal, escalate to user
 - Loop exits when: ALL items dispositioned AND no ACCEPT-FIX items remain AND reviewer states **"APPROVED: Proceed to [next step]"**
+- **Only explicit "APPROVED: Proceed to [step]" exits the loop.** Conditional statements ("approved if you clarify X"), questions, or clarification requests are feedback requiring iteration - resume the reviewer with your clarification. Do not ask the user for permission to proceed on conditional approval.
 
 *Response Format:*
 ```
@@ -386,3 +387,4 @@ cd server && npm run perf:standard    # Standard suite
 3. **Mandatory adversarial-reviewer before COMMIT** - Final quality gate catches gaps
 4. **Re-review after fixes** - Ensures fixes don't introduce new issues
 5. **code-detective for non-obvious issues** - Deep investigation prevents wasted work
+6. **Only explicit "APPROVED" exits review loops** - "Conditional approval" or "LGTM if you clarify X" requires resuming the reviewer with clarifications, not asking the user for permission to proceed (incident: 2026-01-19)
