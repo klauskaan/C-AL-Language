@@ -129,3 +129,114 @@ export function sanitizeChar(char: string): string {
 
   return `[char sanitized, code ${code}]`;
 }
+
+/**
+ * Sanitizes token type representation when it reveals sensitive keywords.
+ *
+ * Security Rationale:
+ * Token types in error messages can reveal reserved keywords and language constructs
+ * from proprietary code. This function replaces keyword token types with a generic
+ * sanitized representation, while preserving generic token type information for
+ * tokens like operators, delimiters, and literals.
+ *
+ * Keywords that should be sanitized:
+ * - Reserved words (BEGIN, END, REPEAT, WHILE, etc.)
+ * - Data types (RECORD, BOOLEAN, DECIMAL, etc.)
+ * - Object types (TABLE, REPORT, CODEUNIT, etc.)
+ * - Control flow (IF, THEN, ELSE, FOR, etc.)
+ * - Procedure modifiers (LOCAL, VAR, PROCEDURE, FUNCTION, etc.)
+ *
+ * Token types that are safe (not revealing keywords):
+ * - IDENTIFIER (generic, doesn't reveal specific name)
+ * - Operators (PLUS, MINUS, EQUAL, etc.) - symbols, not keywords
+ * - Delimiters (LEFT_PAREN, SEMICOLON, etc.) - symbols, not keywords
+ * - Literals (INTEGER, STRING, DATE, etc.) - types, not keyword values
+ * - Special (EOF, COMMENT) - metadata, not keywords
+ *
+ * @param tokenType - The token type string (e.g., 'BEGIN', 'IDENTIFIER', 'PLUS')
+ * @returns Either the original token type (if safe) or a sanitized representation
+ *
+ * @example
+ * sanitizeTokenType('BEGIN')
+ * // => '[token type sanitized]'
+ *
+ * @example
+ * sanitizeTokenType('IDENTIFIER')
+ * // => 'IDENTIFIER'  (unchanged - doesn't reveal the actual name)
+ *
+ * @example
+ * sanitizeTokenType('PLUS')
+ * // => 'PLUS'  (unchanged - symbol, not a keyword)
+ */
+export function sanitizeTokenType(tokenType: string): string {
+  // Keywords that should be sanitized (reserved words that reveal C/AL structure)
+  const SENSITIVE_KEYWORDS = new Set([
+    // Object types
+    'OBJECT', 'TABLE', 'PAGE', 'REPORT', 'CODEUNIT', 'QUERY', 'XMLPORT', 'MENUSUITE',
+
+    // Sections
+    'PROPERTIES', 'OBJECT_PROPERTIES', 'FIELDS', 'KEYS', 'FIELDGROUPS', 'CODE',
+    'CONTROLS', 'ACTIONS', 'DATAITEMS', 'ELEMENTS', 'REQUESTFORM', 'DATASET',
+    'REQUESTPAGE', 'LABELS',
+
+    // Data types
+    'BOOLEAN', 'INTEGER_TYPE', 'DECIMAL_TYPE', 'TEXT', 'CODE_TYPE', 'DATE_TYPE',
+    'TIME_TYPE', 'DATETIME_TYPE', 'RECORD', 'RECORDID', 'RECORDREF', 'FIELDREF',
+    'BIGINTEGER', 'BIGTEXT', 'BLOB', 'GUID', 'DURATION', 'OPTION', 'CHAR', 'BYTE',
+    'TEXTCONST',
+
+    // Control flow
+    'IF', 'THEN', 'ELSE', 'CASE', 'OF', 'WHILE', 'DO', 'REPEAT', 'UNTIL', 'FOR',
+    'TO', 'DOWNTO', 'EXIT', 'BREAK',
+
+    // Procedure/Function keywords
+    'PROCEDURE', 'FUNCTION', 'LOCAL', 'VAR', 'TRIGGER', 'EVENT',
+
+    // Blocks
+    'BEGIN', 'END',
+
+    // Boolean
+    'TRUE', 'FALSE',
+
+    // Other keywords
+    'DIV', 'MOD', 'AND', 'OR', 'NOT', 'XOR', 'IN', 'WITH', 'ARRAY', 'TEMPORARY',
+    'INDATASET', 'RUNONCLIENT', 'WITHEVENTS', 'SECURITYFILTERING',
+
+    // AL-only features (also sensitive as they reveal attempted AL code)
+    'AL_ONLY_KEYWORD', 'AL_ONLY_ACCESS_MODIFIER', 'TERNARY_OPERATOR',
+    'PREPROCESSOR_DIRECTIVE'
+  ]);
+
+  // Token types that are safe to display (they don't reveal specific keywords)
+  const SAFE_TYPES = new Set([
+    // Literals - don't reveal the actual value
+    'IDENTIFIER', 'QUOTED_IDENTIFIER', 'INTEGER', 'DECIMAL', 'STRING', 'DATE',
+    'TIME', 'DATETIME',
+
+    // Operators - these are symbols, not keywords
+    'PLUS', 'MINUS', 'MULTIPLY', 'DIVIDE', 'ASSIGN', 'PLUS_ASSIGN',
+    'MINUS_ASSIGN', 'MULTIPLY_ASSIGN', 'DIVIDE_ASSIGN', 'EQUAL', 'NOT_EQUAL',
+    'LESS', 'LESS_EQUAL', 'GREATER', 'GREATER_EQUAL', 'DOT', 'DOTDOT',
+    'COMMA', 'SEMICOLON', 'COLON', 'DOUBLE_COLON',
+
+    // Delimiters - these are symbols
+    'LEFT_PAREN', 'RIGHT_PAREN', 'LEFT_BRACKET', 'RIGHT_BRACKET',
+    'LEFT_BRACE', 'RIGHT_BRACE',
+
+    // Special
+    'COMMENT', 'WHITESPACE', 'NEWLINE', 'EOF', 'UNKNOWN'
+  ]);
+
+  // If it's a known safe type, return it unchanged
+  if (SAFE_TYPES.has(tokenType)) {
+    return tokenType;
+  }
+
+  // If it's a sensitive keyword, sanitize it
+  if (SENSITIVE_KEYWORDS.has(tokenType)) {
+    return '[token type sanitized]';
+  }
+
+  // Unknown token type - sanitize to be safe
+  return '[token type sanitized]';
+}

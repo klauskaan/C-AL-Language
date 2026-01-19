@@ -235,7 +235,13 @@ describe('Parser - Error Messages with Context', () => {
       const errors = parser.getErrors();
 
       expect(errors.length).toBeGreaterThan(0);
-      const ternaryError = errors.find(e => e.message.includes('TERNARY_OPERATOR'));
+      // Token types are now sanitized to prevent keyword leakage
+      // Look for an error that mentions token type sanitization (from the ? operator)
+      const ternaryError = errors.find(e =>
+        e.message.includes('[token type sanitized]') ||
+        e.message.includes('ternary') ||
+        e.message.includes('unexpected')
+      );
       expect(ternaryError).toBeDefined();
       // The error message will be sanitized
       expect(ternaryError?.message).toMatch(/\[content sanitized, \d+ chars\]/);

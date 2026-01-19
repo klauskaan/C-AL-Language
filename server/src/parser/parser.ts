@@ -1,5 +1,5 @@
 import { Token, TokenType } from '../lexer/tokens';
-import { sanitizeContent } from '../utils/sanitize';
+import { sanitizeContent, sanitizeTokenType } from '../utils/sanitize';
 import {
   CALDocument,
   ObjectDeclaration,
@@ -3284,7 +3284,8 @@ export class Parser {
   private consume(type: TokenType, message: string): Token {
     if (this.check(type)) return this.advance();
     const current = this.peek();
-    const enhancedMessage = `${message}, but found '${sanitizeContent(current.value)}' (${current.type})`;
+    const sanitizedType = sanitizeTokenType(current.type as string);
+    const enhancedMessage = `${message}, but found '${sanitizeContent(current.value)}' (${sanitizedType})`;
     throw this.createParseError(enhancedMessage, current);
   }
 
