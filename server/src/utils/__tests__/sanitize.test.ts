@@ -19,7 +19,8 @@
 import {
   sanitizeContent,
   sanitizeComparison,
-  sanitizeChar
+  sanitizeChar,
+  stripPaths
 } from '../sanitize';
 
 describe('Sanitization Utility', () => {
@@ -679,6 +680,315 @@ describe('Sanitization Utility', () => {
 
       // Second sanitization should report length of first sanitization output
       expect(sanitized2).toContain('chars]');
+    });
+  });
+
+  describe('stripPaths', () => {
+    describe('Unix path redaction', () => {
+      it('should redact basic Unix path', () => {
+        const result = stripPaths('test/REAL/file.txt');
+
+        expect(result).toBe('<REDACTED>');
+      });
+
+      it('should redact Unix path with nested directories', () => {
+        const result = stripPaths('test/REAL/Codeunit/Object.txt');
+
+        expect(result).toBe('<REDACTED>');
+      });
+
+      it('should redact Unix path without trailing content', () => {
+        const result = stripPaths('test/REAL');
+
+        expect(result).toBe('<REDACTED>');
+      });
+
+      it('should redact Unix path with trailing slash', () => {
+        const result = stripPaths('test/REAL/');
+
+        expect(result).toBe('<REDACTED>');
+      });
+
+      it('should redact Unix path in error context', () => {
+        const result = stripPaths('Error at test/REAL/foo.cal:42');
+
+        expect(result).toBe('Error at <REDACTED>:42');
+      });
+    });
+
+    describe('Windows path redaction', () => {
+      it('should redact basic Windows path', () => {
+        const result = stripPaths('test\\REAL\\file.txt');
+
+        expect(result).toBe('<REDACTED>');
+      });
+
+      it('should redact Windows path with nested directories', () => {
+        const result = stripPaths('test\\REAL\\Codeunit\\Object.txt');
+
+        expect(result).toBe('<REDACTED>');
+      });
+
+      it('should redact Windows path without trailing content', () => {
+        const result = stripPaths('test\\REAL');
+
+        expect(result).toBe('<REDACTED>');
+      });
+
+      it('should redact Windows path with trailing backslash', () => {
+        const result = stripPaths('test\\REAL\\');
+
+        expect(result).toBe('<REDACTED>');
+      });
+
+      it('should redact Windows path in error context', () => {
+        const result = stripPaths('Error at test\\REAL\\foo.cal:42');
+
+        expect(result).toBe('Error at <REDACTED>:42');
+      });
+    });
+
+    describe('Case variation handling', () => {
+      it('should redact TEST/REAL (uppercase test)', () => {
+        const result = stripPaths('TEST/REAL/file.txt');
+
+        expect(result).toBe('<REDACTED>');
+      });
+
+      it('should redact test/Real (mixed case REAL)', () => {
+        const result = stripPaths('test/Real/file.txt');
+
+        expect(result).toBe('<REDACTED>');
+      });
+
+      it('should redact Test/real (capitalized test, lowercase REAL)', () => {
+        const result = stripPaths('Test/real/file.txt');
+
+        expect(result).toBe('<REDACTED>');
+      });
+
+      it('should redact TeSt/ReAl (random case)', () => {
+        const result = stripPaths('TeSt/ReAl/file.txt');
+
+        expect(result).toBe('<REDACTED>');
+      });
+
+      it('should redact TEST\\REAL (Windows, uppercase)', () => {
+        const result = stripPaths('TEST\\REAL\\file.txt');
+
+        expect(result).toBe('<REDACTED>');
+      });
+
+      it('should redact Test\\Real (Windows, mixed case)', () => {
+        const result = stripPaths('Test\\Real\\file.txt');
+
+        expect(result).toBe('<REDACTED>');
+      });
+    });
+
+    describe('Multiple occurrences', () => {
+      it('should redact multiple Unix paths', () => {
+        const result = stripPaths('test/REAL/a and test/REAL/b');
+
+        expect(result).toBe('<REDACTED> and <REDACTED>');
+      });
+
+      it('should redact multiple Windows paths', () => {
+        const result = stripPaths('test\\REAL\\a and test\\REAL\\b');
+
+        expect(result).toBe('<REDACTED> and <REDACTED>');
+      });
+
+      it('should redact mixed Unix and Windows paths', () => {
+        const result = stripPaths('test/REAL/a and test\\REAL\\b');
+
+        expect(result).toBe('<REDACTED> and <REDACTED>');
+      });
+
+      it('should redact multiple paths with different cases', () => {
+        const result = stripPaths('test/REAL/a and TEST/Real/b and Test/real/c');
+
+        expect(result).toBe('<REDACTED> and <REDACTED> and <REDACTED>');
+      });
+    });
+
+    describe('Negative cases - should NOT redact', () => {
+      it('should NOT redact when test and REAL have no separator', () => {
+        const result = stripPaths('testXREAL.txt');
+
+        expect(result).toBe('testXREAL.txt');
+      });
+
+      it('should NOT redact when prefix is not test', () => {
+        const result = stripPaths('context/REAL/file.txt');
+
+        expect(result).toBe('context/REAL/file.txt');
+      });
+
+      it('should NOT redact when test is not standalone', () => {
+        const result = stripPaths('mytest/REAL/foo');
+
+        expect(result).toBe('mytest/REAL/foo');
+      });
+
+      it('should NOT redact when test has word boundary issue', () => {
+        const result = stripPaths('retest/REAL/foo');
+
+        expect(result).toBe('retest/REAL/foo');
+      });
+
+      it('should NOT redact partial matches', () => {
+        const result = stripPaths('testing/REALITY/file.txt');
+
+        expect(result).toBe('testing/REALITY/file.txt');
+      });
+
+      it('should NOT redact when REAL is not preceded by test', () => {
+        const result = stripPaths('data/REAL/file.txt');
+
+        expect(result).toBe('data/REAL/file.txt');
+      });
+
+      it('should NOT redact when test is prefixed with underscore', () => {
+        const result = stripPaths('_test/REAL/foo');
+
+        expect(result).toBe('_test/REAL/foo');
+      });
+
+      it('should NOT redact when test is prefixed with a digit', () => {
+        const result = stripPaths('2test/REAL/foo');
+
+        expect(result).toBe('2test/REAL/foo');
+      });
+    });
+
+    describe('Edge cases', () => {
+      it('should handle empty string', () => {
+        const result = stripPaths('');
+
+        expect(result).toBe('');
+      });
+
+      it('should handle string with no paths', () => {
+        const result = stripPaths('No paths here');
+
+        expect(result).toBe('No paths here');
+      });
+
+      it('should handle just test/REAL with no path components', () => {
+        const result = stripPaths('test/REAL');
+
+        expect(result).toBe('<REDACTED>');
+      });
+
+      it('should handle path at start of string', () => {
+        const result = stripPaths('test/REAL/file.txt in error');
+
+        expect(result).toBe('<REDACTED> in error');
+      });
+
+      it('should handle path at end of string', () => {
+        const result = stripPaths('Found in test/REAL/file.txt');
+
+        expect(result).toBe('Found in <REDACTED>');
+      });
+
+      it('should preserve content after redacted path', () => {
+        const result = stripPaths('test/REAL/file.txt:42:10');
+
+        expect(result).toBe('<REDACTED>:42:10');
+      });
+
+      it('should handle mixed separators in same path (should not occur in practice)', () => {
+        const result = stripPaths('test/REAL\\file.txt');
+
+        // Should redact test/REAL part
+        expect(result).toContain('<REDACTED>');
+      });
+    });
+
+    describe('Real-world error message scenarios', () => {
+      it('should redact path in lexer error', () => {
+        const result = stripPaths('Unexpected token at test/REAL/Table50000.txt:12:5');
+
+        expect(result).toBe('Unexpected token at <REDACTED>:12:5');
+      });
+
+      it('should redact path in parser error', () => {
+        const result = stripPaths('Parse error in test/REAL/Codeunit80000.txt: Expected END');
+
+        expect(result).toBe('Parse error in <REDACTED>: Expected END');
+      });
+
+      it('should redact path in stack trace style message', () => {
+        const result = stripPaths('  at Parser.parse (test/REAL/file.cal:42:10)');
+
+        expect(result).toBe('  at Parser.parse (<REDACTED>:42:10)');
+      });
+
+      it('should redact multiple paths in comparison message', () => {
+        const result = stripPaths('Diff between test/REAL/a.cal and test/REAL/b.cal');
+
+        expect(result).toBe('Diff between <REDACTED> and <REDACTED>');
+      });
+
+      it('should redact Windows path in error', () => {
+        const result = stripPaths('File not found: test\\REAL\\Table18.txt');
+
+        expect(result).toBe('File not found: <REDACTED>');
+      });
+    });
+
+    describe('Zero content leakage - security critical', () => {
+      it('should NOT leak directory names after test/REAL', () => {
+        const result = stripPaths('test/REAL/Codeunit/MySecretCode.txt');
+
+        expect(result).not.toContain('Codeunit');
+        expect(result).not.toContain('Secret');
+        expect(result).not.toContain('Code.txt');
+      });
+
+      it('should NOT leak filename after redaction', () => {
+        const result = stripPaths('Error in test/REAL/ProprietaryObject.cal');
+
+        expect(result).not.toContain('Proprietary');
+        expect(result).not.toContain('Object');
+        expect(result).not.toContain('.cal');
+      });
+
+      it('should NOT leak object IDs in paths', () => {
+        const result = stripPaths('test/REAL/Codeunit6000000.txt');
+
+        expect(result).not.toContain('6000000');
+        expect(result).not.toContain('Codeunit');
+      });
+
+      it('should only show redaction marker', () => {
+        const result = stripPaths('test/REAL/VerySecretInternalCode.txt');
+
+        expect(result).toBe('<REDACTED>');
+        expect(result).not.toContain('test');
+        expect(result).not.toContain('REAL');
+        expect(result).not.toContain('Secret');
+      });
+    });
+
+    describe('Format validation', () => {
+      it('should use consistent redaction marker', () => {
+        const result1 = stripPaths('test/REAL/a.txt');
+        const result2 = stripPaths('test\\REAL\\b.txt');
+        const result3 = stripPaths('TEST/REAL/c.txt');
+
+        expect(result1).toBe('<REDACTED>');
+        expect(result2).toBe('<REDACTED>');
+        expect(result3).toBe('<REDACTED>');
+      });
+
+      it('should preserve non-path content exactly', () => {
+        const result = stripPaths('Error: Something at test/REAL/file.txt failed');
+
+        expect(result).toBe('Error: Something at <REDACTED> failed');
+      });
     });
   });
 });

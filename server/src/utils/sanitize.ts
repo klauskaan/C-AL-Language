@@ -240,3 +240,34 @@ export function sanitizeTokenType(tokenType: string): string {
   // Unknown token type - sanitize to be safe
   return '[token type sanitized]';
 }
+
+/**
+ * Redacts test/REAL/ paths from messages to prevent proprietary content leakage.
+ *
+ * Handles:
+ * - Unix paths: test/REAL/file.txt
+ * - Windows paths: test\REAL\file.txt
+ * - Case variations: TEST/REAL/, test/Real/, Test/real/
+ * - With or without trailing content: test/REAL or test/REAL/file.txt
+ *
+ * Does NOT match:
+ * - testXREAL (no path separator after test)
+ * - context/REAL/ (wrong prefix)
+ * - mytest/REAL/ (prefix not word boundary)
+ *
+ * Pattern explanation:
+ * - (?<![a-zA-Z0-9_]) - Negative lookbehind: prevents matching mid-word like "mytest/REAL/"
+ * - test - Literal "test" (case-insensitive due to 'i' flag)
+ * - [\/\\] - Forward slash or backslash
+ * - real - Literal "REAL" (case-insensitive due to 'i' flag)
+ * - (?:[\/\\][^\s:)]*)? - Optional: slash followed by any chars except whitespace, colon, or closing paren (path content)
+ * - gi flags - Global (replace all) + case-insensitive
+ *
+ * Requires Node 10+ for negative lookbehind support.
+ *
+ * @param msg - Message that may contain file paths
+ * @returns Message with test/REAL/ paths replaced by <REDACTED>
+ */
+export function stripPaths(msg: string): string {
+  return msg.replace(/(?<![a-zA-Z0-9_])test[\/\\]real(?:[\/\\][^\s:)]*)?/gi, '<REDACTED>');
+}

@@ -1,5 +1,5 @@
 import { Token, TokenType } from '../lexer/tokens';
-import { sanitizeContent, sanitizeTokenType } from '../utils/sanitize';
+import { sanitizeContent, sanitizeTokenType, stripPaths } from '../utils/sanitize';
 import {
   CALDocument,
   ObjectDeclaration,
@@ -3315,7 +3315,6 @@ export class Parser {
     // Apply path sanitization as a safety layer to prevent test/REAL/ leakage
     // Note: stripPaths only removes file paths, not the entire message content
     // Token values should already be sanitized by callers using sanitizeContent()
-    const stripPaths = (msg: string) => msg.replace(/test\/REAL\/[^\s]*/g, '<REDACTED>');
     const sanitizedMessage = stripPaths(message);
     return new ParseError(sanitizedMessage, errorToken);
   }
