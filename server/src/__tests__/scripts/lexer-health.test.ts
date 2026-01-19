@@ -2,10 +2,12 @@
  * Lexer Health Script - Helper Function Tests
  *
  * Tests the exported helper functions from server/scripts/lexer-health.ts.
- * The script itself is a standalone executable and is not directly testable
- * due to process.exit() calls.
+ * The main execution block is a standalone executable and is not directly testable
+ * due to process.exit() calls, but core validation logic has been extracted into
+ * testable functions.
  *
  * Test Coverage:
+ * - validateDirectoryForReport(): Directory validation with structured results
  * - calculatePercentile(): Percentile calculation with edge cases
  * - isReportFile(): Report file detection
  * - formatDuration(): Human-readable duration formatting
@@ -18,6 +20,7 @@ import {
   isReportFile,
   formatDuration,
   calculateETA,
+  validateDirectoryForReport,
 } from '../../../scripts/lexer-health';
 
 jest.mock('fs');
@@ -431,10 +434,6 @@ describe('Lexer Health Script - formatDuration()', () => {
 });
 
 describe('Lexer Health Script - validateAllFiles()', () => {
-  beforeEach(() => {
-    jest.resetModules();
-  });
-
   it('should return empty array when no .TXT files found', () => {
     // This tests the change from process.exit(2) to return []
     const mockExistsSync = jest.requireMock('fs').existsSync as jest.MockedFunction<typeof existsSync>;
@@ -443,9 +442,9 @@ describe('Lexer Health Script - validateAllFiles()', () => {
     mockExistsSync.mockReturnValue(true);
     mockReaddirSync.mockReturnValue([]);
 
-    // Re-require the module after mocking to pick up the mocked fs
-    const { validateAllFiles } = require('../../../scripts/lexer-health');
-    const results = validateAllFiles();
+    // Use the imported function directly (already loaded with mocked fs)
+    const { validateAllFiles: validateAllFilesImported } = require('../../../scripts/lexer-health') as typeof import('../../../scripts/lexer-health');
+    const results = validateAllFilesImported();
 
     expect(results).toEqual([]);
     expect(results.length).toBe(0);
@@ -662,6 +661,287 @@ describe('Lexer Health Script - calculateETA()', () => {
       const result = calculateETA(1000, 2000, 3333);
       expect(Number.isInteger(result)).toBe(true);
       expect(result).toBeGreaterThanOrEqual(0);
+    });
+  });
+});
+
+describe('Lexer Health Script - validateDirectoryForReport()', () => {
+  let mockExistsSync: jest.MockedFunction<typeof existsSync>;
+  let mockReaddirSync: jest.MockedFunction<typeof readdirSync>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockExistsSync = jest.requireMock('fs').existsSync as jest.MockedFunction<typeof existsSync>;
+    mockReaddirSync = jest.requireMock('fs').readdirSync as jest.MockedFunction<typeof readdirSync>;
+  });
+
+  describe('directory does not exist', () => {
+    it('should return status "not_found" when directory does not exist', () => {
+      mockExistsSync.mockReturnValue(false);
+
+      const result = validateDirectoryForReport('/path/to/nonexistent');
+
+      expect(result.status).toBe('not_found');
+      expect(result.files).toBeUndefined();
+      expect(result.errorDetails).toBeUndefined();
+    });
+
+    it('should not call readdirSync when directory does not exist', () => {
+      mockExistsSync.mockReturnValue(false);
+
+      validateDirectoryForReport('/path/to/nonexistent');
+
+      expect(mockReaddirSync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('read errors', () => {
+    it('should return status "read_error" with EACCES code for permission denied', () => {
+      mockExistsSync.mockReturnValue(true);
+
+      const permissionError: any = new Error('EACCES: permission denied, scandir \'/test/REAL\'');
+      permissionError.code = 'EACCES';
+      permissionError.errno = -13;
+      permissionError.syscall = 'scandir';
+      permissionError.path = '/test/REAL';
+
+      mockReaddirSync.mockImplementation(() => {
+        throw permissionError;
+      });
+
+      const result = validateDirectoryForReport('/test/REAL');
+
+      expect(result.status).toBe('read_error');
+      expect(result.files).toBeUndefined();
+      expect(result.errorDetails).toBeDefined();
+      expect(result.errorDetails?.code).toBe('EACCES');
+      expect(result.errorDetails?.message).toContain('permission denied');
+    });
+
+    it('should return status "read_error" with ENOENT code for TOCTOU race condition', () => {
+      // Directory exists during existsSync check but is deleted before readdirSync
+      mockExistsSync.mockReturnValue(true);
+
+      const enoentError: any = new Error('ENOENT: no such file or directory, scandir \'/test/REAL\'');
+      enoentError.code = 'ENOENT';
+      enoentError.errno = -2;
+      enoentError.syscall = 'scandir';
+      enoentError.path = '/test/REAL';
+
+      mockReaddirSync.mockImplementation(() => {
+        throw enoentError;
+      });
+
+      const result = validateDirectoryForReport('/test/REAL');
+
+      expect(result.status).toBe('read_error');
+      expect(result.files).toBeUndefined();
+      expect(result.errorDetails).toBeDefined();
+      expect(result.errorDetails?.code).toBe('ENOENT');
+      expect(result.errorDetails?.message).toContain('no such file or directory');
+    });
+
+    it('should return status "read_error" for generic filesystem errors', () => {
+      mockExistsSync.mockReturnValue(true);
+
+      const genericError = new Error('Too many open files');
+      mockReaddirSync.mockImplementation(() => {
+        throw genericError;
+      });
+
+      const result = validateDirectoryForReport('/test/REAL');
+
+      expect(result.status).toBe('read_error');
+      expect(result.files).toBeUndefined();
+      expect(result.errorDetails).toBeDefined();
+      expect(result.errorDetails?.message).toBe('Too many open files');
+      expect(result.errorDetails?.code).toBeUndefined();
+    });
+
+    it('should handle non-Error thrown values in read errors', () => {
+      mockExistsSync.mockReturnValue(true);
+
+      mockReaddirSync.mockImplementation(() => {
+        throw 'String error message';
+      });
+
+      const result = validateDirectoryForReport('/test/REAL');
+
+      expect(result.status).toBe('read_error');
+      expect(result.files).toBeUndefined();
+      expect(result.errorDetails).toBeDefined();
+      expect(result.errorDetails?.message).toBe('String error message');
+      expect(result.errorDetails?.code).toBeUndefined();
+    });
+  });
+
+  describe('empty directory cases', () => {
+    it('should return status "empty" when directory contains no files at all', () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReaddirSync.mockReturnValue([]);
+
+      const result = validateDirectoryForReport('/test/REAL');
+
+      expect(result.status).toBe('empty');
+      expect(result.files).toBeUndefined();
+      expect(result.errorDetails).toBeUndefined();
+    });
+
+    it('should return status "empty" when directory contains only non-.TXT files', () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReaddirSync.mockReturnValue([
+        'README.md' as any,
+        'config.json' as any,
+        '.gitignore' as any,
+        'script.sh' as any
+      ]);
+
+      const result = validateDirectoryForReport('/test/REAL');
+
+      expect(result.status).toBe('empty');
+      expect(result.files).toBeUndefined();
+      expect(result.errorDetails).toBeUndefined();
+    });
+
+    it('should return status "empty" when directory contains files with various non-.TXT extensions', () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReaddirSync.mockReturnValue([
+        'file.txt.backup' as any,  // Not .TXT extension
+        'archive.tar.gz' as any,
+        'document.pdf' as any,
+        'image.png' as any
+      ]);
+
+      const result = validateDirectoryForReport('/test/REAL');
+
+      expect(result.status).toBe('empty');
+      expect(result.files).toBeUndefined();
+      expect(result.errorDetails).toBeUndefined();
+    });
+  });
+
+  describe('success cases', () => {
+    it('should return status "valid" with files array when .TXT files found', () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReaddirSync.mockReturnValue([
+        'TAB18.TXT' as any,
+        'COD1.TXT' as any,
+        'REP50000.TXT' as any
+      ]);
+
+      const result = validateDirectoryForReport('/test/REAL');
+
+      expect(result.status).toBe('valid');
+      expect(result.files).toBeDefined();
+      expect(result.files).toHaveLength(3);
+      expect(result.files).toContain('TAB18.TXT');
+      expect(result.files).toContain('COD1.TXT');
+      expect(result.files).toContain('REP50000.TXT');
+      expect(result.errorDetails).toBeUndefined();
+    });
+
+    it('should return status "valid" with single .TXT file', () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReaddirSync.mockReturnValue(['TAB18.TXT' as any]);
+
+      const result = validateDirectoryForReport('/test/REAL');
+
+      expect(result.status).toBe('valid');
+      expect(result.files).toBeDefined();
+      expect(result.files).toHaveLength(1);
+      expect(result.files).toContain('TAB18.TXT');
+      expect(result.errorDetails).toBeUndefined();
+    });
+
+    it('should filter mixed .TXT and non-.TXT files correctly', () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReaddirSync.mockReturnValue([
+        'TAB18.TXT' as any,
+        'README.md' as any,
+        'COD1.TXT' as any,
+        '.gitignore' as any,
+        'REP50000.TXT' as any,
+        'config.json' as any
+      ]);
+
+      const result = validateDirectoryForReport('/test/REAL');
+
+      expect(result.status).toBe('valid');
+      expect(result.files).toBeDefined();
+      expect(result.files).toHaveLength(3);
+      expect(result.files).toContain('TAB18.TXT');
+      expect(result.files).toContain('COD1.TXT');
+      expect(result.files).toContain('REP50000.TXT');
+      expect(result.files).not.toContain('README.md');
+      expect(result.files).not.toContain('.gitignore');
+      expect(result.files).not.toContain('config.json');
+      expect(result.errorDetails).toBeUndefined();
+    });
+
+    it('should handle .TXT files with different case sensitivity', () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReaddirSync.mockReturnValue([
+        'FILE1.TXT' as any,
+        'file2.txt' as any,  // Lowercase extension
+        'File3.Txt' as any   // Mixed case
+      ]);
+
+      const result = validateDirectoryForReport('/test/REAL');
+
+      expect(result.status).toBe('valid');
+      expect(result.files).toBeDefined();
+      // All should be included since hasTxtExtension() is case-insensitive
+      expect(result.files?.length).toBeGreaterThan(0);
+    });
+
+    it('should return sorted files array', () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReaddirSync.mockReturnValue([
+        'COD50000.TXT' as any,
+        'TAB18.TXT' as any,
+        'REP1.TXT' as any
+      ]);
+
+      const result = validateDirectoryForReport('/test/REAL');
+
+      expect(result.status).toBe('valid');
+      expect(result.files).toBeDefined();
+      expect(result.files).toEqual(['COD50000.TXT', 'REP1.TXT', 'TAB18.TXT']);
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should handle very large number of files', () => {
+      mockExistsSync.mockReturnValue(true);
+      const largeFileList = Array.from({ length: 10000 }, (_, i) => `FILE${i}.TXT` as any);
+      mockReaddirSync.mockReturnValue(largeFileList);
+
+      const result = validateDirectoryForReport('/test/REAL');
+
+      expect(result.status).toBe('valid');
+      expect(result.files).toBeDefined();
+      expect(result.files).toHaveLength(10000);
+    });
+
+    it('should handle special characters in directory path', () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReaddirSync.mockReturnValue(['TAB18.TXT' as any]);
+
+      const result = validateDirectoryForReport('/test/REAL with spaces/objects (legacy)');
+
+      expect(result.status).toBe('valid');
+      expect(result.files).toHaveLength(1);
+    });
+
+    it('should handle files with very long names', () => {
+      mockExistsSync.mockReturnValue(true);
+      const longFileName = 'REP ' + 'A'.repeat(200) + '.TXT';
+      mockReaddirSync.mockReturnValue([longFileName as any]);
+
+      const result = validateDirectoryForReport('/test/REAL');
+
+      expect(result.status).toBe('valid');
+      expect(result.files).toContain(longFileName);
     });
   });
 });

@@ -78,6 +78,32 @@ export interface CIResult {
 }
 
 /**
+ * Result of validating a directory for report generation.
+ *
+ * This is a discriminated union - check `status` field to determine
+ * which optional fields are present:
+ * - status === 'valid' → files array is defined
+ * - status === 'read_error' → errorDetails object is defined
+ * - status === 'not_found' | 'empty' → only status field is defined
+ *
+ * Returns structured result instead of calling process.exit(),
+ * enabling testability. Used by validateDirectoryForReport().
+ */
+export interface DirectoryValidationResult {
+  /** Status of directory validation */
+  status: 'valid' | 'not_found' | 'read_error' | 'empty';
+  /** List of .TXT files found (only present when status === 'valid') */
+  files?: string[];
+  /** Error details (only present when status === 'read_error') */
+  errorDetails?: {
+    /** Human-readable error message */
+    message: string;
+    /** Error code if available (e.g., 'EACCES', 'ENOENT') */
+    code?: string;
+  };
+}
+
+/**
  * Calculate percentile value from array of numbers using R-7 linear interpolation.
  * This implementation matches Excel's PERCENTILE.INC and NumPy's default percentile method.
  * Guards against empty arrays and filters non-finite values (NaN, Infinity, -Infinity).
@@ -150,6 +176,64 @@ export function formatDuration(seconds: number): string {
 
   // Show minutes and seconds
   return `${minutes}m ${secs}s`;
+}
+
+/**
+ * Validate directory for report generation.
+ *
+ * Checks that the directory exists, is readable, and contains .TXT files.
+ * Returns structured result instead of calling process.exit(), enabling testability.
+ *
+ * This function is used by:
+ * - runCICheck() for CI mode validation
+ * - validateAllFiles() for standard mode validation
+ * - Main block for report generation
+ *
+ * @param dirPath - Absolute path to directory to validate
+ * @returns Validation result with status and file list or error details
+ */
+export function validateDirectoryForReport(dirPath: string): DirectoryValidationResult {
+  // Check if directory exists
+  if (!existsSync(dirPath)) {
+    return {
+      status: 'not_found'
+    };
+  }
+
+  // Try to read directory
+  let allFiles: string[];
+  try {
+    allFiles = readdirSync(dirPath);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorCode = error instanceof Error && 'code' in error
+      ? (error as NodeJS.ErrnoException).code
+      : undefined;
+
+    return {
+      status: 'read_error',
+      errorDetails: {
+        message: errorMessage,
+        code: errorCode
+      }
+    };
+  }
+
+  // Filter for .TXT files
+  const txtFiles = allFiles.filter(hasTxtExtension).sort();
+
+  // Check if any .TXT files found
+  if (txtFiles.length === 0) {
+    return {
+      status: 'empty'
+    };
+  }
+
+  // Success - return file list
+  return {
+    status: 'valid',
+    files: txtFiles
+  };
 }
 
 /**
@@ -258,8 +342,11 @@ export function compareToBaseline(actualFailures: number, baselineMax: number): 
 export function runCICheck(): CIResult {
   const realDir = join(__dirname, '../../test/REAL');
 
-  // Check if test/REAL exists
-  if (!existsSync(realDir)) {
+  // Validate directory using shared validation function
+  const dirValidation = validateDirectoryForReport(realDir);
+
+  // Handle validation result
+  if (dirValidation.status === 'not_found') {
     return {
       exitCode: CI_EXIT_CODES.PASS,
       skipped: true,
@@ -268,11 +355,7 @@ export function runCICheck(): CIResult {
     };
   }
 
-  // Check for empty directory before proceeding
-  let files: string[];
-  try {
-    files = readdirSync(realDir).filter(hasTxtExtension);
-  } catch (error) {
+  if (dirValidation.status === 'read_error') {
     return {
       exitCode: CI_EXIT_CODES.CONFIG_ERROR,
       skipped: false,
@@ -283,12 +366,12 @@ export function runCICheck(): CIResult {
         baselineMax: 0,
         improvement: 0,
         requiresBaselineUpdate: false,
-        message: `Configuration error: cannot read test/REAL directory - ${error instanceof Error ? error.message : String(error)}`
+        message: `Configuration error: cannot read test/REAL directory - ${dirValidation.errorDetails?.message ?? 'unknown error'}`
       }
     };
   }
 
-  if (files.length === 0) {
+  if (dirValidation.status === 'empty') {
     return {
       exitCode: CI_EXIT_CODES.CONFIG_ERROR,
       skipped: false,
@@ -303,6 +386,8 @@ export function runCICheck(): CIResult {
       }
     };
   }
+
+  // dirValidation.status === 'valid', files will be validated in validateAllFiles()
 
   // Load baseline
   const baselinePath = join(__dirname, 'lexer-health-baseline.json');
@@ -384,27 +469,31 @@ export function runCICheck(): CIResult {
 export function validateAllFiles(): FileResult[] {
   const realDir = join(__dirname, '../../test/REAL');
 
-  // Check if directory exists before attempting to read
-  if (!existsSync(realDir)) {
+  // Validate directory
+  const dirValidation = validateDirectoryForReport(realDir);
+
+  // Handle validation errors - preserve existing behavior of calling process.exit()
+  if (dirValidation.status === 'not_found') {
     console.error('Error: test/REAL directory does not exist');
     console.error('This script requires proprietary NAV object files.');
     console.error('See README for more information.');
     process.exit(CI_EXIT_CODES.CONFIG_ERROR);
   }
 
-  let files: string[];
-  try {
-    files = readdirSync(realDir)
-      .filter(hasTxtExtension)
-      .sort();
-  } catch (error) {
-    console.error(`Error: cannot read test/REAL directory - ${error instanceof Error ? error.message : String(error)}`);
+  if (dirValidation.status === 'read_error') {
+    console.error(`Error: cannot read test/REAL directory - ${dirValidation.errorDetails?.message ?? 'unknown error'}`);
     process.exit(CI_EXIT_CODES.CONFIG_ERROR);
   }
 
-  if (files.length === 0) {
+  if (dirValidation.status === 'empty') {
     console.warn('No .TXT files found in test/REAL');
     return [];  // Let caller handle the empty result
+  }
+
+  // Get files from validation result
+  const files = dirValidation.files;
+  if (!files) {
+    throw new Error('Internal error: valid status but no files array');
   }
 
   console.log(`Found ${files.length} files to validate\n`);
@@ -646,17 +735,22 @@ if (require.main === module && !process.env.JEST_WORKER_ID) {
   console.log('Lexer Health Report Tool\n');
   console.log('Scanning test/REAL directory...\n');
 
-  // Check for empty directory before validation
+  // Validate directory before processing
   const realDir = join(__dirname, '../../test/REAL');
-  let txtFiles: string[];
-  try {
-    txtFiles = readdirSync(realDir).filter(hasTxtExtension);
-  } catch (error) {
-    console.error(`Error: cannot read test/REAL directory - ${error instanceof Error ? error.message : String(error)}`);
-    process.exit(CI_EXIT_CODES.CONFIG_ERROR);
-  }
-  if (txtFiles.length === 0) {
-    console.error('Error: No .TXT files found in test/REAL directory');
+  const dirValidation = validateDirectoryForReport(realDir);
+
+  if (dirValidation.status !== 'valid') {
+    // Map status to appropriate error message
+    let errorMsg: string;
+    if (dirValidation.status === 'not_found') {
+      errorMsg = 'test/REAL directory does not exist';
+    } else if (dirValidation.status === 'read_error') {
+      errorMsg = `cannot read test/REAL directory - ${dirValidation.errorDetails?.message ?? 'unknown error'}`;
+    } else {  // empty
+      errorMsg = 'No .TXT files found in test/REAL directory';
+    }
+
+    console.error(`Error: ${errorMsg}`);
     process.exit(CI_EXIT_CODES.CONFIG_ERROR);
   }
 
