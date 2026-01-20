@@ -2229,6 +2229,179 @@ ruleTester.run('no-direct-parse-error', rule, {
       ],
     },
 
+    // ========== Same-Line Declaration Edge Cases Tests (Issue #168) ==========
+    // These tests verify that getLineRemovalRange() doesn't offer destructive removal
+    // suggestions when multiple statements share a line with the alias declaration.
+    // Removing an entire line would delete unrelated code.
+    //
+    // TDD Note: These tests will FAIL initially - the current code incorrectly offers
+    // the removal suggestion in all single-usage cases, even when unsafe.
+
+    // 1. Multiple declarations on same line (PE is second) - should NOT offer removal
+    {
+      code: `
+        class Parser {
+          parse() {
+            const x = 1; const PE = ParseError; throw new PE('Error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            const x = 1; const PE = ParseError; throw this.createParseError('Error', this.token);
+          }
+        }
+      `,
+            },
+            // NO suggestUseFactoryAndRemoveAlias - would delete 'const x = 1;' on same line
+          ],
+        },
+      ],
+    },
+
+    // 2. Multiple declarations on same line (PE is first) - should NOT offer removal
+    {
+      code: `
+        class Parser {
+          parse() {
+            const PE = ParseError; const x = 1; throw new PE('Error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            const PE = ParseError; const x = 1; throw this.createParseError('Error', this.token);
+          }
+        }
+      `,
+            },
+            // NO suggestUseFactoryAndRemoveAlias - would delete 'const x = 1;' on same line
+          ],
+        },
+      ],
+    },
+
+    // 3. Declaration and usage on same line - SHOULD offer both suggestions (safe case)
+    {
+      code: `
+        class Parser {
+          parse() {
+            const PE = ParseError; throw new PE('Error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            const PE = ParseError; throw this.createParseError('Error', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        class Parser {
+          parse() {
+            throw this.createParseError('Error', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 4. Reassignment on same line with other code - should NOT offer removal
+    {
+      code: `
+        class Parser {
+          parse() {
+            let E = Other; E = ParseError; new E('msg', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            let E = Other; E = ParseError; this.createParseError('msg', this.token);
+          }
+        }
+      `,
+            },
+            // NO suggestUseFactoryAndRemoveAlias - would delete 'let E = Other;' on same line
+          ],
+        },
+      ],
+    },
+
+    // 5. Single declaration on its own line (control test) - SHOULD offer both suggestions
+    {
+      code: `
+        class Parser {
+          parse() {
+            const PE = ParseError;
+            throw new PE('Error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            const PE = ParseError;
+            throw this.createParseError('Error', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        class Parser {
+          parse() {
+            throw this.createParseError('Error', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
     // ========== Context-Aware MessageIds Tests (Issue #164) ==========
     // These tests verify that different violation contexts produce different messageIds
     // to give developers context-specific guidance.

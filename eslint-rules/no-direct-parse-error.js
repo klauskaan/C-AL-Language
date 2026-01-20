@@ -412,8 +412,31 @@ module.exports = {
           statementNode = declarationNode.parent;
         }
 
-        const [lineStart, lineEnd] = getLineRemovalRange(sourceCode, statementNode);
-        return fixer.removeRange([lineStart, lineEnd]);
+        // Guard: Don't offer removal if other VariableDeclarations on same line
+        // (removing the line would delete those too)
+        if (hasOtherVariableDeclarationsOnSameLine(sourceCode, statementNode)) {
+          return null;
+        }
+
+        // Check if there are other statements on the same line
+        if (hasOtherStatementsOnSameLine(sourceCode, statementNode)) {
+          // Other statements exist - remove statement and any trailing whitespace
+          // (preserves indentation and other statements on the line)
+          const text = sourceCode.getText();
+          let end = statementNode.range[1];
+
+          // Skip any trailing spaces after the statement (but not newlines)
+          while (end < text.length && (text[end] === ' ' || text[end] === '\t')) {
+            end++;
+          }
+
+          // Remove from statement start to end of trailing whitespace
+          return fixer.removeRange([statementNode.range[0], end]);
+        } else {
+          // No other statements - use line removal (cleans up indentation and newline)
+          const [lineStart, lineEnd] = getLineRemovalRange(sourceCode, statementNode);
+          return fixer.removeRange([lineStart, lineEnd]);
+        }
       }
 
       // Multiple declarators - need to handle commas carefully
@@ -490,6 +513,77 @@ module.exports = {
       if (lineEnd < text.length && text[lineEnd] === '\n') lineEnd++;
 
       return [lineStart, lineEnd];
+    }
+
+    /**
+     * Checks if there are other VariableDeclarations on the same line as the given node.
+     * Used to determine if line-based removal would be destructive to other declarations.
+     *
+     * This function specifically checks for other VariableDeclaration statements that would
+     * be deleted if we removed the entire line. Other types of statements (like throw, return, etc.)
+     * won't be affected because we can use statement-range removal instead of line removal.
+     *
+     * @param {object} sourceCode - ESLint sourceCode object
+     * @param {Node} node - The VariableDeclaration statement node to check
+     * @returns {boolean} True if other VariableDeclarations exist on the same line
+     */
+    function hasOtherVariableDeclarationsOnSameLine(sourceCode, node) {
+      const text = sourceCode.getText();
+      const nodeStart = node.range[0];
+      const nodeEnd = node.range[1];
+
+      // Find line boundaries
+      let lineStart = nodeStart;
+      while (lineStart > 0 && text[lineStart - 1] !== '\n' && text[lineStart - 1] !== '\r') {
+        lineStart--;
+      }
+
+      let lineEnd = nodeEnd;
+      while (lineEnd < text.length && text[lineEnd] !== '\n' && text[lineEnd] !== '\r') {
+        lineEnd++;
+      }
+
+      // Check for 'const', 'let', or 'var' keywords before the node on the same line
+      const beforeNode = text.slice(lineStart, nodeStart);
+      const hasDeclarationBefore = /\b(const|let|var)\b/.test(beforeNode);
+
+      // Check for 'const', 'let', or 'var' keywords after the node on the same line
+      const afterNode = text.slice(nodeEnd, lineEnd);
+      const hasDeclarationAfter = /\b(const|let|var)\b/.test(afterNode);
+
+      return hasDeclarationBefore || hasDeclarationAfter;
+    }
+
+    /**
+     * Checks if there are any other statements on the same line as the given node.
+     * Used to determine if we should use statement-range removal instead of line removal.
+     *
+     * @param {object} sourceCode - ESLint sourceCode object
+     * @param {Node} node - The statement node to check
+     * @returns {boolean} True if any other statements exist on the same line
+     */
+    function hasOtherStatementsOnSameLine(sourceCode, node) {
+      const text = sourceCode.getText();
+      const nodeStart = node.range[0];
+      const nodeEnd = node.range[1];
+
+      // Find line boundaries
+      let lineStart = nodeStart;
+      while (lineStart > 0 && text[lineStart - 1] !== '\n' && text[lineStart - 1] !== '\r') {
+        lineStart--;
+      }
+
+      let lineEnd = nodeEnd;
+      while (lineEnd < text.length && text[lineEnd] !== '\n' && text[lineEnd] !== '\r') {
+        lineEnd++;
+      }
+
+      // Check for non-whitespace content before or after the node on the same line
+      // This detects other code sharing the line
+      const beforeNode = text.slice(lineStart, nodeStart).trim();
+      const afterNode = text.slice(nodeEnd, lineEnd).trim();
+
+      return beforeNode.length > 0 || afterNode.length > 0;
     }
 
     /**
@@ -760,34 +854,70 @@ module.exports = {
           // Suggestion 2: If alias + single usage, offer replace + remove
           const aliasInfo = getAliasDeclarationInfo(node.callee, context);
           if (aliasInfo && isSingleUsage(aliasInfo.variable, node.callee, aliasInfo.declarationNode, aliasInfo.isReassignment || false)) {
-            suggestions.push({
-              messageId: 'suggestUseFactoryAndRemoveAlias',
-              fix(fixer) {
-                const fixes = [];
+            // Check if removal is possible (not blocked by same-line conflicts)
+            let canRemove = false;
 
-                // Fix 1: Replace the NewExpression
-                fixes.push(fixer.replaceText(node, `this.createParseError(${args})`));
+            if (aliasInfo.declarationType === 'VariableDeclarator') {
+              // For VariableDeclarator, check if it can be removed
+              const declarationNode = aliasInfo.declarationNode.parent;
+              const declarators = declarationNode.declarations;
 
-                // Fix 2: Remove the alias declaration or reassignment
-                if (aliasInfo.declarationType === 'VariableDeclarator') {
-                  fixes.push(getDeclaratorRemovalFix(fixer, sourceCode, aliasInfo.declarationNode));
-                } else if (aliasInfo.declarationType === 'ImportSpecifier') {
-                  const removalFix = getImportSpecifierRemovalFix(fixer, sourceCode, aliasInfo.declarationNode);
-                  if (removalFix) {
-                    fixes.push(removalFix);
-                  }
-                } else if (aliasInfo.declarationType === 'AssignmentExpression') {
-                  // For reassignment, remove the entire assignment statement
-                  const assignmentStmt = aliasInfo.declarationNode.parent; // ExpressionStatement
-                  if (assignmentStmt && assignmentStmt.type === 'ExpressionStatement') {
-                    const [lineStart, lineEnd] = getLineRemovalRange(sourceCode, assignmentStmt);
-                    fixes.push(fixer.removeRange([lineStart, lineEnd]));
-                  }
+              if (declarators.length === 1) {
+                // Single declarator - check if removal would be safe
+                let statementNode = declarationNode;
+                if (declarationNode.parent && declarationNode.parent.type === 'ExpressionStatement') {
+                  statementNode = declarationNode.parent;
                 }
+                // Can remove unless there are other VariableDeclarations on the same line
+                canRemove = !hasOtherVariableDeclarationsOnSameLine(sourceCode, statementNode);
+              } else {
+                // Multiple declarators - can always remove one declarator safely
+                canRemove = true;
+              }
+            } else if (aliasInfo.declarationType === 'ImportSpecifier') {
+              // Import aliases can always be converted back to direct imports
+              canRemove = true;
+            } else if (aliasInfo.declarationType === 'AssignmentExpression') {
+              // For reassignment, check if line removal would be safe
+              const assignmentStmt = aliasInfo.declarationNode.parent;
+              if (assignmentStmt && assignmentStmt.type === 'ExpressionStatement') {
+                canRemove = !hasOtherStatementsOnSameLine(sourceCode, assignmentStmt);
+              }
+            }
 
-                return fixes;
-              },
-            });
+            // Only offer the removal suggestion if removal is possible
+            if (canRemove) {
+              suggestions.push({
+                messageId: 'suggestUseFactoryAndRemoveAlias',
+                fix(fixer) {
+                  const fixes = [];
+
+                  // Fix 1: Replace the NewExpression
+                  fixes.push(fixer.replaceText(node, `this.createParseError(${args})`));
+
+                  // Fix 2: Remove the alias declaration or reassignment
+                  if (aliasInfo.declarationType === 'VariableDeclarator') {
+                    const removalFix = getDeclaratorRemovalFix(fixer, sourceCode, aliasInfo.declarationNode);
+                    if (removalFix) {
+                      fixes.push(removalFix);
+                    }
+                  } else if (aliasInfo.declarationType === 'ImportSpecifier') {
+                    const removalFix = getImportSpecifierRemovalFix(fixer, sourceCode, aliasInfo.declarationNode);
+                    if (removalFix) {
+                      fixes.push(removalFix);
+                    }
+                  } else if (aliasInfo.declarationType === 'AssignmentExpression') {
+                    const assignmentStmt = aliasInfo.declarationNode.parent;
+                    if (assignmentStmt && assignmentStmt.type === 'ExpressionStatement') {
+                      const [lineStart, lineEnd] = getLineRemovalRange(sourceCode, assignmentStmt);
+                      fixes.push(fixer.removeRange([lineStart, lineEnd]));
+                    }
+                  }
+
+                  return fixes;
+                },
+              });
+            }
           }
 
           report.suggest = suggestions;
