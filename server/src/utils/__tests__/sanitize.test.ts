@@ -20,7 +20,8 @@ import {
   sanitizeContent,
   sanitizeComparison,
   sanitizeChar,
-  stripPaths
+  stripPaths,
+  formatError
 } from '../sanitize';
 
 describe('Sanitization Utility', () => {
@@ -680,6 +681,338 @@ describe('Sanitization Utility', () => {
 
       // Second sanitization should report length of first sanitization output
       expect(sanitized2).toContain('chars]');
+    });
+  });
+
+  describe('formatError', () => {
+    describe('Error instances with stack', () => {
+      it('should format Error with stack containing test/REAL/ path', () => {
+        const error = new Error('Something went wrong');
+        error.stack = 'Error: Something went wrong\n  at Parser.parse (test/REAL/Table50000.txt:12:5)';
+
+        const result = formatError(error);
+
+        expect(result).toContain('Something went wrong');
+        expect(result).toContain('<REDACTED>');
+        expect(result).not.toContain('test/REAL');
+        expect(result).not.toContain('Table50000');
+      });
+
+      it('should format Error with stack without sensitive paths', () => {
+        const error = new Error('Normal error');
+        error.stack = 'Error: Normal error\n  at Object.<anonymous> (/src/server.ts:42:10)';
+
+        const result = formatError(error);
+
+        expect(result).toContain('Normal error');
+        expect(result).toContain('/src/server.ts:42:10');
+        expect(result).not.toContain('<REDACTED>');
+      });
+
+      it('should format Error with stack containing multiple test/REAL/ paths', () => {
+        const error = new Error('Parse error');
+        error.stack = 'Error: Parse error\n  at Parser (test/REAL/a.txt:1:1)\n  at Lexer (test/REAL/b.txt:2:2)';
+
+        const result = formatError(error);
+
+        expect(result).toContain('Parse error');
+        expect(result).toContain('<REDACTED>');
+        expect(result).not.toContain('test/REAL');
+        expect(result).not.toContain('a.txt');
+        expect(result).not.toContain('b.txt');
+        // Should have two redactions
+        const redactedCount = (result.match(/<REDACTED>/g) || []).length;
+        expect(redactedCount).toBe(2);
+      });
+
+      it('should format Error with Windows path in stack', () => {
+        const error = new Error('File not found');
+        error.stack = 'Error: File not found\n  at fs.readFile (test\\REAL\\Codeunit80000.txt:1:1)';
+
+        const result = formatError(error);
+
+        expect(result).toContain('File not found');
+        expect(result).toContain('<REDACTED>');
+        expect(result).not.toContain('test\\REAL');
+        expect(result).not.toContain('Codeunit80000');
+      });
+    });
+
+    describe('Error instances without stack', () => {
+      it('should format Error without stack property', () => {
+        const error = new Error('Error without stack');
+        delete error.stack;
+
+        const result = formatError(error);
+
+        expect(result).toBe('Error: Error without stack');
+      });
+
+      it('should format Error with undefined stack', () => {
+        const error: Error & { stack?: string } = new Error('Message');
+        error.stack = undefined;
+
+        const result = formatError(error);
+
+        expect(result).toBe('Error: Message');
+      });
+
+      it('should format Error with empty stack', () => {
+        const error = new Error('Message');
+        error.stack = '';
+
+        const result = formatError(error);
+
+        expect(result).toBe('');
+      });
+    });
+
+    describe('Non-Error values', () => {
+      it('should format string containing test/REAL/ path', () => {
+        const errorString = 'Parse failed at test/REAL/file.txt:10';
+
+        const result = formatError(errorString);
+
+        expect(result).toBe('Parse failed at <REDACTED>:10');
+        expect(result).not.toContain('test/REAL');
+        expect(result).not.toContain('file.txt');
+      });
+
+      it('should format plain string without sensitive paths', () => {
+        const errorString = 'Simple error message';
+
+        const result = formatError(errorString);
+
+        expect(result).toBe('Simple error message');
+      });
+
+      it('should format number by converting to string', () => {
+        const errorNumber = 42;
+
+        const result = formatError(errorNumber);
+
+        expect(result).toBe('42');
+      });
+
+      it('should format boolean by converting to string', () => {
+        const errorBoolean = false;
+
+        const result = formatError(errorBoolean);
+
+        expect(result).toBe('false');
+      });
+
+      it('should format null', () => {
+        const errorNull = null;
+
+        const result = formatError(errorNull);
+
+        expect(result).toBe('null');
+      });
+
+      it('should format undefined', () => {
+        const errorUndefined = undefined;
+
+        const result = formatError(errorUndefined);
+
+        expect(result).toBe('undefined');
+      });
+    });
+
+    describe('Custom objects with toString()', () => {
+      it('should format object with custom toString() containing test/REAL/ path', () => {
+        const errorObject = {
+          toString() {
+            return 'Custom error at test/REAL/CustomObject.txt';
+          }
+        };
+
+        const result = formatError(errorObject);
+
+        expect(result).toBe('Custom error at <REDACTED>');
+        expect(result).not.toContain('test/REAL');
+        expect(result).not.toContain('CustomObject');
+      });
+
+      it('should format object with custom toString() without sensitive paths', () => {
+        const errorObject = {
+          toString() {
+            return 'Custom error message';
+          }
+        };
+
+        const result = formatError(errorObject);
+
+        expect(result).toBe('Custom error message');
+      });
+
+      it('should format plain object (default toString)', () => {
+        const errorObject = { foo: 'bar' };
+
+        const result = formatError(errorObject);
+
+        expect(result).toBe('[object Object]');
+      });
+    });
+
+    describe('Edge cases - defensive handling', () => {
+      it('should handle circular reference without throwing', () => {
+        const circular: any = { name: 'circular' };
+        circular.self = circular;
+
+        // Should not throw when converting to string
+        expect(() => formatError(circular)).not.toThrow();
+
+        const result = formatError(circular);
+        expect(result).toBe('[object Object]');
+      });
+
+      it('should handle object with throwing toString() without propagating error', () => {
+        const throwingObject = {
+          toString() {
+            throw new Error('toString() failed');
+          }
+        };
+
+        // Should catch the error and return a fallback message
+        const result = formatError(throwingObject);
+
+        expect(result).toContain('Error formatting error message');
+        expect(result).not.toContain('test/REAL');
+      });
+
+      it('should handle Error with throwing stack getter', () => {
+        const throwingError = new Error('Message');
+        Object.defineProperty(throwingError, 'stack', {
+          get() {
+            throw new Error('Stack access failed');
+          }
+        });
+
+        const result = formatError(throwingError);
+
+        expect(result).toContain('Error formatting error message');
+      });
+
+      it('should handle symbol', () => {
+        const errorSymbol = Symbol('error');
+
+        const result = formatError(errorSymbol);
+
+        expect(result).toBe('Symbol(error)');
+      });
+
+      it('should handle array', () => {
+        const errorArray = ['error1', 'test/REAL/file.txt', 'error2'];
+
+        const result = formatError(errorArray);
+
+        expect(result).toBe('error1,<REDACTED>,error2');
+        expect(result).not.toContain('test/REAL');
+        expect(result).not.toContain('file.txt');
+      });
+
+      it('should handle empty string', () => {
+        const result = formatError('');
+
+        expect(result).toBe('');
+      });
+    });
+
+    describe('Real-world server error scenarios', () => {
+      it('should format lexer error with file path', () => {
+        const error = new Error('Unexpected character');
+        error.stack = 'Error: Unexpected character\n  at Lexer.tokenize (test/REAL/Table18.txt:42:10)';
+
+        const result = formatError(error);
+
+        expect(result).toContain('Unexpected character');
+        expect(result).toContain('<REDACTED>:42:10');
+        expect(result).not.toContain('Table18');
+      });
+
+      it('should format parser error with multiple frames', () => {
+        const error = new Error('Expected END');
+        error.stack = [
+          'Error: Expected END',
+          '  at Parser.parseBlock (test/REAL/Codeunit50000.txt:100:5)',
+          '  at Parser.parseProcedure (test/REAL/Codeunit50000.txt:50:10)',
+          '  at Parser.parse (/src/parser.ts:20:15)'
+        ].join('\n');
+
+        const result = formatError(error);
+
+        expect(result).toContain('Expected END');
+        expect(result).toContain('<REDACTED>:100:5');
+        expect(result).toContain('<REDACTED>:50:10');
+        expect(result).toContain('/src/parser.ts:20:15');
+        expect(result).not.toContain('Codeunit50000');
+      });
+
+      it('should format non-Error exception from third-party library', () => {
+        const exception = 'String exception from library at test/REAL/data.txt';
+
+        const result = formatError(exception);
+
+        expect(result).toBe('String exception from library at <REDACTED>');
+      });
+    });
+
+    describe('Integration with stripPaths', () => {
+      it('should apply stripPaths to Error stack', () => {
+        const error = new Error('Test');
+        error.stack = 'Error: Test\n  at test/REAL/file.txt:1:1';
+
+        const result = formatError(error);
+        const manualResult = stripPaths(error.stack!);
+
+        expect(result).toBe(manualResult);
+      });
+
+      it('should apply stripPaths to string values', () => {
+        const errorString = 'Error at test/REAL/file.txt';
+
+        const result = formatError(errorString);
+        const manualResult = stripPaths(errorString);
+
+        expect(result).toBe(manualResult);
+      });
+    });
+
+    describe('Zero content leakage - security critical', () => {
+      it('should NOT leak proprietary file paths', () => {
+        const error = new Error('Failed');
+        error.stack = 'Error: Failed\n  at test/REAL/ProprietaryModule6000000.txt:1:1';
+
+        const result = formatError(error);
+
+        expect(result).not.toContain('Proprietary');
+        expect(result).not.toContain('6000000');
+        expect(result).not.toContain('test/REAL');
+        expect(result).toContain('<REDACTED>');
+      });
+
+      it('should NOT leak directory structure after test/REAL', () => {
+        const error = new Error('Failed');
+        error.stack = 'Error: Failed\n  at test/REAL/Internal/Secret/Code.txt:1:1';
+
+        const result = formatError(error);
+
+        expect(result).not.toContain('Internal');
+        expect(result).not.toContain('Secret');
+        expect(result).not.toContain('Code.txt');
+        expect(result).toContain('<REDACTED>');
+      });
+
+      it('should NOT leak object names in paths', () => {
+        const errorString = 'Parse error in test/REAL/CustomerManagement.txt';
+
+        const result = formatError(errorString);
+
+        expect(result).not.toContain('Customer');
+        expect(result).not.toContain('Management');
+        expect(result).toContain('<REDACTED>');
+      });
     });
   });
 

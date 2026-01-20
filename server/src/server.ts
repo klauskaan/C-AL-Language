@@ -39,6 +39,7 @@ import { ReferenceProvider } from './references';
 import { CodeLensProvider } from './codelens';
 import { DocumentSymbolProvider } from './documentSymbol';
 import { SymbolTable } from './symbols/symbolTable';
+import { formatError } from './utils/sanitize';
 
 // Create a connection for the server
 const connection = createConnection(ProposedFeatures.all);
@@ -140,8 +141,7 @@ connection.languages.semanticTokens.on((params: SemanticTokensParams) => {
 
     return builder.build();
   } catch (error) {
-    const msg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
-    connection.console.error(`Error building semantic tokens: ${msg}`);
+    connection.console.error(`Error building semantic tokens: ${formatError(error)}`);
     return { data: [] };
   }
 });
@@ -165,8 +165,7 @@ connection.onCompletion((params: CompletionParams): CompletionItem[] => {
       triggerCharacter
     );
   } catch (error) {
-    const msg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
-    connection.console.error(`Error getting completions: ${msg}`);
+    connection.console.error(`Error getting completions: ${formatError(error)}`);
     return [];
   }
 });
@@ -189,8 +188,7 @@ connection.onHover((params: HoverParams): Hover | null => {
       lexer.getTokens()
     );
   } catch (error) {
-    const msg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
-    connection.console.error(`Error getting hover info: ${msg}`);
+    connection.console.error(`Error getting hover info: ${formatError(error)}`);
     return null;
   }
 });
@@ -212,8 +210,7 @@ connection.onSignatureHelp((params: SignatureHelpParams): SignatureHelp | null =
       symbolTable
     );
   } catch (error) {
-    const msg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
-    connection.console.error(`Error getting signature help: ${msg}`);
+    connection.console.error(`Error getting signature help: ${formatError(error)}`);
     return null;
   }
 });
@@ -235,8 +232,7 @@ connection.onDefinition((params: DefinitionParams): Location | null => {
       symbolTable
     );
   } catch (error) {
-    const msg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
-    connection.console.error(`Error getting definition: ${msg}`);
+    connection.console.error(`Error getting definition: ${formatError(error)}`);
     return null;
   }
 });
@@ -273,8 +269,7 @@ connection.onReferences((params: ReferenceParams): Location[] => {
     connection.console.log(`[References] Found ${results.length} references`);
     return results;
   } catch (error) {
-    const msg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
-    connection.console.error(`Error getting references: ${msg}`);
+    connection.console.error(`Error getting references: ${formatError(error)}`);
     return [];
   }
 });
@@ -290,8 +285,7 @@ connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
     const { ast } = parseDocument(document);
     return codeLensProvider.getCodeLenses(document, ast);
   } catch (error) {
-    const msg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
-    connection.console.error(`Error getting code lenses: ${msg}`);
+    connection.console.error(`Error getting code lenses: ${formatError(error)}`);
     return [];
   }
 });
@@ -315,8 +309,7 @@ connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] => 
     }
     return symbols;
   } catch (error) {
-    const msg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
-    connection.console.error(`Error getting document symbols: ${msg}`);
+    connection.console.error(`Error getting document symbols: ${formatError(error)}`);
     return [];
   }
 });
@@ -353,8 +346,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     // Send diagnostics to client
     connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
   } catch (error) {
-    const msg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
-    connection.console.error(`Error validating document: ${msg}`);
+    connection.console.error(`Error validating document: ${formatError(error)}`);
   }
 }
 

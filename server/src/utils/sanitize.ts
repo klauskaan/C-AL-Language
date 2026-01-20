@@ -260,8 +260,10 @@ export function sanitizeTokenType(tokenType: string): string {
  * - test - Literal "test" (case-insensitive due to 'i' flag)
  * - [\/\\] - Forward slash or backslash
  * - real - Literal "REAL" (case-insensitive due to 'i' flag)
- * - (?:[\/\\][^\s:]*)? - Optional: slash followed by any chars except whitespace or colon (path content)
+ * - (?:[\/\\][^\s:,]*)? - Optional: slash followed by any chars except whitespace, colon, or comma (path content)
  * - gi flags - Global (replace all) + case-insensitive
+ *
+ * Note: Excludes commas to handle comma-separated lists (e.g., array stringification)
  *
  * Requires Node 10+ for negative lookbehind support.
  *
@@ -269,5 +271,62 @@ export function sanitizeTokenType(tokenType: string): string {
  * @returns Message with test/REAL/ paths replaced by <REDACTED>
  */
 export function stripPaths(msg: string): string {
-  return msg.replace(/(?<![a-zA-Z0-9_])test[\/\\]+real(?:[\/\\][^\s:]*)?/gi, '<REDACTED>');
+  return msg.replace(/(?<![a-zA-Z0-9_])test[\/\\]+real(?:[\/\\][^\s:,]*)?/gi, '<REDACTED>');
+}
+
+/**
+ * Formats an error for safe logging, sanitizing any test/REAL/ paths.
+ *
+ * Security Rationale:
+ * When errors occur during LSP operations, stack traces may contain file paths
+ * from test/REAL/ (proprietary NAV objects). This function ensures all error
+ * output is sanitized before logging.
+ *
+ * Handles:
+ * - Error instances with or without stack traces
+ * - Non-Error values (strings, objects with toString())
+ * - Edge cases defensively (circular references, throwing toString())
+ * - Ensures all output is sanitized via stripPaths()
+ *
+ * @param error - The error value (Error instance or any other value)
+ * @returns Sanitized error message safe for logging
+ *
+ * @example
+ * formatError(new Error('Parse failed'))
+ * // => 'Error: Parse failed\n    at ...'
+ *
+ * @example
+ * formatError('Error in test/REAL/Table50000.txt')
+ * // => 'Error in <REDACTED>'
+ */
+export function formatError(error: unknown): string {
+  try {
+    if (error instanceof Error) {
+      // Handle Error instances
+      const message = error.message || '';
+      const stack = error.stack;
+
+      // Determine what to output:
+      // - If stack exists and is non-empty, use it (includes message)
+      // - If stack is empty string, return empty string
+      // - If no stack (undefined/deleted), prefix message with "Error: "
+      let raw: string;
+      if (stack !== undefined) {
+        // Stack exists (could be empty string or non-empty)
+        raw = stack;
+      } else {
+        // Stack is undefined or deleted - prefix message with "Error: "
+        raw = message ? `Error: ${message}` : '';
+      }
+      return stripPaths(raw);
+    }
+
+    // Handle non-Error values
+    return stripPaths(String(error));
+  } catch {
+    // Defensive: String(error) or error.stack getter could throw
+    // (circular reference, malformed toString, etc.)
+    // Error handlers must NEVER throw
+    return stripPaths('Error formatting error message');
+  }
 }
