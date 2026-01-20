@@ -525,24 +525,6 @@ ruleTester.run('no-direct-parse-error', rule, {
       ],
     },
 
-    // Alias in class method (non-factory) - violation
-    {
-      code: `
-        class Parser {
-          parse() {
-            const E = ParseError;
-            return new E('error', this.token);
-          }
-        }
-      `,
-      errors: [
-        {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
-          type: 'NewExpression',
-        },
-      ],
-    },
-
     // Alias via default parameter - violation
     {
       code: `const handleError = (E = ParseError) => new E('msg', null);`,
@@ -808,25 +790,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       ],
     },
 
-    // 10. SHOULD NOT SUGGEST: Aliased construction (complex case deferred)
-    // Note: This is explicitly deferred per the plan - alias detection for suggestions
-    // adds significant complexity and should be handled in a future enhancement
-    {
-      code: `
-        class Parser {
-          parse() {
-            const PE = ParseError;
-            throw new PE('Aliased error', token);
-          }
-        }
-      `,
-      errors: [
-        {
-          messageId: 'useFactory',
-          // NO suggestions - alias handling deferred to future enhancement
-        },
-      ],
-    },
+    // 10. REMOVED: Aliased construction test (redundant with auto-fix tests below)
 
     // 11. SHOULD SUGGEST: Private method in Parser (has valid this)
     {
@@ -1212,24 +1176,6 @@ ruleTester.run('no-direct-parse-error', rule, {
       ],
     },
 
-    // Import alias in throw statement - should be detected
-    {
-      code: `
-        import { ParseError as PE } from './errors';
-        class Parser {
-          parse() {
-            throw new PE('Syntax error', this.token);
-          }
-        }
-      `,
-      errors: [
-        {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
-          type: 'NewExpression',
-        },
-      ],
-    },
-
     // Import alias in class method - should be detected
     {
       code: `
@@ -1313,25 +1259,6 @@ ruleTester.run('no-direct-parse-error', rule, {
         const B = A;
         const C = B;
         new C('message', token);
-      `,
-      errors: [
-        {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
-          type: 'NewExpression',
-        },
-      ],
-    },
-
-    // Chained alias in class method (non-factory) - should be detected
-    {
-      code: `
-        class Parser {
-          parse() {
-            const A = ParseError;
-            const B = A;
-            return new B('error', this.token);
-          }
-        }
       `,
       errors: [
         {
@@ -1436,25 +1363,6 @@ ruleTester.run('no-direct-parse-error', rule, {
       ],
     },
 
-    // Reassignment in class method
-    {
-      code: `
-        class Parser {
-          parse() {
-            let E = SafeClass;
-            E = ParseError;
-            return new E('error', this.token);
-          }
-        }
-      `,
-      errors: [
-        {
-          messageId: 'useFactory',
-          type: 'NewExpression',
-        },
-      ],
-    },
-
     // Multiple reassignments ending in ParseError
     {
       code: `
@@ -1502,6 +1410,821 @@ ruleTester.run('no-direct-parse-error', rule, {
         {
           messageId: 'useFactory',
           type: 'NewExpression',
+        },
+      ],
+    },
+
+    // ========== Auto-fix: Alias Removal Tests (Issue #163) ==========
+    // These tests verify that ESLint offers TWO suggestions when an alias has only one usage:
+    // 1. Replace only: new PE(...) → this.createParseError(...)
+    // 2. Replace + remove: Same replacement PLUS remove the unused alias declaration
+    //
+    // TDD Note: These tests will FAIL initially because the feature doesn't exist yet.
+
+    // 1. Basic alias with single usage - should offer BOTH suggestions
+    {
+      code: `
+        class Parser {
+          parse() {
+            const PE = ParseError;
+            throw new PE('Syntax error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            const PE = ParseError;
+            throw this.createParseError('Syntax error', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        class Parser {
+          parse() {
+            throw this.createParseError('Syntax error', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 2. Alias with multiple usages - should offer ONLY replace suggestion (no removal)
+    {
+      code: `
+        class Parser {
+          parse() {
+            const PE = ParseError;
+            throw new PE('Error 1', this.token);
+            this.errors.push(new PE('Error 2', this.token));
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            const PE = ParseError;
+            throw this.createParseError('Error 1', this.token);
+            this.errors.push(new PE('Error 2', this.token));
+          }
+        }
+      `,
+            },
+            // NO suggestUseFactoryAndRemoveAlias - alias has multiple usages
+          ],
+        },
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            const PE = ParseError;
+            throw new PE('Error 1', this.token);
+            this.errors.push(this.createParseError('Error 2', this.token));
+          }
+        }
+      `,
+            },
+            // NO suggestUseFactoryAndRemoveAlias - alias has multiple usages
+          ],
+        },
+      ],
+    },
+
+    // 3. Import alias with single usage - should offer both suggestions
+    {
+      code: `
+        import { ParseError as PE } from './errors';
+        class Parser {
+          parse() {
+            throw new PE('Import error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        import { ParseError as PE } from './errors';
+        class Parser {
+          parse() {
+            throw this.createParseError('Import error', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        import { ParseError } from './errors';
+        class Parser {
+          parse() {
+            throw this.createParseError('Import error', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 4. Multi-declarator variable - remove suggestion should only remove the PE declarator
+    {
+      code: `
+        class Parser {
+          parse() {
+            const A = OtherClass, PE = ParseError, B = AnotherClass;
+            return new PE('Error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            const A = OtherClass, PE = ParseError, B = AnotherClass;
+            return this.createParseError('Error', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        class Parser {
+          parse() {
+            const A = OtherClass, B = AnotherClass;
+            return this.createParseError('Error', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 5. Multi-specifier import - remove suggestion should only remove the PE specifier
+    {
+      code: `
+        import { Token, ParseError as PE, Lexer } from './errors';
+        class Parser {
+          parse() {
+            throw new PE('Multi-import error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        import { Token, ParseError as PE, Lexer } from './errors';
+        class Parser {
+          parse() {
+            throw this.createParseError('Multi-import error', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        import { Token, ParseError, Lexer } from './errors';
+        class Parser {
+          parse() {
+            throw this.createParseError('Multi-import error', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 6. Chained alias with single usage - should offer both suggestions
+    {
+      code: `
+        class Parser {
+          parse() {
+            const A = ParseError;
+            const B = A;
+            return new B('Chained error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            const A = ParseError;
+            const B = A;
+            return this.createParseError('Chained error', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        class Parser {
+          parse() {
+            const A = ParseError;
+            return this.createParseError('Chained error', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 7. Export case - exported alias is NOT unused, only offer replace
+    {
+      code: `
+        export const PE = ParseError;
+        class Parser {
+          parse() {
+            throw new PE('Exported error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        export const PE = ParseError;
+        class Parser {
+          parse() {
+            throw this.createParseError('Exported error', this.token);
+          }
+        }
+      `,
+            },
+            // NO suggestUseFactoryAndRemoveAlias - alias is exported (not safe to remove)
+          ],
+        },
+      ],
+    },
+
+    // 8. Mixed import (default + named) - handle correctly (from adversarial review)
+    {
+      code: `
+        import DefaultExport, { ParseError as PE } from './errors';
+        class Parser {
+          parse() {
+            return new PE('Mixed import error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        import DefaultExport, { ParseError as PE } from './errors';
+        class Parser {
+          parse() {
+            return this.createParseError('Mixed import error', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        import DefaultExport, { ParseError } from './errors';
+        class Parser {
+          parse() {
+            return this.createParseError('Mixed import error', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 9a. Multi-declarator edge case: first position
+    {
+      code: `
+        class Parser {
+          parse() {
+            const PE = ParseError, B = OtherClass;
+            throw new PE('First position', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            const PE = ParseError, B = OtherClass;
+            throw this.createParseError('First position', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        class Parser {
+          parse() {
+            const B = OtherClass;
+            throw this.createParseError('First position', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 9b. Multi-declarator edge case: middle position
+    {
+      code: `
+        class Parser {
+          parse() {
+            const A = OtherClass, PE = ParseError, B = AnotherClass;
+            throw new PE('Middle position', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            const A = OtherClass, PE = ParseError, B = AnotherClass;
+            throw this.createParseError('Middle position', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        class Parser {
+          parse() {
+            const A = OtherClass, B = AnotherClass;
+            throw this.createParseError('Middle position', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 9c. Multi-declarator edge case: last position
+    {
+      code: `
+        class Parser {
+          parse() {
+            const A = OtherClass, PE = ParseError;
+            throw new PE('Last position', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            const A = OtherClass, PE = ParseError;
+            throw this.createParseError('Last position', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        class Parser {
+          parse() {
+            const A = OtherClass;
+            throw this.createParseError('Last position', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 10. Let declaration with single usage - should offer both suggestions
+    {
+      code: `
+        class Parser {
+          parse() {
+            let PE = ParseError;
+            return new PE('Let error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            let PE = ParseError;
+            return this.createParseError('Let error', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        class Parser {
+          parse() {
+            return this.createParseError('Let error', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 11. Var declaration with single usage - should offer both suggestions
+    {
+      code: `
+        class Parser {
+          parse() {
+            var PE = ParseError;
+            throw new PE('Var error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            var PE = ParseError;
+            throw this.createParseError('Var error', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        class Parser {
+          parse() {
+            throw this.createParseError('Var error', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 12. Import with only ParseError specifier - remove should remove entire import
+    {
+      code: `
+        import { ParseError as PE } from './errors';
+        class Parser {
+          parse() {
+            throw new PE('Solo import error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        import { ParseError as PE } from './errors';
+        class Parser {
+          parse() {
+            throw this.createParseError('Solo import error', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        import { ParseError } from './errors';
+        class Parser {
+          parse() {
+            throw this.createParseError('Solo import error', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 13. Alias used in non-violation context - should NOT offer removal suggestion
+    {
+      code: `
+        class Parser {
+          parse() {
+            const PE = ParseError;
+            const isError = something instanceof PE;
+            throw new PE('Mixed usage', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            const PE = ParseError;
+            const isError = something instanceof PE;
+            throw this.createParseError('Mixed usage', this.token);
+          }
+        }
+      `,
+            },
+            // NO suggestUseFactoryAndRemoveAlias - alias has other usages (instanceof)
+          ],
+        },
+      ],
+    },
+
+    // 14. Multi-specifier import, first position
+    {
+      code: `
+        import { ParseError as PE, Token, Lexer } from './errors';
+        class Parser {
+          parse() {
+            throw new PE('First specifier', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        import { ParseError as PE, Token, Lexer } from './errors';
+        class Parser {
+          parse() {
+            throw this.createParseError('First specifier', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        import { ParseError, Token, Lexer } from './errors';
+        class Parser {
+          parse() {
+            throw this.createParseError('First specifier', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 15. Multi-specifier import, last position
+    {
+      code: `
+        import { Token, Lexer, ParseError as PE } from './errors';
+        class Parser {
+          parse() {
+            throw new PE('Last specifier', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        import { Token, Lexer, ParseError as PE } from './errors';
+        class Parser {
+          parse() {
+            throw this.createParseError('Last specifier', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        import { Token, Lexer, ParseError } from './errors';
+        class Parser {
+          parse() {
+            throw this.createParseError('Last specifier', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 16. Deeper chain (3 levels) with single usage - should offer both suggestions
+    {
+      code: `
+        class Parser {
+          parse() {
+            const A = ParseError;
+            const B = A;
+            const C = B;
+            return new C('Deep chain', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            const A = ParseError;
+            const B = A;
+            const C = B;
+            return this.createParseError('Deep chain', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        class Parser {
+          parse() {
+            const A = ParseError;
+            const B = A;
+            return this.createParseError('Deep chain', this.token);
+          }
+        }
+      `,
+            },
+          ],
+        },
+      ],
+    },
+
+    // 17. Non-aliased direct import with single usage - only replace suggestion (no alias to remove)
+    {
+      code: `
+        import { ParseError } from './errors';
+        class Parser {
+          parse() {
+            throw new ParseError('Direct import', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        import { ParseError } from './errors';
+        class Parser {
+          parse() {
+            throw this.createParseError('Direct import', this.token);
+          }
+        }
+      `,
+            },
+            // NO suggestUseFactoryAndRemoveAlias - no alias to remove, just direct import
+          ],
+        },
+      ],
+    },
+
+    // 18. Reassignment pattern with single usage - should offer both suggestions
+    {
+      code: `
+        class Parser {
+          parse() {
+            let E = OtherClass;
+            E = ParseError;
+            return new E('Reassignment', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          suggestions: [
+            {
+              messageId: 'suggestUseFactory',
+              output: `
+        class Parser {
+          parse() {
+            let E = OtherClass;
+            E = ParseError;
+            return this.createParseError('Reassignment', this.token);
+          }
+        }
+      `,
+            },
+            {
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              output: `
+        class Parser {
+          parse() {
+            let E = OtherClass;
+            return this.createParseError('Reassignment', this.token);
+          }
+        }
+      `,
+            },
+          ],
         },
       ],
     },

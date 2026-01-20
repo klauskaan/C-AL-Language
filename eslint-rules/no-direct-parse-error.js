@@ -55,6 +55,7 @@ module.exports = {
       useFactory:
         'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
       suggestUseFactory: 'Replace with this.createParseError(...)',
+      suggestUseFactoryAndRemoveAlias: 'Replace with this.createParseError(...) and remove unused alias declaration',
     },
     schema: [],
   },
@@ -261,6 +262,200 @@ module.exports = {
     }
 
     /**
+     * Gets metadata about an alias declaration for the given callee.
+     * Also finds the reassignment node if the variable was reassigned to ParseError.
+     *
+     * @param {Node} callee - The callee node from NewExpression
+     * @param {object} context - ESLint context
+     * @returns {object|null} - { variable, declarationNode, declarationType, isReassignment } or null
+     */
+    function getAliasDeclarationInfo(callee, context) {
+      if (!callee || callee.type !== 'Identifier') {
+        return null;
+      }
+
+      // Direct ParseError usage is not an alias
+      if (callee.name === 'ParseError') {
+        return null;
+      }
+
+      // Look up the variable using scope analysis
+      const scope = context.sourceCode.getScope(callee);
+      const variable = findVariableInScope(scope, callee.name);
+
+      if (!variable || variable.defs.length === 0) {
+        return null;
+      }
+
+      // Check if this is a reassignment pattern (tainted variable)
+      // For reassignment: let E = OtherClass; E = ParseError; new E(...)
+      if (isTainted(scope, callee.name)) {
+        // Find the reassignment node
+        for (const ref of variable.references) {
+          if (ref.isWrite() && !ref.init) {
+            const parent = ref.identifier.parent;
+            if (parent && parent.type === 'AssignmentExpression') {
+              const rightSide = parent.right;
+              if (rightSide && isParseErrorOrAlias(rightSide, context, new Set(), 0)) {
+                // Found the reassignment
+                return {
+                  variable,
+                  declarationNode: parent, // AssignmentExpression
+                  declarationType: 'AssignmentExpression',
+                  isReassignment: true,
+                };
+              }
+            }
+          }
+        }
+      }
+
+      // Get the declaration definition
+      const def = variable.defs[0];
+
+      // Handle VariableDeclarator: const PE = ParseError;
+      if (def.type === 'Variable' && def.node.type === 'VariableDeclarator') {
+        return {
+          variable,
+          declarationNode: def.node,
+          declarationType: 'VariableDeclarator',
+          isReassignment: false,
+        };
+      }
+
+      // Handle ImportSpecifier: import { ParseError as PE } from './errors';
+      if (def.type === 'ImportBinding' && def.node.type === 'ImportSpecifier') {
+        return {
+          variable,
+          declarationNode: def.node,
+          declarationType: 'ImportSpecifier',
+          isReassignment: false,
+        };
+      }
+
+      return null;
+    }
+
+    /**
+     * Checks if an alias variable has only a single usage (the current node).
+     *
+     * @param {Variable} variable - ESLint variable object
+     * @param {Node} currentNode - The current NewExpression node's callee
+     * @param {Node} declarationNode - The declaration node (to check for exports)
+     * @param {boolean} isReassignment - Whether this is a reassignment pattern
+     * @returns {boolean} True if alias has only one usage and is safe to remove
+     */
+    function isSingleUsage(variable, currentNode, declarationNode, isReassignment) {
+      // Filter out initialization references (where the variable is being declared)
+      // For reassignments, also filter out the reassignment itself
+      const usageRefs = variable.references.filter(ref => {
+        if (ref.init) return false; // Skip initialization
+
+        // For reassignment pattern, skip the reassignment write
+        if (isReassignment && ref.isWrite() && ref.identifier.parent === declarationNode) {
+          return false;
+        }
+
+        return true;
+      });
+
+      // Check if the declaration is exported
+      if (declarationNode.parent && declarationNode.parent.parent) {
+        const grandParent = declarationNode.parent.parent;
+        if (grandParent.type === 'ExportNamedDeclaration' || grandParent.type === 'ExportDefaultDeclaration') {
+          return false; // Exported - not safe to remove
+        }
+      }
+
+      // Single usage means exactly one reference and it's the current node
+      return usageRefs.length === 1 && usageRefs[0].identifier === currentNode;
+    }
+
+    /**
+     * Generates a fixer to remove a VariableDeclarator from a VariableDeclaration.
+     * Handles comma positions (first, middle, last) and entire declaration removal.
+     *
+     * @param {object} fixer - ESLint fixer object
+     * @param {object} sourceCode - ESLint sourceCode object
+     * @param {Node} declaratorNode - The VariableDeclarator node to remove
+     * @returns {object} Fixer object
+     */
+    function getDeclaratorRemovalFix(fixer, sourceCode, declaratorNode) {
+      const declarationNode = declaratorNode.parent;
+      const declarators = declarationNode.declarations;
+      const text = sourceCode.getText();
+
+      // If this is the only declarator, remove the entire declaration statement
+      if (declarators.length === 1) {
+        // Find the statement node (handles both VariableDeclaration directly and wrapped in ExpressionStatement)
+        let statementNode = declarationNode;
+        if (declarationNode.parent && declarationNode.parent.type === 'ExpressionStatement') {
+          statementNode = declarationNode.parent;
+        }
+
+        // Find the start of the line (including indentation)
+        let lineStart = statementNode.range[0];
+        while (lineStart > 0 && text[lineStart - 1] !== '\n' && text[lineStart - 1] !== '\r') {
+          lineStart--;
+        }
+
+        // Find the end of the line (including semicolon and newline)
+        let lineEnd = statementNode.range[1];
+        while (lineEnd < text.length && text[lineEnd] !== '\n' && text[lineEnd] !== '\r') {
+          lineEnd++;
+        }
+        if (lineEnd < text.length && text[lineEnd] === '\r') lineEnd++;
+        if (lineEnd < text.length && text[lineEnd] === '\n') lineEnd++;
+
+        return fixer.removeRange([lineStart, lineEnd]);
+      }
+
+      // Multiple declarators - need to handle commas carefully
+      const index = declarators.indexOf(declaratorNode);
+
+      if (index === 0) {
+        // First declarator: remove from start to just before the next declarator
+        const nextDeclarator = declarators[1];
+        const rangeStart = declaratorNode.range[0];
+        const rangeEnd = nextDeclarator.range[0];
+        return fixer.removeRange([rangeStart, rangeEnd]);
+      } else {
+        // Middle or last: remove from after previous declarator (including comma) to end of this one
+        const prevDeclarator = declarators[index - 1];
+        const rangeStart = prevDeclarator.range[1];
+        const rangeEnd = declaratorNode.range[1];
+        return fixer.removeRange([rangeStart, rangeEnd]);
+      }
+    }
+
+    /**
+     * Generates a fixer to remove an ImportSpecifier from an ImportDeclaration.
+     * Handles comma positions and converts "as X" aliases back to direct imports.
+     *
+     * @param {object} fixer - ESLint fixer object
+     * @param {object} sourceCode - ESLint sourceCode object
+     * @param {Node} specifierNode - The ImportSpecifier node to remove/modify
+     * @returns {object} Fixer object
+     */
+    function getImportSpecifierRemovalFix(fixer, sourceCode, specifierNode) {
+      const importNode = specifierNode.parent;
+      const specifiers = importNode.specifiers.filter(s => s.type === 'ImportSpecifier');
+
+      // Check if this specifier is aliased (import { ParseError as PE })
+      const isAliased = specifierNode.imported.name !== specifierNode.local.name;
+
+      if (isAliased) {
+        // Convert "ParseError as PE" to just "ParseError"
+        const importedName = specifierNode.imported.name;
+        return fixer.replaceText(specifierNode, importedName);
+      }
+
+      // Not aliased - this case shouldn't happen per plan, but handle gracefully
+      // (Direct imports like "import { ParseError }" don't get removal suggestions)
+      return null;
+    }
+
+    /**
      * Checks if a node is inside a Parser class.
      * Uses dynamic ancestor walking to detect the class context.
      * Supports both ClassDeclaration and ClassExpression.
@@ -296,12 +491,6 @@ module.exports = {
      * @returns {boolean} True if suggestion should be offered
      */
     function shouldOfferSuggestion(node) {
-      // Deferred: Don't offer suggestions for aliased construction
-      // (complex case that requires more sophisticated code transformation)
-      if (node.callee && node.callee.name !== 'ParseError') {
-        return false; // This is an alias like `new PE(...)`, skip suggestion
-      }
-
       // Must be inside Parser class
       if (!isInsideParserClass(node)) {
         return false;
@@ -490,14 +679,65 @@ module.exports = {
             .map((arg) => sourceCode.getText(arg))
             .join(', ');
 
-          report.suggest = [
-            {
-              messageId: 'suggestUseFactory',
-              fix(fixer) {
-                return fixer.replaceText(node, `this.createParseError(${args})`);
-              },
+          const suggestions = [];
+
+          // Suggestion 1: Always offer replace
+          suggestions.push({
+            messageId: 'suggestUseFactory',
+            fix(fixer) {
+              return fixer.replaceText(node, `this.createParseError(${args})`);
             },
-          ];
+          });
+
+          // Suggestion 2: If alias + single usage, offer replace + remove
+          const aliasInfo = getAliasDeclarationInfo(node.callee, context);
+          if (aliasInfo && isSingleUsage(aliasInfo.variable, node.callee, aliasInfo.declarationNode, aliasInfo.isReassignment || false)) {
+            suggestions.push({
+              messageId: 'suggestUseFactoryAndRemoveAlias',
+              fix(fixer) {
+                const fixes = [];
+
+                // Fix 1: Replace the NewExpression
+                fixes.push(fixer.replaceText(node, `this.createParseError(${args})`));
+
+                // Fix 2: Remove the alias declaration or reassignment
+                if (aliasInfo.declarationType === 'VariableDeclarator') {
+                  fixes.push(getDeclaratorRemovalFix(fixer, sourceCode, aliasInfo.declarationNode));
+                } else if (aliasInfo.declarationType === 'ImportSpecifier') {
+                  const removalFix = getImportSpecifierRemovalFix(fixer, sourceCode, aliasInfo.declarationNode);
+                  if (removalFix) {
+                    fixes.push(removalFix);
+                  }
+                } else if (aliasInfo.declarationType === 'AssignmentExpression') {
+                  // For reassignment, remove the entire assignment statement
+                  const assignmentStmt = aliasInfo.declarationNode.parent; // ExpressionStatement
+                  if (assignmentStmt && assignmentStmt.type === 'ExpressionStatement') {
+                    const text = sourceCode.getText();
+
+                    // Find the start of the line (including indentation)
+                    let lineStart = assignmentStmt.range[0];
+                    while (lineStart > 0 && text[lineStart - 1] !== '\n' && text[lineStart - 1] !== '\r') {
+                      lineStart--;
+                    }
+
+                    // Find the end of the line (including semicolon and newline)
+                    let lineEnd = assignmentStmt.range[1];
+                    while (lineEnd < text.length && text[lineEnd] !== '\n' && text[lineEnd] !== '\r') {
+                      lineEnd++;
+                    }
+                    if (lineEnd < text.length && text[lineEnd] === '\r') lineEnd++;
+                    if (lineEnd < text.length && text[lineEnd] === '\n') lineEnd++;
+
+                    fixes.push(fixer.removeRange([lineStart, lineEnd]));
+                  }
+                }
+
+                return fixes;
+              },
+            });
+          }
+
+          report.suggest = suggestions;
         }
 
         // Report violation
