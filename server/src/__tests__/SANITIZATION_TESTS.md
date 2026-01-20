@@ -10,16 +10,16 @@ The sanitization system prevents proprietary C/AL code from leaking into error m
 
 | File | Strategy | Purpose |
 |------|----------|---------|
-| `utils/__tests__/sanitize.test.ts` | Unit | Core sanitization functions |
-| `parser/__tests__/parser-sanitization.test.ts` | Unit | Parser error locations |
-| `parser/__tests__/parse-error-integration.test.ts` | Integration | End-to-end error output validation |
-| `__tests__/lexer-error-sanitization.test.ts` | Security validation | Lexer Unknown token coverage |
-| `parser/__tests__/parse-error-token-isolation.test.ts` | Design documentation | Security boundary verification |
-| `__tests__/parse-error-factory.test.ts` | CI guard | Factory pattern enforcement |
+| [`utils/__tests__/sanitize.test.ts`](../utils/__tests__/sanitize.test.ts) | Unit | Core sanitization functions |
+| [`parser/__tests__/parser-sanitization.test.ts`](../parser/__tests__/parser-sanitization.test.ts) | Unit | Parser error locations |
+| [`parser/__tests__/parse-error-integration.test.ts`](../parser/__tests__/parse-error-integration.test.ts) | Integration | End-to-end error output validation |
+| [`__tests__/lexer-error-sanitization.test.ts`](lexer-error-sanitization.test.ts) | Security validation | Lexer Unknown token coverage |
+| [`parser/__tests__/parse-error-token-isolation.test.ts`](../parser/__tests__/parse-error-token-isolation.test.ts) | Design documentation | Security boundary verification |
+| [`__tests__/parse-error-factory.test.ts`](parse-error-factory.test.ts) | CI guard | Factory pattern enforcement |
 
 ## Test Files
 
-### `utils/__tests__/sanitize.test.ts`
+### [`utils/__tests__/sanitize.test.ts`](../utils/__tests__/sanitize.test.ts)
 
 **Purpose:** Unit tests for the sanitization utility functions.
 
@@ -43,7 +43,7 @@ The sanitization system prevents proprietary C/AL code from leaking into error m
 
 ---
 
-### `parser/__tests__/parser-sanitization.test.ts`
+### [`parser/__tests__/parser-sanitization.test.ts`](../parser/__tests__/parser-sanitization.test.ts)
 
 **Purpose:** Unit tests verifying each parser error location uses sanitization.
 
@@ -70,7 +70,7 @@ The sanitization system prevents proprietary C/AL code from leaking into error m
 
 ---
 
-### `parser/__tests__/parse-error-integration.test.ts`
+### [`parser/__tests__/parse-error-integration.test.ts`](../parser/__tests__/parse-error-integration.test.ts)
 
 **Purpose:** End-to-end tests verifying actual ParseError output contains no sensitive content.
 
@@ -93,7 +93,7 @@ The sanitization system prevents proprietary C/AL code from leaking into error m
 
 ---
 
-### `__tests__/lexer-error-sanitization.test.ts`
+### [`__tests__/lexer-error-sanitization.test.ts`](lexer-error-sanitization.test.ts)
 
 **Purpose:** Security validation for lexer error sanitization with regression protection.
 
@@ -122,7 +122,7 @@ Six Unknown token sources:
 
 ---
 
-### `parser/__tests__/parse-error-token-isolation.test.ts`
+### [`parser/__tests__/parse-error-token-isolation.test.ts`](../parser/__tests__/parse-error-token-isolation.test.ts)
 
 **Purpose:** Design documentation and verification of the ParseError.token security boundary.
 
@@ -155,7 +155,7 @@ ParseError (server-side only)
 
 ---
 
-### `__tests__/parse-error-factory.test.ts`
+### [`__tests__/parse-error-factory.test.ts`](parse-error-factory.test.ts)
 
 **Purpose:** CI guard enforcing ParseError factory method pattern.
 
@@ -200,8 +200,36 @@ Adding sanitization tests?
     └─ → parse-error-factory.test.ts
 ```
 
+## Not Covered Here
+
+This documentation focuses on **core sanitization logic** (lexer/parser error handling). The following sanitization-related tests exist in separate layers and are NOT documented here:
+
+**LSP Diagnostic Conversion** (`server.ts` and related LSP files)
+- Wire format tests verifying diagnostics are created from ParseError
+- Conversion from internal ParseError to LSP Diagnostic protocol
+- These tests validate the LSP layer, not the sanitization layer
+
+**JSON Serialization** (LSP transport layer)
+- Tests that verify serialized diagnostics contain no sensitive content
+- Wire format compliance (LSP specification conformance)
+- These validate protocol serialization, not error message generation
+
+**End-to-End Integration Tests** (client/server interaction)
+- Full LSP client integration tests
+- VSCode extension activation tests
+- These validate the complete system, not individual sanitization components
+
+**Why They're Separate:**
+
+The tests documented here focus on the **sanitization boundary** - ensuring raw token values never escape into error messages. LSP-layer tests focus on **protocol compliance** - ensuring sanitized messages are correctly formatted for transmission. These are distinct concerns at different architectural layers.
+
+**Design Principle:**
+
+Sanitization happens at the **point of error creation** (lexer/parser). LSP tests assume errors are already sanitized and focus on correct diagnostic transformation. This separation of concerns enables independent testing of each layer.
+
 ## Related Issues
 
+- [#166](https://github.com/klauskaan/C-AL-Language/issues/166) - Added clickable file links and scope documentation
 - [#147](https://github.com/klauskaan/C-AL-Language/issues/147) - Lexer error sanitization coverage
 - [#140](https://github.com/klauskaan/C-AL-Language/issues/140) - Parser error sanitization integration tests
 - [#150](https://github.com/klauskaan/C-AL-Language/issues/150) - tokenTypeToObjectKind sanitization
