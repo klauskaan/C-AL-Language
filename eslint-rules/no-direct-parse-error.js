@@ -76,7 +76,7 @@ module.exports = {
       useFactoryNonParserClass: 'Do not directly instantiate ParseError. This class does not have a createParseError() method. Add a factory method to this class, or use a different error type.',
       useFactoryNestedFunction: 'Do not directly instantiate ParseError in nested functions. The `this` binding is not available here. Convert to an arrow function to preserve this binding, or move error creation to the outer method.',
       useFactoryTopLevel: 'Do not directly instantiate ParseError. Import and use a factory function for error creation, or wrap this in a class with a factory method.',
-      useFactoryStaticMethodNonParser: 'Do not directly instantiate ParseError in static methods. This class does not have a createParseError() method. Consider adding a factory method to this class, or use a different error type.',
+      useFactoryStaticMethodNonParser: 'Do not directly instantiate ParseError in static methods. This class does not have a createParseError() method. Add a factory method to this class, or use a different error type.',
       useFactoryNestedFunctionNonParser: 'Do not directly instantiate ParseError in nested functions. This class does not have a createParseError() method. Add a factory method to this class, or move error creation to the enclosing method.',
       suggestUseFactory: 'Replace with this.createParseError(...)',
       suggestUseFactoryAndRemoveAlias: 'Replace with this.createParseError(...) and remove unused alias declaration',
