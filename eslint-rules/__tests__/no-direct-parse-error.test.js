@@ -2547,6 +2547,25 @@ ruleTester.run('no-direct-parse-error', rule, {
       ],
     },
 
+    // 8a. Static method with nested function in Parser class - should use 'useFactoryStaticMethod'
+    {
+      code: `
+        class Parser {
+          static process() {
+            function helper() {
+              return new ParseError('Static nested error', null);
+            }
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactoryStaticMethod',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
     // 8b. Static method with nested function in non-Parser class - static takes priority
     {
       code: `
