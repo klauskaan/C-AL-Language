@@ -9,6 +9,7 @@
  * - Issue #141: ESLint rule implementation
  * - Issue #149: Alias detection enhancement
  * - Issue #160: Import alias detection
+ * - Issue #161: Chained alias detection
  * - Direct construction bypasses centralized error sanitization
  * - Factory pattern enables consistent content sanitization
  * - Prevents sensitive content leakage in error messages
@@ -25,11 +26,11 @@
  *   - const PE = ParseError; new PE(...) in regular methods (alias detected)
  *   - let Err = ParseError; throw new Err(...) outside factories
  *   - import { ParseError as PE } from './errors'; new PE(...) outside factories (import alias detected)
+ *   - const A = ParseError; const B = A; new B(...) outside factories (chained alias detected)
  *
  * Out of scope (intentionally not detected, covered by Jest CI guard):
  *   - Re-exports: export { ParseError as PE } from './errors'
  *   - Default imports: import PE from './errors'; new PE(...)
- *   - Chained aliases: const A = ParseError; const B = A; new B(...)
  *   - Reassignment: let E = Other; E = ParseError; new E(...)
  *   - Property access: const obj = { PE: ParseError }; new obj.PE(...)
  *   - Dynamic assignments, destructuring patterns
@@ -68,6 +69,7 @@ module.exports = {
     /**
      * Checks if the callee is 'ParseError' or an alias to it.
      * Uses ESLint's scope analysis to detect variable assignments.
+     * Recursively detects chained aliases with circular reference protection.
      *
      * Examples:
      *   - new ParseError('msg', token)           → true (direct)
@@ -75,6 +77,8 @@ module.exports = {
      *   - let Err = ParseError; new Err(...)     → true (alias)
      *   - (E = ParseError) => new E(...)         → true (default param alias)
      *   - import { ParseError as PE } from './errors'; new PE(...) → true (import alias)
+     *   - const A = ParseError; const B = A; new B(...) → true (chained alias, 2 levels)
+     *   - const A = ParseError; const B = A; const C = B; new C(...) → true (chained alias, 3+ levels)
      *
      * Out of scope (intentionally not detected):
      *   - const obj = { PE: ParseError }         → false (property)
@@ -82,9 +86,18 @@ module.exports = {
      *
      * @param {Node} callee - The callee node from NewExpression
      * @param {object} context - ESLint context
+     * @param {Set<string>} visited - Set of already-checked identifiers (for cycle detection)
+     * @param {number} depth - Current recursion depth (for stack overflow protection)
      * @returns {boolean} True if callee is ParseError or an alias
      */
-    function isParseErrorOrAlias(callee, context) {
+    function isParseErrorOrAlias(callee, context, visited = new Set(), depth = 0) {
+      // Max depth protection: prevent stack overflow on pathologically deep (but non-circular) chains
+      // In practice, alias chains > 3 levels are extremely rare; 10 is generous
+      const MAX_ALIAS_DEPTH = 10;
+      if (depth > MAX_ALIAS_DEPTH) {
+        return false;
+      }
+
       if (!callee || callee.type !== 'Identifier') {
         return false;
       }
@@ -93,6 +106,18 @@ module.exports = {
       if (callee.name === 'ParseError') {
         return true;
       }
+
+      // Circular reference protection: if we've already checked this identifier, stop.
+      // Note: We track by name, not by variable instance. This is safe because:
+      // 1. Each NewExpression gets a fresh visited Set (called from NewExpression handler)
+      // 2. Recursion follows a single variable's definition chain within scope analysis
+      // 3. Shadowed variables in different scopes have different Variable objects in ESLint
+      if (visited.has(callee.name)) {
+        return false;
+      }
+
+      // Add to visited set before recursing
+      visited.add(callee.name);
 
       // Check if it's an alias using scope analysis
       const scope = context.sourceCode.getScope(callee);
@@ -104,11 +129,18 @@ module.exports = {
 
       // Check all definitions of this variable
       for (const def of variable.defs) {
-        // For variable declarations like: const PE = ParseError
+        // For variable declarations like: const PE = ParseError or const B = A
         if (def.type === 'Variable' && def.node.init) {
           const init = def.node.init;
-          if (init.type === 'Identifier' && init.name === 'ParseError') {
-            return true;
+          if (init.type === 'Identifier') {
+            // Base case: directly assigned to ParseError
+            if (init.name === 'ParseError') {
+              return true;
+            }
+            // Recursive case: assigned to another identifier - check if that's an alias
+            if (isParseErrorOrAlias(init, context, visited, depth + 1)) {
+              return true;
+            }
           }
         }
         // For default parameters like: (E = ParseError) => ...
@@ -118,8 +150,15 @@ module.exports = {
           const nameParent = def.name?.parent;
           if (nameParent?.type === 'AssignmentPattern') {
             const right = nameParent.right;
-            if (right && right.type === 'Identifier' && right.name === 'ParseError') {
-              return true;
+            if (right && right.type === 'Identifier') {
+              // Base case: directly assigned to ParseError
+              if (right.name === 'ParseError') {
+                return true;
+              }
+              // Recursive case: check if the right side is an alias
+              if (isParseErrorOrAlias(right, context, visited, depth + 1)) {
+                return true;
+              }
             }
           }
         }

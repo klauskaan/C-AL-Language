@@ -234,6 +234,40 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       options: [],
     },
+
+    // ========== Chained Alias Detection - Valid Cases (Issue #161) ==========
+
+    // Chained alias inside factory method - allowed (factory method pattern)
+    {
+      code: `
+        function createParseError(msg: string) {
+          const A = ParseError;
+          const B = A;
+          return new B(msg, null);
+        }
+      `,
+      options: [],
+    },
+
+    // Chain that doesn't start from ParseError - not our concern
+    {
+      code: `
+        const A = SomeOtherClass;
+        const B = A;
+        new B('message', token);
+      `,
+      options: [],
+    },
+
+    // Circular reference protection - should NOT crash, should NOT report (not a ParseError chain)
+    {
+      code: `
+        const A = B;
+        const B = A;
+        new A('message', token);
+      `,
+      options: [],
+    },
   ],
 
   invalid: [
@@ -1246,6 +1280,104 @@ ruleTester.run('no-direct-parse-error', rule, {
           message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
           type: 'NewExpression',
         },
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // ========== Chained Alias Detection Tests (Issue #161) ==========
+    // These tests verify that chains of aliases (A = ParseError; B = A; new B(...))
+    // are detected and reported as violations.
+
+    // Simple 2-level chained alias - should be detected
+    {
+      code: `
+        const A = ParseError;
+        const B = A;
+        new B('message', token);
+      `,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Deeper 3-level chain - should be detected
+    {
+      code: `
+        const A = ParseError;
+        const B = A;
+        const C = B;
+        new C('message', token);
+      `,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Chained alias in class method (non-factory) - should be detected
+    {
+      code: `
+        class Parser {
+          parse() {
+            const A = ParseError;
+            const B = A;
+            return new B('error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Chained alias in throw statement - should be detected
+    {
+      code: `
+        const ErrorAlias = ParseError;
+        const ThrowableError = ErrorAlias;
+        throw new ThrowableError('error', token);
+      `,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Chained alias through default parameter - should be detected
+    {
+      code: `
+        const A = ParseError;
+        const handleError = (E = A) => new E('msg', null);
+      `,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Import-to-variable chain - should be detected
+    {
+      code: `
+        import { ParseError as PE } from './errors';
+        const A = PE;
+        new A('message', token);
+      `,
+      errors: [
         {
           message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
           type: 'NewExpression',
