@@ -227,7 +227,8 @@ describe('Lexer Health Script - runCICheck()', () => {
 
       const result = runCICheck();
 
-      expect(result.exitCode).toBeGreaterThan(0);
+      // Missing baseline file is a configuration error
+      expect(result.exitCode).toBe(CI_EXIT_CODES.CONFIG_ERROR);
       expect(result.skipped).toBe(false);
       expect(result.comparison).not.toBeNull();
       // Should indicate baseline is missing in some way
@@ -249,7 +250,8 @@ describe('Lexer Health Script - runCICheck()', () => {
 
       const result = runCICheck();
 
-      expect(result.exitCode).toBeGreaterThan(0);
+      // Malformed JSON is a configuration error
+      expect(result.exitCode).toBe(CI_EXIT_CODES.CONFIG_ERROR);
       expect(result.skipped).toBe(false);
       expect(result.comparison).not.toBeNull();
       if (result.comparison) {
@@ -270,7 +272,8 @@ describe('Lexer Health Script - runCICheck()', () => {
 
       const result = runCICheck();
 
-      expect(result.exitCode).toBeGreaterThan(0);
+      // Missing maxFailures property is a configuration error
+      expect(result.exitCode).toBe(CI_EXIT_CODES.CONFIG_ERROR);
       expect(result.comparison).not.toBeNull();
       if (result.comparison) {
         expect(result.comparison.passed).toBe(false);
@@ -289,7 +292,8 @@ describe('Lexer Health Script - runCICheck()', () => {
 
       const result = runCICheck();
 
-      expect(result.exitCode).toBeGreaterThan(0);
+      // Non-numeric maxFailures is a configuration error
+      expect(result.exitCode).toBe(CI_EXIT_CODES.CONFIG_ERROR);
       expect(result.comparison).not.toBeNull();
       if (result.comparison) {
         expect(result.comparison.passed).toBe(false);
@@ -357,7 +361,7 @@ describe('Lexer Health Script - runCICheck()', () => {
       expect(result.comparison?.passed).toBe(false);
     });
 
-    it('should return exit code 2 when baseline file handling fails', () => {
+    it('should return CONFIG_ERROR when baseline file handling fails', () => {
       (existsSync as jest.Mock).mockImplementation((path: string) => {
         if (path.includes('test/REAL')) return true;
         if (path.includes('baseline.json')) return false;
@@ -366,8 +370,8 @@ describe('Lexer Health Script - runCICheck()', () => {
 
       const result = runCICheck();
 
-      // Exit code 2 for configuration/setup errors
-      expect(result.exitCode).toBeGreaterThanOrEqual(1);
+      // Missing baseline file is a configuration error
+      expect(result.exitCode).toBe(CI_EXIT_CODES.CONFIG_ERROR);
     });
   });
 
