@@ -2406,7 +2406,10 @@ ruleTester.run('no-direct-parse-error', rule, {
     // These tests verify that different violation contexts produce different messageIds
     // to give developers context-specific guidance.
     //
-    // TDD Note: These tests will FAIL initially because the messageIds don't exist yet.
+    // Issue #169 Enhancement: Compound context tests modified to expect:
+    // - useFactoryNestedFunctionNonParser (nested + non-Parser)
+    // - useFactoryStaticMethodNonParser (static + non-Parser)
+    // These provide more accurate messages that don't mislead about this.createParseError().
 
     // 1. Async static method in Parser class - should use 'useFactoryStaticMethod'
     {
@@ -2461,7 +2464,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       ],
     },
 
-    // 4. Nested function in non-Parser class method - should use 'useFactoryNestedFunction'
+    // 4. Nested function in non-Parser class method - should use 'useFactoryNestedFunctionNonParser'
     {
       code: `
         class Validator {
@@ -2474,7 +2477,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactoryNestedFunction',
+          messageId: 'useFactoryNestedFunctionNonParser',
           type: 'NewExpression',
         },
       ],
@@ -2527,7 +2530,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       ],
     },
 
-    // 8. Static method in non-Parser class - should use 'useFactoryStaticMethod'
+    // 8. Static method in non-Parser class - should use 'useFactoryStaticMethodNonParser'
     {
       code: `
         class Validator {
@@ -2538,7 +2541,26 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactoryStaticMethod',
+          messageId: 'useFactoryStaticMethodNonParser',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // 8b. Static method with nested function in non-Parser class - static takes priority
+    {
+      code: `
+        class Validator {
+          static validate() {
+            function checkRule() {
+              return new ParseError('Static nested error', null);
+            }
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactoryStaticMethodNonParser',
           type: 'NewExpression',
         },
       ],

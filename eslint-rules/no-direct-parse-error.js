@@ -56,6 +56,8 @@ const CONTEXT = Object.freeze({
   NON_PARSER_CLASS: 'nonParserClass',
   NESTED_FUNCTION: 'nestedFunction',
   TOP_LEVEL: 'topLevel',
+  STATIC_METHOD_NON_PARSER: 'staticMethodNonParser',
+  NESTED_FUNCTION_NON_PARSER: 'nestedFunctionNonParser',
 });
 
 module.exports = {
@@ -74,6 +76,8 @@ module.exports = {
       useFactoryNonParserClass: 'Do not directly instantiate ParseError. This class does not have a createParseError() method. Add a factory method to this class, or use a different error type.',
       useFactoryNestedFunction: 'Do not directly instantiate ParseError in nested functions. The `this` binding is not available here. Convert to an arrow function to preserve this binding, or move error creation to the outer method.',
       useFactoryTopLevel: 'Do not directly instantiate ParseError. Import and use a factory function for error creation, or wrap this in a class with a factory method.',
+      useFactoryStaticMethodNonParser: 'Do not directly instantiate ParseError in static methods. This class does not have a createParseError() method. Consider adding a factory method to this class, or use a different error type.',
+      useFactoryNestedFunctionNonParser: 'Do not directly instantiate ParseError in nested functions. This class does not have a createParseError() method. Consider adding a factory method to this class, or restructure to avoid nested function error creation.',
       suggestUseFactory: 'Replace with this.createParseError(...)',
       suggestUseFactoryAndRemoveAlias: 'Replace with this.createParseError(...) and remove unused alias declaration',
     },
@@ -673,7 +677,7 @@ module.exports = {
         }
       }
 
-      // TOP_LEVEL: No class context at all
+      // 1. TOP_LEVEL: No class context at all (MUST be checked FIRST)
       const hasClassContext = ancestors.some(
         n => n.type === 'ClassDeclaration' || n.type === 'ClassExpression'
       );
@@ -682,22 +686,30 @@ module.exports = {
         return CONTEXT.TOP_LEVEL;
       }
 
-      // STATIC_METHOD: In any class but static
-      if (enclosingMethodOrProperty?.static) {
+      // Pre-compute conditions for clarity
+      const isStatic = enclosingMethodOrProperty?.static;
+      const hasNestedFunction = checkForNestedRegularFunction(node, ancestors, enclosingMethodOrProperty);
+
+      // 2. NON-PARSER CLASS branch (compound contexts)
+      if (!inParserClass) {
+        // Static takes priority over nested (static is more fundamental limitation)
+        if (isStatic) {
+          return CONTEXT.STATIC_METHOD_NON_PARSER;
+        }
+        if (hasNestedFunction) {
+          return CONTEXT.NESTED_FUNCTION_NON_PARSER;
+        }
+        // Plain instance method in non-Parser class
+        return CONTEXT.NON_PARSER_CLASS;
+      }
+
+      // 3. PARSER CLASS branch
+      if (isStatic) {
         return CONTEXT.STATIC_METHOD;
       }
 
-      // Check for nested regular function (existing logic from shouldOfferSuggestion)
-      const hasNestedFunction = checkForNestedRegularFunction(node, ancestors, enclosingMethodOrProperty);
-
-      // NESTED_FUNCTION: Inside a nested regular function (loses this binding)
       if (hasNestedFunction) {
         return CONTEXT.NESTED_FUNCTION;
-      }
-
-      // NON_PARSER_CLASS: In a class but not Parser
-      if (!inParserClass) {
-        return CONTEXT.NON_PARSER_CLASS;
       }
 
       // Valid contexts in Parser class
@@ -821,8 +833,10 @@ module.exports = {
         // Map context to messageId
         const messageIdMap = {
           [CONTEXT.STATIC_METHOD]: 'useFactoryStaticMethod',
+          [CONTEXT.STATIC_METHOD_NON_PARSER]: 'useFactoryStaticMethodNonParser',
           [CONTEXT.NON_PARSER_CLASS]: 'useFactoryNonParserClass',
           [CONTEXT.NESTED_FUNCTION]: 'useFactoryNestedFunction',
+          [CONTEXT.NESTED_FUNCTION_NON_PARSER]: 'useFactoryNestedFunctionNonParser',
           [CONTEXT.TOP_LEVEL]: 'useFactoryTopLevel',
           [CONTEXT.PARSER_INSTANCE_METHOD]: 'useFactory',
           [CONTEXT.PARSER_ARROW_FIELD]: 'useFactory',
