@@ -10,6 +10,7 @@
  * - Issue #149: Alias detection enhancement
  * - Issue #160: Import alias detection
  * - Issue #161: Chained alias detection
+ * - Issue #162: Variable reassignment detection
  * - Direct construction bypasses centralized error sanitization
  * - Factory pattern enables consistent content sanitization
  * - Prevents sensitive content leakage in error messages
@@ -27,13 +28,18 @@
  *   - let Err = ParseError; throw new Err(...) outside factories
  *   - import { ParseError as PE } from './errors'; new PE(...) outside factories (import alias detected)
  *   - const A = ParseError; const B = A; new B(...) outside factories (chained alias detected)
+ *   - let E = Other; E = ParseError; new E(...) outside factories (reassignment detected)
  *
  * Out of scope (intentionally not detected, covered by Jest CI guard):
  *   - Re-exports: export { ParseError as PE } from './errors'
  *   - Default imports: import PE from './errors'; new PE(...)
- *   - Reassignment: let E = Other; E = ParseError; new E(...)
  *   - Property access: const obj = { PE: ParseError }; new obj.PE(...)
- *   - Dynamic assignments, destructuring patterns
+ *   - Destructuring reassignment: [E] = [ParseError]; new E(...)
+ *   - Dynamic assignments
+ *
+ * Known false positive (accepted trade-off):
+ *   - const B = A; A = ParseError; new B(...) - B captured A's value before A was tainted
+ *   - Reassignment detection uses conservative over-approximation for simplicity
  */
 
 module.exports = {
@@ -54,6 +60,49 @@ module.exports = {
   },
 
   create(context) {
+    // Track variables reassigned to ParseError or its aliases (Issue #162)
+    // Key: ESLint Scope object (using object identity)
+    // Value: Set of variable names tainted in that scope
+    const taintedVariables = new Map();
+
+    /**
+     * Gets the appropriate scope key for tracking a variable.
+     * For 'var' declarations, returns variableScope (function scope due to hoisting).
+     * For 'let'/'const', returns the current block scope.
+     */
+    function getScopeKey(scope, kind) {
+      if (kind === 'var' && scope.variableScope) {
+        return scope.variableScope;
+      }
+      return scope;
+    }
+
+    /**
+     * Marks a variable as tainted (assigned to ParseError or alias) in its scope.
+     */
+    function markTainted(scope, name) {
+      if (!taintedVariables.has(scope)) {
+        taintedVariables.set(scope, new Set());
+      }
+      taintedVariables.get(scope).add(name);
+    }
+
+    /**
+     * Checks if a variable is tainted in the given scope or any parent scope.
+     */
+    function isTainted(scope, name) {
+      let currentScope = scope;
+      while (currentScope) {
+        if (taintedVariables.has(currentScope)) {
+          if (taintedVariables.get(currentScope).has(name)) {
+            return true;
+          }
+        }
+        currentScope = currentScope.upper;
+      }
+      return false;
+    }
+
     /**
      * Checks if a function/method name matches the factory pattern.
      * Factory pattern: /^create.*Error$/
@@ -125,6 +174,16 @@ module.exports = {
 
       if (!variable) {
         return false;
+      }
+
+      // Check if this variable was reassigned to ParseError/alias (Issue #162)
+      // This catches: let E = Other; E = ParseError; new E(...)
+      // NOTE: Only flags uses AFTER reassignment. Uses before reassignment are not
+      // flagged because ESLint visits nodes in source order, so the taint Map is
+      // populated as we traverse. This is intentional - we want to catch the pattern
+      // where a variable is reassigned and THEN used, not accidental early uses.
+      if (isTainted(scope, callee.name)) {
+        return true;
       }
 
       // Check all definitions of this variable
@@ -375,6 +434,33 @@ module.exports = {
 
       'ArrowFunctionExpression:exit'() {
         functionStack.pop();
+      },
+
+      AssignmentExpression(node) {
+        // Only handle simple identifier assignments (skip destructuring)
+        if (node.left.type !== 'Identifier') {
+          return;
+        }
+
+        // Check if right-hand side is ParseError or an alias
+        if (!isParseErrorOrAlias(node.right, context, new Set(), 0)) {
+          return;
+        }
+
+        // Find the variable being assigned to
+        const scope = context.sourceCode.getScope(node);
+        const variable = findVariableInScope(scope, node.left.name);
+
+        if (!variable) {
+          return; // Undeclared variable, skip
+        }
+
+        // Determine the variable's declaration kind for scope key calculation
+        // Use defensive fallback for parameters (no .kind property)
+        const kind = variable.defs[0]?.kind || 'var';
+
+        const scopeKey = getScopeKey(scope, kind);
+        markTainted(scopeKey, node.left.name);
       },
 
       NewExpression(node) {

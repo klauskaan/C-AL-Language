@@ -1384,5 +1384,167 @@ ruleTester.run('no-direct-parse-error', rule, {
         },
       ],
     },
+
+    // ========== Variable Reassignment Detection Tests (Issue #162) ==========
+    // These tests verify that reassignment patterns like:
+    // let E = OtherClass; E = ParseError; new E(...)
+    // are detected and reported as violations.
+
+    // Basic reassignment - let
+    {
+      code: `
+        let E = OtherClass;
+        E = ParseError;
+        new E('message', token);
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Basic reassignment - var
+    {
+      code: `
+        var E = OtherClass;
+        E = ParseError;
+        new E('error', token);
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Reassignment to alias
+    {
+      code: `
+        const PE = ParseError;
+        let E = OtherClass;
+        E = PE;
+        new E('message', token);
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Reassignment in class method
+    {
+      code: `
+        class Parser {
+          parse() {
+            let E = SafeClass;
+            E = ParseError;
+            return new E('error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Multiple reassignments ending in ParseError
+    {
+      code: `
+        let E = SafeClass;
+        E = AnotherSafe;
+        E = ParseError;
+        new E('message', token);
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Parameter reassignment
+    {
+      code: `
+        function test(E) {
+          E = ParseError;
+          return new E('msg', null);
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Known false positive: Chain captured before reassignment
+    // Per issue #162, this will report a violation even though B is not actually ParseError
+    // at the point of construction. This is an accepted trade-off to avoid complex
+    // control flow analysis. The rule errs on the side of flagging potential issues.
+    {
+      code: `
+        let A = SafeClass;
+        const B = A;
+        A = ParseError;
+        new B('message', token);
+      `,
+      errors: [
+        {
+          messageId: 'useFactory',
+          type: 'NewExpression',
+        },
+      ],
+    },
   ],
+});
+
+// ========== Additional VALID tests for reassignment patterns (Issue #162) ==========
+// These should be added to the valid array in a future edit if needed
+
+describe('no-direct-parse-error - reassignment edge cases (valid)', () => {
+  const ruleTester = new RuleTester({
+    languageOptions: {
+      parser: require('@typescript-eslint/parser'),
+      ecmaVersion: 2020,
+      sourceType: 'module',
+    },
+  });
+
+  ruleTester.run('no-direct-parse-error', rule, {
+    valid: [
+      // Reassignment AFTER use (temporal safety)
+      {
+        code: `
+          let E = OtherClass;
+          new E('message', token);
+          E = ParseError;
+        `,
+        options: [],
+      },
+
+      // Block-scoped shadowing (inner scope safe)
+      {
+        code: `
+          let E = ParseError;
+          {
+            let E = SafeClass;
+            new E('message', token);
+          }
+        `,
+        options: [],
+      },
+    ],
+
+    invalid: [],
+  });
 });
