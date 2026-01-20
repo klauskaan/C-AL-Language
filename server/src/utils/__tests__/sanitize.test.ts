@@ -757,13 +757,22 @@ describe('Sanitization Utility', () => {
         expect(result).toBe('Error: Message');
       });
 
-      it('should format Error with empty stack', () => {
-        const error = new Error('Message');
+      it('should format Error with empty string stack (defensive handling)', () => {
+        const error = new Error('Critical failure');
         error.stack = '';
 
         const result = formatError(error);
 
-        expect(result).toBe('');
+        expect(result).toBe('Error: Critical failure');
+      });
+
+      it('should format Error with both empty message and empty stack', () => {
+        const error = new Error('');
+        error.stack = '';
+
+        const result = formatError(error);
+
+        expect(result).toBe(''); // No error info = no output
       });
     });
 

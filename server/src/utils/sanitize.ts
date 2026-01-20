@@ -308,14 +308,13 @@ export function formatError(error: unknown): string {
 
       // Determine what to output:
       // - If stack exists and is non-empty, use it (includes message)
-      // - If stack is empty string, return empty string
-      // - If no stack (undefined/deleted), prefix message with "Error: "
+      // - If stack is empty string or undefined/deleted, fall back to "Error: ${message}"
       let raw: string;
-      if (stack !== undefined) {
-        // Stack exists (could be empty string or non-empty)
+      if (stack) {
+        // Stack exists and is non-empty
         raw = stack;
       } else {
-        // Stack is undefined or deleted - prefix message with "Error: "
+        // Stack is empty string, undefined, or deleted - prefix message with "Error: "
         raw = message ? `Error: ${message}` : '';
       }
       return stripPaths(raw);
