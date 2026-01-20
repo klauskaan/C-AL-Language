@@ -3295,6 +3295,14 @@ export class Parser {
 
   /**
    * Get all skipped regions recorded during parsing
+   *
+   * SECURITY WARNING: Returns data containing raw token values.
+   * - MUST NOT be exposed to LSP clients
+   * - Safe for internal position/length calculations only
+   * - Do NOT serialize token.value to any external interface
+   *
+   * Reserved for future debugging and diagnostic tools. Currently has no callers.
+   * See skipped-region-token-isolation.test.ts for safe usage patterns.
    */
   public getSkippedRegions(): SkippedRegion[] {
     return this.skippedRegions;
@@ -3599,6 +3607,16 @@ export class ParseError extends Error {
 
 /**
  * Represents a region of tokens skipped during error recovery
+ *
+ * SECURITY WARNING: This interface contains raw, unsanitized token data.
+ * - Both `startToken.value` and `endToken.value` contain raw source content
+ * - MUST NEVER be serialized to LSP clients
+ * - Safe for internal position/length calculations only
+ *
+ * See skipped-region-token-isolation.test.ts for the security boundary pattern.
+ *
+ * NOTE: getSkippedRegions() currently has no callers. Reserved for future
+ * debugging and diagnostic tools.
  */
 export interface SkippedRegion {
   startToken: Token;      // First token in skipped region
