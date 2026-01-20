@@ -42,6 +42,22 @@
  *   - Reassignment detection uses conservative over-approximation for simplicity
  */
 
+/**
+ * Context types for ParseError construction violations.
+ * Used to provide context-specific messageIds and suggestions.
+ */
+const CONTEXT = Object.freeze({
+  // Valid contexts where suggestions are offered
+  PARSER_INSTANCE_METHOD: 'parserInstanceMethod',
+  PARSER_ARROW_FIELD: 'parserArrowField',
+
+  // Invalid contexts where only guidance is provided
+  STATIC_METHOD: 'staticMethod',
+  NON_PARSER_CLASS: 'nonParserClass',
+  NESTED_FUNCTION: 'nestedFunction',
+  TOP_LEVEL: 'topLevel',
+});
+
 module.exports = {
   meta: {
     type: 'problem',
@@ -54,6 +70,10 @@ module.exports = {
     messages: {
       useFactory:
         'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+      useFactoryStaticMethod: 'Do not directly instantiate ParseError in static methods. Static methods cannot use this.createParseError(). Move this code to an instance method where this.createParseError() is available.',
+      useFactoryNonParserClass: 'Do not directly instantiate ParseError. This class does not have a createParseError() method. Add a factory method to this class, or use a different error type.',
+      useFactoryNestedFunction: 'Do not directly instantiate ParseError in nested functions. The `this` binding is not available here. Convert to an arrow function to preserve this binding, or move error creation to the outer method.',
+      useFactoryTopLevel: 'Do not directly instantiate ParseError. Import and use a factory function for error creation, or wrap this in a class with a factory method.',
       suggestUseFactory: 'Replace with this.createParseError(...)',
       suggestUseFactoryAndRemoveAlias: 'Replace with this.createParseError(...) and remove unused alias declaration',
     },
@@ -480,50 +500,13 @@ module.exports = {
     }
 
     /**
-     * Checks if we should offer a suggestion to replace with this.createParseError.
-     * Suggestion is only valid when:
-     * 1. Inside a Parser class (ClassDeclaration or named ClassExpression)
-     * 2. Inside an instance method (MethodDefinition, not static) OR class field arrow function (PropertyDefinition)
-     * 3. Not inside a nested regular function (which loses `this` context)
-     *    - Arrow functions are OK (they preserve `this`)
-     *
-     * @param {Node} node - The NewExpression node
-     * @returns {boolean} True if suggestion should be offered
+     * Checks if the node is inside a nested regular function that loses `this` binding.
+     * @param {Node} node - The node to check
+     * @param {Node[]} ancestors - Ancestor nodes
+     * @param {Node|null} enclosingMethodOrProperty - The enclosing method/property
+     * @returns {boolean} True if inside a nested regular function
      */
-    function shouldOfferSuggestion(node) {
-      // Must be inside Parser class
-      if (!isInsideParserClass(node)) {
-        return false;
-      }
-
-      const ancestors = context.sourceCode.getAncestors(node);
-
-      // Find the enclosing method or property definition (if any)
-      let enclosingMethodOrProperty = null;
-      for (let i = ancestors.length - 1; i >= 0; i--) {
-        if (ancestors[i].type === 'MethodDefinition' || ancestors[i].type === 'PropertyDefinition') {
-          enclosingMethodOrProperty = ancestors[i];
-          break;
-        }
-      }
-
-      // Must be inside a method or property definition
-      if (!enclosingMethodOrProperty) {
-        return false;
-      }
-
-      // Cannot be a static method or property
-      if (enclosingMethodOrProperty.static) {
-        return false;
-      }
-
-      // For PropertyDefinition, the value must be an ArrowFunctionExpression
-      if (enclosingMethodOrProperty.type === 'PropertyDefinition') {
-        if (enclosingMethodOrProperty.value?.type !== 'ArrowFunctionExpression') {
-          return false; // Only support arrow function class fields
-        }
-      }
-
+    function checkForNestedRegularFunction(node, ancestors, enclosingMethodOrProperty) {
       // Check if inside a nested regular function that loses `this`
       // We need to check all ancestors between the method/property and the node
       // Regular functions (FunctionDeclaration/FunctionExpression) break `this` binding
@@ -531,7 +514,6 @@ module.exports = {
       //
       // Note: MethodDefinition.value is a FunctionExpression - this is the method's
       // own function and should NOT be counted as a nested function
-      let hasNestedRegularFunction = false;
 
       for (const ancestor of ancestors) {
         // Skip the method/property definition itself
@@ -546,17 +528,73 @@ module.exports = {
         ) {
           // Check if this function is the immediate child of the method definition
           // (which would make it the method's own function, not a nested one)
-          const isMethodFunction = enclosingMethodOrProperty.type === 'MethodDefinition' && enclosingMethodOrProperty.value === ancestor;
+          const isMethodFunction = enclosingMethodOrProperty?.type === 'MethodDefinition' && enclosingMethodOrProperty.value === ancestor;
 
           if (!isMethodFunction) {
             // This is a nested function that breaks `this` binding
-            hasNestedRegularFunction = true;
-            break;
+            return true;
           }
         }
       }
 
-      return !hasNestedRegularFunction;
+      return false;
+    }
+
+    /**
+     * Classifies the context where a ParseError construction occurs.
+     * Returns a CONTEXT constant value used to select appropriate messageIds.
+     *
+     * @param {Node} node - The NewExpression node
+     * @param {object} context - The ESLint rule context
+     * @returns {string} One of the CONTEXT constant values
+     */
+    function classifyContext(node, context) {
+      const ancestors = context.sourceCode.getAncestors(node);
+      const inParserClass = isInsideParserClass(node);
+
+      // Find enclosing method or property definition
+      let enclosingMethodOrProperty = null;
+      for (let i = ancestors.length - 1; i >= 0; i--) {
+        const ancestor = ancestors[i];
+        if (ancestor.type === 'MethodDefinition' || ancestor.type === 'PropertyDefinition') {
+          enclosingMethodOrProperty = ancestor;
+          break;
+        }
+      }
+
+      // TOP_LEVEL: No class context at all
+      const hasClassContext = ancestors.some(
+        n => n.type === 'ClassDeclaration' || n.type === 'ClassExpression'
+      );
+
+      if (!hasClassContext) {
+        return CONTEXT.TOP_LEVEL;
+      }
+
+      // STATIC_METHOD: In any class but static
+      if (enclosingMethodOrProperty?.static) {
+        return CONTEXT.STATIC_METHOD;
+      }
+
+      // Check for nested regular function (existing logic from shouldOfferSuggestion)
+      const hasNestedFunction = checkForNestedRegularFunction(node, ancestors, enclosingMethodOrProperty);
+
+      // NESTED_FUNCTION: Inside a nested regular function (loses this binding)
+      if (hasNestedFunction) {
+        return CONTEXT.NESTED_FUNCTION;
+      }
+
+      // NON_PARSER_CLASS: In a class but not Parser
+      if (!inParserClass) {
+        return CONTEXT.NON_PARSER_CLASS;
+      }
+
+      // Valid contexts in Parser class
+      if (enclosingMethodOrProperty?.type === 'PropertyDefinition') {
+        return CONTEXT.PARSER_ARROW_FIELD;
+      }
+
+      return CONTEXT.PARSER_INSTANCE_METHOD;
     }
 
     // Stack to track current function context
@@ -666,14 +704,27 @@ module.exports = {
           return; // Allowed: inside factory method
         }
 
+        // Classify the context to determine appropriate messageId
+        const ctx = classifyContext(node, context);
+
+        // Map context to messageId
+        const messageIdMap = {
+          [CONTEXT.STATIC_METHOD]: 'useFactoryStaticMethod',
+          [CONTEXT.NON_PARSER_CLASS]: 'useFactoryNonParserClass',
+          [CONTEXT.NESTED_FUNCTION]: 'useFactoryNestedFunction',
+          [CONTEXT.TOP_LEVEL]: 'useFactoryTopLevel',
+          [CONTEXT.PARSER_INSTANCE_METHOD]: 'useFactory',
+          [CONTEXT.PARSER_ARROW_FIELD]: 'useFactory',
+        };
+
         // Build report object
         const report = {
           node,
-          messageId: 'useFactory',
+          messageId: messageIdMap[ctx] || 'useFactory', // Fallback to default
         };
 
-        // Add suggestion if context allows
-        if (shouldOfferSuggestion(node)) {
+        // Only offer suggestions for valid Parser contexts
+        if (ctx === CONTEXT.PARSER_INSTANCE_METHOD || ctx === CONTEXT.PARSER_ARROW_FIELD) {
           const sourceCode = context.sourceCode;
           const args = node.arguments
             .map((arg) => sourceCode.getText(arg))

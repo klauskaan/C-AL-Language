@@ -276,7 +276,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       code: `throw new ParseError('Unexpected token', token);`,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -287,7 +287,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       code: `this.errors.push(new ParseError('Invalid syntax', token));`,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -305,7 +305,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactory',
           type: 'NewExpression',
           suggestions: [
             {
@@ -333,7 +333,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -351,7 +351,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactory',
           type: 'NewExpression',
           suggestions: [
             {
@@ -368,7 +368,7 @@ ruleTester.run('no-direct-parse-error', rule, {
           ],
         },
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactory',
           type: 'NewExpression',
           suggestions: [
             {
@@ -398,7 +398,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactory',
           type: 'NewExpression',
           suggestions: [
             {
@@ -425,7 +425,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -440,7 +440,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -454,7 +454,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -469,7 +469,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -486,7 +486,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -497,7 +497,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       code: `const PE = ParseError; new PE('message', token);`,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -508,7 +508,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       code: `let Err = ParseError; new Err('message', token);`,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -519,7 +519,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       code: `var E = ParseError; throw new E('error', token);`,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -530,7 +530,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       code: `const handleError = (E = ParseError) => new E('msg', null);`,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -544,7 +544,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -731,7 +731,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactory',
+          messageId: 'useFactoryStaticMethod',
           // NO suggestions property - cannot use this.createParseError in static context
         },
       ],
@@ -748,7 +748,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactory',
+          messageId: 'useFactoryNonParserClass',
           // NO suggestions - Lexer doesn't have createParseError method
         },
       ],
@@ -767,7 +767,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactory',
+          messageId: 'useFactoryNestedFunction',
           // NO suggestions - regular function doesn't preserve this
         },
       ],
@@ -784,7 +784,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactory',
+          messageId: 'useFactoryTopLevel',
           // NO suggestions - not in a Parser class
         },
       ],
@@ -913,7 +913,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactory',
+          messageId: 'useFactoryTopLevel',
           // NO suggestions - not in any class
         },
       ],
@@ -987,7 +987,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactory',
+          messageId: 'useFactoryNonParserClass',
           // NO suggestions - not in a class literally named "Parser"
           // (The plan specifies checking for Parser class context)
         },
@@ -1045,7 +1045,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactory',
+          messageId: 'useFactoryNestedFunction',
           // NO suggestions - regular function breaks the this chain
         },
       ],
@@ -1118,7 +1118,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactory',
+          messageId: 'useFactoryNestedFunction',
           // NO suggestions - regular function in class field loses this binding
         },
       ],
@@ -1135,7 +1135,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactory',
+          messageId: 'useFactoryNonParserClass',
           // NO suggestions - anonymous ClassExpression has no name, so not detected as Parser
         },
       ],
@@ -1154,7 +1154,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -1170,7 +1170,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -1189,7 +1189,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryNonParserClass',
           type: 'NewExpression',
         },
       ],
@@ -1205,7 +1205,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -1223,11 +1223,11 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -1246,7 +1246,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -1262,7 +1262,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -1277,7 +1277,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -1291,7 +1291,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -1306,7 +1306,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -1326,7 +1326,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactory',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -1341,7 +1341,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactory',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -1357,7 +1357,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactory',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -1373,7 +1373,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactory',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -1389,7 +1389,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactory',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -1408,7 +1408,7 @@ ruleTester.run('no-direct-parse-error', rule, {
       `,
       errors: [
         {
-          messageId: 'useFactory',
+          messageId: 'useFactoryTopLevel',
           type: 'NewExpression',
         },
       ],
@@ -2228,46 +2228,185 @@ ruleTester.run('no-direct-parse-error', rule, {
         },
       ],
     },
-  ],
-});
 
-// ========== Additional VALID tests for reassignment patterns (Issue #162) ==========
-// These should be added to the valid array in a future edit if needed
+    // ========== Context-Aware MessageIds Tests (Issue #164) ==========
+    // These tests verify that different violation contexts produce different messageIds
+    // to give developers context-specific guidance.
+    //
+    // TDD Note: These tests will FAIL initially because the messageIds don't exist yet.
 
-describe('no-direct-parse-error - reassignment edge cases (valid)', () => {
-  const ruleTester = new RuleTester({
-    languageOptions: {
-      parser: require('@typescript-eslint/parser'),
-      ecmaVersion: 2020,
-      sourceType: 'module',
-    },
-  });
-
-  ruleTester.run('no-direct-parse-error', rule, {
-    valid: [
-      // Reassignment AFTER use (temporal safety)
-      {
-        code: `
-          let E = OtherClass;
-          new E('message', token);
-          E = ParseError;
-        `,
-        options: [],
-      },
-
-      // Block-scoped shadowing (inner scope safe)
-      {
-        code: `
-          let E = ParseError;
-          {
-            let E = SafeClass;
-            new E('message', token);
+    // 1. Async static method in Parser class - should use 'useFactoryStaticMethod'
+    {
+      code: `
+        class Parser {
+          static async handleErrorAsync() {
+            return new ParseError('Async static error', null);
           }
-        `,
-        options: [],
-      },
-    ],
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactoryStaticMethod',
+          type: 'NewExpression',
+        },
+      ],
+    },
 
-    invalid: [],
-  });
+    // 2. Generator static method in Parser class - should use 'useFactoryStaticMethod'
+    {
+      code: `
+        class Parser {
+          static *handleErrors() {
+            yield new ParseError('Generator static error', null);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactoryStaticMethod',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // 3. Nested regular function in Parser method - should use 'useFactoryNestedFunction'
+    {
+      code: `
+        class Parser {
+          parse() {
+            function helper() {
+              return new ParseError('Nested function error', null);
+            }
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactoryNestedFunction',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // 4. Nested function in non-Parser class method - should use 'useFactoryNestedFunction'
+    {
+      code: `
+        class Validator {
+          validate() {
+            function checkRule() {
+              return new ParseError('Validation error', null);
+            }
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactoryNestedFunction',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // 5. Top-level function - should use 'useFactoryTopLevel'
+    {
+      code: `
+        function parseToken(token) {
+          throw new ParseError('Top-level error', token);
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactoryTopLevel',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // 6. Top-level arrow function - should use 'useFactoryTopLevel'
+    {
+      code: `
+        const parseExpression = (expr) => {
+          return new ParseError('Arrow function error', null);
+        };
+      `,
+      errors: [
+        {
+          messageId: 'useFactoryTopLevel',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // 7. Object literal method - should use 'useFactoryTopLevel' (not in class)
+    {
+      code: `
+        const handler = {
+          handle() {
+            throw new ParseError('Object literal method', token);
+          }
+        };
+      `,
+      errors: [
+        {
+          messageId: 'useFactoryTopLevel',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // 8. Static method in non-Parser class - should use 'useFactoryStaticMethod'
+    {
+      code: `
+        class Validator {
+          static validate() {
+            return new ParseError('Static validator error', null);
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactoryStaticMethod',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // 9. Nested arrow in regular function in Parser - should use 'useFactoryNestedFunction'
+    {
+      code: `
+        class Parser {
+          parse() {
+            function helper() {
+              const arrow = () => {
+                return new ParseError('Nested arrow in function', null);
+              };
+            }
+          }
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactoryNestedFunction',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // 10. Static arrow function field - should use 'useFactoryStaticMethod'
+    {
+      code: `
+        class Parser {
+          static handler = () => {
+            return new ParseError('Static arrow field', null);
+          };
+        }
+      `,
+      errors: [
+        {
+          messageId: 'useFactoryStaticMethod',
+          type: 'NewExpression',
+        },
+      ],
+    },
+  ],
 });
