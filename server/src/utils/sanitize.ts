@@ -326,6 +326,6 @@ export function formatError(error: unknown): string {
     // Defensive: String(error) or error.stack getter could throw
     // (circular reference, malformed toString, etc.)
     // Error handlers must NEVER throw
-    return stripPaths('Error formatting error message');
+    return stripPaths(`Error formatting error message (type: ${typeof error})`);
   }
 }

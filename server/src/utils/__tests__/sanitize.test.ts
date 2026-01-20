@@ -886,7 +886,7 @@ describe('Sanitization Utility', () => {
         // Should catch the error and return a fallback message
         const result = formatError(throwingObject);
 
-        expect(result).toContain('Error formatting error message');
+        expect(result).toContain('Error formatting error message (type: object)');
         expect(result).not.toContain('test/REAL');
       });
 
@@ -900,7 +900,7 @@ describe('Sanitization Utility', () => {
 
         const result = formatError(throwingError);
 
-        expect(result).toContain('Error formatting error message');
+        expect(result).toContain('Error formatting error message (type: object)');
       });
 
       it('should handle symbol', () => {
