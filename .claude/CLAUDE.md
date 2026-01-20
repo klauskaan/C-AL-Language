@@ -61,7 +61,9 @@ We work as **pair programming partners**:
 │    adversarial-reviewer → ALWAYS RUN                        │
 │       ├─ Scope creep? (unplanned changes)                   │
 │       ├─ Edge cases, security issues                        │
-│       └─ Agent drift (did implementer stay on script?)      │
+│       ├─ Agent drift (did implementer stay on script?)      │
+│       ├─ Boy Scout classification (mechanical/quick/safe)   │
+│       └─ Issue Creation Bias (recommend DEFER vs ACKNOWLEDGE)│
 │                                                             │
 │    Use Feedback Resolution Protocol to disposition findings │
 │    Design flaw found? → back to step 2 (re-plan)            │
@@ -168,6 +170,34 @@ The workflow continues after reporting - do not wait for user acknowledgment. If
 
 *Boundary with Boy Scout Rule:* Issue Creation Bias applies to items that do NOT qualify for Boy Scout Rule. For Boy Scout-eligible items (mechanical, quick, safe), fix inline. For Boy Scout-excluded items (different files, requires tests, "while I'm here" refactoring), ACCEPT-DEFER to track.
 
+**Adversarial-Reviewer Disposition Guidance:**
+
+For each MINOR finding, the adversarial-reviewer provides guidance:
+
+| Finding Type | Recommended Disposition | Re-Review Required? |
+|--------------|------------------------|---------------------|
+| MINOR, Boy Scout eligible | `[BOY-SCOUT]` flag | Yes (lightweight) |
+| MINOR, valid but out of scope | Recommend ACCEPT-DEFER | Confirm issue created |
+| MINOR, meta-observation only | Recommend ACKNOWLEDGE | No |
+
+*Issue Creation Bias:*
+- **Bias toward ACCEPT-DEFER** for valid concerns that should be tracked
+- **ACKNOWLEDGE only** for meta-observations that don't prescribe specific action
+  - Example ACKNOWLEDGE: "This module is growing complex"
+  - Example ACCEPT-DEFER: "Consider adding validation in adjacent function"
+
+*Output Format Example:*
+```
+### Review Findings
+
+1. **[BOY-SCOUT]** Unused import on line 42 (MINOR)
+2. Error handling in function bar() could be improved (MINOR - recommend ACCEPT-DEFER)
+3. This pattern appears in multiple places (MINOR - recommend ACKNOWLEDGE as design observation)
+4. Missing null check on user input (SERIOUS - ACCEPT-FIX required)
+
+**Status:** CHANGES REQUIRED - Fix item #4, apply Boy Scout #1, create issue for #2
+```
+
 **Re-Plan Rule:** When implementation reveals fundamental problems, go back and re-plan.
 
 Loop back to step 2 (PLAN) when:
@@ -230,8 +260,34 @@ Does NOT apply to:
 - Issues in files unrelated to the current fix
 - Anything requiring new tests or test updates
 
+**Boy Scout Protocol:**
+
+When adversarial-reviewer flags Boy Scout-eligible items during review:
+
+1. **Adversarial-reviewer flags with `[BOY-SCOUT]` tag** in their feedback
+   - Item must meet all Boy Scout criteria (mechanical, quick, safe)
+   - Example: `[BOY-SCOUT] Remove unused import on line 42`
+
+2. **Reviewee/Implementer applies fix**
+   - Fix the flagged item inline
+   - No separate disposition needed (implicit ACCEPT-FIX)
+
+3. **Adversarial-reviewer performs Lightweight Re-Review**
+   - Scope: ONLY the Boy Scout fix(es)
+   - Checklist:
+     - [ ] Fix matches what was flagged
+     - [ ] No unrelated changes introduced
+     - [ ] No new issues created
+   - Response: "BOY-SCOUT VERIFIED" or flags new issue if problems found
+
+4. **Proceed to COMMIT** only after adversarial-reviewer confirms
+
+*Efficiency:* Lightweight re-review is faster than full review because scope is explicitly limited to flagged items and adversarial-reviewer already knows what to expect.
+
+*If re-review finds issues:* Treat as new feedback, iterate normally.
+
 These cleanup changes are **exempt from scope-creep detection and TDD requirements**.
-If in doubt whether something qualifies, create a follow-up issue instead of expanding the current fix
+If in doubt whether something qualifies, create a follow-up issue instead of expanding scope.
 
 ---
 
@@ -259,7 +315,7 @@ If in doubt whether something qualifies, create a follow-up issue instead of exp
 | Agent | Purpose |
 |-------|---------|
 | **code-detective** | Root cause investigation, impact analysis |
-| **adversarial-reviewer** | Find bugs, edge cases, security issues |
+| **adversarial-reviewer** | Find bugs, edge cases, security issues; classify Boy Scout items; recommend issue creation |
 | **architect** | Design decisions, architectural reviews |
 
 ---
