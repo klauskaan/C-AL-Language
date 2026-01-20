@@ -1,4 +1,5 @@
 import { Token, TokenType } from '../lexer/tokens';
+import { Lexer } from '../lexer/lexer';
 import { sanitizeContent, sanitizeTokenType, stripPaths } from '../utils/sanitize';
 import {
   CALDocument,
@@ -3630,7 +3631,6 @@ export interface SkippedRegion {
  * Used in tests to easily parse code snippets and get AST + errors
  */
 export function parseCode(code: string): { ast: CALDocument | null; errors: ParseError[] } {
-  const { Lexer } = require('../lexer/lexer');
   const lexer = new Lexer(code);
   const tokens = lexer.tokenize();
   const parser = new Parser(tokens);
