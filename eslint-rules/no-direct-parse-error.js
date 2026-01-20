@@ -403,7 +403,6 @@ module.exports = {
     function getDeclaratorRemovalFix(fixer, sourceCode, declaratorNode) {
       const declarationNode = declaratorNode.parent;
       const declarators = declarationNode.declarations;
-      const text = sourceCode.getText();
 
       // If this is the only declarator, remove the entire declaration statement
       if (declarators.length === 1) {
@@ -413,20 +412,7 @@ module.exports = {
           statementNode = declarationNode.parent;
         }
 
-        // Find the start of the line (including indentation)
-        let lineStart = statementNode.range[0];
-        while (lineStart > 0 && text[lineStart - 1] !== '\n' && text[lineStart - 1] !== '\r') {
-          lineStart--;
-        }
-
-        // Find the end of the line (including semicolon and newline)
-        let lineEnd = statementNode.range[1];
-        while (lineEnd < text.length && text[lineEnd] !== '\n' && text[lineEnd] !== '\r') {
-          lineEnd++;
-        }
-        if (lineEnd < text.length && text[lineEnd] === '\r') lineEnd++;
-        if (lineEnd < text.length && text[lineEnd] === '\n') lineEnd++;
-
+        const [lineStart, lineEnd] = getLineRemovalRange(sourceCode, statementNode);
         return fixer.removeRange([lineStart, lineEnd]);
       }
 
@@ -473,6 +459,37 @@ module.exports = {
       // Not aliased - this case shouldn't happen per plan, but handle gracefully
       // (Direct imports like "import { ParseError }" don't get removal suggestions)
       return null;
+    }
+
+    /**
+     * Calculates the range to remove an entire line containing a statement,
+     * including leading indentation and trailing newline.
+     *
+     * Used for removing single-declarator variable declarations and
+     * standalone assignment expression statements.
+     *
+     * @param {object} sourceCode - ESLint sourceCode object
+     * @param {Node} statementNode - The statement node whose line should be removed (must have .range property)
+     * @returns {[number, number]} Range tuple [start, end] for fixer.removeRange()
+     */
+    function getLineRemovalRange(sourceCode, statementNode) {
+      const text = sourceCode.getText();
+
+      // Find the start of the line (including indentation)
+      let lineStart = statementNode.range[0];
+      while (lineStart > 0 && text[lineStart - 1] !== '\n' && text[lineStart - 1] !== '\r') {
+        lineStart--;
+      }
+
+      // Find the end of the line (including semicolon and newline)
+      let lineEnd = statementNode.range[1];
+      while (lineEnd < text.length && text[lineEnd] !== '\n' && text[lineEnd] !== '\r') {
+        lineEnd++;
+      }
+      if (lineEnd < text.length && text[lineEnd] === '\r') lineEnd++;
+      if (lineEnd < text.length && text[lineEnd] === '\n') lineEnd++;
+
+      return [lineStart, lineEnd];
     }
 
     /**
@@ -763,22 +780,7 @@ module.exports = {
                   // For reassignment, remove the entire assignment statement
                   const assignmentStmt = aliasInfo.declarationNode.parent; // ExpressionStatement
                   if (assignmentStmt && assignmentStmt.type === 'ExpressionStatement') {
-                    const text = sourceCode.getText();
-
-                    // Find the start of the line (including indentation)
-                    let lineStart = assignmentStmt.range[0];
-                    while (lineStart > 0 && text[lineStart - 1] !== '\n' && text[lineStart - 1] !== '\r') {
-                      lineStart--;
-                    }
-
-                    // Find the end of the line (including semicolon and newline)
-                    let lineEnd = assignmentStmt.range[1];
-                    while (lineEnd < text.length && text[lineEnd] !== '\n' && text[lineEnd] !== '\r') {
-                      lineEnd++;
-                    }
-                    if (lineEnd < text.length && text[lineEnd] === '\r') lineEnd++;
-                    if (lineEnd < text.length && text[lineEnd] === '\n') lineEnd++;
-
+                    const [lineStart, lineEnd] = getLineRemovalRange(sourceCode, assignmentStmt);
                     fixes.push(fixer.removeRange([lineStart, lineEnd]));
                   }
                 }
