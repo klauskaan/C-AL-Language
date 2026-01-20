@@ -990,5 +990,64 @@ describe('Sanitization Utility', () => {
         expect(result).toBe('Error: Something at <REDACTED> failed');
       });
     });
+
+    describe('Parentheses in filenames (#156)', () => {
+      it('should redact filename with single parenthetical suffix (bug fix)', () => {
+        const result = stripPaths('test/REAL/Codeunit(old).txt');
+
+        expect(result).toBe('<REDACTED>');
+        expect(result).not.toContain('old');
+        expect(result).not.toContain('Codeunit');
+      });
+
+      it('should redact filename with parentheses containing numbers', () => {
+        const result = stripPaths('test/REAL/file(1).txt');
+
+        expect(result).toBe('<REDACTED>');
+        expect(result).not.toContain('(1)');
+        expect(result).not.toContain('file');
+      });
+
+      it('should redact filename with multiple parenthetical groups', () => {
+        const result = stripPaths('test/REAL/file(1)(2).txt');
+
+        expect(result).toBe('<REDACTED>');
+        expect(result).not.toContain('(1)');
+        expect(result).not.toContain('(2)');
+        expect(result).not.toContain('file');
+      });
+
+      it('should redact filename with parens and preserve line numbers', () => {
+        const result = stripPaths('test/REAL/file(1).txt:42:10');
+
+        expect(result).toBe('<REDACTED>:42:10');
+        expect(result).not.toContain('(1)');
+        expect(result).not.toContain('file');
+      });
+
+      it('should NOT over-redact when parens follow with no space', () => {
+        const result = stripPaths('test/REAL/file.txt(context)');
+
+        expect(result).toBe('<REDACTED>');
+        expect(result).not.toContain('context');
+        expect(result).not.toContain('file');
+      });
+
+      it('should preserve space-separated contextual parens', () => {
+        const result = stripPaths('test/REAL/file.txt (in function X)');
+
+        expect(result).toBe('<REDACTED> (in function X)');
+        expect(result).toContain('(in function X)');
+        expect(result).not.toContain('file');
+      });
+
+      it('should redact Windows path with parentheses', () => {
+        const result = stripPaths('test\\REAL\\file(1).txt');
+
+        expect(result).toBe('<REDACTED>');
+        expect(result).not.toContain('(1)');
+        expect(result).not.toContain('file');
+      });
+    });
   });
 });

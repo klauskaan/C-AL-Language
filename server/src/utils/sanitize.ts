@@ -260,7 +260,7 @@ export function sanitizeTokenType(tokenType: string): string {
  * - test - Literal "test" (case-insensitive due to 'i' flag)
  * - [\/\\] - Forward slash or backslash
  * - real - Literal "REAL" (case-insensitive due to 'i' flag)
- * - (?:[\/\\][^\s:)]*)? - Optional: slash followed by any chars except whitespace, colon, or closing paren (path content)
+ * - (?:[\/\\][^\s:]*)? - Optional: slash followed by any chars except whitespace or colon (path content)
  * - gi flags - Global (replace all) + case-insensitive
  *
  * Requires Node 10+ for negative lookbehind support.
@@ -269,5 +269,5 @@ export function sanitizeTokenType(tokenType: string): string {
  * @returns Message with test/REAL/ paths replaced by <REDACTED>
  */
 export function stripPaths(msg: string): string {
-  return msg.replace(/(?<![a-zA-Z0-9_])test[\/\\]real(?:[\/\\][^\s:)]*)?/gi, '<REDACTED>');
+  return msg.replace(/(?<![a-zA-Z0-9_])test[\/\\]real(?:[\/\\][^\s:]*)?/gi, '<REDACTED>');
 }
