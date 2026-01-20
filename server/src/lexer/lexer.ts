@@ -1156,7 +1156,7 @@ export class Lexer {
       TokenType.Code, TokenType.Text, TokenType.Date_Type, TokenType.Time,
       TokenType.RecordID, TokenType.RecordRef, TokenType.FieldRef,
       TokenType.Record, TokenType.Boolean, TokenType.Integer_Type,
-      TokenType.Decimal_Type, TokenType.Code_Type, TokenType.Time_Type,
+      TokenType.Decimal_Type, TokenType.Time_Type,
       TokenType.DateTime_Type, TokenType.BigInteger, TokenType.BigText,
       TokenType.BLOB, TokenType.GUID, TokenType.Duration, TokenType.Option,
       TokenType.Char, TokenType.Byte, TokenType.TextConst
@@ -1171,20 +1171,32 @@ export class Lexer {
       if (nextChar === '@') {
         tokenType = TokenType.Identifier;
       }
-      // If followed by '[' and preceded by a colon, it's a data type declaration like ": Code[20]"
-      // Keep as keyword (don't convert to identifier)
-      else if (nextChar === '[' && prevToken && prevToken.type === TokenType.Colon) {
-        // This is a data type: keep as keyword
-        // Example: "Param : Code[20]"
+      // Check if we're in a data type context (not a parameter name)
+      else {
+        // Determine if this is a data type position:
+        // 1. After colon: "Param : Code[20]" or "VAR x : Code;"
+        // 2. After OF keyword: "ARRAY[10] OF Code[20]"
+        // 3. In FIELDS section at COL_4: "{ 1 ; ; FieldName ; Code[10] }"
+        const isAfterColon = prevToken && prevToken.type === TokenType.Colon;
+        const isAfterOf = prevToken && prevToken.type === TokenType.Of;
+        const isFieldDataType = this.currentSectionType === 'FIELDS' && this.fieldDefColumn === FieldDefColumn.COL_4;
+        const isInDataTypeContext = isAfterColon || isAfterOf || isFieldDataType;
+
+        if (isInDataTypeContext) {
+          // This is a data type usage, not a section keyword or identifier
+          // For Code specifically, upgrade to Code_Type
+          if (tokenType === TokenType.Code) {
+            tokenType = TokenType.Code_Type;
+          }
+          // Keep other data type keywords as-is
+        }
+        // If followed by '[' but NOT in data type context, might be array access
+        // For safety, convert to identifier
+        else if (nextChar === '[') {
+          tokenType = TokenType.Identifier;
+        }
+        // Otherwise, let it fall through to section keyword downgrade logic below
       }
-      // If followed by '[' but NOT after colon, might be array access or other context
-      // For safety, convert to identifier
-      else if (nextChar === '[') {
-        tokenType = TokenType.Identifier;
-      }
-      // For CODE specifically, check if it's a section header
-      // CODE section would be at object level, not in parameter/variable contexts
-      // The parser handles CODE { ... } correctly even if lexed as identifier
     }
 
     // Downgrade section keywords to identifiers when used as parameter/variable names

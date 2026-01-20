@@ -127,7 +127,7 @@ describe('Lexer - Auto-Numbering (@number) Handling', () => {
       expect(tokens[2].type).toBe(TokenType.Unknown); // @
       expect(tokens[3].type).toBe(TokenType.Integer); // 1000
       expect(tokens[4].type).toBe(TokenType.Colon); // :
-      expect(tokens[5].type).toBe(TokenType.Code); // Code keyword
+      expect(tokens[5].type).toBe(TokenType.Code_Type); // Code data type (after colon)
       expect(tokens[6].type).toBe(TokenType.LeftBracket); // [
 
       // Semicolon separator is at position 9 after ]
