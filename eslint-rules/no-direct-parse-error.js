@@ -8,6 +8,7 @@
  * - Issue #131: Enforce ParseError factory method pattern
  * - Issue #141: ESLint rule implementation
  * - Issue #149: Alias detection enhancement
+ * - Issue #160: Import alias detection
  * - Direct construction bypasses centralized error sanitization
  * - Factory pattern enables consistent content sanitization
  * - Prevents sensitive content leakage in error messages
@@ -16,15 +17,18 @@
  *   - this.createParseError('message', token)
  *   - Inside functions/methods matching /^create.*Error$/
  *   - Aliases inside factory methods: const PE = ParseError; return new PE(...)
+ *   - Import aliases inside factory methods: import { ParseError as PE } from './errors'; new PE(...)
  *
  * Invalid:
  *   - new ParseError('message', token) in regular methods
  *   - throw new ParseError(...) outside factory methods
  *   - const PE = ParseError; new PE(...) in regular methods (alias detected)
  *   - let Err = ParseError; throw new Err(...) outside factories
+ *   - import { ParseError as PE } from './errors'; new PE(...) outside factories (import alias detected)
  *
  * Out of scope (intentionally not detected, covered by Jest CI guard):
- *   - Import aliases: import { ParseError as PE } from './errors'; new PE(...)
+ *   - Re-exports: export { ParseError as PE } from './errors'
+ *   - Default imports: import PE from './errors'; new PE(...)
  *   - Chained aliases: const A = ParseError; const B = A; new B(...)
  *   - Reassignment: let E = Other; E = ParseError; new E(...)
  *   - Property access: const obj = { PE: ParseError }; new obj.PE(...)
@@ -70,6 +74,7 @@ module.exports = {
      *   - const PE = ParseError; new PE(...)     → true (alias)
      *   - let Err = ParseError; new Err(...)     → true (alias)
      *   - (E = ParseError) => new E(...)         → true (default param alias)
+     *   - import { ParseError as PE } from './errors'; new PE(...) → true (import alias)
      *
      * Out of scope (intentionally not detected):
      *   - const obj = { PE: ParseError }         → false (property)
@@ -114,6 +119,16 @@ module.exports = {
           if (nameParent?.type === 'AssignmentPattern') {
             const right = nameParent.right;
             if (right && right.type === 'Identifier' && right.name === 'ParseError') {
+              return true;
+            }
+          }
+        }
+        // For import aliases like: import { ParseError as PE } from './errors'
+        if (def.type === 'ImportBinding') {
+          const importNode = def.node;
+          if (importNode.type === 'ImportSpecifier') {
+            const imported = importNode.imported;
+            if (imported && imported.type === 'Identifier' && imported.name === 'ParseError') {
               return true;
             }
           }

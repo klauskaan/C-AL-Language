@@ -190,13 +190,34 @@ ruleTester.run('no-direct-parse-error', rule, {
       options: [],
     },
 
-    // Import alias - out of scope (requires ImportBinding analysis)
-    // Note: Not detected by this rule, but caught by Jest CI guard
+    // Import alias in factory method - allowed (factory method pattern)
     {
       code: `
         import { ParseError as PE } from './errors';
-        function handleError() {
-          new PE('message', null);
+        function createParseError(msg: string) {
+          return new PE(msg, null);
+        }
+      `,
+      options: [],
+    },
+
+    // Non-aliased direct import in factory method - allowed
+    {
+      code: `
+        import { ParseError } from './errors';
+        function createParseError(msg: string) {
+          return new ParseError(msg, null);
+        }
+      `,
+      options: [],
+    },
+
+    // Multiple import specifiers with ParseError alias in factory - allowed
+    {
+      code: `
+        import { Token, ParseError as PE, Lexer } from './errors';
+        function createCustomError(msg: string) {
+          return new PE(msg, null);
         }
       `,
       options: [],
@@ -1118,6 +1139,116 @@ ruleTester.run('no-direct-parse-error', rule, {
         {
           messageId: 'useFactory',
           // NO suggestions - anonymous ClassExpression has no name, so not detected as Parser
+        },
+      ],
+    },
+
+    // ========== Import Alias Detection Tests (Issue #160) ==========
+    // These tests verify that import aliases are detected just like variable aliases.
+
+    // Basic import alias violation - should be detected
+    {
+      code: `
+        import { ParseError as PE } from './errors';
+        function handleError() {
+          return new PE('message', null);
+        }
+      `,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Non-aliased direct import violation - should be detected
+    {
+      code: `
+        import { ParseError } from './errors';
+        function handleError() {
+          throw new ParseError('error', token);
+        }
+      `,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Import alias in throw statement - should be detected
+    {
+      code: `
+        import { ParseError as PE } from './errors';
+        class Parser {
+          parse() {
+            throw new PE('Syntax error', this.token);
+          }
+        }
+      `,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Import alias in class method - should be detected
+    {
+      code: `
+        import { ParseError as Err } from './errors';
+        class Lexer {
+          tokenize() {
+            const error = new Err('Lexer error', this.currentToken);
+            return error;
+          }
+        }
+      `,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Multiple import specifiers - only ParseError alias triggers violation
+    {
+      code: `
+        import { Token, ParseError as PE, Lexer } from './errors';
+        function validate() {
+          return new PE('Validation failed', null);
+        }
+      `,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+      ],
+    },
+
+    // Multiple aliases in same import (edge case) - both should be detected
+    {
+      code: `
+        import { ParseError as PE, ParseError as Err } from './errors';
+        function handleError() {
+          const e1 = new PE('Error 1', null);
+          const e2 = new Err('Error 2', null);
+          return [e1, e2];
+        }
+      `,
+      errors: [
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
+        },
+        {
+          message: 'Do not directly instantiate ParseError. Use a factory method (e.g., createParseError) instead.',
+          type: 'NewExpression',
         },
       ],
     },
