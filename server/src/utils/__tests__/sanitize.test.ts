@@ -991,6 +991,63 @@ describe('Sanitization Utility', () => {
       });
     });
 
+    describe('Consecutive path separators (#157)', () => {
+      it('should redact path with double forward slash', () => {
+        const result = stripPaths('test//REAL/file.txt');
+
+        expect(result).toBe('<REDACTED>');
+        expect(result).not.toContain('file');
+      });
+
+      it('should redact path with triple forward slash', () => {
+        const result = stripPaths('test///REAL/file.txt');
+
+        expect(result).toBe('<REDACTED>');
+        expect(result).not.toContain('file');
+      });
+
+      it('should redact path with mixed separators (forward then backslash)', () => {
+        const result = stripPaths('test/\\REAL/file.txt');
+
+        expect(result).toBe('<REDACTED>');
+        expect(result).not.toContain('file');
+      });
+
+      it('should redact path with mixed separators (backslash then forward)', () => {
+        const result = stripPaths('test\\/REAL/file.txt');
+
+        expect(result).toBe('<REDACTED>');
+        expect(result).not.toContain('file');
+      });
+
+      it('should redact absolute path with double forward slash', () => {
+        const result = stripPaths('/home/user/test//REAL/file.txt');
+
+        expect(result).toBe('/home/user/<REDACTED>');
+        expect(result).not.toContain('file');
+      });
+
+      it('should redact Windows path with double backslash', () => {
+        const result = stripPaths('test\\\\REAL\\\\file.txt');
+
+        expect(result).toBe('<REDACTED>');
+        expect(result).not.toContain('file');
+      });
+
+      it('should redact path with triple mixed separators', () => {
+        const result = stripPaths('test/\\\\/REAL/file.txt');
+
+        expect(result).toBe('<REDACTED>');
+        expect(result).not.toContain('file');
+      });
+
+      it('should NOT redact when test is not standalone with double slash', () => {
+        const result = stripPaths('mytest//REAL/file.txt');
+
+        expect(result).toBe('mytest//REAL/file.txt');
+      });
+    });
+
     describe('Parentheses in filenames (#156)', () => {
       it('should redact filename with single parenthetical suffix (bug fix)', () => {
         const result = stripPaths('test/REAL/Codeunit(old).txt');

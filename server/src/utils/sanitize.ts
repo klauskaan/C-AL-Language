@@ -269,5 +269,5 @@ export function sanitizeTokenType(tokenType: string): string {
  * @returns Message with test/REAL/ paths replaced by <REDACTED>
  */
 export function stripPaths(msg: string): string {
-  return msg.replace(/(?<![a-zA-Z0-9_])test[\/\\]real(?:[\/\\][^\s:]*)?/gi, '<REDACTED>');
+  return msg.replace(/(?<![a-zA-Z0-9_])test[\/\\]+real(?:[\/\\][^\s:]*)?/gi, '<REDACTED>');
 }
