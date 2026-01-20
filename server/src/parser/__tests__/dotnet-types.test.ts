@@ -911,4 +911,62 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
       expect(variable.startToken.column).toBeGreaterThan(0);
     });
   });
+
+  describe('DotNet error handling and edge cases (Issues #76, #77, #80)', () => {
+    it('should parse DotNet with escaped single quote in assembly name', () => {
+      // Assembly name contains apostrophe, escaped as '' in C/AL
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Publisher@1 : DotNet "'O''Reilly.Json'.O''Reilly.Json.Parser";
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.dataType.typeName).toBe('DotNet');
+      // IMPORTANT: Verify unescaped value (single quote, not doubled)
+      expect(variable.dataType.assemblyReference).toBe("O'Reilly.Json");
+      expect(variable.dataType.dotNetTypeName).toBe("O'Reilly.Json.Parser");
+    });
+
+    it('should parse DotNet with multiple escaped quotes in assembly name', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Weird@1 : DotNet "'It''s.A.Test''s.Assembly'.Some.Type";
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const variable = ast.object!.code!.variables[0];
+      // Verify unescaped: It's.A.Test's.Assembly
+      expect(variable.dataType.assemblyReference).toBe("It's.A.Test's.Assembly");
+    });
+
+    it('should report error for DotNet with empty type name after assembly', () => {
+      // Assembly present but type name is empty (missing after the dot)
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            NoType@1 : DotNet "'mscorlib'.";
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Should report specific error about missing type name
+      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(parser.getErrors()[0].message).toMatch(/Expected type name after/i);
+      // Should still recover and create partial DataType
+      expect(ast.object).toBeDefined();
+    });
+  });
 });

@@ -727,7 +727,8 @@ export class Parser {
 
       // Parse the value: 'assembly'.Type.Name
       // Assembly reference is between the first pair of single quotes
-      const assemblyMatch = fullTypeSpec.match(/^'([^']+)'\./);
+      // Support escaped quotes: 'O''Reilly' should match as O''Reilly
+      const assemblyMatch = fullTypeSpec.match(/^'((?:[^']|'')+)'\./);
 
       if (!assemblyMatch) {
         this.recordError('Invalid DotNet type format, expected \'assembly\'.TypeName', this.peek());
@@ -739,8 +740,20 @@ export class Parser {
         };
       }
 
-      const assemblyReference = assemblyMatch[1]; // Extract assembly name (without quotes)
-      const dotNetTypeName = fullTypeSpec.substring(assemblyMatch[0].length); // Everything after 'assembly'.
+      const assemblyReference = assemblyMatch[1].replace(/''/g, "'"); // Extract assembly name and unescape doubled quotes
+      const dotNetTypeName = fullTypeSpec.substring(assemblyMatch[0].length).replace(/''/g, "'"); // Everything after 'assembly', unescape doubled quotes
+
+      // Validate that type name is not empty
+      if (!dotNetTypeName || dotNetTypeName.trim() === '') {
+        this.recordError('Expected type name after assembly reference', quotedTypeToken);
+        return {
+          type: 'DataType',
+          typeName: 'DotNet',
+          assemblyReference,
+          startToken,
+          endToken: this.previous()
+        };
+      }
 
       return {
         type: 'DataType',
