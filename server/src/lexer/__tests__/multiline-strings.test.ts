@@ -242,4 +242,59 @@ Continuation line.;ENU=English version';`;
       expect(tokens[4].value).toBe('Line 3\nLine 4');
     });
   });
+
+  describe('Line ending edge cases inside strings', () => {
+    // These tests verify line endings INSIDE string literals (vs BETWEEN tokens in line-endings.test.ts)
+
+    it('should treat \\n\\r as two separate newlines', () => {
+      const code = "'Line1\n\rLine2' X";
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.String);
+      expect(tokens[0].value).toBe('Line1\n\rLine2');
+      // String starts line 1, \n increments to line 2, \r increments to line 3. Closing quote on line 3, X token follows on same line (line 3).
+      // X should be on line 3 (line 1 + LF newline + CR newline)
+      expect(tokens[1].line).toBe(3);
+    });
+
+    it('should handle standalone CR (old Mac line ending)', () => {
+      const code = "'Line1\rLine2'";
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.String);
+      expect(tokens[0].value).toBe('Line1\rLine2');
+    });
+
+    it('should handle \\r\\r\\n correctly (CR + CRLF)', () => {
+      const code = "'A\r\r\nB' X";
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.String);
+      // First \r is one newline, \r\n is second newline
+      expect(tokens[0].value).toBe('A\r\r\nB');
+      // Add line tracking: X should be on line 3 (first \r → line 2, \r\n → line 3)
+      expect(tokens[1].line).toBe(3);
+    });
+
+    it('should handle CRLF immediately before closing quote', () => {
+      const code = "'Line1\r\n'";
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.String);
+      expect(tokens[0].value).toBe('Line1\r\n');
+    });
+
+    it('should handle mixed line endings in same string', () => {
+      const code = "'Unix\nWindows\r\nOldMac\rEnd'";
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.String);
+      expect(tokens[0].value).toBe('Unix\nWindows\r\nOldMac\rEnd');
+    });
+  });
 });
