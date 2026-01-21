@@ -2366,6 +2366,51 @@ describe('Parser - Multi-word Property Names', () => {
       expect(field?.properties?.properties[0].value).toBe('Yes');
     });
   });
+
+  describe('Error recovery for multi-word properties', () => {
+    it('should report error for malformed multi-word property without crashing', () => {
+      const code = `OBJECT Table 50000 Test {
+        FIELDS {
+          { 1 ; ; Field ; Code20 ; SQL Data Type }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Verify no crash - AST is defined
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+
+      // Verify meaningful error message is reported (issue #69 acceptance criteria)
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors.some(e => e.message.includes('='))).toBe(true);
+    });
+
+    it('should recover and parse subsequent valid fields after malformed multi-word property', () => {
+      const code = `OBJECT Table 50000 Test {
+        FIELDS {
+          { 1 ; ; BadField ; Code20 ; SQL Data Type }
+          { 2 ; ; GoodField ; Integer }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Verify parser recovered - AST is valid
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+
+      // Verify second field was successfully parsed (proves recovery worked)
+      expect(ast.object?.fields?.fields).toHaveLength(2);
+
+      // Verify error was still reported for the malformed field
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThan(0);
+    });
+  });
 });
 
 describe('Parser - Field Triggers', () => {
