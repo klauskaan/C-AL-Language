@@ -618,6 +618,125 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     });
   });
 
+  describe('Deeply nested MemberExpression (3+ levels)', () => {
+    /**
+     * REGRESSION TESTS: These tests verify that the parser correctly handles
+     * deeply nested member expressions (3+ levels) in FOR loop variables.
+     *
+     * The parser already implements this via recursive `parseMemberAccessIfPresent()`,
+     * so these tests should PASS immediately. They serve as regression protection
+     * to ensure deep nesting continues to work as the parser evolves.
+     *
+     * Context: Issue #65 - verify arbitrary depth member access works correctly.
+     */
+
+    it('should parse 3-level nested member expression as FOR variable', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestFor();
+    VAR
+      a : Record 50000;
+    BEGIN
+      FOR a.b.c := 1 TO 10 DO
+        ProcessItem;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should parse without errors
+      expect(errors).toHaveLength(0);
+      expect(ast.object).toBeDefined();
+
+      const procedure = ast.object!.code!.procedures[0];
+      const forStmt = procedure.body[0] as ForStatement;
+
+      expect(forStmt.type).toBe('ForStatement');
+
+      // Verify the FOR variable is a deeply nested MemberExpression
+      const variable = forStmt.variable as any;
+      expect(variable.type).toBe('MemberExpression');
+
+      // Top level: a.b.c
+      // variable.property should be 'c'
+      expect(variable.property.name).toBe('c');
+
+      // variable.object should be a MemberExpression for 'a.b'
+      expect(variable.object.type).toBe('MemberExpression');
+      expect(variable.object.property.name).toBe('b');
+
+      // variable.object.object should be an Identifier for 'a'
+      expect(variable.object.object.type).toBe('Identifier');
+      expect(variable.object.object.name).toBe('a');
+
+      // Verify from/to expressions are correct
+      expect(forStmt.from.type).toBe('Literal');
+      expect(forStmt.to.type).toBe('Literal');
+    });
+
+    it('should parse 4-level nested member expression as FOR variable', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestFor();
+    VAR
+      a : Record 50000;
+    BEGIN
+      FOR a.b.c.d := 1 TO 10 DO
+        ProcessItem;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should parse without errors
+      expect(errors).toHaveLength(0);
+      expect(ast.object).toBeDefined();
+
+      const procedure = ast.object!.code!.procedures[0];
+      const forStmt = procedure.body[0] as ForStatement;
+
+      expect(forStmt.type).toBe('ForStatement');
+
+      // Verify the FOR variable is a 4-level nested MemberExpression
+      const variable = forStmt.variable as any;
+      expect(variable.type).toBe('MemberExpression');
+
+      // Top level: a.b.c.d
+      // Level 1: property 'd', object is MemberExpression 'a.b.c'
+      expect(variable.property.name).toBe('d');
+      expect(variable.object.type).toBe('MemberExpression');
+
+      // Level 2: property 'c', object is MemberExpression 'a.b'
+      expect(variable.object.property.name).toBe('c');
+      expect(variable.object.object.type).toBe('MemberExpression');
+
+      // Level 3: property 'b', object is Identifier 'a'
+      expect(variable.object.object.property.name).toBe('b');
+      expect(variable.object.object.object.type).toBe('Identifier');
+
+      // Level 4: base identifier 'a'
+      expect(variable.object.object.object.name).toBe('a');
+
+      // Verify from/to expressions are correct
+      expect(forStmt.from.type).toBe('Literal');
+      expect(forStmt.to.type).toBe('Literal');
+
+      // This test proves the recursive parser handles arbitrary depth correctly
+    });
+  });
+
   describe('Error positioning for invalid FOR variables', () => {
     /**
      * Issue #66: Error messages for invalid FOR loop variables should point
