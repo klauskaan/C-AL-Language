@@ -405,6 +405,10 @@ export class Parser {
         if (braceDepth < 0) {
           // Back up one token since we consumed the brace that closes the PROPERTIES section
           this.current--;
+          // Restore this.braceDepth that was decremented by advance() when consuming the RightBrace
+          // The backup undoes the token consumption, so we must also undo the braceDepth change
+          // (advance() decrements this.braceDepth at line 3068)
+          this.braceDepth++;
           braceDepth = 0;
           break;
         }
