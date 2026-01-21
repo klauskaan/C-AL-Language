@@ -349,7 +349,7 @@ export class Parser {
       const block = this.parseBlock();
       const triggerBody = block.statements;
 
-      const endToken = this.consume(TokenType.Semicolon, 'Expected ;');
+      const endToken = this.consume(TokenType.Semicolon, 'Expected ; after trigger body');
 
       return {
         type: 'Property',
@@ -488,7 +488,7 @@ export class Parser {
     const fieldNoToken = this.consume(TokenType.Integer, 'Expected field number');
     const fieldNo = this.parseInteger(fieldNoToken, 'field number in FIELDS section');
 
-    this.consume(TokenType.Semicolon, 'Expected ;');
+    this.consume(TokenType.Semicolon, 'Expected ; after field number');
 
     // Reserved column (always empty in NAV exports)
     // C/AL format: { FieldNo ; (reserved) ; FieldName ; DataType }
@@ -499,7 +499,7 @@ export class Parser {
       fieldClass = fieldClassToken.value;
     }
 
-    this.consume(TokenType.Semicolon, 'Expected ;');
+    this.consume(TokenType.Semicolon, 'Expected ; after field class');
 
     // Field name (can be quoted or unquoted)
     // For unquoted names, read all tokens until semicolon to handle special chars like periods
@@ -533,7 +533,7 @@ export class Parser {
       }
     }
 
-    this.consume(TokenType.Semicolon, 'Expected ;');
+    this.consume(TokenType.Semicolon, 'Expected ; after field name');
 
     // Data type
     const dataType = this.parseDataType();
@@ -640,7 +640,7 @@ export class Parser {
 
       const dimensions = this.parseArrayDimensions();
 
-      this.consume(TokenType.RightBracket, 'Expected ]');
+      this.consume(TokenType.RightBracket, 'Expected ] after array dimensions');
 
       // Expect OF keyword
       let hasTemporary = false;
@@ -705,7 +705,7 @@ export class Parser {
       this.advance();
       const lengthToken = this.consume(TokenType.Integer, 'Expected length');
       length = this.parseInteger(lengthToken, 'string/code length');
-      this.consume(TokenType.RightBracket, 'Expected ]');
+      this.consume(TokenType.RightBracket, 'Expected ] after type length');
       // Include bracket notation in typeName for proper display
       typeName = `${typeName}[${length}]`;
     }
@@ -1191,7 +1191,7 @@ export class Parser {
         // Skip @number if present (C/AL auto-numbering)
         this.skipAutoNumberSuffix();
 
-        this.consume(TokenType.Colon, 'Expected :');
+        this.consume(TokenType.Colon, 'Expected : after variable name in variable declaration');
 
         // Check for TEMPORARY keyword before data type
         let isTemporary: boolean | undefined;
@@ -1210,7 +1210,7 @@ export class Parser {
         // Parse post-type modifiers (INDATASET, WITHEVENTS, RUNONCLIENT, SECURITYFILTERING)
         const modifiers = this.parsePostTypeModifiers(true); // true = include INDATASET for variables
 
-        this.consume(TokenType.Semicolon, 'Expected ;');
+        this.consume(TokenType.Semicolon, 'Expected ; after variable declaration');
 
         const variable: VariableDeclaration = {
           type: 'VariableDeclaration',
@@ -1444,12 +1444,17 @@ export class Parser {
       if (this.check(TokenType.Semicolon)) {
         this.advance();
       } else if (!this.check(TokenType.RightParen)) {
-        this.recordError(`Unexpected token '${sanitizeContent(this.peek().value)}' in parameter list (expected ';' or ')')`, this.peek());
+        // Check if we've hit a definite end-of-parameter-list token
+        if (this.check(TokenType.Begin) || this.check(TokenType.Var) || this.check(TokenType.Procedure)) {
+          this.recordError(`Expected ) in parameter list (missing closing parenthesis)`, this.peek());
+        } else {
+          this.recordError(`Unexpected token '${sanitizeContent(this.peek().value)}' in parameter list (expected ';' or ')')`, this.peek());
+        }
         this.advance();
       }
     }
 
-    this.consume(TokenType.RightParen, 'Expected )');
+    this.consume(TokenType.RightParen, 'Expected ) after parameter list');
 
     // Skip semicolon after procedure declaration
     if (this.check(TokenType.Semicolon)) {
@@ -2190,7 +2195,7 @@ export class Parser {
     }
 
     // Colon
-    this.consume(TokenType.Colon, 'Expected :');
+    this.consume(TokenType.Colon, 'Expected : after case branch value');
 
     // Parse statement(s)
     const statements: Statement[] = [];
@@ -2272,7 +2277,7 @@ export class Parser {
       if (!this.check(TokenType.RightParen)) {
         value = this.parseExpression();
       }
-      this.consume(TokenType.RightParen, 'Expected )');
+      this.consume(TokenType.RightParen, 'Expected ) after EXIT value');
     }
 
     if (this.check(TokenType.Semicolon)) {
@@ -2316,7 +2321,7 @@ export class Parser {
    * - WITH record DO;
    */
   private parseEmptyStatement(): EmptyStatement {
-    const semicolon = this.consume(TokenType.Semicolon, 'Expected ;');
+    const semicolon = this.consume(TokenType.Semicolon, 'Expected ; after statement');
     return {
       type: 'EmptyStatement',
       startToken: semicolon,
@@ -2718,7 +2723,7 @@ export class Parser {
     if (this.check(TokenType.LeftParen)) {
       this.advance();
       const expr = this.parseExpression();
-      this.consume(TokenType.RightParen, 'Expected )');
+      this.consume(TokenType.RightParen, 'Expected ) after expression');
       return expr;
     }
 
@@ -2910,7 +2915,7 @@ export class Parser {
       indices.push(this.parseExpression());
     }
 
-    const endToken = this.consume(TokenType.RightBracket, 'Expected ]');
+    const endToken = this.consume(TokenType.RightBracket, 'Expected ] after array index');
 
     return {
       type: 'ArrayAccessExpression',
@@ -3001,7 +3006,7 @@ export class Parser {
       }
     } while (!this.check(TokenType.RightBracket) && !this.isAtEnd());
 
-    const endToken = this.consume(TokenType.RightBracket, 'Expected ]');
+    const endToken = this.consume(TokenType.RightBracket, 'Expected ] after set literal');
 
     return {
       type: 'SetLiteral',

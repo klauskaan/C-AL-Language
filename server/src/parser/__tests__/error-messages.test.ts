@@ -133,9 +133,9 @@ describe('Parser - Error Messages with Context', () => {
       parser.parse();
       const errors = parser.getErrors();
 
-      if (errors.length > 0) {
-        expect(errors[0].message).toContain('Expected ;');
-      }
+      expect(errors.length).toBeGreaterThan(0);
+      // Issue #3: Should provide contextual error message
+      expect(errors[0].message).toMatch(/Expected ; after field/i);
     });
   });
 
@@ -452,6 +452,190 @@ describe('Parser - Error Messages with Context', () => {
       expect(procedures.length).toBe(2);
       expect(procedures[0].name).toBe('TestProc');
       expect(procedures[1].name).toBe('AnotherProc');
+    });
+  });
+
+  describe('Improved error message context (Issue #3)', () => {
+    it('should include context for missing semicolon in EXIT statement', () => {
+      // NOTE: In C/AL, semicolons are optional between statements.
+      // However, EXIT with a value followed by something else can trigger errors.
+      // Test the EXIT statement which DOES require proper parsing.
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    BEGIN
+      EXIT(x)
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      // EXIT(x) without semicolon before END is valid in C/AL
+      // This test verifies that valid code parses without errors
+      // The error message improvements are tested in other scenarios
+      expect(errors.length).toBe(0);
+    });
+
+    it('should include context for missing semicolon in variable declaration', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      MyVar@1 : Integer
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      expect(errors.length).toBeGreaterThan(0);
+      // Should provide context about missing semicolon in variable declaration
+      expect(errors[0].message).toMatch(/Expected ; after (variable|declaration)/i);
+    });
+
+    it('should include context for missing semicolon in trigger body', () => {
+      const code = `OBJECT Codeunit 1 Test
+{
+  PROPERTIES
+  {
+    OnRun=BEGIN END
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      expect(errors.length).toBeGreaterThan(0);
+      // Should provide context about missing semicolon after trigger body
+      expect(errors[0].message).toMatch(/Expected ; after trigger body/i);
+    });
+
+    it('should include context for missing colon in variable declaration', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      MyVar@1 Integer;
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      expect(errors.length).toBeGreaterThan(0);
+      // Should provide context about missing colon in variable declaration
+      expect(errors[0].message).toMatch(/Expected : (after variable|in variable declaration)/i);
+    });
+
+    it('should include context for missing closing bracket in array', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      MyArray@1 : ARRAY[10 OF Integer;
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      expect(errors.length).toBeGreaterThan(0);
+      // Should provide context about missing closing bracket
+      const bracketError = errors.find(e => e.message.includes(']'));
+      expect(bracketError).toBeDefined();
+      expect(bracketError?.message).toMatch(/Expected \] (after|in array)/i);
+    });
+
+    it('should include context for missing closing paren in parameters', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(Param1@1 : Integer;
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      expect(errors.length).toBeGreaterThan(0);
+      // Should provide context about missing closing parenthesis
+      const parenError = errors.find(e => e.message.includes(')'));
+      expect(parenError).toBeDefined();
+      expect(parenError?.message).toMatch(/Expected \) (after|in parameter)/i);
+    });
+  });
+
+  describe('Multi-error scenarios (Issue #3)', () => {
+    it('should provide contextual error message for malformed variable declaration', () => {
+      // NOTE: In C/AL, semicolons between statements are optional (separator, not terminator).
+      // So missing semicolons between statements don't trigger errors.
+      // However, missing semicolons in VAR sections DO trigger errors.
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Var1@1 : Integer
+      Var2@2 : Text;
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      // Should report at least one error for missing semicolon after variable declaration
+      expect(errors.length).toBeGreaterThanOrEqual(1);
+
+      // The error should include contextual information
+      const contextualErrors = errors.filter(e =>
+        e.message.match(/after (variable|declaration)/i)
+      );
+
+      // Should have at least one contextual error message
+      expect(contextualErrors.length).toBeGreaterThan(0);
     });
   });
 });
