@@ -28,6 +28,7 @@ import {
   RepeatStatement,
   CaseStatement,
   ExitStatement,
+  BreakStatement,
   DataType,
   ASTNode
 } from '../../parser/ast';
@@ -609,6 +610,36 @@ describe('ASTWalker', () => {
       expect(visitedExits.length).toBe(1);
       expect(visitedLiterals.length).toBeGreaterThanOrEqual(1);
       expect(visitedLiterals.some(l => l.value === 42)).toBe(true);
+    });
+
+    it('should visit break statements', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          VAR
+            i : Integer;
+
+          PROCEDURE TestProc();
+          BEGIN
+            REPEAT
+              i := i + 1;
+              BREAK;
+            UNTIL i > 10;
+          END;
+        }
+      }`;
+      const ast = parseCode(code);
+      const visitedBreaks: BreakStatement[] = [];
+
+      const visitor: Partial<ASTVisitor> = {
+        visitBreakStatement: (node: BreakStatement) => {
+          visitedBreaks.push(node);
+        }
+      };
+
+      walker.walk(ast, visitor);
+
+      expect(visitedBreaks.length).toBe(1);
+      expect(visitedBreaks[0].type).toBe('BreakStatement');
     });
   });
 
