@@ -1061,8 +1061,21 @@ export class Parser {
     const fieldGroups: FieldGroup[] = [];
 
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
-      // Skip for now - simplified implementation
-      this.advance();
+      const fieldGroup = this.parseWithRecovery(
+        () => this.parseFieldGroup(),
+        [TokenType.LeftBrace, TokenType.RightBrace]
+      );
+      if (fieldGroup) {
+        fieldGroups.push(fieldGroup);
+      } else if (this.check(TokenType.RightBrace)) {
+        // After error recovery, we may be at an entry's closing brace.
+        // If the next token is '{' (another entry), consume this '}' and continue.
+        // Otherwise, it's the section's closing brace - let the outer loop handle it.
+        const nextToken = this.tokens[this.current + 1];
+        if (nextToken?.type === TokenType.LeftBrace) {
+          this.advance(); // consume entry's closing brace
+        }
+      }
     }
 
     const endToken = this.consume(TokenType.RightBrace, 'Expected }');
@@ -1070,6 +1083,72 @@ export class Parser {
     return {
       type: 'FieldGroupSection',
       fieldGroups,
+      startToken,
+      endToken
+    };
+  }
+
+  private parseFieldGroup(): FieldGroup {
+    const startToken = this.consume(TokenType.LeftBrace, 'Expected {');
+
+    // Column 1: ID (integer)
+    const idToken = this.consume(TokenType.Integer, 'Expected field group ID');
+    const id = this.parseInteger(idToken, 'field group ID');
+
+    this.consume(TokenType.Semicolon, 'Expected ; after field group ID');
+
+    // Column 2: Name (identifier, may be quoted)
+    let name: string;
+    if (this.check(TokenType.QuotedIdentifier)) {
+      name = this.advance().value;
+    } else {
+      const nameToken = this.consume(TokenType.Identifier, 'Expected field group name');
+      name = nameToken.value;
+    }
+
+    this.consume(TokenType.Semicolon, 'Expected ; after field group name');
+
+    // Column 3: Field list - comma-separated, accumulate tokens with spacing
+    const fields: string[] = [];
+
+    // Handle empty field list explicitly
+    if (!this.check(TokenType.RightBrace)) {
+      let currentFieldTokens: string[] = [];
+      let lastEndOffset = -1;
+
+      while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+        if (this.check(TokenType.Comma)) {
+          // End of current field
+          if (currentFieldTokens.length > 0) {
+            fields.push(currentFieldTokens.join('').trim());
+            currentFieldTokens = [];
+          }
+          this.advance(); // consume comma
+          lastEndOffset = -1; // reset for next field
+        } else {
+          const token = this.advance();
+          // Add space if there was whitespace between tokens
+          if (lastEndOffset !== -1 && token.startOffset > lastEndOffset) {
+            currentFieldTokens.push(' ');
+          }
+          currentFieldTokens.push(token.value);
+          lastEndOffset = token.endOffset;
+        }
+      }
+
+      // Don't forget last field
+      if (currentFieldTokens.length > 0) {
+        fields.push(currentFieldTokens.join('').trim());
+      }
+    }
+
+    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+
+    return {
+      type: 'FieldGroup',
+      id,
+      name,
+      fields,
       startToken,
       endToken
     };

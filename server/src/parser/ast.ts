@@ -178,6 +178,7 @@ export interface FieldGroupSection extends ASTNode {
 
 export interface FieldGroup extends ASTNode {
   type: 'FieldGroup';
+  id: number;
   name: string;
   fields: string[];
 }
