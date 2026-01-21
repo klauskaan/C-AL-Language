@@ -3932,6 +3932,142 @@ describe('Parser - Keywords as Variable Names', () => {
       expect(ifStmt.type).toBe('IfStatement');
       expect(ifStmt.thenBranch.type).toBe('EmptyStatement');
     });
+
+    it('should parse Code assignment after THEN', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Code@1000 : Code[20];
+      x@1001 : Boolean;
+    BEGIN
+      IF x THEN
+        Code := 'ABC';
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const proc = procedures[0];
+      const statements = proc.body as any[];
+      const ifStmt = statements[0] as any;
+
+      expect(ifStmt.thenBranch.type).toBe('AssignmentStatement');
+      expect(ifStmt.thenBranch.target.name).toBe('Code');
+    });
+
+    it('should parse Code assignment after ELSE', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Code@1000 : Code[20];
+      x@1001 : Boolean;
+      y@1002 : Integer;
+    BEGIN
+      IF x THEN
+        y := 1
+      ELSE
+        Code := 'XYZ';
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const proc = procedures[0];
+      const statements = proc.body as any[];
+      const ifStmt = statements[0] as any;
+
+      expect(ifStmt.elseBranch).not.toBeNull();
+      expect(ifStmt.elseBranch.type).toBe('AssignmentStatement');
+      expect(ifStmt.elseBranch.target.name).toBe('Code');
+    });
+
+    it('should parse Decimal assignment after THEN', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Decimal@1000 : Decimal;
+      x@1001 : Boolean;
+    BEGIN
+      IF x THEN
+        Decimal := 3.14;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const proc = procedures[0];
+      const statements = proc.body as any[];
+      const ifStmt = statements[0] as any;
+
+      expect(ifStmt.thenBranch.type).toBe('AssignmentStatement');
+      expect(ifStmt.thenBranch.target.name).toBe('Decimal');
+    });
+
+    it('should parse Decimal assignment after ELSE', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Decimal@1000 : Decimal;
+      x@1001 : Boolean;
+      y@1002 : Integer;
+    BEGIN
+      IF x THEN
+        y := 1
+      ELSE
+        Decimal := 99.99;
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const proc = procedures[0];
+      const statements = proc.body as any[];
+      const ifStmt = statements[0] as any;
+
+      expect(ifStmt.elseBranch).not.toBeNull();
+      expect(ifStmt.elseBranch.type).toBe('AssignmentStatement');
+      expect(ifStmt.elseBranch.target.name).toBe('Decimal');
+    });
   });
 
   describe('Keys variable name', () => {
