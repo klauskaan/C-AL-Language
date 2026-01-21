@@ -228,11 +228,14 @@ export class SignatureHelpProvider extends ProviderBase {
       parameters: parameterInfos
     };
 
+    // Clamp activeParameter to valid range [0, maxParameterIndex]
+    // (maxParameterIndex is 0 for empty parameter list)
+    const maxParameterIndex = Math.max(0, parameters.length - 1);
+
     return {
       signatures: [signature],
       activeSignature: 0,
-      // Clamp to valid range: 0 to parameters.length - 1 (or 0 if no params)
-      activeParameter: Math.max(0, Math.min(activeParameter, Math.max(0, parameters.length - 1)))
+      activeParameter: Math.max(0, Math.min(activeParameter, maxParameterIndex))
     };
   }
 
