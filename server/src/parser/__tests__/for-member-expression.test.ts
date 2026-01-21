@@ -617,4 +617,151 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
       expect(variable.endToken).toBeDefined();
     });
   });
+
+  describe('Error positioning for invalid FOR variables', () => {
+    /**
+     * Issue #66: Error messages for invalid FOR loop variables should point
+     * to the start of the invalid expression, not the := token.
+     *
+     * These tests validate that error positioning is correct for various
+     * invalid expression types used as FOR loop variables.
+     */
+
+    it('should position error on CallExpression in FOR loop', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestFor();
+    BEGIN
+      FOR GetRecord() := 1 TO 10 DO
+        ProcessItem;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      parser.parse();
+      const errors = parser.getErrors();
+
+      const forError = errors.find(e =>
+        e.message.includes('Invalid FOR loop variable')
+      );
+
+      expect(forError).toBeDefined();
+      expect(forError!.token.value).toBe('GetRecord');
+      expect(forError!.token.column).toBe(11); // "FOR " is 4 chars, plus 6 spaces indent = 10, so "G" is at column 11
+    });
+
+    it('should position error on Literal in FOR loop', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestFor();
+    BEGIN
+      FOR 1 := 1 TO 10 DO
+        ProcessItem;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      parser.parse();
+      const errors = parser.getErrors();
+
+      const forError = errors.find(e =>
+        e.message.includes('Invalid FOR loop variable')
+      );
+
+      expect(forError).toBeDefined();
+      expect(forError!.token.value).toBe('1');
+      expect(forError!.token.column).toBe(11); // "FOR " is 4 chars, plus 6 spaces indent = 10, so "1" is at column 11
+    });
+
+    it('should position error on CallExpression base of MemberExpression in FOR loop', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestFor();
+    BEGIN
+      FOR GetRecord().Field := 1 TO 10 DO
+        ProcessItem;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      parser.parse();
+      const errors = parser.getErrors();
+
+      const forError = errors.find(e =>
+        e.message.includes('Invalid FOR loop variable')
+      );
+
+      expect(forError).toBeDefined();
+      expect(forError!.token.value).toBe('GetRecord');
+      expect(forError!.token.column).toBe(11); // "FOR " is 4 chars, plus 6 spaces indent = 10, so "G" is at column 11
+    });
+
+    it('should position error on ArrayAccessExpression in FOR loop', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestFor();
+    VAR
+      arr : ARRAY[10] OF Integer;
+    BEGIN
+      FOR arr[1] := 1 TO 10 DO
+        ProcessItem;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      parser.parse();
+      const errors = parser.getErrors();
+
+      const forError = errors.find(e =>
+        e.message.includes('Invalid FOR loop variable')
+      );
+
+      expect(forError).toBeDefined();
+      expect(forError!.token.value).toBe('arr');
+      expect(forError!.token.column).toBe(11); // "FOR " is 4 chars, plus 6 spaces indent = 10, so "a" is at column 11
+    });
+
+    it('should position error on BinaryExpression in FOR loop', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestFor();
+    BEGIN
+      FOR a + b := 1 TO 10 DO
+        ProcessItem;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      parser.parse();
+      const errors = parser.getErrors();
+
+      const forError = errors.find(e =>
+        e.message.includes('Invalid FOR loop variable')
+      );
+
+      expect(forError).toBeDefined();
+      expect(forError!.token.value).toBe('a');
+      expect(forError!.token.column).toBe(11); // "FOR " is 4 chars, plus 6 spaces indent = 10, so "a" is at column 11
+    });
+  });
 });

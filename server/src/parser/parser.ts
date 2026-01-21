@@ -2060,7 +2060,7 @@ export class Parser {
       const memberExpr = variableExpr as MemberExpression;
       // Additional validation: ensure the object is a valid lvalue (Identifier or MemberExpression)
       if (memberExpr.object.type !== 'Identifier' && memberExpr.object.type !== 'MemberExpression') {
-        this.recordError('Invalid FOR loop variable: expected identifier or field reference', this.peek());
+        this.recordError('Invalid FOR loop variable: expected identifier or field reference', variableExpr.startToken);
         variable = {
           type: 'Identifier',
           name: '<error>',
@@ -2073,7 +2073,7 @@ export class Parser {
       }
     } else {
       // Invalid expression type - record error and create synthetic identifier for recovery
-      this.recordError('Invalid FOR loop variable: expected identifier or field reference', this.peek());
+      this.recordError('Invalid FOR loop variable: expected identifier or field reference', variableExpr.startToken);
       variable = {
         type: 'Identifier',
         name: '<error>',
