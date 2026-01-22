@@ -439,7 +439,12 @@ export interface ProcedureAttribute extends ASTNode {
   type: 'ProcedureAttribute';
   /** Attribute name (e.g., "External", "Scope", "EventSubscriber") */
   name: string;
-  /** Tokens between attribute name and closing bracket (empty for simple attributes without arguments) */
+  /**
+   * Tokens captured after the attribute name (empty for simple attributes).
+   * For parameterized attributes, includes opening '(', all argument tokens, and closing ')'.
+   * Does NOT include the attribute name itself or the square brackets.
+   * Example: [EventSubscriber(Page,6302,OnEvent)] → rawTokens = ['(', 'Page', ',', '6302', ',', 'OnEvent', ')']
+   */
   rawTokens: Token[];
   /** True if parentheses present (e.g., [EventSubscriber(...)]) */
   hasArguments: boolean;
