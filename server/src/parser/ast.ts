@@ -433,6 +433,19 @@ export interface VariableDeclaration extends ASTNode, VariableModifiers {
 }
 
 /**
+ * Procedure attribute (e.g., [External], [Scope('OnPrem')], [EventSubscriber(...)])
+ */
+export interface ProcedureAttribute extends ASTNode {
+  type: 'ProcedureAttribute';
+  /** Attribute name (e.g., "External", "Scope", "EventSubscriber") */
+  name: string;
+  /** Tokens between attribute name and closing bracket (empty for simple attributes without arguments) */
+  rawTokens: Token[];
+  /** True if parentheses present (e.g., [EventSubscriber(...)]) */
+  hasArguments: boolean;
+}
+
+/**
  * Procedure/Function declaration
  */
 export interface ProcedureDeclaration extends ASTNode {
@@ -443,6 +456,8 @@ export interface ProcedureDeclaration extends ASTNode {
   isLocal: boolean;
   variables: VariableDeclaration[];
   body: Statement[];
+  /** Optional array of captured attributes (e.g., [External], [Scope('OnPrem')]) */
+  attributes?: ProcedureAttribute[];
 }
 
 /**

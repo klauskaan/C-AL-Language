@@ -13,6 +13,7 @@ import {
   FieldGroup,
   VariableDeclaration,
   ProcedureDeclaration,
+  ProcedureAttribute,
   ParameterDeclaration,
   TriggerDeclaration,
   EventDeclaration,
@@ -131,6 +132,11 @@ export interface ASTVisitor {
    * Visit a ProcedureDeclaration node (function/procedure definition)
    */
   visitProcedureDeclaration?(node: ProcedureDeclaration): void | false;
+
+  /**
+   * Visit a ProcedureAttribute node (e.g., [External], [Scope('OnPrem')])
+   */
+  visitProcedureAttribute?(node: ProcedureAttribute): void | false;
 
   /**
    * Visit a ParameterDeclaration node (procedure parameter)

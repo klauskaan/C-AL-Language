@@ -18,6 +18,7 @@ import {
   CodeSection,
   VariableDeclaration,
   VariableModifiers,
+  ProcedureAttribute,
   ProcedureDeclaration,
   ParameterDeclaration,
   TriggerDeclaration,
@@ -1214,17 +1215,15 @@ export class Parser {
         // Check for AL-only tokens before procedure/trigger declarations
         this.skipALOnlyTokens();
 
-        // Skip attributes like [External], [Integration], etc.
+        // Parse attributes like [External], [Integration], etc.
         // These are attributes in square brackets before procedure declarations
+        const attributes: ProcedureAttribute[] = [];
         while (this.check(TokenType.LeftBracket)) {
-          this.advance(); // consume [
-          // Skip until closing ]
-          while (!this.check(TokenType.RightBracket) && !this.isAtEnd()) {
-            this.advance();
+          const attr = this.parseAttribute();
+          if (attr !== null) {
+            attributes.push(attr);
           }
-          if (this.check(TokenType.RightBracket)) {
-            this.advance(); // consume ]
-          }
+          // If parseAttribute() returned null, it already handled recovery
         }
 
         // Check for LOCAL keyword before PROCEDURE/FUNCTION
@@ -1238,7 +1237,7 @@ export class Parser {
         }
 
         if (this.check(TokenType.Procedure) || this.check(TokenType.Function)) {
-          procedures.push(this.parseProcedure(isLocal));
+          procedures.push(this.parseProcedure(isLocal, attributes));
         } else if (this.check(TokenType.Trigger)) {
           triggers.push(this.parseTrigger());
         } else if (this.check(TokenType.Event)) {
@@ -1273,6 +1272,110 @@ export class Parser {
       startToken,
       endToken: this.previous()
     };
+  }
+
+  /**
+   * Parse procedure attribute (e.g., [External], [Scope('OnPrem')], [EventSubscriber(...)])
+   * Returns null if no attribute found or if malformed and recovery failed.
+   */
+  private parseAttribute(): ProcedureAttribute | null {
+    if (!this.check(TokenType.LeftBracket)) {
+      return null;
+    }
+
+    const startToken = this.advance(); // consume [
+
+    // Check for empty attribute
+    if (this.check(TokenType.RightBracket)) {
+      this.recordError('Empty attribute');
+      this.advance(); // consume ]
+      return null;
+    }
+
+    // Capture attribute name (first identifier after [)
+    if (!this.canBeUsedAsIdentifier()) {
+      this.recordError('Expected attribute name after [');
+      return this.recoverFromMalformedAttribute();
+    }
+
+    const nameToken = this.advance();
+    const name = nameToken.value;
+
+    // Track whether we have arguments and collect all tokens
+    let hasArguments = false;
+    const rawTokens: Token[] = [];
+
+    // Check for opening parenthesis
+    if (this.check(TokenType.LeftParen)) {
+      hasArguments = true;
+      let parenDepth = 0;
+
+      // Capture all tokens until matching closing paren
+      while (!this.isAtEnd()) {
+        const token = this.peek();
+
+        if (token.type === TokenType.LeftParen) {
+          parenDepth++;
+          rawTokens.push(this.advance());
+        } else if (token.type === TokenType.RightParen) {
+          rawTokens.push(this.advance());
+          parenDepth--;
+          if (parenDepth === 0) {
+            break;
+          }
+        } else if (token.type === TokenType.RightBracket && parenDepth === 0) {
+          // Hit closing bracket before closing paren - malformed
+          this.recordError('Unclosed parenthesis in attribute');
+          return this.recoverFromMalformedAttribute();
+        } else {
+          rawTokens.push(this.advance());
+        }
+      }
+
+      // Check if we exited due to EOF with unclosed parens
+      if (parenDepth > 0) {
+        this.recordError('Unclosed parenthesis in attribute');
+        return this.recoverFromMalformedAttribute();
+      }
+    }
+
+    // Expect closing bracket
+    if (!this.check(TokenType.RightBracket)) {
+      this.recordError('Expected ] to close attribute');
+      return this.recoverFromMalformedAttribute();
+    }
+
+    const endToken = this.advance(); // consume ]
+
+    return {
+      type: 'ProcedureAttribute',
+      name,
+      rawTokens,
+      hasArguments,
+      startToken,
+      endToken
+    };
+  }
+
+  /**
+   * Recover from malformed attribute by skipping to closing ] or next statement keyword.
+   * Returns null to indicate attribute parsing failed.
+   */
+  private recoverFromMalformedAttribute(): null {
+    // Skip to closing ] or next statement keyword
+    while (!this.isAtEnd()) {
+      if (this.check(TokenType.RightBracket)) {
+        this.advance(); // consume ]
+        break;
+      }
+      if (this.check(TokenType.Procedure) || this.check(TokenType.Function) ||
+          this.check(TokenType.Local) || this.check(TokenType.Begin)) {
+        // Stop at procedure/function keywords
+        break;
+      }
+      this.advance();
+    }
+    return null;
   }
 
   /**
@@ -1427,7 +1530,7 @@ export class Parser {
     return modifiers;
   }
 
-  private parseProcedure(isLocal: boolean = false): ProcedureDeclaration {
+  private parseProcedure(isLocal: boolean = false, attributes: ProcedureAttribute[] = []): ProcedureDeclaration {
     const startToken = this.advance(); // PROCEDURE or FUNCTION
 
     const name = this.parseProcedureName();
@@ -1454,7 +1557,7 @@ export class Parser {
       this.advance();
     }
 
-    return {
+    const proc: ProcedureDeclaration = {
       type: 'ProcedureDeclaration',
       name,
       parameters,
@@ -1465,6 +1568,13 @@ export class Parser {
       startToken,
       endToken: this.previous()
     };
+
+    // Add attributes only if there are any (keeps undefined for procedures without attributes)
+    if (attributes.length > 0) {
+      proc.attributes = attributes;
+    }
+
+    return proc;
   }
 
   /**

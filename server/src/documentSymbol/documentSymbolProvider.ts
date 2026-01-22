@@ -15,6 +15,7 @@ import {
   FieldDeclaration,
   KeyDeclaration,
   ProcedureDeclaration,
+  ProcedureAttribute,
   TriggerDeclaration,
   VariableDeclaration
 } from '../parser/ast';
@@ -172,6 +173,12 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
   visitProcedureDeclaration(node: ProcedureDeclaration): void | false {
     if (!this.proceduresGroup || !node.startToken || !node.name) return;
 
+    // Build attribute prefix if attributes present
+    let attributePrefix = '';
+    if (node.attributes && node.attributes.length > 0) {
+      attributePrefix = node.attributes.map(a => `[${a.name}]`).join(' ') + ' ';
+    }
+
     // Build signature
     const params = (node.parameters || []).map(p => {
       const prefix = p.isVar ? 'VAR ' : '';
@@ -180,7 +187,7 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
 
     const returnType = node.returnType ? ` : ${node.returnType.typeName}` : '';
     const localPrefix = node.isLocal ? 'LOCAL ' : '';
-    const name = `${localPrefix}${node.name}(${params})${returnType}`;
+    const name = `${attributePrefix}${localPrefix}${node.name}(${params})${returnType}`;
 
     const symbol = this.createSymbol(
       name,

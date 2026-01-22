@@ -23,6 +23,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
       "events": [],
       "procedures": [
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 14,
+                "endOffset": 1704,
+                "line": 35,
+                "startOffset": 1703,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "External",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 1695,
+                "line": 35,
+                "startOffset": 1694,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [
             {
               "body": {
@@ -43783,6 +43807,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
       "events": [],
       "procedures": [
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 17,
+                "endOffset": 1203,
+                "line": 40,
+                "startOffset": 1202,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "Integration",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 1191,
+                "line": 40,
+                "startOffset": 1190,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [
             {
               "endToken": {
@@ -49746,6 +49794,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
           ],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 14,
+                "endOffset": 2628,
+                "line": 76,
+                "startOffset": 2627,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "External",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 2619,
+                "line": 76,
+                "startOffset": 2618,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [
             {
               "body": {
@@ -50674,6 +50746,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
           "variables": [],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 14,
+                "endOffset": 3136,
+                "line": 92,
+                "startOffset": 3135,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "External",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 3127,
+                "line": 92,
+                "startOffset": 3126,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [
             {
               "endToken": {
@@ -50928,6 +51024,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
           "variables": [],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 14,
+                "endOffset": 3319,
+                "line": 98,
+                "startOffset": 3318,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "External",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 3310,
+                "line": 98,
+                "startOffset": 3309,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [
             {
               "endToken": {
@@ -51081,6 +51201,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
           "variables": [],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 17,
+                "endOffset": 3461,
+                "line": 104,
+                "startOffset": 3460,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "Integration",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 3449,
+                "line": 104,
+                "startOffset": 3448,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [],
           "endToken": {
             "column": 8,
@@ -51151,6 +51295,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
           "variables": [],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 17,
+                "endOffset": 3591,
+                "line": 109,
+                "startOffset": 3590,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "Integration",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 3579,
+                "line": 109,
+                "startOffset": 3578,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [],
           "endToken": {
             "column": 8,
@@ -51221,6 +51389,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
           "variables": [],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 17,
+                "endOffset": 3720,
+                "line": 114,
+                "startOffset": 3719,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "Integration",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 3708,
+                "line": 114,
+                "startOffset": 3707,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [],
           "endToken": {
             "column": 8,
@@ -51291,6 +51483,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
           "variables": [],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 17,
+                "endOffset": 3849,
+                "line": 119,
+                "startOffset": 3848,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "Integration",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 3837,
+                "line": 119,
+                "startOffset": 3836,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [],
           "endToken": {
             "column": 8,
@@ -51361,6 +51577,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
           "variables": [],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 17,
+                "endOffset": 3977,
+                "line": 124,
+                "startOffset": 3976,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "Integration",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 3965,
+                "line": 124,
+                "startOffset": 3964,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [],
           "endToken": {
             "column": 8,
@@ -54281,6 +54521,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
       "events": [],
       "procedures": [
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 17,
+                "endOffset": 10108,
+                "line": 238,
+                "startOffset": 10107,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "Integration",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 10096,
+                "line": 238,
+                "startOffset": 10095,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [],
           "endToken": {
             "column": 8,
@@ -62677,6 +62941,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
       "events": [],
       "procedures": [
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 14,
+                "endOffset": 2674,
+                "line": 70,
+                "startOffset": 2673,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "External",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 2665,
+                "line": 70,
+                "startOffset": 2664,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [
             {
               "endToken": {
@@ -64107,6 +64395,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
           "variables": [],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 14,
+                "endOffset": 3446,
+                "line": 86,
+                "startOffset": 3445,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "External",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 3437,
+                "line": 86,
+                "startOffset": 3436,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [
             {
               "endToken": {
@@ -65390,6 +65702,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
           "variables": [],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 14,
+                "endOffset": 4105,
+                "line": 101,
+                "startOffset": 4104,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "External",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 4096,
+                "line": 101,
+                "startOffset": 4095,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [
             {
               "endToken": {
@@ -66820,6 +67156,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
           "variables": [],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 14,
+                "endOffset": 4870,
+                "line": 117,
+                "startOffset": 4869,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "External",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 4861,
+                "line": 117,
+                "startOffset": 4860,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [
             {
               "endToken": {
@@ -67706,6 +68066,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
           ],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 14,
+                "endOffset": 5369,
+                "line": 137,
+                "startOffset": 5368,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "External",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 5360,
+                "line": 137,
+                "startOffset": 5359,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [
             {
               "condition": {
@@ -68675,6 +69059,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
           ],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 14,
+                "endOffset": 5859,
+                "line": 157,
+                "startOffset": 5858,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "External",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 5850,
+                "line": 157,
+                "startOffset": 5849,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [
             {
               "condition": {
@@ -70204,6 +70612,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
           ],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 14,
+                "endOffset": 6659,
+                "line": 184,
+                "startOffset": 6658,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "External",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 6650,
+                "line": 184,
+                "startOffset": 6649,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [
             {
               "branches": [
@@ -71019,6 +71451,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
           ],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 14,
+                "endOffset": 7128,
+                "line": 200,
+                "startOffset": 7127,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "External",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 7119,
+                "line": 200,
+                "startOffset": 7118,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [
             {
               "endToken": {
@@ -82424,6 +82880,30 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
           "variables": [],
         },
         {
+          "attributes": [
+            {
+              "endToken": {
+                "column": 14,
+                "endOffset": 7995,
+                "line": 204,
+                "startOffset": 7994,
+                "type": "RIGHT_BRACKET",
+                "value": "]",
+              },
+              "hasArguments": false,
+              "name": "External",
+              "rawTokens": [],
+              "startToken": {
+                "column": 5,
+                "endOffset": 7986,
+                "line": 204,
+                "startOffset": 7985,
+                "type": "LEFT_BRACKET",
+                "value": "[",
+              },
+              "type": "ProcedureAttribute",
+            },
+          ],
           "body": [
             {
               "endToken": {

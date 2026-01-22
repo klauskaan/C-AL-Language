@@ -11,7 +11,7 @@ import {
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SymbolTable, Symbol } from '../symbols/symbolTable';
-import { CALDocument } from '../parser/ast';
+import { CALDocument, ProcedureDeclaration } from '../parser/ast';
 import { Token, KEYWORDS } from '../lexer/tokens';
 import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from '../completion/builtins';
 import { ProviderBase } from '../providers/providerBase';
@@ -261,7 +261,7 @@ export class HoverProvider extends ProviderBase {
     if (symbolTable) {
       const symbol = symbolTable.getSymbol(word);
       if (symbol) {
-        return this.buildSymbolHover(symbol);
+        return this.buildSymbolHover(symbol, ast);
       }
     }
 
@@ -285,7 +285,7 @@ export class HoverProvider extends ProviderBase {
   /**
    * Build hover content for a symbol
    */
-  private buildSymbolHover(symbol: Symbol): Hover {
+  private buildSymbolHover(symbol: Symbol, ast?: CALDocument): Hover {
     let content = `**${symbol.name}**\n\n`;
 
     switch (symbol.kind) {
@@ -311,11 +311,14 @@ export class HoverProvider extends ProviderBase {
         break;
 
       case 'procedure':
-        content += `*Procedure*`;
-        break;
-
       case 'function':
-        content += `*Function*`;
+        // Look up full procedure declaration to get attributes
+        const procedureDecl = this.findProcedureInAST(symbol.name, ast);
+        if (procedureDecl) {
+          content = this.buildProcedureHover(procedureDecl);
+        } else {
+          content += `*Procedure*`;
+        }
         break;
 
       default:
@@ -340,6 +343,47 @@ export class HoverProvider extends ProviderBase {
         value: `**${fieldName}**\n\n*Field*\n\nType: \`${dataType}\``
       }
     };
+  }
+
+  /**
+   * Find a procedure declaration in the AST by name
+   */
+  private findProcedureInAST(name: string, ast?: CALDocument): ProcedureDeclaration | null {
+    if (!ast?.object?.code?.procedures) {
+      return null;
+    }
+
+    const lowerName = name.toLowerCase();
+    return ast.object.code.procedures.find(
+      proc => proc.name.toLowerCase() === lowerName
+    ) || null;
+  }
+
+  /**
+   * Build hover content for a procedure declaration with attributes
+   */
+  private buildProcedureHover(proc: ProcedureDeclaration): string {
+    let content = '';
+
+    // Add attributes on separate lines before the signature
+    if (proc.attributes && proc.attributes.length > 0) {
+      for (const attr of proc.attributes) {
+        content += `\`[${attr.name}]\`\n`;
+      }
+    }
+
+    // Build procedure signature
+    const localPrefix = proc.isLocal ? 'LOCAL ' : '';
+    const params = proc.parameters.map(p => {
+      const varPrefix = p.isVar ? 'VAR ' : '';
+      return `${varPrefix}${p.name}: ${p.dataType.typeName}`;
+    }).join('; ');
+    const returnType = proc.returnType ? ` : ${proc.returnType.typeName}` : '';
+
+    content += `\`${localPrefix}PROCEDURE ${proc.name}(${params})${returnType}\`\n\n`;
+    content += '*Procedure*';
+
+    return content;
   }
 
   /**

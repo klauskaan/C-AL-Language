@@ -34,6 +34,7 @@ import {
   FieldGroup,
   VariableDeclaration,
   ProcedureDeclaration,
+  ProcedureAttribute,
   ParameterDeclaration,
   TriggerDeclaration,
   EventDeclaration,
@@ -139,6 +140,9 @@ export class ASTWalker {
         break;
       case 'ProcedureDeclaration':
         this.walkProcedureDeclaration(node as ProcedureDeclaration, visitor);
+        break;
+      case 'ProcedureAttribute':
+        this.walkProcedureAttribute(node as ProcedureAttribute, visitor);
         break;
       case 'ParameterDeclaration':
         this.walkParameterDeclaration(node as ParameterDeclaration, visitor);
@@ -406,6 +410,12 @@ export class ASTWalker {
         return;
       }
     }
+    // Walk attributes first (if present)
+    if (node.attributes) {
+      for (const attr of node.attributes) {
+        this.walk(attr, visitor);
+      }
+    }
     for (const param of node.parameters) {
       this.walk(param, visitor);
     }
@@ -418,6 +428,13 @@ export class ASTWalker {
     for (const stmt of node.body) {
       this.walkStatement(stmt, visitor);
     }
+  }
+
+  private walkProcedureAttribute(node: ProcedureAttribute, visitor: Partial<ASTVisitor>): void {
+    if (visitor.visitProcedureAttribute) {
+      visitor.visitProcedureAttribute(node);
+    }
+    // ProcedureAttribute has no child AST nodes to traverse (rawTokens are not AST nodes)
   }
 
   private walkParameterDeclaration(node: ParameterDeclaration, visitor: Partial<ASTVisitor>): void {
