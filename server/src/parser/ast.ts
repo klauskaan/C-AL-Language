@@ -61,6 +61,217 @@ export interface Property extends ASTNode {
   triggerBody?: Statement[];
   /** Variables declared in property trigger VAR section (rare but possible) */
   triggerVariables?: VariableDeclaration[];
+  /** Original tokens captured during property value parsing.
+   * Preserves exact positions and token types (including QuotedIdentifier).
+   * Used by mini-parsers for accurate parsing with position tracking.
+   * Not populated for trigger properties (which use triggerBody instead). */
+  valueTokens?: Token[];
+  /** Parsed CalcFormula structure (for CalcFormula properties) */
+  calcFormula?: CalcFormulaNode;
+  /** Parsed TableRelation structure (for TableRelation properties) */
+  tableRelation?: TableRelationNode;
+}
+
+/**
+ * CalcFormula parsed structure
+ *
+ * Represents a parsed CalcFormula property value, which defines a FlowField calculation.
+ *
+ * @example
+ * CalcFormula=Sum("Customer Ledger Entry".Amount WHERE ("Customer No."=FIELD("No.")))
+ * // Produces:
+ * {
+ *   type: 'CalcFormulaNode',
+ *   aggregationFunction: 'Sum',
+ *   sourceTable: 'Customer Ledger Entry',
+ *   sourceField: 'Amount',
+ *   whereClause: { conditions: [...] }
+ * }
+ *
+ * @example
+ * CalcFormula=Count("Sales Line")
+ * // Produces:
+ * {
+ *   type: 'CalcFormulaNode',
+ *   aggregationFunction: 'Count',
+ *   sourceTable: 'Sales Line',
+ *   sourceField: undefined  // Count doesn't require a field
+ * }
+ */
+export interface CalcFormulaNode extends ASTNode {
+  type: 'CalcFormulaNode';
+  /** Aggregation function: Sum, Count, Lookup, Exist, Min, Max, Average */
+  aggregationFunction: 'Sum' | 'Count' | 'Lookup' | 'Exist' | 'Min' | 'Max' | 'Average';
+  /** Source table name (quoted or unquoted) */
+  sourceTable: string;
+  /** Source field name (required for Sum/Lookup/Min/Max/Average, not for Count/Exist) */
+  sourceField?: string;
+  /** Optional WHERE clause filtering the source table */
+  whereClause?: WhereClauseNode;
+}
+
+/**
+ * TableRelation parsed structure
+ *
+ * Represents a parsed TableRelation property value, which defines field validation/lookup.
+ *
+ * @example
+ * TableRelation=Customer
+ * // Produces:
+ * {
+ *   type: 'TableRelationNode',
+ *   tableName: 'Customer',
+ *   fieldName: undefined,
+ *   whereClause: undefined,
+ *   conditionalRelations: undefined
+ * }
+ *
+ * @example
+ * TableRelation="G/L Account"."No." WHERE (Blocked=CONST(No))
+ * // Produces:
+ * {
+ *   type: 'TableRelationNode',
+ *   tableName: 'G/L Account',
+ *   fieldName: 'No.',
+ *   whereClause: { conditions: [...] },
+ *   conditionalRelations: undefined
+ * }
+ *
+ * @example
+ * TableRelation=IF (Type=CONST(Item)) Item ELSE Resource
+ * // Produces:
+ * {
+ *   type: 'TableRelationNode',
+ *   tableName: undefined,  // No unconditional relation
+ *   conditionalRelations: [
+ *     {
+ *       condition: { fieldName: 'Type', operator: '=', predicateType: 'CONST', predicateValue: 'Item' },
+ *       thenRelation: { tableName: 'Item', ... },
+ *       elseRelation: { tableName: 'Resource', ... }
+ *     }
+ *   ]
+ * }
+ */
+export interface TableRelationNode extends ASTNode {
+  type: 'TableRelationNode';
+  /** Target table name (for simple, unconditional relations) */
+  tableName?: string;
+  /** Qualified field name (e.g., "No." in Customer."No.") */
+  fieldName?: string;
+  /** Optional WHERE clause filtering the target table */
+  whereClause?: WhereClauseNode;
+  /** Conditional relations (IF/ELSE clauses) */
+  conditionalRelations?: ConditionalTableRelation[];
+}
+
+/**
+ * Conditional table relation (IF/ELSE structure)
+ *
+ * Represents an IF condition in a TableRelation property.
+ *
+ * @example
+ * IF (Type=CONST(Item)) Item ELSE Resource
+ * // Produces:
+ * {
+ *   type: 'ConditionalTableRelation',
+ *   condition: { fieldName: 'Type', operator: '=', predicateType: 'CONST', predicateValue: 'Item' },
+ *   thenRelation: { tableName: 'Item', ... },
+ *   elseRelation: { tableName: 'Resource', ... }
+ * }
+ *
+ * @example
+ * IF (Type=CONST(G/L Account)) "G/L Account" ELSE IF (Type=CONST(Item)) Item ELSE Resource
+ * // Produces multiple ConditionalTableRelation nodes in array:
+ * [
+ *   { condition: {...G/L Account...}, thenRelation: {...}, elseRelation: undefined },
+ *   { condition: {...Item...}, thenRelation: {...}, elseRelation: {...Resource...} }
+ * ]
+ */
+export interface ConditionalTableRelation extends ASTNode {
+  type: 'ConditionalTableRelation';
+  /** The condition to test (e.g., Type=CONST(Item)) */
+  condition: WhereConditionNode;
+  /** The table relation if condition is true */
+  thenRelation: TableRelationNode;
+  /** The table relation if condition is false (optional ELSE clause) */
+  elseRelation?: TableRelationNode;
+}
+
+/**
+ * WHERE clause containing one or more conditions
+ *
+ * Represents a WHERE clause in CalcFormula or TableRelation.
+ *
+ * @example
+ * WHERE ("Customer No."=FIELD("No."), "Posting Date"=FIELD("Date Filter"))
+ * // Produces:
+ * {
+ *   type: 'WhereClauseNode',
+ *   conditions: [
+ *     { fieldName: 'Customer No.', operator: '=', predicateType: 'FIELD', predicateValue: 'No.' },
+ *     { fieldName: 'Posting Date', operator: '=', predicateType: 'FIELD', predicateValue: 'Date Filter' }
+ *   ]
+ * }
+ */
+export interface WhereClauseNode extends ASTNode {
+  type: 'WhereClauseNode';
+  /** Array of WHERE conditions (comma-separated in source) */
+  conditions: WhereConditionNode[];
+}
+
+/**
+ * Individual WHERE condition
+ *
+ * Represents a single condition in a WHERE clause.
+ *
+ * Predicate types:
+ * - FIELD: Value comes from another field (e.g., FIELD("No."))
+ * - CONST: Constant value (e.g., CONST(Item))
+ * - FILTER: Filter expression (e.g., FILTER('1000..9999'))
+ *
+ * @example
+ * "Customer No."=FIELD("No.")
+ * // Produces:
+ * {
+ *   type: 'WhereConditionNode',
+ *   fieldName: 'Customer No.',
+ *   operator: '=',
+ *   predicateType: 'FIELD',
+ *   predicateValue: 'No.'
+ * }
+ *
+ * @example
+ * Type=CONST(Item)
+ * // Produces:
+ * {
+ *   type: 'WhereConditionNode',
+ *   fieldName: 'Type',
+ *   operator: '=',
+ *   predicateType: 'CONST',
+ *   predicateValue: 'Item'
+ * }
+ *
+ * @example
+ * "G/L Account No."=FILTER('1000..9999')
+ * // Produces:
+ * {
+ *   type: 'WhereConditionNode',
+ *   fieldName: 'G/L Account No.',
+ *   operator: '=',
+ *   predicateType: 'FILTER',
+ *   predicateValue: '1000..9999'
+ * }
+ */
+export interface WhereConditionNode extends ASTNode {
+  type: 'WhereConditionNode';
+  /** Field name being tested (can be quoted or unquoted) */
+  fieldName: string;
+  /** Comparison operator (typically '=' but could be '<>', '>', '<', etc.) */
+  operator: string;
+  /** Type of predicate: FIELD, CONST, or FILTER */
+  predicateType: 'FIELD' | 'CONST' | 'FILTER';
+  /** Value inside the predicate function (e.g., "No." for FIELD("No.")) */
+  predicateValue: string;
 }
 
 /**

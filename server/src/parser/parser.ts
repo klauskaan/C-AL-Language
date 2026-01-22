@@ -1,6 +1,7 @@
 import { Token, TokenType } from '../lexer/tokens';
 import { Lexer } from '../lexer/lexer';
 import { sanitizeContent, sanitizeTokenType, stripPaths } from '../utils/sanitize';
+import { PropertyValueParser } from './propertyValueParser';
 import {
   CALDocument,
   ObjectDeclaration,
@@ -366,6 +367,7 @@ export class Parser {
     // Special handling: ActionList/DataItemTable properties can have nested ACTIONS/DATAITEMS blocks
     let value = '';
     let lastToken: Token | null = null;
+    const valueTokens: Token[] = [];  // Collect original tokens
     let braceDepth = 0;
     let bracketDepth = 0;
 
@@ -394,6 +396,7 @@ export class Parser {
       }
 
       const currentToken = this.advance();
+      valueTokens.push(currentToken);  // Store original token
 
       // Track brace depth to handle nested structures like ActionList=ACTIONS { ... }
       if (currentToken.type === TokenType.LeftBrace) {
@@ -443,13 +446,27 @@ export class Parser {
       endToken = lastToken || startToken;
     }
 
-    return {
+    const property: Property = {
       type: 'Property',
       name,
       value: value.trim(),
+      valueTokens: valueTokens.length > 0 ? valueTokens : undefined,
       startToken,
       endToken
     };
+
+    // Parse complex property values
+    if (valueTokens.length > 0) {
+      const lowerName = name.toLowerCase();
+
+      if (lowerName === 'calcformula') {
+        property.calcFormula = PropertyValueParser.parseCalcFormula(valueTokens) ?? undefined;
+      } else if (lowerName === 'tablerelation') {
+        property.tableRelation = PropertyValueParser.parseTableRelation(valueTokens) ?? undefined;
+      }
+    }
+
+    return property;
   }
 
   /**
@@ -727,7 +744,7 @@ export class Parser {
     // We need to parse its value to extract assembly reference and type name.
     if (typeName.toUpperCase() === 'DOTNET' && this.check(TokenType.QuotedIdentifier)) {
       const quotedTypeToken = this.advance(); // consume the entire "'assembly'.Type" string
-      const fullTypeSpec = quotedTypeToken.value; // e.g., "'mscorlib'.System.DateTime"
+      const fullTypeSpec = quotedTypeToken.value; // e.g., 'mscorlib'.System.DateTime
 
       // Parse the value: 'assembly'.Type.Name
       // Assembly reference is between the first pair of single quotes
@@ -927,6 +944,7 @@ export class Parser {
             let value = '';
             let bracketDepth = 0;
             let lastToken: Token | null = null;
+            const valueTokens: Token[] = [];  // Collect original tokens
 
             while (!this.isAtEnd()) {
               // Stop at semicolon only if not inside brackets
@@ -940,6 +958,7 @@ export class Parser {
               }
 
               const currentToken = this.advance();
+              valueTokens.push(currentToken);  // Store original token
 
               // Track bracket depth
               if (currentToken.type === TokenType.LeftBracket) {
@@ -964,15 +983,29 @@ export class Parser {
               this.advance();
             }
 
+            const property: Property = {
+              type: 'Property' as const,
+              name,
+              value: value.trim(),
+              valueTokens: valueTokens.length > 0 ? valueTokens : undefined,
+              startToken,
+              endToken: this.previous()
+            };
+
+            // Parse complex property values
+            if (valueTokens.length > 0) {
+              const lowerName = name.toLowerCase();
+
+              if (lowerName === 'calcformula') {
+                property.calcFormula = PropertyValueParser.parseCalcFormula(valueTokens) ?? undefined;
+              } else if (lowerName === 'tablerelation') {
+                property.tableRelation = PropertyValueParser.parseTableRelation(valueTokens) ?? undefined;
+              }
+            }
+
             return {
               type: 'property' as const,
-              property: {
-                type: 'Property' as const,
-                name,
-                value: value.trim(),
-                startToken,
-                endToken: this.previous()
-              }
+              property
             };
           }
         },
