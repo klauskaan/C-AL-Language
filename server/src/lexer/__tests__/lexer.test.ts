@@ -12,7 +12,7 @@
  * TokenType.Time being defined in tokens.ts.
  */
 
-import { Lexer, LexerContextState } from '../lexer';
+import { Lexer } from '../lexer';
 import { TokenType } from '../tokens';
 
 describe('Lexer - General Functionality', () => {

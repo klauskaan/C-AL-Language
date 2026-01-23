@@ -32,17 +32,17 @@ describe('Regression - Option InitValue Parsing', () => {
     const lexer = new Lexer(code);
     const tokens = lexer.tokenize();
     const parser = new Parser(tokens);
-    const ast = parser.parse();
+    const _ast = parser.parse();
     const errors = parser.getErrors();
 
     console.log('\n=== MINIMAL TEST CASE ===');
     console.log('Code:', code);
     console.log('\nTokens:', JSON.stringify(tokens, null, 2));
     console.log('\nErrors:', JSON.stringify(errors, null, 2));
-    console.log('\nAST:', JSON.stringify(ast, null, 2));
+    console.log('\nAST:', JSON.stringify(_ast, null, 2));
 
     expect(errors).toHaveLength(0);
-    expect(ast.object).not.toBeNull();
+    expect(_ast.object).not.toBeNull();
   });
 
   it('should parse fixture file with Option InitValue fields', () => {
@@ -55,7 +55,7 @@ describe('Regression - Option InitValue Parsing', () => {
     const lexer = new Lexer(code);
     const tokens = lexer.tokenize();
     const parser = new Parser(tokens);
-    const ast = parser.parse();
+    const _ast = parser.parse();
     const errors = parser.getErrors();
 
     console.log('\n=== FIXTURE FILE TEST ===');
@@ -110,7 +110,7 @@ describe('Regression - Option InitValue Parsing', () => {
     }
 
     expect(errors).toHaveLength(0);
-    expect(ast.object).not.toBeNull();
+    expect(_ast.object).not.toBeNull();
   });
 
   it('should tokenize InitValue=DefaultValue correctly', () => {
@@ -144,7 +144,7 @@ describe('Regression - Option InitValue Parsing', () => {
     const lexer = new Lexer(code);
     const tokens = lexer.tokenize();
     const parser = new Parser(tokens);
-    const ast = parser.parse();
+    const _ast = parser.parse();
     const errors = parser.getErrors();
 
     console.log('\n=== SIMPLE PROPERTY TEST ===');
@@ -182,7 +182,7 @@ describe('Regression - Option InitValue Parsing', () => {
     });
 
     const parser = new Parser(tokens);
-    const ast = parser.parse();
+    const _ast = parser.parse();
     const errors = parser.getErrors();
 
     console.log('\nParser errors:', errors.length);
@@ -222,7 +222,7 @@ describe('Regression - Option InitValue Parsing', () => {
     }
 
     const parser = new Parser(tokens);
-    const ast = parser.parse();
+    const _ast = parser.parse();
     const errors = parser.getErrors();
 
     console.log('\nParser errors:', errors.length);

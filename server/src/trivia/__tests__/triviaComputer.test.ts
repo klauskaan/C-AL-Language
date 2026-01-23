@@ -22,8 +22,6 @@ import { Lexer } from '../../lexer/lexer';
 import { Token, TokenType } from '../../lexer/tokens';
 import {
   TriviaSpan,
-  TriviaResult,
-  TriviaType,
   computeTriviaBetween,
   computeTrailingTrivia,
   getTriviaText

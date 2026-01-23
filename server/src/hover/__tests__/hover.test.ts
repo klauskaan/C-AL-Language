@@ -4,8 +4,6 @@
 
 import { HoverProvider } from '../hoverProvider';
 import { SymbolTable } from '../../symbols/symbolTable';
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../../parser/parser';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Position, MarkupKind } from 'vscode-languageserver';
 
@@ -30,18 +28,6 @@ function mockToken(): any {
   };
 }
 
-/**
- * Helper to parse content and build symbol table
- */
-function parseAndBuildSymbols(content: string): { ast: any; symbolTable: SymbolTable; tokens: any[] } {
-  const lexer = new Lexer(content);
-  const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
-  const ast = parser.parse();
-  const symbolTable = new SymbolTable();
-  symbolTable.buildFromAST(ast);
-  return { ast, symbolTable, tokens };
-}
 
 /**
  * Helper to get markdown content from hover

@@ -69,13 +69,13 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       // This test currently FAILS with: "Expected THEN at line 5, column 38"
       // Parser doesn't recognize :: as valid operator in expressions
       expect(parser.getErrors()).toHaveLength(0);
-      expect(ast.object).toBeDefined();
-      expect(ast.object?.code).toBeDefined();
+      expect(_ast.object).toBeDefined();
+      expect(_ast.object?.code).toBeDefined();
     });
 
     it('should parse IF with quoted field and :: operator (COD1003 regression)', () => {
@@ -92,11 +92,11 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       // This test currently FAILS with: "Expected THEN at line 5, column 49"
       expect(parser.getErrors()).toHaveLength(0);
-      expect(ast.object).toBeDefined();
+      expect(_ast.object).toBeDefined();
     });
 
     it('should parse nested IF statements with multiple :: operators', () => {
@@ -112,10 +112,10 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
-      expect(ast.object).toBeDefined();
+      expect(_ast.object).toBeDefined();
     });
 
     it('should parse IF with :: in complex member expression', () => {
@@ -130,7 +130,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
     });
@@ -148,10 +148,10 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
-      expect(ast.object).toBeDefined();
+      expect(_ast.object).toBeDefined();
     });
 
     it('should parse assignment with quoted identifiers and ::', () => {
@@ -165,7 +165,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
     });
@@ -181,7 +181,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
     });
@@ -204,10 +204,10 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
-      expect(ast.object).toBeDefined();
+      expect(_ast.object).toBeDefined();
     });
 
     it('should parse CASE with quoted identifiers and ::', () => {
@@ -228,7 +228,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
     });
@@ -249,7 +249,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
     });
@@ -268,7 +268,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
     });
@@ -285,7 +285,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
     });
@@ -303,7 +303,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
     });
@@ -320,7 +320,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
     });
@@ -337,7 +337,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
     });
@@ -356,7 +356,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
     });
@@ -373,7 +373,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
     });
@@ -389,7 +389,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
     });
@@ -406,7 +406,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
     });
@@ -423,7 +423,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
     });
@@ -441,10 +441,10 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       // Should record error but not crash
-      expect(ast.object).toBeDefined();
+      expect(_ast.object).toBeDefined();
       // Parser should generate an error for incomplete expression
       expect(parser.getErrors().length).toBeGreaterThan(0);
     });
@@ -460,10 +460,10 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       // Should record error but not crash
-      expect(ast.object).toBeDefined();
+      expect(_ast.object).toBeDefined();
     });
   });
 
@@ -480,11 +480,11 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
-      expect(ast.object).toBeDefined();
-      expect(ast.object?.objectKind).toBe('Codeunit');
+      expect(_ast.object).toBeDefined();
+      expect(_ast.object?.objectKind).toBe('Codeunit');
     });
 
     it('should parse real NAV pattern: journal line account type', () => {
@@ -507,10 +507,10 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
-      expect(ast.object).toBeDefined();
+      expect(_ast.object).toBeDefined();
     });
 
     it('should parse real NAV pattern: document status filtering', () => {
@@ -527,10 +527,10 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
 
       expect(parser.getErrors()).toHaveLength(0);
-      expect(ast.object).toBeDefined();
+      expect(_ast.object).toBeDefined();
     });
 
     it('should parse CASE with unquoted identifier after ::', () => {
@@ -549,7 +549,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
       expect(parser.getErrors()).toHaveLength(0);
     });
 
@@ -571,7 +571,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
       expect(parser.getErrors()).toHaveLength(0);
     });
 
@@ -601,7 +601,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
       expect(parser.getErrors()).toHaveLength(0);
     });
   });
@@ -624,7 +624,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
       expect(parser.getErrors()).toHaveLength(0);
     });
 
@@ -641,7 +641,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
       expect(parser.getErrors()).toHaveLength(0);
     });
 
@@ -659,7 +659,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
       expect(parser.getErrors()).toHaveLength(0);
     });
 
@@ -677,7 +677,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
       expect(parser.getErrors()).toHaveLength(0);
     });
 
@@ -695,7 +695,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
       }`;
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const _ast = parser.parse();
       expect(parser.getErrors()).toHaveLength(0);
     });
   });

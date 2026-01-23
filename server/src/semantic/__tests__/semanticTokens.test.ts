@@ -160,7 +160,7 @@ describe('SemanticTokensProvider', () => {
   describe('buildSemanticTokens', () => {
     it('should process all tokens in the input', () => {
       const code = 'OBJECT Table 18 Customer { }';
-      const { builder, tokens } = buildSemanticTokens(code);
+      const { builder, tokens: _tokens } = buildSemanticTokens(code);
 
       // Should have processed tokens (not all tokens result in semantic tokens)
       expect(builder.tokens.length).toBeGreaterThan(0);
@@ -583,7 +583,7 @@ describe('SemanticTokensProvider', () => {
         const code = 'VAR x : Code';
         // The lexer may tokenize 'Code' as TokenType.Code (section keyword)
         // Let's check with a different context
-        const { builder, tokens } = buildSemanticTokens(code);
+        const { builder: _builder, tokens: _tokens } = buildSemanticTokens(code);
         // Verify VAR is keyword and x is variable
         expect(findSemanticType(code, 'VAR')).toBe(SemanticTokenTypes.Keyword);
       });
@@ -1302,7 +1302,7 @@ describe('SemanticTokensProvider', () => {
 
       it('should map multiple arithmetic operators in expression', () => {
         const code = 'x := 1 + 2 - 3 * 4 / 5';
-        const { builder, tokens } = buildSemanticTokens(code);
+        const { builder, tokens: _tokens } = buildSemanticTokens(code);
 
         // Count operator tokens
         const operatorTokens = builder.getTokensOfType(SemanticTokenTypes.Operator);
@@ -1326,11 +1326,11 @@ describe('SemanticTokensProvider', () => {
 
       it('should distinguish := (assignment) from = (comparison)', () => {
         const code = 'IF x = 1 THEN y := 2';
-        const { builder, tokens } = buildSemanticTokens(code);
+        const { builder, tokens: _tokens } = buildSemanticTokens(code);
 
         // Find both operators
-        const equalToken = tokens.find(t => t.value === '=');
-        const assignToken = tokens.find(t => t.value === ':=');
+        const equalToken = _tokens.find(t => t.value === '=');
+        const assignToken = _tokens.find(t => t.value === ':=');
 
         expect(equalToken).toBeDefined();
         expect(assignToken).toBeDefined();
@@ -1400,10 +1400,10 @@ describe('SemanticTokensProvider', () => {
 
       it('should correctly map dots in chained access', () => {
         const code = 'Customer.Address.City';
-        const { builder, tokens } = buildSemanticTokens(code);
+        const { builder, tokens: _tokens } = buildSemanticTokens(code);
 
         // Find all dot tokens
-        const dotTokens = tokens.filter(t => t.value === '.');
+        const dotTokens = _tokens.filter(t => t.value === '.');
         expect(dotTokens.length).toBe(2);
 
         // All dots should be Operator type
@@ -1435,7 +1435,7 @@ describe('SemanticTokensProvider', () => {
 
       it('should correctly map operators in compound expression', () => {
         const code = 'Result := (a + b) * (c - d) / e';
-        const { builder, tokens } = buildSemanticTokens(code);
+        const { builder: _builder, tokens: _tokens } = buildSemanticTokens(code);
 
         // Find operators
         const plusType = findSemanticType(code, '+');
@@ -1487,10 +1487,10 @@ describe('SemanticTokensProvider', () => {
     describe('Multiple Operators of Same Type', () => {
       it('should correctly map multiple plus operators', () => {
         const code = 'x := 1 + 2 + 3 + 4';
-        const { builder, tokens } = buildSemanticTokens(code);
+        const { builder, tokens: _tokens } = buildSemanticTokens(code);
 
         // Find all plus tokens
-        const plusTokens = tokens.filter(t => t.value === '+');
+        const plusTokens = _tokens.filter(t => t.value === '+');
         expect(plusTokens.length).toBe(3);
 
         // All should be Operator type
@@ -1502,10 +1502,10 @@ describe('SemanticTokensProvider', () => {
 
       it('should correctly map multiple comparison operators', () => {
         const code = 'IF (a > b) AND (c > d) AND (e > f) THEN';
-        const { builder, tokens } = buildSemanticTokens(code);
+        const { builder, tokens: _tokens } = buildSemanticTokens(code);
 
         // Find all greater than tokens
-        const gtTokens = tokens.filter(t => t.value === '>');
+        const gtTokens = _tokens.filter(t => t.value === '>');
         expect(gtTokens.length).toBe(3);
 
         // All should be Operator type
@@ -1517,10 +1517,10 @@ describe('SemanticTokensProvider', () => {
 
       it('should correctly map multiple assignments', () => {
         const code = 'a := 1; b := 2; c := 3';
-        const { builder, tokens } = buildSemanticTokens(code);
+        const { builder, tokens: _tokens } = buildSemanticTokens(code);
 
         // Find all assignment tokens
-        const assignTokens = tokens.filter(t => t.value === ':=');
+        const assignTokens = _tokens.filter(t => t.value === ':=');
         expect(assignTokens.length).toBe(3);
 
         // All should be Operator type
@@ -1682,7 +1682,7 @@ describe('SemanticTokensProvider', () => {
 
       it('should skip inline comments after code', () => {
         const code = 'x := 1; // Comment after code';
-        const { builder, tokens } = buildSemanticTokens(code);
+        const { builder, tokens: _tokens } = buildSemanticTokens(code);
 
         // Comment is skipped, but code tokens should still be present
         const commentTokens = builder.getTokensOfType(SemanticTokenTypes.Comment);
@@ -1741,7 +1741,7 @@ describe('SemanticTokensProvider', () => {
 
       it('should correctly tokenize code with comments in between', () => {
         const code = 'x := 1;\n// Comment\ny := 2;';
-        const { builder, tokens } = buildSemanticTokens(code);
+        const { builder, tokens: _tokens } = buildSemanticTokens(code);
 
         // Both assignments should be tokenized (comments are skipped)
         const operatorTokens = builder.getTokensOfType(SemanticTokenTypes.Operator);
@@ -2060,9 +2060,9 @@ describe('SemanticTokensProvider', () => {
         const { builder, tokens } = buildSemanticTokens(code);
 
         // Verify tokens on first, middle, and last lines
-        const line1Token = tokens.find(t => t.value === 'line1');
-        const line5Token = tokens.find(t => t.value === 'line5');
-        const line10Token = tokens.find(t => t.value === 'line10');
+        const _line1Token = tokens.find(t => t.value === 'line1');
+        const _line5Token = tokens.find(t => t.value === 'line5');
+        const _line10Token = tokens.find(t => t.value === 'line10');
 
         expect(builder.getTokenAt(0, 0)?.line).toBe(0);
         expect(builder.getTokenAt(4, 0)?.line).toBe(4);
@@ -2480,7 +2480,7 @@ END`;
 
         // Verify no semicolons, colons, or parentheses appear
         // Only keywords, identifiers, and types should be present
-        const expectedCount = 6; // PROCEDURE, MyProc, a, Integer, b, Text, Boolean
+        const _expectedCount = 6; // PROCEDURE, MyProc, a, Integer, b, Text, Boolean
         // Note: The colon before Boolean might be skipped or included depending on implementation
         expect(builder.tokens.length).toBeGreaterThanOrEqual(5);
 
@@ -2575,7 +2575,7 @@ END`;
         lines.push('END');
         const code = lines.join('\n');
 
-        const { builder, tokens } = buildSemanticTokens(code);
+        const { builder, tokens: _tokens } = buildSemanticTokens(code);
 
         // Verify tokens span many lines
         const lastToken = builder.tokens[builder.tokens.length - 1];
@@ -2786,7 +2786,7 @@ END`;
 
         // Verify keywords are correctly identified
         const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
-        const keywordNames = ['OBJECT', 'Table', 'PROPERTIES', 'FIELDS'];
+        const _keywordNames = ['OBJECT', 'Table', 'PROPERTIES', 'FIELDS'];
         expect(keywords.length).toBeGreaterThan(0);
 
         // Verify identifiers (both quoted and unquoted) are correctly mapped
@@ -2842,7 +2842,7 @@ END`;
         const types = builder.getTokensOfType(SemanticTokenTypes.Type);
         const operators = builder.getTokensOfType(SemanticTokenTypes.Operator);
         const strings = builder.getTokensOfType(SemanticTokenTypes.String);
-        const numbers = builder.getTokensOfType(SemanticTokenTypes.Number);
+        const _numbers = builder.getTokensOfType(SemanticTokenTypes.Number);
 
         // Keywords: OBJECT, Codeunit, CODE, VAR, PROCEDURE, BEGIN, END, IF, THEN, REPEAT, UNTIL, LOCAL, ERROR, TRUE
         expect(keywords.length).toBeGreaterThan(10);
@@ -2923,7 +2923,7 @@ END`;
 
         // Find both quoted and unquoted identifier tokens
         const quotedIdentifiers = tokens.filter(t => t.type === TokenType.QuotedIdentifier);
-        const regularIdentifiers = tokens.filter(t => t.type === TokenType.Identifier);
+        const _regularIdentifiers = tokens.filter(t => t.type === TokenType.Identifier);
 
         // Verify quoted identifiers exist
         expect(quotedIdentifiers.length).toBeGreaterThan(0);
@@ -2948,7 +2948,7 @@ y := LineNo;
 "Line Amount" := Amount;
 "Line Discount %" := DiscountPct;
 `;
-        const { builder, tokens } = buildSemanticTokens(code);
+        const { builder, tokens: _tokens } = buildSemanticTokens(code);
 
         // All identifiers should be Variable type
         const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
@@ -3674,10 +3674,10 @@ END;
     Date=24-03-19;
   }
 }`;
-          const { builder, tokens } = buildSemanticTokens(code);
+          const { builder, tokens: _tokens } = buildSemanticTokens(code);
 
           // Find tokens on the Date property line
-          const lexerTokens = tokens.filter(t => t.line === 5);
+          const _lexerTokens = _tokens.filter(t => t.line === 5);
           const semanticTokens = builder.tokens.filter(t => t.line === 4); // 0-indexed
 
           // The hyphens in "24-03-19" should NOT be separate operator tokens
@@ -3699,7 +3699,7 @@ END;
     Time=12:00:00;
   }
 }`;
-          const { builder, tokens } = buildSemanticTokens(code);
+          const { builder, tokens: _tokens } = buildSemanticTokens(code);
 
           // Find tokens on the Time property line
           const semanticTokens = builder.tokens.filter(t => t.line === 4); // 0-indexed

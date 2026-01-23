@@ -17,7 +17,7 @@
 
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../parser';
-import { ProcedureDeclaration, ProcedureAttribute } from '../ast';
+import { ProcedureDeclaration } from '../ast';
 
 describe('Parser - Procedure Attributes', () => {
   describe('Simple attributes without arguments', () => {

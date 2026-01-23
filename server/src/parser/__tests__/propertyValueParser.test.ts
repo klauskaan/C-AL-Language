@@ -68,24 +68,6 @@ function getPropertyValueTokens(code: string, propertyName: string): Token[] {
   return property.valueTokens;
 }
 
-/**
- * Helper function to get tokens from object-level properties.
- */
-function getObjectPropertyValueTokens(code: string, propertyName: string): Token[] {
-  const lexer = new Lexer(code);
-  const parser = new Parser(lexer.tokenize());
-  const ast = parser.parse();
-
-  const property = ast.object?.properties?.properties?.find(
-    (p: Property) => p.name === propertyName
-  );
-
-  if (!property?.valueTokens) {
-    throw new Error(`Property ${propertyName} has no valueTokens`);
-  }
-
-  return property.valueTokens;
-}
 
 describe('PropertyValueParser - CalcFormula Parsing', () => {
   describe('Basic CalcFormula aggregation functions', () => {

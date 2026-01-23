@@ -22,7 +22,6 @@
 
 import { Lexer } from '../../lexer/lexer';
 import { TokenType } from '../../lexer/tokens';
-import { Parser } from '../parser';
 import { parseCode } from '../../parser';
 
 describe('Lexer - Report section keywords', () => {

@@ -15,16 +15,7 @@ import { Scope, SymbolTable, Symbol } from '../symbolTable';
 import { Token, TokenType } from '../../lexer/tokens';
 import {
   CALDocument,
-  ObjectDeclaration,
-  ObjectKind,
-  CodeSection,
-  FieldSection,
-  ProcedureDeclaration,
-  TriggerDeclaration,
-  VariableDeclaration,
-  ParameterDeclaration,
-  DataType,
-  FieldDeclaration
+  DataType
 } from '../../parser/ast';
 
 /**
@@ -67,19 +58,6 @@ function createMockToken(
 }
 
 /**
- * Helper to create a mock DataType
- */
-function createMockDataType(typeName: string): DataType {
-  const token = createMockToken(typeName);
-  return {
-    type: 'DataType',
-    typeName,
-    startToken: token,
-    endToken: token
-  };
-}
-
-/**
  * Helper to create a mock Symbol
  */
 function createMockSymbol(
@@ -96,150 +74,6 @@ function createMockSymbol(
   };
 }
 
-/**
- * Helper to create a mock VariableDeclaration
- */
-function createMockVariable(name: string, typeName: string, offset: number = 0): VariableDeclaration {
-  const startToken = createMockToken(name, offset);
-  return {
-    type: 'VariableDeclaration',
-    name,
-    dataType: createMockDataType(typeName),
-    startToken,
-    endToken: startToken
-  };
-}
-
-/**
- * Helper to create a mock ParameterDeclaration
- */
-function createMockParameter(name: string, typeName: string, offset: number = 0): ParameterDeclaration {
-  const startToken = createMockToken(name, offset);
-  return {
-    type: 'ParameterDeclaration',
-    name,
-    dataType: createMockDataType(typeName),
-    isVar: false,
-    isTemporary: false,
-    startToken,
-    endToken: startToken
-  };
-}
-
-/**
- * Helper to create a mock FieldDeclaration
- */
-function createMockField(fieldNo: number, fieldName: string, typeName: string, offset: number = 0): FieldDeclaration {
-  const startToken = createMockToken(fieldName, offset);
-  return {
-    type: 'FieldDeclaration',
-    fieldNo,
-    fieldClass: '',
-    fieldName,
-    dataType: createMockDataType(typeName),
-    properties: null,
-    triggers: null,
-    startToken,
-    endToken: startToken
-  };
-}
-
-/**
- * Helper to create a mock ProcedureDeclaration
- */
-function createMockProcedure(
-  name: string,
-  parameters: ParameterDeclaration[],
-  variables: VariableDeclaration[],
-  startOffset: number = 0,
-  endOffset: number = 100
-): ProcedureDeclaration {
-  const startToken = createMockToken(name, startOffset);
-  const endToken = createMockToken('END', endOffset);
-  return {
-    type: 'ProcedureDeclaration',
-    name,
-    parameters,
-    returnType: null,
-    isLocal: false,
-    variables,
-    body: [],
-    startToken,
-    endToken
-  };
-}
-
-/**
- * Helper to create a mock TriggerDeclaration
- */
-function createMockTrigger(
-  name: string,
-  variables: VariableDeclaration[],
-  startOffset: number = 0,
-  endOffset: number = 100
-): TriggerDeclaration {
-  const startToken = createMockToken(name, startOffset);
-  const endToken = createMockToken('END', endOffset);
-  return {
-    type: 'TriggerDeclaration',
-    name,
-    variables,
-    body: [],
-    startToken,
-    endToken
-  };
-}
-
-/**
- * Helper to create a minimal CALDocument AST
- */
-function createMockAST(options: {
-  fields?: FieldDeclaration[];
-  globalVariables?: VariableDeclaration[];
-  procedures?: ProcedureDeclaration[];
-  triggers?: TriggerDeclaration[];
-}): CALDocument {
-  const startToken = createMockToken('OBJECT');
-  const endToken = createMockToken('}', 1000);
-
-  const codeSection: CodeSection | null = (options.globalVariables || options.procedures || options.triggers) ? {
-    type: 'CodeSection',
-    variables: options.globalVariables || [],
-    procedures: options.procedures || [],
-    triggers: options.triggers || [],
-    events: [],
-    startToken,
-    endToken
-  } : null;
-
-  const fieldSection: FieldSection | null = options.fields ? {
-    type: 'FieldSection',
-    fields: options.fields,
-    startToken,
-    endToken
-  } : null;
-
-  const objectDecl: ObjectDeclaration = {
-    type: 'ObjectDeclaration',
-    objectKind: ObjectKind.Table,
-    objectId: 18,
-    objectName: 'TestTable',
-    properties: null,
-    fields: fieldSection,
-    keys: null,
-    fieldGroups: null,
-    code: codeSection,
-    startToken,
-    endToken
-  };
-
-  return {
-    type: 'CALDocument',
-    object: objectDecl,
-    startToken,
-    endToken
-  };
-}
 
 describe('Scope Class', () => {
   describe('Constructor and Parent/Child Relationships', () => {

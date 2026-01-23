@@ -12,7 +12,6 @@
  */
 
 import { Lexer } from '../lexer';
-import { TokenType } from '../tokens';
 
 describe('Lexer - Object Type Detection', () => {
   describe('Basic Object Type Detection', () => {

@@ -22,7 +22,7 @@ function testFile(name: string, fixtureName: string) {
 
     const startParse = Date.now();
     const parser = new Parser(tokens);
-    const ast = parser.parse();
+    const _ast = parser.parse();
     const parseTime = Date.now() - startParse;
     console.log(`  ✓ Parser: parsed successfully in ${parseTime}ms`);
 

@@ -13,7 +13,7 @@
  * isCleanExit() method doesn't exist yet.
  */
 
-import { Lexer, ExitCategory, ExitViolation, CleanExitResult, CleanExitOptions } from '../lexer';
+import { Lexer, ExitCategory } from '../lexer';
 
 describe('Lexer - Clean Exit Criteria', () => {
   describe('ExitCategory enum', () => {

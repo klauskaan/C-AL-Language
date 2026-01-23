@@ -638,7 +638,7 @@ describe('ReferenceProvider', () => {
     END.
   }
 }`;
-      const doc = createDocument(code);
+      const _doc = createDocument(code);
       const { ast } = parseContent(code);
 
       // Position cursor on 'Unknown' which doesn't exist

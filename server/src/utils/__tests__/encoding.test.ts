@@ -17,8 +17,7 @@ import * as path from 'path';
 import * as os from 'os';
 import {
   readFileWithEncoding,
-  decodeCp850,
-  EncodingResult
+  decodeCp850
 } from '../encoding';
 
 describe('CP850 Encoding Detection', () => {

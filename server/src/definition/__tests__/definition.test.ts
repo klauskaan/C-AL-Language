@@ -7,7 +7,7 @@ import { SymbolTable } from '../../symbols/symbolTable';
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../../parser/parser';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { Position, Location } from 'vscode-languageserver';
+import { Position } from 'vscode-languageserver';
 
 /**
  * Helper to create a TextDocument from a string

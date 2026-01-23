@@ -26,7 +26,7 @@
 
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../parser';
-import { FieldGroupSection, FieldGroup, ObjectDeclaration } from '../ast';
+import { FieldGroupSection, ObjectDeclaration } from '../ast';
 
 describe('Parser - FIELDGROUPS Section', () => {
   describe('Basic field group parsing', () => {
