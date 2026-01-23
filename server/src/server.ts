@@ -21,7 +21,10 @@ import {
   CodeLens,
   CodeLensParams,
   DocumentSymbol,
-  DocumentSymbolParams
+  DocumentSymbolParams,
+  PrepareRenameParams,
+  RenameParams,
+  WorkspaceEdit
 } from 'vscode-languageserver/node';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -38,6 +41,7 @@ import { DefinitionProvider } from './definition';
 import { ReferenceProvider } from './references';
 import { CodeLensProvider } from './codelens';
 import { DocumentSymbolProvider } from './documentSymbol';
+import { RenameProvider } from './rename';
 import { SymbolTable } from './symbols/symbolTable';
 import { formatError } from './utils/sanitize';
 
@@ -70,6 +74,9 @@ const codeLensProvider = new CodeLensProvider();
 
 // DocumentSymbol provider (Outline view)
 const documentSymbolProvider = new DocumentSymbolProvider();
+
+// Rename provider
+const renameProvider = new RenameProvider();
 
 // Cache for parsed documents (includes symbol table and parse errors)
 interface ParsedDocument {
@@ -112,11 +119,14 @@ connection.onInitialize((params: InitializeParams) => {
       codeLensProvider: {
         resolveProvider: false
       },
-      documentSymbolProvider: true
+      documentSymbolProvider: true,
+      renameProvider: {
+        prepareProvider: true
+      }
     }
   };
 
-  connection.console.log('Capabilities registered: semanticTokens, completion, hover, signatureHelp, definition, references, codeLens, documentSymbol');
+  connection.console.log('Capabilities registered: semanticTokens, completion, hover, signatureHelp, definition, references, codeLens, documentSymbol, rename');
   return result;
 });
 
@@ -311,6 +321,49 @@ connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] => 
   } catch (error) {
     connection.console.error(`Error getting document symbols: ${formatError(error)}`);
     return [];
+  }
+});
+
+// Handle prepareRename requests (Validate rename position)
+connection.onPrepareRename((params: PrepareRenameParams) => {
+  const document = documents.get(params.textDocument.uri);
+  if (!document) {
+    return null;
+  }
+
+  try {
+    const { ast, symbolTable } = parseDocument(document);
+    return renameProvider.prepareRename(
+      document,
+      params.position,
+      ast,
+      symbolTable
+    );
+  } catch (error) {
+    connection.console.error(`Error preparing rename: ${formatError(error)}`);
+    return null;
+  }
+});
+
+// Handle rename requests (Perform rename)
+connection.onRenameRequest((params: RenameParams): WorkspaceEdit | null => {
+  const document = documents.get(params.textDocument.uri);
+  if (!document) {
+    return null;
+  }
+
+  try {
+    const { ast, symbolTable } = parseDocument(document);
+    return renameProvider.getRenameEdits(
+      document,
+      params.position,
+      params.newName,
+      ast,
+      symbolTable
+    );
+  } catch (error) {
+    connection.console.error(`Error performing rename: ${formatError(error)}`);
+    return null;
   }
 });
 
