@@ -12,7 +12,6 @@
  */
 
 import { generateMarkdownReport, ValidationResult } from '../validate-real';
-import { escapeMarkdown } from '../../src/utils/escapeMarkdown';
 
 // Mock timers for deterministic timestamps
 jest.useFakeTimers();
