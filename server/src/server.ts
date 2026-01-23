@@ -26,7 +26,9 @@ import {
   RenameParams,
   WorkspaceEdit,
   WorkspaceSymbolParams,
-  SymbolInformation
+  SymbolInformation,
+  FoldingRange,
+  FoldingRangeParams
 } from 'vscode-languageserver/node';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -45,6 +47,7 @@ import { CodeLensProvider } from './codelens';
 import { DocumentSymbolProvider } from './documentSymbol';
 import { RenameProvider } from './rename';
 import { WorkspaceSymbolProvider } from './workspaceSymbol';
+import { FoldingRangeProvider } from './foldingRange/foldingRangeProvider';
 import { SymbolTable } from './symbols/symbolTable';
 import { formatError } from './utils/sanitize';
 
@@ -86,6 +89,9 @@ const workspaceSymbolProvider = new WorkspaceSymbolProvider(
   documentSymbolProvider,
   connection
 );
+
+// FoldingRange provider (code folding)
+const foldingRangeProvider = new FoldingRangeProvider();
 
 // Cache for parsed documents (includes symbol table and parse errors)
 interface ParsedDocument {
@@ -132,11 +138,12 @@ connection.onInitialize((params: InitializeParams) => {
       renameProvider: {
         prepareProvider: true
       },
-      workspaceSymbolProvider: true
+      workspaceSymbolProvider: true,
+      foldingRangeProvider: true
     }
   };
 
-  connection.console.log('Capabilities registered: semanticTokens, completion, hover, signatureHelp, definition, references, codeLens, documentSymbol, rename, workspaceSymbol');
+  connection.console.log('Capabilities registered: semanticTokens, completion, hover, signatureHelp, definition, references, codeLens, documentSymbol, rename, workspaceSymbol, foldingRanges');
   return result;
 });
 
@@ -393,6 +400,22 @@ connection.onWorkspaceSymbol((params: WorkspaceSymbolParams): SymbolInformation[
     return results;
   } catch (error) {
     connection.console.error(`Error getting workspace symbols: ${formatError(error)}`);
+    return [];
+  }
+});
+
+// Handle folding range requests
+connection.onFoldingRanges((params: FoldingRangeParams): FoldingRange[] => {
+  const document = documents.get(params.textDocument.uri);
+  if (!document) {
+    return [];
+  }
+
+  try {
+    const { ast } = parseDocument(document);
+    return foldingRangeProvider.provide(document, ast);
+  } catch (error) {
+    connection.console.error(`Error providing folding ranges: ${formatError(error)}`);
     return [];
   }
 });

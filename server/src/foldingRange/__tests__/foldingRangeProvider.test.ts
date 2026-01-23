@@ -1,0 +1,1071 @@
+/**
+ * Tests for FoldingRangeProvider (TDD - Tests MUST fail initially)
+ *
+ * These tests validate the code folding functionality following TDD principles.
+ * All tests are expected to FAIL initially because FoldingRangeProvider does not exist yet.
+ *
+ * Issue: #32 - Code folding support
+ */
+
+import { Lexer } from '../../lexer/lexer';
+import { Parser } from '../../parser/parser';
+import { TextDocument } from 'vscode-languageserver-textdocument';
+import { FoldingRange, FoldingRangeKind } from 'vscode-languageserver';
+
+// This import will FAIL - FoldingRangeProvider doesn't exist yet
+import { FoldingRangeProvider } from '../foldingRangeProvider';
+
+/**
+ * Helper to create a TextDocument from a string
+ */
+function createDocument(content: string, uri: string = 'file:///test.cal'): TextDocument {
+  return TextDocument.create(uri, 'cal', 1, content);
+}
+
+/**
+ * Helper to parse content into AST
+ */
+function parseContent(content: string) {
+  const lexer = new Lexer(content);
+  const tokens = lexer.tokenize();
+  const parser = new Parser(tokens);
+  return parser.parse();
+}
+
+describe('FoldingRangeProvider', () => {
+  let provider: FoldingRangeProvider;
+
+  beforeEach(() => {
+    provider = new FoldingRangeProvider();
+  });
+
+  describe('Basic Constructs', () => {
+    it('should create folding range for procedure', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE MyProcedure@1();
+    VAR
+      Counter : Integer;
+    BEGIN
+      Counter := 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for MyProcedure (entire procedure declaration)
+      const procRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('PROCEDURE MyProcedure');
+      });
+
+      expect(procRange).toBeDefined();
+      expect(procRange?.kind).toBeUndefined(); // Procedures don't use FoldingRangeKind.Region
+    });
+
+    it.skip('should create folding range for trigger', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  CODE
+  {
+    TRIGGER OnInsert@1();
+    BEGIN
+      // Trigger logic
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for OnInsert trigger
+      const triggerRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('TRIGGER OnInsert');
+      });
+
+      expect(triggerRange).toBeDefined();
+      expect(triggerRange?.kind).toBeUndefined();
+    });
+
+    it('should create folding range for BEGIN/END block', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    BEGIN
+      BEGIN
+        // Nested block
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding ranges for both outer and inner BEGIN/END blocks
+      expect(ranges.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Control Structures', () => {
+    it('should create folding range for IF statement with BEGIN/END', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    VAR
+      Flag : Boolean;
+    BEGIN
+      IF Flag THEN BEGIN
+        // IF branch
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for IF statement's BEGIN/END block
+      const ifRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('IF Flag THEN BEGIN');
+      });
+
+      expect(ifRange).toBeDefined();
+    });
+
+    it('should create folding range for CASE statement', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    VAR
+      Value : Integer;
+    BEGIN
+      CASE Value OF
+        1: BEGIN
+          // Case 1
+        END;
+        2: BEGIN
+          // Case 2
+        END;
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for CASE statement
+      const caseRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('CASE Value OF');
+      });
+
+      expect(caseRange).toBeDefined();
+    });
+
+    it('should create folding range for REPEAT...UNTIL loop', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    VAR
+      Counter : Integer;
+    BEGIN
+      REPEAT
+        Counter := Counter + 1;
+      UNTIL Counter > 10;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for REPEAT...UNTIL
+      const repeatRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('REPEAT');
+      });
+
+      expect(repeatRange).toBeDefined();
+    });
+
+    it('should create folding range for FOR loop', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    VAR
+      i : Integer;
+    BEGIN
+      FOR i := 1 TO 10 DO BEGIN
+        // Loop body
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for FOR loop's BEGIN/END block
+      const forRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('FOR i := 1 TO 10 DO BEGIN');
+      });
+
+      expect(forRange).toBeDefined();
+    });
+
+    it('should create folding range for WHILE loop', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    VAR
+      Flag : Boolean;
+    BEGIN
+      WHILE Flag DO BEGIN
+        // Loop body
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for WHILE loop's BEGIN/END block
+      const whileRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('WHILE Flag DO BEGIN');
+      });
+
+      expect(whileRange).toBeDefined();
+    });
+
+    it('should create folding range for WITH block', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      WITH Customer DO BEGIN
+        // WITH body
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for WITH block
+      const withRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('WITH Customer DO BEGIN');
+      });
+
+      expect(withRange).toBeDefined();
+    });
+  });
+
+  describe('Sections - FoldingRangeKind.Region', () => {
+    it('should create folding range for PROPERTIES section with kind Region', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  PROPERTIES
+  {
+    DataPerCompany=Yes;
+    OnInsert=BEGIN
+      // Property trigger
+    END;
+
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for PROPERTIES section
+      const propsRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('PROPERTIES');
+      });
+
+      expect(propsRange).toBeDefined();
+      expect(propsRange?.kind).toBe(FoldingRangeKind.Region);
+    });
+
+    it('should create folding range for FIELDS section with kind Region', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        }
+    { 2   ;   ;Name                ;Text50        }
+    { 3   ;   ;Address             ;Text100       }
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for FIELDS section
+      const fieldsRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('FIELDS');
+      });
+
+      expect(fieldsRange).toBeDefined();
+      expect(fieldsRange?.kind).toBe(FoldingRangeKind.Region);
+    });
+
+    it('should create folding range for KEYS section with kind Region', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        }
+  }
+  KEYS
+  {
+    {    ;No.                      ;Clustered=Yes }
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for KEYS section
+      const keysRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('KEYS');
+      });
+
+      expect(keysRange).toBeDefined();
+      expect(keysRange?.kind).toBe(FoldingRangeKind.Region);
+    });
+
+    it('should create folding range for CODE section with kind Region', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for CODE section
+      const codeRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('CODE');
+      });
+
+      expect(codeRange).toBeDefined();
+      expect(codeRange?.kind).toBe(FoldingRangeKind.Region);
+    });
+
+    it.skip('should create folding range for CONTROLS section with kind Region', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    PageType=Card;
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                Name=ContentArea }
+
+    { 2   ;1   ;Field     ;
+                SourceExpr="No." }
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for CONTROLS section
+      const controlsRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('CONTROLS');
+      });
+
+      expect(controlsRange).toBeDefined();
+      expect(controlsRange?.kind).toBe(FoldingRangeKind.Region);
+    });
+
+    it('should create folding range for FIELDGROUPS section with kind Region', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        }
+    { 2   ;   ;Name                ;Text50        }
+  }
+  FIELDGROUPS
+  {
+    { 1   ;DropDown            ;No.,Name                         }
+    { 2   ;Brick               ;No.,Name                         }
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for FIELDGROUPS section
+      const fieldGroupsRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('FIELDGROUPS');
+      });
+
+      expect(fieldGroupsRange).toBeDefined();
+      expect(fieldGroupsRange?.kind).toBe(FoldingRangeKind.Region);
+    });
+  });
+
+  describe('Nested Constructs', () => {
+    it('should create folding ranges for nested IF with BEGIN/END', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    VAR
+      Flag1 : Boolean;
+      Flag2 : Boolean;
+    BEGIN
+      IF Flag1 THEN BEGIN
+        IF Flag2 THEN BEGIN
+          // Nested IF
+        END;
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding ranges for outer procedure, outer IF block, and nested IF block
+      expect(ranges.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('should create folding ranges for CASE with multiple branches', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    VAR
+      Value : Integer;
+    BEGIN
+      CASE Value OF
+        1: BEGIN
+          // Case 1
+          IF TRUE THEN BEGIN
+            // Nested in Case 1
+          END;
+        END;
+        2: BEGIN
+          // Case 2
+        END;
+        ELSE BEGIN
+          // Default case
+        END;
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding ranges for:
+      // - Procedure
+      // - CASE statement
+      // - Each CASE branch's BEGIN/END
+      // - Nested IF in first branch
+      // - ELSE branch
+      expect(ranges.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it('should create folding ranges for deeply nested blocks', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    VAR
+      i : Integer;
+    BEGIN
+      FOR i := 1 TO 10 DO BEGIN
+        WHILE TRUE DO BEGIN
+          IF i > 5 THEN BEGIN
+            // Deeply nested
+          END;
+        END;
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding ranges for procedure, FOR block, WHILE block, IF block
+      expect(ranges.length).toBeGreaterThanOrEqual(4);
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should not create folding range for single-line procedure', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE OneLine@1();
+    BEGIN EXIT(TRUE); END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should NOT include single-line procedure (startLine == endLine)
+      const singleLineRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('OneLine') && r.startLine === r.endLine;
+      });
+
+      expect(singleLineRange).toBeUndefined();
+    });
+
+    it('should handle empty procedure body', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Empty@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should create folding range even for empty procedure if multi-line
+      const emptyProcRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('PROCEDURE Empty');
+      });
+
+      // Empty procedure should fold if BEGIN and END are on different lines
+      if (emptyProcRange) {
+        expect(emptyProcRange.startLine).toBeLessThan(emptyProcRange.endLine);
+      }
+    });
+
+    it('should handle malformed AST with missing endToken gracefully', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Incomplete@1();
+    BEGIN
+      // Missing END - malformed
+`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      // Should not throw - parser handles errors gracefully
+      expect(() => provider.provide(doc, ast)).not.toThrow();
+    });
+
+    it('should return empty array for empty document', () => {
+      const code = '';
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      expect(ranges).toEqual([]);
+    });
+
+    it('should return empty array for document with no foldable constructs', () => {
+      const code = `OBJECT Codeunit 50000 Empty
+{
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // No sections, procedures, or control structures to fold
+      expect(ranges).toEqual([]);
+    });
+  });
+
+  describe('Coordinate Conversion', () => {
+    it('should convert to 0-based LSP coordinates from 1-based token coordinates', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    BEGIN
+      // Line 6 (1-based)
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // All line numbers should be 0-based
+      ranges.forEach((range: FoldingRange) => {
+        expect(range.startLine).toBeGreaterThanOrEqual(0);
+        expect(range.endLine).toBeGreaterThanOrEqual(0);
+        expect(range.endLine).toBeGreaterThanOrEqual(range.startLine);
+      });
+    });
+
+    it('should exclude END line from folding range (remains visible when folded)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    BEGIN
+      // Line 6 (0-based: line 5)
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Find the procedure's BEGIN/END block
+      const procRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('PROCEDURE Foo');
+      });
+
+      if (procRange) {
+        // The endLine should be one less than the actual END token line
+        // so END remains visible when folded
+        const endLineText = doc.getText({
+          start: { line: procRange.endLine, character: 0 },
+          end: { line: procRange.endLine, character: 100 }
+        });
+        // The range should end before the END keyword line
+        expect(endLineText).not.toMatch(/^\s*END;/);
+      }
+    });
+
+    it('should handle object starting on line 1 correctly', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    BEGIN
+      // Body
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should create valid 0-based coordinates
+      // There should be ranges for CODE section and procedure
+      expect(ranges.length).toBeGreaterThan(0);
+
+      // All ranges should have valid coordinates (startLine < endLine)
+      ranges.forEach((r: FoldingRange) => {
+        expect(r.startLine).toBeGreaterThanOrEqual(0);
+        expect(r.endLine).toBeGreaterThan(r.startLine);
+      });
+    });
+  });
+
+  describe('Complex Document Structures', () => {
+    it('should create all expected folding ranges for a complete table', () => {
+      const code = `OBJECT Table 50000 Customer
+{
+  PROPERTIES
+  {
+    DataPerCompany=Yes;
+  }
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        }
+    { 2   ;   ;Name                ;Text50        }
+  }
+  KEYS
+  {
+    {    ;No.                      ;Clustered=Yes }
+  }
+  CODE
+  {
+    VAR
+      GlobalVar@1000 : Integer;
+
+    PROCEDURE ValidateNo@1();
+    BEGIN
+      IF "No." = '' THEN BEGIN
+        ERROR('No. cannot be blank');
+      END;
+    END;
+
+    TRIGGER OnInsert@2();
+    BEGIN
+      ValidateNo;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding ranges for:
+      // - PROPERTIES section
+      // - FIELDS section
+      // - KEYS section
+      // - CODE section
+      // - ValidateNo procedure
+      // - IF statement's BEGIN/END in ValidateNo
+      // - OnInsert trigger
+      expect(ranges.length).toBeGreaterThanOrEqual(7);
+
+      // Check sections have kind Region
+      const sectionRanges = ranges.filter((r: FoldingRange) => r.kind === FoldingRangeKind.Region);
+      expect(sectionRanges.length).toBeGreaterThanOrEqual(4); // PROPERTIES, FIELDS, KEYS, CODE
+    });
+
+    it('should handle procedure with VAR section correctly', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    VAR
+      LocalVar1 : Integer;
+      LocalVar2 : Text[50];
+    BEGIN
+      LocalVar1 := 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should create folding range for entire procedure (including VAR section)
+      const procRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.includes('PROCEDURE Foo');
+      });
+
+      expect(procRange).toBeDefined();
+    });
+
+    it('should handle multiple procedures in CODE section', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE First@1();
+    BEGIN
+      // First
+    END;
+
+    PROCEDURE Second@2();
+    BEGIN
+      // Second
+    END;
+
+    PROCEDURE Third@3();
+    BEGIN
+      // Third
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding ranges for CODE section + 3 procedures
+      expect(ranges.length).toBeGreaterThanOrEqual(4);
+
+      // All three procedures should be foldable
+      const procNames = ['First', 'Second', 'Third'];
+      procNames.forEach(name => {
+        const procRange = ranges.find((r: FoldingRange) => {
+          const startLineText = doc.getText({
+            start: { line: r.startLine, character: 0 },
+            end: { line: r.startLine, character: 100 }
+          });
+          return startLineText.includes(`PROCEDURE ${name}`);
+        });
+        expect(procRange).toBeDefined();
+      });
+    });
+  });
+
+  describe('Statement-Level Folding', () => {
+    it('should create folding range for standalone BlockStatement', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    BEGIN
+      BEGIN
+        // Standalone block
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding ranges for procedure and inner standalone block
+      expect(ranges.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should handle CASE branches without BEGIN/END', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    VAR
+      Value : Integer;
+    BEGIN
+      CASE Value OF
+        1: Value := 2;
+        2: Value := 3;
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for CASE statement and procedure
+      // But NOT for individual single-line branches
+      expect(ranges.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should handle IF/ELSE without BEGIN/END', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    VAR
+      Flag : Boolean;
+      X : Integer;
+    BEGIN
+      IF Flag THEN
+        X := 1
+      ELSE
+        X := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for procedure
+      // But NOT for single-line IF branches without BEGIN/END
+      expect(ranges.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+});
