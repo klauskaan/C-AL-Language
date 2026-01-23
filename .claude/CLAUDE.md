@@ -422,6 +422,30 @@ cd server && npm run perf:standard    # Standard suite
 
 ---
 
+## TypeScript Diagnostic Verification
+
+**Rule:** Always recompile before investigating TypeScript errors.
+
+IDE diagnostics can be stale. Before spending time investigating a TypeScript error:
+
+```bash
+# From project root - compiles BOTH client (src/) and server (server/src/)
+npm run compile
+```
+
+Note: There is no separate compile command for server-only. The root `npm run compile` handles both codebases via `tsconfig.json` (client) and `tsconfig.server.json` (server).
+
+**Workflow:**
+1. Encounter a TypeScript error in diagnostics
+2. Run `npm run compile` from project root
+3. If error disappears: was stale, continue working
+4. If error persists: investigate the real issue
+5. If compile fails with a *different* error: fix that first (may be causing cascade)
+
+Apply this check when you first encounter a TypeScript error during any workflow step. A 5-second compile saves minutes of chasing phantom errors.
+
+---
+
 ## Available Skills
 
 | Skill | Purpose |
