@@ -6,7 +6,6 @@
 import { CodeLens, Position, Range, Command } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import {
-  ASTNode,
   CALDocument,
   ProcedureDeclaration,
   TriggerDeclaration,

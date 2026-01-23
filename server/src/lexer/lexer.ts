@@ -67,9 +67,9 @@ export interface ExitViolation {
   /** Human-readable violation message */
   message: string;
   /** Expected value */
-  expected: any;
+  expected: unknown;
   /** Actual value found */
-  actual: any;
+  actual: unknown;
 }
 
 /**
@@ -602,7 +602,7 @@ export class Lexer {
 
       // Check for thenable (Promise-like) return value
       // Use Promise.resolve() to normalize any thenable to a proper Promise
-      if (result != null && typeof (result as any).then === 'function') {
+      if (result != null && typeof result === 'object' && 'then' in result && typeof result.then === 'function') {
         Promise.resolve(result).catch((error) => {
           this.handleAsyncRejection(error, sessionId);
         });

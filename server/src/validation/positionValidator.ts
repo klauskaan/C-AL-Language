@@ -101,7 +101,7 @@ export function validateTokenPositions(
       if (!triviaResult.isValid) {
         errors.push(
           `Invalid trivia at offset ${lastEndOffset}: ` +
-          `contains non-trivia content ${sanitizeContent(triviaResult.invalidContent!)}`
+          `contains non-trivia content ${sanitizeContent(triviaResult.invalidContent ?? '')}`
         );
         return { isValid: false, errors, warnings };
       }

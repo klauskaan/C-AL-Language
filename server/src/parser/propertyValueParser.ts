@@ -4,8 +4,7 @@ import {
   TableRelationNode,
   WhereClauseNode,
   WhereConditionNode,
-  ConditionalTableRelation,
-  ASTNode
+  ConditionalTableRelation
 } from './ast';
 
 /**
@@ -132,7 +131,7 @@ export class PropertyValueParser {
         startToken,
         endToken
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -215,7 +214,7 @@ export class PropertyValueParser {
         startToken,
         endToken
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }

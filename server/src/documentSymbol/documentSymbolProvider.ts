@@ -6,7 +6,6 @@
 import { DocumentSymbol, SymbolKind, Range } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import {
-  ASTNode,
   CALDocument,
   ObjectDeclaration,
   FieldSection,
@@ -15,7 +14,6 @@ import {
   FieldDeclaration,
   KeyDeclaration,
   ProcedureDeclaration,
-  ProcedureAttribute,
   TriggerDeclaration,
   VariableDeclaration
 } from '../parser/ast';
@@ -68,7 +66,7 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
       node.endToken
     );
     this.fieldsGroup.children = [];
-    this.root.children!.push(this.fieldsGroup);
+    this.pushChild(this.root, this.fieldsGroup);
   }
 
   /**
@@ -84,7 +82,7 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
       node.endToken
     );
     this.keysGroup.children = [];
-    this.root.children!.push(this.keysGroup);
+    this.pushChild(this.root, this.keysGroup);
   }
 
   /**
@@ -102,7 +100,7 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
         node.endToken
       );
       this.variablesGroup.children = [];
-      this.root.children!.push(this.variablesGroup);
+      this.pushChild(this.root, this.variablesGroup);
     }
 
     // Create triggers group if there are any
@@ -114,7 +112,7 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
         node.endToken
       );
       this.triggersGroup.children = [];
-      this.root.children!.push(this.triggersGroup);
+      this.pushChild(this.root, this.triggersGroup);
     }
 
     // Create procedures group if there are any
@@ -126,7 +124,7 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
         node.endToken
       );
       this.proceduresGroup.children = [];
-      this.root.children!.push(this.proceduresGroup);
+      this.pushChild(this.root, this.proceduresGroup);
     }
   }
 
@@ -145,7 +143,7 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
       node.endToken,
       typeName
     );
-    this.fieldsGroup.children!.push(symbol);
+    this.pushChild(this.fieldsGroup, symbol);
   }
 
   /**
@@ -164,7 +162,7 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
       node.startToken,
       node.endToken
     );
-    this.keysGroup.children!.push(symbol);
+    this.pushChild(this.keysGroup, symbol);
   }
 
   /**
@@ -195,7 +193,7 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
       node.startToken,
       node.endToken
     );
-    this.proceduresGroup.children!.push(symbol);
+    this.pushChild(this.proceduresGroup, symbol);
 
     // Skip children - we don't want to show local variables in the outline
     return false;
@@ -213,7 +211,7 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
       node.startToken,
       node.endToken
     );
-    this.triggersGroup.children!.push(symbol);
+    this.pushChild(this.triggersGroup, symbol);
 
     // Skip children - we don't want to show local variables in the outline
     return false;
@@ -234,7 +232,7 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
       node.endToken,
       typeName
     );
-    this.variablesGroup.children!.push(symbol);
+    this.pushChild(this.variablesGroup, symbol);
   }
 
   /**
@@ -302,6 +300,18 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
     }
 
     return symbol;
+  }
+
+  /**
+   * Safely push a child symbol to a parent's children array.
+   * Initializes children array if undefined (lazy initialization).
+   * This preserves the LSP convention where leaf symbols have undefined children.
+   */
+  private pushChild(parent: DocumentSymbol, child: DocumentSymbol): void {
+    if (!parent.children) {
+      parent.children = [];
+    }
+    parent.children.push(child);
   }
 }
 
