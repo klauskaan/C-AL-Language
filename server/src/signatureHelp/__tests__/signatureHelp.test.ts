@@ -4,29 +4,8 @@
 
 import { SignatureHelpProvider } from '../signatureHelpProvider';
 import { SymbolTable } from '../../symbols/symbolTable';
-import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Position, MarkupKind } from 'vscode-languageserver';
-
-/**
- * Helper to create a TextDocument from a string
- */
-function createDocument(content: string): TextDocument {
-  return TextDocument.create('file:///test.cal', 'cal', 1, content);
-}
-
-/**
- * Helper to create a mock token for tests
- */
-function mockToken(): any {
-  return {
-    type: 'IDENTIFIER',
-    value: 'test',
-    line: 1,
-    column: 1,
-    startOffset: 0,
-    endOffset: 4
-  };
-}
+import { createMockToken, createDocument } from '../../__tests__/testUtils';
 
 /**
  * Helper to get documentation content from signature help
@@ -241,7 +220,7 @@ describe('SignatureHelpProvider', () => {
       const doc = createDocument('MyProcedure(');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'MyProcedure', kind: 'procedure', token: mockToken() });
+      symbolTable.getRootScope().addSymbol({ name: 'MyProcedure', kind: 'procedure', token: createMockToken() });
 
       const help = provider.getSignatureHelp(doc, Position.create(0, 12), undefined, symbolTable);
 

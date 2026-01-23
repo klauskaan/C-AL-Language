@@ -4,29 +4,8 @@
 
 import { HoverProvider } from '../hoverProvider';
 import { SymbolTable } from '../../symbols/symbolTable';
-import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Position, MarkupKind } from 'vscode-languageserver';
-
-/**
- * Helper to create a TextDocument from a string
- */
-function createDocument(content: string): TextDocument {
-  return TextDocument.create('file:///test.cal', 'cal', 1, content);
-}
-
-/**
- * Helper to create a mock token for tests
- */
-function mockToken(): any {
-  return {
-    type: 'IDENTIFIER',
-    value: 'test',
-    line: 1,
-    column: 1,
-    startOffset: 0,
-    endOffset: 4
-  };
-}
+import { createMockToken, createDocument } from '../../__tests__/testUtils';
 
 
 /**
@@ -51,7 +30,7 @@ describe('HoverProvider', () => {
       const doc = createDocument('MyVar');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'MyVar', kind: 'variable', token: mockToken(), type: 'Integer' });
+      symbolTable.getRootScope().addSymbol({ name: 'MyVar', kind: 'variable', token: createMockToken(), type: 'Integer' });
 
       const hover = provider.getHover(doc, Position.create(0, 2), undefined, symbolTable);
 
@@ -66,7 +45,7 @@ describe('HoverProvider', () => {
       const doc = createDocument('Name');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'Name', kind: 'field', token: mockToken(), type: 'Text100' });
+      symbolTable.getRootScope().addSymbol({ name: 'Name', kind: 'field', token: createMockToken(), type: 'Text100' });
 
       const hover = provider.getHover(doc, Position.create(0, 2), undefined, symbolTable);
 
@@ -81,7 +60,7 @@ describe('HoverProvider', () => {
       const doc = createDocument('MyProcedure');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'MyProcedure', kind: 'procedure', token: mockToken() });
+      symbolTable.getRootScope().addSymbol({ name: 'MyProcedure', kind: 'procedure', token: createMockToken() });
 
       const hover = provider.getHover(doc, Position.create(0, 5), undefined, symbolTable);
 
@@ -95,7 +74,7 @@ describe('HoverProvider', () => {
       const doc = createDocument('MYVAR');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'MyVar', kind: 'variable', token: mockToken(), type: 'Integer' });
+      symbolTable.getRootScope().addSymbol({ name: 'MyVar', kind: 'variable', token: createMockToken(), type: 'Integer' });
 
       const hover = provider.getHover(doc, Position.create(0, 3), undefined, symbolTable);
 
@@ -169,7 +148,7 @@ describe('HoverProvider', () => {
       const doc = createDocument('Rec.GET');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: mockToken(), type: 'Record Customer' });
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
 
       const hover = provider.getHover(doc, Position.create(0, 5), undefined, symbolTable);
 
@@ -183,7 +162,7 @@ describe('HoverProvider', () => {
       const doc = createDocument('Rec.FINDSET');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: mockToken(), type: 'Record Customer' });
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
 
       const hover = provider.getHover(doc, Position.create(0, 7), undefined, symbolTable);
 
@@ -197,7 +176,7 @@ describe('HoverProvider', () => {
       const doc = createDocument('Rec.INSERT');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: mockToken(), type: 'Record Customer' });
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
 
       const hover = provider.getHover(doc, Position.create(0, 6), undefined, symbolTable);
 
@@ -211,7 +190,7 @@ describe('HoverProvider', () => {
       const doc = createDocument('Rec.Name');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: mockToken(), type: 'Record Customer' });
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
 
       const ast = {
         object: {
@@ -353,7 +332,7 @@ describe('HoverProvider', () => {
       const doc = createDocument('MyVar');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'MyVar', kind: 'variable', token: mockToken(), type: 'Integer' });
+      symbolTable.getRootScope().addSymbol({ name: 'MyVar', kind: 'variable', token: createMockToken(), type: 'Integer' });
 
       const hover = provider.getHover(doc, Position.create(0, 3), undefined, symbolTable);
 

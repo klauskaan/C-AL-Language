@@ -4,44 +4,8 @@
 
 import { DefinitionProvider } from '../definitionProvider';
 import { SymbolTable } from '../../symbols/symbolTable';
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../../parser/parser';
-import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Position } from 'vscode-languageserver';
-
-/**
- * Helper to create a TextDocument from a string
- */
-function createDocument(content: string, uri: string = 'file:///test.cal'): TextDocument {
-  return TextDocument.create(uri, 'cal', 1, content);
-}
-
-/**
- * Helper to create a mock token for tests with required properties
- */
-function mockToken(overrides: { line?: number; column?: number; value?: string } = {}): any {
-  return {
-    type: 'IDENTIFIER',
-    value: overrides.value || 'test',
-    line: overrides.line || 1,
-    column: overrides.column || 1,
-    startOffset: 0,
-    endOffset: 4
-  };
-}
-
-/**
- * Helper to parse content and build symbol table
- */
-function parseAndBuildSymbols(content: string): { ast: any; symbolTable: SymbolTable } {
-  const lexer = new Lexer(content);
-  const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
-  const ast = parser.parse();
-  const symbolTable = new SymbolTable();
-  symbolTable.buildFromAST(ast);
-  return { ast, symbolTable };
-}
+import { createMockToken, createDocument, parseAndBuildSymbols } from '../../__tests__/testUtils';
 
 describe('DefinitionProvider', () => {
   let provider: DefinitionProvider;
@@ -58,7 +22,7 @@ describe('DefinitionProvider', () => {
       symbolTable.getRootScope().addSymbol({
         name: 'MyVar',
         kind: 'variable',
-        token: mockToken({ line: 5, column: 3, value: 'MyVar' }),
+        token: createMockToken({ line: 5, column: 3, value: 'MyVar' }),
         type: 'Integer'
       });
 
@@ -77,7 +41,7 @@ describe('DefinitionProvider', () => {
       symbolTable.getRootScope().addSymbol({
         name: 'MyProcedure',
         kind: 'procedure',
-        token: mockToken({ line: 10, column: 1, value: 'MyProcedure' })
+        token: createMockToken({ line: 10, column: 1, value: 'MyProcedure' })
       });
 
       const result = provider.getDefinition(doc, Position.create(0, 5), undefined, symbolTable);
@@ -94,7 +58,7 @@ describe('DefinitionProvider', () => {
       symbolTable.getRootScope().addSymbol({
         name: 'Name',
         kind: 'field',
-        token: mockToken({ line: 3, column: 5, value: 'Name' }),
+        token: createMockToken({ line: 3, column: 5, value: 'Name' }),
         type: 'Text100'
       });
 
@@ -134,7 +98,7 @@ describe('DefinitionProvider', () => {
       symbolTable.getRootScope().addSymbol({
         name: 'MyVar',
         kind: 'variable',
-        token: mockToken({ value: 'MyVar' }),
+        token: createMockToken({ value: 'MyVar' }),
         type: 'Integer'
       });
 
@@ -150,7 +114,7 @@ describe('DefinitionProvider', () => {
       symbolTable.getRootScope().addSymbol({
         name: 'myvar',
         kind: 'variable',
-        token: mockToken({ value: 'myvar' }),
+        token: createMockToken({ value: 'myvar' }),
         type: 'Integer'
       });
 
@@ -332,7 +296,7 @@ describe('DefinitionProvider', () => {
       symbolTable.getRootScope().addSymbol({
         name: 'CustomerName',
         kind: 'field',
-        token: mockToken({ line: 5, column: 10, value: 'CustomerName' }),
+        token: createMockToken({ line: 5, column: 10, value: 'CustomerName' }),
         type: 'Text100'
       });
 
@@ -351,7 +315,7 @@ describe('DefinitionProvider', () => {
       symbolTable.getRootScope().addSymbol({
         name: 'TestSymbol',
         kind: 'variable',
-        token: mockToken({ line: 10, column: 5, value: 'TestSymbol' }),
+        token: createMockToken({ line: 10, column: 5, value: 'TestSymbol' }),
         type: 'Integer'
       });
 
@@ -375,7 +339,7 @@ describe('DefinitionProvider', () => {
       symbolTable.getRootScope().addSymbol({
         name: 'MyVar',
         kind: 'variable',
-        token: mockToken({ value: 'MyVar' }),
+        token: createMockToken({ value: 'MyVar' }),
         type: 'Integer'
       });
 
@@ -403,7 +367,7 @@ describe('DefinitionProvider', () => {
       symbolTable.getRootScope().addSymbol({
         name: 'MyVar',
         kind: 'variable',
-        token: mockToken({ value: 'MyVar' })
+        token: createMockToken({ value: 'MyVar' })
       });
 
       const result = provider.getDefinition(doc, Position.create(0, 0), undefined, symbolTable);
@@ -418,7 +382,7 @@ describe('DefinitionProvider', () => {
       symbolTable.getRootScope().addSymbol({
         name: 'MyVar',
         kind: 'variable',
-        token: mockToken({ value: 'MyVar' })
+        token: createMockToken({ value: 'MyVar' })
       });
 
       const result = provider.getDefinition(doc, Position.create(0, 5), undefined, symbolTable);
@@ -434,7 +398,7 @@ describe('DefinitionProvider', () => {
       symbolTable.getRootScope().addSymbol({
         name: 'My_Var_Name',
         kind: 'variable',
-        token: mockToken({ value: 'My_Var_Name' })
+        token: createMockToken({ value: 'My_Var_Name' })
       });
 
       const result = provider.getDefinition(doc, Position.create(0, 5), undefined, symbolTable);
@@ -449,7 +413,7 @@ describe('DefinitionProvider', () => {
       symbolTable.getRootScope().addSymbol({
         name: 'Var123',
         kind: 'variable',
-        token: mockToken({ value: 'Var123' })
+        token: createMockToken({ value: 'Var123' })
       });
 
       const result = provider.getDefinition(doc, Position.create(0, 3), undefined, symbolTable);

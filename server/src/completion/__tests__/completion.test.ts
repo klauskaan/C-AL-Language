@@ -6,44 +6,8 @@
 import { CompletionProvider } from '../completionProvider';
 import { BUILTIN_FUNCTIONS, RECORD_METHODS } from '../builtins';
 import { SymbolTable } from '../../symbols/symbolTable';
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../../parser/parser';
-import { TextDocument } from 'vscode-languageserver-textdocument';
 import { CompletionItemKind, Position } from 'vscode-languageserver';
-
-/**
- * Helper to create a TextDocument from a string
- */
-function createDocument(content: string): TextDocument {
-  return TextDocument.create('file:///test.cal', 'cal', 1, content);
-}
-
-/**
- * Helper to create a mock token for tests
- */
-function mockToken(): any {
-  return {
-    type: 'IDENTIFIER',
-    value: 'test',
-    line: 1,
-    column: 1,
-    startOffset: 0,
-    endOffset: 4
-  };
-}
-
-/**
- * Helper to parse content and build symbol table
- */
-function _parseAndBuildSymbols(content: string): { ast: any; symbolTable: SymbolTable } {
-  const lexer = new Lexer(content);
-  const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
-  const ast = parser.parse();
-  const symbolTable = new SymbolTable();
-  symbolTable.buildFromAST(ast);
-  return { ast, symbolTable };
-}
+import { createMockToken, createDocument, parseAndBuildSymbols } from '../../__tests__/testUtils';
 
 describe('CompletionProvider', () => {
   let provider: CompletionProvider;
@@ -142,8 +106,8 @@ describe('CompletionProvider', () => {
       // Create a mock symbol table with symbols
       const symbolTable = new SymbolTable();
       // Manually add symbols for testing (parser may not extract from all formats)
-      symbolTable.getRootScope().addSymbol({ name: 'MyVar', kind: 'variable', token: mockToken(), type: 'Integer' });
-      symbolTable.getRootScope().addSymbol({ name: 'MyProcedure', kind: 'procedure', token: mockToken() });
+      symbolTable.getRootScope().addSymbol({ name: 'MyVar', kind: 'variable', token: createMockToken(), type: 'Integer' });
+      symbolTable.getRootScope().addSymbol({ name: 'MyProcedure', kind: 'procedure', token: createMockToken() });
 
       const items = provider.getCompletions(doc, Position.create(0, 2), undefined, symbolTable);
 
@@ -157,8 +121,8 @@ describe('CompletionProvider', () => {
 
       // Create a mock symbol table with field symbols
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'No.', kind: 'field', token: mockToken(), type: 'Code10' });
-      symbolTable.getRootScope().addSymbol({ name: 'Name', kind: 'field', token: mockToken(), type: 'Text100' });
+      symbolTable.getRootScope().addSymbol({ name: 'No.', kind: 'field', token: createMockToken(), type: 'Code10' });
+      symbolTable.getRootScope().addSymbol({ name: 'Name', kind: 'field', token: createMockToken(), type: 'Text100' });
 
       const items = provider.getCompletions(doc, Position.create(0, 2), undefined, symbolTable);
 
@@ -171,7 +135,7 @@ describe('CompletionProvider', () => {
       const doc = createDocument('My');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'MyProcedure', kind: 'procedure', token: mockToken() });
+      symbolTable.getRootScope().addSymbol({ name: 'MyProcedure', kind: 'procedure', token: createMockToken() });
 
       const items = provider.getCompletions(doc, Position.create(0, 2), undefined, symbolTable);
 
@@ -184,9 +148,9 @@ describe('CompletionProvider', () => {
       const doc = createDocument('Na');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'No.', kind: 'field', token: mockToken(), type: 'Code10' });
-      symbolTable.getRootScope().addSymbol({ name: 'Name', kind: 'field', token: mockToken(), type: 'Text100' });
-      symbolTable.getRootScope().addSymbol({ name: 'Address', kind: 'field', token: mockToken(), type: 'Text100' });
+      symbolTable.getRootScope().addSymbol({ name: 'No.', kind: 'field', token: createMockToken(), type: 'Code10' });
+      symbolTable.getRootScope().addSymbol({ name: 'Name', kind: 'field', token: createMockToken(), type: 'Text100' });
+      symbolTable.getRootScope().addSymbol({ name: 'Address', kind: 'field', token: createMockToken(), type: 'Text100' });
 
       const items = provider.getCompletions(doc, Position.create(0, 2), undefined, symbolTable);
 
@@ -202,7 +166,7 @@ describe('CompletionProvider', () => {
       const doc = createDocument('');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'MyVar', kind: 'variable', token: mockToken(), type: 'Integer' });
+      symbolTable.getRootScope().addSymbol({ name: 'MyVar', kind: 'variable', token: createMockToken(), type: 'Integer' });
 
       const items = provider.getCompletions(doc, Position.create(0, 0), undefined, symbolTable);
 
@@ -279,7 +243,7 @@ describe('CompletionProvider', () => {
 
       // Create symbol table with a Record variable
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: mockToken(), type: 'Record Customer' });
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
 
       // Trigger with '.' character
       const items = provider.getCompletions(doc, Position.create(0, 4), undefined, symbolTable, '.');
@@ -297,7 +261,7 @@ describe('CompletionProvider', () => {
       const doc = createDocument('Rec.');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: mockToken(), type: 'Record Customer' });
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
 
       const items = provider.getCompletions(doc, Position.create(0, 4), undefined, symbolTable, '.');
 
@@ -310,7 +274,7 @@ describe('CompletionProvider', () => {
       const doc = createDocument('Rec.FI');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: mockToken(), type: 'Record Customer' });
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
 
       // Position after "FI" - isAfterDot should detect the dot
       const items = provider.getCompletions(doc, Position.create(0, 6), undefined, symbolTable);
@@ -340,7 +304,7 @@ describe('CompletionProvider', () => {
 
       // Create symbol table with a Record variable
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: mockToken(), type: 'Record Customer' });
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
 
       // Create mock AST with fields
       const ast = {
@@ -368,7 +332,7 @@ describe('CompletionProvider', () => {
       const doc = createDocument('Rec.');
 
       const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: mockToken(), type: 'Record Customer' });
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
 
       // Create mock AST with field containing spaces
       const ast = {

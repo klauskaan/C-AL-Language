@@ -55,6 +55,7 @@
  */
 
 import { Lexer } from '../../lexer/lexer';
+import { TokenType } from '../../lexer/tokens';
 import { Parser, ParseError } from '../parser';
 
 /**
@@ -190,7 +191,7 @@ describe('ParseError Token Isolation (Issue #147)', () => {
       expect(errors.length).toBeGreaterThan(0);
 
       // Find UNKNOWN token error
-      const unknownError = errors.find(e => e.token.type === 'UNKNOWN');
+      const unknownError = errors.find(e => e.token.type === TokenType.Unknown);
       expect(unknownError).toBeDefined();
 
       // Raw value exists in token
@@ -307,7 +308,7 @@ describe('ParseError Token Isolation (Issue #147)', () => {
         const errors = parseAndGetErrors(code);
 
         errors.forEach(error => {
-          if (error.token.type === 'UNKNOWN') {
+          if (error.token.type === TokenType.Unknown) {
             // Raw value exists in token (for position calculation)
             expect(error.token.value).toBeTruthy();
 
@@ -329,7 +330,7 @@ describe('ParseError Token Isolation (Issue #147)', () => {
       const errors = parseAndGetErrors(code);
 
       // Find UNKNOWN token errors
-      const unknownErrors = errors.filter(e => e.token.type === 'UNKNOWN');
+      const unknownErrors = errors.filter(e => e.token.type === TokenType.Unknown);
       expect(unknownErrors.length).toBeGreaterThan(0);
 
       unknownErrors.forEach(error => {
@@ -350,7 +351,7 @@ describe('ParseError Token Isolation (Issue #147)', () => {
       expect(errors.length).toBeGreaterThan(0);
 
       errors.forEach(error => {
-        if (error.token.type === 'UNKNOWN') {
+        if (error.token.type === TokenType.Unknown) {
           // Should either be marked as UNKNOWN or use sanitized format
           const isSanitized =
             error.message.includes('[content sanitized') ||
