@@ -1,6 +1,7 @@
 import { SemanticTokensBuilder } from 'vscode-languageserver';
 import { Token, TokenType } from '../lexer/tokens';
 import { CALDocument } from '../parser/ast';
+import { scanForSetLiterals, TokenContextType } from './setLiteralScanner';
 
 /**
  * Semantic token types - these will be sent to the client
@@ -16,7 +17,8 @@ export enum SemanticTokenTypes {
   Parameter = 6,
   Property = 7,
   Type = 8,
-  Comment = 9
+  Comment = 9,
+  SetBracket = 10
 }
 
 /**
@@ -44,7 +46,8 @@ export function getSemanticTokensLegend(): { tokenTypes: string[], tokenModifier
       'parameter',
       'property',
       'type',
-      'comment'
+      'comment',
+      'setbracket'
     ],
     tokenModifiers: [
       'declaration',
@@ -81,6 +84,9 @@ export class SemanticTokensProvider {
     this.inPropertyValue = false;
     this.bracketDepth = 0;
 
+    // Scan for set literals and range operators
+    const setLiteralContext = scanForSetLiterals(ast);
+
     // Process all tokens and assign semantic token types
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i];
@@ -89,7 +95,7 @@ export class SemanticTokensProvider {
       // Track OBJECT-PROPERTIES and PROPERTIES context
       this.updatePropertiesContext(token);
 
-      this.processToken(token, builder, nextToken);
+      this.processToken(token, builder, nextToken, setLiteralContext.contextMap);
     }
   }
 
@@ -128,8 +134,31 @@ export class SemanticTokensProvider {
   }
 
 
-  private processToken(token: Token, builder: SemanticTokensBuilder, nextToken: Token | null): void {
-    const tokenType = this.mapTokenTypeToSemantic(token, nextToken);
+  private processToken(token: Token, builder: SemanticTokensBuilder, nextToken: Token | null, contextMap: Map<number, TokenContextType>): void {
+    let tokenType: number | null = null;
+
+    // IMPORTANT: Check OBJECT-PROPERTIES context FIRST
+    // If we're in OBJECT-PROPERTIES and this is handled there, use that result
+    // This prevents OBJECT-PROPERTIES brackets from being marked as SetBracket
+    if (this.inObjectProperties && this.propertiesBraceDepth > 0) {
+      tokenType = this.mapObjectPropertyToken(token, nextToken);
+    } else {
+      // Not in OBJECT-PROPERTIES, check set literal context
+      const context = contextMap.get(token.startOffset);
+      if (context) {
+        // Apply context-specific semantic token type
+        if (context === TokenContextType.SetBracketOpen || context === TokenContextType.SetBracketClose) {
+          tokenType = SemanticTokenTypes.SetBracket;
+        } else if (context === TokenContextType.RangeOperator) {
+          tokenType = SemanticTokenTypes.Operator;
+        }
+      }
+
+      // If no set literal context, use normal mapping
+      if (tokenType === null) {
+        tokenType = this.mapTokenTypeToSemantic(token, nextToken);
+      }
+    }
 
     if (tokenType === null) {
       return; // Skip tokens we don't want to highlight semantically

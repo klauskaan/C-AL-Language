@@ -701,4 +701,5 @@ export interface RangeExpression extends Expression {
   type: 'RangeExpression';
   start: Expression | null;
   end: Expression | null;
+  operatorToken?: Token;
 }

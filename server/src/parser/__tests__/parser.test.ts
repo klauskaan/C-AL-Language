@@ -14,6 +14,7 @@
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../parser';
 import { ObjectDeclaration, CaseStatement, RangeExpression, Literal } from '../ast';
+import { TokenType } from '../../lexer/tokens';
 
 describe('Parser - Basic Functionality', () => {
   describe('Parser initialization', () => {
@@ -3457,6 +3458,300 @@ describe('Parser - Property Value Whitespace Preservation', () => {
 
       // May have errors or may parse as valid (depending on implementation)
       // The key assertion is that it doesn't crash
+    });
+  });
+});
+
+describe('Parser - RangeExpression operatorToken field', () => {
+  describe('operatorToken presence and positioning', () => {
+    it('should capture operatorToken for closed range [1..10]', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE CheckRange();
+          VAR
+            x : Integer;
+          BEGIN
+            IF x IN [1..10] THEN;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(parser.getErrors()).toHaveLength(0);
+
+      // Navigate to RangeExpression node
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const ifStmt = proc?.body?.[0] as any;
+      expect(ifStmt.type).toBe('IfStatement');
+
+      // The condition should be a BinaryExpression with IN operator
+      const inExpr = ifStmt.condition;
+      expect(inExpr.type).toBe('BinaryExpression');
+
+      // Right side should be a SetLiteral containing a RangeExpression
+      const setLiteral = inExpr.right;
+      expect(setLiteral.type).toBe('SetLiteral');
+      expect(setLiteral.elements).toHaveLength(1);
+
+      const rangeExpr = setLiteral.elements[0] as RangeExpression;
+      expect(rangeExpr.type).toBe('RangeExpression');
+
+      // Assert operatorToken exists and is correct
+      expect(rangeExpr.operatorToken).toBeDefined();
+      expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
+      expect(rangeExpr.operatorToken!.value).toBe('..');
+    });
+
+    it('should capture operatorToken for open-start range [..10]', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE CheckRange();
+          VAR
+            x : Integer;
+          BEGIN
+            IF x IN [..10] THEN;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+
+      // Navigate to RangeExpression node
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const ifStmt = proc?.body?.[0] as any;
+      const inExpr = ifStmt.condition;
+      const setLiteral = inExpr.right;
+      const rangeExpr = setLiteral.elements[0] as RangeExpression;
+
+      expect(rangeExpr.type).toBe('RangeExpression');
+      expect(rangeExpr.start).toBeNull();
+      expect(rangeExpr.end).not.toBeNull();
+
+      // Assert operatorToken exists and is correct
+      expect(rangeExpr.operatorToken).toBeDefined();
+      expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
+      expect(rangeExpr.operatorToken!.value).toBe('..');
+    });
+
+    it('should capture operatorToken for open-end range [1..]', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE CheckRange();
+          VAR
+            x : Integer;
+          BEGIN
+            IF x IN [1..] THEN;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+
+      // Navigate to RangeExpression node
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const ifStmt = proc?.body?.[0] as any;
+      const inExpr = ifStmt.condition;
+      const setLiteral = inExpr.right;
+      const rangeExpr = setLiteral.elements[0] as RangeExpression;
+
+      expect(rangeExpr.type).toBe('RangeExpression');
+      expect(rangeExpr.start).not.toBeNull();
+      expect(rangeExpr.end).toBeNull();
+
+      // Assert operatorToken exists and is correct
+      expect(rangeExpr.operatorToken).toBeDefined();
+      expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
+      expect(rangeExpr.operatorToken!.value).toBe('..');
+    });
+
+    it('should capture operatorToken for closed range with whitespace [1 .. 10]', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE CheckRange();
+          VAR
+            x : Integer;
+          BEGIN
+            IF x IN [1 .. 10] THEN;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(parser.getErrors()).toHaveLength(0);
+
+      // Navigate to RangeExpression node
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const ifStmt = proc?.body?.[0] as any;
+      const inExpr = ifStmt.condition;
+      const setLiteral = inExpr.right;
+      const rangeExpr = setLiteral.elements[0] as RangeExpression;
+
+      expect(rangeExpr.type).toBe('RangeExpression');
+
+      // Assert operatorToken exists and is correct regardless of whitespace
+      expect(rangeExpr.operatorToken).toBeDefined();
+      expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
+      expect(rangeExpr.operatorToken!.value).toBe('..');
+    });
+
+    it('should capture operatorToken for complex expression range [(1+2)..(3*4)]', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE CheckRange();
+          VAR
+            x : Integer;
+          BEGIN
+            IF x IN [(1+2)..(3*4)] THEN;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(parser.getErrors()).toHaveLength(0);
+
+      // Navigate to RangeExpression node
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const ifStmt = proc?.body?.[0] as any;
+      const inExpr = ifStmt.condition;
+      const setLiteral = inExpr.right;
+      const rangeExpr = setLiteral.elements[0] as RangeExpression;
+
+      expect(rangeExpr.type).toBe('RangeExpression');
+      expect(rangeExpr.start?.type).toBe('BinaryExpression');
+      expect(rangeExpr.end?.type).toBe('BinaryExpression');
+
+      // Assert operatorToken exists and points to the .. between expressions
+      expect(rangeExpr.operatorToken).toBeDefined();
+      expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
+      expect(rangeExpr.operatorToken!.value).toBe('..');
+    });
+
+    it('should capture operatorToken in CASE statement ranges', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE CheckValue(n : Integer);
+          BEGIN
+            CASE n OF
+              1..10:
+                EXIT;
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(parser.getErrors()).toHaveLength(0);
+
+      // Navigate to RangeExpression in CASE branch
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const caseStmt = proc?.body?.[0] as CaseStatement;
+      expect(caseStmt.type).toBe('CaseStatement');
+      expect(caseStmt.branches).toHaveLength(1);
+
+      const rangeExpr = caseStmt.branches[0].values[0] as RangeExpression;
+      expect(rangeExpr.type).toBe('RangeExpression');
+
+      // Assert operatorToken exists for CASE ranges too
+      expect(rangeExpr.operatorToken).toBeDefined();
+      expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
+      expect(rangeExpr.operatorToken!.value).toBe('..');
+    });
+
+    it('should capture operatorToken for character range in CASE', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE IsUpperCase(c : Char) : Boolean;
+          BEGIN
+            CASE c OF
+              'A'..'Z':
+                EXIT(TRUE);
+            END;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(parser.getErrors()).toHaveLength(0);
+
+      // Navigate to RangeExpression
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const caseStmt = proc?.body?.[0] as CaseStatement;
+      const rangeExpr = caseStmt.branches[0].values[0] as RangeExpression;
+
+      expect(rangeExpr.type).toBe('RangeExpression');
+      expect((rangeExpr.start as Literal).value).toBe('A');
+      expect((rangeExpr.end as Literal).value).toBe('Z');
+
+      // Assert operatorToken exists
+      expect(rangeExpr.operatorToken).toBeDefined();
+      expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
+      expect(rangeExpr.operatorToken!.value).toBe('..');
+    });
+
+    it('should capture operatorToken for multiple ranges in set literal', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE CheckRange();
+          VAR
+            x : Integer;
+          BEGIN
+            IF x IN [1..10, 20..30, 40..50] THEN;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+
+      const ast = parser.parse();
+      expect(ast).toBeDefined();
+      expect(parser.getErrors()).toHaveLength(0);
+
+      // Navigate to SetLiteral
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const ifStmt = proc?.body?.[0] as any;
+      const inExpr = ifStmt.condition;
+      const setLiteral = inExpr.right;
+
+      expect(setLiteral.type).toBe('SetLiteral');
+      expect(setLiteral.elements).toHaveLength(3);
+
+      // Assert each range has operatorToken
+      for (let i = 0; i < 3; i++) {
+        const rangeExpr = setLiteral.elements[i] as RangeExpression;
+        expect(rangeExpr.type).toBe('RangeExpression');
+        expect(rangeExpr.operatorToken).toBeDefined();
+        expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
+        expect(rangeExpr.operatorToken!.value).toBe('..');
+      }
     });
   });
 });

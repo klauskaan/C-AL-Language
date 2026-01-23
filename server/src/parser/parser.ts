@@ -2461,12 +2461,13 @@ export class Parser {
 
     // Check for range expression (e.g., 1..10)
     if (this.check(TokenType.DotDot)) {
-      this.advance(); // consume ..
+      const operatorToken = this.advance(); // consume ..
       const endExpr = this.parseExpression();
       return {
         type: 'RangeExpression',
         start: expr,
         end: endExpr,
+        operatorToken,
         startToken: expr.startToken,
         endToken: endExpr.endToken
       } as RangeExpression;
@@ -3182,6 +3183,7 @@ export class Parser {
           type: 'RangeExpression',
           start: null,
           end,
+          operatorToken: rangeStart,
           startToken: rangeStart,
           endToken: end.endToken
         } as RangeExpression);
@@ -3191,7 +3193,7 @@ export class Parser {
 
         // Check if this is a range: start..end or start..
         if (this.check(TokenType.DotDot)) {
-          this.advance(); // consume '..'
+          const operatorToken = this.advance(); // consume '..'
 
           // Check for closed range (start..end) vs open-ended range (start..)
           if (!this.check(TokenType.Comma) && !this.check(TokenType.RightBracket)) {
@@ -3201,6 +3203,7 @@ export class Parser {
               type: 'RangeExpression',
               start,
               end,
+              operatorToken,
               startToken: start.startToken,
               endToken: end.endToken
             } as RangeExpression);
@@ -3210,6 +3213,7 @@ export class Parser {
               type: 'RangeExpression',
               start,
               end: null,
+              operatorToken,
               startToken: start.startToken,
               endToken: this.previous()
             } as RangeExpression);
