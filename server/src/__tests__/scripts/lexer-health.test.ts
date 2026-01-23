@@ -14,6 +14,7 @@
  * - calculateETA(): ETA calculation with warmup period
  */
 
+import * as fs from 'fs';
 import { existsSync, readdirSync, mkdirSync, writeFileSync } from 'fs';
 import {
   calculatePercentile,
@@ -444,6 +445,7 @@ describe('Lexer Health Script - validateAllFiles()', () => {
     mockReaddirSync.mockReturnValue([]);
 
     // Use the imported function directly (already loaded with mocked fs)
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require() needed to load module after mocks are configured
     const { validateAllFiles: validateAllFilesImported } = require('../../../scripts/lexer-health') as typeof import('../../../scripts/lexer-health');
     const results = validateAllFilesImported();
 
@@ -460,7 +462,7 @@ describe('Lexer Health Script - validateAllFiles()', () => {
       jest.clearAllMocks();
       mockExistsSync = jest.requireMock('fs').existsSync as jest.MockedFunction<typeof existsSync>;
       mockReaddirSync = jest.requireMock('fs').readdirSync as jest.MockedFunction<typeof readdirSync>;
-      mockReadFileSync = jest.spyOn(require('fs'), 'readFileSync');
+      mockReadFileSync = jest.spyOn(fs, 'readFileSync');
     });
 
     afterEach(() => {
@@ -471,6 +473,7 @@ describe('Lexer Health Script - validateAllFiles()', () => {
       // Mock file content for valid C/AL object
       mockReadFileSync.mockReturnValue(Buffer.from('OBJECT Table 18 Customer\r\n{\r\n}\r\n'));
 
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- require() needed to load module after mocks are configured
       const { validateAllFiles } = require('../../../scripts/lexer-health');
       const results = validateAllFiles(['TAB18.TXT']);
 
@@ -485,6 +488,7 @@ describe('Lexer Health Script - validateAllFiles()', () => {
     it('should log "No .TXT files found" when provided empty array', () => {
       const mockConsoleWarn = jest.spyOn(console, 'warn').mockImplementation();
 
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- require() needed to load module after mocks are configured
       const { validateAllFiles } = require('../../../scripts/lexer-health');
       const results = validateAllFiles([]);
 
@@ -498,6 +502,7 @@ describe('Lexer Health Script - validateAllFiles()', () => {
       // Mock file content for both files
       mockReadFileSync.mockReturnValue(Buffer.from('OBJECT Table 18 Customer\r\n{\r\n}\r\n'));
 
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- require() needed to load module after mocks are configured
       const { validateAllFiles } = require('../../../scripts/lexer-health');
       const results = validateAllFiles(['TAB18.TXT', 'COD50.TXT']);
 
@@ -515,6 +520,7 @@ describe('Lexer Health Script - validateAllFiles()', () => {
       mockReaddirSync.mockReturnValue(['TAB18.TXT' as any]);
       mockReadFileSync.mockReturnValue(Buffer.from('OBJECT Table 18 Customer\r\n{\r\n}\r\n'));
 
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- require() needed to load module after mocks are configured
       const { validateAllFiles } = require('../../../scripts/lexer-health');
       const results = validateAllFiles(undefined);
 
@@ -558,6 +564,7 @@ describe('Lexer Health Script - validateAllFiles()', () => {
         throw permissionError;
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- require() needed to load module after mocks are configured
       const { validateAllFiles } = require('../../../scripts/lexer-health');
 
       // Should throw because process.exit is mocked to throw
@@ -582,6 +589,7 @@ describe('Lexer Health Script - validateAllFiles()', () => {
         throw genericError;
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- require() needed to load module after mocks are configured
       const { validateAllFiles } = require('../../../scripts/lexer-health');
 
       // Should throw because process.exit is mocked to throw
@@ -1023,6 +1031,7 @@ describe('Lexer Health Script - validateDirectoryForReport()', () => {
 describe('Lexer Health Script - validateAllFiles() optimization', () => {
   it('should accept optional files parameter to skip directory validation', () => {
     // Test that validateAllFiles can be called with a files array
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require() needed to load module after mocks are configured
     const { validateAllFiles } = require('../../../scripts/lexer-health');
 
     // Mock files array (empty to avoid actual file processing)

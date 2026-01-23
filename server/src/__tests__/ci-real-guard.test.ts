@@ -18,7 +18,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { checkForRealPaths } from '../utils/ciRealGuard';
+import { runCLI, checkForRealPaths } from '../utils/ciRealGuard';
 
 describe('CI REAL Guard', () => {
   let tempDir: string;
@@ -641,7 +641,6 @@ OBJECT Codeunit 1 Test
   describe('CLI exit codes', () => {
     it('should have a runCLI function', () => {
       // Verify the runCLI function exists
-      const { runCLI } = require('../utils/ciRealGuard');
       expect(typeof runCLI).toBe('function');
     });
   });

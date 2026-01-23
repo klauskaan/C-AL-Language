@@ -12,8 +12,10 @@
  * don't exist yet. Implementation will follow after test validation.
  */
 
-import { compareToBaseline, runCICheck, CI_EXIT_CODES } from '../../../scripts/lexer-health';
+import * as lexerHealth from '../../../scripts/lexer-health';
 import { existsSync } from 'fs';
+
+const { compareToBaseline, runCICheck, CI_EXIT_CODES } = lexerHealth;
 
 // Mock filesystem functions
 jest.mock('fs');
@@ -203,10 +205,24 @@ describe('Lexer Health Script - runCICheck()', () => {
       mockReadFileSync.mockReturnValue(JSON.stringify({ maxFailures: 10 }));
 
       // Mock validateAllFiles to return results
-      jest.spyOn(require('../../../scripts/lexer-health'), 'validateAllFiles')
+      jest.spyOn(lexerHealth, 'validateAllFiles')
         .mockReturnValue([
-          { positionValidation: { isValid: true }, cleanExit: { passed: true } },
-          { positionValidation: { isValid: true }, cleanExit: { passed: true } }
+          {
+            file: 'FILE1.TXT',
+            lines: 100,
+            tokenCount: 500,
+            tokenizeTime: 10,
+            positionValidation: { isValid: true, errors: [], warnings: [] },
+            cleanExit: { passed: true, violations: [], categories: new Set() }
+          },
+          {
+            file: 'FILE2.TXT',
+            lines: 150,
+            tokenCount: 750,
+            tokenizeTime: 15,
+            positionValidation: { isValid: true, errors: [], warnings: [] },
+            cleanExit: { passed: true, violations: [], categories: new Set() }
+          }
         ]);
 
       const result = runCICheck();
@@ -322,11 +338,15 @@ describe('Lexer Health Script - runCICheck()', () => {
       mockReadFileSync.mockReturnValue(JSON.stringify({ maxFailures: 10 }));
 
       // Mock validateAllFiles to return 10 failures (matches baseline)
-      jest.spyOn(require('../../../scripts/lexer-health'), 'validateAllFiles')
+      jest.spyOn(lexerHealth, 'validateAllFiles')
         .mockReturnValue(
-          Array.from({ length: 10 }, () => ({
-            positionValidation: { isValid: false },
-            cleanExit: { passed: true }
+          Array.from({ length: 10 }, (_, i) => ({
+            file: `FILE${i + 1}.TXT`,
+            lines: 100,
+            tokenCount: 500,
+            tokenizeTime: 10,
+            positionValidation: { isValid: false, errors: ['Position mismatch'], warnings: [] },
+            cleanExit: { passed: true, violations: [], categories: new Set() }
           }))
         );
 
@@ -347,11 +367,15 @@ describe('Lexer Health Script - runCICheck()', () => {
       mockReadFileSync.mockReturnValue(JSON.stringify({ maxFailures: 5 }));
 
       // Mock validateAllFiles to return 10 failures (regression)
-      jest.spyOn(require('../../../scripts/lexer-health'), 'validateAllFiles')
+      jest.spyOn(lexerHealth, 'validateAllFiles')
         .mockReturnValue(
-          Array.from({ length: 10 }, () => ({
-            positionValidation: { isValid: false },
-            cleanExit: { passed: true }
+          Array.from({ length: 10 }, (_, i) => ({
+            file: `FILE${i + 1}.TXT`,
+            lines: 100,
+            tokenCount: 500,
+            tokenizeTime: 10,
+            positionValidation: { isValid: false, errors: ['Position mismatch'], warnings: [] },
+            cleanExit: { passed: true, violations: [], categories: new Set() }
           }))
         );
 
@@ -495,11 +519,15 @@ describe('Lexer Health Script - runCICheck()', () => {
       mockReadFileSync.mockReturnValue(JSON.stringify({ maxFailures: 15 }));
 
       // Mock validateAllFiles to return 10 failures (improvement)
-      jest.spyOn(require('../../../scripts/lexer-health'), 'validateAllFiles')
+      jest.spyOn(lexerHealth, 'validateAllFiles')
         .mockReturnValue(
-          Array.from({ length: 10 }, () => ({
-            positionValidation: { isValid: false },
-            cleanExit: { passed: true }
+          Array.from({ length: 10 }, (_, i) => ({
+            file: `FILE${i + 1}.TXT`,
+            lines: 100,
+            tokenCount: 500,
+            tokenizeTime: 10,
+            positionValidation: { isValid: false, errors: ['Position mismatch'], warnings: [] },
+            cleanExit: { passed: true, violations: [], categories: new Set() }
           }))
         );
 
@@ -526,11 +554,15 @@ describe('Lexer Health Script - runCICheck()', () => {
       mockReadFileSync.mockReturnValue(JSON.stringify({ maxFailures: 5 }));
 
       // Mock validateAllFiles to return 8 failures (regression)
-      jest.spyOn(require('../../../scripts/lexer-health'), 'validateAllFiles')
+      jest.spyOn(lexerHealth, 'validateAllFiles')
         .mockReturnValue(
-          Array.from({ length: 8 }, () => ({
-            positionValidation: { isValid: false },
-            cleanExit: { passed: true }
+          Array.from({ length: 8 }, (_, i) => ({
+            file: `FILE${i + 1}.TXT`,
+            lines: 100,
+            tokenCount: 500,
+            tokenizeTime: 10,
+            positionValidation: { isValid: false, errors: ['Position mismatch'], warnings: [] },
+            cleanExit: { passed: true, violations: [], categories: new Set() }
           }))
         );
 
@@ -569,6 +601,7 @@ describe('Lexer Health Script - runCICheck()', () => {
       });
 
       // Import fresh module to avoid spy issues
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- require() needed to load module after mocks are configured
       const lexerHealth = require('../../../scripts/lexer-health');
       const validateAllFilesSpy = jest.spyOn(lexerHealth, 'validateAllFiles');
 
@@ -601,6 +634,7 @@ describe('Lexer Health Script - runCICheck()', () => {
         return Buffer.from('OBJECT Table 18 Customer\r\n{\r\n}\r\n');
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- require() needed to load module after mocks are configured
       const { runCICheck } = require('../../../scripts/lexer-health');
       runCICheck();
 
