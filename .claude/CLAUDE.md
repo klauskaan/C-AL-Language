@@ -26,8 +26,9 @@ We work as **pair programming partners**:
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ 2. PLAN (Opus loop)                                         │
-│    architect → creates plan with agent assignments          │
-│    adversarial-reviewer → critiques plan                    │
+│    architect → creates plan with explicit assumptions       │
+│    adversarial-reviewer → critiques plan, flags [VERIFY]    │
+│    orchestrator → verifies flagged assumptions (fresh calls)│
 │    Loop until reviewer explicitly approves the plan         │
 │    Use Feedback Resolution Protocol                         │
 └─────────────────────────────────────────────────────────────┘
@@ -77,6 +78,35 @@ We work as **pair programming partners**:
 └─────────────────────────────────────────────────────────────┘
 ```
 
+**Assumption Verification (PLAN Phase):**
+
+To mitigate silent tool failures ([anthropics/claude-code#16861](https://github.com/anthropics/claude-code/issues/16861)), the PLAN phase includes lightweight verification:
+
+1. **Architect lists explicit assumptions** in the plan:
+   - "Assumes validation/index.ts exists and exports validators"
+   - "Assumes SetLiteral AST node has endToken field"
+   - "Assumes ASTWalker supports visitBinaryExpression"
+
+2. **Adversarial-reviewer flags critical assumptions** during critique:
+   - Add `[VERIFY]` tag to items requiring verification
+   - Flag when: Plan depends on specific file/function existence
+   - Don't flag: General patterns, things TDD will catch, TypeScript type checks
+
+3. **Orchestrator verifies flagged items** with fresh tool calls:
+   - File existence: `ls path/to/file` or `Glob`
+   - Function signatures: `Grep` for function definition
+   - Scope: Only `[VERIFY]`-flagged items, keep it lightweight
+
+4. **Verification failures** trigger plan revision back to architect
+
+**When to use [VERIFY]:**
+- ✓ Plan depends on modifying a specific file
+- ✓ Plan depends on calling a specific function with particular signature
+- ✓ Investigation was conducted many turns ago (stale state risk)
+- ✗ General architectural assumptions ("this pattern is common")
+- ✗ Code behavior (TDD will catch)
+- ✗ Type signatures (TypeScript compiler will catch)
+
 **Checkpoint Decision Tables:**
 
 Use these to determine next step at each workflow checkpoint.
@@ -89,6 +119,7 @@ Use these to determine next step at each workflow checkpoint.
 | INVESTIGATE | Conflicting existing test/behavior found | Confirm intent with user OR investigate why conflict exists |
 | PLAN | Reviewer explicitly approves | Proceed to WRITE TESTS |
 | PLAN | Reviewer finds gap in approach | Revise plan, re-submit |
+| PLAN | Verification fails (file doesn't exist, etc.) | Revise plan with correct assumptions |
 | PLAN | Reviewer discovers conflicting existing behavior | Back to INVESTIGATE |
 | PLAN | Cannot converge after 3 revision cycles | Escalate to user with both positions |
 | TDD | Tests fail as expected | Proceed to IMPLEMENT |
@@ -326,12 +357,16 @@ If in doubt whether something qualifies, create a follow-up issue instead of exp
 
 **Symptom:** Architect agent (and possibly others) returns 0 tokens with no reply when resumed during review/revision cycles.
 
+**Root Cause:** Known bug tracked in [anthropics/claude-code#16861](https://github.com/anthropics/claude-code/issues/16861). When an agent's session has hidden tool use concurrency errors, attempting to resume fails silently with `API Error: 400 due to tool use concurrency issues`.
+
 **Workaround:** If an agent returns 0 tokens on resume:
 1. Retry the same task WITHOUT the resume parameter (start fresh)
 2. Provide full context in the prompt (investigation findings, plan decisions, current step) since the agent won't have conversation history
 3. Continue the workflow normally
 
-**When to remove this section:** If you notice agents consistently resume successfully without failures, ask Klaus whether this workaround is still needed. This is a temporary measure until the underlying bug is resolved.
+**Impact:** Tool calls may fail silently in the original agent session, causing incomplete investigation. Our multi-agent review approach (architect → adversarial-reviewer) helps catch these gaps since the reviewer runs fresh tool calls.
+
+**When to remove this section:** When [issue #16861](https://github.com/anthropics/claude-code/issues/16861) is resolved and agents consistently resume successfully without failures.
 
 ---
 
@@ -461,10 +496,11 @@ Apply this check when you first encounter a TypeScript error during any workflow
 
 ## Workflow Learnings
 
-**Validated Practices (from Controls keyword fix):**
-1. **adversarial-reviewer in PLAN phase** - Catches conflicting assumptions before implementation
+**Validated Practices:**
+1. **adversarial-reviewer in PLAN phase** - Catches conflicting assumptions before implementation (Controls keyword fix)
 2. **TDD validation** - Tests MUST fail first or diagnosis is wrong
 3. **Mandatory adversarial-reviewer before COMMIT** - Final quality gate catches gaps
 4. **Re-review after fixes** - Ensures fixes don't introduce new issues
 5. **code-detective for non-obvious issues** - Deep investigation prevents wasted work
 6. **Only explicit "APPROVED" exits review loops** - "Conditional approval" or "LGTM if you clarify X" requires resuming the reviewer with clarifications, not asking the user for permission to proceed (incident: 2026-01-19)
+7. **Explicit assumptions + lightweight verification** - Architect states assumptions explicitly, adversarial-reviewer flags critical items with [VERIFY], orchestrator confirms with fresh tool calls. Mitigates silent tool failures without excessive overhead (EmptySetValidator implementation, 2026-01-23)
