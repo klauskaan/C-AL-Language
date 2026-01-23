@@ -1,0 +1,1 @@
+export { WorkspaceSymbolProvider } from './workspaceSymbolProvider';

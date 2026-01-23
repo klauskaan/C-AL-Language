@@ -24,7 +24,9 @@ import {
   DocumentSymbolParams,
   PrepareRenameParams,
   RenameParams,
-  WorkspaceEdit
+  WorkspaceEdit,
+  WorkspaceSymbolParams,
+  SymbolInformation
 } from 'vscode-languageserver/node';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -42,6 +44,7 @@ import { ReferenceProvider } from './references';
 import { CodeLensProvider } from './codelens';
 import { DocumentSymbolProvider } from './documentSymbol';
 import { RenameProvider } from './rename';
+import { WorkspaceSymbolProvider } from './workspaceSymbol';
 import { SymbolTable } from './symbols/symbolTable';
 import { formatError } from './utils/sanitize';
 
@@ -77,6 +80,12 @@ const documentSymbolProvider = new DocumentSymbolProvider();
 
 // Rename provider
 const renameProvider = new RenameProvider();
+
+// WorkspaceSymbol provider (Ctrl+T - Go to Symbol in Workspace)
+const workspaceSymbolProvider = new WorkspaceSymbolProvider(
+  documentSymbolProvider,
+  connection
+);
 
 // Cache for parsed documents (includes symbol table and parse errors)
 interface ParsedDocument {
@@ -122,11 +131,12 @@ connection.onInitialize((params: InitializeParams) => {
       documentSymbolProvider: true,
       renameProvider: {
         prepareProvider: true
-      }
+      },
+      workspaceSymbolProvider: true
     }
   };
 
-  connection.console.log('Capabilities registered: semanticTokens, completion, hover, signatureHelp, definition, references, codeLens, documentSymbol, rename');
+  connection.console.log('Capabilities registered: semanticTokens, completion, hover, signatureHelp, definition, references, codeLens, documentSymbol, rename, workspaceSymbol');
   return result;
 });
 
@@ -364,6 +374,26 @@ connection.onRenameRequest((params: RenameParams): WorkspaceEdit | null => {
   } catch (error) {
     connection.console.error(`Error performing rename: ${formatError(error)}`);
     return null;
+  }
+});
+
+// Handle workspace symbol requests (Ctrl+T - Go to Symbol in Workspace)
+connection.onWorkspaceSymbol((params: WorkspaceSymbolParams): SymbolInformation[] => {
+  connection.console.log(`[WorkspaceSymbol] Query: "${params.query}"`);
+
+  try {
+    // Parse all open documents using cache
+    const parsedDocs = Array.from(documents.all()).map(doc => {
+      const { ast } = parseDocument(doc);
+      return { uri: doc.uri, textDocument: doc, ast };
+    });
+
+    const results = workspaceSymbolProvider.search(params.query, parsedDocs);
+    connection.console.log(`[WorkspaceSymbol] Returning ${results.length} symbols`);
+    return results;
+  } catch (error) {
+    connection.console.error(`Error getting workspace symbols: ${formatError(error)}`);
+    return [];
   }
 });
 
