@@ -209,7 +209,7 @@ function validateQuotedIdentifierToken(documentContent: string): string {
  * 2. Unclosed quoted identifiers: startsWith('"') && !endsWith('"') - strip quote
  * 3. Single-char tokens (@, }, unrecognized char): direct match
  * 4. Unclosed brace comments: starts with '{', no closing '}' - value is '{'
- * 5. Unclosed C-style comments: starts with '/*', no closing '*/' - value is '/*'
+ * 5. Unclosed C-style comments: starts with '/*', no closing '* /' - value is '/*'
  */
 function validateUnknownToken(documentContent: string): string {
   // Unclosed brace comment: { comment... (starts with '{', but no closing '}')
