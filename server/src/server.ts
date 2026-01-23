@@ -50,6 +50,7 @@ import { WorkspaceSymbolProvider } from './workspaceSymbol';
 import { FoldingRangeProvider } from './foldingRange/foldingRangeProvider';
 import { SymbolTable } from './symbols/symbolTable';
 import { formatError } from './utils/sanitize';
+import { EmptySetValidator } from './validation/emptySetValidator';
 
 // Create a connection for the server
 const connection = createConnection(ProposedFeatures.all);
@@ -92,6 +93,9 @@ const workspaceSymbolProvider = new WorkspaceSymbolProvider(
 
 // FoldingRange provider (code folding)
 const foldingRangeProvider = new FoldingRangeProvider();
+
+// EmptySet validator (semantic validation)
+const emptySetValidator = new EmptySetValidator();
 
 // Cache for parsed documents (includes symbol table and parse errors)
 interface ParsedDocument {
@@ -436,10 +440,10 @@ documents.onDidOpen(event => {
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
   try {
     // Parse document and get cached errors (no double parsing!)
-    const { errors } = parseDocument(textDocument);
+    const { ast, errors } = parseDocument(textDocument);
 
     // Convert parse errors to diagnostics
-    const diagnostics: Diagnostic[] = errors.map(error => ({
+    const parseDiagnostics: Diagnostic[] = errors.map(error => ({
       severity: DiagnosticSeverity.Error,
       range: {
         start: { line: error.token.line - 1, character: error.token.column - 1 },
@@ -449,8 +453,14 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
       source: 'cal'
     }));
 
-    // Send diagnostics to client
-    connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+    // Run semantic validations
+    const semanticDiagnostics = emptySetValidator.validate(ast);
+
+    // Merge all diagnostics
+    const allDiagnostics = [...parseDiagnostics, ...semanticDiagnostics];
+
+    // Send combined diagnostics to client
+    connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: allDiagnostics });
   } catch (error) {
     connection.console.error(`Error validating document: ${formatError(error)}`);
   }
