@@ -2411,6 +2411,34 @@ describe('Parser - Multi-word Property Names', () => {
       const errors = parser.getErrors();
       expect(errors.length).toBeGreaterThan(0);
     });
+
+    it('should handle multiple consecutive malformed multi-word properties', () => {
+      const code = `OBJECT Table 50000 Test {
+        FIELDS {
+          { 1 ; ; Field1 ; Code20 ; SQL Data Type }
+          { 2 ; ; Field2 ; Integer ; Auto Increment }
+          { 3 ; ; Field3 ; Text50 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Verify no crash - AST is valid
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+
+      // Verify parser continues and parses all three fields (issue #178)
+      expect(ast.object?.fields?.fields).toHaveLength(3);
+
+      // Verify multiple errors reported (one for each malformed property)
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThanOrEqual(2);
+
+      // Verify errors relate to missing '=' in property values
+      const propertyErrors = errors.filter(e => e.message.includes('='));
+      expect(propertyErrors.length).toBeGreaterThanOrEqual(2);
+    });
   });
 });
 
