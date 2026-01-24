@@ -10,6 +10,8 @@ import {
   ActionDeclaration,
   ControlSection,
   ControlDeclaration,
+  ElementsSection,
+  XMLportElement,
   CodeSection,
   Property,
   FieldDeclaration,
@@ -112,6 +114,11 @@ export interface ASTVisitor {
   visitControlSection?(node: ControlSection): void | false;
 
   /**
+   * Visit an ElementsSection node (XMLport ELEMENTS)
+   */
+  visitElementsSection?(node: ElementsSection): void | false;
+
+  /**
    * Visit a CodeSection node (CODE block)
    */
   visitCodeSection?(node: CodeSection): void | false;
@@ -146,6 +153,11 @@ export interface ASTVisitor {
    * Visit a ControlDeclaration node (control definition in CONTROLS section)
    */
   visitControlDeclaration?(node: ControlDeclaration): void | false;
+
+  /**
+   * Visit an XMLportElement node
+   */
+  visitXMLportElement?(node: XMLportElement): void | false;
 
   /**
    * Visit a VariableDeclaration node (local or global variable)

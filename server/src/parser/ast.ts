@@ -44,6 +44,7 @@ export interface ObjectDeclaration extends ASTNode {
   fieldGroups: FieldGroupSection | null;
   actions: ActionSection | null;
   controls: ControlSection | null;
+  elements: ElementsSection | null;
   code: CodeSection | null;
 }
 
@@ -407,6 +408,16 @@ export type ActionType = 'ActionContainer' | 'ActionGroup' | 'Action' | 'Separat
 export type ControlType = 'Container' | 'Group' | 'Field' | 'Part' | 'Separator';
 
 /**
+ * XMLport node types (column 4 in ELEMENTS section)
+ */
+export type XMLportNodeType = 'Element' | 'Attribute';
+
+/**
+ * XMLport source types (column 5 in ELEMENTS section)
+ */
+export type XMLportSourceType = 'Text' | 'Table' | 'Field';
+
+/**
  * ACTIONS section containing UI action definitions
  */
 export interface ActionSection extends ASTNode {
@@ -427,6 +438,30 @@ export interface ActionDeclaration extends ASTNode {
   properties: PropertySection | null;
   triggers: TriggerDeclaration[] | null;
   children: ActionDeclaration[];
+}
+
+/**
+ * ELEMENTS section containing XMLport element definitions
+ */
+export interface ElementsSection extends ASTNode {
+  type: 'ElementsSection';
+  elements: XMLportElement[];  // Top-level elements (indentLevel 0 or first level)
+}
+
+/**
+ * Individual XMLport element declaration within ELEMENTS section
+ * Format: { [{GUID}];IndentLevel;ElementName;NodeType;SourceType; Properties [Triggers] }
+ */
+export interface XMLportElement extends ASTNode {
+  type: 'XMLportElement';
+  guid: string;
+  indentLevel: number;
+  name: string;
+  nodeType: XMLportNodeType;
+  sourceType: XMLportSourceType;
+  properties: PropertySection | null;
+  triggers: TriggerDeclaration[] | null;
+  children: XMLportElement[];  // Populated from indentLevel hierarchy
 }
 
 /**

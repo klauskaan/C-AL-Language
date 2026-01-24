@@ -31,6 +31,8 @@ import {
   ActionDeclaration,
   ControlSection,
   ControlDeclaration,
+  ElementsSection,
+  XMLportElement,
   CodeSection,
   Property,
   FieldDeclaration,
@@ -128,6 +130,9 @@ export class ASTWalker {
       case 'ControlSection':
         this.walkControlSection(node as ControlSection, visitor);
         break;
+      case 'ElementsSection':
+        this.walkElementsSection(node as ElementsSection, visitor);
+        break;
       case 'CodeSection':
         this.walkCodeSection(node as CodeSection, visitor);
         break;
@@ -150,6 +155,9 @@ export class ASTWalker {
         break;
       case 'ControlDeclaration':
         this.walkControlDeclaration(node as ControlDeclaration, visitor);
+        break;
+      case 'XMLportElement':
+        this.walkXMLportElement(node as XMLportElement, visitor);
         break;
       case 'VariableDeclaration':
         this.walkVariableDeclaration(node as VariableDeclaration, visitor);
@@ -276,6 +284,7 @@ export class ASTWalker {
     this.walk(node.fieldGroups, visitor);
     this.walk(node.actions, visitor);
     this.walk(node.controls, visitor);
+    this.walk(node.elements, visitor);
     this.walk(node.code, visitor);
   }
 
@@ -352,6 +361,18 @@ export class ASTWalker {
     }
     for (const control of node.controls) {
       this.walk(control, visitor);
+    }
+  }
+
+  private walkElementsSection(node: ElementsSection, visitor: Partial<ASTVisitor>): void {
+    if (visitor.visitElementsSection) {
+      const result = visitor.visitElementsSection(node);
+      if (result === false) {
+        return;
+      }
+    }
+    for (const element of node.elements) {
+      this.walk(element, visitor);
     }
   }
 
@@ -466,6 +487,29 @@ export class ASTWalker {
         this.walk(trigger, visitor);
       }
     }
+    for (const child of node.children) {
+      this.walk(child, visitor);
+    }
+  }
+
+  private walkXMLportElement(node: XMLportElement, visitor: Partial<ASTVisitor>): void {
+    if (visitor.visitXMLportElement) {
+      const result = visitor.visitXMLportElement(node);
+      if (result === false) {
+        return;
+      }
+    }
+    // Walk properties
+    if (node.properties) {
+      this.walk(node.properties, visitor);
+    }
+    // Walk triggers
+    if (node.triggers) {
+      for (const trigger of node.triggers) {
+        this.walk(trigger, visitor);
+      }
+    }
+    // Walk children (nested elements)
     for (const child of node.children) {
       this.walk(child, visitor);
     }

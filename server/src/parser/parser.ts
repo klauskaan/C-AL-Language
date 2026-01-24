@@ -21,6 +21,10 @@ import {
   ControlSection,
   ControlDeclaration,
   ControlType,
+  ElementsSection,
+  XMLportElement,
+  XMLportNodeType,
+  XMLportSourceType,
   CodeSection,
   VariableDeclaration,
   VariableModifiers,
@@ -189,6 +193,7 @@ export class Parser {
     let fieldGroups: FieldGroupSection | null = null;
     let actions: ActionSection | null = null;
     let controls: ControlSection | null = null;
+    let elements: ElementsSection | null = null;
     let code: CodeSection | null = null;
     let objectLevelVariables: VariableDeclaration[] = [];
 
@@ -239,13 +244,19 @@ export class Parser {
               throw error;
             }
           }
+        } else if (token.type === TokenType.Elements) {
+          if (objectKind === ObjectKind.XMLport) {
+            elements = this.parseElementsSection();
+          } else {
+            // Query ELEMENTS have different format - not yet supported
+            this.skipUnsupportedSection(TokenType.Elements);
+          }
         } else if (token.type === TokenType.DataItems ||
                    token.type === TokenType.Dataset ||
                    token.type === TokenType.RequestPage ||
                    token.type === TokenType.Labels ||
-                   token.type === TokenType.Elements ||
                    token.type === TokenType.RequestForm) {
-          // Skip unsupported sections (DATAITEMS, DATASET, REQUESTPAGE, LABELS, ELEMENTS, REQUESTFORM)
+          // Skip unsupported sections (DATAITEMS, DATASET, REQUESTPAGE, LABELS, REQUESTFORM)
           // These sections have complex nested structures that aren't fully parsed yet
           this.skipUnsupportedSection(token.type);
         } else {
@@ -272,6 +283,7 @@ export class Parser {
       fieldGroups,
       actions,
       controls,
+      elements,
       code,
       startToken,
       endToken: this.previous()
@@ -912,7 +924,7 @@ export class Parser {
     }
 
     // Multi-word property name: accumulate tokens until = found
-    const nameParts: string[] = [firstToken.value];
+    let name = firstToken.value;
     let endToken = firstToken;
     let lookAhead = 0;
 
@@ -930,9 +942,19 @@ export class Parser {
         break;
       }
 
+      // Handle :: operator in trigger names (e.g., Import::OnBeforeInsertRecord)
+      if (current.type === TokenType.DoubleColon) {
+        name += current.value;  // No space before ::
+        endToken = this.advance();
+        lookAhead++;
+      }
       // Accumulate identifier tokens (property name components)
-      if (current.type === TokenType.Identifier) {
-        nameParts.push(current.value);
+      else if (current.type === TokenType.Identifier) {
+        // Add space before identifier unless previous was ::
+        if (!name.endsWith('::')) {
+          name += ' ';
+        }
+        name += current.value;
         endToken = this.advance();
         lookAhead++;
       } else {
@@ -942,7 +964,7 @@ export class Parser {
     }
 
     return {
-      name: nameParts.join(' '),
+      name,
       startToken,
       endToken
     };
@@ -1521,6 +1543,209 @@ export class Parser {
       }
 
       stack.push({ indent, control });
+    }
+
+    return roots;
+  }
+
+  /**
+   * Parse ELEMENTS section (XMLport only)
+   */
+  private parseElementsSection(): ElementsSection {
+    const startToken = this.consume(TokenType.Elements, 'Expected ELEMENTS');
+    this.consume(TokenType.LeftBrace, 'Expected {');
+
+    const flatElements: XMLportElement[] = [];
+
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      const element = this.parseWithRecovery(
+        () => this.parseXMLportElement(),
+        [TokenType.LeftBrace, TokenType.RightBrace]
+      );
+      if (element) {
+        flatElements.push(element);
+      }
+    }
+
+    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+    const hierarchicalElements = this.buildElementHierarchy(flatElements);
+
+    return {
+      type: 'ElementsSection',
+      elements: hierarchicalElements,
+      startToken,
+      endToken
+    };
+  }
+
+  private parseXMLportElement(): XMLportElement {
+    const startToken = this.consume(TokenType.LeftBrace, 'Expected {');
+
+    // Parse GUID: [{GUID-VALUE}]
+    this.consume(TokenType.LeftBracket, 'Expected [ for GUID');
+    this.consume(TokenType.LeftBrace, 'Expected { in GUID');
+
+    let guid = '';
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      guid += this.advance().value;
+    }
+
+    this.consume(TokenType.RightBrace, 'Expected } in GUID');
+    this.consume(TokenType.RightBracket, 'Expected ] after GUID');
+    this.consume(TokenType.Semicolon, 'Expected ; after GUID');
+
+    // Parse indent level (may be empty, treat as 0)
+    let indentLevel = 0;
+    if (this.check(TokenType.Integer)) {
+      indentLevel = this.parseInteger(this.advance(), 'indent level');
+    }
+    this.consume(TokenType.Semicolon, 'Expected ; after indent level');
+
+    // Parse element name - accumulate tokens until next semicolon (handles names like "Country/Region Code")
+    let name = '';
+    let lastToken: Token | null = null;
+    while (!this.check(TokenType.Semicolon) && !this.isAtEnd()) {
+      const token = this.advance();
+      // Preserve whitespace between tokens based on source positions
+      if (lastToken !== null && token.startOffset > lastToken.endOffset) {
+        name += ' ';
+      }
+      name += token.value;
+      lastToken = token;
+    }
+    name = name.trim();  // Remove leading/trailing whitespace
+    this.consume(TokenType.Semicolon, 'Expected ; after element name');
+
+    // Parse node type (Element or Attribute) - accumulate until semicolon
+    let nodeTypeStr = '';
+    lastToken = null;
+    while (!this.check(TokenType.Semicolon) && !this.isAtEnd()) {
+      const token = this.advance();
+      if (lastToken !== null && token.startOffset > lastToken.endOffset) {
+        nodeTypeStr += ' ';
+      }
+      nodeTypeStr += token.value;
+      lastToken = token;
+    }
+    nodeTypeStr = nodeTypeStr.trim();
+    const nodeType = this.normalizeXMLportNodeType(nodeTypeStr);
+    this.consume(TokenType.Semicolon, 'Expected ; after node type');
+
+    // Parse source type (Text, Table, or Field) - accumulate until semicolon or right brace
+    let sourceTypeStr = '';
+    lastToken = null;
+    while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      const token = this.advance();
+      if (lastToken !== null && token.startOffset > lastToken.endOffset) {
+        sourceTypeStr += ' ';
+      }
+      sourceTypeStr += token.value;
+      lastToken = token;
+    }
+    sourceTypeStr = sourceTypeStr.trim();
+    const sourceType = this.normalizeXMLportSourceType(sourceTypeStr);
+
+    // Optional semicolon after source type (present if there are properties/triggers)
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    // Parse properties and triggers
+    let properties: PropertySection | null = null;
+    let triggers: TriggerDeclaration[] | null = null;
+
+    if (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      const propsStartToken = this.peek();
+      const result = this.parseFieldProperties();
+
+      if (result.properties.length > 0) {
+        properties = {
+          type: 'PropertySection',
+          properties: result.properties,
+          startToken: propsStartToken,
+          endToken: this.previous()
+        };
+      }
+
+      if (result.triggers.length > 0) {
+        triggers = result.triggers;
+      }
+    }
+
+    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+
+    return {
+      type: 'XMLportElement',
+      guid,
+      indentLevel,
+      name,
+      nodeType,
+      sourceType,
+      properties,
+      triggers,
+      children: [],  // Will be populated by buildElementHierarchy
+      startToken,
+      endToken
+    };
+  }
+
+  /**
+   * Normalize XMLport node type to proper case, defaulting to 'Element' for unknown values
+   */
+  private normalizeXMLportNodeType(value: string): XMLportNodeType {
+    const normalized = value.toLowerCase();
+    if (normalized === 'element') return 'Element';
+    if (normalized === 'attribute') return 'Attribute';
+    // Default to Element if unknown
+    return 'Element';
+  }
+
+  /**
+   * Normalize XMLport source type to proper case, defaulting to 'Text' for unknown values
+   */
+  private normalizeXMLportSourceType(value: string): XMLportSourceType {
+    const normalized = value.toLowerCase();
+    if (normalized === 'text') return 'Text';
+    if (normalized === 'table') return 'Table';
+    if (normalized === 'field') return 'Field';
+    // Default to Text if unknown
+    return 'Text';
+  }
+
+  private buildElementHierarchy(flatElements: XMLportElement[]): XMLportElement[] {
+    if (flatElements.length === 0) {
+      return [];
+    }
+
+    const roots: XMLportElement[] = [];
+    const stack: XMLportElement[] = [];
+
+    for (const element of flatElements) {
+      // Validate indent level
+      if (element.indentLevel < 0) {
+        this.recordError(
+          `Invalid negative indent level ${element.indentLevel}, treating as 0`,
+          element.startToken
+        );
+        element.indentLevel = 0;
+      }
+
+      // Pop stack until we find a valid parent (indent < current)
+      while (stack.length > 0 && stack[stack.length - 1].indentLevel >= element.indentLevel) {
+        stack.pop();
+      }
+
+      if (stack.length === 0) {
+        // No parent - this is a root element
+        roots.push(element);
+      } else {
+        // Add as child of the element at top of stack
+        const parent = stack[stack.length - 1];
+        parent.children.push(element);
+      }
+
+      // Push current element onto stack for potential children
+      stack.push(element);
     }
 
     return roots;
