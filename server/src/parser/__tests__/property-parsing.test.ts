@@ -664,7 +664,7 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
                                       ENU=Home,Actions,Reports,Employees,Jobs];
         }
         CONTROLS {
-          { 1 ; ; Name ; Field }
+          { 1 ;0 ;Container }
         }
       }`;
       const lexer = new Lexer(code);
@@ -741,7 +741,7 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
                                       Actions];
         }
         CONTROLS {
-          { 1 ; ; Name ; Field }
+          { 1 ;0 ;Container }
         }
       }`;
       const lexer = new Lexer(code);
@@ -802,7 +802,7 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
                                       ENU=Home,Actions,Reports,Employees,Jobs];
         }
         CONTROLS {
-          { 1 ; ; Name ; Field }
+          { 1 ;0 ;Container }
         }
       }`;
       const lexer = new Lexer(code);

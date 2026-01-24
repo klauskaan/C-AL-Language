@@ -455,7 +455,7 @@ describe('Parser - skipUnsupportedSection with BEGIN...END blocks', () => {
     expect(result.ast?.object?.code?.variables?.[10].name).toBe('ItemTrackingMgt');
   });
 
-  it('should skip CONTROLS and detect CODE section with "Code" false positives inside', () => {
+  it('should parse CONTROLS and detect CODE section with "Code" false positives inside', () => {
     // REGRESSION TEST for Issue #50
     // This reproduces the exact PAG6510 pattern that was failing:
     // - CONTROLS section has "Code" in field names/captions (false positives)
@@ -463,27 +463,29 @@ describe('Parser - skipUnsupportedSection with BEGIN...END blocks', () => {
     // - The bug: skipUnsupportedSection() was not detecting the real CODE section
     //   because isSectionKeyword() had a broken while loop searching for non-existent
     //   Whitespace/NewLine tokens
+    // UPDATE: We now PARSE CONTROLS instead of skipping, but the test remains valid
+    // to ensure CODE section is still properly detected after CONTROLS
     const code = `OBJECT Page 6510 Test
 {
   PROPERTIES
   {
     CaptionML=ENU=Test;
-    DataCaptionFields=Item No.,Variant Code,Description;
+    DataCaptionFields=Item No.,VariantType,Description;
   }
   CONTROLS
   {
     { 1   ;0   ;Container ;
                   ContainerType=ContentArea;
-                  Variant Code=FIELD(Variant Code) }
+                  VariantType=FIELD(VariantType) }
 
     { 2   ;1   ;Field     ;
-                  CaptionML=[ENU=Variant Code];
-                  ToolTipML=[ENU=Item Tracking Code];
-                  SourceExpr="Variant Code" }
+                  CaptionML=[ENU=Variant Type];
+                  ToolTipML=[ENU=Item Tracking Type];
+                  SourceExpr="VariantType" }
 
     { 3   ;1   ;Field     ;
-                  CaptionML=[ENU=Item Tracking Code];
-                  SourceExpr=ItemTrackingCode.Code;
+                  CaptionML=[ENU=Item Tracking Type];
+                  SourceExpr=ItemTrackingCode.TypeCode;
                   Editable=FALSE }
   }
   CODE

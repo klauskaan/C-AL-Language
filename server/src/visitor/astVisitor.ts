@@ -8,6 +8,8 @@ import {
   FieldGroupSection,
   ActionSection,
   ActionDeclaration,
+  ControlSection,
+  ControlDeclaration,
   CodeSection,
   Property,
   FieldDeclaration,
@@ -105,6 +107,11 @@ export interface ASTVisitor {
   visitActionSection?(node: ActionSection): void | false;
 
   /**
+   * Visit a ControlSection node (CONTROLS block)
+   */
+  visitControlSection?(node: ControlSection): void | false;
+
+  /**
    * Visit a CodeSection node (CODE block)
    */
   visitCodeSection?(node: CodeSection): void | false;
@@ -134,6 +141,11 @@ export interface ASTVisitor {
    * Visit an ActionDeclaration node (action definition in ACTIONS section)
    */
   visitActionDeclaration?(node: ActionDeclaration): void | false;
+
+  /**
+   * Visit a ControlDeclaration node (control definition in CONTROLS section)
+   */
+  visitControlDeclaration?(node: ControlDeclaration): void | false;
 
   /**
    * Visit a VariableDeclaration node (local or global variable)

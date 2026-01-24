@@ -38,7 +38,7 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           ActionList=}
         }
         CONTROLS {
-          { 1 ; }
+          { 1 ;0 ;Container }
         }
       }`;
       const lexer = new Lexer(code);
@@ -72,7 +72,7 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           CaptionML=}
         }
         ACTIONS {
-          { 1 ; }
+          { 1 ;0 ;Action }
         }
       }`;
       const lexer = new Lexer(code);
@@ -103,7 +103,7 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           Prop3=}
         }
         CONTROLS {
-          { 1 ; }
+          { 1 ;0 ;Container }
         }
       }`;
       const lexer = new Lexer(code);
@@ -134,7 +134,7 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           Permissions=TableData 18={rimd};
         }
         CONTROLS {
-          { 1 ; }
+          { 1 ;0 ;Container }
         }
       }`;
       const lexer = new Lexer(code);
@@ -152,7 +152,7 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           ActionList=ACTIONS { { nested } };
         }
         CONTROLS {
-          { 1 ; }
+          { 1 ;0 ;Container }
         }
       }`;
       const lexer = new Lexer(code);
@@ -254,7 +254,7 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           BadProp=}
         }
         DATAITEMS {
-          { 1 ; }
+          { 1 ;DataItem ; }
         }
         CODE {
           PROCEDURE Test();
@@ -286,7 +286,7 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           MalformedProp=}
         }
         ELEMENTS {
-          { 1 ; }
+          { 1 ;Element ; }
         }
       }`;
       const lexer = new Lexer(code);
@@ -346,7 +346,7 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           Prop1=}
         }
         CONTROLS {
-          { 1 ; }
+          { 1 ;0 ;Container }
         }
       }`;
       const lexer = new Lexer(code);

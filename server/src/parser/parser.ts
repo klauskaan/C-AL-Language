@@ -18,6 +18,9 @@ import {
   ActionSection,
   ActionDeclaration,
   ActionType,
+  ControlSection,
+  ControlDeclaration,
+  ControlType,
   CodeSection,
   VariableDeclaration,
   VariableModifiers,
@@ -185,6 +188,7 @@ export class Parser {
     let keys: KeySection | null = null;
     let fieldGroups: FieldGroupSection | null = null;
     let actions: ActionSection | null = null;
+    let controls: ControlSection | null = null;
     let code: CodeSection | null = null;
     let objectLevelVariables: VariableDeclaration[] = [];
 
@@ -224,14 +228,24 @@ export class Parser {
           if (objectLevelVariables.length > 0 && code) {
             code.variables = [...objectLevelVariables, ...code.variables];
           }
-        } else if (token.type === TokenType.Controls ||
-                   token.type === TokenType.DataItems ||
+        } else if (token.type === TokenType.Controls) {
+          try {
+            controls = this.parseControlSection();
+          } catch (error) {
+            if (error instanceof ParseError) {
+              this.errors.push(error);
+              this.skipUnsupportedSection(TokenType.Controls);
+            } else {
+              throw error;
+            }
+          }
+        } else if (token.type === TokenType.DataItems ||
                    token.type === TokenType.Dataset ||
                    token.type === TokenType.RequestPage ||
                    token.type === TokenType.Labels ||
                    token.type === TokenType.Elements ||
                    token.type === TokenType.RequestForm) {
-          // Skip unsupported sections (CONTROLS, DATAITEMS, DATASET, REQUESTPAGE, LABELS, ELEMENTS, REQUESTFORM)
+          // Skip unsupported sections (DATAITEMS, DATASET, REQUESTPAGE, LABELS, ELEMENTS, REQUESTFORM)
           // These sections have complex nested structures that aren't fully parsed yet
           this.skipUnsupportedSection(token.type);
         } else {
@@ -257,6 +271,7 @@ export class Parser {
       keys,
       fieldGroups,
       actions,
+      controls,
       code,
       startToken,
       endToken: this.previous()
@@ -1351,6 +1366,161 @@ export class Parser {
       }
 
       stack.push({ indent, action });
+    }
+
+    return roots;
+  }
+
+  /**
+   * Parse CONTROLS section
+   */
+  private parseControlSection(): ControlSection {
+    const startToken = this.consume(TokenType.Controls, 'Expected CONTROLS');
+    this.consume(TokenType.LeftBrace, 'Expected {');
+
+    const flatControls: ControlDeclaration[] = [];
+
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      // Use parseWithRecovery for each control item
+      const control = this.parseWithRecovery(
+        () => this.parseControlItem(),
+        [TokenType.LeftBrace, TokenType.RightBrace]
+      );
+      if (control) {
+        flatControls.push(control);
+      }
+    }
+
+    const endToken = this.consume(TokenType.RightBrace, "Expected '}' after CONTROLS section");
+    const hierarchicalControls = this.buildControlHierarchy(flatControls);
+
+    return {
+      type: 'ControlSection',
+      controls: hierarchicalControls,
+      startToken,
+      endToken
+    };
+  }
+
+  private parseControlItem(): ControlDeclaration {
+    const startToken = this.consume(TokenType.LeftBrace, 'Expected {');
+
+    // Column 1: Control ID
+    const idToken = this.consume(TokenType.Integer, 'Expected control ID');
+    const id = this.parseInteger(idToken, 'control ID');
+    this.consume(TokenType.Semicolon, 'Expected ; after control ID');
+
+    // Column 2: Indent Level (can be empty - whitespace between semicolons)
+    let indentLevel = 0;
+    if (!this.check(TokenType.Semicolon) && !this.isAtEnd()) {
+      const indentToken = this.consume(TokenType.Integer, 'Expected indent level');
+      indentLevel = this.parseInteger(indentToken, 'indent level');
+    }
+    this.consume(TokenType.Semicolon, 'Expected ; after indent level');
+
+    // Column 3: Control Type
+    const { controlType, rawControlType } = this.parseControlType();
+
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    // Properties and Triggers
+    let properties: PropertySection | null = null;
+    let triggers: TriggerDeclaration[] | null = null;
+
+    if (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      const propsStartToken = this.peek();
+      const result = this.parseFieldProperties();
+
+      if (result.properties.length > 0) {
+        properties = {
+          type: 'PropertySection',
+          properties: result.properties,
+          startToken: propsStartToken,
+          endToken: this.previous()
+        };
+      }
+
+      if (result.triggers.length > 0) {
+        triggers = result.triggers;
+      }
+    }
+
+    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+
+    return {
+      type: 'ControlDeclaration',
+      id,
+      indentLevel,
+      controlType,
+      rawControlType,
+      properties,
+      triggers,
+      children: [],
+      startToken,
+      endToken
+    };
+  }
+
+  private parseControlType(): { controlType: ControlType; rawControlType?: string } {
+    if (this.check(TokenType.Semicolon) || this.check(TokenType.RightBrace)) {
+      this.recordError('Missing control type, defaulting to Field', this.peek());
+      return { controlType: 'Field' };
+    }
+
+    const typeToken = this.advance();
+    const rawValue = typeToken.value;
+
+    const typeMap: Record<string, ControlType> = {
+      'container': 'Container',
+      'group': 'Group',
+      'field': 'Field',
+      'part': 'Part',
+      'separator': 'Separator'
+    };
+
+    const normalizedType = typeMap[rawValue.toLowerCase()];
+
+    if (normalizedType) {
+      return { controlType: normalizedType };
+    }
+
+    this.recordError(`Unknown control type '${rawValue}', treating as Field`, typeToken);
+    return { controlType: 'Field', rawControlType: rawValue };
+  }
+
+  private buildControlHierarchy(flatControls: ControlDeclaration[]): ControlDeclaration[] {
+    if (flatControls.length === 0) {
+      return [];
+    }
+
+    const stack: Array<{ indent: number; control: ControlDeclaration }> = [];
+    const roots: ControlDeclaration[] = [];
+
+    for (const control of flatControls) {
+      let indent = control.indentLevel;
+
+      if (indent < 0) {
+        this.recordError(
+          `Invalid negative indent level ${indent}, treating as 0`,
+          control.startToken
+        );
+        indent = 0;
+        control.indentLevel = 0;
+      }
+
+      while (stack.length > 0 && stack[stack.length - 1].indent >= indent) {
+        stack.pop();
+      }
+
+      if (stack.length === 0) {
+        roots.push(control);
+      } else {
+        stack[stack.length - 1].control.children.push(control);
+      }
+
+      stack.push({ indent, control });
     }
 
     return roots;

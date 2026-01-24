@@ -3479,7 +3479,7 @@ describe('Parser - Keywords as Variable Names', () => {
   }
   CONTROLS
   {
-    { 1   ;Container ;
+    { 1   ;0   ;Container ;
                 Name=ContentArea;
                 ContainerType=ContentArea }
   }

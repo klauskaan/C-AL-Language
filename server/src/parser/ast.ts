@@ -43,6 +43,7 @@ export interface ObjectDeclaration extends ASTNode {
   keys: KeySection | null;
   fieldGroups: FieldGroupSection | null;
   actions: ActionSection | null;
+  controls: ControlSection | null;
   code: CodeSection | null;
 }
 
@@ -401,6 +402,11 @@ export interface FieldGroup extends ASTNode {
 export type ActionType = 'ActionContainer' | 'ActionGroup' | 'Action' | 'Separator';
 
 /**
+ * Control types in C/AL CONTROLS sections
+ */
+export type ControlType = 'Container' | 'Group' | 'Field' | 'Part' | 'Separator';
+
+/**
  * ACTIONS section containing UI action definitions
  */
 export interface ActionSection extends ASTNode {
@@ -421,6 +427,29 @@ export interface ActionDeclaration extends ASTNode {
   properties: PropertySection | null;
   triggers: TriggerDeclaration[] | null;
   children: ActionDeclaration[];
+}
+
+/**
+ * CONTROLS section containing UI control definitions
+ */
+export interface ControlSection extends ASTNode {
+  type: 'ControlSection';
+  controls: ControlDeclaration[];
+}
+
+/**
+ * Individual control declaration within CONTROLS section
+ * Format: { ID;IndentLevel;Type; Properties [Triggers] }
+ */
+export interface ControlDeclaration extends ASTNode {
+  type: 'ControlDeclaration';
+  id: number;
+  indentLevel: number;
+  controlType: ControlType;
+  rawControlType?: string;
+  properties: PropertySection | null;
+  triggers: TriggerDeclaration[] | null;
+  children: ControlDeclaration[];
 }
 
 /**
