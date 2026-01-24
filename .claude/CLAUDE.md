@@ -406,6 +406,19 @@ Real NAV C/AL objects (gitignored). **Read freely for analysis; never copy to co
 
 Create synthetic fixtures in test/fixtures/ that mimic structure without copying actual code.
 
+### File Encoding
+
+NAV exports C/AL files using the Windows OEM codepage, which varies by regional settings:
+- **Western Europe:** CP850 (ø=0x9B, æ=0x91, å=0x86)
+- **US:** CP437 (different character mappings)
+- **NAV 2015+:** Can export UTF-8 with BOM (depends on export settings; CP850 output is still possible)
+
+**For development work:**
+- `server/src/utils/encoding.ts` provides CP850 detection heuristics for direct file reading scenarios (used by validation scripts and standalone tools)
+- The LSP server relies on VS Code's encoding handling via the TextDocuments API; it does not perform runtime encoding detection
+- `files.autoGuessEncoding: true` is configured in `.vscode/settings.json`
+- If auto-detection fails, manually reopen with correct encoding via status bar
+
 ---
 
 ## Architecture

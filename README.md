@@ -76,6 +76,50 @@ Simply open a C/AL file in VS Code, and syntax highlighting will be applied auto
 - Press `F1` to see all available commands
 - Use `Ctrl+Space` for basic word completion
 
+## File Encoding Configuration
+
+### Background
+
+C/AL files exported from NAV use legacy single-byte encodings based on Windows regional settings:
+- **Western European systems:** Typically CP850 (DOS Latin 1)
+- **US systems:** Typically CP437 (DOS US)
+- **NAV 2015+:** Can export UTF-8 with BOM (depends on export settings; CP850 output is still possible)
+
+This affects characters like Nordic letters (ø, æ, å), German umlauts (ä, ö, ü), and currency symbols.
+
+### Recommended Setup
+
+**Option 1: Enable Auto-Detection (Recommended)**
+
+Add to your VS Code settings (`Ctrl+,` or `Cmd+,`):
+
+```json
+{
+  "files.autoGuessEncoding": true
+}
+```
+
+This works for most files but may struggle to distinguish between similar single-byte codepages.
+
+**Option 2: Manual Encoding Selection (Fallback)**
+
+If characters still appear garbled:
+
+1. Click the encoding indicator in the VS Code status bar (bottom right, shows "UTF-8" or similar)
+2. Select "Reopen with Encoding"
+3. Try these encodings based on file origin:
+   - `Western (CP 850)` - Western European NAV installations
+   - `Western (CP 437)` - US NAV installations
+   - `UTF-8` - NAV 2015+ exports with BOM
+
+**Tip:** If you know your NAV installation's regional settings, you can set a workspace default:
+
+```json
+{
+  "files.encoding": "cp850"
+}
+```
+
 ## Important: Understanding C/AL Format
 
 **This extension supports C/AL text exports (`.txt` files) from Dynamics NAV C/SIDE, NOT modern AL code for Business Central.**
