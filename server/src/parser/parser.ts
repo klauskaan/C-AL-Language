@@ -846,8 +846,9 @@ export class Parser {
 
       // Parse: {TypeLibGUID} Version:{ClassGUID}:'TypeLibName'.ClassName
       // Regex captures: (1) TypeLibGUID, (2) Version, (3) ClassGUID, (4) TypeLibName, (5) ClassName
+      // TypeLibName supports escaped quotes: 'O''Reilly' -> O'Reilly
       const automationMatch = fullTypeSpec.match(
-        /^\{([^}]+)\}\s+([\d.]+):\{([^}]+)\}:'([^']+)'\.(.+)$/
+        /^\{([^}]+)\}\s+([\d.]+):\{([^}]+)\}:'((?:[^']|'')+)'\.(.+)$/
       );
 
       if (!automationMatch) {
@@ -866,7 +867,7 @@ export class Parser {
         automationTypeLibGuid: automationMatch[1],
         automationVersion: automationMatch[2],
         automationClassGuid: automationMatch[3],
-        automationTypeLibName: automationMatch[4],
+        automationTypeLibName: automationMatch[4].replace(/''/g, "'"), // Unescape doubled quotes
         automationClassName: automationMatch[5],
         startToken,
         endToken: this.previous()

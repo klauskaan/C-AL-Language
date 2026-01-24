@@ -434,8 +434,9 @@ describe('Parser - Automation Type Declarations', () => {
       const parser = new Parser(lexer.tokenize());
       const ast = parser.parse();
 
-      // Should handle gracefully
+      // Should handle gracefully but may report error for empty TypeLibName
       expect(ast.object).toBeDefined();
+      expect(parser.getErrors().length).toBeGreaterThan(0);
     });
 
     it('should handle extra whitespace in Automation declaration', () => {
@@ -529,6 +530,84 @@ describe('Parser - Automation Type Declarations', () => {
       // Token positions should be in valid range
       expect(variable.startToken.line).toBeGreaterThan(0);
       expect(variable.startToken.column).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Automation with escaped quotes in TypeLibName (Issue #175)', () => {
+    it('should parse Automation with escaped single quote in TypeLibName', () => {
+      // TypeLibName contains apostrophe, escaped as '' in C/AL
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Component@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'O''Reilly''s Library'.FileSystemObject";
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.dataType.typeName).toBe('Automation');
+      // IMPORTANT: Verify unescaped value (single quote, not doubled)
+      expect(variable.dataType.automationTypeLibName).toBe("O'Reilly's Library");
+      expect(variable.dataType.automationClassName).toBe('FileSystemObject');
+    });
+
+    it('should parse Automation with multiple escaped quotes in TypeLibName', () => {
+      // Multiple '' sequences in TypeLibName
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Component@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'It''s O''Reilly''s Library'.FileSystemObject";
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.dataType.typeName).toBe('Automation');
+      // All '' sequences should be unescaped to single '
+      expect(variable.dataType.automationTypeLibName).toBe("It's O'Reilly's Library");
+    });
+
+    it('should parse Automation with TypeLibName containing only escaped quote', () => {
+      // Edge case: '''' becomes '
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Component@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:''''.FileSystemObject";
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.dataType.typeName).toBe('Automation');
+      expect(variable.dataType.automationTypeLibName).toBe("'");
+    });
+
+    it('should handle ClassName if it contains escaped quote', () => {
+      // Defensive test: COM class names are identifiers, shouldn't contain quotes
+      // But parser should not crash if it encounters this edge case
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Component@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Library'.File''System''Object";
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Parser may or may not accept this, but should not crash
+      expect(ast.object).toBeDefined();
+      // Document the behavior: COM class names are identifiers, not string literals
+      // This test verifies graceful handling of unusual input
     });
   });
 
