@@ -362,28 +362,112 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
       expect(ast.object).not.toBeNull();
     });
 
-    // TODO: Error reporting for malformed properties is tracked separately (deferred issue).
-    // Issue #75 is ONLY about braceDepth restoration, not error reporting.
-    // Uncomment this test when error reporting is implemented:
-    //
-    // it('should report errors for malformed properties', () => {
-    //   const code = `OBJECT Page 50000 Test {
-    //     PROPERTIES {
-    //       ActionList=}
-    //     }
-    //     CONTROLS {
-    //       { 1 ; }
-    //     }
-    //   }`;
-    //   const lexer = new Lexer(code);
-    //   const parser = new Parser(lexer.tokenize());
-    //   parser.parse();
-    //
-    //   const errors = parser.getErrors();
-    //
-    //   // Should have at least one error about the malformed property
-    //   expect(errors.length).toBeGreaterThan(0);
-    // });
+    it('should report errors for malformed properties (Issue #177)', () => {
+      // EXPECTED TO FAIL: Parser currently does NOT add error diagnostics for malformed properties
+      const code = `OBJECT Page 50000 Test {
+        PROPERTIES {
+          ActionList=}
+        }
+        CONTROLS {
+          { 1 ; }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      parser.parse();
+
+      const errors = parser.getErrors();
+
+      // Should have at least one error about the malformed property
+      expect(errors.length).toBeGreaterThan(0);
+
+      // Error should indicate it's malformed/empty (property name is sanitized)
+      expect(errors[0].message).toMatch(/empty|malformed/i);
+      expect(errors[0].message).toContain('property');
+    });
+
+    it('should NOT report error for property with space as value (Issue #177)', () => {
+      // Space is a valid value in C/AL (26+ occurrences in production NAV)
+      const code = `OBJECT Page 50000 Test {
+        PROPERTIES {
+          InstructionalTextML= }
+        CONTROLS {
+          { 1 ;0 ;Container }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(ast.object).toBeDefined();
+
+      // Space is a valid value - should NOT error
+      const errors = parser.getErrors();
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should NOT report error for property with semicolon as value (Issue #177)', () => {
+      // Semicolon is a valid value in C/AL (26+ occurrences in production NAV)
+      const code = `OBJECT Page 50000 Test {
+        PROPERTIES {
+          OnOpenForm=;
+        }
+        CONTROLS {
+          { 1 ;0 ;Container }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(ast.object).toBeDefined();
+
+      // Semicolon is a valid value - should NOT error
+      const errors = parser.getErrors();
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should handle valid nested structure in property value (Issue #177)', () => {
+      // Valid: ActionList with nested structure
+      const code = `OBJECT Page 50000 Test {
+        PROPERTIES {
+          ActionList=ACTIONS { };
+        }
+        CONTROLS {
+          { 1 ;0 ;Container }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(ast.object).toBeDefined();
+
+      // Valid syntax - should NOT error
+      const errors = parser.getErrors();
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should report error for malformed nested structure with redundant semicolon (Issue #177)', () => {
+      // EXPECTED TO FAIL: Malformed with closing brace after identifier
+      const code = `OBJECT Page 50000 Test {
+        PROPERTIES {
+          ActionList=};
+        }
+        CONTROLS {
+          { 1 ;0 ;Container }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      parser.parse();
+
+      const errors = parser.getErrors();
+
+      // Should report error for malformed property (property name is sanitized)
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].message).toMatch(/empty|malformed/i);
+    });
   });
 
   describe('BOUNDARY: Empty property value with unexpected brace', () => {

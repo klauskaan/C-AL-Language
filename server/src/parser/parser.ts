@@ -376,7 +376,7 @@ export class Parser {
   private parseProperty(): Property {
     const { name, startToken } = this.accumulatePropertyName();
 
-    this.consume(TokenType.Equal, 'Expected =');
+    const equalsToken = this.consume(TokenType.Equal, 'Expected =');
 
     // Check if this is a property trigger (value starts with VAR or BEGIN)
     // Property triggers: OnRun, OnValidate, OnLookup, OnInit, OnOpenPage, etc.
@@ -449,6 +449,13 @@ export class Parser {
         // Safety: if depth goes negative, we've consumed too many closing braces
         // This means we've exited the property value and should stop
         if (braceDepth < 0) {
+          // Report error only if there's no whitespace between = and }
+          // (whitespace is a valid value in C/AL, e.g., InstructionalTextML= )
+          const hasWhitespace = equalsToken.endOffset < currentToken.startOffset;
+          if (!hasWhitespace) {
+            // Truly empty/malformed: no tokens and no whitespace (e.g., ActionList=})
+            this.recordError(`Empty or malformed value for property '${sanitizeContent(name)}'`, currentToken);
+          }
           // Back up one token since we consumed the brace that closes the PROPERTIES section
           this.current--;
           // Restore this.braceDepth that was decremented by advance() when consuming the RightBrace
