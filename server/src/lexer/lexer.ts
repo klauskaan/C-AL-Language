@@ -556,14 +556,6 @@ export class Lexer {
   }
 
   /**
-   * Check if current column should be protected from BEGIN/END context changes.
-   * Delegates to state manager.
-   */
-  private shouldProtectFromBeginEnd(): boolean {
-    return this.state.shouldProtectFromBeginEnd();
-  }
-
-  /**
    * Check if current column should be protected from section keyword context changes.
    * Delegates to state manager.
    */
@@ -1040,7 +1032,7 @@ export class Lexer {
     const sectionKeywords = [
       TokenType.Code, TokenType.Properties, TokenType.FieldGroups,
       TokenType.Actions, TokenType.DataItems, TokenType.Elements, TokenType.RequestForm,
-      TokenType.Dataset, TokenType.RequestPage, TokenType.Labels
+      TokenType.Dataset, TokenType.RequestPage, TokenType.Labels, TokenType.MenuNodes
     ];
     if (sectionKeywords.includes(tokenType) &&
         (this.shouldProtectFromSectionKeyword() ||
@@ -1268,6 +1260,22 @@ export class Lexer {
           }
           if (stateBefore_Labels.currentSectionType !== stateAfter_Labels.currentSectionType) {
             this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_Labels.currentSectionType, to: stateAfter_Labels.currentSectionType } }));
+          }
+        }
+        break;
+
+      case TokenType.MenuNodes:
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
+        {
+          const stateBefore_MenuNodes = this.state.getState();
+          if (stateBefore_MenuNodes.inPropertyValue) { break; }
+          this.state.onSectionKeyword('MENUNODES');
+          const stateAfter_MenuNodes = this.state.getState();
+          if (stateBefore_MenuNodes.lastWasSectionKeyword !== stateAfter_MenuNodes.lastWasSectionKeyword) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_MenuNodes.lastWasSectionKeyword, to: stateAfter_MenuNodes.lastWasSectionKeyword } }));
+          }
+          if (stateBefore_MenuNodes.currentSectionType !== stateAfter_MenuNodes.currentSectionType) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_MenuNodes.currentSectionType, to: stateAfter_MenuNodes.currentSectionType } }));
           }
         }
         break;

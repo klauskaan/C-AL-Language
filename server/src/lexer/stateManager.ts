@@ -57,7 +57,8 @@ export type SectionType =
   | 'ACTIONS'
   | 'DATASET'
   | 'REQUESTPAGE'
-  | 'LABELS';
+  | 'LABELS'
+  | 'MENUNODES';
 
 /**
  * Complete lexer state snapshot
