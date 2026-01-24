@@ -456,7 +456,7 @@ export class ASTWalker {
     // FieldGroup has no child AST nodes to traverse (fields is string[])
   }
 
-  private walkActionDeclaration(node: ActionDeclaration, visitor: Partial<ASTVisitor>): void {
+  protected walkActionDeclaration(node: ActionDeclaration, visitor: Partial<ASTVisitor>): void {
     if (visitor.visitActionDeclaration) {
       const result = visitor.visitActionDeclaration(node);
       if (result === false) {
@@ -474,7 +474,7 @@ export class ASTWalker {
     }
   }
 
-  private walkControlDeclaration(node: ControlDeclaration, visitor: Partial<ASTVisitor>): void {
+  protected walkControlDeclaration(node: ControlDeclaration, visitor: Partial<ASTVisitor>): void {
     if (visitor.visitControlDeclaration) {
       const result = visitor.visitControlDeclaration(node);
       if (result === false) {
@@ -492,7 +492,7 @@ export class ASTWalker {
     }
   }
 
-  private walkXMLportElement(node: XMLportElement, visitor: Partial<ASTVisitor>): void {
+  protected walkXMLportElement(node: XMLportElement, visitor: Partial<ASTVisitor>): void {
     if (visitor.visitXMLportElement) {
       const result = visitor.visitXMLportElement(node);
       if (result === false) {

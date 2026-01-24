@@ -51,6 +51,7 @@ import { FoldingRangeProvider } from './foldingRange/foldingRangeProvider';
 import { SymbolTable } from './symbols/symbolTable';
 import { formatError } from './utils/sanitize';
 import { EmptySetValidator } from './validation/emptySetValidator';
+import { DepthLimitedWalker } from './visitor/depthLimitedWalker';
 
 // Create a connection for the server
 const connection = createConnection(ProposedFeatures.all);
@@ -96,6 +97,9 @@ const foldingRangeProvider = new FoldingRangeProvider();
 
 // EmptySet validator (semantic validation)
 const emptySetValidator = new EmptySetValidator();
+
+// Depth-limited walker (stack overflow protection - Issue #220)
+const depthLimitedWalker = new DepthLimitedWalker();
 
 // Cache for parsed documents (includes symbol table and parse errors)
 interface ParsedDocument {
@@ -456,8 +460,13 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     // Run semantic validations
     const semanticDiagnostics = emptySetValidator.validate(ast);
 
+    // Check for excessive nesting depth (DoS protection - Issue #220)
+    depthLimitedWalker.resetDiagnostics();
+    depthLimitedWalker.walk(ast, {}); // Empty visitor - just checking depth
+    const depthDiagnostics = depthLimitedWalker.getDiagnostics();
+
     // Merge all diagnostics
-    const allDiagnostics = [...parseDiagnostics, ...semanticDiagnostics];
+    const allDiagnostics = [...parseDiagnostics, ...semanticDiagnostics, ...depthDiagnostics];
 
     // Send combined diagnostics to client
     connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: allDiagnostics });
