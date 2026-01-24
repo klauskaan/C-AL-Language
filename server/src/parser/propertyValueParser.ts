@@ -36,6 +36,34 @@ export class PropertyValueParser {
   private tokens: Token[];
   private position: number = 0;
 
+  /**
+   * Set of token types that cannot be treated as identifiers in property value contexts.
+   * Allocated once at class load time for performance.
+   */
+  private static readonly NON_IDENTIFIER_TYPES = new Set<TokenType>([
+    // Operators
+    TokenType.Plus, TokenType.Minus, TokenType.Multiply, TokenType.Divide,
+    TokenType.Assign, TokenType.PlusAssign, TokenType.MinusAssign,
+    TokenType.MultiplyAssign, TokenType.DivideAssign,
+    TokenType.Equal, TokenType.NotEqual, TokenType.Less, TokenType.LessEqual,
+    TokenType.Greater, TokenType.GreaterEqual,
+    TokenType.Dot, TokenType.DotDot, TokenType.Comma, TokenType.Semicolon,
+    TokenType.Colon, TokenType.DoubleColon,
+    // Delimiters
+    TokenType.LeftParen, TokenType.RightParen,
+    TokenType.LeftBracket, TokenType.RightBracket,
+    TokenType.LeftBrace, TokenType.RightBrace,
+    // Literals (except Identifier/QuotedIdentifier)
+    TokenType.Integer, TokenType.Decimal, TokenType.String,
+    TokenType.Date, TokenType.Time, TokenType.DateTime,
+    // Special
+    TokenType.Comment, TokenType.Whitespace, TokenType.NewLine,
+    TokenType.EOF, TokenType.Unknown,
+    // AL-only
+    TokenType.ALOnlyKeyword, TokenType.ALOnlyAccessModifier,
+    TokenType.TernaryOperator, TokenType.PreprocessorDirective
+  ]);
+
   constructor(tokens: Token[]) {
     this.tokens = tokens;
   }
@@ -122,6 +150,11 @@ export class PropertyValueParser {
       this.match(TokenType.RightParen); // Consume if present
       const endToken = this.previousOrEOF();
 
+      // Reject if there are unconsumed tokens (trailing garbage)
+      if (!this.isAtEnd()) {
+        return null;
+      }
+
       return {
         type: 'CalcFormulaNode',
         aggregationFunction,
@@ -169,6 +202,11 @@ export class PropertyValueParser {
 
         const endToken = this.previousOrEOF();
 
+        // Reject if there are unconsumed tokens (trailing garbage)
+        if (!this.isAtEnd()) {
+          return null;
+        }
+
         return {
           type: 'TableRelationNode',
           conditionalRelations,
@@ -206,6 +244,11 @@ export class PropertyValueParser {
 
       const endToken = this.previousOrEOF();
 
+      // Reject if there are unconsumed tokens (trailing garbage)
+      if (!this.isAtEnd()) {
+        return null;
+      }
+
       return {
         type: 'TableRelationNode',
         tableName,
@@ -227,7 +270,7 @@ export class PropertyValueParser {
     | undefined {
     const token = this.peek();
     if (!token) return undefined;
-    if (token.type !== TokenType.Identifier) {
+    if (!this.isIdentifierLike(token.type)) {
       return undefined;
     }
 
@@ -304,7 +347,7 @@ export class PropertyValueParser {
     // Collect field name tokens until we hit an operator
     let fieldName = '';
     let foundOperator = false;
-    let lastTokenWasWord = false; // Track if last token was identifier/keyword (need space before next one)
+    let lastToken: Token | undefined; // Track previous token for offset gap detection
 
     while (!this.isAtEnd() && !foundOperator) {
       const token = this.peek();
@@ -323,42 +366,33 @@ export class PropertyValueParser {
         break;
       }
 
-      // Add token value to field name based on token type
-      // Field names can contain various characters and keywords
-      const currentTokenIsWord = token.type === TokenType.QuotedIdentifier ||
-                                  token.type === TokenType.Identifier ||
-                                  (token.value && /^[a-zA-Z]/.test(token.value));
-
-      // Add space before word tokens if last token was also a word
-      if (currentTokenIsWord && lastTokenWasWord) {
+      // Add space if there's a gap between previous token end and current token start
+      if (lastToken && token.startOffset > lastToken.endOffset) {
         fieldName += ' ';
       }
 
+      // Add token value to field name based on token type
       if (token.type === TokenType.QuotedIdentifier || token.type === TokenType.Identifier) {
         fieldName += token.value;
-        lastTokenWasWord = true;
       } else if (token.type === TokenType.Divide) {
         fieldName += '/';
-        lastTokenWasWord = false;
       } else if (token.type === TokenType.Dot) {
         fieldName += '.';
-        lastTokenWasWord = false;
       } else if (token.type === TokenType.Minus) {
         fieldName += '-';
-        lastTokenWasWord = false;
       } else {
         // Check if this is a keyword token that's part of the field name
         // Common examples: Code, Date, Time, No, etc.
         // These get tokenized as keyword types but can be part of field names
         if (token.value) {
           fieldName += token.value;
-          lastTokenWasWord = true;
         } else {
           // Unknown token type in field name - stop collecting
           break;
         }
       }
 
+      lastToken = token;
       this.advance();
     }
 
@@ -429,7 +463,7 @@ export class PropertyValueParser {
     const token = this.peek();
     if (!token) return undefined;
 
-    if (token.type !== TokenType.Identifier) {
+    if (!this.isIdentifierLike(token.type)) {
       return undefined;
     }
 
@@ -470,7 +504,7 @@ export class PropertyValueParser {
    */
   private parseCompositeValue(): string | undefined {
     let value = '';
-    let lastTokenWasWord = false;
+    let lastToken: Token | undefined; // Track previous token for offset gap detection
 
     while (!this.isAtEnd()) {
       const token = this.peek();
@@ -481,47 +515,36 @@ export class PropertyValueParser {
         break;
       }
 
-      // Check if this is a word token (identifier or keyword)
-      const currentTokenIsWord = token.type === TokenType.QuotedIdentifier ||
-                                  token.type === TokenType.Identifier ||
-                                  (token.value && /^[a-zA-Z]/.test(token.value));
-
-      // Add space before word tokens if last token was also a word
-      if (currentTokenIsWord && lastTokenWasWord) {
+      // Add space if there's a gap between previous token end and current token start
+      if (lastToken && token.startOffset > lastToken.endOffset) {
         value += ' ';
       }
 
+      // Add token value based on type
       if (token.type === TokenType.QuotedIdentifier || token.type === TokenType.Identifier) {
         value += token.value;
-        lastTokenWasWord = true;
       } else if (token.type === TokenType.String) {
         value += token.value;
-        lastTokenWasWord = false;
       } else if (token.type === TokenType.Divide) {
         value += '/';
-        lastTokenWasWord = false;
       } else if (token.type === TokenType.Dot) {
         value += '.';
-        lastTokenWasWord = false;
       } else if (token.type === TokenType.Minus) {
         value += '-';
-        lastTokenWasWord = false;
       } else if (token.type === TokenType.DotDot) {
         value += '..';
-        lastTokenWasWord = false;
       } else if (token.type === TokenType.Integer || token.type === TokenType.Decimal) {
         value += token.value;
-        lastTokenWasWord = false;
       } else {
         // Handle keyword tokens that might be part of value
         if (token.value) {
           value += token.value;
-          lastTokenWasWord = true;
         } else {
           break;
         }
       }
 
+      lastToken = token;
       this.advance();
     }
 
@@ -588,28 +611,15 @@ export class PropertyValueParser {
     if (this.check(TokenType.Else)) {
       this.advance(); // consume ELSE
 
-      // Check if it's ELSE IF (nested conditional)
+      // Check if it's ELSE IF (chain continuation)
       if (this.check(TokenType.If)) {
-        // Don't consume the IF - let the outer loop handle it
-        // But we need to create an elseRelation for this node
-        // We'll parse the rest recursively
-        const nestedRelations = this.parseConditionalRelations();
-        if (!nestedRelations || nestedRelations.length === 0) {
-          return undefined;
-        }
-
-        // Wrap nested conditionals in a TableRelationNode
-        const elseStartToken = this.tokens[this.position - 1];
-        const elseEndToken = this.previousOrEOF();
-
-        elseRelation = {
-          type: 'TableRelationNode',
-          conditionalRelations: nestedRelations,
-          startToken: elseStartToken,
-          endToken: elseEndToken
-        };
+        // ELSE IF detected: this is a chain continuation at the same level, NOT nesting
+        // Per ConditionalTableRelation documentation, chains are represented as flat arrays
+        // where semantic relationships are implicit in array ordering.
+        // Leave elseRelation undefined - the outer parseConditionalRelations() loop
+        // will handle the next IF naturally.
       } else {
-        // Simple ELSE relation
+        // Simple ELSE relation: final fallback value, terminates the chain
         const er = this.parseSimpleTableRelation();
         if (!er) {
           return undefined;
@@ -683,6 +693,20 @@ export class PropertyValueParser {
   }
 
   /**
+   * Check if a token type can be treated as an identifier in property value contexts
+   *
+   * In C/AL property values, keywords are often used as identifiers (e.g., "Code", "Type", "Else").
+   * This method accepts any token that could reasonably be part of an identifier,
+   * excluding only structural tokens, operators, literals, and special tokens.
+   *
+   * @param tokenType - The token type to check
+   * @returns true if the token type can be treated as an identifier
+   */
+  private isIdentifierLike(tokenType: TokenType): boolean {
+    return !PropertyValueParser.NON_IDENTIFIER_TYPES.has(tokenType);
+  }
+
+  /**
    * Parse identifier value (handles both quoted and unquoted identifiers)
    * Also handles identifiers split across multiple tokens (e.g., "Country/Region Code")
    */
@@ -695,13 +719,14 @@ export class PropertyValueParser {
       return token.value;
     }
 
-    if (token.type === TokenType.Identifier) {
+    // Handle special case: string literals in FILTER predicates
+    if (token.type === TokenType.String) {
       this.advance();
       return token.value;
     }
 
-    // Handle special case: string literals in FILTER predicates
-    if (token.type === TokenType.String) {
+    // Accept any identifier-like token (including keywords)
+    if (this.isIdentifierLike(token.type)) {
       this.advance();
       return token.value;
     }
@@ -715,7 +740,7 @@ export class PropertyValueParser {
   private checkIdentifier(value: string): boolean {
     if (this.isAtEnd()) return false;
     const token = this.peek();
-    return !!token && token.type === TokenType.Identifier && token.value.toUpperCase() === value.toUpperCase();
+    return !!token && this.isIdentifierLike(token.type) && token.value.toUpperCase() === value.toUpperCase();
   }
 
   /**

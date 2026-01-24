@@ -176,7 +176,8 @@ END`;
       lexer.tokenize();
 
       // Mock impossible state: negative braceDepth
-      (lexer as any).braceDepth = -1;
+      // Access the state manager and set braceDepth directly
+      (lexer as any).state.braceDepth = -1;
 
       const result = lexer.isCleanExit();
 
@@ -193,7 +194,8 @@ END`;
       lexer.tokenize();
 
       // Mock impossible state: unclosed bracket
-      (lexer as any).bracketDepth = 1;
+      // Access the state manager and set bracketDepth directly
+      (lexer as any).state.bracketDepth = 1;
 
       const result = lexer.isCleanExit();
 

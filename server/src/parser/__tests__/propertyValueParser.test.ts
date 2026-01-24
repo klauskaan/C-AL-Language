@@ -568,6 +568,31 @@ describe('PropertyValueParser - TableRelation Parsing', () => {
       expect(conditional?.elseRelation?.tableName).toBe('Resource');
     });
 
+    it('should parse valid conditional TableRelation without rejecting ELSE keyword (regression for #191)', () => {
+      // Regression test: Ensure the fix for #191 (rejecting trailing tokens)
+      // does NOT break valid ELSE syntax
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (Type=CONST(Item)) Item ELSE Resource }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      // Should successfully parse - ELSE is valid syntax, not trailing garbage
+      expect(result).not.toBeNull();
+      expect(result?.conditionalRelations).toBeDefined();
+      expect(result?.conditionalRelations?.length).toBe(1);
+
+      const conditional = result?.conditionalRelations?.[0];
+      expect(conditional?.thenRelation?.tableName).toBe('Item');
+      expect(conditional?.elseRelation).toBeDefined();
+      expect(conditional?.elseRelation?.tableName).toBe('Resource');
+    });
+
     it('should parse nested IF/ELSE IF/ELSE chain', () => {
       const code = `OBJECT Table 1 Test {
         FIELDS {
@@ -614,6 +639,139 @@ describe('PropertyValueParser - TableRelation Parsing', () => {
       expect(conditional?.thenRelation?.tableName).toBe('Item');
       expect(conditional?.thenRelation?.whereClause).toBeDefined();
       expect(conditional?.thenRelation?.whereClause?.conditions).toHaveLength(1);
+    });
+  });
+
+  describe('TableRelation IF/ELSE IF/ELSE chain as flat array (issue #228)', () => {
+    // EXPECTED TO FAIL: Parser currently produces nested structure
+    // Should produce flat array per ast.ts:186-191
+
+    it('should parse IF/ELSE IF/ELSE chain as flat array with 3 branches', () => {
+      // Main test case for issue #228
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (Type=CONST(G/L Account)) "G/L Account"
+                          ELSE IF (Type=CONST(Item)) Item
+                          ELSE Resource }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      // Should produce flat array with 2 elements (not nested)
+      expect(result?.conditionalRelations).toBeDefined();
+      expect(result?.conditionalRelations?.length).toBe(2);
+
+      // First condition: IF Type=CONST(G/L Account) -> "G/L Account"
+      const firstCondition = result?.conditionalRelations?.[0];
+      expect(firstCondition?.condition?.fieldName).toBe('Type');
+      expect(firstCondition?.condition?.predicateValue).toBe('G/L Account');
+      expect(firstCondition?.thenRelation?.tableName).toBe('G/L Account');
+      expect(firstCondition?.elseRelation).toBeUndefined(); // Should not have ELSE
+
+      // Second condition: ELSE IF Type=CONST(Item) -> Item ELSE Resource
+      const secondCondition = result?.conditionalRelations?.[1];
+      expect(secondCondition?.condition?.fieldName).toBe('Type');
+      expect(secondCondition?.condition?.predicateValue).toBe('Item');
+      expect(secondCondition?.thenRelation?.tableName).toBe('Item');
+      expect(secondCondition?.elseRelation).toBeDefined(); // Final ELSE
+      expect(secondCondition?.elseRelation?.tableName).toBe('Resource');
+    });
+
+    it('should parse IF/ELSE IF without final ELSE', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (Type=CONST(Item)) Item
+                          ELSE IF (Type=CONST(Resource)) Resource }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      // Should produce flat array with 2 elements
+      expect(result?.conditionalRelations?.length).toBe(2);
+
+      // First condition has no elseRelation
+      expect(result?.conditionalRelations?.[0]?.elseRelation).toBeUndefined();
+
+      // Second condition also has no elseRelation
+      expect(result?.conditionalRelations?.[1]?.elseRelation).toBeUndefined();
+    });
+
+    it('should parse chain with 4+ branches', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (A=CONST(1)) T1
+                          ELSE IF (A=CONST(2)) T2
+                          ELSE IF (A=CONST(3)) T3
+                          ELSE T4 }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      // Should produce flat array with 3 elements (3 conditions)
+      expect(result?.conditionalRelations?.length).toBe(3);
+
+      // Only the last condition should have elseRelation
+      expect(result?.conditionalRelations?.[0]?.elseRelation).toBeUndefined();
+      expect(result?.conditionalRelations?.[1]?.elseRelation).toBeUndefined();
+      expect(result?.conditionalRelations?.[2]?.elseRelation).toBeDefined();
+      expect(result?.conditionalRelations?.[2]?.elseRelation?.tableName).toBe('T4');
+    });
+
+    it('should parse chain with WHERE clause on middle branch', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (Type=CONST(Item)) Item WHERE (Blocked=CONST(No))
+                          ELSE IF (Type=CONST(Resource)) Resource
+                          ELSE "G/L Account" }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      // Flat structure should be preserved
+      expect(result?.conditionalRelations?.length).toBe(2);
+
+      // First condition's thenRelation should have WHERE clause
+      expect(result?.conditionalRelations?.[0]?.thenRelation?.tableName).toBe('Item');
+      expect(result?.conditionalRelations?.[0]?.thenRelation?.whereClause).toBeDefined();
+      expect(result?.conditionalRelations?.[0]?.thenRelation?.whereClause?.conditions).toHaveLength(1);
+
+      // Second condition should have proper structure
+      expect(result?.conditionalRelations?.[1]?.thenRelation?.tableName).toBe('Resource');
+      expect(result?.conditionalRelations?.[1]?.elseRelation?.tableName).toBe('G/L Account');
+    });
+
+    it('should return null for malformed ELSE IF without THEN relation', () => {
+      // Malformed: ELSE IF with condition but no table reference
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (Type=CONST(Item)) Item
+                          ELSE IF (Type=CONST(Resource)) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      // Should reject malformed input
+      expect(result).toBeNull();
     });
   });
 
@@ -688,6 +846,65 @@ describe('PropertyValueParser - Error Handling', () => {
       const result = parser.parseTableRelation();
 
       // Semicolon is not expected in TableRelation - should fail gracefully
+      expect(result).toBeNull();
+    });
+
+    it('should return null for simple TableRelation with trailing garbage', () => {
+      // Bug #191: Parser accepts "Customer garbage" without validation
+      const tokens: Token[] = [
+        { type: TokenType.Identifier, value: 'Customer', line: 1, column: 1, startOffset: 0, endOffset: 8 },
+        { type: TokenType.Identifier, value: 'garbage', line: 1, column: 10, startOffset: 10, endOffset: 17 },
+      ];
+
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      // Should reject trailing "garbage" token after valid TableRelation
+      expect(result).toBeNull();
+    });
+
+    it('should return null for conditional TableRelation with trailing garbage', () => {
+      // Bug #191: Parser accepts "IF (Type=CONST(Item)) Item garbage" without validation
+      const tokens: Token[] = [
+        { type: TokenType.If, value: 'IF', line: 1, column: 1, startOffset: 0, endOffset: 2 },
+        { type: TokenType.LeftParen, value: '(', line: 1, column: 4, startOffset: 4, endOffset: 5 },
+        { type: TokenType.Identifier, value: 'Type', line: 1, column: 5, startOffset: 5, endOffset: 9 },
+        { type: TokenType.Equal, value: '=', line: 1, column: 9, startOffset: 9, endOffset: 10 },
+        { type: TokenType.Identifier, value: 'CONST', line: 1, column: 10, startOffset: 10, endOffset: 15 },
+        { type: TokenType.LeftParen, value: '(', line: 1, column: 15, startOffset: 15, endOffset: 16 },
+        { type: TokenType.Identifier, value: 'Item', line: 1, column: 16, startOffset: 16, endOffset: 20 },
+        { type: TokenType.RightParen, value: ')', line: 1, column: 20, startOffset: 20, endOffset: 21 },
+        { type: TokenType.RightParen, value: ')', line: 1, column: 21, startOffset: 21, endOffset: 22 },
+        { type: TokenType.Identifier, value: 'Item', line: 1, column: 23, startOffset: 23, endOffset: 27 },
+        { type: TokenType.Identifier, value: 'garbage', line: 1, column: 28, startOffset: 28, endOffset: 35 },
+      ];
+
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      // EXPECTED TO FAIL: Parser currently accepts this malformed input
+      // Should reject trailing "garbage" token after valid TableRelation
+      expect(result).toBeNull();
+    });
+
+    it('should return null for CalcFormula with multiple trailing tokens', () => {
+      // Bug #191: Parser accepts "Sum("Sales Line".Amount) garbage more" without validation
+      const tokens: Token[] = [
+        { type: TokenType.Identifier, value: 'Sum', line: 1, column: 1, startOffset: 0, endOffset: 3 },
+        { type: TokenType.LeftParen, value: '(', line: 1, column: 4, startOffset: 4, endOffset: 5 },
+        { type: TokenType.QuotedIdentifier, value: 'Sales Line', line: 1, column: 5, startOffset: 5, endOffset: 17 },
+        { type: TokenType.Dot, value: '.', line: 1, column: 17, startOffset: 17, endOffset: 18 },
+        { type: TokenType.Identifier, value: 'Amount', line: 1, column: 18, startOffset: 18, endOffset: 24 },
+        { type: TokenType.RightParen, value: ')', line: 1, column: 24, startOffset: 24, endOffset: 25 },
+        { type: TokenType.Identifier, value: 'garbage', line: 1, column: 26, startOffset: 26, endOffset: 33 },
+        { type: TokenType.Identifier, value: 'more', line: 1, column: 34, startOffset: 34, endOffset: 38 },
+      ];
+
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      // EXPECTED TO FAIL: Parser currently accepts this malformed input
+      // Should reject trailing tokens after valid CalcFormula
       expect(result).toBeNull();
     });
 
