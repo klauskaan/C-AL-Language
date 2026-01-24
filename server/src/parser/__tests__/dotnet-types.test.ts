@@ -950,6 +950,28 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
       expect(variable.dataType.assemblyReference).toBe("It's.A.Test's.Assembly");
     });
 
+    it('should parse DotNet with escaped quotes ONLY in type name', () => {
+      // Type name contains apostrophe, escaped as '' in C/AL
+      // Assembly name has no escaped quotes
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          VAR
+            Parser@1 : DotNet "'mscorlib'.System.O''Brien.Parser";
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const variable = ast.object!.code!.variables[0];
+      expect(variable.dataType.typeName).toBe('DotNet');
+      // Assembly name should remain as-is (no escaping)
+      expect(variable.dataType.assemblyReference).toBe("mscorlib");
+      // IMPORTANT: Verify type name is correctly unescaped (single quote, not doubled)
+      expect(variable.dataType.dotNetTypeName).toBe("System.O'Brien.Parser");
+    });
+
     it('should report error for DotNet with empty type name after assembly', () => {
       // Assembly present but type name is empty (missing after the dot)
       const code = `OBJECT Codeunit 1 Test {
