@@ -51,15 +51,16 @@ describe('Lexer - Bracket Depth Tracking in Property Values', () => {
     });
 
     it('should handle three language codes with two semicolons in brackets', () => {
-      const code = `PROPERTIES
-{
-  CaptionML=[DAN=Start;ENU=Begin;DEU=Anfang];
+      const code = `OBJECT Table 1 {
+  PROPERTIES {
+    CaptionML=[DAN=Start;ENU=Begin;DEU=Anfang];
+  }
 }`;
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
       const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
-      expect(rightBraces.length).toBe(1);
+      expect(rightBraces.length).toBe(2); // PROPERTIES + OBJECT
 
       const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
       expect(unknownTokens).toHaveLength(0);
@@ -67,15 +68,16 @@ describe('Lexer - Bracket Depth Tracking in Property Values', () => {
 
     it('should handle CaptionML in field properties', () => {
       // Fields can also have CaptionML with semicolons
-      const code = `FIELDS
-{
-  { 1 ; ; MyField ; Code20 ; CaptionML=[DAN=Felt;ENU=Field] }
+      const code = `OBJECT Table 1 {
+  FIELDS {
+    { 1 ; ; MyField ; Code20 ; CaptionML=[DAN=Felt;ENU=Field] }
+  }
 }`;
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
       const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
-      expect(rightBraces.length).toBe(2); // FIELDS + field
+      expect(rightBraces.length).toBe(3); // OBJECT + FIELDS + field
 
       const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
       expect(unknownTokens).toHaveLength(0);
@@ -90,14 +92,15 @@ describe('Lexer - Bracket Depth Tracking in Property Values', () => {
       // ENU caption contains "Begin" (incorrectly treated as BEGIN keyword when inPropertyValue=false)
       // Result: CODE_BLOCK is pushed, next field's { becomes block comment, closing braces become UNKNOWN
       // Note: FIELDS context added to enable column tracking protection
-      const code = `FIELDS
-{
+      const code = `OBJECT Table 5218 {
+  FIELDS {
     { 6005550;;Shop Fl. Begin -> Time Begin;Boolean;
                                                    CaptionML=[DAN=Job start -> Tid start;
                                                               ENU=Shop Fl. Begin -> Time Begin] }
     { 6005551;;Time End -> Shop Fl. End;Boolean   ;CaptionML=[DAN=Tid slut -> Job slut;
                                                               ENU=Time End -> Shop Fl. End] }
     { 6005552;;Time Begin -> Shop Fl. Begin;Boolean }
+  }
 }`;
 
       const lexer = new Lexer(code);
@@ -114,45 +117,48 @@ describe('Lexer - Bracket Depth Tracking in Property Values', () => {
     });
 
     it('should handle END keyword in caption text within brackets', () => {
-      const code = `PROPERTIES
-{
-  CaptionML=[DAN=End Process;ENU=Finish];
+      const code = `OBJECT Table 1 {
+  PROPERTIES {
+    CaptionML=[DAN=End Process;ENU=Finish];
+  }
 }`;
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
       const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
-      expect(rightBraces.length).toBe(1);
+      expect(rightBraces.length).toBe(2); // PROPERTIES + OBJECT
 
       const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
       expect(unknownTokens).toHaveLength(0);
     });
 
     it('should handle both BEGIN and END in same CaptionML', () => {
-      const code = `PROPERTIES
-{
-  CaptionML=[DAN=Begin to End;ENU=Start to Finish];
+      const code = `OBJECT Table 1 {
+  PROPERTIES {
+    CaptionML=[DAN=Begin to End;ENU=Start to Finish];
+  }
 }`;
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
       const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
-      expect(rightBraces.length).toBe(1);
+      expect(rightBraces.length).toBe(2); // PROPERTIES + OBJECT
 
       const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
       expect(unknownTokens).toHaveLength(0);
     });
 
     it('should handle other keywords like IF, THEN in caption text', () => {
-      const code = `PROPERTIES
-{
-  CaptionML=[DAN=If Then Else;ENU=Conditional];
+      const code = `OBJECT Table 1 {
+  PROPERTIES {
+    CaptionML=[DAN=If Then Else;ENU=Conditional];
+  }
 }`;
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
       const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
-      expect(rightBraces.length).toBe(1);
+      expect(rightBraces.length).toBe(2); // PROPERTIES + OBJECT
 
       const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
       expect(unknownTokens).toHaveLength(0);
@@ -395,16 +401,17 @@ describe('Lexer - Bracket Depth Tracking in Property Values', () => {
     });
 
     it('should tokenize } as RightBrace after multiple properties with brackets', () => {
-      const code = `PROPERTIES
-{
-  CaptionML=[DAN=Test1;ENU=Value1];
-  OptionCaptionML=[DAN=Opt;ENU=Option];
+      const code = `OBJECT Table 1 {
+  PROPERTIES {
+    CaptionML=[DAN=Test1;ENU=Value1];
+    OptionCaptionML=[DAN=Opt;ENU=Option];
+  }
 }`;
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
       const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
-      expect(rightBraces.length).toBe(1);
+      expect(rightBraces.length).toBe(2); // PROPERTIES + OBJECT
 
       // No UNKNOWN tokens for braces
       const unknownBraces = tokens.filter(t =>
@@ -416,18 +423,19 @@ describe('Lexer - Bracket Depth Tracking in Property Values', () => {
 
   describe('Complex scenarios - multiple fields and properties', () => {
     it('should handle multiple fields with CaptionML containing semicolons', () => {
-      const code = `FIELDS
-{
-  { 1 ; ; Field1 ; Code20 ; CaptionML=[DAN=Felt1;ENU=Field1] }
-  { 2 ; ; Field2 ; Integer ; CaptionML=[DAN=Felt2;ENU=Field2] }
-  { 3 ; ; Field3 ; Option ; CaptionML=[DAN=Begin;ENU=Start] }
+      const code = `OBJECT Table 1 {
+  FIELDS {
+    { 1 ; ; Field1 ; Code20 ; CaptionML=[DAN=Felt1;ENU=Field1] }
+    { 2 ; ; Field2 ; Integer ; CaptionML=[DAN=Felt2;ENU=Field2] }
+    { 3 ; ; Field3 ; Option ; CaptionML=[DAN=Begin;ENU=Start] }
+  }
 }`;
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
-      // Should have: FIELDS section brace + 3 field braces = 4 total
+      // Should have: OBJECT + FIELDS + 3 fields = 5 total right braces
       const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
-      expect(rightBraces.length).toBe(4);
+      expect(rightBraces.length).toBe(5);
 
       // No UNKNOWN tokens
       const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
@@ -436,21 +444,22 @@ describe('Lexer - Bracket Depth Tracking in Property Values', () => {
 
     it('should handle field with CaptionML and trigger code', () => {
       // Complex case: Field has both CaptionML with semicolons AND trigger code
-      const code = `FIELDS
-{
-  { 1 ; ; Status ; Option ;
-    CaptionML=[DAN=Begin Status;ENU=Start Status];
-    OnValidate=BEGIN
-      CheckStatus;
-    END;
+      const code = `OBJECT Table 1 {
+  FIELDS {
+    { 1 ; ; Status ; Option ;
+      CaptionML=[DAN=Begin Status;ENU=Start Status];
+      OnValidate=BEGIN
+        CheckStatus;
+      END;
+    }
   }
 }`;
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
 
-      // Field structure should be intact
+      // Field structure should be intact: OBJECT + FIELDS + field = 3 right braces
       const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
-      expect(rightBraces.length).toBe(2); // FIELDS + field
+      expect(rightBraces.length).toBe(3);
 
       // No UNKNOWN tokens
       const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);

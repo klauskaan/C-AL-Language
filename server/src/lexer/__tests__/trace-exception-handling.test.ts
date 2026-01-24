@@ -348,9 +348,9 @@ describe('Trace callback exception handling', () => {
 
       // CRITICAL: After the throw on braceDepth 1->0, these should NOT have fired:
       // - context-pop for SECTION_LEVEL (from popContext())
-      // - currentSectionType change from 'FIELDS' to null
       //
-      // If fail-once didn't work within the guard block, these would have been invoked.
+      // However, currentSectionType change from 'FIELDS' to null WILL have been recorded
+      // because it happens BEFORE the throw (when the FIELDS section closes at braceDepth 2->1).
 
       // Find the index of the throw event
       const throwEventIndex = events.findIndex(e =>
@@ -365,15 +365,15 @@ describe('Trace callback exception handling', () => {
       const eventsAfterThrow = events.slice(throwEventIndex + 1);
       expect(eventsAfterThrow).toHaveLength(0);
 
-      // Specifically verify currentSectionType change from 'FIELDS' to null was NOT recorded
-      // (There IS a change from null to 'FIELDS' when entering the section, which is expected)
+      // The currentSectionType change from 'FIELDS' to null happens BEFORE the throw,
+      // so it SHOULD be recorded (this is correct behavior after state manager refactoring)
       const sectionTypeExitChanges = events.filter(e =>
         e.type === 'flag-change' &&
         e.data?.flag === 'currentSectionType' &&
         e.data?.from === 'FIELDS' &&
         e.data?.to === null
       );
-      expect(sectionTypeExitChanges).toHaveLength(0);
+      expect(sectionTypeExitChanges).toHaveLength(1);
 
       // console.warn should be called exactly once
       expect(consoleWarnSpy).toHaveBeenCalledTimes(1);

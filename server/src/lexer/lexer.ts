@@ -1,5 +1,5 @@
 import { Token, TokenType, KEYWORDS, AL_ONLY_KEYWORDS, AL_ONLY_ACCESS_MODIFIERS } from './tokens';
-import { LexerStateManager, LexerContext, FieldDefColumn, SectionType } from './stateManager';
+import { LexerStateManager, LexerContext, FieldDefColumn, SectionType, ContextTransition } from './stateManager';
 
 // Re-export types for backward compatibility
 export type { SectionType };
@@ -405,7 +405,14 @@ export class Lexer {
       // that don't get explicitly popped, so clean them up here
       // For malformed code: inner SECTION_LEVELs (unclosed sections) will remain and trigger
       // STACK_MISMATCH violations in isCleanExit()
-      this.state.cleanupContextStack();
+      const transitions = this.state.cleanupContextStack();
+      for (const transition of transitions) {
+        this.emitContextTransition(transition, {
+          line: this.line,
+          column: this.column,
+          offset: this.position
+        });
+      }
 
       this.invokeTraceCallback(() => ({
         type: 'token',
@@ -426,6 +433,28 @@ export class Lexer {
    */
   private getCurrentContext(): LexerContext {
     return this.state.getCurrentContext();
+  }
+
+  /**
+   * Emit context-push or context-pop trace event based on a ContextTransition
+   * @param transition - The transition object from StateManager (null = no transition)
+   * @param position - Position where the transition occurred
+   */
+  private emitContextTransition(
+    transition: ContextTransition | null,
+    position: { line: number; column: number; offset: number }
+  ): void {
+    if (!transition) return;
+
+    const eventType = transition.type === 'push' ? 'context-push' : 'context-pop';
+    this.invokeTraceCallback(() => ({
+      type: eventType,
+      position,
+      data: {
+        from: this.contextToString(transition.from),
+        to: this.contextToString(transition.to)
+      }
+    }));
   }
 
   /**
@@ -558,8 +587,13 @@ export class Lexer {
     const oldBraceDepth = stateBefore.braceDepth;
     const oldFieldDefColumn = stateBefore.fieldDefColumn;
 
-    // Update state via operation method
-    this.state.onOpenBrace();
+    // Update state via operation method and capture transition
+    const transition = this.state.onOpenBrace();
+    this.emitContextTransition(transition, {
+      line: startLine,
+      column: startColumn,
+      offset: startPos
+    });
 
     const stateAfter = this.state.getState();
     this.invokeTraceCallback(() => ({
@@ -604,8 +638,13 @@ export class Lexer {
       const oldFieldDefColumn = stateBefore.fieldDefColumn;
       const oldSectionType = stateBefore.currentSectionType;
 
-      // Update state via operation method (handles all resets atomically)
-      this.state.onCloseBrace();
+      // Update state via operation method (handles all resets atomically) and capture transition
+      const transition = this.state.onCloseBrace();
+      this.emitContextTransition(transition, {
+        line: startLine,
+        column: startColumn,
+        offset: startPos
+      });
 
       const stateAfter = this.state.getState();
 
@@ -1055,13 +1094,19 @@ export class Lexer {
         // The state manager's onObjectKeyword() handles context pushing
         if (this.getCurrentContext() === LexerContext.NORMAL) {
           const stateBeforeObject = this.state.getState();
-          this.state.onObjectKeyword(this.tokens.length - 1);
+          const lastToken = this.tokens[this.tokens.length - 1];
+          const transition = this.state.onObjectKeyword(this.tokens.length - 1);
+          this.emitContextTransition(transition, {
+            line: lastToken.line,
+            column: lastToken.column,
+            offset: lastToken.startOffset
+          });
           const stateAfterObject = this.state.getState();
 
           if (stateBeforeObject.objectTokenIndex !== stateAfterObject.objectTokenIndex) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
+              position: { line: lastToken.line, column: lastToken.column, offset: lastToken.startOffset },
               data: { flag: 'objectTokenIndex', from: stateBeforeObject.objectTokenIndex, to: stateAfterObject.objectTokenIndex }
             }));
           }
@@ -1239,32 +1284,72 @@ export class Lexer {
         if (this.shouldProtectFromSectionKeyword()) {
           break;
         }
+        // Guard: Only mark as section keyword when at OBJECT_LEVEL (same as columnar sections)
+        if (this.getCurrentContext() !== LexerContext.OBJECT_LEVEL) {
+          break;
+        }
         {
           const stateBeforeNonColumnarSection = this.state.getState();
           if (stateBeforeNonColumnarSection.inPropertyValue) {
             break;
           }
-          // These sections don't have column tracking, so we just set lastWasSectionKeyword = true
-          // but don't call onSectionKeyword() (which would set a specific section type).
-          // Note: This is a limitation of the current state manager design - it doesn't have
-          // a method for "generic section keyword without type". For now, we'll note this in tracking.
-          // The state will be updated when the opening brace is encountered.
+
+          // Mark that we saw a section keyword (for SECTION_LEVEL push on next brace)
+          this.state.markSectionKeyword();
+
+          // Emit trace event for the flag change
+          const stateAfterNonColumnarSection = this.state.getState();
+          if (stateBeforeNonColumnarSection.lastWasSectionKeyword !== stateAfterNonColumnarSection.lastWasSectionKeyword) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: this.line, column: this.column, offset: this.position },
+              data: {
+                flag: 'lastWasSectionKeyword',
+                from: stateBeforeNonColumnarSection.lastWasSectionKeyword,
+                to: stateAfterNonColumnarSection.lastWasSectionKeyword
+              }
+            }));
+          }
         }
         break;
 
       case TokenType.Begin:
         // Delegate to state manager's onBeginKeyword
-        this.state.onBeginKeyword(this.getCurrentContext());
+        {
+          const lastToken = this.tokens[this.tokens.length - 1];
+          const transition = this.state.onBeginKeyword(this.getCurrentContext());
+          this.emitContextTransition(transition, {
+            line: lastToken.line,
+            column: lastToken.column,
+            offset: lastToken.startOffset
+          });
+        }
         break;
 
       case TokenType.Case:
         // Delegate to state manager's onCaseKeyword
-        this.state.onCaseKeyword(this.getCurrentContext());
+        {
+          const lastToken = this.tokens[this.tokens.length - 1];
+          const transition = this.state.onCaseKeyword(this.getCurrentContext());
+          this.emitContextTransition(transition, {
+            line: lastToken.line,
+            column: lastToken.column,
+            offset: lastToken.startOffset
+          });
+        }
         break;
 
       case TokenType.End:
         // Delegate to state manager's onEndKeyword
-        this.state.onEndKeyword(this.getCurrentContext());
+        {
+          const lastToken = this.tokens[this.tokens.length - 1];
+          const transition = this.state.onEndKeyword(this.getCurrentContext());
+          this.emitContextTransition(transition, {
+            line: lastToken.line,
+            column: lastToken.column,
+            offset: lastToken.startOffset
+          });
+        }
         break;
     }
   }

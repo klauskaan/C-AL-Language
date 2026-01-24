@@ -358,8 +358,11 @@ describe('LexerStateManager', () => {
     it('should push CODE_BLOCK on onBeginKeyword() from SECTION_LEVEL', () => {
       const manager = new LexerStateManager();
       manager.onObjectKeyword(0);
-      manager.onSectionKeyword('FIELDS');
-      manager.onOpenBrace();
+      manager.onOpenBrace(); // Open object brace
+      // Use markSectionKeyword for non-columnar section (e.g., PROPERTIES)
+      manager.markSectionKeyword();
+      manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
+      // We're now in SECTION_LEVEL but not in any columnar tracking
       manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
 
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
@@ -377,6 +380,8 @@ describe('LexerStateManager', () => {
 
     it('should NOT push CODE_BLOCK on onBeginKeyword() in non-trigger property', () => {
       const manager = new LexerStateManager();
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace(); // Open object brace
       manager.onSectionKeyword('FIELDS');
       manager.onOpenBrace();  // Enter SECTION_LEVEL
       manager.onIdentifier('InitValue', LexerContext.SECTION_LEVEL);
@@ -420,8 +425,10 @@ describe('LexerStateManager', () => {
   describe('Field definition column tracking', () => {
     it('should advance to COL_1 after section keyword and open brace', () => {
       const manager = new LexerStateManager();
+      manager.onObjectKeyword(0); // Establish OBJECT_LEVEL context
+      manager.onOpenBrace(); // Open object brace
       manager.onSectionKeyword('FIELDS');
-      manager.onOpenBrace();
+      manager.onOpenBrace(); // Open section brace
       manager.onOpenBrace(); // Field definition start
 
       expect(manager.getState().fieldDefColumn).toBe(FieldDefColumn.COL_1);
@@ -429,8 +436,10 @@ describe('LexerStateManager', () => {
 
     it('should advance through columns on semicolons', () => {
       const manager = new LexerStateManager();
+      manager.onObjectKeyword(0); // Establish OBJECT_LEVEL context
+      manager.onOpenBrace(); // Open object brace
       manager.onSectionKeyword('FIELDS');
-      manager.onOpenBrace();
+      manager.onOpenBrace(); // Open section brace
       manager.onOpenBrace(); // Start field def
       expect(manager.getState().fieldDefColumn).toBe(FieldDefColumn.COL_1);
 
@@ -449,9 +458,11 @@ describe('LexerStateManager', () => {
 
     it('should reset to NONE on closing brace', () => {
       const manager = new LexerStateManager();
+      manager.onObjectKeyword(0); // Establish OBJECT_LEVEL context
+      manager.onOpenBrace(); // Open object brace
       manager.onSectionKeyword('FIELDS');
-      manager.onOpenBrace();
-      manager.onOpenBrace();
+      manager.onOpenBrace(); // Open section brace
+      manager.onOpenBrace(); // Field definition start
       expect(manager.getState().fieldDefColumn).toBe(FieldDefColumn.COL_1);
 
       manager.onCloseBrace();
@@ -460,9 +471,11 @@ describe('LexerStateManager', () => {
 
     it('should stay in PROPERTIES after reaching it', () => {
       const manager = new LexerStateManager();
+      manager.onObjectKeyword(0); // Establish OBJECT_LEVEL context
+      manager.onOpenBrace(); // Open object brace
       manager.onSectionKeyword('FIELDS');
-      manager.onOpenBrace();
-      manager.onOpenBrace();
+      manager.onOpenBrace(); // Open section brace
+      manager.onOpenBrace(); // Field definition start
 
       // Advance to PROPERTIES
       for (let i = 0; i < 4; i++) {
@@ -481,9 +494,11 @@ describe('LexerStateManager', () => {
     describe('shouldProtectFromBeginEnd()', () => {
       it('should protect structural columns in FIELDS section', () => {
         const manager = new LexerStateManager();
+        manager.onObjectKeyword(0); // Establish OBJECT_LEVEL context
+        manager.onOpenBrace(); // Open object brace
         manager.onSectionKeyword('FIELDS');
-        manager.onOpenBrace();
-        manager.onOpenBrace();
+        manager.onOpenBrace(); // Open section brace
+        manager.onOpenBrace(); // Field definition start
 
         // COL_1 through COL_4 should be protected
         expect(manager.shouldProtectFromBeginEnd()).toBe(true);
@@ -503,9 +518,11 @@ describe('LexerStateManager', () => {
 
       it('should protect structural columns in KEYS section', () => {
         const manager = new LexerStateManager();
+        manager.onObjectKeyword(0); // Establish OBJECT_LEVEL context
+        manager.onOpenBrace(); // Open object brace
         manager.onSectionKeyword('KEYS');
-        manager.onOpenBrace();
-        manager.onOpenBrace();
+        manager.onOpenBrace(); // Open section brace
+        manager.onOpenBrace(); // Key definition start
 
         // COL_1 and COL_2 should be protected in KEYS
         expect(manager.shouldProtectFromBeginEnd()).toBe(true);
@@ -519,9 +536,11 @@ describe('LexerStateManager', () => {
 
       it('should protect structural columns in CONTROLS section', () => {
         const manager = new LexerStateManager();
+        manager.onObjectKeyword(0); // Establish OBJECT_LEVEL context
+        manager.onOpenBrace(); // Open object brace
         manager.onSectionKeyword('CONTROLS');
-        manager.onOpenBrace();
-        manager.onOpenBrace();
+        manager.onOpenBrace(); // Open section brace
+        manager.onOpenBrace(); // Control definition start
 
         // COL_1 through COL_3 should be protected
         expect(manager.shouldProtectFromBeginEnd()).toBe(true);
@@ -545,9 +564,11 @@ describe('LexerStateManager', () => {
     describe('shouldProtectFromSectionKeyword()', () => {
       it('should protect structural columns in FIELDS section', () => {
         const manager = new LexerStateManager();
+        manager.onObjectKeyword(0); // Establish OBJECT_LEVEL context
+        manager.onOpenBrace(); // Open object brace
         manager.onSectionKeyword('FIELDS');
-        manager.onOpenBrace();
-        manager.onOpenBrace();
+        manager.onOpenBrace(); // Open section brace
+        manager.onOpenBrace(); // Field definition start
 
         expect(manager.shouldProtectFromSectionKeyword()).toBe(true);
 
@@ -673,8 +694,11 @@ describe('LexerStateManager', () => {
     it('should handle trigger property with code', () => {
       const manager = new LexerStateManager();
 
-      manager.onSectionKeyword('FIELDS');
-      manager.onOpenBrace();
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace(); // Open object brace
+      // Use markSectionKeyword to avoid column tracking
+      manager.markSectionKeyword();
+      manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
 
       // Trigger property
       manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
@@ -701,8 +725,11 @@ describe('LexerStateManager', () => {
     it('should handle non-trigger property with BEGIN as value', () => {
       const manager = new LexerStateManager();
 
-      manager.onSectionKeyword('FIELDS');
-      manager.onOpenBrace();
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace(); // Open object brace
+      // Use markSectionKeyword to avoid column tracking
+      manager.markSectionKeyword();
+      manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
 
       // Non-trigger property
       manager.onIdentifier('InitValue', LexerContext.SECTION_LEVEL);
@@ -722,8 +749,11 @@ describe('LexerStateManager', () => {
       const manager = new LexerStateManager();
 
       // Set up SECTION_LEVEL context first
-      manager.onSectionKeyword('FIELDS');
-      manager.onOpenBrace();
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace(); // Open object brace
+      // Use markSectionKeyword to avoid column tracking
+      manager.markSectionKeyword();
+      manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
 
       manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
@@ -795,9 +825,11 @@ describe('LexerStateManager', () => {
     it('should maintain contextStack consistency after many operations', () => {
       const manager = new LexerStateManager();
 
-      // Push contexts (without OBJECT open brace for simplicity)
+      // Push contexts
       manager.onObjectKeyword(0);
-      manager.onSectionKeyword('FIELDS');
+      manager.onOpenBrace();  // OBJECT open brace
+      // Use markSectionKeyword to avoid column tracking
+      manager.markSectionKeyword();
       manager.onOpenBrace();  // SECTION open brace
       manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
       manager.onCaseKeyword(LexerContext.CODE_BLOCK);
@@ -810,7 +842,7 @@ describe('LexerStateManager', () => {
       manager.onEndKeyword(LexerContext.CODE_BLOCK);
       manager.onCloseBrace();  // Close SECTION
 
-      // Should be back to OBJECT_LEVEL (not NORMAL, because OBJECT brace was never opened/closed)
+      // Should be back to OBJECT_LEVEL
       expect(manager.getState().contextStack).toEqual([LexerContext.NORMAL, LexerContext.OBJECT_LEVEL]);
     });
   });

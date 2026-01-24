@@ -24,6 +24,15 @@ export enum LexerContext {
 }
 
 /**
+ * Context transition information
+ */
+export interface ContextTransition {
+  type: 'push' | 'pop';
+  from: LexerContext;
+  to: LexerContext;
+}
+
+/**
  * Field definition column positions
  * Tracks position within semicolon-delimited field/key/control definitions
  */
@@ -68,6 +77,7 @@ export interface InternalLexerState {
   fieldDefColumn: FieldDefColumn;
   contextUnderflowDetected: boolean;
   objectTokenIndex: number;
+  sectionEntryDepth: number;
 }
 
 /**
@@ -107,6 +117,7 @@ export class LexerStateManager {
   private fieldDefColumn: FieldDefColumn = FieldDefColumn.NONE;
   private contextUnderflowDetected: boolean = false;
   private objectTokenIndex: number = -1;
+  private sectionEntryDepth: number = -1;
 
   /**
    * Reset all state to initial values
@@ -123,6 +134,7 @@ export class LexerStateManager {
     this.fieldDefColumn = FieldDefColumn.NONE;
     this.contextUnderflowDetected = false;
     this.objectTokenIndex = -1;
+    this.sectionEntryDepth = -1;
   }
 
   /**
@@ -130,16 +142,23 @@ export class LexerStateManager {
    * Pops OBJECT_LEVEL and well-formed outer SECTION_LEVELs (braceDepth === 0)
    * Leaves malformed inner SECTION_LEVELs for isCleanExit() to detect
    */
-  public cleanupContextStack(): void {
+  public cleanupContextStack(): ContextTransition[] {
+    const transitions: ContextTransition[] = [];
+
     while (this.contextStack.length > 1) {
       const top = this.contextStack[this.contextStack.length - 1];
       if (top === LexerContext.OBJECT_LEVEL ||
           (top === LexerContext.SECTION_LEVEL && this.braceDepth === 0)) {
-        this.contextStack.pop();
+        const transition = this.popContext();
+        if (transition) {
+          transitions.push(transition);
+        }
       } else {
         break;
       }
     }
+
+    return transitions;
   }
 
   /**
@@ -157,6 +176,7 @@ export class LexerStateManager {
       fieldDefColumn: this.fieldDefColumn,
       contextUnderflowDetected: this.contextUnderflowDetected,
       objectTokenIndex: this.objectTokenIndex,
+      sectionEntryDepth: this.sectionEntryDepth,
     };
   }
 
@@ -170,19 +190,24 @@ export class LexerStateManager {
   /**
    * Push a new context onto the stack
    */
-  private pushContext(context: LexerContext): void {
+  private pushContext(context: LexerContext): ContextTransition {
+    const from = this.getCurrentContext();
     this.contextStack.push(context);
+    return { type: 'push', from, to: context };
   }
 
   /**
    * Pop the current context from the stack
    * Sets contextUnderflowDetected flag if stack is at minimum size
    */
-  private popContext(): void {
+  private popContext(): ContextTransition | null {
     if (this.contextStack.length > LexerStateManager.MIN_CONTEXT_STACK_SIZE) {
+      const from = this.getCurrentContext();
       this.contextStack.pop();
+      return { type: 'pop', from, to: this.getCurrentContext() };
     } else {
       this.contextUnderflowDetected = true;
+      return null;
     }
   }
 
@@ -276,12 +301,12 @@ export class LexerStateManager {
   /**
    * Handle OBJECT keyword
    */
-  public onObjectKeyword(tokenIndex: number): void {
-    if (this.getCurrentContext() === LexerContext.NORMAL) {
-      this.pushContext(LexerContext.OBJECT_LEVEL);
-    }
-    // Always update objectTokenIndex (allows handling multiple OBJECT keywords)
+  public onObjectKeyword(tokenIndex: number): ContextTransition | null {
     this.objectTokenIndex = tokenIndex;
+    if (this.getCurrentContext() === LexerContext.NORMAL) {
+      return this.pushContext(LexerContext.OBJECT_LEVEL);
+    }
+    return null;
   }
 
   /**
@@ -293,16 +318,33 @@ export class LexerStateManager {
   }
 
   /**
+   * Mark that we just saw a section keyword (for non-columnar sections)
+   * This allows onOpenBrace() to push SECTION_LEVEL without needing a specific section type.
+   * Used for PROPERTIES, CODE, FieldGroups, RequestForm sections that don't use column tracking.
+   */
+  public markSectionKeyword(): void {
+    this.lastWasSectionKeyword = true;
+  }
+
+  /**
    * Handle opening brace '{'
    */
-  public onOpenBrace(): void {
+  public onOpenBrace(): ContextTransition | null {
     this.braceDepth++;
 
-    // Push SECTION_LEVEL context when we just saw a section keyword (FIELDS, PROPERTIES, etc.)
-    const justPushedSectionLevel = this.lastWasSectionKeyword;
+    let transition: ContextTransition | null = null;
 
-    if (justPushedSectionLevel) {
-      this.pushContext(LexerContext.SECTION_LEVEL);
+    // Push SECTION_LEVEL after section keyword when at OBJECT_LEVEL or NORMAL (for fragments)
+    if (this.lastWasSectionKeyword) {
+      const currentContext = this.getCurrentContext();
+      if (currentContext === LexerContext.OBJECT_LEVEL || currentContext === LexerContext.NORMAL) {
+        this.sectionEntryDepth = this.braceDepth; // Record depth AFTER increment
+        transition = this.pushContext(LexerContext.SECTION_LEVEL);
+      }
+    }
+
+    // Always reset the flag after consuming the brace (whether or not we pushed context)
+    if (this.lastWasSectionKeyword) {
       this.lastWasSectionKeyword = false;
     }
 
@@ -311,10 +353,8 @@ export class LexerStateManager {
     // 1. We're in SECTION_LEVEL context
     // 2. We're not already tracking columns (fieldDefColumn is NONE)
     // 3. We're in a columnar section type (FIELDS, KEYS, etc.)
-    // 4. We did NOT just push SECTION_LEVEL (this is a nested brace, i.e., field definition)
     if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
         this.fieldDefColumn === FieldDefColumn.NONE &&
-        !justPushedSectionLevel &&
         (this.currentSectionType === 'FIELDS' ||
          this.currentSectionType === 'KEYS' ||
          this.currentSectionType === 'CONTROLS' ||
@@ -323,25 +363,29 @@ export class LexerStateManager {
          this.currentSectionType === 'ACTIONS')) {
       this.fieldDefColumn = FieldDefColumn.COL_1;
     }
+
+    return transition;
   }
 
   /**
    * Handle closing brace '}'
    * Atomically resets multiple state variables
    */
-  public onCloseBrace(): void {
-    // Prevent negative braceDepth from unmatched closing braces
+  public onCloseBrace(): ContextTransition | null {
     if (this.braceDepth > 0) {
       this.braceDepth--;
     }
 
-    // Pop context when closing a section
-    // A section is closed when we're at SECTION_LEVEL and closing a brace
-    // for a specific section type (FIELDS, KEYS, etc.)
+    let transition: ContextTransition | null = null;
+
+    // Close section when braceDepth drops BELOW entry depth
+    // Note: currentSectionType may be null for non-columnar sections (PROPERTIES, CODE, etc.)
     if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-        this.currentSectionType !== null) {
-      this.popContext();
+        this.sectionEntryDepth !== -1 &&
+        this.braceDepth < this.sectionEntryDepth) {
+      transition = this.popContext();
       this.currentSectionType = null;
+      this.sectionEntryDepth = -1;
     }
 
     // Reset property tracking (atomic operation)
@@ -351,6 +395,8 @@ export class LexerStateManager {
 
     // Reset column tracking
     this.fieldDefColumn = FieldDefColumn.NONE;
+
+    return transition;
   }
 
   /**
@@ -430,53 +476,56 @@ export class LexerStateManager {
    * Handle BEGIN keyword
    * @param currentContext - The lexer's current context (passed from Lexer.getCurrentContext())
    */
-  public onBeginKeyword(currentContext: LexerContext): void {
+  public onBeginKeyword(currentContext: LexerContext): ContextTransition | null {
     // Guard: Don't push CODE_BLOCK if BEGIN appears in structural columns
     if (this.shouldProtectFromBeginEnd()) {
-      return;
+      return null;
     }
 
     // Guard: BEGIN inside brackets is just text, not code start
     if (this.bracketDepth > 0) {
-      return;
+      return null;
     }
 
     // Only push CODE_BLOCK for ACTUAL code blocks, not property values
     // If we're in a property value, only enter CODE_BLOCK if it's a trigger property
     if (this.inPropertyValue) {
       if (this.isTriggerProperty()) {
-        this.pushContext(LexerContext.CODE_BLOCK);
+        return this.pushContext(LexerContext.CODE_BLOCK);
       }
       // Otherwise: BEGIN is just a property value identifier, don't change context
+      return null;
     } else {
       // Not in property value - use passed context to decide
       if (currentContext === LexerContext.NORMAL ||
           currentContext === LexerContext.SECTION_LEVEL ||
           currentContext === LexerContext.CODE_BLOCK ||
           currentContext === LexerContext.CASE_BLOCK) {
-        this.pushContext(LexerContext.CODE_BLOCK);
+        return this.pushContext(LexerContext.CODE_BLOCK);
       }
     }
+
+    return null;
   }
 
   /**
    * Handle END keyword
    * @param currentContext - The lexer's current context (passed from Lexer.getCurrentContext())
    */
-  public onEndKeyword(currentContext: LexerContext): void {
+  public onEndKeyword(currentContext: LexerContext): ContextTransition | null {
     // Guard: Don't pop CODE_BLOCK if END appears in structural columns
     if (this.shouldProtectFromBeginEnd()) {
-      return;
+      return null;
     }
 
     // Guard: END inside brackets is just text, not code end
     if (this.bracketDepth > 0) {
-      return;
+      return null;
     }
 
     // In property values for non-triggers, END is just an identifier value
     if (this.inPropertyValue && !this.isTriggerProperty()) {
-      return;
+      return null;
     }
 
     // Pop the appropriate context based on what we're in (use passed context)
@@ -488,20 +537,23 @@ export class LexerStateManager {
     if (currentContext === LexerContext.CODE_BLOCK ||
         currentContext === LexerContext.CASE_BLOCK ||
         currentContext === LexerContext.NORMAL) {
-      this.popContext();
+      return this.popContext();
     }
+
+    return null;
   }
 
   /**
    * Handle CASE keyword
    * @param currentContext - The lexer's current context (passed from Lexer.getCurrentContext())
    */
-  public onCaseKeyword(currentContext: LexerContext): void {
+  public onCaseKeyword(currentContext: LexerContext): ContextTransition | null {
     // Push CASE_BLOCK when in any code execution context
     // Guard against malformed input (only push when already in code)
     if (currentContext === LexerContext.CODE_BLOCK ||
         currentContext === LexerContext.CASE_BLOCK) {
-      this.pushContext(LexerContext.CASE_BLOCK);
+      return this.pushContext(LexerContext.CASE_BLOCK);
     }
+    return null;
   }
 }
