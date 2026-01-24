@@ -642,6 +642,139 @@ describe('PropertyValueParser - TableRelation Parsing', () => {
     });
   });
 
+  describe('TableRelation IF/ELSE IF/ELSE chain as flat array (issue #228)', () => {
+    // EXPECTED TO FAIL: Parser currently produces nested structure
+    // Should produce flat array per ast.ts:186-191
+
+    it('should parse IF/ELSE IF/ELSE chain as flat array with 3 branches', () => {
+      // Main test case for issue #228
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (Type=CONST(G/L Account)) "G/L Account"
+                          ELSE IF (Type=CONST(Item)) Item
+                          ELSE Resource }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      // Should produce flat array with 2 elements (not nested)
+      expect(result?.conditionalRelations).toBeDefined();
+      expect(result?.conditionalRelations?.length).toBe(2);
+
+      // First condition: IF Type=CONST(G/L Account) -> "G/L Account"
+      const firstCondition = result?.conditionalRelations?.[0];
+      expect(firstCondition?.condition?.fieldName).toBe('Type');
+      expect(firstCondition?.condition?.predicateValue).toBe('G/L Account');
+      expect(firstCondition?.thenRelation?.tableName).toBe('G/L Account');
+      expect(firstCondition?.elseRelation).toBeUndefined(); // Should not have ELSE
+
+      // Second condition: ELSE IF Type=CONST(Item) -> Item ELSE Resource
+      const secondCondition = result?.conditionalRelations?.[1];
+      expect(secondCondition?.condition?.fieldName).toBe('Type');
+      expect(secondCondition?.condition?.predicateValue).toBe('Item');
+      expect(secondCondition?.thenRelation?.tableName).toBe('Item');
+      expect(secondCondition?.elseRelation).toBeDefined(); // Final ELSE
+      expect(secondCondition?.elseRelation?.tableName).toBe('Resource');
+    });
+
+    it('should parse IF/ELSE IF without final ELSE', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (Type=CONST(Item)) Item
+                          ELSE IF (Type=CONST(Resource)) Resource }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      // Should produce flat array with 2 elements
+      expect(result?.conditionalRelations?.length).toBe(2);
+
+      // First condition has no elseRelation
+      expect(result?.conditionalRelations?.[0]?.elseRelation).toBeUndefined();
+
+      // Second condition also has no elseRelation
+      expect(result?.conditionalRelations?.[1]?.elseRelation).toBeUndefined();
+    });
+
+    it('should parse chain with 4+ branches', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (A=CONST(1)) T1
+                          ELSE IF (A=CONST(2)) T2
+                          ELSE IF (A=CONST(3)) T3
+                          ELSE T4 }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      // Should produce flat array with 3 elements (3 conditions)
+      expect(result?.conditionalRelations?.length).toBe(3);
+
+      // Only the last condition should have elseRelation
+      expect(result?.conditionalRelations?.[0]?.elseRelation).toBeUndefined();
+      expect(result?.conditionalRelations?.[1]?.elseRelation).toBeUndefined();
+      expect(result?.conditionalRelations?.[2]?.elseRelation).toBeDefined();
+      expect(result?.conditionalRelations?.[2]?.elseRelation?.tableName).toBe('T4');
+    });
+
+    it('should parse chain with WHERE clause on middle branch', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (Type=CONST(Item)) Item WHERE (Blocked=CONST(No))
+                          ELSE IF (Type=CONST(Resource)) Resource
+                          ELSE "G/L Account" }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      // Flat structure should be preserved
+      expect(result?.conditionalRelations?.length).toBe(2);
+
+      // First condition's thenRelation should have WHERE clause
+      expect(result?.conditionalRelations?.[0]?.thenRelation?.tableName).toBe('Item');
+      expect(result?.conditionalRelations?.[0]?.thenRelation?.whereClause).toBeDefined();
+      expect(result?.conditionalRelations?.[0]?.thenRelation?.whereClause?.conditions).toHaveLength(1);
+
+      // Second condition should have proper structure
+      expect(result?.conditionalRelations?.[1]?.thenRelation?.tableName).toBe('Resource');
+      expect(result?.conditionalRelations?.[1]?.elseRelation?.tableName).toBe('G/L Account');
+    });
+
+    it('should return null for malformed ELSE IF without THEN relation', () => {
+      // Malformed: ELSE IF with condition but no table reference
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (Type=CONST(Item)) Item
+                          ELSE IF (Type=CONST(Resource)) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      // Should reject malformed input
+      expect(result).toBeNull();
+    });
+  });
+
   describe('TableRelation edge cases', () => {
     it('should handle qualified field reference in conditional', () => {
       const code = `OBJECT Table 1 Test {

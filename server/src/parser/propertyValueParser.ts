@@ -611,28 +611,15 @@ export class PropertyValueParser {
     if (this.check(TokenType.Else)) {
       this.advance(); // consume ELSE
 
-      // Check if it's ELSE IF (nested conditional)
+      // Check if it's ELSE IF (chain continuation)
       if (this.check(TokenType.If)) {
-        // Don't consume the IF - let the outer loop handle it
-        // But we need to create an elseRelation for this node
-        // We'll parse the rest recursively
-        const nestedRelations = this.parseConditionalRelations();
-        if (!nestedRelations || nestedRelations.length === 0) {
-          return undefined;
-        }
-
-        // Wrap nested conditionals in a TableRelationNode
-        const elseStartToken = this.tokens[this.position - 1];
-        const elseEndToken = this.previousOrEOF();
-
-        elseRelation = {
-          type: 'TableRelationNode',
-          conditionalRelations: nestedRelations,
-          startToken: elseStartToken,
-          endToken: elseEndToken
-        };
+        // ELSE IF detected: this is a chain continuation at the same level, NOT nesting
+        // Per ConditionalTableRelation documentation, chains are represented as flat arrays
+        // where semantic relationships are implicit in array ordering.
+        // Leave elseRelation undefined - the outer parseConditionalRelations() loop
+        // will handle the next IF naturally.
       } else {
-        // Simple ELSE relation
+        // Simple ELSE relation: final fallback value, terminates the chain
         const er = this.parseSimpleTableRelation();
         if (!er) {
           return undefined;
