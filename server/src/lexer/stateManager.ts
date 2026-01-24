@@ -219,7 +219,7 @@ export class LexerStateManager {
   }
 
   /**
-   * Check if current column should be protected from BEGIN/END context changes
+   * Check if current column should be protected from context changes
    * Section-aware protection:
    * - FIELDS: Protect COL_1-4 (structural columns)
    * - KEYS: Protect COL_1-2 (structural columns)
@@ -228,7 +228,7 @@ export class LexerStateManager {
    * - DATAITEMS: Protect COL_1-4 (structural columns)
    * - ACTIONS: Protect COL_1-3 (structural columns)
    */
-  public shouldProtectFromBeginEnd(): boolean {
+  private shouldProtectStructuralColumn(): boolean {
     if (this.fieldDefColumn === FieldDefColumn.NONE) {
       return false;
     }
@@ -261,39 +261,17 @@ export class LexerStateManager {
   }
 
   /**
+   * Check if current column should be protected from BEGIN/END context changes
+   */
+  public shouldProtectFromBeginEnd(): boolean {
+    return this.shouldProtectStructuralColumn();
+  }
+
+  /**
    * Check if current column should be protected from section keyword context changes
-   * Same protection logic as shouldProtectFromBeginEnd
    */
   public shouldProtectFromSectionKeyword(): boolean {
-    if (this.fieldDefColumn === FieldDefColumn.NONE) {
-      return false;
-    }
-
-    switch (this.currentSectionType) {
-      case 'FIELDS':
-      case 'ELEMENTS':
-      case 'DATAITEMS':
-        // Protect all structural columns (COL_1-4)
-        return this.fieldDefColumn === FieldDefColumn.COL_1 ||
-               this.fieldDefColumn === FieldDefColumn.COL_2 ||
-               this.fieldDefColumn === FieldDefColumn.COL_3 ||
-               this.fieldDefColumn === FieldDefColumn.COL_4;
-
-      case 'KEYS':
-        // Protect only COL_1-2 (reserved ; field list)
-        return this.fieldDefColumn === FieldDefColumn.COL_1 ||
-               this.fieldDefColumn === FieldDefColumn.COL_2;
-
-      case 'CONTROLS':
-      case 'ACTIONS':
-        // Protect COL_1-3 (ID ; Type ; SubType/ActionType)
-        return this.fieldDefColumn === FieldDefColumn.COL_1 ||
-               this.fieldDefColumn === FieldDefColumn.COL_2 ||
-               this.fieldDefColumn === FieldDefColumn.COL_3;
-
-      default:
-        return false;
-    }
+    return this.shouldProtectStructuralColumn();
   }
 
   // ========== Operation methods (called by Lexer) ==========
@@ -341,10 +319,7 @@ export class LexerStateManager {
         this.sectionEntryDepth = this.braceDepth; // Record depth AFTER increment
         transition = this.pushContext(LexerContext.SECTION_LEVEL);
       }
-    }
-
-    // Always reset the flag after consuming the brace (whether or not we pushed context)
-    if (this.lastWasSectionKeyword) {
+      // Always reset the flag after consuming the brace (whether or not we pushed context)
       this.lastWasSectionKeyword = false;
     }
 
