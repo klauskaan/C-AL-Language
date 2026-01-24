@@ -1284,10 +1284,6 @@ export class Lexer {
         if (this.shouldProtectFromSectionKeyword()) {
           break;
         }
-        // Guard: Only mark as section keyword when at OBJECT_LEVEL (same as columnar sections)
-        if (this.getCurrentContext() !== LexerContext.OBJECT_LEVEL) {
-          break;
-        }
         {
           const stateBeforeNonColumnarSection = this.state.getState();
           if (stateBeforeNonColumnarSection.inPropertyValue) {
