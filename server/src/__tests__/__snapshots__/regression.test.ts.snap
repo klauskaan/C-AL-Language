@@ -11,6 +11,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
     "value": ")",
   },
   "object": {
+    "actions": null,
     "code": {
       "endToken": {
         "column": 196,
@@ -43795,6 +43796,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
     "value": ";",
   },
   "object": {
+    "actions": null,
     "code": {
       "endToken": {
         "column": 8,
@@ -45423,6 +45425,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
     "value": ";",
   },
   "object": {
+    "actions": null,
     "code": {
       "endToken": {
         "column": 8,
@@ -52246,6 +52249,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-343-check-credit-limit
     "value": ";",
   },
   "object": {
+    "actions": null,
     "code": {
       "endToken": {
         "column": 40,
@@ -53093,6 +53097,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
     "value": ";",
   },
   "object": {
+    "actions": null,
     "code": {
       "endToken": {
         "column": 8,
@@ -54509,6 +54514,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
     "value": ")",
   },
   "object": {
+    "actions": null,
     "code": {
       "endToken": {
         "column": 54,
@@ -61111,6 +61117,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
     "value": ";",
   },
   "object": {
+    "actions": null,
     "code": {
       "endToken": {
         "column": 8,
@@ -62929,6 +62936,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
     "value": ";",
   },
   "object": {
+    "actions": null,
     "code": {
       "endToken": {
         "column": 8,
@@ -74925,6 +74933,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-5342-option-initvalue
     "value": "{",
   },
   "object": {
+    "actions": null,
     "code": {
       "endToken": {
         "column": 3,
@@ -76381,6 +76390,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
     "value": ";",
   },
   "object": {
+    "actions": null,
     "code": {
       "endToken": {
         "column": 8,
@@ -89072,6 +89082,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-apostrophe-in-descrip
     "value": "{",
   },
   "object": {
+    "actions": null,
     "code": {
       "endToken": {
         "column": 3,
@@ -89474,6 +89485,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: xmlport-1225-data-exch-def-
     "value": "{",
   },
   "object": {
+    "actions": null,
     "code": {
       "endToken": {
         "column": 3,

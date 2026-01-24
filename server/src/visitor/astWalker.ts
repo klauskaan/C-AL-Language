@@ -27,6 +27,8 @@ import {
   FieldSection,
   KeySection,
   FieldGroupSection,
+  ActionSection,
+  ActionDeclaration,
   CodeSection,
   Property,
   FieldDeclaration,
@@ -118,6 +120,9 @@ export class ASTWalker {
       case 'FieldGroupSection':
         this.walkFieldGroupSection(node as FieldGroupSection, visitor);
         break;
+      case 'ActionSection':
+        this.walkActionSection(node as ActionSection, visitor);
+        break;
       case 'CodeSection':
         this.walkCodeSection(node as CodeSection, visitor);
         break;
@@ -134,6 +139,9 @@ export class ASTWalker {
         break;
       case 'FieldGroup':
         this.walkFieldGroup(node as FieldGroup, visitor);
+        break;
+      case 'ActionDeclaration':
+        this.walkActionDeclaration(node as ActionDeclaration, visitor);
         break;
       case 'VariableDeclaration':
         this.walkVariableDeclaration(node as VariableDeclaration, visitor);
@@ -258,6 +266,7 @@ export class ASTWalker {
     this.walk(node.fields, visitor);
     this.walk(node.keys, visitor);
     this.walk(node.fieldGroups, visitor);
+    this.walk(node.actions, visitor);
     this.walk(node.code, visitor);
   }
 
@@ -310,6 +319,18 @@ export class ASTWalker {
     }
     for (const group of node.fieldGroups) {
       this.walk(group, visitor);
+    }
+  }
+
+  private walkActionSection(node: ActionSection, visitor: Partial<ASTVisitor>): void {
+    if (visitor.visitActionSection) {
+      const result = visitor.visitActionSection(node);
+      if (result === false) {
+        return;
+      }
+    }
+    for (const action of node.actions) {
+      this.walk(action, visitor);
     }
   }
 
@@ -391,6 +412,24 @@ export class ASTWalker {
       visitor.visitFieldGroup(node);
     }
     // FieldGroup has no child AST nodes to traverse (fields is string[])
+  }
+
+  private walkActionDeclaration(node: ActionDeclaration, visitor: Partial<ASTVisitor>): void {
+    if (visitor.visitActionDeclaration) {
+      const result = visitor.visitActionDeclaration(node);
+      if (result === false) {
+        return;
+      }
+    }
+    this.walk(node.properties, visitor);
+    if (node.triggers) {
+      for (const trigger of node.triggers) {
+        this.walk(trigger, visitor);
+      }
+    }
+    for (const child of node.children) {
+      this.walk(child, visitor);
+    }
   }
 
   private walkVariableDeclaration(node: VariableDeclaration, visitor: Partial<ASTVisitor>): void {

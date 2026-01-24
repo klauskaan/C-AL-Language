@@ -6,6 +6,8 @@ import {
   FieldSection,
   KeySection,
   FieldGroupSection,
+  ActionSection,
+  ActionDeclaration,
   CodeSection,
   Property,
   FieldDeclaration,
@@ -98,6 +100,11 @@ export interface ASTVisitor {
   visitFieldGroupSection?(node: FieldGroupSection): void | false;
 
   /**
+   * Visit an ActionSection node (ACTIONS block)
+   */
+  visitActionSection?(node: ActionSection): void | false;
+
+  /**
    * Visit a CodeSection node (CODE block)
    */
   visitCodeSection?(node: CodeSection): void | false;
@@ -122,6 +129,11 @@ export interface ASTVisitor {
    * Visit a FieldGroup node (field group definition)
    */
   visitFieldGroup?(node: FieldGroup): void | false;
+
+  /**
+   * Visit an ActionDeclaration node (action definition in ACTIONS section)
+   */
+  visitActionDeclaration?(node: ActionDeclaration): void | false;
 
   /**
    * Visit a VariableDeclaration node (local or global variable)

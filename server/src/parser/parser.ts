@@ -15,6 +15,9 @@ import {
   KeyDeclaration,
   FieldGroupSection,
   FieldGroup,
+  ActionSection,
+  ActionDeclaration,
+  ActionType,
   CodeSection,
   VariableDeclaration,
   VariableModifiers,
@@ -181,6 +184,7 @@ export class Parser {
     let fields: FieldSection | null = null;
     let keys: KeySection | null = null;
     let fieldGroups: FieldGroupSection | null = null;
+    let actions: ActionSection | null = null;
     let code: CodeSection | null = null;
     let objectLevelVariables: VariableDeclaration[] = [];
 
@@ -199,6 +203,17 @@ export class Parser {
           keys = this.parseKeySection();
         } else if (token.type === TokenType.FieldGroups) {
           fieldGroups = this.parseFieldGroupSection();
+        } else if (token.type === TokenType.Actions) {
+          try {
+            actions = this.parseActionSection();
+          } catch (error) {
+            if (error instanceof ParseError) {
+              this.errors.push(error);
+              this.skipUnsupportedSection(TokenType.Actions);
+            } else {
+              throw error;
+            }
+          }
         } else if (token.type === TokenType.Var) {
           // Parse object-level VAR section
           // These variables should be included in the CODE section
@@ -210,14 +225,13 @@ export class Parser {
             code.variables = [...objectLevelVariables, ...code.variables];
           }
         } else if (token.type === TokenType.Controls ||
-                   token.type === TokenType.Actions ||
                    token.type === TokenType.DataItems ||
                    token.type === TokenType.Dataset ||
                    token.type === TokenType.RequestPage ||
                    token.type === TokenType.Labels ||
                    token.type === TokenType.Elements ||
                    token.type === TokenType.RequestForm) {
-          // Skip unsupported sections (CONTROLS, ACTIONS, DATAITEMS, DATASET, REQUESTPAGE, LABELS, ELEMENTS, REQUESTFORM)
+          // Skip unsupported sections (CONTROLS, DATAITEMS, DATASET, REQUESTPAGE, LABELS, ELEMENTS, REQUESTFORM)
           // These sections have complex nested structures that aren't fully parsed yet
           this.skipUnsupportedSection(token.type);
         } else {
@@ -242,6 +256,7 @@ export class Parser {
       fields,
       keys,
       fieldGroups,
+      actions,
       code,
       startToken,
       endToken: this.previous()
@@ -1186,6 +1201,159 @@ export class Parser {
       startToken,
       endToken
     };
+  }
+
+  /**
+   * Parse ACTIONS section
+   */
+  private parseActionSection(): ActionSection {
+    const startToken = this.consume(TokenType.Actions, 'Expected ACTIONS');
+    this.consume(TokenType.LeftBrace, 'Expected {');
+
+    const flatActions: ActionDeclaration[] = [];
+
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      const action = this.parseWithRecovery(
+        () => this.parseActionItem(),
+        [TokenType.LeftBrace, TokenType.RightBrace]
+      );
+      if (action) {
+        flatActions.push(action);
+      }
+    }
+
+    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+    const hierarchicalActions = this.buildActionHierarchy(flatActions);
+
+    return {
+      type: 'ActionSection',
+      actions: hierarchicalActions,
+      startToken,
+      endToken
+    };
+  }
+
+  private parseActionItem(): ActionDeclaration {
+    const startToken = this.consume(TokenType.LeftBrace, 'Expected {');
+
+    // Column 1: Action ID
+    const idToken = this.consume(TokenType.Integer, 'Expected action ID');
+    const id = this.parseInteger(idToken, 'action ID');
+    this.consume(TokenType.Semicolon, 'Expected ; after action ID');
+
+    // Column 2: Indent Level (can be empty - whitespace between semicolons)
+    let indentLevel = 0;
+    if (!this.check(TokenType.Semicolon) && !this.isAtEnd()) {
+      const indentToken = this.consume(TokenType.Integer, 'Expected indent level');
+      indentLevel = this.parseInteger(indentToken, 'indent level');
+    }
+    this.consume(TokenType.Semicolon, 'Expected ; after indent level');
+
+    // Column 3: Action Type
+    const { actionType, rawActionType } = this.parseActionType();
+
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+
+    // Properties and Triggers
+    let properties: PropertySection | null = null;
+    let triggers: TriggerDeclaration[] | null = null;
+
+    if (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      const propsStartToken = this.peek();
+      const result = this.parseFieldProperties();
+
+      if (result.properties.length > 0) {
+        properties = {
+          type: 'PropertySection',
+          properties: result.properties,
+          startToken: propsStartToken,
+          endToken: this.previous()
+        };
+      }
+
+      if (result.triggers.length > 0) {
+        triggers = result.triggers;
+      }
+    }
+
+    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+
+    return {
+      type: 'ActionDeclaration',
+      id,
+      indentLevel,
+      actionType,
+      rawActionType,
+      properties,
+      triggers,
+      children: [],
+      startToken,
+      endToken
+    };
+  }
+
+  private parseActionType(): { actionType: ActionType; rawActionType?: string } {
+    if (this.check(TokenType.Semicolon) || this.check(TokenType.RightBrace)) {
+      this.recordError('Missing action type, defaulting to Action', this.peek());
+      return { actionType: 'Action' };
+    }
+
+    const typeToken = this.advance();
+    const rawValue = typeToken.value;
+
+    const typeMap: Record<string, ActionType> = {
+      'actioncontainer': 'ActionContainer',
+      'actiongroup': 'ActionGroup',
+      'action': 'Action',
+      'separator': 'Separator'
+    };
+
+    const normalizedType = typeMap[rawValue.toLowerCase()];
+
+    if (normalizedType) {
+      return { actionType: normalizedType };
+    }
+
+    this.recordError(`Unknown action type '${rawValue}', treating as Action`, typeToken);
+    return { actionType: 'Action', rawActionType: rawValue };
+  }
+
+  private buildActionHierarchy(flatActions: ActionDeclaration[]): ActionDeclaration[] {
+    if (flatActions.length === 0) {
+      return [];
+    }
+
+    const stack: Array<{ indent: number; action: ActionDeclaration }> = [];
+    const roots: ActionDeclaration[] = [];
+
+    for (const action of flatActions) {
+      let indent = action.indentLevel;
+
+      if (indent < 0) {
+        this.recordError(
+          `Invalid negative indent level ${indent}, treating as 0`,
+          action.startToken
+        );
+        indent = 0;
+        action.indentLevel = 0;
+      }
+
+      while (stack.length > 0 && stack[stack.length - 1].indent >= indent) {
+        stack.pop();
+      }
+
+      if (stack.length === 0) {
+        roots.push(action);
+      } else {
+        stack[stack.length - 1].action.children.push(action);
+      }
+
+      stack.push({ indent, action });
+    }
+
+    return roots;
   }
 
   /**

@@ -42,6 +42,7 @@ export interface ObjectDeclaration extends ASTNode {
   fields: FieldSection | null;
   keys: KeySection | null;
   fieldGroups: FieldGroupSection | null;
+  actions: ActionSection | null;
   code: CodeSection | null;
 }
 
@@ -392,6 +393,34 @@ export interface FieldGroup extends ASTNode {
   id: number;
   name: string;
   fields: string[];
+}
+
+/**
+ * Action types in C/AL ACTIONS sections
+ */
+export type ActionType = 'ActionContainer' | 'ActionGroup' | 'Action' | 'Separator';
+
+/**
+ * ACTIONS section containing UI action definitions
+ */
+export interface ActionSection extends ASTNode {
+  type: 'ActionSection';
+  actions: ActionDeclaration[];
+}
+
+/**
+ * Individual action declaration within ACTIONS section
+ * Format: { ID;IndentLevel;Type; Properties [Triggers] }
+ */
+export interface ActionDeclaration extends ASTNode {
+  type: 'ActionDeclaration';
+  id: number;
+  indentLevel: number;
+  actionType: ActionType;
+  rawActionType?: string;
+  properties: PropertySection | null;
+  triggers: TriggerDeclaration[] | null;
+  children: ActionDeclaration[];
 }
 
 /**
