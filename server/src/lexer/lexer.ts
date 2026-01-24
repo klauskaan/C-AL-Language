@@ -1,49 +1,8 @@
 import { Token, TokenType, KEYWORDS, AL_ONLY_KEYWORDS, AL_ONLY_ACCESS_MODIFIERS } from './tokens';
+import { LexerStateManager, LexerContext, FieldDefColumn, SectionType } from './stateManager';
 
-/**
- * Lexer context states for context-aware brace handling
- * C/AL uses { } for both structural delimiters and comments
- */
-enum LexerContext {
-  NORMAL,           // Default state
-  OBJECT_LEVEL,     // After OBJECT keyword, before first section
-  SECTION_LEVEL,    // Inside PROPERTIES/FIELDS/KEYS/FIELDGROUPS/CODE sections
-  CODE_BLOCK,       // Inside BEGIN...END blocks (braces are comments here)
-  CASE_BLOCK,       // Inside CASE...END blocks (braces are comments here)
-}
-
-/**
- * Column position tracking for field definitions
- * Used to distinguish field name positions from property values
- *
- * Column meanings are section-specific:
- *
- * FIELDS: { FieldNo ; Reserved ; FieldName ; DataType ; Properties }
- *   COL_1-4: Structural columns (protect from BEGIN/END context changes)
- *   PROPERTIES: Field properties (allow triggers)
- *
- * KEYS: { ; FieldList ; Properties }
- *   COL_1-2: Structural columns (reserved ; field list)
- *   COL_3+: Properties section (allow triggers if they existed)
- *
- * CONTROLS: { ID ; Type ; SubType ; Properties }
- *   COL_1-3: Structural columns (ID ; Type ; SubType)
- *   COL_4+: Properties section (allow triggers)
- */
-enum FieldDefColumn {
-  NONE,       // Not in field definition
-  COL_1,      // FIELDS: FieldNo | KEYS: Reserved | CONTROLS: ID
-  COL_2,      // FIELDS: Reserved | KEYS: FieldList | CONTROLS: Type
-  COL_3,      // FIELDS: FieldName | KEYS: Properties start | CONTROLS: SubType
-  COL_4,      // FIELDS: DataType | CONTROLS: Properties start
-  PROPERTIES  // FIELDS: After DataType, in properties section
-}
-
-/**
- * Section types in C/AL object definitions.
- * Used for tracking current section context during tokenization.
- */
-export type SectionType = 'FIELDS' | 'KEYS' | 'CONTROLS' | 'ELEMENTS' | 'DATAITEMS' | 'ACTIONS' | 'DATASET' | 'REQUESTPAGE' | 'LABELS';
+// Re-export types for backward compatibility
+export type { SectionType };
 
 /**
  * Categories of clean exit validation failures.
@@ -363,7 +322,6 @@ export class Lexer {
   private static readonly UNDEFINED_DATE_DIGITS = 1; // 0D (undefined date)
   private static readonly UNDEFINED_DATE = '0D';    // Undefined date literal value
   private static readonly MIN_TIME_DIGITS = 6;      // HHMMSS minimum
-  private static readonly MIN_CONTEXT_STACK_SIZE = 1; // Context stack minimum
 
   // Unicode range constants for extended Latin identifiers
   // NAV C/SIDE supports extended Latin characters (validated by multilingual.cal fixture)
@@ -373,45 +331,14 @@ export class Lexer {
   private static readonly LATIN_EXTENDED_A_END = 0x017F;      // ſ
   // Excluded from identifiers: U+00D7 (×), U+00F7 (÷)
 
-  /**
-   * Property names that contain executable code (trigger properties).
-   * These are the ONLY properties where BEGIN/END should enter CODE_BLOCK context.
-   * Source: NAV 2013-2018 C/AL Language Reference
-   */
-  private static readonly TRIGGER_PROPERTIES: ReadonlySet<string> = new Set<string>([
-    'oninsert', 'onmodify', 'ondelete', 'onrename',
-    'onvalidate', 'onlookup',
-    'onrun',
-    'oninit', 'onopenpage', 'onclosepage', 'onfindrecord', 'onnextrecord',
-    'onaftergetrecord', 'onnewrecord', 'oninsertrecord', 'onmodifyrecord',
-    'ondeleterecord', 'onqueryclosepage', 'onaftergetcurrrecord', 'onactivate',
-    'onaction', 'onassistedit', 'ondrilldown',
-    'oninitreport', 'onprereport', 'onpostreport',
-    'onpredataitem', 'onpostdataitem',
-    'oninitxmlport', 'onprexmlport', 'onpostxmlport', 'onprexmlitem',
-    'onafterassignfield', 'onbeforepassfield',
-    'onafterassignvariable', 'onbeforepassvariable',
-    'onafterinitrecord', 'onafterinsertrecord', 'onbeforeinsertrecord',
-    'onbeforeopen',
-  ]);
-
   private input: string;
   private position: number = 0;
   private line: number = 1;
   private column: number = 1;
   private readonly tokens: Token[] = [];
-  private readonly contextStack: LexerContext[] = [LexerContext.NORMAL];
-  private braceDepth: number = 0;
-  private contextUnderflowDetected: boolean = false;
-  private objectTokenIndex: number = -1;
 
-  // Property tracking for BEGIN/END context decisions
-  private lastPropertyName: string = '';
-  private inPropertyValue: boolean = false;
-  private bracketDepth: number = 0;
-
-  // Track if we just saw a section keyword (FIELDS, PROPERTIES, etc.)
-  private lastWasSectionKeyword: boolean = false;
+  /** State manager handles all lexer state tracking */
+  private state: LexerStateManager;
 
   /** Optional trace callback - null/undefined means tracing disabled */
   private traceCallback?: TraceCallback;
@@ -431,10 +358,6 @@ export class Lexer {
    */
   private isTokenizing: boolean = false;
 
-  // Column position tracking for field definitions
-  private currentSectionType: 'FIELDS' | 'KEYS' | 'CONTROLS' | 'ELEMENTS' | 'DATAITEMS' | 'ACTIONS' | 'DATASET' | 'REQUESTPAGE' | 'LABELS' | null = null;
-  private fieldDefColumn: FieldDefColumn = FieldDefColumn.NONE;
-
   /**
    * Create a new Lexer instance.
    * @param input - The source code to tokenize
@@ -442,6 +365,7 @@ export class Lexer {
    */
   constructor(input: string, options?: LexerOptions) {
     this.input = input;
+    this.state = new LexerStateManager();
     this.traceCallback = options?.trace;
   }
 
@@ -469,21 +393,7 @@ export class Lexer {
       this.position = 0;
       this.line = 1;
       this.column = 1;
-      this.contextStack.length = 0;
-      this.contextStack.push(LexerContext.NORMAL);
-      this.braceDepth = 0;
-      // Reset property tracking state
-      this.lastPropertyName = '';
-      this.inPropertyValue = false;
-      this.bracketDepth = 0;
-      this.lastWasSectionKeyword = false;
-      // Reset column tracking state
-      this.currentSectionType = null;
-      this.fieldDefColumn = FieldDefColumn.NONE;
-      // Reset context underflow flag
-      this.contextUnderflowDetected = false;
-      // Reset object token index
-      this.objectTokenIndex = -1;
+      this.state.reset();
 
       while (this.position < this.input.length) {
         this.scanToken();
@@ -495,12 +405,7 @@ export class Lexer {
       // that don't get explicitly popped, so clean them up here
       // For malformed code: inner SECTION_LEVELs (unclosed sections) will remain and trigger
       // STACK_MISMATCH violations in isCleanExit()
-      while (this.contextStack.length > 1 &&
-             (this.contextStack[this.contextStack.length - 1] === LexerContext.OBJECT_LEVEL ||
-              (this.contextStack[this.contextStack.length - 1] === LexerContext.SECTION_LEVEL &&
-               this.braceDepth === 0))) {
-        this.popContext();
-      }
+      this.state.cleanupContextStack();
 
       this.invokeTraceCallback(() => ({
         type: 'token',
@@ -517,10 +422,10 @@ export class Lexer {
 
   /**
    * Get current lexer context
-   * Defensive: Returns NORMAL if stack is empty (should never happen in normal operation)
+   * Delegates to state manager
    */
   private getCurrentContext(): LexerContext {
-    return this.contextStack[this.contextStack.length - 1] ?? LexerContext.NORMAL;
+    return this.state.getCurrentContext();
   }
 
   /**
@@ -528,7 +433,7 @@ export class Lexer {
    * @returns true if in CODE_BLOCK or CASE_BLOCK
    */
   private isInCodeContext(): boolean {
-    const context = this.getCurrentContext();
+    const context = this.state.getCurrentContext();
     return context === LexerContext.CODE_BLOCK || context === LexerContext.CASE_BLOCK;
   }
 
@@ -612,134 +517,29 @@ export class Lexer {
     }
   }
 
-  /**
-   * Push a new context onto the stack
-   */
-  private pushContext(context: LexerContext): void {
-    const from = this.contextToString(this.getCurrentContext());
-    this.contextStack.push(context);
-
-    this.invokeTraceCallback(() => ({
-      type: 'context-push',
-      position: { line: this.line, column: this.column, offset: this.position },
-      data: { from, to: this.contextToString(context) }
-    }));
-  }
 
   /**
-   * Pop the current context from the stack
-   * Sets contextUnderflowDetected flag if stack is at minimum size
+   * Check if last property name is a trigger property (contains executable code).
+   * Delegates to state manager.
    */
-  private popContext(): void {
-    if (this.contextStack.length > Lexer.MIN_CONTEXT_STACK_SIZE) {
-      const from = this.contextToString(this.getCurrentContext());
-      this.contextStack.pop();
-
-      this.invokeTraceCallback(() => ({
-        type: 'context-pop',
-        position: { line: this.line, column: this.column, offset: this.position },
-        data: { from, to: this.contextToString(this.getCurrentContext()) }
-      }));
-    } else {
-      this.contextUnderflowDetected = true;
-    }
-  }
-
-  /**
-   * Check if a property name is a trigger property (contains executable code).
-   */
-  private isTriggerProperty(propertyName: string): boolean {
-    return Lexer.TRIGGER_PROPERTIES.has(propertyName.toLowerCase());
+  private isTriggerProperty(): boolean {
+    return this.state.isTriggerProperty();
   }
 
   /**
    * Check if current column should be protected from BEGIN/END context changes.
-   * Section-aware protection:
-   * - FIELDS: Protect COL_1-4 (structural columns)
-   * - KEYS: Protect COL_1-2 (structural columns)
-   * - CONTROLS: Protect COL_1-3 (structural columns)
-   * - ELEMENTS: Protect COL_1-4 (structural columns)
-   * - DATAITEMS: Protect COL_1-4 (structural columns)
-   * - ACTIONS: TBD - needs column investigation
+   * Delegates to state manager.
    */
   private shouldProtectFromBeginEnd(): boolean {
-    if (this.fieldDefColumn === FieldDefColumn.NONE) {
-      return false;
-    }
-
-    switch (this.currentSectionType) {
-      case 'FIELDS':
-      case 'ELEMENTS':
-      case 'DATAITEMS':
-        // Protect all structural columns (COL_1-4)
-        return this.fieldDefColumn === FieldDefColumn.COL_1 ||
-               this.fieldDefColumn === FieldDefColumn.COL_2 ||
-               this.fieldDefColumn === FieldDefColumn.COL_3 ||
-               this.fieldDefColumn === FieldDefColumn.COL_4;
-
-      case 'KEYS':
-        // Protect only COL_1-2 (reserved ; field list)
-        // COL_3+ is properties section (allow triggers if they existed)
-        return this.fieldDefColumn === FieldDefColumn.COL_1 ||
-               this.fieldDefColumn === FieldDefColumn.COL_2;
-
-      case 'CONTROLS':
-      case 'ACTIONS':
-        // Protect COL_1-3 (ID ; Type ; SubType/ActionType)
-        // COL_4+ is properties section (allow triggers)
-        return this.fieldDefColumn === FieldDefColumn.COL_1 ||
-               this.fieldDefColumn === FieldDefColumn.COL_2 ||
-               this.fieldDefColumn === FieldDefColumn.COL_3;
-
-      default:
-        // No protection for unknown section types
-        return false;
-    }
+    return this.state.shouldProtectFromBeginEnd();
   }
 
   /**
    * Check if current column should be protected from section keyword context changes.
-   * Prevents section keywords (PROPERTIES, FIELDGROUPS, CODE, etc.) appearing in
-   * structural columns from corrupting lexer context.
-   * Section-aware protection:
-   * - FIELDS: Protect COL_1-4 (structural columns)
-   * - KEYS: Protect COL_1-2 (structural columns)
-   * - CONTROLS: Protect COL_1-3 (structural columns)
-   * - ELEMENTS: Protect COL_1-4 (structural columns)
-   * - DATAITEMS: Protect COL_1-4 (structural columns)
-   * - ACTIONS: Protect COL_1-3 (structural columns)
+   * Delegates to state manager.
    */
   private shouldProtectFromSectionKeyword(): boolean {
-    if (this.fieldDefColumn === FieldDefColumn.NONE) {
-      return false;
-    }
-
-    switch (this.currentSectionType) {
-      case 'FIELDS':
-      case 'ELEMENTS':
-      case 'DATAITEMS':
-        // Protect all structural columns (COL_1-4)
-        return this.fieldDefColumn === FieldDefColumn.COL_1 ||
-               this.fieldDefColumn === FieldDefColumn.COL_2 ||
-               this.fieldDefColumn === FieldDefColumn.COL_3 ||
-               this.fieldDefColumn === FieldDefColumn.COL_4;
-
-      case 'KEYS':
-        // Protect only COL_1-2 (reserved ; field list)
-        return this.fieldDefColumn === FieldDefColumn.COL_1 ||
-               this.fieldDefColumn === FieldDefColumn.COL_2;
-
-      case 'CONTROLS':
-      case 'ACTIONS':
-        // Protect COL_1-3 (ID ; Type ; SubType/ActionType)
-        return this.fieldDefColumn === FieldDefColumn.COL_1 ||
-               this.fieldDefColumn === FieldDefColumn.COL_2 ||
-               this.fieldDefColumn === FieldDefColumn.COL_3;
-
-      default:
-        // No protection for unknown section types
-        return false;
-    }
+    return this.state.shouldProtectFromSectionKeyword();
   }
 
   /**
@@ -754,39 +554,27 @@ export class Lexer {
     }
     // Otherwise, they are structural delimiters
     this.advance();
-    const oldBraceDepth = this.braceDepth;
-    this.braceDepth++;
+    const stateBefore = this.state.getState();
+    const oldBraceDepth = stateBefore.braceDepth;
+    const oldFieldDefColumn = stateBefore.fieldDefColumn;
+
+    // Update state via operation method
+    this.state.onOpenBrace();
+
+    const stateAfter = this.state.getState();
     this.invokeTraceCallback(() => ({
       type: 'flag-change',
       position: { line: startLine, column: startColumn, offset: startPos },
-      data: { flag: 'braceDepth', from: oldBraceDepth, to: this.braceDepth }
+      data: { flag: 'braceDepth', from: oldBraceDepth, to: stateAfter.braceDepth }
     }));
     this.addToken(TokenType.LeftBrace, '{', startPos, this.position, startLine, startColumn);
 
-    // Push SECTION_LEVEL context when we see opening brace at object level
-    // OR when we just saw a section keyword (FIELDS, PROPERTIES, etc.)
-    if ((this.getCurrentContext() === LexerContext.OBJECT_LEVEL && this.braceDepth === 1) ||
-        this.lastWasSectionKeyword) {
-      this.pushContext(LexerContext.SECTION_LEVEL);
-      this.lastWasSectionKeyword = false;
-    }
-
-    // Start column tracking when opening a field/key/control/element/dataitem/action definition
-    // ONLY if we're not already in one (prevents nested braces from resetting column tracking)
-    if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-        this.fieldDefColumn === FieldDefColumn.NONE &&
-        (this.currentSectionType === 'FIELDS' ||
-         this.currentSectionType === 'KEYS' ||
-         this.currentSectionType === 'CONTROLS' ||
-         this.currentSectionType === 'ELEMENTS' ||
-         this.currentSectionType === 'DATAITEMS' ||
-         this.currentSectionType === 'ACTIONS')) {
-      const oldFieldDefColumn = this.fieldDefColumn;
-      this.fieldDefColumn = FieldDefColumn.COL_1;
+    // Trace field def column changes (if any)
+    if (oldFieldDefColumn !== stateAfter.fieldDefColumn) {
       this.invokeTraceCallback(() => ({
         type: 'flag-change',
         position: { line: startLine, column: startColumn, offset: startPos },
-        data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: 'COL_1' }
+        data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: this.fieldDefColumnToString(stateAfter.fieldDefColumn) }
       }));
     }
   }
@@ -803,72 +591,69 @@ export class Lexer {
       this.advance();
 
       // Prevent negative braceDepth from unmatched closing braces
-      if (this.braceDepth <= 0) {
+      const stateBefore = this.state.getState();
+      if (stateBefore.braceDepth <= 0) {
         this.addToken(TokenType.Unknown, '}', startPos, this.position, startLine, startColumn);
         return true;
       }
 
-      const oldBraceDepth = this.braceDepth;
-      this.braceDepth--;
+      const oldBraceDepth = stateBefore.braceDepth;
+      const oldInPropertyValue = stateBefore.inPropertyValue;
+      const oldLastPropertyName = stateBefore.lastPropertyName;
+      const oldBracketDepth = stateBefore.bracketDepth;
+      const oldFieldDefColumn = stateBefore.fieldDefColumn;
+      const oldSectionType = stateBefore.currentSectionType;
+
+      // Update state via operation method (handles all resets atomically)
+      this.state.onCloseBrace();
+
+      const stateAfter = this.state.getState();
+
       this.invokeTraceCallback(() => ({
         type: 'flag-change',
         position: { line: startLine, column: startColumn, offset: startPos },
-        data: { flag: 'braceDepth', from: oldBraceDepth, to: this.braceDepth }
+        data: { flag: 'braceDepth', from: oldBraceDepth, to: stateAfter.braceDepth }
       }));
       this.addToken(TokenType.RightBrace, '}', startPos, this.position, startLine, startColumn);
 
-      // Pop context when closing a section
-      if (this.braceDepth === 0 && this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
-        this.popContext();
-        // Reset section tracking when exiting section context
-        const oldSectionType = this.currentSectionType;
-        this.currentSectionType = null;
-        if (oldSectionType !== null) {
-          this.invokeTraceCallback(() => ({
-            type: 'flag-change',
-            position: { line: startLine, column: startColumn, offset: startPos },
-            data: { flag: 'currentSectionType', from: oldSectionType, to: null }
-          }));
-        }
-      }
-
-      // Reset property tracking (standardized order: inPropertyValue first, then lastPropertyName)
-      const oldInPropertyValue = this.inPropertyValue;
-      const oldLastPropertyName = this.lastPropertyName;
-      const oldBracketDepth = this.bracketDepth;
-      this.inPropertyValue = false;
-      this.lastPropertyName = '';
-      this.bracketDepth = 0;
-      if (oldInPropertyValue !== false) {
+      // Trace section type changes (if any)
+      if (oldSectionType !== stateAfter.currentSectionType) {
         this.invokeTraceCallback(() => ({
           type: 'flag-change',
           position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: false }
-        }));
-      }
-      if (oldLastPropertyName !== '') {
-        this.invokeTraceCallback(() => ({
-          type: 'flag-change',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: '' }
-        }));
-      }
-      if (oldBracketDepth !== 0) {
-        this.invokeTraceCallback(() => ({
-          type: 'flag-change',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'bracketDepth', from: oldBracketDepth, to: 0 }
+          data: { flag: 'currentSectionType', from: oldSectionType, to: stateAfter.currentSectionType }
         }));
       }
 
-      // Reset column tracking when closing a field definition
-      const oldFieldDefColumn = this.fieldDefColumn;
-      this.fieldDefColumn = FieldDefColumn.NONE;
-      if (oldFieldDefColumn !== FieldDefColumn.NONE) {
+      // Trace property tracking changes
+      if (oldInPropertyValue !== stateAfter.inPropertyValue) {
         this.invokeTraceCallback(() => ({
           type: 'flag-change',
           position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: 'NONE' }
+          data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: stateAfter.inPropertyValue }
+        }));
+      }
+      if (oldLastPropertyName !== stateAfter.lastPropertyName) {
+        this.invokeTraceCallback(() => ({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: stateAfter.lastPropertyName }
+        }));
+      }
+      if (oldBracketDepth !== stateAfter.bracketDepth) {
+        this.invokeTraceCallback(() => ({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'bracketDepth', from: oldBracketDepth, to: stateAfter.bracketDepth }
+        }));
+      }
+
+      // Trace column tracking changes
+      if (oldFieldDefColumn !== stateAfter.fieldDefColumn) {
+        this.invokeTraceCallback(() => ({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: this.fieldDefColumnToString(stateAfter.fieldDefColumn) }
         }));
       }
 
@@ -1177,9 +962,10 @@ export class Lexer {
         // 1. After colon: "Param : Code[20]" or "VAR x : Code;"
         // 2. After OF keyword: "ARRAY[10] OF Code[20]"
         // 3. In FIELDS section at COL_4: "{ 1 ; ; FieldName ; Code[10] }"
+        const state = this.state.getState();
         const isAfterColon = prevToken && prevToken.type === TokenType.Colon;
         const isAfterOf = prevToken && prevToken.type === TokenType.Of;
-        const isFieldDataType = this.currentSectionType === 'FIELDS' && this.fieldDefColumn === FieldDefColumn.COL_4;
+        const isFieldDataType = state.currentSectionType === 'FIELDS' && state.fieldDefColumn === FieldDefColumn.COL_4;
         const isInDataTypeContext = isAfterColon || isAfterOf || isFieldDataType;
 
         if (isInDataTypeContext) {
@@ -1211,6 +997,7 @@ export class Lexer {
 
     // Downgrade section keywords to identifiers when in protected columns, inside brackets, or in CODE_BLOCK
     // Prevents section keywords in field/key/control names, ML property values, or code blocks from corrupting context
+    const stateForSectionKeywords = this.state.getState();
     const sectionKeywords = [
       TokenType.Code, TokenType.Properties, TokenType.FieldGroups,
       TokenType.Actions, TokenType.DataItems, TokenType.Elements, TokenType.RequestForm,
@@ -1218,7 +1005,7 @@ export class Lexer {
     ];
     if (sectionKeywords.includes(tokenType) &&
         (this.shouldProtectFromSectionKeyword() ||
-         this.bracketDepth > 0 ||
+         stateForSectionKeywords.bracketDepth > 0 ||
          this.isInCodeContext())) {
       tokenType = TokenType.Identifier;
     }
@@ -1228,47 +1015,30 @@ export class Lexer {
     // BUT: Keep BEGIN/END as keywords for:
     // - Trigger properties (OnInsert, OnModify, etc.) where they delimit code blocks
     // - CODE_BLOCK context (actual code, not property values)
+    const stateForBeginEnd = this.state.getState();
     if ((tokenType === TokenType.Begin || tokenType === TokenType.End) &&
-        (this.bracketDepth > 0 ||
-         (this.inPropertyValue &&
-          !this.isTriggerProperty(this.lastPropertyName) &&
+        (stateForBeginEnd.bracketDepth > 0 ||
+         (stateForBeginEnd.inPropertyValue &&
+          !this.isTriggerProperty() &&
           this.getCurrentContext() !== LexerContext.CODE_BLOCK))) {
       tokenType = TokenType.Identifier;
     }
 
     this.addToken(tokenType, value, startPos, this.position, startLine, startColumn);
 
-    // Track identifier as potential property name for BEGIN/END context decisions
-    // Only track at SECTION_LEVEL where properties exist - NOT in CODE_BLOCK where = is comparison
-    // This prevents UNTIL x = 0 from corrupting property tracking state
-    // NOTE: Context coupling is intentional - C/AL properties only exist in PROPERTIES/FIELDS/KEYS sections
-    if (!this.inPropertyValue &&
-        tokenType === TokenType.Identifier &&
-        this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
-      const oldLastPropertyName = this.lastPropertyName;
-      this.lastPropertyName = value;
-      if (oldLastPropertyName !== value) {
-        this.invokeTraceCallback(() => ({
-          type: 'flag-change',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: value }
-        }));
-      }
-    }
+    // Track identifier as potential property name via state manager
+    // The state manager's onIdentifier() handles all the context checking internally
+    const stateBeforeIdentifier = this.state.getState();
+    this.state.onIdentifier(value, this.getCurrentContext());
+    const stateAfterIdentifier = this.state.getState();
 
-    // Reset section keyword flag for non-section identifiers
-    // Section keywords (FIELDS, PROPERTIES, etc.) will re-set this flag in updateContextForKeyword()
-    // This condition is always true here (scanIdentifier never produces LeftBrace), but prevents future bugs
-    if (tokenType !== TokenType.LeftBrace) {
-      const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
-      this.lastWasSectionKeyword = false;
-      if (oldLastWasSectionKeyword !== false) {
-        this.invokeTraceCallback(() => ({
-          type: 'flag-change',
-          position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: false }
-        }));
-      }
+    // Trace lastPropertyName changes (if any)
+    if (stateBeforeIdentifier.lastPropertyName !== stateAfterIdentifier.lastPropertyName) {
+      this.invokeTraceCallback(() => ({
+        type: 'flag-change',
+        position: { line: startLine, column: startColumn, offset: startPos },
+        data: { flag: 'lastPropertyName', from: stateBeforeIdentifier.lastPropertyName, to: stateAfterIdentifier.lastPropertyName }
+      }));
     }
 
     // Update context based on keywords
@@ -1281,308 +1051,178 @@ export class Lexer {
   private updateContextForKeyword(tokenType: TokenType): void {
     switch (tokenType) {
       case TokenType.Object:
-        // Only push OBJECT_LEVEL when in NORMAL context (at document start)
-        // Prevents "object" appearing in property values from corrupting context stack
-        // Only set objectTokenIndex for the first OBJECT in the file.
-        // This ensures objectType reflects the first object only (see LexerContextState.objectType docs).
+        // Only set objectTokenIndex when in NORMAL context (at document start)
+        // The state manager's onObjectKeyword() handles context pushing
         if (this.getCurrentContext() === LexerContext.NORMAL) {
-          this.pushContext(LexerContext.OBJECT_LEVEL);
-          // Capture token index for lazy object type resolution
-          // tokens.length - 1 because the OBJECT token was just added
-          const oldObjectTokenIndex = this.objectTokenIndex;
-          this.objectTokenIndex = this.tokens.length - 1;
-          if (oldObjectTokenIndex !== this.objectTokenIndex) {
+          const stateBeforeObject = this.state.getState();
+          this.state.onObjectKeyword(this.tokens.length - 1);
+          const stateAfterObject = this.state.getState();
+
+          if (stateBeforeObject.objectTokenIndex !== stateAfterObject.objectTokenIndex) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'objectTokenIndex', from: oldObjectTokenIndex, to: this.objectTokenIndex }
+              data: { flag: 'objectTokenIndex', from: stateBeforeObject.objectTokenIndex, to: stateAfterObject.objectTokenIndex }
             }));
           }
         }
         break;
 
       case TokenType.Fields:
-        // Guard: Don't mark as section keyword if appearing inside code blocks
-        // Prevents section keywords in trigger code (e.g., variable "Fields" in "Fields := RecordRef.FIELDCOUNT") from corrupting context
+        // Guard: Don't mark as section keyword if appearing inside code blocks or property values
         if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
           break;
         }
-        // Guard: Don't mark as section keyword if appearing in property value
-        // Prevents section keywords in property values from corrupting context
-        if (this.inPropertyValue) {
-          break;
-        }
         {
-          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
-          const oldCurrentSectionType = this.currentSectionType;
-          this.lastWasSectionKeyword = true;
-          this.currentSectionType = 'FIELDS';
-          if (oldLastWasSectionKeyword !== true) {
+          const stateBeforeFields = this.state.getState();
+          if (stateBeforeFields.inPropertyValue) {
+            break;
+          }
+
+          this.state.onSectionKeyword('FIELDS');
+          const stateAfterFields = this.state.getState();
+
+          if (stateBeforeFields.lastWasSectionKeyword !== stateAfterFields.lastWasSectionKeyword) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
+              data: { flag: 'lastWasSectionKeyword', from: stateBeforeFields.lastWasSectionKeyword, to: stateAfterFields.lastWasSectionKeyword }
             }));
           }
-          if (oldCurrentSectionType !== 'FIELDS') {
+          if (stateBeforeFields.currentSectionType !== stateAfterFields.currentSectionType) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'FIELDS' }
+              data: { flag: 'currentSectionType', from: stateBeforeFields.currentSectionType, to: stateAfterFields.currentSectionType }
             }));
           }
         }
         break;
 
       case TokenType.Keys:
-        // Guard: Don't mark as section keyword if appearing inside code blocks
-        // Prevents section keywords in trigger code (e.g., variable "Keys" in "Keys := RecordRef.KEYCOUNT") from corrupting context
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
-          break;
-        }
-        // Guard: Don't mark as section keyword if appearing in property value
-        if (this.inPropertyValue) {
-          break;
-        }
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
-          const oldCurrentSectionType = this.currentSectionType;
-          this.lastWasSectionKeyword = true;
-          this.currentSectionType = 'KEYS';
-          if (oldLastWasSectionKeyword !== true) {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-            }));
+          const stateBefore_Keys = this.state.getState();
+          if (stateBefore_Keys.inPropertyValue) { break; }
+          this.state.onSectionKeyword('KEYS');
+          const stateAfter_Keys = this.state.getState();
+          if (stateBefore_Keys.lastWasSectionKeyword !== stateAfter_Keys.lastWasSectionKeyword) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_Keys.lastWasSectionKeyword, to: stateAfter_Keys.lastWasSectionKeyword } }));
           }
-          if (oldCurrentSectionType !== 'KEYS') {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'KEYS' }
-            }));
+          if (stateBefore_Keys.currentSectionType !== stateAfter_Keys.currentSectionType) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_Keys.currentSectionType, to: stateAfter_Keys.currentSectionType } }));
           }
         }
         break;
 
       case TokenType.Controls:
-        // Guard: Don't mark as section keyword if appearing inside code blocks
-        // Prevents section keywords in trigger code (e.g., variable "Controls" in trigger) from corrupting context
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
-          break;
-        }
-        // Guard: Don't mark as section keyword if appearing in property value
-        if (this.inPropertyValue) {
-          break;
-        }
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
-          const oldCurrentSectionType = this.currentSectionType;
-          this.lastWasSectionKeyword = true;
-          this.currentSectionType = 'CONTROLS';
-          if (oldLastWasSectionKeyword !== true) {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-            }));
+          const stateBefore_Controls = this.state.getState();
+          if (stateBefore_Controls.inPropertyValue) { break; }
+          this.state.onSectionKeyword('CONTROLS');
+          const stateAfter_Controls = this.state.getState();
+          if (stateBefore_Controls.lastWasSectionKeyword !== stateAfter_Controls.lastWasSectionKeyword) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_Controls.lastWasSectionKeyword, to: stateAfter_Controls.lastWasSectionKeyword } }));
           }
-          if (oldCurrentSectionType !== 'CONTROLS') {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'CONTROLS' }
-            }));
+          if (stateBefore_Controls.currentSectionType !== stateAfter_Controls.currentSectionType) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_Controls.currentSectionType, to: stateAfter_Controls.currentSectionType } }));
           }
         }
         break;
 
       case TokenType.Elements:
-        // Guard: Don't mark as section keyword if appearing inside code blocks
-        // Prevents section keywords in trigger code (e.g., variable "Elements" in trigger) from corrupting context
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
-          break;
-        }
-        // Guard: Don't mark as section keyword if appearing in property value
-        if (this.inPropertyValue) {
-          break;
-        }
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
-          const oldCurrentSectionType = this.currentSectionType;
-          this.lastWasSectionKeyword = true;
-          this.currentSectionType = 'ELEMENTS';
-          if (oldLastWasSectionKeyword !== true) {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-            }));
+          const stateBefore_Elements = this.state.getState();
+          if (stateBefore_Elements.inPropertyValue) { break; }
+          this.state.onSectionKeyword('ELEMENTS');
+          const stateAfter_Elements = this.state.getState();
+          if (stateBefore_Elements.lastWasSectionKeyword !== stateAfter_Elements.lastWasSectionKeyword) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_Elements.lastWasSectionKeyword, to: stateAfter_Elements.lastWasSectionKeyword } }));
           }
-          if (oldCurrentSectionType !== 'ELEMENTS') {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'ELEMENTS' }
-            }));
+          if (stateBefore_Elements.currentSectionType !== stateAfter_Elements.currentSectionType) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_Elements.currentSectionType, to: stateAfter_Elements.currentSectionType } }));
           }
         }
         break;
 
       case TokenType.DataItems:
-        // Guard: Don't mark as section keyword if appearing inside code blocks
-        // Prevents section keywords in trigger code (e.g., variable "DataItems" in trigger) from corrupting context
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
-          break;
-        }
-        // Guard: Don't mark as section keyword if appearing in property value
-        if (this.inPropertyValue) {
-          break;
-        }
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
-          const oldCurrentSectionType = this.currentSectionType;
-          this.lastWasSectionKeyword = true;
-          this.currentSectionType = 'DATAITEMS';
-          if (oldLastWasSectionKeyword !== true) {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-            }));
+          const stateBefore_DataItems = this.state.getState();
+          if (stateBefore_DataItems.inPropertyValue) { break; }
+          this.state.onSectionKeyword('DATAITEMS');
+          const stateAfter_DataItems = this.state.getState();
+          if (stateBefore_DataItems.lastWasSectionKeyword !== stateAfter_DataItems.lastWasSectionKeyword) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_DataItems.lastWasSectionKeyword, to: stateAfter_DataItems.lastWasSectionKeyword } }));
           }
-          if (oldCurrentSectionType !== 'DATAITEMS') {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'DATAITEMS' }
-            }));
+          if (stateBefore_DataItems.currentSectionType !== stateAfter_DataItems.currentSectionType) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_DataItems.currentSectionType, to: stateAfter_DataItems.currentSectionType } }));
           }
         }
         break;
 
       case TokenType.Actions:
-        // Guard: Don't mark as section keyword if appearing inside code blocks
-        // Prevents section keywords in trigger code (e.g., variable "Actions" in trigger) from corrupting context
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
-          break;
-        }
-        // Guard: Don't mark as section keyword if appearing in property value
-        if (this.inPropertyValue) {
-          break;
-        }
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
-          const oldCurrentSectionType = this.currentSectionType;
-          this.lastWasSectionKeyword = true;
-          this.currentSectionType = 'ACTIONS';
-          if (oldLastWasSectionKeyword !== true) {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-            }));
+          const stateBefore_Actions = this.state.getState();
+          if (stateBefore_Actions.inPropertyValue) { break; }
+          this.state.onSectionKeyword('ACTIONS');
+          const stateAfter_Actions = this.state.getState();
+          if (stateBefore_Actions.lastWasSectionKeyword !== stateAfter_Actions.lastWasSectionKeyword) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_Actions.lastWasSectionKeyword, to: stateAfter_Actions.lastWasSectionKeyword } }));
           }
-          if (oldCurrentSectionType !== 'ACTIONS') {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'ACTIONS' }
-            }));
+          if (stateBefore_Actions.currentSectionType !== stateAfter_Actions.currentSectionType) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_Actions.currentSectionType, to: stateAfter_Actions.currentSectionType } }));
           }
         }
         break;
 
       case TokenType.Dataset:
-        // Guard: Don't mark as section keyword if appearing inside code blocks
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
-          break;
-        }
-        // Guard: Don't mark as section keyword if appearing in property value
-        if (this.inPropertyValue) {
-          break;
-        }
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
-          const oldCurrentSectionType = this.currentSectionType;
-          this.lastWasSectionKeyword = true;
-          this.currentSectionType = 'DATASET';
-          if (oldLastWasSectionKeyword !== true) {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-            }));
+          const stateBefore_Dataset = this.state.getState();
+          if (stateBefore_Dataset.inPropertyValue) { break; }
+          this.state.onSectionKeyword('DATASET');
+          const stateAfter_Dataset = this.state.getState();
+          if (stateBefore_Dataset.lastWasSectionKeyword !== stateAfter_Dataset.lastWasSectionKeyword) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_Dataset.lastWasSectionKeyword, to: stateAfter_Dataset.lastWasSectionKeyword } }));
           }
-          if (oldCurrentSectionType !== 'DATASET') {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'DATASET' }
-            }));
+          if (stateBefore_Dataset.currentSectionType !== stateAfter_Dataset.currentSectionType) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_Dataset.currentSectionType, to: stateAfter_Dataset.currentSectionType } }));
           }
         }
         break;
 
       case TokenType.RequestPage:
-        // Guard: Don't mark as section keyword if appearing inside code blocks
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
-          break;
-        }
-        // Guard: Don't mark as section keyword if appearing in property value
-        if (this.inPropertyValue) {
-          break;
-        }
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
-          const oldCurrentSectionType = this.currentSectionType;
-          this.lastWasSectionKeyword = true;
-          this.currentSectionType = 'REQUESTPAGE';
-          if (oldLastWasSectionKeyword !== true) {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-            }));
+          const stateBefore_RequestPage = this.state.getState();
+          if (stateBefore_RequestPage.inPropertyValue) { break; }
+          this.state.onSectionKeyword('REQUESTPAGE');
+          const stateAfter_RequestPage = this.state.getState();
+          if (stateBefore_RequestPage.lastWasSectionKeyword !== stateAfter_RequestPage.lastWasSectionKeyword) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_RequestPage.lastWasSectionKeyword, to: stateAfter_RequestPage.lastWasSectionKeyword } }));
           }
-          if (oldCurrentSectionType !== 'REQUESTPAGE') {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'REQUESTPAGE' }
-            }));
+          if (stateBefore_RequestPage.currentSectionType !== stateAfter_RequestPage.currentSectionType) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_RequestPage.currentSectionType, to: stateAfter_RequestPage.currentSectionType } }));
           }
         }
         break;
 
       case TokenType.Labels:
-        // Guard: Don't mark as section keyword if appearing inside code blocks
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
-          break;
-        }
-        // Guard: Don't mark as section keyword if appearing in property value
-        if (this.inPropertyValue) {
-          break;
-        }
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
-          const oldCurrentSectionType = this.currentSectionType;
-          this.lastWasSectionKeyword = true;
-          this.currentSectionType = 'LABELS';
-          if (oldLastWasSectionKeyword !== true) {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-            }));
+          const stateBefore_Labels = this.state.getState();
+          if (stateBefore_Labels.inPropertyValue) { break; }
+          this.state.onSectionKeyword('LABELS');
+          const stateAfter_Labels = this.state.getState();
+          if (stateBefore_Labels.lastWasSectionKeyword !== stateAfter_Labels.lastWasSectionKeyword) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_Labels.lastWasSectionKeyword, to: stateAfter_Labels.lastWasSectionKeyword } }));
           }
-          if (oldCurrentSectionType !== 'LABELS') {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: 'LABELS' }
-            }));
+          if (stateBefore_Labels.currentSectionType !== stateAfter_Labels.currentSectionType) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_Labels.currentSectionType, to: stateAfter_Labels.currentSectionType } }));
           }
         }
         break;
@@ -1592,109 +1232,39 @@ export class Lexer {
       case TokenType.Code:
       case TokenType.RequestForm:
         // Guard: Don't mark as section keyword if appearing inside code blocks
-        // Prevents section keywords in trigger code (e.g., variable "Code" in "TimeBalanceLine.SETRANGE(Code)") from corrupting context
         if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
           break;
         }
         // Guard: Don't mark as section keyword if appearing in structural columns
-        // Prevents section keywords in field/key/control names from corrupting context
         if (this.shouldProtectFromSectionKeyword()) {
           break;
         }
-        // Guard: Don't mark as section keyword if appearing in property value
-        // Prevents section keywords in property values (e.g., "SWIFT Code" in CaptionML) from corrupting context
-        if (this.inPropertyValue) {
-          break;
-        }
-        // Section keywords without column tracking
         {
-          const oldLastWasSectionKeyword = this.lastWasSectionKeyword;
-          const oldCurrentSectionType = this.currentSectionType;
-          this.lastWasSectionKeyword = true;
-          this.currentSectionType = null;
-          if (oldLastWasSectionKeyword !== true) {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: true }
-            }));
+          const stateBeforeNonColumnarSection = this.state.getState();
+          if (stateBeforeNonColumnarSection.inPropertyValue) {
+            break;
           }
-          if (oldCurrentSectionType !== null) {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: null }
-            }));
-          }
+          // These sections don't have column tracking, so we just set lastWasSectionKeyword = true
+          // but don't call onSectionKeyword() (which would set a specific section type).
+          // Note: This is a limitation of the current state manager design - it doesn't have
+          // a method for "generic section keyword without type". For now, we'll note this in tracking.
+          // The state will be updated when the opening brace is encountered.
         }
         break;
 
       case TokenType.Begin:
-        // Guard: Don't push CODE_BLOCK if BEGIN appears in structural columns
-        // Section-aware protection:
-        // - FIELDS: Protect COL_1-4 (structural)
-        // - KEYS: Protect COL_1-2 (structural)
-        // - CONTROLS: Protect COL_1-3 (structural)
-        if (this.shouldProtectFromBeginEnd()) {
-          // BEGIN is part of structure (likely in field/key/control name), not code
-          break;
-        }
-        // Guard: BEGIN inside brackets is just text, not code start
-        if (this.bracketDepth > 0) {
-          break;
-        }
-
-        // Only push CODE_BLOCK for ACTUAL code blocks, not property values
-        // If we're in a property value, only enter CODE_BLOCK if it's a trigger property
-        if (this.inPropertyValue) {
-          if (this.isTriggerProperty(this.lastPropertyName)) {
-            this.pushContext(LexerContext.CODE_BLOCK);
-          }
-          // Otherwise: BEGIN is just a property value identifier, don't change context
-        } else {
-          // Not in property value - use original context-based logic
-          const currentContext = this.getCurrentContext();
-          if (currentContext === LexerContext.NORMAL ||
-              currentContext === LexerContext.SECTION_LEVEL ||
-              currentContext === LexerContext.CODE_BLOCK ||
-              currentContext === LexerContext.CASE_BLOCK) {
-            this.pushContext(LexerContext.CODE_BLOCK);
-          }
-        }
+        // Delegate to state manager's onBeginKeyword
+        this.state.onBeginKeyword(this.getCurrentContext());
         break;
 
       case TokenType.Case:
-        // Push CASE_BLOCK when in any code execution context
-        // This allows nested CASE statements to each maintain their own context
-        // Guard against malformed input (only push when already in code)
-        const currentCtx = this.getCurrentContext();
-        if (currentCtx === LexerContext.CODE_BLOCK || currentCtx === LexerContext.CASE_BLOCK) {
-          this.pushContext(LexerContext.CASE_BLOCK);
-        }
+        // Delegate to state manager's onCaseKeyword
+        this.state.onCaseKeyword(this.getCurrentContext());
         break;
 
       case TokenType.End:
-        // Guard: Don't pop CODE_BLOCK if END appears in structural columns
-        if (this.shouldProtectFromBeginEnd()) {
-          break;
-        }
-        // Guard: END inside brackets is just text, not code end
-        if (this.bracketDepth > 0) {
-          break;
-        }
-
-        // In property values for non-triggers, END is just an identifier value
-        if (this.inPropertyValue && !this.isTriggerProperty(this.lastPropertyName)) {
-          break;
-        }
-
-        // Pop the appropriate context based on what we're in
-        // The context stack naturally handles nesting:
-        // - BEGIN pushes CODE_BLOCK
-        // - CASE pushes CASE_BLOCK
-        // - END pops whichever is on top
-        // Unmatched END outside CODE_BLOCK/CASE_BLOCK will be caught by popContext underflow detection
-        this.popContext();
+        // Delegate to state manager's onEndKeyword
+        this.state.onEndKeyword(this.getCurrentContext());
         break;
     }
   }
@@ -1738,19 +1308,17 @@ export class Lexer {
         break;
       case '=':
         this.addToken(TokenType.Equal, ch, startPos, this.position, startLine, startColumn);
-        // Enter property value mode ONLY at SECTION_LEVEL
-        // In CODE_BLOCK, = is a comparison operator, not property assignment
-        // DEPENDENCY: lastPropertyName is set by scanIdentifier() when an identifier is scanned
-        // Pattern: PropertyName = Value
-        if (this.lastPropertyName !== '' &&
-            this.getCurrentContext() === LexerContext.SECTION_LEVEL) {
-          const oldInPropertyValue = this.inPropertyValue;
-          this.inPropertyValue = true;
-          if (oldInPropertyValue !== this.inPropertyValue) {
+        // Delegate to state manager's onEquals
+        {
+          const stateBeforeEquals = this.state.getState();
+          this.state.onEquals();
+          const stateAfterEquals = this.state.getState();
+
+          if (stateBeforeEquals.inPropertyValue !== stateAfterEquals.inPropertyValue) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.inPropertyValue }
+              data: { flag: 'inPropertyValue', from: stateBeforeEquals.inPropertyValue, to: stateAfterEquals.inPropertyValue }
             }));
           }
         }
@@ -1795,51 +1363,31 @@ export class Lexer {
         break;
       case ';':
         this.addToken(TokenType.Semicolon, ch, startPos, this.position, startLine, startColumn);
-        // End of property value (only if not inside brackets)
-        // Brackets are used in multi-language properties like CaptionML=[DAN=...;ENU=...]
-        if (this.bracketDepth === 0) {
-          const oldInPropertyValue = this.inPropertyValue;
-          const oldLastPropertyName = this.lastPropertyName;
-          this.inPropertyValue = false;
-          this.lastPropertyName = '';
-          if (oldInPropertyValue !== this.inPropertyValue) {
+        // Delegate to state manager's onSemicolon
+        {
+          const stateBeforeSemicolon = this.state.getState();
+          this.state.onSemicolon();
+          const stateAfterSemicolon = this.state.getState();
+
+          if (stateBeforeSemicolon.inPropertyValue !== stateAfterSemicolon.inPropertyValue) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.inPropertyValue }
+              data: { flag: 'inPropertyValue', from: stateBeforeSemicolon.inPropertyValue, to: stateAfterSemicolon.inPropertyValue }
             }));
           }
-          if (oldLastPropertyName !== this.lastPropertyName) {
+          if (stateBeforeSemicolon.lastPropertyName !== stateAfterSemicolon.lastPropertyName) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: this.lastPropertyName }
+              data: { flag: 'lastPropertyName', from: stateBeforeSemicolon.lastPropertyName, to: stateAfterSemicolon.lastPropertyName }
             }));
           }
-        }
-        // Advance column tracking
-        if (this.fieldDefColumn !== FieldDefColumn.NONE) {
-          const oldFieldDefColumn = this.fieldDefColumn;
-          switch (this.fieldDefColumn) {
-            case FieldDefColumn.COL_1:
-              this.fieldDefColumn = FieldDefColumn.COL_2;
-              break;
-            case FieldDefColumn.COL_2:
-              this.fieldDefColumn = FieldDefColumn.COL_3;
-              break;
-            case FieldDefColumn.COL_3:
-              this.fieldDefColumn = FieldDefColumn.COL_4;
-              break;
-            case FieldDefColumn.COL_4:
-              this.fieldDefColumn = FieldDefColumn.PROPERTIES;
-              break;
-            // Stay in PROPERTIES after that
-          }
-          if (oldFieldDefColumn !== this.fieldDefColumn) {
+          if (stateBeforeSemicolon.fieldDefColumn !== stateAfterSemicolon.fieldDefColumn) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: this.fieldDefColumnToString(this.fieldDefColumn) }
+              data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(stateBeforeSemicolon.fieldDefColumn), to: this.fieldDefColumnToString(stateAfterSemicolon.fieldDefColumn) }
             }));
           }
         }
@@ -1855,28 +1403,36 @@ export class Lexer {
         break;
       case '[':
         this.addToken(TokenType.LeftBracket, ch, startPos, this.position, startLine, startColumn);
-        // Track bracket depth when in property value (for CaptionML, etc.)
-        if (this.inPropertyValue) {
-          const oldBracketDepth = this.bracketDepth;
-          this.bracketDepth++;
-          this.invokeTraceCallback(() => ({
-            type: 'flag-change',
-            position: { line: startLine, column: startColumn, offset: startPos },
-            data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.bracketDepth }
-          }));
+        // Delegate to state manager's onOpenBracket
+        {
+          const stateBeforeBracket = this.state.getState();
+          this.state.onOpenBracket();
+          const stateAfterBracket = this.state.getState();
+
+          if (stateBeforeBracket.bracketDepth !== stateAfterBracket.bracketDepth) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: startLine, column: startColumn, offset: startPos },
+              data: { flag: 'bracketDepth', from: stateBeforeBracket.bracketDepth, to: stateAfterBracket.bracketDepth }
+            }));
+          }
         }
         break;
       case ']':
         this.addToken(TokenType.RightBracket, ch, startPos, this.position, startLine, startColumn);
-        // Decrement bracket depth when in property value, but never go negative
-        if (this.inPropertyValue && this.bracketDepth > 0) {
-          const oldBracketDepth = this.bracketDepth;
-          this.bracketDepth--;
-          this.invokeTraceCallback(() => ({
-            type: 'flag-change',
-            position: { line: startLine, column: startColumn, offset: startPos },
-            data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.bracketDepth }
-          }));
+        // Delegate to state manager's onCloseBracket
+        {
+          const stateBeforeCloseBracket = this.state.getState();
+          this.state.onCloseBracket();
+          const stateAfterCloseBracket = this.state.getState();
+
+          if (stateBeforeCloseBracket.bracketDepth !== stateAfterCloseBracket.bracketDepth) {
+            this.invokeTraceCallback(() => ({
+              type: 'flag-change',
+              position: { line: startLine, column: startColumn, offset: startPos },
+              data: { flag: 'bracketDepth', from: stateBeforeCloseBracket.bracketDepth, to: stateAfterCloseBracket.bracketDepth }
+            }));
+          }
         }
         break;
       case '?':
@@ -2218,10 +1774,11 @@ export class Lexer {
    * @returns Uppercase object type string or null if not determinable
    */
   private resolveObjectType(): 'TABLE' | 'CODEUNIT' | 'PAGE' | 'REPORT' | 'QUERY' | 'XMLPORT' | 'MENUSUITE' | null {
-    if (this.objectTokenIndex < 0) {
+    const state = this.state.getState();
+    if (state.objectTokenIndex < 0) {
       return null;
     }
-    const typeTokenIndex = this.objectTokenIndex + 1;
+    const typeTokenIndex = state.objectTokenIndex + 1;
     if (typeTokenIndex >= this.tokens.length) {
       return null;
     }
@@ -2293,14 +1850,15 @@ export class Lexer {
    * @returns A snapshot of the current lexer state
    */
   public getContextState(): LexerContextState {
+    const state = this.state.getState();
     return {
-      contextStack: this.contextStack.map(ctx => this.contextToString(ctx)),
-      braceDepth: this.braceDepth,
-      bracketDepth: this.bracketDepth,
-      inPropertyValue: this.inPropertyValue,
-      fieldDefColumn: this.fieldDefColumnToString(this.fieldDefColumn),
-      currentSectionType: this.currentSectionType,
-      contextUnderflowDetected: this.contextUnderflowDetected,
+      contextStack: state.contextStack.map((ctx: LexerContext) => this.contextToString(ctx)),
+      braceDepth: state.braceDepth,
+      bracketDepth: state.bracketDepth,
+      inPropertyValue: state.inPropertyValue,
+      fieldDefColumn: this.fieldDefColumnToString(state.fieldDefColumn),
+      currentSectionType: state.currentSectionType,
+      contextUnderflowDetected: state.contextUnderflowDetected,
       objectType: this.resolveObjectType(),
     };
   }
