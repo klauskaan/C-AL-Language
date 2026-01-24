@@ -264,6 +264,10 @@ export class LexerStateManager {
    * Check if current column should be protected from BEGIN/END context changes
    */
   public shouldProtectFromBeginEnd(): boolean {
+    // Don't protect if we're in a property value - the property parsing has moved us past structural columns
+    if (this.inPropertyValue) {
+      return false;
+    }
     return this.shouldProtectStructuralColumn();
   }
 
@@ -476,6 +480,10 @@ export class LexerStateManager {
           currentContext === LexerContext.SECTION_LEVEL ||
           currentContext === LexerContext.CODE_BLOCK ||
           currentContext === LexerContext.CASE_BLOCK) {
+        // Clear lastPropertyName when entering CODE_BLOCK from non-property context.
+        // At SECTION_LEVEL, BEGIN may have been tracked as a potential property name by onIdentifier().
+        // Once we transition to CODE_BLOCK, that tracking is invalid - any '=' is an assignment, not property syntax.
+        this.lastPropertyName = '';
         return this.pushContext(LexerContext.CODE_BLOCK);
       }
     }

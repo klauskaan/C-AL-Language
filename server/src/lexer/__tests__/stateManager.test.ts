@@ -7,8 +7,8 @@
 
 import { LexerStateManager } from '../stateManager';
 
-// Import types from lexer (will be moved to stateManager later)
-import type { SectionType } from '../lexer';
+// Import types from stateManager
+import type { SectionType } from '../stateManager';
 
 // These enums will move to stateManager, but import from lexer for now
 enum LexerContext {
@@ -559,6 +559,27 @@ describe('LexerStateManager', () => {
         const manager = new LexerStateManager();
         expect(manager.shouldProtectFromBeginEnd()).toBe(false);
       });
+
+      it('should return false when in property value mode regardless of column', () => {
+        const manager = new LexerStateManager();
+
+        // Set up structural column tracking
+        manager.onObjectKeyword(0);
+        manager.onOpenBrace();
+        manager.markSectionKeyword();
+        manager.onOpenBrace();
+
+        // Simulate property name followed by equals
+        manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
+        manager.onEquals();
+
+        // Now in property value mode at structural column
+        const state = manager.getState();
+        expect(state.inPropertyValue).toBe(true);
+
+        // shouldProtectFromBeginEnd should return false
+        expect((manager as any).shouldProtectFromBeginEnd()).toBe(false);
+      });
     });
 
     describe('shouldProtectFromSectionKeyword()', () => {
@@ -896,6 +917,125 @@ describe('LexerStateManager', () => {
 
       expect(manager.getState().braceDepth).toBe(0);
       expect(manager.getState().bracketDepth).toBe(0);
+    });
+  });
+
+  describe('BEGIN property name tracking bug (issue #221)', () => {
+    it('should clear lastPropertyName when BEGIN transitions to CODE_BLOCK', () => {
+      const manager = new LexerStateManager();
+
+      // Set up state at SECTION_LEVEL
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace(); // Open object brace
+      manager.markSectionKeyword();
+      manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
+
+      // BEGIN is encountered at SECTION_LEVEL
+      // onIdentifier sets lastPropertyName = "BEGIN"
+      manager.onIdentifier('BEGIN', LexerContext.SECTION_LEVEL);
+      expect(manager.getState().lastPropertyName).toBe('BEGIN');
+
+      // onBeginKeyword transitions to CODE_BLOCK
+      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
+
+      // lastPropertyName should be cleared (not a property context)
+      expect(manager.getState().lastPropertyName).toBe('');
+    });
+
+    it('should NOT set inPropertyValue for equals inside CODE_BLOCK after BEGIN', () => {
+      const manager = new LexerStateManager();
+
+      // Set up CODE_BLOCK entered from SECTION_LEVEL via BEGIN
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace(); // Open object brace
+      manager.markSectionKeyword();
+      manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
+
+      // Enter CODE_BLOCK via BEGIN from SECTION_LEVEL
+      manager.onIdentifier('BEGIN', LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
+
+      // Equals inside CODE_BLOCK is an assignment operator
+      manager.onEquals();
+
+      // Should NOT trigger property value mode
+      expect(manager.getState().inPropertyValue).toBe(false);
+    });
+
+    it('should allow END to pop CODE_BLOCK after assignments', () => {
+      const manager = new LexerStateManager();
+
+      // Set up CODE_BLOCK
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace(); // Open object brace
+      manager.markSectionKeyword();
+      manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
+
+      // Enter CODE_BLOCK via BEGIN
+      manager.onIdentifier('BEGIN', LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
+
+      // Simulate assignment
+      manager.onEquals();
+      expect(manager.getState().inPropertyValue).toBe(false);
+
+      // END should pop CODE_BLOCK
+      manager.onEndKeyword(LexerContext.CODE_BLOCK);
+      expect(manager.getCurrentContext()).toBe(LexerContext.SECTION_LEVEL);
+    });
+
+    it('should NOT clear lastPropertyName for trigger properties - REGRESSION TEST', () => {
+      const manager = new LexerStateManager();
+
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace(); // Open object brace
+      manager.onSectionKeyword('FIELDS');
+      manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
+
+      // OnValidate=BEGIN sequence (trigger property)
+      manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
+      expect(manager.getState().lastPropertyName).toBe('OnValidate');
+
+      manager.onEquals();
+      expect(manager.getState().inPropertyValue).toBe(true);
+      expect(manager.isTriggerProperty()).toBe(true);
+
+      // BEGIN in trigger context
+      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
+
+      // lastPropertyName should NOT be cleared in trigger context
+      expect(manager.getState().lastPropertyName).toBe('OnValidate');
+
+      // inPropertyValue should remain true
+      expect(manager.getState().inPropertyValue).toBe(true);
+    });
+
+    it('should not pollute property tracking when CASE keyword appears at SECTION_LEVEL', () => {
+      const manager = new LexerStateManager();
+
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace(); // Open object brace
+      manager.markSectionKeyword();
+      manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
+
+      // CASE keyword at SECTION_LEVEL (unusual but possible)
+      manager.onIdentifier('CASE', LexerContext.SECTION_LEVEL);
+      expect(manager.getState().lastPropertyName).toBe('CASE');
+
+      // Next identifier should overwrite
+      manager.onIdentifier('SomeProperty', LexerContext.SECTION_LEVEL);
+      expect(manager.getState().lastPropertyName).toBe('SomeProperty');
+
+      // Should not have any lingering CASE pollution
+      manager.onEquals();
+      expect(manager.getState().inPropertyValue).toBe(true);
+
+      manager.onSemicolon();
+      expect(manager.getState().inPropertyValue).toBe(false);
     });
   });
 });
