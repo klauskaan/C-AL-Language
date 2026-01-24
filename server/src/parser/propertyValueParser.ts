@@ -150,6 +150,11 @@ export class PropertyValueParser {
       this.match(TokenType.RightParen); // Consume if present
       const endToken = this.previousOrEOF();
 
+      // Reject if there are unconsumed tokens (trailing garbage)
+      if (!this.isAtEnd()) {
+        return null;
+      }
+
       return {
         type: 'CalcFormulaNode',
         aggregationFunction,
@@ -197,6 +202,11 @@ export class PropertyValueParser {
 
         const endToken = this.previousOrEOF();
 
+        // Reject if there are unconsumed tokens (trailing garbage)
+        if (!this.isAtEnd()) {
+          return null;
+        }
+
         return {
           type: 'TableRelationNode',
           conditionalRelations,
@@ -233,6 +243,11 @@ export class PropertyValueParser {
       }
 
       const endToken = this.previousOrEOF();
+
+      // Reject if there are unconsumed tokens (trailing garbage)
+      if (!this.isAtEnd()) {
+        return null;
+      }
 
       return {
         type: 'TableRelationNode',
