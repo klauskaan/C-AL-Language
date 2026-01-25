@@ -1,8 +1,8 @@
 /**
  * Tests for LexerStateManager
  *
- * These tests SHOULD FAIL because the LexerStateManager class doesn't exist yet.
- * This is the TDD phase for issue #62 - tests validate the design before implementation.
+ * Validates state management for the lexer including context tracking,
+ * brace/bracket depth, property value mode, and section type handling.
  */
 
 import { LexerStateManager, LexerContext, FieldDefColumn } from '../stateManager';
