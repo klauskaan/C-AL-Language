@@ -429,13 +429,19 @@ export class Parser {
 
       // Stop if we encounter a section keyword (ACTIONS, CONTROLS, DATAITEMS, etc) at depth 0
       // UNLESS this is the first token (meaning it's a property like ActionList=ACTIONS { ... })
+      // Also check if the keyword is followed by '{' to ensure it's actually a section start
+      // This prevents stopping on keywords used in property values like CaptionML=ENU=Actions
       if (braceDepth === 0 && bracketDepth === 0 && value.length > 0 &&
           (this.check(TokenType.Actions) ||
            this.check(TokenType.Controls) ||
            this.check(TokenType.DataItems) ||
            this.check(TokenType.Elements) ||
            this.check(TokenType.RequestForm))) {
-        break;
+        // Peek ahead to see if this keyword is followed by '{'
+        const nextToken = this.tokens[this.current + 1];
+        if (nextToken && nextToken.type === TokenType.LeftBrace) {
+          break;
+        }
       }
 
       const currentToken = this.advance();
@@ -1003,23 +1009,62 @@ export class Parser {
           } else {
             // Regular property - read value until semicolon, tracking bracket depth for arrays
             let value = '';
+            let braceDepth = 0;
             let bracketDepth = 0;
             let lastToken: Token | null = null;
             const valueTokens: Token[] = [];  // Collect original tokens
 
             while (!this.isAtEnd()) {
-              // Stop at semicolon only if not inside brackets
-              if (this.check(TokenType.Semicolon) && bracketDepth === 0) {
+              // Stop at semicolon only if not inside brackets or braces
+              if (this.check(TokenType.Semicolon) && braceDepth === 0 && bracketDepth === 0) {
                 break;
               }
 
-              // Stop at right brace when not inside brackets (end of field properties)
-              if (this.check(TokenType.RightBrace) && bracketDepth === 0) {
+              // Stop at right brace when not inside brackets or braces (end of field properties)
+              // Only stop if we have some value content (prevents stopping on malformed ActionList=})
+              if (this.check(TokenType.RightBrace) && braceDepth === 0 && bracketDepth === 0 && value.length > 0) {
                 break;
+              }
+
+              // Stop at section keywords when at depth 0 and have value content
+              // Only stop if the keyword is followed by '{' (indicating a section start)
+              // This prevents stopping on keywords used in property values like CaptionML=ENU=Actions
+              if (braceDepth === 0 && bracketDepth === 0 && value.length > 0 &&
+                  (this.check(TokenType.Actions) ||
+                   this.check(TokenType.Controls) ||
+                   this.check(TokenType.DataItems) ||
+                   this.check(TokenType.Elements) ||
+                   this.check(TokenType.RequestForm))) {
+                // Peek ahead to see if this keyword is followed by '{'
+                const nextToken = this.tokens[this.current + 1];
+                if (nextToken && nextToken.type === TokenType.LeftBrace) {
+                  break;
+                }
               }
 
               const currentToken = this.advance();
               valueTokens.push(currentToken);  // Store original token
+
+              // Track brace depth for nested structures like ActionList=ACTIONS { ... }
+              if (currentToken.type === TokenType.LeftBrace) {
+                braceDepth++;
+              } else if (currentToken.type === TokenType.RightBrace) {
+                braceDepth--;
+                if (braceDepth < 0) {
+                  // Report error for truly empty/malformed values like ActionList=}
+                  // Skip error if value is non-empty (has tokens)
+                  if (valueTokens.length === 1) {
+                    // Only the closing brace was consumed - this is malformed
+                    this.recordError(`Empty or malformed value for property '${sanitizeContent(name)}'`, currentToken);
+                  }
+                  // Back up token position
+                  this.current--;
+                  // Restore this.braceDepth (decremented by advance())
+                  this.braceDepth++;
+                  braceDepth = 0;
+                  break;
+                }
+              }
 
               // Track bracket depth
               if (currentToken.type === TokenType.LeftBracket) {
