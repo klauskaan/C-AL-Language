@@ -5,28 +5,10 @@
  * This is the TDD phase for issue #62 - tests validate the design before implementation.
  */
 
-import { LexerStateManager } from '../stateManager';
+import { LexerStateManager, LexerContext, FieldDefColumn } from '../stateManager';
 
 // Import types from stateManager
 import type { SectionType } from '../stateManager';
-
-// These enums will move to stateManager, but import from lexer for now
-enum LexerContext {
-  NORMAL = 0,
-  OBJECT_LEVEL = 1,
-  SECTION_LEVEL = 2,
-  CODE_BLOCK = 3,
-  CASE_BLOCK = 4,
-}
-
-enum FieldDefColumn {
-  NONE = 0,
-  COL_1 = 1,
-  COL_2 = 2,
-  COL_3 = 3,
-  COL_4 = 4,
-  PROPERTIES = 5,
-}
 
 describe('LexerStateManager', () => {
   describe('Initial state', () => {
