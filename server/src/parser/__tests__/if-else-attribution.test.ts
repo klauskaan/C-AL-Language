@@ -177,6 +177,123 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
       expect(caseStmt.elseBranch).not.toBeNull();
       expect(caseStmt.elseBranch?.length).toBe(1);
     });
+
+    it('should attribute ELSE to CASE when IF has BEGIN-END with semicolon', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      State : Integer;
+    BEGIN
+      CASE State OF
+        1: IF Found THEN BEGIN
+             Action1;
+             Action2;
+           END;
+        ELSE
+          ERROR('Invalid state');
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should parse without errors
+      expect(errors.length).toBe(0);
+      expect(ast).not.toBeNull();
+
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures.length).toBe(1);
+
+      const body = procedures[0]?.body || [];
+      expect(body.length).toBe(1);
+      expect(body[0]?.type).toBe('CaseStatement');
+
+      const caseStmt = body[0] as CaseStatement;
+      // CASE should have 1 branch (value: 1) with IF statement
+      expect(caseStmt.branches.length).toBe(1);
+      expect(caseStmt.branches[0]?.statements.length).toBe(1);
+      expect(caseStmt.branches[0]?.statements[0]?.type).toBe('IfStatement');
+
+      // IF statement should NOT have elseBranch (BEGIN-END terminated by semicolon)
+      const ifStmt = caseStmt.branches[0]?.statements[0] as IfStatement;
+      expect(ifStmt.elseBranch).toBeNull();
+
+      // IF's thenBranch should be a BlockStatement
+      expect(ifStmt.thenBranch.type).toBe('BlockStatement');
+      const block = ifStmt.thenBranch as BlockStatement;
+      expect(block.statements.length).toBe(2);
+
+      // CASE should have elseBranch (ELSE belongs to CASE, not IF)
+      expect(caseStmt.elseBranch).not.toBeNull();
+      expect(caseStmt.elseBranch?.length).toBe(1);
+      expect(caseStmt.elseBranch?.[0]?.type).toBe('CallStatement');
+    });
+
+    it('should attribute ELSE to IF when BEGIN-END has no semicolon', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      State : Integer;
+    BEGIN
+      CASE State OF
+        1: IF Found THEN BEGIN
+             Action1;
+             Action2;
+           END
+           ELSE
+             ERROR('Not found');
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should parse without errors
+      expect(errors.length).toBe(0);
+      expect(ast).not.toBeNull();
+
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures.length).toBe(1);
+
+      const body = procedures[0]?.body || [];
+      expect(body.length).toBe(1);
+      expect(body[0]?.type).toBe('CaseStatement');
+
+      const caseStmt = body[0] as CaseStatement;
+      // CASE should have 1 branch (value: 1) with IF statement
+      expect(caseStmt.branches.length).toBe(1);
+      expect(caseStmt.branches[0]?.statements.length).toBe(1);
+      expect(caseStmt.branches[0]?.statements[0]?.type).toBe('IfStatement');
+
+      // IF statement SHOULD have elseBranch (no semicolon before ELSE)
+      const ifStmt = caseStmt.branches[0]?.statements[0] as IfStatement;
+      expect(ifStmt.elseBranch).not.toBeNull();
+      expect(ifStmt.elseBranch?.type).toBe('CallStatement');
+
+      // IF's thenBranch should be a BlockStatement
+      expect(ifStmt.thenBranch.type).toBe('BlockStatement');
+      const block = ifStmt.thenBranch as BlockStatement;
+      expect(block.statements.length).toBe(2);
+
+      // CASE should NOT have elseBranch (ELSE belongs to IF)
+      expect(caseStmt.elseBranch).toBeNull();
+    });
   });
 
   describe('Nested IF statements', () => {
