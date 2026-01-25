@@ -763,9 +763,30 @@ export function generateMarkdownReport(results: FileResult[]): string {
 
   // Performance section
   md += '## Performance Metrics\n\n';
-  md += `- **p50 (median):** ${p50.toFixed(2)}ms\n`;
-  md += `- **p95:** ${p95.toFixed(2)}ms\n`;
-  md += `- **p99:** ${p99.toFixed(2)}ms\n\n`;
+
+  // Extract min/max/avg from metrics or compute from results (legacy)
+  // Legacy mode: assumes `results` contains ALL processed files (not just failures)
+  // Streaming mode: use __metrics which captures stats from all files
+  const minTokenizeTime = metrics?.minTokenizeTime ??
+    (results.length > 0 ? Math.min(...results.map(r => r.tokenizeTime)) : 0);
+  const maxTokenizeTime = metrics?.maxTokenizeTime ??
+    (results.length > 0 ? Math.max(...results.map(r => r.tokenizeTime)) : 0);
+  const avgTokenizeTime = metrics?.avgTokenizeTime ??
+    (results.length > 0 ? results.reduce((sum, r) => sum + r.tokenizeTime, 0) / results.length : 0);
+
+  md += `- **Min:** ${minTokenizeTime.toFixed(2)}ms\n`;
+  md += `- **Max:** ${maxTokenizeTime.toFixed(2)}ms\n`;
+  md += `- **Avg:** ${avgTokenizeTime.toFixed(2)}ms\n`;
+
+  // Show percentiles only when tokenizeTimes data is available
+  if (tokenizeTimes.length > 0) {
+    md += `- **p50 (median):** ${p50.toFixed(2)}ms\n`;
+    md += `- **p95:** ${p95.toFixed(2)}ms\n`;
+    md += `- **p99:** ${p99.toFixed(2)}ms\n`;
+  } else {
+    md += '> *Percentile data unavailable (< 100 failures for timing analysis)*\n';
+  }
+  md += '\n';
 
   if (outliers.length > 0) {
     md += `### Performance Outliers (>${outlierThreshold.toFixed(2)}ms)\n\n`;

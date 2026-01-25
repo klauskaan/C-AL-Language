@@ -237,17 +237,76 @@ describe('generateMarkdownReport', () => {
       expect(report).toContain('**Total files:** 8,000');
       expect(report).toContain('**Success rate:** 100.00%');
 
-      // Percentiles should return 0 for empty tokenizeTimes
-      // calculatePercentile([],50) returns 0 (tested at lexer-health.test.ts:34)
-      expect(report).toContain('**p50 (median):** 0.00ms');
-      expect(report).toContain('**p95:** 0.00ms');
-      expect(report).toContain('**p99:** 0.00ms');
+      // Should show min/max/avg from metrics
+      expect(report).toContain('**Min:** 5.20ms');
+      expect(report).toContain('**Max:** 150.30ms');
+      expect(report).toContain('**Avg:** 12.50ms');
+
+      // Should NOT show 0.00ms percentiles
+      expect(report).not.toContain('**p50 (median):**');
+      expect(report).not.toContain('**p95:**');
+      expect(report).not.toContain('**p99:**');
+
+      // Should show unavailable note instead
+      expect(report).toContain('Percentile data unavailable');
 
       // No outliers section (results is empty - no failures to check)
       expect(report).not.toContain('Performance Outliers');
 
       // Should show success message (no failures)
       expect(report).toContain('✅ **All files passed validation!**');
+    });
+
+    it('should handle all-zero metrics (all empty files)', () => {
+      const results: FileResult[] = [];
+      (results as any).__metrics = {
+        totalFiles: 5,
+        totalLines: 0,
+        totalTokens: 0,
+        tokenizeTimes: [],
+        minTokenizeTime: 0,
+        maxTokenizeTime: 0,
+        avgTokenizeTime: 0
+      };
+
+      const report = generateMarkdownReport(results);
+
+      // Should show zero metrics
+      expect(report).toContain('**Min:** 0.00ms');
+      expect(report).toContain('**Max:** 0.00ms');
+      expect(report).toContain('**Avg:** 0.00ms');
+
+      // Should show unavailable note (not percentiles)
+      expect(report).toContain('Percentile data unavailable');
+      expect(report).not.toContain('**p50 (median):**');
+    });
+
+    it('should display min/max/avg with percentiles when tokenizeTimes has data', () => {
+      const results: FileResult[] = [];
+      (results as any).__metrics = {
+        totalFiles: 5,
+        totalLines: 500,
+        totalTokens: 2500,
+        tokenizeTimes: [10, 20, 30, 40, 50],
+        minTokenizeTime: 10,
+        maxTokenizeTime: 50,
+        avgTokenizeTime: 30
+      };
+
+      const report = generateMarkdownReport(results);
+
+      // Should show min/max/avg
+      expect(report).toContain('**Min:** 10.00ms');
+      expect(report).toContain('**Max:** 50.00ms');
+      expect(report).toContain('**Avg:** 30.00ms');
+
+      // Should also show percentiles
+      expect(report).toContain('**p50 (median):**');
+      expect(report).toContain('**p95:**');
+      expect(report).toContain('**p99:**');
+
+      // Should NOT show unavailable note
+      expect(report).not.toContain('Percentile data unavailable');
     });
   });
 
@@ -426,6 +485,11 @@ describe('generateMarkdownReport', () => {
 
       // p50 should be median (30)
       expect(report).toContain('**p50 (median):** 30.00ms');
+
+      // Should compute min/max/avg from results array (legacy mode)
+      expect(report).toContain('**Min:** 10.00ms');
+      expect(report).toContain('**Max:** 50.00ms');
+      expect(report).toContain('**Avg:** 30.00ms');
 
       // Should contain performance metrics section
       expect(report).toContain('## Performance Metrics');
