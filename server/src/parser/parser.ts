@@ -2,6 +2,7 @@ import { Token, TokenType } from '../lexer/tokens';
 import { Lexer } from '../lexer/lexer';
 import { sanitizeContent, sanitizeTokenType, stripPaths } from '../utils/sanitize';
 import { PropertyValueParser } from './propertyValueParser';
+import { unescapeCalString } from '../utils/string';
 import {
   CALDocument,
   ObjectDeclaration,
@@ -817,8 +818,8 @@ export class Parser {
         };
       }
 
-      const assemblyReference = assemblyMatch[1].replace(/''/g, "'"); // Extract assembly name and unescape doubled quotes
-      const dotNetTypeName = fullTypeSpec.substring(assemblyMatch[0].length).replace(/''/g, "'"); // Everything after 'assembly', unescape doubled quotes
+      const assemblyReference = unescapeCalString(assemblyMatch[1]); // Extract assembly name and unescape doubled quotes
+      const dotNetTypeName = unescapeCalString(fullTypeSpec.substring(assemblyMatch[0].length)); // Everything after 'assembly', unescape doubled quotes
 
       // Validate that type name is not empty
       if (!dotNetTypeName || dotNetTypeName.trim() === '') {
@@ -880,7 +881,7 @@ export class Parser {
         automationTypeLibGuid: automationMatch[1],
         automationVersion: automationMatch[2],
         automationClassGuid: automationMatch[3],
-        automationTypeLibName: automationMatch[4].replace(/''/g, "'"), // Unescape doubled quotes
+        automationTypeLibName: unescapeCalString(automationMatch[4]), // Unescape doubled quotes
         automationClassName: automationMatch[5],
         startToken,
         endToken: this.previous()

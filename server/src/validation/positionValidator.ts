@@ -11,6 +11,7 @@
 import { Token, TokenType } from '../lexer/tokens';
 import { looksLikeCode } from '../trivia/triviaComputer';
 import { sanitizeContent, sanitizeComparison } from '../utils/sanitize';
+import { unescapeCalString } from '../utils/string';
 
 /**
  * Result of position validation
@@ -151,13 +152,6 @@ export function validateTokenPositions(
 }
 
 /**
- * Unescape string content by converting '' to '
- */
-function unescapeStringContent(content: string): string {
-  return content.replace(/''/g, "'");
-}
-
-/**
  * Validate String token and return expected value.
  * Returns error string instead of throwing to make validator robust.
  */
@@ -177,7 +171,7 @@ function validateStringToken(documentContent: string): string {
   const content = documentContent.substring(1, documentContent.length - 1);
 
   // Unescape '' to '
-  return unescapeStringContent(content);
+  return unescapeCalString(content);
 }
 
 /**
@@ -226,7 +220,7 @@ function validateUnknownToken(documentContent: string): string {
   // Handle edge case: empty unclosed string (just "'")
   if (documentContent.startsWith("'") && (documentContent.length === 1 || !documentContent.endsWith("'"))) {
     const content = documentContent.substring(1);
-    return unescapeStringContent(content);
+    return unescapeCalString(content);
   }
 
   // Unclosed quoted identifier: "test (starts with ", doesn't end with ")
