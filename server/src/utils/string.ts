@@ -6,6 +6,14 @@
  *
  * @param content - The raw string content (without surrounding quotes)
  * @returns The unescaped string with '' converted to '
+ *
+ * @example
+ * unescapeCalString("Hello ''World''")
+ * // => "Hello 'World'"
+ *
+ * @example
+ * unescapeCalString("It''s a test")
+ * // => "It's a test"
  */
 export function unescapeCalString(content: string): string {
     return content.replace(/''/g, "'");

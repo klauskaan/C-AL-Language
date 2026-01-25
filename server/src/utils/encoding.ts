@@ -180,6 +180,14 @@ const CP850_TO_UNICODE: number[] = [
  *
  * @param buffer - Buffer containing CP850-encoded bytes
  * @returns Unicode string
+ *
+ * @example
+ * decodeCp850(Buffer.from([0x9B]))
+ * // => "ø"
+ *
+ * @example
+ * decodeCp850(Buffer.from([0x48, 0x65, 0x6C, 0x6C, 0x6F]))
+ * // => "Hello"
  */
 export function decodeCp850(buffer: Buffer): string {
   if (buffer.length === 0) {
@@ -223,6 +231,14 @@ export function decodeCp850(buffer: Buffer): string {
  * @param filePath - Path to the file to read
  * @returns EncodingResult with content and detected encoding
  * @throws Error if file cannot be read
+ *
+ * @example
+ * readFileWithEncoding("/path/to/file.txt")
+ * // => { content: "OBJECT Table 18 Customer...", encoding: "cp850" }
+ *
+ * @example
+ * readFileWithEncoding("/path/to/utf8-file.txt")
+ * // => { content: "OBJECT Table 18 Customer...", encoding: "utf-8" }
  */
 export function readFileWithEncoding(filePath: string): EncodingResult {
   // Read file as raw buffer

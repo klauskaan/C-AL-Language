@@ -269,6 +269,14 @@ export function sanitizeTokenType(tokenType: string): string {
  *
  * @param msg - Message that may contain file paths
  * @returns Message with test/REAL/ paths replaced by <REDACTED>
+ *
+ * @example
+ * stripPaths("Error in /home/user/project/test/REAL/file.ts at line 10")
+ * // => "Error in /home/user/project/<REDACTED> at line 10"
+ *
+ * @example
+ * stripPaths("Failed: C:\\Users\\dev\\src\\test\\REAL\\main.txt")
+ * // => "Failed: C:\\Users\\dev\\src\\<REDACTED>"
  */
 export function stripPaths(msg: string): string {
   return msg.replace(/(?<![a-zA-Z0-9_])test[\/\\]+real(?:[\/\\][^\s:,]*)?/gi, '<REDACTED>');

@@ -9,6 +9,18 @@
  *
  * @param text - Text to escape
  * @returns Escaped text safe for markdown
+ *
+ * @example
+ * escapeMarkdown("*bold* and _italic_")
+ * // => "\\*bold\\* and \\_italic\\_"
+ *
+ * @example
+ * escapeMarkdown("Code: `example`")
+ * // => "Code: \\`example\\`"
+ *
+ * @example
+ * escapeMarkdown("Line1\nLine2")
+ * // => "Line1\\nLine2"
  */
 export function escapeMarkdown(text: string): string {
   return text
