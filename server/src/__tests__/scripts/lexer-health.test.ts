@@ -26,6 +26,9 @@ import {
 } from '../../../scripts/lexer-health';
 
 jest.mock('fs');
+jest.mock('../../../src/utils/encoding');
+jest.mock('../../../src/lexer/lexer');
+jest.mock('../../../src/validation/positionValidator');
 
 describe('Lexer Health Script - calculatePercentile()', () => {
   it('should return 0 for empty arrays (guard against NaN)', () => {
@@ -456,22 +459,42 @@ describe('Lexer Health Script - validateAllFiles()', () => {
   describe('with files parameter', () => {
     let mockExistsSync: jest.MockedFunction<typeof existsSync>;
     let mockReaddirSync: jest.MockedFunction<typeof readdirSync>;
-    let mockReadFileSync: jest.SpyInstance;
+    let mockReadFileWithEncoding: jest.Mock;
+    let mockLexer: jest.Mock;
+    let mockValidateTokenPositions: jest.Mock;
 
     beforeEach(() => {
       jest.clearAllMocks();
       mockExistsSync = jest.requireMock('fs').existsSync as jest.MockedFunction<typeof existsSync>;
       mockReaddirSync = jest.requireMock('fs').readdirSync as jest.MockedFunction<typeof readdirSync>;
-      mockReadFileSync = jest.spyOn(fs, 'readFileSync');
-    });
+      mockReadFileWithEncoding = jest.requireMock('../../../src/utils/encoding').readFileWithEncoding as jest.Mock;
 
-    afterEach(() => {
-      mockReadFileSync.mockRestore();
+      // Mock Lexer and validation functions to return failures
+      const mockLexerInstance = {
+        tokenize: jest.fn().mockReturnValue([]),
+        isCleanExit: jest.fn().mockReturnValue({
+          passed: false,
+          violations: [{ category: 'test', message: 'test violation', expected: 0, actual: 1 }],
+          categories: new Set()
+        })
+      };
+      mockLexer = jest.requireMock('../../../src/lexer/lexer').Lexer as jest.Mock;
+      mockLexer.mockImplementation(() => mockLexerInstance);
+
+      mockValidateTokenPositions = jest.requireMock('../../../src/validation/positionValidator').validateTokenPositions as jest.Mock;
+      mockValidateTokenPositions.mockReturnValue({
+        isValid: false,
+        errors: ['test error'],
+        warnings: []
+      });
     });
 
     it('should use provided files array instead of re-validating directory', () => {
-      // Mock file content for valid C/AL object
-      mockReadFileSync.mockReturnValue(Buffer.from('OBJECT Table 18 Customer\r\n{\r\n}\r\n'));
+      // Mock file content
+      mockReadFileWithEncoding.mockReturnValue({
+        content: 'OBJECT Table 18 Customer\r\n{\r\n}\r\n',
+        encoding: 'utf-8'
+      });
 
       // eslint-disable-next-line @typescript-eslint/no-require-imports -- require() needed to load module after mocks are configured
       const { validateAllFiles } = require('../../../scripts/lexer-health');
@@ -480,7 +503,7 @@ describe('Lexer Health Script - validateAllFiles()', () => {
       // Should NOT call readdirSync since files were provided
       expect(mockReaddirSync).not.toHaveBeenCalled();
 
-      // Should process the provided file
+      // Should process the provided file and return it (as a failure)
       expect(results).toHaveLength(1);
       expect(results[0].file).toBe('TAB18.TXT');
     });
@@ -499,8 +522,11 @@ describe('Lexer Health Script - validateAllFiles()', () => {
     });
 
     it('should process all provided files and return FileResult array', () => {
-      // Mock file content for both files
-      mockReadFileSync.mockReturnValue(Buffer.from('OBJECT Table 18 Customer\r\n{\r\n}\r\n'));
+      // Mock file content
+      mockReadFileWithEncoding.mockReturnValue({
+        content: 'OBJECT Table 18 Customer\r\n{\r\n}\r\n',
+        encoding: 'utf-8'
+      });
 
       // eslint-disable-next-line @typescript-eslint/no-require-imports -- require() needed to load module after mocks are configured
       const { validateAllFiles } = require('../../../scripts/lexer-health');
@@ -518,7 +544,11 @@ describe('Lexer Health Script - validateAllFiles()', () => {
       // Mock directory validation to succeed
       mockExistsSync.mockReturnValue(true);
       mockReaddirSync.mockReturnValue(['TAB18.TXT' as any]);
-      mockReadFileSync.mockReturnValue(Buffer.from('OBJECT Table 18 Customer\r\n{\r\n}\r\n'));
+      // Mock file content
+      mockReadFileWithEncoding.mockReturnValue({
+        content: 'OBJECT Table 18 Customer\r\n{\r\n}\r\n',
+        encoding: 'utf-8'
+      });
 
       // eslint-disable-next-line @typescript-eslint/no-require-imports -- require() needed to load module after mocks are configured
       const { validateAllFiles } = require('../../../scripts/lexer-health');

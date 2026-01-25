@@ -183,11 +183,19 @@ describe('generateMarkdownReport', () => {
 
   describe('Success cases', () => {
     it('should show success message when all files pass (100% success)', () => {
-      const results: FileResult[] = [
-        createFileResult({ file: 'file1.txt', lines: 100 }),
-        createFileResult({ file: 'file2.txt', lines: 200 }),
-        createFileResult({ file: 'file3.txt', lines: 300 })
-      ];
+      // NEW API: 100% success = EMPTY array (no failures) + __metrics with totalFiles
+      const results: FileResult[] = [];
+
+      // Attach metrics representing 3 total files (all passed, so none in failures array)
+      (results as any).__metrics = {
+        totalFiles: 3,
+        totalLines: 600,        // 100 + 200 + 300
+        totalTokens: 1500,      // 500 * 3
+        tokenizeTimes: [10.5, 10.5, 10.5],  // 3 files worth of timing data
+        minTokenizeTime: 10.5,
+        maxTokenizeTime: 10.5,
+        avgTokenizeTime: 10.5
+      };
 
       const report = generateMarkdownReport(results);
 
@@ -250,10 +258,14 @@ describe('generateMarkdownReport', () => {
     });
 
     it('should calculate 50% success rate correctly (mixed results)', () => {
+      // NEW API: 50% success = only FAILURES in array + __metrics.totalFiles = 2 (1 pass + 1 fail)
       const results: FileResult[] = [
-        createFileResult({ file: 'pass.txt' }),
+        // Only the failure is in the array
         createFileResult({
           file: 'fail.txt',
+          lines: 200,
+          tokenCount: 500,
+          tokenizeTime: 10.5,
           positionValidation: {
             isValid: false,
             errors: ['Error'],
@@ -261,6 +273,17 @@ describe('generateMarkdownReport', () => {
           }
         })
       ];
+
+      // Attach metrics representing 2 total files (1 pass not in array, 1 fail in array)
+      (results as any).__metrics = {
+        totalFiles: 2,
+        totalLines: 300,        // 100 (pass) + 200 (fail)
+        totalTokens: 1000,      // 500 * 2
+        tokenizeTimes: [10.5, 10.5],  // Both files' timing data
+        minTokenizeTime: 10.5,
+        maxTokenizeTime: 10.5,
+        avgTokenizeTime: 10.5
+      };
 
       const report = generateMarkdownReport(results);
 
@@ -271,22 +294,35 @@ describe('generateMarkdownReport', () => {
     });
 
     it('should calculate 99% success rate correctly (99 pass, 1 fail)', () => {
-      const results: FileResult[] = [];
+      // NEW API: 99% success = only FAILURES in array (1 file) + __metrics.totalFiles = 100
+      const results: FileResult[] = [
+        // Only the 1 failing file is in the array
+        createFileResult({
+          file: 'fail.txt',
+          lines: 100,
+          tokenCount: 500,
+          tokenizeTime: 10.5,
+          positionValidation: {
+            isValid: false,
+            errors: ['Error'],
+            warnings: []
+          }
+        })
+      ];
 
-      // 99 passing files
-      for (let i = 0; i < 99; i++) {
-        results.push(createFileResult({ file: `pass${i}.txt` }));
-      }
+      // Attach metrics representing 100 total files (99 pass not in array, 1 fail in array)
+      // Build tokenizeTimes array with 100 entries (all 10.5ms for consistency)
+      const tokenizeTimes = Array(100).fill(10.5);
 
-      // 1 failing file
-      results.push(createFileResult({
-        file: 'fail.txt',
-        positionValidation: {
-          isValid: false,
-          errors: ['Error'],
-          warnings: []
-        }
-      }));
+      (results as any).__metrics = {
+        totalFiles: 100,
+        totalLines: 10000,       // 100 lines * 100 files
+        totalTokens: 50000,      // 500 tokens * 100 files
+        tokenizeTimes: tokenizeTimes,
+        minTokenizeTime: 10.5,
+        maxTokenizeTime: 10.5,
+        avgTokenizeTime: 10.5
+      };
 
       const report = generateMarkdownReport(results);
 
@@ -297,15 +333,16 @@ describe('generateMarkdownReport', () => {
     });
 
     it('should calculate 1% success rate correctly (1 pass, 99 fail)', () => {
+      // NEW API: 1% success = only FAILURES in array (99 files) + __metrics.totalFiles = 100
       const results: FileResult[] = [];
 
-      // 1 passing file
-      results.push(createFileResult({ file: 'pass.txt' }));
-
-      // 99 failing files
+      // Only the 99 failing files are in the array
       for (let i = 0; i < 99; i++) {
         results.push(createFileResult({
           file: `fail${i}.txt`,
+          lines: 100,
+          tokenCount: 500,
+          tokenizeTime: 10.5,
           positionValidation: {
             isValid: false,
             errors: ['Error'],
@@ -313,6 +350,20 @@ describe('generateMarkdownReport', () => {
           }
         }));
       }
+
+      // Attach metrics representing 100 total files (1 pass not in array, 99 fail in array)
+      // Build tokenizeTimes array with 100 entries (all 10.5ms for consistency)
+      const tokenizeTimes = Array(100).fill(10.5);
+
+      (results as any).__metrics = {
+        totalFiles: 100,
+        totalLines: 10000,       // 100 lines * 100 files
+        totalTokens: 50000,      // 500 tokens * 100 files
+        tokenizeTimes: tokenizeTimes,
+        minTokenizeTime: 10.5,
+        maxTokenizeTime: 10.5,
+        avgTokenizeTime: 10.5
+      };
 
       const report = generateMarkdownReport(results);
 
