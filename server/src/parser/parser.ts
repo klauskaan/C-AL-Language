@@ -1000,7 +1000,7 @@ export class Parser {
         () => {
           const { name, startToken } = this.accumulatePropertyName();
 
-          this.consume(TokenType.Equal, 'Expected =');
+          const equalsToken = this.consume(TokenType.Equal, 'Expected =');
 
           // Check if this is a trigger (starts with BEGIN or VAR) or regular property
           if (this.check(TokenType.Begin) || this.check(TokenType.Var)) {
@@ -1051,10 +1051,11 @@ export class Parser {
               } else if (currentToken.type === TokenType.RightBrace) {
                 braceDepth--;
                 if (braceDepth < 0) {
-                  // Report error for truly empty/malformed values like ActionList=}
-                  // Skip error if value is non-empty (has tokens)
-                  if (valueTokens.length === 1) {
-                    // Only the closing brace was consumed - this is malformed
+                  // Report error only if there's no whitespace between = and }
+                  // (whitespace is a valid value in C/AL, e.g., InstructionalTextML= )
+                  const hasWhitespace = equalsToken.endOffset < currentToken.startOffset;
+                  if (!hasWhitespace) {
+                    // Truly empty/malformed: no tokens and no whitespace (e.g., ActionList=})
                     this.recordError(`Empty or malformed value for property '${sanitizeContent(name)}'`, currentToken);
                   }
                   // Back up token position

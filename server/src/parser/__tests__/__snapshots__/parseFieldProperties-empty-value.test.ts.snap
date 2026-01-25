@@ -1,0 +1,133 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Parser - Empty/Malformed Property Values in parseFieldProperties() SNAPSHOT: Property value parsing results should match snapshot for field with empty Description value 1`] = `
+{
+  "endToken": {
+    "column": 61,
+    "endOffset": 345,
+    "line": 14,
+    "startOffset": 343,
+    "type": "IDENTIFIER",
+    "value": "No",
+  },
+  "properties": [
+    {
+      "endToken": {
+        "column": 76,
+        "endOffset": 216,
+        "line": 12,
+        "startOffset": 215,
+        "type": "SEMICOLON",
+        "value": ";",
+      },
+      "name": "CaptionML",
+      "startToken": {
+        "column": 52,
+        "endOffset": 200,
+        "line": 12,
+        "startOffset": 191,
+        "type": "IDENTIFIER",
+        "value": "CaptionML",
+      },
+      "type": "Property",
+      "value": "ENU=Test Field",
+      "valueTokens": [
+        {
+          "column": 62,
+          "endOffset": 204,
+          "line": 12,
+          "startOffset": 201,
+          "type": "IDENTIFIER",
+          "value": "ENU",
+        },
+        {
+          "column": 65,
+          "endOffset": 205,
+          "line": 12,
+          "startOffset": 204,
+          "type": "EQUAL",
+          "value": "=",
+        },
+        {
+          "column": 66,
+          "endOffset": 209,
+          "line": 12,
+          "startOffset": 205,
+          "type": "IDENTIFIER",
+          "value": "Test",
+        },
+        {
+          "column": 71,
+          "endOffset": 215,
+          "line": 12,
+          "startOffset": 210,
+          "type": "IDENTIFIER",
+          "value": "Field",
+        },
+      ],
+    },
+    {
+      "endToken": {
+        "column": 65,
+        "endOffset": 282,
+        "line": 13,
+        "startOffset": 281,
+        "type": "SEMICOLON",
+        "value": ";",
+      },
+      "name": "Description",
+      "startToken": {
+        "column": 52,
+        "endOffset": 279,
+        "line": 13,
+        "startOffset": 268,
+        "type": "IDENTIFIER",
+        "value": "Description",
+      },
+      "type": "Property",
+      "value": "",
+      "valueTokens": undefined,
+    },
+    {
+      "endToken": {
+        "column": 61,
+        "endOffset": 345,
+        "line": 14,
+        "startOffset": 343,
+        "type": "IDENTIFIER",
+        "value": "No",
+      },
+      "name": "Editable",
+      "startToken": {
+        "column": 52,
+        "endOffset": 342,
+        "line": 14,
+        "startOffset": 334,
+        "type": "IDENTIFIER",
+        "value": "Editable",
+      },
+      "type": "Property",
+      "value": "No",
+      "valueTokens": [
+        {
+          "column": 61,
+          "endOffset": 345,
+          "line": 14,
+          "startOffset": 343,
+          "type": "IDENTIFIER",
+          "value": "No",
+        },
+      ],
+    },
+  ],
+  "startToken": {
+    "column": 52,
+    "endOffset": 200,
+    "line": 12,
+    "startOffset": 191,
+    "type": "IDENTIFIER",
+    "value": "CaptionML",
+  },
+  "type": "PropertySection",
+}
+`;
