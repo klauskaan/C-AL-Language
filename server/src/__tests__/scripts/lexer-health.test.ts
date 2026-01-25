@@ -14,7 +14,6 @@
  * - calculateETA(): ETA calculation with warmup period
  */
 
-import * as fs from 'fs';
 import { existsSync, readdirSync, mkdirSync, writeFileSync } from 'fs';
 import {
   calculatePercentile,
@@ -638,6 +637,82 @@ describe('Lexer Health Script - validateAllFiles()', () => {
 
       // Verify process.exit was called with code 2
       expect(mockExit).toHaveBeenCalledWith(2);
+    });
+  });
+
+  describe('tokenizeTimes optimization threshold (> 100 failures)', () => {
+    let mockReadFileWithEncoding: jest.Mock;
+    let mockLexer: jest.Mock;
+    let mockValidateTokenPositions: jest.Mock;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+
+      // Mock file reading - returns valid content for any file
+      mockReadFileWithEncoding = jest.requireMock('../../../src/utils/encoding').readFileWithEncoding as jest.Mock;
+      mockReadFileWithEncoding.mockReturnValue({
+        content: 'OBJECT Table 1 Test\r\n{\r\n}\r\n',
+        encoding: 'utf-8'
+      });
+
+      // Mock Lexer to return failure (ensures file counts as a failure)
+      const mockLexerInstance = {
+        tokenize: jest.fn().mockReturnValue([{ type: 'keyword', value: 'OBJECT' }]),
+        isCleanExit: jest.fn().mockReturnValue({
+          passed: false,
+          violations: [{ category: 'test', message: 'forced failure', expected: 0, actual: 1 }],
+          categories: new Set()
+        })
+      };
+      mockLexer = jest.requireMock('../../../src/lexer/lexer').Lexer as jest.Mock;
+      mockLexer.mockImplementation(() => mockLexerInstance);
+
+      // Mock position validation to pass (failure comes from isCleanExit)
+      mockValidateTokenPositions = jest.requireMock('../../../src/validation/positionValidator').validateTokenPositions as jest.Mock;
+      mockValidateTokenPositions.mockReturnValue({
+        isValid: true,
+        errors: [],
+        warnings: []
+      });
+    });
+
+    it('should set tokenizeTimes to empty array when failures.length === 100 (at threshold)', () => {
+      const files = Array.from({ length: 100 }, (_, i) => `TAB${i}.TXT`);
+
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { validateAllFiles } = require('../../../scripts/lexer-health');
+      const results = validateAllFiles(files);
+
+      // Verify we got 100 failures
+      expect(results).toHaveLength(100);
+
+      // Threshold is > 100, so 100 failures means empty tokenizeTimes
+      const metrics = (results as any).__metrics;
+      expect(metrics).toBeDefined();
+      expect(metrics.tokenizeTimes).toEqual([]);
+    });
+
+    it('should populate tokenizeTimes when failures.length === 101 (above threshold)', () => {
+      const files = Array.from({ length: 101 }, (_, i) => `TAB${i}.TXT`);
+
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { validateAllFiles } = require('../../../scripts/lexer-health');
+      const results = validateAllFiles(files);
+
+      // Verify we got 101 failures
+      expect(results).toHaveLength(101);
+
+      // Threshold is > 100, so 101 failures means tokenizeTimes is populated
+      const metrics = (results as any).__metrics;
+      expect(metrics).toBeDefined();
+      expect(metrics.tokenizeTimes).toHaveLength(101);
+
+      // Verify entries are valid positive numbers (tokenize times)
+      metrics.tokenizeTimes.forEach((time: number) => {
+        expect(typeof time).toBe('number');
+        expect(Number.isFinite(time)).toBe(true);
+        expect(time).toBeGreaterThanOrEqual(0);
+      });
     });
   });
 });
