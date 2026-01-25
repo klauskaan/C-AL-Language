@@ -711,16 +711,25 @@ export class Lexer {
       return;
     }
 
-    // Comments
+    // Comments - but NOT inside brackets where :// (URLs) and /* (text) are common
     if (ch === '/' && this.peek() === '/') {
-      this.scanLineComment();
-      return;
+      const state = this.state.getState();
+      // Skip line comment scanning when inside brackets (both inPropertyValue and general bracket contexts)
+      // URLs like https://... are common in InstructionalTextML, CaptionML, etc.
+      if (state.bracketDepth === 0) {
+        this.scanLineComment();
+        return;
+      }
     }
 
-    // C-style comments
+    // C-style comments - but NOT inside brackets where /* can appear in text
     if (ch === '/' && this.peek() === '*') {
-      this.scanCStyleComment();
-      return;
+      const state = this.state.getState();
+      // Skip C-style comment scanning when inside brackets
+      if (state.bracketDepth === 0) {
+        this.scanCStyleComment();
+        return;
+      }
     }
 
     // Handle braces based on context

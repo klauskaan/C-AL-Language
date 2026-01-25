@@ -381,20 +381,18 @@ export class LexerStateManager {
 
   /**
    * Handle opening bracket '['
-   * Only tracks depth when in property value mode
+   * Always tracks depth to support comment-like sequences in any bracket context
    */
   public onOpenBracket(): void {
-    if (this.inPropertyValue) {
-      this.bracketDepth++;
-    }
+    this.bracketDepth++;
   }
 
   /**
    * Handle closing bracket ']'
-   * Only tracks depth when in property value mode
+   * Always tracks depth to maintain bracket balance
    */
   public onCloseBracket(): void {
-    if (this.inPropertyValue && this.bracketDepth > 0) {
+    if (this.bracketDepth > 0) {
       this.bracketDepth--;
     }
   }

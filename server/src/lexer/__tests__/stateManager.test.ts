@@ -122,11 +122,12 @@ describe('LexerStateManager', () => {
   });
 
   describe('Bracket depth tracking', () => {
-    it('should NOT increment bracketDepth when not in property value mode', () => {
+    it('should increment bracketDepth regardless of property value mode', () => {
       const manager = new LexerStateManager();
       manager.onOpenBracket();
 
-      expect(manager.getState().bracketDepth).toBe(0);
+      // Brackets are now tracked globally to support comment-like sequences (://, /*) inside any brackets
+      expect(manager.getState().bracketDepth).toBe(1);
     });
 
     it('should increment bracketDepth in property value mode', () => {
@@ -158,23 +159,29 @@ describe('LexerStateManager', () => {
       expect(manager.getState().bracketDepth).toBe(0);
     });
 
-    it('should only track brackets inside property values', () => {
+    it('should track brackets globally to support comment-like sequences in any bracket context', () => {
       const manager = new LexerStateManager();
-      // Brackets outside property value context
+      // Brackets are now tracked globally (not just in property value context)
       manager.onOpenBracket();
       manager.onOpenBracket();
-      expect(manager.getState().bracketDepth).toBe(0);
+      expect(manager.getState().bracketDepth).toBe(2);
 
       // Enter property value
       manager.onSectionKeyword('FIELDS');
       manager.onIdentifier('OptionString', LexerContext.SECTION_LEVEL);
       manager.onEquals();
       manager.onOpenBracket();
-      expect(manager.getState().bracketDepth).toBe(1);
+      expect(manager.getState().bracketDepth).toBe(3);
 
-      // Exit property value
+      // Exit property value with semicolon
       manager.onSemicolon();
-      expect(manager.getState().bracketDepth).toBe(1); // Stays at 1, doesn't reset
+      expect(manager.getState().bracketDepth).toBe(3); // Bracket depth is independent of inPropertyValue
+
+      // Close brackets
+      manager.onCloseBracket();
+      manager.onCloseBracket();
+      manager.onCloseBracket();
+      expect(manager.getState().bracketDepth).toBe(0);
     });
   });
 
