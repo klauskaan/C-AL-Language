@@ -501,6 +501,7 @@ export function runCICheck(): CIResult {
   const results = exports.validateAllFiles(dirValidation.files);
 
   // Count failures
+  // In streaming mode, results only contains failures, so count them directly
   const actualFailures = results.filter((r: FileResult) =>
     !r.positionValidation.isValid || !r.cleanExit.passed
   ).length;
@@ -564,11 +565,33 @@ export function validateAllFiles(files?: string[]): FileResult[] {
   }
 
   console.log(`Found ${files.length} files to validate\n`);
-  const results: FileResult[] = [];
+
+  // TEMPORARY: Process in batches to work around V8/ts-node memory issue
+  // Process 5000 files at a time, then collect full results
+  const BATCH_SIZE = 5000;
+  const failures: FileResult[] = [];
+  let totalLines = 0;
+  let totalTokens = 0;
+  let totalFiles = 0;
+  let minTokenizeTime = Infinity;
+  let maxTokenizeTime = -Infinity;
+  let sumTokenizeTime = 0;
+
   const scanStartTime = performance.now();
 
-  for (const file of files) {
+  for (let batchStart = 0; batchStart < files.length; batchStart += BATCH_SIZE) {
+    const batchEnd = Math.min(batchStart + BATCH_SIZE, files.length);
+    const batch = files.slice(batchStart, batchEnd);
+
+    console.log(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(files.length / BATCH_SIZE)} (files ${batchStart + 1}-${batchEnd})...`);
+
+    for (const file of batch) {
     const filePath = join(realDir, file);
+
+    // Debug: Log every file around crash point
+    if (totalFiles >= 7590 && totalFiles <= 7610) {
+      console.log(`[DEBUG] Processing file ${totalFiles}: ${file}`);
+    }
 
     try {
       const { content } = readFileWithEncoding(filePath);
@@ -588,17 +611,31 @@ export function validateAllFiles(files?: string[]): FileResult[] {
         allowRdldataUnderflow: isReportFile(file)
       });
 
-      results.push({
-        file,
-        lines: lineCount,
-        tokenCount: tokens.length,
-        tokenizeTime,
-        positionValidation,
-        cleanExit
-      });
+      // Update aggregate metrics (all files)
+      totalLines += lineCount;
+      totalTokens += tokens.length;
+      totalFiles++;
+
+      // Track performance statistics
+      minTokenizeTime = Math.min(minTokenizeTime, tokenizeTime);
+      maxTokenizeTime = Math.max(maxTokenizeTime, tokenizeTime);
+      sumTokenizeTime += tokenizeTime;
+
+      // Only store full result if file has failures
+      const hasFailed = !positionValidation.isValid || !cleanExit.passed;
+      if (hasFailed) {
+        failures.push({
+          file,
+          lines: lineCount,
+          tokenCount: tokens.length,
+          tokenizeTime,
+          positionValidation,
+          cleanExit
+        });
+      }
     } catch (error) {
       // Record file read failure as an error result
-      results.push({
+      failures.push({
         file,
         lines: 0,
         tokenCount: 0,
@@ -614,55 +651,93 @@ export function validateAllFiles(files?: string[]): FileResult[] {
           categories: new Set()
         }
       });
+      totalFiles++;
       // Continue processing other files
       continue;
     }
 
     // Progress indicator every 100 files
-    if (results.length > 0 && results.length % 100 === 0) {
-      const failedCount = results.filter(r =>
-        !r.positionValidation.isValid || !r.cleanExit.passed
-      ).length;
+    if (totalFiles > 0 && totalFiles % 100 === 0) {
+      const failedCount = failures.length;
 
       const elapsedMs = performance.now() - scanStartTime;
       const elapsedStr = formatDuration(elapsedMs / 1000);
 
-      const eta = calculateETA(results.length, files.length, elapsedMs);
+      const eta = calculateETA(totalFiles, files.length, elapsedMs);
       const etaStr = eta !== null ? formatDuration(eta) : 'Calculating...';
 
+      // Debug: Show memory usage
+      const mem = process.memoryUsage();
+      const heapUsedMB = (mem.heapUsed / 1024 / 1024).toFixed(1);
+      const heapTotalMB = (mem.heapTotal / 1024 / 1024).toFixed(1);
+
       console.log(
-        `Processed ${results.length}/${files.length} files ` +
+        `Processed ${totalFiles}/${files.length} files ` +
         `(${failedCount} with failures) - ` +
-        `Elapsed: ${elapsedStr}, ETA: ${etaStr}`
+        `Elapsed: ${elapsedStr}, ETA: ${etaStr} - ` +
+        `Heap: ${heapUsedMB}/${heapTotalMB}MB`
       );
+
+      // Force garbage collection every 100 files to prevent memory accumulation
+      // This works around what appears to be a V8/ts-node memory leak
+      if (global.gc) {
+        global.gc();
+      }
     }
   }
 
-  return results;
+    // Force GC at end of batch
+    if (global.gc) {
+      global.gc();
+    }
+  }
+
+  // Attach aggregate metrics to results array for generateMarkdownReport
+  // Use failures' tokenize times for percentile calculation (approximation when few failures)
+  // If most files pass, this will be less accurate but prevents memory issues
+  const tokenizeTimes = failures.length > 100
+    ? failures.map(f => f.tokenizeTime)
+    : [];  // Empty array forces percentile calculation to return 0
+
+  (failures as any).__metrics = {
+    totalLines,
+    totalTokens,
+    totalFiles,
+    tokenizeTimes,  // Empty if few failures, to avoid memory issues
+    minTokenizeTime: minTokenizeTime === Infinity ? 0 : minTokenizeTime,
+    maxTokenizeTime: maxTokenizeTime === -Infinity ? 0 : maxTokenizeTime,
+    avgTokenizeTime: totalFiles > 0 ? sumTokenizeTime / totalFiles : 0
+  };
+
+  return failures;
 }
 
 export function generateMarkdownReport(results: FileResult[]): string {
+  // Extract metrics if available (streaming mode), otherwise compute from results (legacy mode)
+  const metrics = (results as any).__metrics;
+
   const filesWithPositionErrors = results.filter(r => !r.positionValidation.isValid);
   const filesWithExitErrors = results.filter(r => !r.cleanExit.passed);
-  const filesWithAnyError = results.filter(r =>
-    !r.positionValidation.isValid || !r.cleanExit.passed
-  );
+  const filesWithAnyError = results; // In streaming mode, results only contains failures
 
-  const totalLines = results.reduce((sum, r) => sum + r.lines, 0);
-  const totalTokens = results.reduce((sum, r) => sum + r.tokenCount, 0);
+  // Use pre-computed metrics if available, otherwise compute from results
+  const totalLines = metrics?.totalLines ?? results.reduce((sum, r) => sum + r.lines, 0);
+  const totalTokens = metrics?.totalTokens ?? results.reduce((sum, r) => sum + r.tokenCount, 0);
+  const totalFiles = metrics?.totalFiles ?? results.length;
+  const tokenizeTimes = metrics?.tokenizeTimes ?? results.map(r => r.tokenizeTime);
 
   // Guard against division by zero
-  const successRate = results.length > 0
-    ? ((1 - filesWithAnyError.length / results.length) * 100).toFixed(2)
+  const successRate = totalFiles > 0
+    ? ((1 - filesWithAnyError.length / totalFiles) * 100).toFixed(2)
     : '0.00';
 
   // Performance metrics
-  const tokenizeTimes = results.map(r => r.tokenizeTime);
   const p50 = calculatePercentile(tokenizeTimes, 50);
   const p95 = calculatePercentile(tokenizeTimes, 95);
   const p99 = calculatePercentile(tokenizeTimes, 99);
 
   // Outliers: files >2x p95 (strict greater-than)
+  // In streaming mode, we only have tokenizeTimes for failures, so compute outliers from failures only
   const outlierThreshold = p95 * 2;
   const outliers = results.filter(r => r.tokenizeTime > outlierThreshold);
 
@@ -672,14 +747,14 @@ export function generateMarkdownReport(results: FileResult[]): string {
   md += `**Generated:** ${new Date().toISOString()}\n\n`;
 
   // Handle empty results - don't show misleading "all passed" message
-  if (results.length === 0) {
+  if (totalFiles === 0) {
     md += '⚠️ **No files to validate**\n';
     return md;
   }
 
   // Summary section
   md += '## Summary\n\n';
-  md += `- **Total files:** ${results.length.toLocaleString()}\n`;
+  md += `- **Total files:** ${totalFiles.toLocaleString()}\n`;
   md += `- **Total lines:** ${totalLines.toLocaleString()}\n`;
   md += `- **Total tokens:** ${totalTokens.toLocaleString()}\n`;
   md += `- **Files with position errors:** ${filesWithPositionErrors.length.toLocaleString()}\n`;

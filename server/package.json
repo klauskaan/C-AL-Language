@@ -26,8 +26,8 @@
     "perf:memory": "NODE_OPTIONS='--expose-gc' ts-node src/__tests__/performance/benchmarks/memory.bench.ts",
     "perf:all": "npm run perf:benchmark && npm run perf:memory && npm run perf:compare",
     "validate:real": "ts-node scripts/validate-real.ts",
-    "lexer:health": "ts-node scripts/lexer-health.ts",
-    "lexer:health:ci": "ts-node scripts/lexer-health.ts --ci",
+    "lexer:health": "NODE_OPTIONS='--expose-gc --max-old-space-size=8192' ts-node scripts/lexer-health.ts",
+    "lexer:health:ci": "NODE_OPTIONS='--expose-gc --max-old-space-size=8192' ts-node scripts/lexer-health.ts --ci",
     "lexer:trace": "ts-node scripts/lexer-trace.ts",
     "ci:real-guard": "ts-node src/utils/ciRealGuard.ts"
   },
