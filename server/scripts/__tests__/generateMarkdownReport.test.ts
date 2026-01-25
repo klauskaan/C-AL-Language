@@ -214,6 +214,41 @@ describe('generateMarkdownReport', () => {
       // Should NOT show failures section
       expect(report).not.toContain('## Failures');
     });
+
+    it('should handle empty tokenizeTimes array (production behavior when failures <= 100)', () => {
+      // Production code sets tokenizeTimes=[] when failures.length <= 100
+      // This happens in high success rate scenarios to save memory (validateAllFiles in lexer-health.ts)
+      const results: FileResult[] = [];
+
+      // Attach metrics with empty tokenizeTimes (streaming mode: all files passed)
+      (results as any).__metrics = {
+        totalFiles: 8000,
+        totalLines: 800000,
+        totalTokens: 4000000,
+        tokenizeTimes: [],  // Empty - matches production when failures <= 100
+        minTokenizeTime: 5.2,
+        maxTokenizeTime: 150.3,
+        avgTokenizeTime: 12.5
+      };
+
+      const report = generateMarkdownReport(results);
+
+      // Should show summary with correct totals
+      expect(report).toContain('**Total files:** 8,000');
+      expect(report).toContain('**Success rate:** 100.00%');
+
+      // Percentiles should return 0 for empty tokenizeTimes
+      // calculatePercentile([],50) returns 0 (tested at lexer-health.test.ts:34)
+      expect(report).toContain('**p50 (median):** 0.00ms');
+      expect(report).toContain('**p95:** 0.00ms');
+      expect(report).toContain('**p99:** 0.00ms');
+
+      // No outliers section (results is empty - no failures to check)
+      expect(report).not.toContain('Performance Outliers');
+
+      // Should show success message (no failures)
+      expect(report).toContain('✅ **All files passed validation!**');
+    });
   });
 
   describe('Failure cases', () => {
