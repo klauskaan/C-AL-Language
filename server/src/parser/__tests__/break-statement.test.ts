@@ -332,7 +332,8 @@ describe('Parser - BREAK Statement', () => {
     });
 
     it('should parse BREAK in empty control flow pattern', () => {
-      // Edge case from adversarial review: IF TRUE THEN BREAK; ELSE;
+      // Edge case: IF TRUE THEN BREAK; ELSE;
+      // Semicolon after BREAK terminates the IF, so ELSE does NOT belong to IF
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -364,8 +365,8 @@ describe('Parser - BREAK Statement', () => {
       const breakStmt = ifStmt.thenBranch;
       expect(breakStmt.type).toBe('BreakStatement');
 
-      const elseStmt = ifStmt.elseBranch;
-      expect(elseStmt.type).toBe('EmptyStatement');
+      // IF should NOT have elseBranch (semicolon after BREAK terminates it)
+      expect(ifStmt.elseBranch).toBeNull();
     });
   });
 

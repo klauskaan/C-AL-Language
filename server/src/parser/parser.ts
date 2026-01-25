@@ -2752,6 +2752,63 @@ export class Parser {
     };
   }
 
+  /**
+   * Determines if a statement was terminated by a semicolon.
+   * For compound statements (WHILE, FOR, WITH, nested IF), this recursively
+   * checks their inner statements since semicolons inside compound statements
+   * affect ELSE attribution for outer IFs.
+   *
+   * KEY RULES:
+   * 1. Self-contained statements (BEGIN/END, CASE, REPEAT) are never terminated internally
+   * 2. Simple statements (calls, assignments, etc.) propagate from their endToken
+   * 3. Compound wrappers (WHILE, FOR, WITH) propagate from their body
+   * 4. IF without elseBranch is never terminated (allows outer IF to claim ELSE)
+   * 5. IF with elseBranch propagates from elseBranch
+   */
+  private isStatementTerminatedBySemicolon(stmt: Statement): boolean {
+    switch (stmt.type) {
+      // Simple statements: check if their endToken is a semicolon
+      case 'CallStatement':
+      case 'AssignmentStatement':
+      case 'ExitStatement':
+      case 'BreakStatement':
+      case 'EmptyStatement':
+        return stmt.endToken?.type === TokenType.Semicolon;
+
+      // Compound statements that wrap a single body: propagate from body
+      case 'WhileStatement':
+      case 'ForStatement':
+      case 'WithStatement':
+        return this.isStatementTerminatedBySemicolon((stmt as WhileStatement | ForStatement | WithStatement).body);
+
+      // IF statement: Check if the IF can claim a following ELSE
+      // If elseBranch exists, check if it's terminated (prevents outer IF from claiming ELSE)
+      // If no elseBranch, this IF is "open" and could claim a following ELSE
+      case 'IfStatement': {
+        const ifStmt = stmt as IfStatement;
+        if (ifStmt.elseBranch) {
+          // IF with elseBranch: check if complete IF-ELSE ends with semicolon
+          return this.isStatementTerminatedBySemicolon(ifStmt.elseBranch);
+        } else {
+          // IF without elseBranch: this IF is "open" and could claim a following ELSE
+          // Don't propagate inner thenBranch termination to outer constructs
+          return false;
+        }
+      }
+
+      // Self-contained statements: check if followed by semicolon after END/UNTIL
+      case 'BlockStatement':
+      case 'CaseStatement':
+      case 'RepeatStatement':
+        // These statements end with END/UNTIL - check if followed by semicolon
+        return stmt.endToken?.type === TokenType.Semicolon;
+
+      // Default: not terminated
+      default:
+        return false;
+    }
+  }
+
   private parseIfStatement(): IfStatement {
     const startToken = this.consume(TokenType.If, 'Expected IF');
 
@@ -2784,8 +2841,12 @@ export class Parser {
     }
 
     // Parse optional else branch
+    // C/AL rule: A semicolon terminates the IF statement's ability to claim an ELSE.
+    // For compound statements (WHILE, FOR, WITH, nested IF), we recursively check if
+    // their inner statements were terminated by semicolon.
     let elseBranch: Statement | null = null;
-    if (this.check(TokenType.Else)) {
+    const thenEndedWithSemicolon = this.isStatementTerminatedBySemicolon(thenBranch);
+    if (this.check(TokenType.Else) && !thenEndedWithSemicolon) {
       this.advance();
       if (this.check(TokenType.Begin)) {
         elseBranch = this.parseBlock();
