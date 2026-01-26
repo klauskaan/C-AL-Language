@@ -999,12 +999,15 @@ export class Lexer {
       // Check if we're in a data type context (not a parameter name)
       else {
         // Determine if this is a data type position:
-        // 1. After colon: "Param : Code[20]" or "VAR x : Code;"
-        // 2. After OF keyword: "ARRAY[10] OF Code[20]"
+        // 1. After colon: "Param : Code[20]" or "VAR x : Code;" (but NOT "CASE label : identifier")
+        // 2. After OF keyword: "ARRAY[10] OF Code[20]" (but NOT "CASE x OF")
         // 3. In FIELDS section at COL_4: "{ 1 ; ; FieldName ; Code[10] }"
         const state = this.state.getState();
-        const isAfterColon = prevToken && prevToken.type === TokenType.Colon;
-        const isAfterOf = prevToken && prevToken.type === TokenType.Of;
+        const isAfterColon = prevToken && prevToken.type === TokenType.Colon &&
+                             this.getCurrentContext() !== LexerContext.CASE_BLOCK;
+        // In CASE blocks, OF introduces case labels (identifiers), not data types
+        const isAfterOf = prevToken && prevToken.type === TokenType.Of &&
+                         this.getCurrentContext() !== LexerContext.CASE_BLOCK;
         const isFieldDataType = state.currentSectionType === 'FIELDS' && state.fieldDefColumn === FieldDefColumn.COL_4;
         const isInDataTypeContext = isAfterColon || isAfterOf || isFieldDataType;
 
@@ -1019,6 +1022,11 @@ export class Lexer {
         // If followed by '[' but NOT in data type context, might be array access
         // For safety, convert to identifier
         else if (nextChar === '[') {
+          tokenType = TokenType.Identifier;
+        }
+        // In code context but NOT in data type position (e.g., RecCustomer.Date, WITH Rec DO Time := ...)
+        // Downgrade to identifier since this is a field/variable name, not a type
+        else if (this.isInCodeContext()) {
           tokenType = TokenType.Identifier;
         }
         // Otherwise, let it fall through to section keyword downgrade logic below
