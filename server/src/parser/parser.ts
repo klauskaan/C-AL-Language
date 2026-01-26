@@ -1869,10 +1869,13 @@ export class Parser {
       } catch (error) {
         if (error instanceof ParseError) {
           this.errors.push(error);
-          // Skip to next procedure/trigger/event/end
+          // Skip to next procedure/trigger/event declaration
+          // Note: BEGIN is intentionally NOT a stopping token here - if we're
+          // recovering from "PROCEDURE BEGIN" (invalid), we need to skip past
+          // the BEGIN to find the next real procedure declaration
           while (!this.check(TokenType.Procedure) && !this.check(TokenType.Function) &&
                  !this.check(TokenType.Trigger) && !this.check(TokenType.Event) &&
-                 !this.check(TokenType.Begin) && !this.isAtEnd()) {
+                 !this.isAtEnd()) {
             this.advance();
           }
         } else {
@@ -2200,6 +2203,14 @@ export class Parser {
    * Parse procedure/function name, handling @number syntax for C/AL auto-numbering
    */
   private parseProcedureName(): { name: string; nameToken: Token } {
+    // Validate BEFORE advancing - cannot use structural keywords as procedure names
+    if (!this.canBeUsedAsIdentifier()) {
+      throw this.createParseError(
+        `Expected procedure name, found '${sanitizeContent(this.peek().value)}'`,
+        this.peek()
+      );
+    }
+
     const nameToken = this.advance();
     const name = nameToken.value;
 

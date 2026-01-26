@@ -638,4 +638,398 @@ describe('Parser - Error Messages with Context', () => {
       expect(contextualErrors.length).toBeGreaterThan(0);
     });
   });
+
+  describe('REGRESSION TEST #251: Procedure name validation', () => {
+    describe('Invalid structural keywords as procedure names', () => {
+      it('should report error when PROCEDURE keyword is used as procedure name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE PROCEDURE();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        // Should report an error about invalid procedure name
+        expect(errors.length).toBeGreaterThan(0);
+        const nameError = errors.find(e => e.message.includes('Expected procedure name'));
+        expect(nameError).toBeDefined();
+      });
+
+      it('should report error when BEGIN keyword is used as procedure name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE BEGIN();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        const nameError = errors.find(e => e.message.includes('Expected procedure name'));
+        expect(nameError).toBeDefined();
+      });
+
+      it('should report error when IF keyword is used as procedure name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE IF();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        const nameError = errors.find(e => e.message.includes('Expected procedure name'));
+        expect(nameError).toBeDefined();
+      });
+
+      it('should report error when END keyword is used as procedure name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE END();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        const nameError = errors.find(e => e.message.includes('Expected procedure name'));
+        expect(nameError).toBeDefined();
+      });
+
+      it('should report error when VAR keyword is used as procedure name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE VAR();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        const nameError = errors.find(e => e.message.includes('Expected procedure name'));
+        expect(nameError).toBeDefined();
+      });
+    });
+
+    describe('Invalid punctuation/operators as procedure names', () => {
+      it('should report error when LeftParen is used as procedure name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE ();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        const nameError = errors.find(e => e.message.includes('Expected procedure name'));
+        expect(nameError).toBeDefined();
+      });
+
+      it('should report error when Semicolon is used as procedure name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE ;
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        const nameError = errors.find(e => e.message.includes('Expected procedure name'));
+        expect(nameError).toBeDefined();
+      });
+
+      it('should report error when procedure name is missing (EOF after PROCEDURE)', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE`;
+
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors.some(e => e.message.includes('Expected procedure name'))).toBe(true);
+      });
+    });
+
+    describe('Critical cascade prevention tests', () => {
+      it('should continue parsing after invalid procedure name with LeftParen', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE ();
+    PROCEDURE ValidProc();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Should report error for first invalid procedure
+        expect(errors.length).toBeGreaterThan(0);
+
+        // But should still parse the second procedure
+        const procedures = ast.object?.code?.procedures || [];
+
+        // Should have the valid procedure in the AST
+        const validProc = procedures.find(p => p.name === 'ValidProc');
+        expect(validProc).toBeDefined();
+        expect(validProc?.name).toBe('ValidProc');
+      });
+
+      it('should continue parsing after invalid procedure name with BEGIN keyword', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE BEGIN
+      MESSAGE('This should not happen');
+    END;
+    PROCEDURE ValidProc();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Should report error for first invalid procedure
+        expect(errors.length).toBeGreaterThan(0);
+
+        // Should recover and parse ValidProc
+        const procedures = ast.object?.code?.procedures || [];
+        const validProc = procedures.find(p => p.name === 'ValidProc');
+        expect(validProc).toBeDefined();
+        expect(validProc?.name).toBe('ValidProc');
+      });
+
+      it('should not consume subsequent procedures during error recovery', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE IF();
+    PROCEDURE AnotherValidProc();
+    BEGIN
+    END;
+    PROCEDURE ThirdValidProc();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Should report error for invalid procedure
+        expect(errors.length).toBeGreaterThan(0);
+
+        // Should have both valid procedures in AST
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBeGreaterThanOrEqual(2);
+
+        const secondProc = procedures.find(p => p.name === 'AnotherValidProc');
+        const thirdProc = procedures.find(p => p.name === 'ThirdValidProc');
+
+        expect(secondProc).toBeDefined();
+        expect(secondProc?.name).toBe('AnotherValidProc');
+        expect(thirdProc).toBeDefined();
+        expect(thirdProc?.name).toBe('ThirdValidProc');
+      });
+    });
+
+    describe('Valid cases (regression)', () => {
+      it('should accept normal identifier as procedure name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE MyProc();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBe(0);
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(1);
+        expect(procedures[0].name).toBe('MyProc');
+      });
+
+      it('should accept identifier with auto-number as procedure name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE MyProc@123();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBe(0);
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(1);
+        expect(procedures[0].name).toBe('MyProc');
+      });
+
+      it('should accept quoted identifier as procedure name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE "Quoted Name"();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBe(0);
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(1);
+        expect(procedures[0].name).toBe('Quoted Name');
+      });
+
+      it('should accept Table keyword as procedure name (allowed keyword)', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Table();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBe(0);
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(1);
+        expect(procedures[0].name).toBe('Table');
+      });
+
+      it('should accept Code keyword as procedure name (allowed keyword)', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Code();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBe(0);
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(1);
+        expect(procedures[0].name).toBe('Code');
+      });
+    });
+  });
 });
