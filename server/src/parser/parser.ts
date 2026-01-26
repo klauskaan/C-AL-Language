@@ -1863,8 +1863,22 @@ export class Parser {
         if (this.check(TokenType.Procedure) || this.check(TokenType.Function)) {
           procedures.push(this.parseProcedure(isLocal, attributes));
         } else if (this.check(TokenType.Trigger)) {
+          if (firstLeftBracket !== null) {
+            const count = attributeAttempts;
+            this.recordError(
+              `${count} ${count === 1 ? 'attribute' : 'attributes'} ignored - attributes are only supported on PROCEDURE declarations in C/AL`,
+              firstLeftBracket
+            );
+          }
           triggers.push(this.parseTrigger());
         } else if (this.check(TokenType.Event)) {
+          if (firstLeftBracket !== null) {
+            const count = attributeAttempts;
+            this.recordError(
+              `${count} ${count === 1 ? 'attribute' : 'attributes'} ignored - attributes are only supported on PROCEDURE declarations in C/AL`,
+              firstLeftBracket
+            );
+          }
           events.push(this.parseEvent());
         } else if (this.check(TokenType.Begin)) {
           // Main code block (documentation trigger) - skip for now

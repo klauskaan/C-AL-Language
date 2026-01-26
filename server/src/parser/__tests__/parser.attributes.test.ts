@@ -501,11 +501,10 @@ describe('Parser - Procedure Attributes', () => {
         expect(errors[0].message).toContain('Expected ] to close attribute');
       });
 
-      it('should silently discard attributes before triggers', () => {
-        // C/AL triggers don't support attributes - the parser silently discards them
-        // This is consistent with C/AL's lack of trigger attribute support
-        // Note: This behavior is different from procedure errors where we warn about
-        // discarded attributes. For triggers, attributes are always ignored (not an error case).
+      it('should warn when attribute precedes TRIGGER declaration', () => {
+        // Issue #253: C/AL triggers don't support attributes
+        // Parser now warns when attributes appear before TRIGGER declarations
+        // This helps users understand why their attributes are being ignored
         const code = `OBJECT Table 1 Test {
           CODE {
             [External]
@@ -518,13 +517,137 @@ describe('Parser - Procedure Attributes', () => {
         const parser = new Parser(lexer.tokenize());
         const ast = parser.parse();
 
-        // No errors - attributes are silently ignored for triggers
-        expect(parser.getErrors()).toHaveLength(0);
+        // Expect exactly 1 warning
+        const errors = parser.getErrors();
+        expect(errors).toHaveLength(1);
+        expect(errors[0].message).toContain('1 attribute ignored');
+        expect(errors[0].message).toContain('attributes are only supported on PROCEDURE declarations in C/AL');
 
-        // Trigger parses successfully
+        // Trigger should still parse successfully
         const table = ast.object as any;
         expect(table.code.triggers).toHaveLength(1);
         expect(table.code.triggers[0].name).toBe('OnInsert');
+      });
+
+      it('should warn when multiple attributes precede TRIGGER declaration', () => {
+        const code = `OBJECT Table 1 Test {
+          CODE {
+            [External]
+            [TryFunction]
+            TRIGGER OnInsert();
+            BEGIN
+            END;
+          }
+        }`;
+        const lexer = new Lexer(code);
+        const parser = new Parser(lexer.tokenize());
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Expect exactly 1 warning with correct count
+        expect(errors).toHaveLength(1);
+        expect(errors[0].message).toContain('2 attributes ignored');
+        expect(errors[0].message).toContain('attributes are only supported on PROCEDURE declarations in C/AL');
+
+        // Trigger should still parse successfully
+        const table = ast.object as any;
+        expect(table.code.triggers).toHaveLength(1);
+        expect(table.code.triggers[0].name).toBe('OnInsert');
+      });
+
+      it('should warn when attribute precedes EVENT declaration', () => {
+        // Use TRIGGER instead of EVENT (C/AL doesn't have EVENT at code level)
+        const code = `OBJECT Table 1 Test {
+          CODE {
+            [External]
+            TRIGGER OnValidate();
+            BEGIN
+            END;
+          }
+        }`;
+        const lexer = new Lexer(code);
+        const parser = new Parser(lexer.tokenize());
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Expect at least 1 warning about ignored attributes
+        const attributeWarning = errors.find(e =>
+          e.message.includes('1 attribute ignored') &&
+          e.message.includes('attributes are only supported on PROCEDURE declarations')
+        );
+        expect(attributeWarning).toBeDefined();
+
+        // Trigger should still parse successfully
+        const table = ast.object as any;
+        expect(table.code.triggers).toHaveLength(1);
+      });
+
+      it('should warn when multiple attributes precede EVENT declaration', () => {
+        // Use TRIGGER instead of EVENT (C/AL doesn't have EVENT at code level)
+        const code = `OBJECT Table 1 Test {
+          CODE {
+            [External]
+            [Integration]
+            TRIGGER OnModify();
+            BEGIN
+            END;
+          }
+        }`;
+        const lexer = new Lexer(code);
+        const parser = new Parser(lexer.tokenize());
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Expect at least 1 warning about ignored attributes
+        const attributeWarning = errors.find(e =>
+          e.message.includes('2 attributes ignored') &&
+          e.message.includes('attributes are only supported on PROCEDURE declarations')
+        );
+        expect(attributeWarning).toBeDefined();
+
+        // Trigger should still parse successfully
+        const table = ast.object as any;
+        expect(table.code.triggers).toHaveLength(1);
+      });
+
+      it('should warn about attributes after error recovery then before trigger', () => {
+        const code = `OBJECT Table 1 Test {
+          CODE {
+            [External]
+            PROCEDURE;  // Invalid - missing name
+
+            [Integration]
+            TRIGGER OnInsert();
+            BEGIN
+            END;
+          }
+        }`;
+        const lexer = new Lexer(code);
+        const parser = new Parser(lexer.tokenize());
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Should have at least 2 errors:
+        // 1. Error from malformed procedure ("Expected procedure name")
+        // 2. Warning that attribute before malformed procedure was discarded
+        // Note: [Integration] is skipped during error recovery, so no warning for it
+        expect(errors.length).toBeGreaterThanOrEqual(2);
+
+        // Find the error about the malformed procedure
+        const malformedProcError = errors.find(e =>
+          e.message.includes('Expected procedure name')
+        );
+        expect(malformedProcError).toBeDefined();
+
+        // Find the error about discarded attributes
+        const discardedAttrError = errors.find(e =>
+          e.message.includes('discarded due to invalid declaration')
+        );
+        expect(discardedAttrError).toBeDefined();
+
+        // Trigger should still parse successfully even after error recovery
+        const table = ast.object as any;
+        expect(table.code.triggers).toHaveLength(1);
       });
     });
   });
