@@ -90,6 +90,8 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
   TokenType.Fields,     // e.g., "Fields" parameter name (2 occurrences)
   TokenType.Keys,       // e.g., "Keys" section keyword but can be used as name (like Fields, Controls)
   TokenType.Byte,       // e.g., "Byte" parameter name (1 occurrence)
+  TokenType.Break,      // Issue #258: "Break" procedure name (REP6005597.TXT:835)
+                        // Note: Calls require quoted syntax ("Break";) to disambiguate from BREAK statement
   TokenType.ALOnlyKeyword,         // Enum, Interface, Extends, Implements can be variable names
   TokenType.ALOnlyAccessModifier,  // Internal, Protected, Public can be variable names
 ]);
