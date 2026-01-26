@@ -556,11 +556,10 @@ describe('Parser - Procedure Attributes', () => {
       });
 
       it('should warn when attribute precedes EVENT declaration', () => {
-        // Use TRIGGER instead of EVENT (C/AL doesn't have EVENT at code level)
-        const code = `OBJECT Table 1 Test {
+        const code = `OBJECT Page 1 Test {
           CODE {
             [External]
-            TRIGGER OnValidate();
+            EVENT WebViewer@1::ControlAddInReady@2(sender@1000 : Variant);
             BEGIN
             END;
           }
@@ -570,25 +569,23 @@ describe('Parser - Procedure Attributes', () => {
         const ast = parser.parse();
         const errors = parser.getErrors();
 
-        // Expect at least 1 warning about ignored attributes
-        const attributeWarning = errors.find(e =>
-          e.message.includes('1 attribute ignored') &&
-          e.message.includes('attributes are only supported on PROCEDURE declarations')
-        );
-        expect(attributeWarning).toBeDefined();
+        // Expect exactly 1 warning
+        expect(errors).toHaveLength(1);
+        expect(errors[0].message).toContain('1 attribute ignored');
+        expect(errors[0].message).toContain('attributes are only supported on PROCEDURE declarations in C/AL');
 
-        // Trigger should still parse successfully
-        const table = ast.object as any;
-        expect(table.code.triggers).toHaveLength(1);
+        // Event should still parse successfully
+        const page = ast.object as any;
+        expect(page.code.events).toHaveLength(1);
+        expect(page.code.events[0].subscriberName).toBe('WebViewer@1');
       });
 
       it('should warn when multiple attributes precede EVENT declaration', () => {
-        // Use TRIGGER instead of EVENT (C/AL doesn't have EVENT at code level)
-        const code = `OBJECT Table 1 Test {
+        const code = `OBJECT Page 1 Test {
           CODE {
             [External]
             [Integration]
-            TRIGGER OnModify();
+            EVENT Chart@1::DataPointClicked@2(point@1000 : Integer);
             BEGIN
             END;
           }
@@ -598,16 +595,15 @@ describe('Parser - Procedure Attributes', () => {
         const ast = parser.parse();
         const errors = parser.getErrors();
 
-        // Expect at least 1 warning about ignored attributes
-        const attributeWarning = errors.find(e =>
-          e.message.includes('2 attributes ignored') &&
-          e.message.includes('attributes are only supported on PROCEDURE declarations')
-        );
-        expect(attributeWarning).toBeDefined();
+        // Expect exactly 1 warning with correct count
+        expect(errors).toHaveLength(1);
+        expect(errors[0].message).toContain('2 attributes ignored');
+        expect(errors[0].message).toContain('attributes are only supported on PROCEDURE declarations in C/AL');
 
-        // Trigger should still parse successfully
-        const table = ast.object as any;
-        expect(table.code.triggers).toHaveLength(1);
+        // Event should still parse successfully
+        const page = ast.object as any;
+        expect(page.code.events).toHaveLength(1);
+        expect(page.code.events[0].subscriberName).toBe('Chart@1');
       });
 
       it('should warn about attributes after error recovery then before trigger', () => {
