@@ -1,0 +1,386 @@
+OBJECT Codeunit 50000 Keyword Procedure Names Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=26-01-26;
+    Time=16:00:00;
+    Modified=Yes;
+    Version List=TEST;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            // Test that all C/AL keywords can be used as procedure names
+            // Based on real NAV usage found in production code
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      TestResult@1000 : Boolean;
+
+    PROCEDURE Object@1();
+    BEGIN
+      // TokenType.Object - Object type keyword
+    END;
+
+    PROCEDURE Table@2();
+    BEGIN
+      // TokenType.Table - Object type keyword
+    END;
+
+    PROCEDURE Page@3();
+    BEGIN
+      // TokenType.Page - Object type keyword
+    END;
+
+    PROCEDURE Report@4();
+    BEGIN
+      // TokenType.Report - Object type keyword
+    END;
+
+    PROCEDURE Codeunit@5();
+    BEGIN
+      // TokenType.Codeunit - Object type keyword
+    END;
+
+    PROCEDURE Query@6();
+    BEGIN
+      // TokenType.Query - Object type keyword
+    END;
+
+    PROCEDURE XMLport@7();
+    BEGIN
+      // TokenType.XMLport - Object type keyword
+    END;
+
+    PROCEDURE MenuSuite@8();
+    BEGIN
+      // TokenType.MenuSuite - Object type keyword
+    END;
+
+    PROCEDURE Properties@9();
+    BEGIN
+      // TokenType.Properties - Section keyword
+    END;
+
+    PROCEDURE Fields@10();
+    BEGIN
+      // TokenType.Fields - Section keyword
+    END;
+
+    PROCEDURE Keys@11();
+    BEGIN
+      // TokenType.Keys - Section keyword
+    END;
+
+    PROCEDURE FieldGroups@12();
+    BEGIN
+      // TokenType.FieldGroups - Section keyword
+    END;
+
+    PROCEDURE Code@13();
+    BEGIN
+      // TokenType.Code - Section keyword
+    END;
+
+    PROCEDURE Controls@14();
+    BEGIN
+      // TokenType.Controls - Section keyword
+    END;
+
+    PROCEDURE Actions@15();
+    BEGIN
+      // TokenType.Actions - Section keyword
+    END;
+
+    PROCEDURE DataItems@16();
+    BEGIN
+      // TokenType.DataItems - Section keyword
+    END;
+
+    PROCEDURE Elements@17();
+    BEGIN
+      // TokenType.Elements - Section keyword
+    END;
+
+    PROCEDURE Dataset@18();
+    BEGIN
+      // TokenType.Dataset - Section keyword
+    END;
+
+    PROCEDURE Labels@19();
+    BEGIN
+      // TokenType.Labels - Section keyword
+    END;
+
+    PROCEDURE Boolean@20();
+    BEGIN
+      // TokenType.Boolean - Data type keyword
+    END;
+
+    PROCEDURE Text@21();
+    BEGIN
+      // TokenType.Text - Data type keyword
+    END;
+
+    PROCEDURE Record@22();
+    BEGIN
+      // TokenType.Record - Data type keyword
+    END;
+
+    PROCEDURE RecordID@23();
+    BEGIN
+      // TokenType.RecordID - Data type keyword
+    END;
+
+    PROCEDURE RecordRef@24();
+    BEGIN
+      // TokenType.RecordRef - Data type keyword
+    END;
+
+    PROCEDURE FieldRef@25();
+    BEGIN
+      // TokenType.FieldRef - Data type keyword
+    END;
+
+    PROCEDURE BigInteger@26();
+    BEGIN
+      // TokenType.BigInteger - Data type keyword
+    END;
+
+    PROCEDURE BigText@27();
+    BEGIN
+      // TokenType.BigText - Data type keyword
+    END;
+
+    PROCEDURE BLOB@28();
+    BEGIN
+      // TokenType.BLOB - Data type keyword
+    END;
+
+    PROCEDURE GUID@29();
+    BEGIN
+      // TokenType.GUID - Data type keyword
+    END;
+
+    PROCEDURE Duration@30();
+    BEGIN
+      // TokenType.Duration - Data type keyword
+    END;
+
+    PROCEDURE Option@31();
+    BEGIN
+      // TokenType.Option - Data type keyword
+    END;
+
+    PROCEDURE Char@32();
+    BEGIN
+      // TokenType.Char - Data type keyword
+    END;
+
+    PROCEDURE Byte@33();
+    BEGIN
+      // TokenType.Byte - Data type keyword
+    END;
+
+    PROCEDURE TextConst@34();
+    BEGIN
+      // TokenType.TextConst - Data type keyword
+    END;
+
+    PROCEDURE If@35();
+    BEGIN
+      // TokenType.If - Control flow keyword
+    END;
+
+    PROCEDURE Then@36();
+    BEGIN
+      // TokenType.Then - Control flow keyword
+    END;
+
+    PROCEDURE Else@37();
+    BEGIN
+      // TokenType.Else - Control flow keyword
+    END;
+
+    PROCEDURE Case@38();
+    BEGIN
+      // TokenType.Case - Control flow keyword
+    END;
+
+    PROCEDURE Of@39();
+    BEGIN
+      // TokenType.Of - Control flow keyword
+    END;
+
+    PROCEDURE While@40();
+    BEGIN
+      // TokenType.While - Loop keyword
+    END;
+
+    PROCEDURE Do@41();
+    BEGIN
+      // TokenType.Do - Loop keyword
+    END;
+
+    PROCEDURE Repeat@42();
+    BEGIN
+      // TokenType.Repeat - Loop keyword
+    END;
+
+    PROCEDURE Until@43();
+    BEGIN
+      // TokenType.Until - Loop keyword
+    END;
+
+    PROCEDURE For@44();
+    BEGIN
+      // TokenType.For - Loop keyword
+    END;
+
+    PROCEDURE To@45();
+    BEGIN
+      // TokenType.To - Loop keyword
+    END;
+
+    PROCEDURE DownTo@46();
+    BEGIN
+      // TokenType.DownTo - Loop keyword
+    END;
+
+    PROCEDURE Exit@47();
+    BEGIN
+      // TokenType.Exit - Statement keyword (FOUND IN REAL NAV: not used)
+    END;
+
+    PROCEDURE Break@48();
+    BEGIN
+      // TokenType.Break - Statement keyword (FOUND IN REAL NAV: REP6005597.TXT)
+    END;
+
+    PROCEDURE Procedure@49();
+    BEGIN
+      // TokenType.Procedure - Declaration keyword
+    END;
+
+    PROCEDURE Function@50();
+    BEGIN
+      // TokenType.Function - Declaration keyword
+    END;
+
+    PROCEDURE Local@51();
+    BEGIN
+      // TokenType.Local - Modifier keyword
+    END;
+
+    PROCEDURE Var@52();
+    BEGIN
+      // TokenType.Var - Declaration keyword
+    END;
+
+    PROCEDURE Trigger@53();
+    BEGIN
+      // TokenType.Trigger - Declaration keyword
+    END;
+
+    PROCEDURE Event@54();
+    BEGIN
+      // TokenType.Event - Declaration keyword
+    END;
+
+    PROCEDURE Begin@55();
+    BEGIN
+      // TokenType.Begin - Block keyword
+    END;
+
+    PROCEDURE End@56();
+    BEGIN
+      // TokenType.End - Block keyword
+    END;
+
+    PROCEDURE True@57();
+    BEGIN
+      // TokenType.True - Boolean literal
+    END;
+
+    PROCEDURE False@58();
+    BEGIN
+      // TokenType.False - Boolean literal
+    END;
+
+    PROCEDURE Div@59();
+    BEGIN
+      // TokenType.Div - Arithmetic operator keyword
+    END;
+
+    PROCEDURE Mod@60();
+    BEGIN
+      // TokenType.Mod - Arithmetic operator keyword
+    END;
+
+    PROCEDURE And@61();
+    BEGIN
+      // TokenType.And - Logical operator keyword
+    END;
+
+    PROCEDURE Or@62();
+    BEGIN
+      // TokenType.Or - Logical operator keyword
+    END;
+
+    PROCEDURE Not@63();
+    BEGIN
+      // TokenType.Not - Logical operator keyword
+    END;
+
+    PROCEDURE Xor@64();
+    BEGIN
+      // TokenType.Xor - Logical operator keyword
+    END;
+
+    PROCEDURE In@65();
+    BEGIN
+      // TokenType.In - Set membership operator keyword
+    END;
+
+    PROCEDURE With@66();
+    BEGIN
+      // TokenType.With - Statement keyword
+    END;
+
+    PROCEDURE Array@67();
+    BEGIN
+      // TokenType.Array - Type modifier keyword
+    END;
+
+    PROCEDURE Temporary@68();
+    BEGIN
+      // TokenType.Temporary - Modifier keyword
+    END;
+
+    PROCEDURE InDataSet@69();
+    BEGIN
+      // TokenType.InDataSet - Modifier keyword
+    END;
+
+    PROCEDURE RunOnClient@70();
+    BEGIN
+      // TokenType.RunOnClient - Modifier keyword
+    END;
+
+    PROCEDURE WithEvents@71();
+    BEGIN
+      // TokenType.WithEvents - Modifier keyword
+    END;
+
+    PROCEDURE SecurityFiltering@72();
+    BEGIN
+      // TokenType.SecurityFiltering - Modifier keyword
+    END;
+
+    BEGIN
+    END.
+  }
+}
