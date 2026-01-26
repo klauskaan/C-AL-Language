@@ -9,7 +9,7 @@
  * - ParseError.token stores the raw Token object with unsanitized token.value field
  * - This is INTENTIONAL and SAFE because:
  *   1. LSP diagnostics use only error.message (sanitized), never error.token.value
- *   2. token.value.length is used for range calculation (safe - numeric value only)
+ *   2. Source span (endOffset - startOffset) is used for range calculation (safe - numeric value only)
  *   3. The token object itself is never serialized to the LSP client
  *
  * Security Boundary:
@@ -18,7 +18,9 @@
  * │                                                                 │
  * │  .message   → SANITIZED (exposed to LSP client)                │
  * │  .token     → RAW CONTENT (server-internal use only)           │
- * │    ├─ .value      → Used for .length calculation ONLY         │
+ * │    ├─ .value      → Never exposed directly                    │
+ * │    ├─ .startOffset → Source position (safe numeric)           │
+ * │    ├─ .endOffset   → Source position (safe numeric)           │
  * │    ├─ .line       → Safe numeric metadata                     │
  * │    ├─ .column     → Safe numeric metadata                     │
  * │    └─ .type       → Safe enum value                           │
@@ -88,6 +90,8 @@ function parseAndGetErrors(code: string): ParseError[] {
  * IMPORTANT: This helper must stay in sync with server.ts diagnostic creation.
  * If server.ts adds new fields that might expose token.value, these tests
  * may not catch it. Consider periodic review.
+ *
+ * Uses source span (endOffset - startOffset) for accurate range calculation.
  */
 function createDiagnostic(error: ParseError) {
   return {
@@ -99,7 +103,7 @@ function createDiagnostic(error: ParseError) {
       },
       end: {
         line: error.token.line - 1,
-        character: error.token.column + error.token.value.length - 1
+        character: error.token.column + (error.token.endOffset - error.token.startOffset) - 1
       }
     },
     message: error.message,
@@ -113,12 +117,12 @@ describe('ParseError Token Isolation (Issue #147)', () => {
       // DESIGN DECISION: This test DOCUMENTS intentional behavior
       //
       // ParseError.token.value contains RAW unsanitized content because:
-      // 1. We need the actual length for accurate diagnostic range calculation
-      // 2. The Token object is never serialized or sent to the LSP client
-      // 3. Only error.message (sanitized) is exposed in diagnostics
+      // 1. The Token object is never serialized or sent to the LSP client
+      // 2. Only error.message (sanitized) is exposed in diagnostics
+      // 3. Range calculation uses source span (endOffset - startOffset), not token.value
       //
       // This is SAFE because the LSP diagnostic creation pattern (server.ts:343-350)
-      // extracts only: error.message, token.line, token.column, token.value.length
+      // extracts only: error.message, token.line, token.column, token.startOffset, token.endOffset
 
       const SENSITIVE = '$PROPRIETARY_CONTENT$';
       const code = `"${SENSITIVE}`;
@@ -260,9 +264,9 @@ describe('ParseError Token Isolation (Issue #147)', () => {
       expect(diagnostic).not.toHaveProperty('token');
     });
 
-    it('should use token.value.length for range calculation only', () => {
-      // Verify that token.value is accessed ONLY for its .length property,
-      // which is a safe numeric value, not the string content itself
+    it('should use source span for range calculation only', () => {
+      // Verify that range calculation uses source span (endOffset - startOffset),
+      // which are safe numeric values, not the string content itself
 
       const code = `"UnclosedIdentifier`;
 
@@ -272,14 +276,14 @@ describe('ParseError Token Isolation (Issue #147)', () => {
       const error = errors[0];
       const diagnostic = createDiagnostic(error);
 
-      // The .length is used for calculating the end character position
-      const expectedLength = error.token.value.length;
+      // The source span is used for calculating the end character position
+      const expectedLength = error.token.endOffset - error.token.startOffset;
       const calculatedEndChar = error.token.column + expectedLength - 1;
 
-      // Verify the diagnostic uses the length-based calculation
+      // Verify the diagnostic uses the span-based calculation
       expect(diagnostic.range.end.character).toBe(calculatedEndChar);
 
-      // This is safe because we're using the LENGTH (number), not VALUE (string)
+      // This is safe because we're using source offsets (numbers), not VALUE (string)
       expect(typeof expectedLength).toBe('number');
       expect(typeof calculatedEndChar).toBe('number');
     });
@@ -461,9 +465,9 @@ describe('ParseError Token Isolation (Issue #147)', () => {
   });
 
   describe('Position Calculation', () => {
-    it('should use token.value.length for diagnostic range accuracy', () => {
-      // Verify that token.value.length is the ONLY way we access token.value
-      // in LSP diagnostic creation, and it's safe because length is numeric
+    it('should use source span for diagnostic range accuracy', () => {
+      // Verify that source span (endOffset - startOffset) is used for range calculation
+      // in LSP diagnostic creation, and it's safe because offsets are numeric
 
       const code = `"UnclosedQuotedIdentifier`;
 
@@ -472,11 +476,11 @@ describe('ParseError Token Isolation (Issue #147)', () => {
 
       const error = errors[0];
 
-      // Length calculation needs the real value length
-      const expectedLength = error.token.value.length;
+      // Length calculation uses source span
+      const expectedLength = error.token.endOffset - error.token.startOffset;
       const diagnosticEndChar = error.token.column + expectedLength - 1;
 
-      // This is safe because we're using the LENGTH (number), not the VALUE (string)
+      // This is safe because we're using source offsets (numbers), not the VALUE (string)
       expect(typeof expectedLength).toBe('number');
       expect(typeof diagnosticEndChar).toBe('number');
       expect(diagnosticEndChar).toBeGreaterThan(error.token.column);
@@ -502,9 +506,9 @@ describe('ParseError Token Isolation (Issue #147)', () => {
         const error = errors[0];
         const diagnostic = createDiagnostic(error);
 
-        // Verify range calculation is based on token.value.length
+        // Verify range calculation is based on source span (endOffset - startOffset)
         // LSP ranges are half-open [start, end), so length = end - start
-        const expectedRangeLength = error.token.value.length;
+        const expectedRangeLength = error.token.endOffset - error.token.startOffset;
         const actualRangeLength =
           diagnostic.range.end.character - diagnostic.range.start.character;
 
@@ -512,9 +516,9 @@ describe('ParseError Token Isolation (Issue #147)', () => {
       });
     });
 
-    it('should use numeric length even for sensitive token values', () => {
+    it('should use numeric span even for sensitive token values', () => {
       // Verify that even when token.value contains sensitive data,
-      // we only extract its numeric length for range calculation
+      // we only extract source span (safe numeric values) for range calculation
 
       const SENSITIVE = 'EXTREMELY_SENSITIVE_PROPRIETARY_IDENTIFIER_NAME';
       const code = `"${SENSITIVE}`;
@@ -527,11 +531,11 @@ describe('ParseError Token Isolation (Issue #147)', () => {
       // Token contains sensitive value (or at least part of it)
       expect(error.token.value).toBeTruthy();
 
-      // But we only use its length (safe numeric value)
-      const length = error.token.value.length;
+      // But we only use source span (safe numeric values)
+      const length = error.token.endOffset - error.token.startOffset;
       expect(typeof length).toBe('number');
 
-      // Diagnostic uses only the length
+      // Diagnostic uses only the source span
       // LSP ranges are half-open [start, end), so length = end - start
       const diagnostic = createDiagnostic(error);
       const rangeLength =
@@ -599,8 +603,8 @@ describe('ParseError Token Isolation (Issue #147)', () => {
             character: error.token.column - 1  // Safe: numeric
           },
           end: {
-            line: error.token.line - 1,                           // Safe: numeric
-            character: error.token.column + error.token.value.length - 1  // Safe: numeric length
+            line: error.token.line - 1,                                                          // Safe: numeric
+            character: error.token.column + (error.token.endOffset - error.token.startOffset) - 1  // Safe: numeric span
           }
         },
 

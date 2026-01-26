@@ -451,7 +451,8 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
       severity: DiagnosticSeverity.Error,
       range: {
         start: { line: error.token.line - 1, character: error.token.column - 1 },
-        end: { line: error.token.line - 1, character: error.token.column + error.token.value.length - 1 }
+        // Use source span (includes quotes) for accurate error underlining
+        end: { line: error.token.line - 1, character: error.token.column + (error.token.endOffset - error.token.startOffset) - 1 }
       },
       message: error.message,
       source: 'cal'

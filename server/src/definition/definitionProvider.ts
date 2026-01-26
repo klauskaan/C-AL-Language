@@ -12,7 +12,6 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SymbolTable, Symbol } from '../symbols/symbolTable';
 import { CALDocument } from '../parser/ast';
 import { ProviderBase } from '../providers/providerBase';
-import { TokenType } from '../lexer/tokens';
 
 /**
  * Definition provider class
@@ -57,10 +56,9 @@ export class DefinitionProvider extends ProviderBase {
           f => f.fieldName.toLowerCase() === word.toLowerCase()
         );
         if (field && field.nameToken) {
-          // Calculate the actual name length for highlighting
-          const nameLength = field.nameToken.type === TokenType.QuotedIdentifier
-            ? field.nameToken.value.length + 2  // +2 for quotes
-            : field.fieldName.length;            // Full multi-token name
+          // Calculate the actual name length using source span
+          // This handles both quoted identifiers and multi-token names correctly
+          const nameLength = field.nameToken.endOffset - field.nameToken.startOffset;
 
           return this.symbolToLocation(
             {

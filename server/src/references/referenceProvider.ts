@@ -17,7 +17,7 @@ import {
   ParameterDeclaration,
   FieldDeclaration
 } from '../parser/ast';
-import { Token, TokenType } from '../lexer/tokens';
+import { Token } from '../lexer/tokens';
 import { ProviderBase } from '../providers/providerBase';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { ASTWalker } from '../visitor/astWalker';
@@ -115,10 +115,9 @@ class ReferenceCollectorVisitor implements Partial<ASTVisitor> {
     // Skip if no nameToken (error recovery case)
     if (!node.nameToken) return;
 
-    // Calculate the actual name length for highlighting
-    const nameLength = node.nameToken.type === TokenType.QuotedIdentifier
-      ? node.nameToken.value.length + 2  // +2 for quotes
-      : node.fieldName.length;            // Full multi-token name
+    // Calculate the actual name length using source span
+    // This handles both quoted identifiers and multi-token names correctly
+    const nameLength = node.nameToken.endOffset - node.nameToken.startOffset;
 
     this.refs.push({
       name: node.fieldName,

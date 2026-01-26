@@ -160,6 +160,7 @@ class LSPTestContext {
 
   /**
    * Get diagnostics for document
+   * Uses source span (endOffset - startOffset) for accurate range calculation.
    */
   getDiagnostics(uri: string): Diagnostic[] {
     const parsed = this.getParsedDocument(uri);
@@ -171,7 +172,7 @@ class LSPTestContext {
         start: { line: error.token.line - 1, character: error.token.column - 1 },
         end: {
           line: error.token.line - 1,
-          character: error.token.column + error.token.value.length - 1
+          character: error.token.column + (error.token.endOffset - error.token.startOffset) - 1
         }
       },
       message: error.message,

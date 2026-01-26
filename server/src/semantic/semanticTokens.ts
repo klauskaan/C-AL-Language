@@ -167,7 +167,8 @@ export class SemanticTokensProvider {
     // Calculate line and character position (0-based)
     const line = token.line - 1; // Tokens use 1-based line numbers
     const char = token.column - 1; // Tokens use 1-based column numbers
-    const length = token.value.length;
+    // Use source span (includes quotes) instead of value.length (excludes quotes)
+    const length = token.endOffset - token.startOffset;
 
     // Add the semantic token
     builder.push(line, char, length, tokenType, 0);

@@ -16,13 +16,16 @@ import { SymbolTable } from '../symbols/symbolTable';
  * const token = createMockToken({ type: TokenType.Begin, value: 'BEGIN' });
  */
 export function createMockToken(overrides?: Partial<Token>): Token {
+  const value = overrides?.value ?? 'test';
+  const startOffset = overrides?.startOffset ?? 0;
+
   return {
     type: TokenType.Identifier,
-    value: 'test',
+    value,
     line: 1,
     column: 1,
-    startOffset: 0,
-    endOffset: 4,
+    startOffset,
+    endOffset: startOffset + value.length,
     ...overrides
   };
 }

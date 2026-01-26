@@ -1851,7 +1851,7 @@ describe('SemanticTokensProvider', () => {
      * The lexer uses 1-indexed positions, so the provider must convert:
      * - line: token.line - 1
      * - char: token.column - 1
-     * - length: token.value.length
+     * - length: calculated from source span (endOffset - startOffset)
      */
 
     describe('0-Indexed Positions', () => {
@@ -2087,7 +2087,7 @@ describe('SemanticTokensProvider', () => {
     });
 
     describe('Special Token Lengths', () => {
-      it('should correctly calculate length for quoted identifiers (without quotes)', () => {
+      it('should correctly calculate length for quoted identifiers (including quotes)', () => {
         const code = '"Line No." := 1';
         const { builder, tokens } = buildSemanticTokens(code);
 
@@ -2097,11 +2097,11 @@ describe('SemanticTokensProvider', () => {
 
         const quotedSemantic = builder.getTokenAt(0, quotedToken!.column - 1);
         expect(quotedSemantic).toBeDefined();
-        // Length is based on token.value.length, which is 'Line No.' = 8 chars
-        expect(quotedSemantic?.length).toBe(8);
+        // Length is based on source span (token.endOffset - token.startOffset), which is "Line No." = 10 chars
+        expect(quotedSemantic?.length).toBe(10);
       });
 
-      it('should correctly calculate length for string literals (without quotes)', () => {
+      it('should correctly calculate length for string literals (including quotes)', () => {
         const code = "x := 'Hello World'";
         const { builder, tokens } = buildSemanticTokens(code);
 
@@ -2111,11 +2111,11 @@ describe('SemanticTokensProvider', () => {
 
         const stringSemantic = builder.getTokenAt(0, stringToken!.column - 1);
         expect(stringSemantic).toBeDefined();
-        // Length is based on 'Hello World' = 11 chars
-        expect(stringSemantic?.length).toBe(11);
+        // Length is based on source span (token.endOffset - token.startOffset), which is 'Hello World' = 13 chars
+        expect(stringSemantic?.length).toBe(13);
       });
 
-      it('should correctly calculate length for empty quoted identifier', () => {
+      it('should correctly calculate length for empty quoted identifier (including quotes)', () => {
         const code = '"" := 1';
         const { builder, tokens } = buildSemanticTokens(code);
 
@@ -2125,10 +2125,10 @@ describe('SemanticTokensProvider', () => {
 
         const emptySemantic = builder.getTokenAt(0, emptyToken!.column - 1);
         expect(emptySemantic).toBeDefined();
-        expect(emptySemantic?.length).toBe(0);
+        expect(emptySemantic?.length).toBe(2);
       });
 
-      it('should correctly calculate length for empty string literal', () => {
+      it('should correctly calculate length for empty string literal (including quotes)', () => {
         const code = "x := ''";
         const { builder, tokens } = buildSemanticTokens(code);
 
@@ -2138,7 +2138,7 @@ describe('SemanticTokensProvider', () => {
 
         const emptySemantic = builder.getTokenAt(0, emptyStringToken!.column - 1);
         expect(emptySemantic).toBeDefined();
-        expect(emptySemantic?.length).toBe(0);
+        expect(emptySemantic?.length).toBe(2);
       });
 
       it('should correctly calculate length for number tokens', () => {
@@ -2625,7 +2625,8 @@ END`;
         expect(stringToken).toBeDefined();
 
         const stringSemantic = builder.getTokenAt(0, stringToken!.column - 1);
-        expect(stringSemantic?.length).toBe(1000);
+        // Length includes the two quotes: 'a'*1000 = 1002 chars
+        expect(stringSemantic?.length).toBe(1002);
         expect(stringSemantic?.tokenType).toBe(SemanticTokenTypes.String);
       });
     });
@@ -2743,7 +2744,8 @@ END`;
         const { builder } = buildSemanticTokens(code);
 
         expect(builder.tokens.length).toBe(1);
-        expect(builder.tokens[0].length).toBe(0);
+        // Length includes the two quotes even for empty content: "" = 2 chars
+        expect(builder.tokens[0].length).toBe(2);
       });
 
       it('should handle length of 1 (single character)', () => {
@@ -3071,15 +3073,94 @@ END`;
         const variables = builder.getTokensOfType(SemanticTokenTypes.Variable);
         expect(variables.length).toBe(2);
 
-        // "Customer No." has length 12 (without quotes as value)
+        // "Customer No." has length 14 (based on source span including quotes)
         const custNo = variables.find(v => v.char === 0);
         expect(custNo).toBeDefined();
-        expect(custNo?.length).toBe(12);
+        expect(custNo?.length).toBe(14);
 
-        // "Bal. Account No." has length 16 (without quotes as value)
+        // "Bal. Account No." has length 18 (based on source span including quotes)
         const balAcct = variables.find(v => v.char > 0);
         expect(balAcct).toBeDefined();
-        expect(balAcct?.length).toBe(16);
+        expect(balAcct?.length).toBe(18);
+      });
+    });
+
+    describe('Quoted Identifier Length Regression Tests', () => {
+      // Regression tests documenting the fix for quoted identifier highlighting bug where
+      // length was incorrectly calculated from token.value instead of source span
+      // (endOffset - startOffset). These tests ensure quoted identifier lengths include
+      // the surrounding quotes for correct semantic token highlighting.
+
+      it('should correctly calculate length for adjacent quoted identifiers', () => {
+        // C/AL does not support escaped quotes like strings do.
+        // "Item""Name" tokenizes as TWO adjacent identifiers: "Item" and "Name"
+        const code = '"Item""Name" := 1';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        // Find the two quoted identifier tokens
+        const itemToken = tokens.find(t => t.value === 'Item');
+        const nameToken = tokens.find(t => t.value === 'Name');
+
+        expect(itemToken).toBeDefined();
+        expect(nameToken).toBeDefined();
+
+        // Verify semantic tokens have correct lengths
+        const itemSemantic = builder.getTokenAt(0, itemToken!.column - 1);
+        const nameSemantic = builder.getTokenAt(0, nameToken!.column - 1);
+
+        expect(itemSemantic).toBeDefined();
+        expect(nameSemantic).toBeDefined();
+
+        // Each identifier should have length 6 (quotes + content)
+        expect(itemSemantic?.length).toBe(6);
+        expect(nameSemantic?.length).toBe(6);
+      });
+
+      it('should correctly calculate length for single-character quoted identifier', () => {
+        const code = '"X" := 1';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const xToken = tokens.find(t => t.value === 'X');
+        expect(xToken).toBeDefined();
+
+        const xSemantic = builder.getTokenAt(0, xToken!.column - 1);
+        expect(xSemantic).toBeDefined();
+
+        // Expected length: 3 (quotes + content)
+        expect(xSemantic?.length).toBe(3);
+      });
+
+      it('should correctly calculate length for quoted identifier with spaces', () => {
+        const code = '" Spaced " := 1';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const spacedToken = tokens.find(t => t.value === ' Spaced ');
+        expect(spacedToken).toBeDefined();
+
+        const spacedSemantic = builder.getTokenAt(0, spacedToken!.column - 1);
+        expect(spacedSemantic).toBeDefined();
+
+        // Expected length: 10 (quotes + 8 chars including spaces)
+        expect(spacedSemantic?.length).toBe(10);
+      });
+
+      it('should demonstrate source span approach vs token.value', () => {
+        // This test explicitly shows the difference between token.value and source span
+        const code = '"Date Filter" := 1';
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const dateFilterToken = tokens.find(t => t.value === 'Date Filter');
+        expect(dateFilterToken).toBeDefined();
+
+        const dateFilterSemantic = builder.getTokenAt(0, dateFilterToken!.column - 1);
+        expect(dateFilterSemantic).toBeDefined();
+
+        // token.value = "Date Filter" (11 chars)
+        expect(dateFilterToken?.value.length).toBe(11);
+
+        // But source span includes quotes: "Date Filter" (13 chars)
+        // This is what the semantic token length MUST be for correct highlighting
+        expect(dateFilterSemantic?.length).toBe(13);
       });
     });
 

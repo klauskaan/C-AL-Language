@@ -131,14 +131,16 @@ Six Unknown token sources:
 - LSP diagnostic field isolation (only safe fields extracted)
 - Error message vs token value separation
 - Serialization safety (JSON.stringify risks)
-- Position calculation using only `token.value.length`
+- Position calculation using source span (endOffset - startOffset)
 
 **Security boundary:**
 ```
 ParseError (server-side only)
 ├─ .message → SANITIZED (exposed to LSP)
 └─ .token → RAW CONTENT (server-internal)
-    ├─ .value → Used for .length calculation ONLY
+    ├─ .value → Never exposed directly
+    ├─ .startOffset → Used for source span calculation (safe numeric)
+    ├─ .endOffset → Used for source span calculation (safe numeric)
     ├─ .line → Safe numeric metadata
     └─ .column → Safe numeric metadata
            ↓

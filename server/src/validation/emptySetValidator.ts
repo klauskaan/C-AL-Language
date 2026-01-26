@@ -42,6 +42,10 @@ class EmptySetValidatorVisitor implements Partial<ASTVisitor> {
         // Use endToken for range calculation, fallback to startToken if missing
         const endToken = setLiteral.endToken || setLiteral.startToken;
 
+        // Calculate end position using source span (endOffset - startOffset)
+        // This handles multi-character tokens (e.g., ']') correctly without relying on token.value
+        const endCharacter = endToken.column + (endToken.endOffset - endToken.startOffset) - 1;
+
         this.diagnostics.push({
           message: 'Empty set in IN expression - condition will always be false',
           severity: DiagnosticSeverity.Warning,
@@ -52,7 +56,7 @@ class EmptySetValidatorVisitor implements Partial<ASTVisitor> {
             },
             end: {
               line: endToken.line - 1,
-              character: endToken.column + endToken.value.length - 1
+              character: endCharacter
             }
           },
           source: 'cal'

@@ -23,13 +23,14 @@ function getParseErrors(code: string): ParseError[] {
 
 /**
  * Convert ParseError to Diagnostic (mirrors server.ts logic)
+ * Uses source span (endOffset - startOffset) for accurate range calculation.
  */
 function errorToDiagnostic(error: ParseError): Diagnostic {
   return {
     severity: DiagnosticSeverity.Error,
     range: {
       start: { line: error.token.line - 1, character: error.token.column - 1 },
-      end: { line: error.token.line - 1, character: error.token.column + error.token.value.length - 1 }
+      end: { line: error.token.line - 1, character: error.token.column + (error.token.endOffset - error.token.startOffset) - 1 }
     },
     message: error.message,
     source: 'cal'

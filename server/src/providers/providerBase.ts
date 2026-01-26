@@ -139,7 +139,7 @@ export abstract class ProviderBase {
    * Convert a token's position to an LSP Location
    * Handles coordinate conversion from 1-based (token) to 0-based (LSP)
    *
-   * @param token - The token containing position information (line, column, value)
+   * @param token - The token containing position information (line, column, offsets)
    * @param documentUri - The document URI
    * @param nameLength - Optional explicit length for multi-token or quoted identifiers
    * @returns Location object for use in LSP responses
@@ -148,7 +148,8 @@ export abstract class ProviderBase {
     // Token line and column are 1-based, LSP wants 0-based
     const startLine = token.line - 1;
     const startChar = token.column - 1;
-    const endChar = startChar + (nameLength ?? token.value.length);
+    // Use source span (includes quotes) for accurate range, unless explicit length provided
+    const endChar = startChar + (nameLength ?? (token.endOffset - token.startOffset));
 
     const range: Range = {
       start: { line: startLine, character: startChar },
