@@ -395,6 +395,138 @@ describe('Parser - Procedure Attributes', () => {
       expect(proc.attributes).toHaveLength(1);
       expect(proc.attributes![0].name).toBe('TryFunction');
     });
+
+    // Issue #252: Warn when attributes are discarded during error recovery
+    describe('Attribute discard warnings', () => {
+      it('should warn when single attribute is discarded on invalid procedure', () => {
+        const code = `OBJECT Codeunit 1 Test {
+          CODE {
+            [External]
+            PROCEDURE BEGIN;
+          }
+        }`;
+        const lexer = new Lexer(code);
+        const parser = new Parser(lexer.tokenize());
+        parser.parse();
+
+        const errors = parser.getErrors();
+        // Expect 2 errors: parse error + attribute discard warning
+        expect(errors.length).toBe(2);
+
+        // Find the attribute discard warning
+        const attrWarning = errors.find(e => e.message.includes('1 attribute discarded'));
+        expect(attrWarning).toBeDefined();
+        expect(attrWarning!.message).toContain('1 attribute discarded');
+      });
+
+      it('should warn when multiple attributes are discarded on invalid procedure', () => {
+        const code = `OBJECT Codeunit 1 Test {
+          CODE {
+            [External] [TryFunction]
+            PROCEDURE BEGIN;
+          }
+        }`;
+        const lexer = new Lexer(code);
+        const parser = new Parser(lexer.tokenize());
+        parser.parse();
+
+        const errors = parser.getErrors();
+        // Expect 2 errors: parse error + attribute discard warning
+        expect(errors.length).toBe(2);
+
+        // Find the attribute discard warning
+        const attrWarning = errors.find(e => e.message.includes('2 attributes discarded'));
+        expect(attrWarning).toBeDefined();
+        expect(attrWarning!.message).toContain('2 attributes discarded');
+      });
+
+      it('should NOT warn when no attributes present on invalid procedure', () => {
+        const code = `OBJECT Codeunit 1 Test {
+          CODE {
+            PROCEDURE BEGIN;
+          }
+        }`;
+        const lexer = new Lexer(code);
+        const parser = new Parser(lexer.tokenize());
+        parser.parse();
+
+        const errors = parser.getErrors();
+        // Expect only 1 error: parse error, NO attribute warning
+        expect(errors.length).toBe(1);
+
+        // Verify no attribute discard warning
+        const attrWarning = errors.find(e => e.message.includes('attribute'));
+        expect(attrWarning).toBeUndefined();
+      });
+
+      it('should point warning location to first attribute startToken', () => {
+        const code = `OBJECT Codeunit 1 Test {
+          CODE {
+            [External]
+            PROCEDURE BEGIN;
+          }
+        }`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        parser.parse();
+
+        const errors = parser.getErrors();
+        const attrWarning = errors.find(e => e.message.includes('attribute discarded'));
+        expect(attrWarning).toBeDefined();
+
+        // Find the first '[' token (start of attribute)
+        const leftBracket = tokens.find(t => t.value === '[' && t.type === 'LEFT_BRACKET');
+        expect(leftBracket).toBeDefined();
+
+        // Warning should point to the '[' token
+        expect(attrWarning!.token).toBe(leftBracket);
+      });
+
+      it('should NOT warn when malformed attribute recovery allows procedure to parse', () => {
+        const code = `OBJECT Codeunit 1 Test {
+          CODE {
+            [Malformed PROCEDURE BEGIN;
+          }
+        }`;
+        const lexer = new Lexer(code);
+        const parser = new Parser(lexer.tokenize());
+        parser.parse();
+
+        const errors = parser.getErrors();
+        // Malformed attribute produces one error during attribute parsing
+        // The attribute recovery stops at PROCEDURE, which is then parsed normally
+        // (BEGIN becomes the procedure name, which is weird but syntactically valid)
+        expect(errors.length).toBe(1);
+        expect(errors[0].message).toContain('Expected ] to close attribute');
+      });
+
+      it('should silently discard attributes before triggers', () => {
+        // C/AL triggers don't support attributes - the parser silently discards them
+        // This is consistent with C/AL's lack of trigger attribute support
+        // Note: This behavior is different from procedure errors where we warn about
+        // discarded attributes. For triggers, attributes are always ignored (not an error case).
+        const code = `OBJECT Table 1 Test {
+          CODE {
+            [External]
+            TRIGGER OnInsert();
+            BEGIN
+            END;
+          }
+        }`;
+        const lexer = new Lexer(code);
+        const parser = new Parser(lexer.tokenize());
+        const ast = parser.parse();
+
+        // No errors - attributes are silently ignored for triggers
+        expect(parser.getErrors()).toHaveLength(0);
+
+        // Trigger parses successfully
+        const table = ast.object as any;
+        expect(table.code.triggers).toHaveLength(1);
+        expect(table.code.triggers[0].name).toBe('OnInsert');
+      });
+    });
   });
 
   describe('Mixed procedures with and without attributes', () => {

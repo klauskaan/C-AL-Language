@@ -1829,14 +1829,20 @@ export class Parser {
 
     // Parse procedures, triggers, and events
     while (!this.isAtEnd()) {
+      const attributes: ProcedureAttribute[] = [];
+      let firstLeftBracket: Token | null = null;
+      let attributeAttempts = 0;  // Count [ tokens seen, including malformed attributes
       try {
         // Check for AL-only tokens before procedure/trigger declarations
         this.skipALOnlyTokens();
 
         // Parse attributes like [External], [Integration], etc.
         // These are attributes in square brackets before procedure declarations
-        const attributes: ProcedureAttribute[] = [];
         while (this.check(TokenType.LeftBracket)) {
+          if (firstLeftBracket === null) {
+            firstLeftBracket = this.peek();
+          }
+          attributeAttempts++;  // Count each [ token seen
           const attr = this.parseAttribute();
           if (attr !== null) {
             attributes.push(attr);
@@ -1869,6 +1875,16 @@ export class Parser {
       } catch (error) {
         if (error instanceof ParseError) {
           this.errors.push(error);
+          // Warn if attributes were parsed but will be discarded
+          if (firstLeftBracket !== null) {
+            // Use attributeAttempts to count all [ tokens seen (including malformed)
+            const count = attributeAttempts;
+            const token = attributes.length > 0 ? attributes[0].startToken : firstLeftBracket;
+            this.recordError(
+              `${count} ${count === 1 ? 'attribute' : 'attributes'} discarded due to invalid declaration`,
+              token
+            );
+          }
           // Skip to next procedure/trigger/event declaration
           // Note: BEGIN is intentionally NOT a stopping token here - if we're
           // recovering from "PROCEDURE BEGIN" (invalid), we need to skip past
