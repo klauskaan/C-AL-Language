@@ -6,7 +6,7 @@
 import { ProviderBase } from '../providers/providerBase';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Position, Range, WorkspaceEdit, TextEdit } from 'vscode-languageserver';
-import { CALDocument } from '../parser/ast';
+import { CALDocument, FieldDeclaration } from '../parser/ast';
 import { SymbolTable } from '../symbols/symbolTable';
 import { Lexer } from '../lexer/lexer';
 import { Token, TokenType, KEYWORDS } from '../lexer/tokens';
@@ -34,7 +34,17 @@ export class RenameProvider extends ProviderBase {
     ast: CALDocument | undefined,
     symbolTable: SymbolTable | undefined
   ): { range: Range; placeholder: string } | null {
-    // Find the actual token at this position to check its type
+    // Check if we're on a multi-token field (cursor might be on a token or between tokens)
+    if (ast) {
+      const offset = document.offsetAt(position);
+      const field = this.findFieldByPartialToken(ast, offset);
+      if (field) {
+        // Use field's full range instead of single token
+        return this.getFieldIdentifierRangeAndText(document, field);
+      }
+    }
+
+    // Not a multi-token field, get token at position for regular identifier
     const token = this.getTokenAtPosition(document, position);
     if (!token) {
       return null;
@@ -52,6 +62,7 @@ export class RenameProvider extends ProviderBase {
 
       // Verify the symbol exists in the symbol table
       const symbol = symbolTable.getSymbolAtOffset(identifierName, token.startOffset);
+
       if (!symbol) {
         // Not a known symbol, might be a type annotation or keyword
         return null;
@@ -80,38 +91,61 @@ export class RenameProvider extends ProviderBase {
     ast: CALDocument | undefined,
     symbolTable: SymbolTable | undefined
   ): WorkspaceEdit | null {
-    // Find the token at the cursor position
-    const token = this.getTokenAtPosition(document, position);
-    if (!token || !this.isRenameableToken(token)) {
-      return null;
-    }
-
-    // Validate the new name
-    const symbolType = this.getSymbolType(token, symbolTable, document.offsetAt(position));
-    const validationError = this.validateNewName(newName, symbolType);
-    if (validationError) {
-      throw new Error(validationError);
-    }
-
     // Get all references using ReferenceProvider
     if (!ast) {
       return null;
     }
 
-    const referenceProvider = new ReferenceProvider();
-    const references = referenceProvider.getReferences(document, position, ast, true);
+    // Check if we're renaming a multi-token field (cursor might be on a token or between tokens)
+    const offset = document.offsetAt(position);
+    const field = this.findFieldByPartialToken(ast, offset);
 
-    if (references.length === 0) {
+    let filteredReferences: { uri: string; range: Range }[];
+    let symbolType: string;
+
+    if (field) {
+      // Multi-token field: collect references manually using field name
+      // No scope filtering needed - fields are global to the table
+      filteredReferences = this.collectFieldReferences(document, ast, field);
+      symbolType = 'field';
+    } else {
+      // Not a multi-token field, get token at position for regular rename
+      const token = this.getTokenAtPosition(document, position);
+      if (!token || !this.isRenameableToken(token)) {
+        return null;
+      }
+
+      // Validate symbol type
+      symbolType = this.getSymbolType(token, symbolTable, offset, ast);
+
+      // Regular symbol: use ReferenceProvider
+      const referenceProvider = new ReferenceProvider();
+      const references = referenceProvider.getReferences(document, position, ast, true);
+
+      if (references.length === 0) {
+        return null;
+      }
+
+      // Filter references to only include those in the correct scope
+      filteredReferences = this.filterReferencesByScope(
+        references,
+        token,
+        offset,
+        symbolTable,
+        ast,
+        document
+      );
+    }
+
+    if (filteredReferences.length === 0) {
       return null;
     }
 
-    // Filter references to only include those in the correct scope
-    const filteredReferences = this.filterReferencesByScope(
-      references,
-      token,
-      symbolTable,
-      document
-    );
+    // Validate the new name
+    const validationError = this.validateNewName(newName, symbolType);
+    if (validationError) {
+      throw new Error(validationError);
+    }
 
     // Determine if the new name needs quotes
     const needsQuotes = this.needsQuotes(newName);
@@ -269,14 +303,24 @@ export class RenameProvider extends ProviderBase {
    * @param token - The token being renamed
    * @param symbolTable - The symbol table
    * @param offset - Document offset
+   * @param ast - The parsed AST (optional)
    * @returns Symbol type string
    */
-  private getSymbolType(token: Token, symbolTable: SymbolTable | undefined, offset: number): string {
+  private getSymbolType(token: Token, symbolTable: SymbolTable | undefined, offset: number, ast?: CALDocument): string {
     if (!symbolTable) {
       return 'variable'; // Default to variable if no symbol table
     }
 
     const symbol = symbolTable.getSymbolAtOffset(token.value, offset);
+
+    // AST FALLBACK: Check if token is part of a multi-token field
+    if (!symbol && ast) {
+      const field = this.findFieldByPartialToken(ast, offset);
+      if (field) {
+        return 'field';
+      }
+    }
+
     if (!symbol) {
       return 'variable'; // Default
     }
@@ -301,14 +345,18 @@ export class RenameProvider extends ProviderBase {
    *
    * @param references - All references found by ReferenceProvider
    * @param originToken - The token at the cursor position
+   * @param originOffset - The document offset of the origin position
    * @param symbolTable - The symbol table
+   * @param ast - The parsed AST (optional)
    * @param document - The text document
    * @returns Filtered array of references
    */
   private filterReferencesByScope(
     references: { uri: string; range: Range }[],
     originToken: Token,
+    originOffset: number,
     symbolTable: SymbolTable | undefined,
+    ast: CALDocument | undefined,
     document: TextDocument
   ): { uri: string; range: Range }[] {
     if (!symbolTable) {
@@ -317,8 +365,16 @@ export class RenameProvider extends ProviderBase {
     }
 
     // Get the symbol at the origin position
-    const originOffset = originToken.startOffset;
-    const originSymbol = symbolTable.getSymbolAtOffset(originToken.value, originOffset);
+    const originSymbol = symbolTable.getSymbolAtOffset(originToken.value, originToken.startOffset);
+
+    // AST FALLBACK: For multi-token fields, don't filter by scope
+    if (!originSymbol && ast) {
+      const field = this.findFieldByPartialToken(ast, originOffset);
+      if (field) {
+        // Fields are global to the table - return all references
+        return references;
+      }
+    }
 
     if (!originSymbol) {
       // If we can't find the origin symbol, return all references
@@ -357,5 +413,166 @@ export class RenameProvider extends ProviderBase {
       // New name doesn't need quotes
       return newName;
     }
+  }
+
+
+  /**
+   * Find a field declaration that contains the given document offset.
+   * Used when cursor is on ANY token of a multi-token field name.
+   *
+   * @param ast - The parsed AST
+   * @param offset - The document offset
+   * @returns The field declaration, or null if not found
+   */
+  private findFieldByPartialToken(ast: CALDocument | undefined, offset: number): FieldDeclaration | null {
+    if (!ast?.object?.fields?.fields) return null;
+
+    for (const field of ast.object.fields.fields) {
+      if (!field.nameToken) continue;
+
+      const startOffset = field.nameToken.startOffset;
+      const endOffset = startOffset + field.fieldName.length;
+
+      if (offset >= startOffset && offset < endOffset) {
+        return field;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get the full range and text for a field declaration.
+   * Handles both quoted and unquoted multi-token field names.
+   *
+   * @param document - The text document
+   * @param field - The field declaration
+   * @returns Object with range and placeholder text
+   */
+  private getFieldIdentifierRangeAndText(
+    document: TextDocument,
+    field: FieldDeclaration
+  ): { range: Range; placeholder: string } {
+    if (!field.nameToken) {
+      throw new Error('Field nameToken is undefined');
+    }
+
+    let startOffset: number;
+    let endOffset: number;
+
+    if (field.nameToken.type === TokenType.QuotedIdentifier) {
+      // Quoted: range from token start to token end (includes quotes)
+      startOffset = field.nameToken.startOffset;
+      endOffset = field.nameToken.endOffset;
+    } else {
+      // Unquoted multi-token: range = first token start + full name length
+      startOffset = field.nameToken.startOffset;
+      endOffset = startOffset + field.fieldName.length;
+    }
+
+    const startPos = document.positionAt(startOffset);
+    const endPos = document.positionAt(endOffset);
+
+    return {
+      range: { start: startPos, end: endPos },
+      placeholder: field.fieldName
+    };
+  }
+
+  /**
+   * Collect all references to a specific field by searching the AST.
+   * This method handles multi-token field names by using the full field name from the AST.
+   *
+   * @param document - The text document
+   * @param ast - The parsed AST
+   * @param field - The field declaration to find references for
+   * @returns Array of locations where the field is referenced
+   */
+  private collectFieldReferences(
+    document: TextDocument,
+    ast: CALDocument,
+    field: FieldDeclaration
+  ): { uri: string; range: Range }[] {
+    const references: { uri: string; range: Range }[] = [];
+    const fieldName = field.fieldName.toLowerCase();
+
+    // Get all field names from AST to check for prefix collisions
+    const allFieldNames = (ast.object?.fields?.fields || [])
+      .map(f => f.fieldName.toLowerCase())
+      .filter(name => name !== fieldName); // Exclude the current field
+
+    // Now search for all usages (including definition) in the code
+    // We'll use the lexer to find all tokens and match them against the field name
+    const text = document.getText();
+    const lexer = new Lexer(text);
+    const tokens = lexer.tokenize();
+
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i];
+
+      // For quoted identifiers, check if the token value matches the field name
+      if (token.type === TokenType.QuotedIdentifier) {
+        if (token.value.toLowerCase() === fieldName) {
+          const start = document.positionAt(token.startOffset);
+          const end = document.positionAt(token.endOffset);
+          references.push({ uri: document.uri, range: { start, end } });
+        }
+        continue;
+      }
+
+      // For unquoted multi-token fields, check if this token starts a sequence matching the field name
+      // We check all tokens (including keywords) because field names can contain reserved words
+      // Skip only structural and non-word tokens
+      if (token.type === TokenType.Whitespace ||
+          token.type === TokenType.NewLine ||
+          token.type === TokenType.Comment ||
+          token.type === TokenType.LeftParen ||
+          token.type === TokenType.RightParen ||
+          token.type === TokenType.Semicolon) {
+        continue;
+      }
+
+      // Try to match the full field name starting from this position
+      const potentialMatch = text.substring(token.startOffset, token.startOffset + field.fieldName.length);
+
+      if (potentialMatch.toLowerCase() === fieldName) {
+        // Verify this is actually a complete match (not part of a longer identifier)
+        // Check the character BEFORE and AFTER the match to ensure word boundaries
+        const charBefore = token.startOffset > 0 ? text[token.startOffset - 1] : null;
+        const charAfter = text[token.startOffset + field.fieldName.length];
+
+        // Before: should be non-identifier char (or start of file)
+        const validBefore = !charBefore || !/[a-zA-Z0-9_]/.test(charBefore);
+        // After: should be non-identifier char (or end of file)
+        const validAfter = !charAfter || !/[a-zA-Z0-9_]/.test(charAfter);
+
+        if (validBefore && validAfter) {
+          // CRITICAL: Check for prefix collision with other fields
+          // If we're matching "Update" but there's a field "Update Count", we might be
+          // matching the prefix of "Update Count" instead of the actual "Update" field
+          let isPrefixOfLongerField = false;
+
+          for (const otherFieldName of allFieldNames) {
+            if (otherFieldName.startsWith(fieldName)) {
+              // There's a longer field that starts with this field name
+              // Check if the text at this position matches the longer field
+              const longerMatch = text.substring(token.startOffset, token.startOffset + otherFieldName.length);
+              if (longerMatch.toLowerCase() === otherFieldName) {
+                // This is actually a reference to the longer field, not our field
+                isPrefixOfLongerField = true;
+                break;
+              }
+            }
+          }
+
+          if (!isPrefixOfLongerField) {
+            const start = document.positionAt(token.startOffset);
+            const end = document.positionAt(token.startOffset + field.fieldName.length);
+            references.push({ uri: document.uri, range: { start, end } });
+          }
+        }
+      }
+    }
+
+    return references;
   }
 }

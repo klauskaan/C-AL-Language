@@ -836,9 +836,8 @@ describe('RenameProvider', () => {
       });
     });
 
-    // Issue #204: Multi-token unquoted field names should be renamed completely
-    // NOTE: Skipped - requires deeper symbol lookup changes (see issue #256)
-    it.skip('should rename multi-token unquoted field name completely', () => {
+    // Issue #256: Multi-token unquoted field names should be renamed completely
+    it('should rename multi-token unquoted field name completely', () => {
       const code = `OBJECT Table 50000 Test
 {
   FIELDS
@@ -879,6 +878,382 @@ describe('RenameProvider', () => {
         const rangeText = doc.getText(edit.range);
         expect(rangeText.toLowerCase()).toContain('update');
         expect(rangeText.toLowerCase()).toContain('count');
+      });
+    });
+
+    // Issue #256: Multi-token field rename with cursor on second token
+    it('should rename multi-token field when cursor is on second token', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Update Count ; Integer }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    BEGIN
+      Update Count := 5;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+
+      // Position on "Count" token (second part of the field name)
+      const lines = code.split('\n');
+      const lineIndex = lines.findIndex(l => l.includes('Update Count ; Integer'));
+      const colIndex = lines[lineIndex].indexOf('Count');
+      const pos = { line: lineIndex, character: colIndex + 2 }; // Middle of "Count"
+
+      const edits = provider.getRenameEdits(doc, pos, 'RefreshCounter', ast, symbolTable);
+
+      expect(edits).toBeDefined();
+
+      const changes = edits!.changes![doc.uri];
+
+      // Should rename in 2 locations: definition + usage
+      expect(changes.length).toBe(2);
+
+      changes.forEach((edit: any) => {
+        expect(edit.newText).toBe('RefreshCounter');
+      });
+    });
+
+    // Issue #256: Multi-token field with quoted usage in CODE
+    it('should rename multi-token field when used with quotes in CODE', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Update Count ; Integer }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    BEGIN
+      "Update Count" := 10;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+
+      // Position on field definition
+      const pos = findPosition(code, 'Update Count', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'RefreshCount', ast, symbolTable);
+
+      expect(edits).toBeDefined();
+
+      const changes = edits!.changes![doc.uri];
+
+      // Should rename: definition + quoted usage
+      expect(changes.length).toBe(2);
+    });
+
+    // Issue #256: Multi-token field with qualified access
+    it('should rename multi-token field with qualified access (Rec.Field)', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Update Count ; Integer }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    VAR
+      Rec : Record 50000;
+    BEGIN
+      Rec."Update Count" := 0;
+      Update Count := Rec."Update Count" + 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+
+      const pos = findPosition(code, 'Update Count', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'RefreshCount', ast, symbolTable);
+
+      expect(edits).toBeDefined();
+
+      const changes = edits!.changes![doc.uri];
+
+      // Should rename: definition + 3 usages (1 unquoted, 2 qualified)
+      expect(changes.length).toBe(4);
+    });
+
+    // Issue #256: Multi-token field with special characters (period)
+    // Note: This test is skipped due to parser issue #257 where field names with periods
+    // are stored with extra whitespace (e.g., "Phone No ." instead of "Phone No.")
+    // See: https://github.com/klauskaan/C-AL-Language/issues/257
+    it.skip('should rename multi-token field with special characters like No.', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Phone No. ; Code20 }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    BEGIN
+      "Phone No." := '123';
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+
+      // Position on the field definition
+      const lines = code.split('\n');
+      const lineIndex = lines.findIndex(l => l.includes('Phone No. ; Code20'));
+      const colIndex = lines[lineIndex].indexOf('Phone No.');
+      const pos = { line: lineIndex, character: colIndex + 3 }; // Middle of "Phone"
+
+      const edits = provider.getRenameEdits(doc, pos, 'PhoneNumber', ast, symbolTable);
+
+      expect(edits).toBeDefined();
+
+      const changes = edits!.changes![doc.uri];
+
+      // Should rename: definition + usage
+      expect(changes.length).toBe(2);
+    });
+
+    // Issue #256: Table with both single-token and multi-token fields
+    it('should not confuse multi-token field with similar single-token field', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Update ; Integer }
+    { 2 ;   ; Update Count ; Integer }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    BEGIN
+      Update := 1;
+      Update Count := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+
+      // Position on "Update Count" field
+      const lines = code.split('\n');
+      const lineIndex = lines.findIndex(l => l.includes('Update Count ; Integer'));
+      const colIndex = lines[lineIndex].indexOf('Update Count');
+      const pos = { line: lineIndex, character: colIndex + 1 };
+
+      const edits = provider.getRenameEdits(doc, pos, 'RefreshCounter', ast, symbolTable);
+
+      expect(edits).toBeDefined();
+
+      const changes = edits!.changes![doc.uri];
+
+      // Should rename only "Update Count" (2 locations), not "Update"
+      expect(changes.length).toBe(2);
+
+      // Verify "Update := 1;" is NOT affected
+      const updateLine = code.split('\n').findIndex(l => l.trim() === 'Update := 1;');
+      const affectedLines = changes.map((c: any) => c.range.start.line);
+      expect(affectedLines).not.toContain(updateLine);
+    });
+
+    // Issue #256: Prefix collision bug - renaming single-token field should not affect multi-token field with same prefix
+    it('should not rename single-token field if it is a prefix of multi-token field', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=26/01/26;
+    Time=12:00:00;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Update          ;Integer }
+    { 2   ;   ;Update Count    ;Integer }
+  }
+  KEYS
+  {
+    {    ;Update                       ;Clustered=Yes }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+
+      // Position on the first "Update" field (the single-token one)
+      const lines = code.split('\n');
+      const lineIndex = lines.findIndex(l => l.includes('Update          ;Integer'));
+      const colIndex = lines[lineIndex].indexOf('Update');
+      const pos = { line: lineIndex, character: colIndex + 3 }; // Middle of "Update"
+
+      const edits = provider.getRenameEdits(doc, pos, 'Changed', ast, symbolTable);
+
+      expect(edits).toBeDefined();
+
+      const changes = edits!.changes![doc.uri];
+
+      // Should rename only "Update" field (2 locations: definition + KEY)
+      // Should NOT affect "Update Count" field
+      expect(changes.length).toBe(2);
+
+      // Apply edits to verify "Update Count" is not modified
+      let newCode = code;
+      const sortedEdits = [...changes].sort((a, b) => {
+        if (a.range.start.line !== b.range.start.line) {
+          return b.range.start.line - a.range.start.line;
+        }
+        return b.range.start.character - a.range.start.character;
+      });
+
+      sortedEdits.forEach((edit: any) => {
+        const startOffset = doc.offsetAt(edit.range.start);
+        const endOffset = doc.offsetAt(edit.range.end);
+        newCode = newCode.substring(0, startOffset) + edit.newText + newCode.substring(endOffset);
+      });
+
+      // Verify "Update Count" field is not modified
+      expect(newCode).toContain('Update Count');
+      expect(newCode).not.toContain('Changed Count');
+
+      // Verify "Update" field IS modified
+      expect(newCode).toContain('Changed          ;Integer');
+      expect(newCode).not.toContain('Update          ;Integer');
+    });
+
+    // Issue #256: Multi-token field declared but never used
+    it('should rename multi-token field that is only declared', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Update Count ; Integer }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+
+      const pos = findPosition(code, 'Update Count', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'RefreshCount', ast, symbolTable);
+
+      expect(edits).toBeDefined();
+
+      const changes = edits!.changes![doc.uri];
+
+      // Should rename only the definition (1 location)
+      expect(changes.length).toBe(1);
+    });
+
+    // Issue #256: prepareRename should return correct range for multi-token field
+    it('should return correct range for prepareRename on multi-token field', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Update Count ; Integer }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+
+      const pos = findPosition(code, 'Update Count', 1);
+
+      const result = provider.prepareRename(doc, pos, ast, symbolTable);
+
+      expect(result).not.toBeNull();
+      expect(result?.placeholder).toBe('Update Count');
+
+      // Range should cover BOTH tokens
+      const rangeText = doc.getText(result!.range);
+      expect(rangeText.toLowerCase()).toContain('update');
+      expect(rangeText.toLowerCase()).toContain('count');
+      // Should be "Update Count" with possible whitespace
+      expect(rangeText.replace(/\s+/g, ' ').trim().toLowerCase()).toBe('update count');
+    });
+
+    // Issue #256: Multi-token field with reserved word component
+    it('should rename multi-token field containing reserved word like Begin Date', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Begin Date ; Date }
+    { 2 ;   ; End Time ; Time }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    BEGIN
+      "Begin Date" := TODAY;
+      "End Time" := TIME;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+
+      const pos = findPosition(code, 'Begin Date', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'StartDate', ast, symbolTable);
+
+      expect(edits).toBeDefined();
+
+      const changes = edits!.changes![doc.uri];
+
+      // Should rename: definition + usage
+      expect(changes.length).toBe(2);
+
+      changes.forEach((edit: any) => {
+        expect(edit.newText).toBe('StartDate');
       });
     });
 
