@@ -91,7 +91,7 @@ class ReferenceCollectorVisitor implements Partial<ASTVisitor> {
   visitProcedureDeclaration(node: ProcedureDeclaration): void {
     this.refs.push({
       name: node.name,
-      token: node.startToken,
+      token: node.nameToken ?? node.startToken,
       isDefinition: true
     });
   }

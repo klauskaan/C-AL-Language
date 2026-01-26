@@ -654,10 +654,105 @@ describe('RenameProvider', () => {
 
       const changes = edits!.changes![doc.uri];
 
-      // TODO: Bug - only finds 3 out of 4 expected changes
       // Should rename: definition + 2 calls in Run + 1 call in Process = 4
-      // Currently only finds 3 (missing one reference)
-      expect(changes.length).toBe(3);
+      expect(changes.length).toBe(4);
+
+      // Verify specific lines are found: definition (line 4, 0-indexed) + calls (lines 10, 11, 16)
+      expect(changes.map(c => c.range.start.line).sort((a, b) => a - b)).toEqual([4, 10, 11, 16]);
+    });
+
+    it('should rename quoted procedure name in definition and call', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  CODE
+  {
+    PROCEDURE "My Procedure"();
+    BEGIN
+    END;
+
+    PROCEDURE Run();
+    BEGIN
+      "My Procedure";
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+      const pos = findPosition(code, '"My Procedure"', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'New Name', ast, symbolTable);
+
+      expect(edits).toBeDefined();
+
+      const changes = edits!.changes![doc.uri];
+
+      expect(changes.length).toBe(2);
+    });
+
+    it('should rename procedure with @number suffix in definition and call', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Calculate@1000001();
+    BEGIN
+    END;
+
+    PROCEDURE Run();
+    BEGIN
+      Calculate;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+      const pos = findPosition(code, 'Calculate', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'Compute', ast, symbolTable);
+
+      expect(edits).toBeDefined();
+
+      const changes = edits!.changes![doc.uri];
+
+      // Note: The @1000001 should remain after rename
+      expect(changes.length).toBe(2);
+    });
+
+    it('should rename LOCAL PROCEDURE in definition and call', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  CODE
+  {
+    LOCAL PROCEDURE Helper();
+    BEGIN
+    END;
+
+    PROCEDURE Run();
+    BEGIN
+      Helper;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+      const pos = findPosition(code, 'Helper', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'Assist', ast, symbolTable);
+
+      expect(edits).toBeDefined();
+
+      const changes = edits!.changes![doc.uri];
+
+      expect(changes.length).toBe(2);
     });
 
     // TODO: Parser limitation - qualified field references (Rec.Field) scope resolution needs improvement
@@ -1218,9 +1313,8 @@ describe('RenameProvider', () => {
       expect(edits).toBeDefined();
       const changes = edits!.changes![doc.uri];
 
-      // TODO: Bug - procedure declarations with no usages are not found by rename
-      // Should rename just the declaration (1 change), but currently finds nothing
-      expect(changes.length).toBe(0);
+      // Should rename just the declaration (1 change)
+      expect(changes.length).toBe(1);
     });
 
     it('should handle case-insensitive matching in references', () => {

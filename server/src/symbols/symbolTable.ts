@@ -190,7 +190,7 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
     this.currentScope.addSymbol({
       name: node.name,
       kind: 'procedure',
-      token: node.startToken
+      token: node.nameToken ?? node.startToken
     });
 
     // Create child scope for procedure body

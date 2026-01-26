@@ -549,6 +549,8 @@ export interface ProcedureAttribute extends ASTNode {
 export interface ProcedureDeclaration extends ASTNode {
   type: 'ProcedureDeclaration';
   name: string;
+  /** Token pointing to the procedure name identifier (for symbol resolution) */
+  nameToken?: Token;
   parameters: ParameterDeclaration[];
   returnType: DataType | null;
   isLocal: boolean;

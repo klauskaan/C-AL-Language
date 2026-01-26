@@ -243,6 +243,62 @@ describe('DefinitionProvider', () => {
       const defLineIndex = lines.findIndex(l => l.includes('PROCEDURE MyProcedure'));
       expect(result?.range.start.line).toBe(defLineIndex);
     });
+
+    it('should navigate to procedure name, not PROCEDURE keyword', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+  }
+  CODE
+  {
+    PROCEDURE Calculate();
+    BEGIN
+    END;
+
+    PROCEDURE Run();
+    BEGIN
+      Calculate;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+
+      // Find where Calculate is CALLED (not defined)
+      const lines = code.split('\n');
+      const usageLineIndex = lines.findIndex(l => l.trim() === 'Calculate;');
+      const usageLine = lines[usageLineIndex];
+      const procCol = usageLine.indexOf('Calculate');
+
+      const result = provider.getDefinition(doc, Position.create(usageLineIndex, procCol + 1), ast, symbolTable);
+
+      expect(result).not.toBeNull();
+      if (result) {
+        // Should point to the procedure name "Calculate", not the "PROCEDURE" keyword
+        const defLineIndex = lines.findIndex(l => l.includes('PROCEDURE Calculate'));
+        expect(result.range.start.line).toBe(defLineIndex);
+        // The column should point to "Calculate", not "PROCEDURE"
+        // "    PROCEDURE Calculate" - "Calculate" starts after "    PROCEDURE "
+        const defLine = lines[defLineIndex];
+        const procedureKeywordPos = defLine.indexOf('PROCEDURE');
+        const calculatePos = defLine.indexOf('Calculate');
+        expect(result.range.start.character).toBe(calculatePos);
+        expect(result.range.start.character).toBeGreaterThan(procedureKeywordPos);
+      }
+    });
   });
 
   describe('Field Access (Dot Notation)', () => {

@@ -2151,7 +2151,7 @@ export class Parser {
   private parseProcedure(isLocal: boolean = false, attributes: ProcedureAttribute[] = []): ProcedureDeclaration {
     const startToken = this.advance(); // PROCEDURE or FUNCTION
 
-    const name = this.parseProcedureName();
+    const { name, nameToken } = this.parseProcedureName();
 
     const parameters = this.parseProcedureParameters();
 
@@ -2178,6 +2178,7 @@ export class Parser {
     const proc: ProcedureDeclaration = {
       type: 'ProcedureDeclaration',
       name,
+      nameToken,
       parameters,
       returnType,
       isLocal,
@@ -2198,14 +2199,14 @@ export class Parser {
   /**
    * Parse procedure/function name, handling @number syntax for C/AL auto-numbering
    */
-  private parseProcedureName(): string {
+  private parseProcedureName(): { name: string; nameToken: Token } {
     const nameToken = this.advance();
     const name = nameToken.value;
 
     // Skip @number if present (C/AL auto-numbering)
     this.skipAutoNumberSuffix();
 
-    return name;
+    return { name, nameToken };
   }
 
   /**
