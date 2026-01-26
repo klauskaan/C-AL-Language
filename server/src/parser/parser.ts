@@ -173,6 +173,17 @@ export class Parser {
   }
 
   /**
+   * Record a warning when attributes are ignored for non-PROCEDURE declarations.
+   * Used when attributes precede TRIGGER or EVENT declarations (which don't support attributes in C/AL).
+   */
+  private warnIgnoredAttributes(count: number, token: Token): void {
+    this.recordError(
+      `${count} ${count === 1 ? 'attribute' : 'attributes'} ignored - attributes are only supported on PROCEDURE declarations in C/AL`,
+      token
+    );
+  }
+
+  /**
    * Parse OBJECT declaration
    */
   private parseObject(): ObjectDeclaration {
@@ -1864,20 +1875,12 @@ export class Parser {
           procedures.push(this.parseProcedure(isLocal, attributes));
         } else if (this.check(TokenType.Trigger)) {
           if (firstLeftBracket !== null) {
-            const count = attributeAttempts;
-            this.recordError(
-              `${count} ${count === 1 ? 'attribute' : 'attributes'} ignored - attributes are only supported on PROCEDURE declarations in C/AL`,
-              firstLeftBracket
-            );
+            this.warnIgnoredAttributes(attributeAttempts, firstLeftBracket);
           }
           triggers.push(this.parseTrigger());
         } else if (this.check(TokenType.Event)) {
           if (firstLeftBracket !== null) {
-            const count = attributeAttempts;
-            this.recordError(
-              `${count} ${count === 1 ? 'attribute' : 'attributes'} ignored - attributes are only supported on PROCEDURE declarations in C/AL`,
-              firstLeftBracket
-            );
+            this.warnIgnoredAttributes(attributeAttempts, firstLeftBracket);
           }
           events.push(this.parseEvent());
         } else if (this.check(TokenType.Begin)) {
