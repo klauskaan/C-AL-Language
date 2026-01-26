@@ -70,7 +70,7 @@ describe('Integration - COD1003.TXT Auto-Numbering Issues', () => {
 
       expect(ast.object?.objectKind).toBe('Codeunit');
       expect(ast.object?.objectId).toBe(1003);
-      expect(ast.object?.objectName).toBe('Job Task - Indent');
+      expect(ast.object?.objectName).toBe('Job Task-Indent');
     });
   });
 

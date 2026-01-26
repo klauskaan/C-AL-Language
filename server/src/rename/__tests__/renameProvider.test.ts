@@ -995,11 +995,8 @@ describe('RenameProvider', () => {
       expect(changes.length).toBe(4);
     });
 
-    // Issue #256: Multi-token field with special characters (period)
-    // Note: This test is skipped due to parser issue #257 where field names with periods
-    // are stored with extra whitespace (e.g., "Phone No ." instead of "Phone No.")
-    // See: https://github.com/klauskaan/C-AL-Language/issues/257
-    it.skip('should rename multi-token field with special characters like No.', () => {
+    // Issue #256/#257: Multi-token field with special characters (period)
+    it('should rename multi-token field with special characters like No.', () => {
       const code = `OBJECT Table 50000 Test
 {
   FIELDS

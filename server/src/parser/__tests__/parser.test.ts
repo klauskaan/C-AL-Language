@@ -3155,7 +3155,7 @@ describe('Parser - Property Value Whitespace Preservation', () => {
 
       expect(ast.object).not.toBeNull();
       const table = ast.object as ObjectDeclaration;
-      expect(table.fields?.fields[0].fieldName).toBe('No .');
+      expect(table.fields?.fields[0].fieldName).toBe('No.');
     });
 
     it('should parse multi-word unquoted field name (Job No.)', () => {
@@ -3169,7 +3169,7 @@ describe('Parser - Property Value Whitespace Preservation', () => {
       const ast = parser.parse();
 
       const table = ast.object as ObjectDeclaration;
-      expect(table.fields?.fields[0].fieldName).toBe('Job No .');
+      expect(table.fields?.fields[0].fieldName).toBe('Job No.');
     });
 
     it('should parse quoted field name with period ("No.")', () => {
@@ -3202,12 +3202,12 @@ describe('Parser - Property Value Whitespace Preservation', () => {
 
       const table = ast.object as ObjectDeclaration;
       expect(table.fields?.fields).toHaveLength(5);
-      expect(table.fields?.fields[0].fieldName).toBe('No .');
-      expect(table.fields?.fields[1].fieldName).toBe('Job No .');
-      expect(table.fields?.fields[2].fieldName).toBe('Document No .');
+      expect(table.fields?.fields[0].fieldName).toBe('No.');
+      expect(table.fields?.fields[1].fieldName).toBe('Job No.');
+      expect(table.fields?.fields[2].fieldName).toBe('Document No.');
       expect(table.fields?.fields[3].fieldName).toBe('Serial No.');
-      // Note: join(' ') adds spaces around periods
-      expect(table.fields?.fields[4].fieldName).toBe('Update Std . Gen . Jnl . Lines');
+      // Field names should match source exactly - no extra whitespace
+      expect(table.fields?.fields[4].fieldName).toBe('Update Std. Gen. Jnl. Lines');
     });
 
     it('should handle empty field name gracefully', () => {
@@ -3236,7 +3236,7 @@ describe('Parser - Property Value Whitespace Preservation', () => {
       const ast = parser.parse();
 
       const table = ast.object as ObjectDeclaration;
-      expect(table.fields?.fields[0].fieldName).toBe('No .');
+      expect(table.fields?.fields[0].fieldName).toBe('No.');
       expect(table.fields?.fields[0].properties).not.toBeNull();
     });
 
@@ -3251,7 +3251,7 @@ describe('Parser - Property Value Whitespace Preservation', () => {
       const ast = parser.parse();
 
       const table = ast.object as ObjectDeclaration;
-      expect(table.fields?.fields[0].fieldName).toBe('Update Std . Gen . Jnl . Lines');
+      expect(table.fields?.fields[0].fieldName).toBe('Update Std. Gen. Jnl. Lines');
     });
 
     it('should parse field names without periods', () => {

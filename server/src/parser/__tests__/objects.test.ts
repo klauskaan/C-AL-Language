@@ -57,8 +57,8 @@ describe('Parser - Table Objects', () => {
     const ast = parser.parse();
 
     expect(ast.object).not.toBeNull();
-    // Hyphen is tokenized as operator, so spaces are added around it
-    expect(ast.object?.objectName).toBe('Customer - Extended');
+    // Hyphen preserved without added spaces - matches NAV export format
+    expect(ast.object?.objectName).toBe('Customer-Extended');
   });
 
   it('should parse table and validate AST structure', () => {
@@ -355,8 +355,8 @@ describe('Parser - Regression Tests', () => {
 
       const ast = parser.parse();
 
-      // Note: Hyphen is tokenized as separate operator, so spaces are added
-      expect(ast.object?.objectName).toBe('Job Task - Indent');
+      // Hyphen preserved without added spaces - matches NAV export format
+      expect(ast.object?.objectName).toBe('Job Task-Indent');
     });
 
     it('should parse object name with multiple special characters', () => {
@@ -368,8 +368,8 @@ describe('Parser - Regression Tests', () => {
 
       const ast = parser.parse();
 
-      // Note: Operators are tokenized separately, so spaces are added
-      expect(ast.object?.objectName).toBe('Sales Order - Test / Debug');
+      // Operators preserved with original spacing - matches NAV export format
+      expect(ast.object?.objectName).toBe('Sales Order - Test/Debug');
     });
   });
 

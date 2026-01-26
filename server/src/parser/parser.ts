@@ -325,12 +325,19 @@ export class Parser {
       // Quoted name - single token
       objectName = this.advance().value;
     } else {
-      // Unquoted name - consume all tokens until left brace
+      // Unquoted name - use offset-based accumulation to preserve original spacing
       const nameParts: string[] = [];
+      let lastEndOffset = -1;
       while (!this.check(TokenType.LeftBrace) && !this.isAtEnd()) {
-        nameParts.push(this.advance().value);
+        const token = this.advance();
+        // Add space only if there was whitespace between tokens in source
+        if (lastEndOffset !== -1 && token.startOffset > lastEndOffset) {
+          nameParts.push(' ');
+        }
+        nameParts.push(token.value);
+        lastEndOffset = token.endOffset;
       }
-      objectName = nameParts.join(' ').trim();
+      objectName = nameParts.join('').trim();
     }
 
     return { startToken, objectKind, objectId, objectName };
@@ -602,15 +609,22 @@ export class Parser {
       // Examples: No., Job No., Update Std. Gen. Jnl. Lines
       const startPos = this.peek();
       const nameParts: string[] = [];
+      let lastEndOffset = -1;
 
       // Consume all tokens until we hit the next semicolon
+      // Use offset-based accumulation to preserve original spacing
       while (!this.check(TokenType.Semicolon) && !this.isAtEnd()) {
-        nameParts.push(this.advance().value);
+        const token = this.advance();
+        // Add space only if there was whitespace between tokens in source
+        if (lastEndOffset !== -1 && token.startOffset > lastEndOffset) {
+          nameParts.push(' ');
+        }
+        nameParts.push(token.value);
+        lastEndOffset = token.endOffset;
       }
 
-      // Join tokens with single space, then trim leading/trailing whitespace
-      // This normalizes field names (spaces around periods, e.g., 'No .')
-      fieldName = nameParts.join(' ').trim();
+      // Join without adding extra spaces
+      fieldName = nameParts.join('').trim();
 
       // Validate field name is not empty
       if (fieldName === '') {

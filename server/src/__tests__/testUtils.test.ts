@@ -134,8 +134,8 @@ describe('Test Utilities', () => {
       // Field names are stored in the symbol table
       const allSymbols = symbolTable.getAllSymbols();
       const fieldNames = allSymbols.filter(s => s.kind === 'field').map(s => s.name);
-      // Parser preserves whitespace in field names as written in the fixture
-      expect(fieldNames).toContain('No .');
+      // Field names match source exactly - no extra whitespace added
+      expect(fieldNames).toContain('No.');
       expect(fieldNames).toContain('Name');
     });
 
