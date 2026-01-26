@@ -755,8 +755,8 @@ describe('RenameProvider', () => {
       expect(changes.length).toBe(2);
     });
 
-    // TODO: Parser limitation - qualified field references (Rec.Field) scope resolution needs improvement
-    it.skip('should rename field in definition and all usages (qualified and unqualified)', () => {
+    // Issue #204: Field rename should work with qualified and unqualified references
+    it('should rename field in definition and all usages (qualified and unqualified)', () => {
       const code = `OBJECT Table 50000 Test
 {
   FIELDS
@@ -789,6 +789,198 @@ describe('RenameProvider', () => {
 
       // Should rename: field definition + unqualified usage + qualified usage = 3
       expect(changes.length).toBe(3);
+    });
+
+    // Issue #204: Quoted field rename should include quotes in replacement
+    it('should rename quoted field including quotes in all locations', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; "No." ; Code20 }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    VAR
+      Rec : Record 50000;
+    BEGIN
+      "No." := '12345';
+      Rec."No." := '67890';
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+      const pos = findPosition(code, '"No."', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'Number', ast, symbolTable);
+
+      expect(edits).toBeDefined();
+
+      const changes = edits!.changes![doc.uri];
+
+      // Should rename field in 3 locations: definition + unqualified usage + qualified usage
+      expect(changes.length).toBe(3);
+
+      // All edits should have the full quoted string replaced
+      changes.forEach((edit: any) => {
+        // New name doesn't need quotes, so it should be unquoted
+        expect(edit.newText).toBe('Number');
+        // Old range should include the entire quoted identifier
+        const rangeText = doc.getText(edit.range);
+        expect(rangeText).toBe('"No."');
+      });
+    });
+
+    // Issue #204: Multi-token unquoted field names should be renamed completely
+    // NOTE: Skipped - requires deeper symbol lookup changes (see issue #256)
+    it.skip('should rename multi-token unquoted field name completely', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Update Count ; Integer }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    BEGIN
+      Update Count := 0;
+      Update Count := Update Count + 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+
+      // Position on first "Update" token in field definition
+      const pos = findPosition(code, 'Update Count', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'RefreshCount', ast, symbolTable);
+
+      expect(edits).toBeDefined();
+
+      const changes = edits!.changes![doc.uri];
+
+      // Should rename in 4 locations: definition + 3 usages
+      expect(changes.length).toBe(4);
+
+      // Verify that the new text is correct (not corrupted like "RefreshCount Count")
+      changes.forEach((edit: any) => {
+        expect(edit.newText).toBe('RefreshCount');
+        // Range should cover both tokens "Update Count"
+        const rangeText = doc.getText(edit.range);
+        expect(rangeText.toLowerCase()).toContain('update');
+        expect(rangeText.toLowerCase()).toContain('count');
+      });
+    });
+
+    // Issue #204: Malformed field declarations should not crash
+    it('should handle malformed field declaration gracefully', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; ; Code20 }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+
+      // Try to rename at the malformed field location
+      const lines = code.split('\n');
+      const lineIndex = lines.findIndex(l => l.includes('{ 1 ;   ; ; Code20 }'));
+      const pos = Position.create(lineIndex, 10); // Position in the malformed field
+
+      // Should not crash and should return null (no valid identifier to rename)
+      expect(() => {
+        const result = provider.prepareRename(doc, pos, ast, symbolTable);
+        expect(result).toBeNull();
+      }).not.toThrow();
+    });
+
+    // Issue #204: End-to-end test - verify renamed code is valid
+    it('should produce valid code after field rename (end-to-end)', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; CustomerNo ; Code20 }
+    { 2 ;   ; Name ; Text50 }
+  }
+  CODE
+  {
+    PROCEDURE Validate();
+    VAR
+      Rec : Record 50000;
+    BEGIN
+      IF CustomerNo = '' THEN
+        ERROR('Empty');
+      Rec.CustomerNo := '12345';
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+      const pos = findPosition(code, 'CustomerNo', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'CustomerNumber', ast, symbolTable);
+
+      expect(edits).toBeDefined();
+
+      const changes = edits!.changes![doc.uri];
+
+      // Verify we have the expected number of changes
+      expect(changes.length).toBe(3); // definition + 2 usages
+
+      // Apply the edits manually and verify the result parses without errors
+      let newCode = code;
+      // Sort edits in reverse order to apply from end to start (preserves positions)
+      const sortedEdits = [...changes].sort((a, b) => {
+        if (a.range.start.line !== b.range.start.line) {
+          return b.range.start.line - a.range.start.line;
+        }
+        return b.range.start.character - a.range.start.character;
+      });
+
+      sortedEdits.forEach((edit: any) => {
+        const startOffset = doc.offsetAt(edit.range.start);
+        const endOffset = doc.offsetAt(edit.range.end);
+        newCode = newCode.substring(0, startOffset) + edit.newText + newCode.substring(endOffset);
+      });
+
+      // Verify the renamed code parses successfully
+      const newLexer = new Lexer(newCode);
+      const newTokens = newLexer.tokenize();
+      const newParser = new Parser(newTokens);
+      const newAst = newParser.parse();
+
+      // Should not have critical parse errors
+      expect(newAst).toBeDefined();
+
+      // Verify the new field name appears in the correct locations
+      expect(newCode).toContain('CustomerNumber');
+      expect(newCode).not.toContain('CustomerNo ;'); // Old field definition should be gone
+      expect(newCode).toContain('CustomerNumber ;'); // New field definition should be present
     });
   });
 

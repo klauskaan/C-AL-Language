@@ -12,6 +12,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SymbolTable, Symbol } from '../symbols/symbolTable';
 import { CALDocument } from '../parser/ast';
 import { ProviderBase } from '../providers/providerBase';
+import { TokenType } from '../lexer/tokens';
 
 /**
  * Definition provider class
@@ -21,8 +22,8 @@ export class DefinitionProvider extends ProviderBase {
   /**
    * Convert a symbol's token position to an LSP Location
    */
-  private symbolToLocation(symbol: Symbol, documentUri: string): Location {
-    return this.tokenToLocation(symbol.token, documentUri);
+  private symbolToLocation(symbol: Symbol, documentUri: string, nameLength?: number): Location {
+    return this.tokenToLocation(symbol.token, documentUri, nameLength);
   }
 
   /**
@@ -55,15 +56,21 @@ export class DefinitionProvider extends ProviderBase {
         const field = ast.object.fields.fields.find(
           f => f.fieldName.toLowerCase() === word.toLowerCase()
         );
-        if (field && field.startToken) {
+        if (field && field.nameToken) {
+          // Calculate the actual name length for highlighting
+          const nameLength = field.nameToken.type === TokenType.QuotedIdentifier
+            ? field.nameToken.value.length + 2  // +2 for quotes
+            : field.fieldName.length;            // Full multi-token name
+
           return this.symbolToLocation(
             {
               name: field.fieldName,
               kind: 'field',
-              token: field.startToken,
+              token: field.nameToken,
               type: field.dataType.typeName
             },
-            document.uri
+            document.uri,
+            nameLength
           );
         }
       }

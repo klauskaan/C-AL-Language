@@ -17,7 +17,7 @@ import {
   ParameterDeclaration,
   FieldDeclaration
 } from '../parser/ast';
-import { Token } from '../lexer/tokens';
+import { Token, TokenType } from '../lexer/tokens';
 import { ProviderBase } from '../providers/providerBase';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { ASTWalker } from '../visitor/astWalker';
@@ -29,6 +29,7 @@ interface SymbolReference {
   name: string;
   token: Token;
   isDefinition: boolean;
+  nameLength?: number;  // Actual length of the name (for multi-token or quoted identifiers)
 }
 
 /**
@@ -51,10 +52,17 @@ class ReferenceCollectorVisitor implements Partial<ASTVisitor> {
    * Visit an Identifier node - collect as a reference (not definition)
    */
   visitIdentifier(node: Identifier): void {
+    // Calculate the actual name length for highlighting
+    // For quoted identifiers, include the quotes in the range
+    const nameLength = node.isQuoted
+      ? node.name.length + 2  // +2 for quotes
+      : node.name.length;
+
     this.refs.push({
       name: node.name,
       token: node.startToken,
-      isDefinition: false
+      isDefinition: false,
+      nameLength
     });
   }
 
@@ -104,10 +112,19 @@ class ReferenceCollectorVisitor implements Partial<ASTVisitor> {
    * Visit a FieldDeclaration node - collect as a definition
    */
   visitFieldDeclaration(node: FieldDeclaration): void {
+    // Skip if no nameToken (error recovery case)
+    if (!node.nameToken) return;
+
+    // Calculate the actual name length for highlighting
+    const nameLength = node.nameToken.type === TokenType.QuotedIdentifier
+      ? node.nameToken.value.length + 2  // +2 for quotes
+      : node.fieldName.length;            // Full multi-token name
+
     this.refs.push({
       name: node.fieldName,
-      token: node.startToken,
-      isDefinition: true
+      token: node.nameToken,
+      isDefinition: true,
+      nameLength
     });
   }
 }
@@ -239,6 +256,6 @@ export class ReferenceProvider extends ProviderBase {
     debugLog?.(`[References] Matching refs: ${matchingRefs.length}`);
 
     // Convert to locations
-    return matchingRefs.map(ref => this.tokenToLocation(ref.token, document.uri));
+    return matchingRefs.map(ref => this.tokenToLocation(ref.token, document.uri, ref.nameLength));
   }
 }

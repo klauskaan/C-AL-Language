@@ -157,10 +157,13 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
    * Visit a FieldDeclaration node and add it to the current scope
    */
   visitFieldDeclaration(node: FieldDeclaration): void | false {
+    // Skip if no nameToken (error recovery case)
+    if (!node.nameToken) return;
+
     this.currentScope.addSymbol({
       name: node.fieldName,
       kind: 'field',
-      token: node.startToken,
+      token: node.nameToken,
       type: node.dataType.typeName
     });
 

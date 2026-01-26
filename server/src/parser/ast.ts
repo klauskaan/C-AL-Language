@@ -290,6 +290,7 @@ export interface FieldDeclaration extends ASTNode {
   fieldNo: number;
   fieldClass: string;  // Reserved column - always empty in NAV exports
   fieldName: string;
+  nameToken?: Token;  // First token of field name (QuotedIdentifier or first token of unquoted name)
   dataType: DataType;
   properties: PropertySection | null;
   triggers: TriggerDeclaration[] | null;  // Field-level triggers (OnValidate, OnLookup, etc.)

@@ -590,10 +590,11 @@ export class Parser {
     // For unquoted names, read all tokens until semicolon to handle special chars like periods
     // Format: { FieldNo ; FieldClass ; FieldName ... ; DataType ; ... }
     let fieldName = '';
+    let nameToken: Token | undefined;
 
     if (this.check(TokenType.QuotedIdentifier)) {
       // Quoted name - single token (e.g., "No.")
-      const nameToken = this.advance();
+      nameToken = this.advance();
       fieldName = nameToken.value;
     } else {
       // Unquoted name - read everything between semicolons
@@ -615,6 +616,10 @@ export class Parser {
       if (fieldName === '') {
         this.recordError('Field name cannot be empty (in FIELDS section)', startPos);
         fieldName = '<missing>'; // Placeholder for error recovery
+        // Leave nameToken as undefined for error recovery
+      } else {
+        // Use first token of the multi-token name
+        nameToken = startPos;
       }
     }
 
@@ -660,6 +665,7 @@ export class Parser {
       fieldNo,
       fieldClass,
       fieldName,
+      nameToken,
       dataType,
       properties,
       triggers,

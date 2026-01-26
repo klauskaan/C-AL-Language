@@ -141,13 +141,14 @@ export abstract class ProviderBase {
    *
    * @param token - The token containing position information (line, column, value)
    * @param documentUri - The document URI
+   * @param nameLength - Optional explicit length for multi-token or quoted identifiers
    * @returns Location object for use in LSP responses
    */
-  protected tokenToLocation(token: Token, documentUri: string): Location {
+  protected tokenToLocation(token: Token, documentUri: string, nameLength?: number): Location {
     // Token line and column are 1-based, LSP wants 0-based
     const startLine = token.line - 1;
     const startChar = token.column - 1;
-    const endChar = startChar + token.value.length;
+    const endChar = startChar + (nameLength ?? token.value.length);
 
     const range: Range = {
       start: { line: startLine, character: startChar },
