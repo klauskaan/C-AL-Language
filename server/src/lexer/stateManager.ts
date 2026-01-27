@@ -377,6 +377,9 @@ export class LexerStateManager {
     // Reset column tracking
     this.fieldDefColumn = FieldDefColumn.NONE;
 
+    // Reset section keyword flag (issue #262)
+    this.lastWasSectionKeyword = false;
+
     return transition;
   }
 
@@ -456,6 +459,10 @@ export class LexerStateManager {
    * @param currentContext - The lexer's current context (passed from Lexer.getCurrentContext())
    */
   public onBeginKeyword(currentContext: LexerContext): ContextTransition | null {
+    // Always clear stale lastWasSectionKeyword when we see BEGIN
+    // Even if we don't enter CODE_BLOCK (due to protection guards), the flag is no longer valid
+    this.lastWasSectionKeyword = false;
+
     // Guard: Don't push CODE_BLOCK if BEGIN appears in structural columns
     if (this.shouldProtectFromBeginEnd()) {
       return null;

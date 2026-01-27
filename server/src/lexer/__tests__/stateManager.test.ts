@@ -1027,4 +1027,101 @@ describe('LexerStateManager', () => {
       expect(manager.getState().inPropertyValue).toBe(false);
     });
   });
+
+  describe('lastWasSectionKeyword flag reset at boundaries (issue #262)', () => {
+    it('should reset lastWasSectionKeyword when onCloseBrace() pops SECTION_LEVEL', () => {
+      const manager = new LexerStateManager();
+
+      // Setup: Enter OBJECT_LEVEL
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace(); // Open object brace (braceDepth=1)
+
+      // Simulate section keyword and enter SECTION_LEVEL
+      manager.markSectionKeyword();
+      manager.onOpenBrace(); // Enter SECTION_LEVEL (braceDepth=2)
+
+      // Set stale flag within section
+      manager.markSectionKeyword();
+      expect(manager.getState().lastWasSectionKeyword).toBe(true);
+
+      // Close section - should reset flag
+      manager.onCloseBrace(); // Pop SECTION_LEVEL (braceDepth=1)
+
+      // Assert flag is cleared (WILL FAIL before fix)
+      expect(manager.getState().lastWasSectionKeyword).toBe(false);
+    });
+
+    it('should reset lastWasSectionKeyword when onBeginKeyword() enters CODE_BLOCK from trigger property', () => {
+      const manager = new LexerStateManager();
+
+      // Setup: Enter SECTION_LEVEL in FIELDS section
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace();
+      manager.onSectionKeyword('FIELDS');
+      manager.onOpenBrace(); // Enter SECTION_LEVEL
+
+      // Trigger property setup
+      manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
+      manager.onEquals(); // Enter property value mode
+
+      // Set stale flag
+      manager.markSectionKeyword();
+      expect(manager.getState().lastWasSectionKeyword).toBe(true);
+
+      // BEGIN should enter CODE_BLOCK
+      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+
+      // Assert flag is cleared (WILL FAIL before fix)
+      expect(manager.getState().lastWasSectionKeyword).toBe(false);
+      // Also verify context transition worked
+      expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
+    });
+
+    it('should reset lastWasSectionKeyword when onBeginKeyword() enters CODE_BLOCK from non-property context', () => {
+      const manager = new LexerStateManager();
+
+      // Setup: Enter SECTION_LEVEL (use markSectionKeyword to avoid column tracking)
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace();
+      manager.markSectionKeyword(); // Non-columnar section (e.g., PROPERTIES)
+      manager.onOpenBrace(); // Enter SECTION_LEVEL
+
+      // Set stale flag
+      manager.markSectionKeyword();
+      expect(manager.getState().lastWasSectionKeyword).toBe(true);
+
+      // BEGIN at SECTION_LEVEL (non-property context) should enter CODE_BLOCK
+      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+
+      // Assert flag is cleared (WILL FAIL before fix)
+      expect(manager.getState().lastWasSectionKeyword).toBe(false);
+      // Also verify context transition worked
+      expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
+    });
+
+    it('should reset lastWasSectionKeyword on field-level close brace (not just section pop)', () => {
+      const manager = new LexerStateManager();
+
+      // Setup: Enter SECTION_LEVEL with field definition
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace(); // braceDepth=1
+      manager.onSectionKeyword('FIELDS');
+      manager.onOpenBrace(); // braceDepth=2, enter SECTION_LEVEL
+
+      // Open field definition
+      manager.onOpenBrace(); // braceDepth=3
+
+      // Set stale flag mid-field
+      manager.markSectionKeyword();
+      expect(manager.getState().lastWasSectionKeyword).toBe(true);
+
+      // Close field brace (not section pop)
+      manager.onCloseBrace(); // braceDepth=2, still in SECTION_LEVEL
+
+      // Assert flag is cleared (WILL FAIL before fix)
+      expect(manager.getState().lastWasSectionKeyword).toBe(false);
+      // Verify we're still in SECTION_LEVEL (didn't pop section)
+      expect(manager.getCurrentContext()).toBe(LexerContext.SECTION_LEVEL);
+    });
+  });
 });
