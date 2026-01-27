@@ -2,7 +2,7 @@
   "name": "cal-language",
   "displayName": "C/AL Language Support",
   "description": "Language support for Microsoft Dynamics NAV C/AL",
-  "version": "0.4.6",
+  "version": "0.5.0",
   "publisher": "cal-extension",
   "engines": {
     "vscode": "^1.80.0"

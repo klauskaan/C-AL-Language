@@ -2,7 +2,380 @@
 
 All notable changes to the C/AL Language extension will be documented in this file.
 
+## [0.5.0] - 2026-01-27
+
+### Major Release - LSP Feature Suite & Comprehensive Parser Coverage
+
+This is a major release delivering 5 new LSP providers, comprehensive parser improvements, advanced diagnostics, and significant infrastructure enhancements. The extension now provides a complete language server experience with intelligent code completion, navigation, refactoring, and validation capabilities.
+
+**Note:** Code Completion was shipped in v0.4.9 but was not documented in that release.
+
+### Added
+
+#### LSP Features
+
+**Code Completion (v0.4.9, documented here)**
+- IntelliSense for keywords, variables, procedures, fields
+- Built-in function completion with signatures
+- Record method completion
+- Context-aware suggestions
+
+**Code Lens**
+- Reference count indicators above procedures
+- "Find All References" quick links
+- Jump to references directly from declaration
+
+**Document Symbol (Outline View)**
+- Hierarchical outline in Explorer sidebar
+- Object-level symbols (Tables, Pages, Codeunits)
+- Section-level symbols (FIELDS, KEYS, CODE)
+- Procedure and field navigation
+- Quick jump to any symbol
+
+**Rename Refactoring (F2)**
+- Rename variables, fields, procedures across document
+- Multi-token field name support (e.g., `Entry No.`)
+- Handles both quoted and unquoted identifiers
+- Safe refactoring with scope awareness
+
+**Workspace Symbol Search (Ctrl+T)**
+- Search for symbols across entire workspace
+- Find procedures, fields, objects by name
+- Fuzzy matching support
+- Quick navigation to symbol definitions
+
+**Folding Ranges**
+- Code folding for BEGIN...END blocks
+- Procedure and function folding
+- Section folding (FIELDS, KEYS, CODE)
+- Improved code organization
+
+#### Diagnostics and Validation
+
+**Empty Set Validation**
+- Detects empty sets in `IN` expressions: `IF X IN [] THEN`
+- Warns about unreachable code paths
+- Helps catch logic errors early
+- Configurable severity (warning/error)
+
+**Depth-Limited Walker**
+- Stack overflow protection for deeply nested AST structures
+- Handles complex Action hierarchies in Page objects
+- Prevents language server crashes on malformed code
+- Graceful degradation with error reporting
+
+**AL-Only Feature Detection**
+- Warns when AL-only syntax is used in C/AL files
+- Prevents NAV compilation errors
+- Helps maintain C/AL vs AL boundaries
+- Educates developers on version differences
+
+#### Parser - Language Constructs
+
+**WITH-DO Statements**
+- Full parsing of `WITH record DO statement` syntax
+- Nested WITH-DO support
+- Proper scope tracking for record shortcuts
+
+**CASE Statement Ranges**
+- Range expressions in CASE branches: `CASE X OF 1..10:`
+- Single values and ranges intermixed
+- Proper AST representation
+
+**Array Declarations**
+- Array syntax: `MyArray : ARRAY [10] OF Integer`
+- Multi-dimensional arrays
+- Array indexing expressions
+
+**Variable Modifiers**
+- `TEMPORARY` - In-memory Record variables
+- `SECURITYFILTERING` - Record-level security control
+- `INDATASET` - Page variable binding
+- `WITHEVENTS` - .NET event subscription
+- `RUNONCLIENT` - Client-side .NET execution
+
+**Procedure Modifiers**
+- `LOCAL` - Private procedure visibility
+- Procedure attributes: `[External]`, `[IntegrationEvent]`, `[BusinessEvent]`
+- Attribute validation and error reporting
+
+**FOR Loop Enhancements**
+- `DOWNTO` keyword support for descending loops
+- Complex loop expressions
+- Member access in loop bounds
+
+**BREAK Statement**
+- Break keyword parsing
+- Proper AST node type
+- Allows `Break` as procedure name (C/AL permits keyword reuse)
+
+**DotNet Declarations**
+- `DotNet` variable type with assembly/type paths
+- Escaped quotes in type names
+- Optional WITHEVENTS and RUNONCLIENT modifiers
+
+**Automation Declarations**
+- `Automation` variable type
+- TypeLibName property with escaped quotes
+
+**FOREACH Loops (NAV 2016+)**
+- `FOREACH element IN collection DO` syntax
+- .NET collection iteration
+- Full AST support
+
+**EVENT Declarations**
+- Event trigger syntax for .NET interop
+- Event parameter parsing
+
+#### Parser - Object Section Coverage
+
+**ACTIONS Section (Page Objects)**
+- Complete Action hierarchy parsing
+- ActionContainer, ActionGroup, Action, Separator
+- Nested action structures
+- Property parsing within actions
+- Deeply nested action support with stack overflow protection
+
+**CONTROLS Section (Page Objects)**
+- Complete control hierarchy parsing
+- Container, Group, Field, Part controls
+- Nested control structures
+- Property parsing within controls
+
+**ELEMENTS Section (XMLport Objects)**
+- Element hierarchy parsing
+- Element properties
+- Field mappings
+- Nested element structures
+
+**FIELDGROUPS Section**
+- FieldGroup definitions
+- Field lists within groups
+- DropDown and Brick field groups
+
+**KEYS Section Enhancements**
+- Key field lists
+- Key properties (Clustered, SumIndexFields, etc.)
+- Multi-field key support
+
+**Property Parsing Enhancements**
+- CalcFormula property with token capture
+- TableRelation property with token capture
+- Multi-line property values
+- Brace depth tracking in complex properties
+- Empty/malformed property detection
+- Escaped quotes in property values
+
+#### Lexer Improvements
+
+**Context-Aware Tokenization**
+- `Code` keyword classification: data type vs statement starter
+- `Date`, `Time`, `Boolean` keyword classification: data type vs identifier
+- Section keyword support: `MENUNODES` for MenuSuite objects
+- Comment detection inside bracket contexts
+
+**State Management**
+- Lexer state manager integration
+- Reduced state complexity
+- Property name tracking
+- CODE_BLOCK transition handling
+
+**Token Type Additions**
+- `DOWNTO` token
+- `BREAK` token
+- `FOREACH` token
+- `EVENT` token
+- Section-specific tokens
+
+#### Semantic Highlighting
+
+**Set Literals**
+- Syntax highlighting for set expressions: `[1, 2, 3]`
+- Empty set highlighting: `[]`
+
+**Range Expressions**
+- Range operator highlighting: `1..10`
+- Range expressions in CASE and set contexts
+
+**Improved Token Classification**
+- Quoted identifier length calculation fixes
+- Proper scoping for all token types
+- Consistent semantic token mapping
+
+#### Infrastructure
+
+**LexerStateManager**
+- Centralized lexer state management
+- Reduces lexer complexity
+- Improves maintainability
+- Better state transition handling
+
+**Encoding Configuration**
+- CP850 encoding detection for NAV exports
+- UTF-8 with BOM support
+- Encoding configuration guide
+
+**Test Infrastructure**
+- 4,710 tests passing across 118 suites
+- Comprehensive regression coverage
+- Performance benchmarks
+- Snapshot testing for AST stability
+
+**Lexer Health Script**
+- Validates lexer performance on large file sets
+- Memory usage optimization
+- Tokenization time statistics (min/max/avg)
+- CI integration with failure thresholds
+
+**Type Safety Improvements**
+- Enhanced type safety in test utilities
+- Static imports replacing runtime requires
+- Better TypeScript inference
+
+**Documentation**
+- JSDoc improvements with `@example` tags
+- Encoding configuration guide
+- Sanitization test documentation
+- Parser development guides updated
+
+#### Security Hardening
+
+**Path Sanitization**
+- Strip confidential paths from error messages
+- Prevent test/REAL/ path leakage in diagnostics
+- Windows path handling in sanitization
+- Stack trace sanitization
+
+**SkippedRegion Token Isolation**
+- Security boundary for unparsed content
+- Prevents accidental exposure of skipped regions
+
+**ESLint Security Rules**
+- `no-direct-parse-error` rule prevents ParseError construction bypass
+- Detects aliased ParseError construction
+- Auto-fix suggestions for violations
+- Chained alias detection
+- Import alias detection
+- Variable reassignment detection
+- Context-aware error messages
+- Same-line safety guards
+
+### Fixed
+
+#### Parser Fixes
+
+**IF-ELSE Statement Attribution**
+- Fixed misattribution of ELSE to wrong IF when semicolons present
+- Proper handling of `IF...THEN BEGIN...END; ELSE` syntax
+- Comprehensive test coverage for semicolon termination cases
+
+**Field/Object Name Spacing**
+- Preserve exact spacing in multi-token field names
+- Maintain original formatting for display purposes
+- Fixes alignment issues in property editors
+
+**Procedure Name Validation**
+- Validate procedure name token before consumption
+- Better error messages for invalid procedure declarations
+- Prevents crashes on malformed procedure syntax
+
+**Property Parsing Robustness**
+- Report errors for empty/malformed property values
+- Brace depth tracking in ActionList properties
+- Align field property parsing with general property parsing
+- Handle multiple consecutive malformed properties
+
+**DotNet and Automation Parsing**
+- Handle escaped quotes in type names: `'System.String'` → `'System.String'`
+- Handle empty type names gracefully
+- Proper error reporting for malformed declarations
+
+**Error Recovery**
+- Attribute warnings when discarded during error recovery
+- Attribute validation when preceding triggers/events
+- Better error positioning for invalid FOR loop variables
+- Restore brace depth after token backup
+
+**Expression Parsing**
+- Deeply nested FOR loop member expressions
+- Code and Decimal as statement starters
+- Improved operator precedence handling
+
+#### Lexer Fixes
+
+**Comment Detection**
+- Prevent comment detection inside bracket contexts
+- Clear property name tracking on state transitions
+- Multi-line string line ending edge cases
+
+**Token Type Disambiguation**
+- Emit `Code_Type` for Code in data type contexts
+- Proper classification of Date/Time/Boolean in code contexts
+- Keyword vs identifier disambiguation
+
+#### Rename Fixes
+
+**Rename Completeness**
+- Include field definitions in rename operations
+- Include procedure definitions in rename operations
+- Multi-token unquoted field name support
+- Proper scope handling for all rename targets
+
+#### Semantic Token Fixes
+
+**Token Length Calculation**
+- Correct token length for quoted identifiers
+- Fixes misaligned semantic highlighting
+- Proper handling of escaped quotes in token length
+
+#### Sanitization Fixes
+
+**Path Stripping**
+- Handle Windows paths with backslashes
+- Handle consecutive slashes in paths
+- Case-insensitive path matching
+- Allow parentheses in test/REAL paths
+
+**Error Formatting**
+- Handle empty string stack in formatError
+- typeof guard for undefined values
+- Better fallback error messages
+
+#### ESLint Fixes
+
+**TypeScript Parsing**
+- Fix parsing errors in script files
+- Proper ES6 module support
+- Convert require() to import statements
+
+**Warning Cleanup**
+- Fixed 97 warnings in test files
+- Fixed 20 warnings in production code
+- Escape JSDoc comment terminators
+
+### Changed
+
+**ESLint Configuration**
+- Harmonized message tone for custom rules
+- Improved actionability of rule messages
+- Context-aware error messages with compound contexts
+- Auto-fix suggestions for common violations
+
+**Test Infrastructure**
+- Improved type safety in test utilities
+- Static imports replacing dynamic requires
+- Better test organization and coverage
+- Regression test suite expansion
+
+**Code Quality**
+- Extract helper functions from complex logic
+- Remove duplicate declarations
+- Improve code readability
+- Better error handling patterns
+
 ## [0.4.9] - 2025-12-22
+
+**Note:** This release included Code Completion functionality that was not documented at the time. See v0.5.0 changelog above for Code Completion details.
 
 ### Fixed - Integer Parsing Exception Handling (#62)
 
@@ -1328,32 +1701,3 @@ All improvements were derived from analyzing Microsoft's official AL extension T
 - No code navigation features (planned for future release)
 - No debugging support (planned for future release)
 
----
-
-## Future Roadmap
-
-### Planned Features
-- **Code Intelligence**
-  - IntelliSense code completion
-  - Parameter info and hover documentation
-  - Go to definition and find all references
-
-- **Code Navigation**
-  - Symbol provider for outline view
-  - Object browser for NAV objects
-  - Code lens for references
-
-- **Validation & Diagnostics**
-  - Real-time syntax validation
-  - Error detection and reporting
-  - Code actions and quick fixes
-
-- **Advanced Features**
-  - Code formatting
-  - Refactoring support
-  - Snippet library expansion
-  - Integration with NAV Development Environment
-  - Debugging support
-  - Version control integration
-
-Stay tuned for updates!

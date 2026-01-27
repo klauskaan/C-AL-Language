@@ -1,6 +1,6 @@
 {
   "name": "cal-language-server",
-  "version": "0.4.6",
+  "version": "0.5.0",
   "description": "Language Server for C/AL",
   "main": "./out/server/server.js",
   "types": "./out/server/index.d.ts",

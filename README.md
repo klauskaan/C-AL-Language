@@ -1,80 +1,137 @@
 # C/AL Language for Visual Studio Code
 
-This extension provides comprehensive language support for Microsoft Dynamics NAV C/AL programming language.
+Comprehensive language support for Microsoft Dynamics NAV C/AL programming language, providing intelligent code editing features through a full Language Server Protocol implementation.
 
 ## Features
 
-### Syntax Highlighting (Enhanced in v0.2.2!)
-- Full syntax highlighting for C/AL keywords, data types, operators, and functions
-- Support for comments (single-line `//`, multi-line `/* */`, and curly brace `{ }`)
-- **@ Numbering System**: Highlights C/AL's unique `@` numbering for variables and procedures
-- **Field Definitions**: Smart detection of FIELDS/KEYS/CONTROLS definitions (prevents treating them as comments)
-- **TextConst Language Codes**: Highlights language codes (ENU, FRA, DEU, etc.) in multi-language strings
-- **OBJECT-PROPERTIES**: Proper highlighting for OBJECT-PROPERTIES section
-- **Enhanced Number Support**: Hexadecimal (`0xFF`), scientific notation (`1.5e10`), and decimals (`.5`)
-- **Punctuation Highlighting**: Clear visual separation with dedicated semicolon, colon, and comma highlighting
-- **Improved String Handling**: Better escape sequence recognition and error recovery
-- **Procedure Name Capture**: Enhanced highlighting for PROCEDURE/TRIGGER declarations with dotted names
+### Code Intelligence
+
+**Code Completion (v0.4.9)** - Context-aware IntelliSense suggestions
+- 54 C/AL keywords with descriptions
+- 65+ built-in functions (MESSAGE, ERROR, STRSUBSTNO, etc.) with signatures
+- 55+ Record methods (GET, FIND, FINDSET, INSERT, MODIFY, DELETE, etc.)
+- Symbol completion for variables, fields, and procedures
+- Dot-trigger completion for Record methods and table fields
+- Automatic quoting for field names with spaces
+
+**Hover Information (v0.4.1)** - Documentation on hover
+- Type information for variables and fields
+- Documentation for 65+ built-in functions with signatures
+- Record method documentation after dot (e.g., `Rec.GET`)
+- Keyword descriptions for control flow, data types, and operators
+
+**Signature Help (v0.4.2)** - Parameter hints while typing
+- Parameter hints for 70+ built-in C/AL functions
+- 55+ Record method signatures
+- Active parameter highlighting
+- Nested function call support
+
+### Navigation
+
+**Go to Definition (v0.4.3)** - Jump to symbol definitions
+- F12 to navigate to variable, field, and procedure definitions
+- Case-insensitive symbol lookup
+- Accurate location ranges
+
+**Find All References (v0.4.4)** - Locate all symbol usages
+- Shift+F12 to find all usages of variables, fields, and procedures
+- Expression context support (assignments, conditions, function calls)
+- Include/exclude declaration option
+
+**Document Symbol (v0.5.0)** - Code outline navigation
+- Hierarchical outline in Explorer sidebar (Ctrl+Shift+O)
+- Object-level symbols (Tables, Pages, Codeunits)
+- Section-level symbols (FIELDS, KEYS, CODE)
+- Quick jump to procedures and fields
+
+**Workspace Symbol (v0.5.0)** - Workspace-wide symbol search
+- Ctrl+T to search for symbols across entire workspace
+- Find procedures, fields, objects by name
+- Fuzzy matching support
+
+### Refactoring
+
+**Rename Symbol (v0.5.0)** - Safe symbol renaming
+- F2 to rename variables, fields, procedures across document
+- Multi-token field name support (e.g., `Entry No.`)
+- Handles both quoted and unquoted identifiers
+- Scope-aware refactoring
+
+### Code Visualization
+
+**Semantic Highlighting (v0.3.0)** - Intelligent syntax coloring
+- AST-based semantic analysis for accurate highlighting
+- Quoted identifiers like `"Line No."` match regular identifier colors
+- Context-aware token classification
+
+**Code Lens (v0.5.0)** - Inline reference indicators
+- Reference count indicators above procedures
+- Click to navigate to references
+- Jump to references directly from declaration
+
+**Folding Ranges (v0.5.0)** - Code folding support
+- Code folding for BEGIN...END blocks
+- Procedure and function folding
+- Section folding (FIELDS, KEYS, CODE)
+
+### Diagnostics
+
+**Parse Error Detection** - Real-time syntax validation
+- Identifies syntax errors as you type
+- Detailed error messages with line/column information
+- Error recovery for continued analysis
+
+**Empty Set Validation (v0.5.0)** - Logic error detection
+- Detects empty sets in `IN` expressions: `IF X IN [] THEN`
+- Warns about unreachable code paths
+- Configurable severity (warning/error)
+
+**Depth Warnings (v0.5.0)** - Stack overflow protection
+- Prevents crashes on deeply nested AST structures
+- Handles complex Action hierarchies in Page objects
+- Graceful degradation with error reporting
+
+**AL-Only Feature Detection (v0.5.0)** - Version compatibility warnings
+- Warns when AL-only syntax is used in C/AL files
+- Prevents NAV compilation errors
+- Helps maintain C/AL vs AL boundaries
+
+### Syntax Highlighting
+
+Full syntax highlighting powered by TextMate grammar:
+- C/AL keywords, data types, operators, and functions
+- Comments (single-line `//`, multi-line `/* */`, and curly brace `{ }`)
+- @ Numbering System for variables and procedures
+- Field definitions with smart detection (prevents treating structural braces as comments)
+- TextConst language codes (ENU, FRA, DEU, etc.)
+- Number literals (hexadecimal, scientific notation, decimals)
 - String highlighting with escape character support
-- Number literals including BigInteger (with `L` or `l` suffix)
 - Proper handling of double-quoted identifiers (e.g., `"No."`, `"Customer No."`)
 
-### Language Features (NEW in v0.2.1!)
-- **Keyword Bracket Matching**: Jump between matching `BEGIN`/`END` and `CASE`/`END` blocks with `Ctrl+Shift+\`
-  - Works with all case variations (BEGIN/begin/Begin, CASE/case/Case)
-  - Visual indicators for mismatched keyword blocks
-- **Smart Auto-Closing**: Automatic completion of keyword blocks
-  - Type `BEGIN` → automatically adds `END;`
-  - Type `CASE` → automatically adds `END;`
-  - Type `THEN BEGIN` → automatically adds `END`
-- **Bracket Matching**: Automatic matching for `{}`, `[]`, `()`, and keyword pairs
-- **Auto-Closing Pairs**: Automatic closing of brackets, quotes, comments, and keyword blocks
-- **Comment Toggle**: Use `Ctrl+/` (or `Cmd+/` on Mac) to toggle line comments
-- **Code Folding**: Support for region markers (`//#region`, `#region`, `//#endregion`, `#endregion`)
-- **Smart Indentation**: Automatic indentation based on C/AL code structure
-- **Improved Word Selection**: Double-click quoted identifiers like `"Customer No."` to select the entire identifier
+### Language Features
 
-### Supported File Extensions
+Editor enhancements for C/AL development:
+- **Keyword Bracket Matching** - Jump between matching BEGIN/END and CASE/END blocks with Ctrl+Shift+\
+- **Smart Auto-Closing** - Automatic completion of keyword blocks (BEGIN → END;, CASE → END;)
+- **Bracket Matching** - Automatic matching for `{}`, `[]`, `()`, and keyword pairs
+- **Comment Toggle** - Use Ctrl+/ (or Cmd+/ on Mac) to toggle line comments
+- **Code Folding** - Support for region markers (`//#region`, `#region`)
+- **Smart Indentation** - Automatic indentation based on C/AL code structure
+- **Improved Word Selection** - Double-click quoted identifiers like `"Customer No."` to select entire identifier
+
+## Supported File Extensions
+
 - `.cal` - C/AL source files
 - `.txt` - NAV object exports in text format
 
-## Supported C/AL Elements
+## Configuration
 
-### Keywords
-- Control flow: `IF`, `THEN`, `ELSE`, `BEGIN`, `END`, `CASE`, `OF`
-- Loops: `REPEAT`, `UNTIL`, `WHILE`, `DO`, `FOR`, `TO`, `DOWNTO`
-- Functions: `PROCEDURE`, `FUNCTION`, `TRIGGER`, `EXIT`
-- Object types: `TABLE`, `FORM`, `REPORT`, `DATAPORT`, `CODEUNIT`, `XMLPORT`, `PAGE`, `QUERY`
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `cal.languageServer.enabled` | boolean | `true` | Enable/disable the C/AL Language Server |
+| `cal.semanticHighlighting.enabled` | boolean | `true` | Enable/disable semantic highlighting |
 
-### Data Types
-All C/AL fundamental and complex data types including:
-- Numeric: `Integer`, `BigInteger`, `Decimal`, `Byte`, `Char`
-- String: `Text`, `Code`
-- Temporal: `Date`, `DateTime`, `Time`, `Duration`
-- Complex: `Record`, `RecordRef`, `Page`, `Report`, `Codeunit`, `BLOB`, `BigText`, and more
-
-### Built-in Functions
-Over 100+ built-in C/AL functions including:
-- String functions: `COPYSTR`, `STRLEN`, `UPPERCASE`, `LOWERCASE`, `STRSUBSTNO`
-- Record functions: `FIND`, `GET`, `INSERT`, `MODIFY`, `DELETE`, `SETRANGE`, `SETFILTER`
-- UI functions: `MESSAGE`, `ERROR`, `CONFIRM`, `DIALOG`
-- Date/Time functions: `TODAY`, `TIME`, `CALCDATE`, `DATE2DMY`
-- System functions: `USERID`, `COMPANYNAME`, `WORKDATE`, `RUN`
-
-## Installation
-
-1. Download and install Visual Studio Code
-2. Install this extension from the VS Code Marketplace
-3. Open any `.cal` or `.txt` file containing C/AL code
-
-## Usage
-
-Simply open a C/AL file in VS Code, and syntax highlighting will be applied automatically.
-
-### Tips
-- Use `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac) to access the command palette
-- Press `F1` to see all available commands
-- Use `Ctrl+Space` for basic word completion
+Access settings via File > Preferences > Settings (Ctrl+,) and search for "C/AL".
 
 ## File Encoding Configuration
 
@@ -91,7 +148,7 @@ This affects characters like Nordic letters (ø, æ, å), German umlauts (ä, ö
 
 **Option 1: Enable Auto-Detection (Recommended)**
 
-Add to your VS Code settings (`Ctrl+,` or `Cmd+,`):
+Add to your VS Code settings (Ctrl+, or Cmd+,):
 
 ```json
 {
@@ -122,7 +179,7 @@ If characters still appear garbled:
 
 ## Important: Understanding C/AL Format
 
-**This extension supports C/AL text exports (`.txt` files) from Dynamics NAV C/SIDE, NOT modern AL code for Business Central.**
+**This extension supports C/AL text exports (.txt files) from Dynamics NAV C/SIDE, NOT modern AL code for Business Central.**
 
 C/AL has unique syntax features:
 - Curly braces `{ }` serve multiple purposes (structural delimiters AND comments)
@@ -130,67 +187,29 @@ C/AL has unique syntax features:
 - Fixed-width FIELDS/KEYS/CONTROLS sections
 - `BEGIN END.` notation (note the period)
 
-For detailed information about C/AL format, see [`cal.md`](../documentation/cal/cal.md) in the repository.
-
-## Known Limitations
-
-### Curly Brace Context Awareness
-
-**Important**: The extension uses heuristics to detect field definitions vs. comments:
-- Field definitions starting with `{ Number ;` are correctly highlighted as structured data
-- Other curly braces `{ }` are treated as comments
-- In rare edge cases, this heuristic may be incorrect
-
-This is a limitation of TextMate grammars, which cannot fully understand C/AL's context-dependent syntax. The extension prioritizes correct highlighting for the most common cases (FIELDS sections).
-
-### Language Server Features (v0.4.1)
-
-The extension includes a full Language Server Protocol (LSP) implementation with intelligent IDE features:
-
-**Code Completion (IntelliSense)** - NEW in v0.4.0!
-- **54 C/AL keywords** with descriptions
-- **65+ built-in functions** (MESSAGE, ERROR, STRSUBSTNO, etc.) with signatures
-- **55+ Record methods** (GET, FIND, FINDSET, INSERT, MODIFY, DELETE, etc.)
-- **Symbol completion** for variables, fields, and procedures
-- **Dot-trigger completion** for Record methods and table fields
-- Automatic quoting for field names with spaces
-
-**Hover Information** - NEW in v0.4.1!
-- **Type information** for variables and fields
-- **Documentation** for 65+ built-in functions with signatures
-- **Record method documentation** after dot (e.g., `Rec.GET`)
-- **Keyword descriptions** for control flow, data types, and operators
-
-**Semantic Highlighting** - v0.3.0
-- **Quoted Identifier Visual Consistency**: Quoted identifiers like `"Line No."` now appear with the same color as regular identifiers
-- **Intelligent Syntax Analysis**: The language server parses your C/AL code for accurate highlighting
-
-**Coming in Future Releases:**
-- Signature Help (parameter hints)
-- Go to definition
-- Find all references
-- Enhanced diagnostics
-
-The language server activates automatically when you open C/AL files. See [CHANGELOG.md](CHANGELOG.md) for detailed release notes.
-
 ## Testing
 
-**Status:** v0.4.1 - Comprehensive test infrastructure
-
-The C/AL Language Server includes a robust test suite to ensure reliability and prevent regressions:
+The C/AL Language Server includes a comprehensive test suite with **4,710 passing tests across 118 suites**, executing in ~7-14 seconds.
 
 ### Test Coverage
 
-- **397 automated tests** covering lexer, parser, semantic tokens, completion, hover, and regression scenarios
-- **Fast execution:** All tests complete in ~7 seconds
 - **High coverage:** 98%+ lexer coverage, 90% semantic tokens coverage
 - **Real-world validation:** 9 production C/AL files from Microsoft's cal-open-library
+- **Categories covered:**
+  - Lexer: Quoted identifiers, keywords, comments, operators, literals (150+ tests)
+  - Parser: Object parsing, AST validation, error recovery (100+ tests)
+  - Completion: Keywords, built-in functions, Record methods, dot-trigger (31 tests)
+  - Hover: Symbol info, keyword docs, built-in function docs (34 tests)
+  - Signature Help: Function signatures, parameter tracking (35 tests)
+  - Definition: Variable, field, procedure navigation (25+ tests)
+  - References: Usage tracking across all expression contexts (35+ tests)
+  - Regression: Snapshot testing with real C/AL files (66 tests)
 
 ### Running Tests
 
 ```bash
 # Navigate to server directory
-cd c-al-extension/server
+cd server
 
 # Install dependencies (first time only)
 npm install
@@ -199,82 +218,66 @@ npm install
 npm test
 
 # Run tests in watch mode (during development)
-npm run test:watch
+npm test -- --watch
 
 # Run tests with coverage report
-npm run test:coverage
+npm test -- --coverage
 ```
 
-### Test Categories
-
-1. **Lexer Tests (~150 tests)**
-   - Quoted identifiers vs strings
-   - Case-insensitive keywords
-   - Context-aware tokenization
-   - Comments, operators, literals
-
-2. **Parser Tests (~100 tests)**
-   - Object parsing (Table, Page, Codeunit, etc.)
-   - AST structure validation
-   - Error recovery
-
-3. **Completion Tests (31 tests)**
-   - Keyword completion
-   - Built-in function completion
-   - Record method completion
-   - Dot-trigger completion
-
-4. **Hover Tests (34 tests)**
-   - Symbol hover
-   - Keyword documentation
-   - Built-in function documentation
-
-5. **Regression Tests (66 tests)**
-   - Snapshot testing with real C/AL files
-   - 9 AST snapshots
-
-For detailed testing information, see [documentation/testing/](../documentation/testing/).
-
 ## Development
-
-### Contributing
-
-Before submitting changes:
-
-1. Run tests: `npm test`
-2. Ensure all tests pass
-3. Add tests for new features
-4. Update documentation as needed
 
 ### Project Structure
 
 ```
 c-al-extension/
 ├── src/                    # Extension client (TypeScript)
+│   └── extension.ts        # LSP client entry point
 ├── server/                 # Language server (TypeScript)
 │   ├── src/
 │   │   ├── lexer/         # Tokenization
 │   │   ├── parser/        # AST generation
-│   │   ├── semantic/      # Semantic tokens
+│   │   ├── types/         # Type definitions
 │   │   ├── symbols/       # Symbol table
-│   │   ├── completion/    # Code completion
+│   │   ├── visitor/       # AST visitor pattern
+│   │   ├── trivia/        # Whitespace and comment handling
+│   │   ├── providers/     # Base provider class
+│   │   ├── completion/    # Code completion (IntelliSense)
 │   │   ├── hover/         # Hover information
-│   │   └── __tests__/     # Test suites
+│   │   ├── definition/    # Go-to-definition
+│   │   ├── references/    # Find all references
+│   │   ├── signatureHelp/ # Parameter hints
+│   │   ├── semantic/      # Semantic highlighting
+│   │   ├── documentSymbol/# Document outline
+│   │   ├── workspaceSymbol/# Workspace symbol search
+│   │   ├── rename/        # Rename refactoring
+│   │   ├── codelens/      # Code lens actions
+│   │   ├── foldingRange/  # Code folding
+│   │   ├── validation/    # Diagnostics and validators
+│   │   ├── utils/         # Utility functions
+│   │   ├── __tests__/     # Test suites
+│   │   └── server.ts      # LSP server entry point
 │   └── package.json       # Server dependencies
 ├── syntaxes/              # TextMate grammar
-└── test/fixtures/         # Test data files
+│   └── cal.tmLanguage.json
+└── test/
+    ├── fixtures/          # Synthetic test files
+    └── regression/        # Regression test cases
 ```
 
-## Feedback and Contributions
+### Contributing
 
-Found a bug or have a feature request? Please open an issue on our [GitHub repository](https://github.com/klauskaan/messing-around).
+Before submitting changes:
+
+1. Run tests: `npm test` (from server directory)
+2. Ensure all tests pass
+3. Add tests for new features
+4. Update documentation as needed
 
 ## Release Notes
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed release information.
 
 ## License
-
 
 MIT
 
