@@ -92,6 +92,20 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
   TokenType.Byte,       // e.g., "Byte" parameter name (1 occurrence)
   TokenType.Break,      // Issue #258: "Break" procedure name (REP6005597.TXT:835)
                         // Note: Calls require quoted syntax ("Break";) to disambiguate from BREAK statement
+  // Issue #258: Section keywords as identifiers (completing the family started by Fields/Keys/Controls/Code)
+  // These keywords are structural at object level but can be used as identifiers inside CODE sections.
+  // At SECTION_LEVEL (procedure declarations): lexer retains keyword types, parser must allow via this set.
+  // At CODE_BLOCK (procedure bodies): lexer downgrades to Identifier automatically.
+  // Note: Labels and Dataset have additional @ downgrade behavior (Issue #261).
+  // State contamination: updateContextForKeyword fires at SECTION_LEVEL setting lastWasSectionKeyword (Issue #260).
+  TokenType.MenuSuite,     // Object type keyword (same family as Table/Page/Report/Codeunit/Query/XMLport)
+  TokenType.Properties,    // Section keyword (PROPERTIES section)
+  TokenType.FieldGroups,   // Section keyword (FIELDGROUPS section)
+  TokenType.Actions,       // Section keyword (ACTIONS section - Page/Report)
+  TokenType.DataItems,     // Section keyword (DATAITEMS section - Report)
+  TokenType.Elements,      // Section keyword (ELEMENTS section - XMLport)
+  TokenType.Labels,        // Section keyword (LABELS section - Report); @ downgrade per Issue #261
+  TokenType.Dataset,       // Section keyword (DATASET section - Report/Page); @ downgrade per Issue #261
   TokenType.ALOnlyKeyword,         // Enum, Interface, Extends, Implements can be variable names
   TokenType.ALOnlyAccessModifier,  // Internal, Protected, Public can be variable names
 ]);
@@ -4160,7 +4174,7 @@ export class Parser {
    * - **Performance:** Efficient suffix check using `type.toString().endsWith('_TYPE')`
    *
    * ### 2. Explicitly Allowed Keywords (ALLOWED_KEYWORDS_AS_IDENTIFIERS constant)
-   * Keywords stored in the Set at line 51, including:
+   * Keywords stored in the ALLOWED_KEYWORDS_AS_IDENTIFIERS Set, including:
    *
    * **Object types:** Table, Page, Report, Codeunit, Query, XMLport, Object
    * - Common for variables holding object IDs or references
@@ -4177,23 +4191,63 @@ export class Parser {
    * **Other keywords:** Byte
    * - Less common but valid in specific contexts
    *
-   * ### 3. NOT Allowed - Control Flow & Structural Keywords
-   * These keywords are fundamental to C/AL syntax and cannot be identifiers:
+   * **Section keywords:** MenuSuite, Properties, FieldGroups, Actions, DataItems, Elements, Labels, Dataset
+   * - Structural at object level, but can be identifiers inside CODE sections
+   * - Lexer behavior (context-dependent):
+   *   - At SECTION_LEVEL (procedure declarations): keyword type preserved, parser allows via this set
+   *   - At CODE_BLOCK (procedure bodies): lexer downgrades to Identifier automatically
+   * - Non-uniformity (Issue #261): Labels and Dataset have additional @ downgrade behavior
+   * - State contamination (Issue #260): updateContextForKeyword fires at SECTION_LEVEL setting lastWasSectionKeyword
+   * - Example: `PROCEDURE Properties@1(); BEGIN END;` inside a CODE section
    *
-   * **Control flow:** IF, THEN, ELSE, FOR, WHILE, REPEAT, UNTIL, DO, TO, DOWNTO
-   * **Blocks:** BEGIN, END, CASE, OF, EXIT
-   * **Declarations:** VAR, PROCEDURE, FUNCTION, LOCAL
-   * **Sections:** KEYS, CONTROLS, PROPERTIES, CODE
+   * ### 3. NOT Allowed - Reserved Keywords
+   * These keywords are fundamental to C/AL syntax and CANNOT be used as identifiers.
+   * Attempting to use them as variable/parameter names will cause parser errors.
+   *
+   * **Control flow keywords:**
+   * - IF, THEN, ELSE - Conditional statement parts (`IF condition THEN ... ELSE ...`)
+   * - CASE, OF - Case statement structure (`CASE value OF ...`)
+   * - WHILE, DO - While loop (`WHILE condition DO ...`)
+   * - REPEAT, UNTIL - Repeat loop (`REPEAT ... UNTIL condition`)
+   * - FOR, TO, DOWNTO - For loop (`FOR i := 1 TO 10 DO ...`)
+   * - Rationale: Statement starters/parts that would create ambiguity with `parseStatement()` dispatch
+   *
+   * **Block delimiters:**
+   * - BEGIN, END - Code block boundaries, consumed throughout parser
+   * - Rationale: Used ubiquitously for block delimiting; cannot be identifiers
+   *
+   * **Boolean literals:**
+   * - TRUE, FALSE - Parsed as boolean literals in `parseLiteral()`
+   * - Rationale: These are literal values, not keywords
+   *
+   * **Operators:**
+   * - DIV, MOD - Integer division and modulo operators
+   * - AND, OR, NOT, XOR - Logical operators
+   * - IN - Set membership operator
+   * - Rationale: Binary/unary operators in expression parsing
+   *
+   * **Declaration keywords:**
+   * - VAR, PROCEDURE, FUNCTION - Declaration starters
+   * - LOCAL - Procedure visibility modifier
+   * - TRIGGER, EVENT - Special procedure types
+   * - Rationale: Intercepted before `parseProcedureName()` or used as section boundaries
+   *
+   * **Statement/Type modifiers:**
+   * - WITH - Statement starter (`WITH record DO ...`)
+   * - ARRAY - Type declaration (`ARRAY [10] OF Integer`)
+   * - TEMPORARY - Variable modifier (`TEMPORARY Record 18`)
+   * - Rationale: Special syntactic roles that conflict with identifier usage
    *
    * **Example (invalid):**
    * ```cal
    * VAR
    *   IF@1000 : Integer;    // ERROR: Cannot use reserved keyword
    *   FOR@1001 : Text[10];  // ERROR: Cannot use reserved keyword
+   *   BEGIN@1002 : Boolean; // ERROR: Cannot use reserved keyword
    * ```
    *
    * ## Cross-References
-   * - **ALLOWED_KEYWORDS_AS_IDENTIFIERS constant** (line 51): Set of explicitly allowed keywords
+   * - **ALLOWED_KEYWORDS_AS_IDENTIFIERS constant**: Set of explicitly allowed keywords
    * - **Lexer TokenType enum** (server/src/lexer/tokens.ts): Defines all token types including _TYPE suffix
    * - **Tests** (server/src/parser/__tests__/keyword-variable-names.test.ts): Comprehensive test coverage
    *
@@ -4250,11 +4304,35 @@ export class Parser {
    * - **Performance:** O(1) lookup using Set for ALLOWED_KEYWORDS_AS_IDENTIFIERS
    * - **Type safety:** Returns boolean - caller must validate further if needed
    *
+   * ### Lexer Behavior Notes
+   *
+   * **Section keyword token types:**
+   * - At SECTION_LEVEL (procedure declarations): Section keywords (Properties, FieldGroups, Actions, DataItems,
+   *   Elements, MenuSuite, Labels, Dataset) arrive as their respective keyword TokenType values, not Identifier.
+   *   The parser must explicitly allow them via ALLOWED_KEYWORDS_AS_IDENTIFIERS.
+   * - At CODE_BLOCK (procedure bodies): The lexer automatically downgrades section keywords to Identifier type,
+   *   so the parser sees TokenType.Identifier directly.
+   *
+   * **Labels/Dataset @ downgrade non-uniformity (Issue #261):**
+   * - When Labels or Dataset keywords are followed by `@` (identifier position), the lexer downgrades them
+   *   to Identifier type even at SECTION_LEVEL.
+   * - Other section keywords (Properties, FieldGroups, Actions, DataItems, Elements, MenuSuite) do NOT have
+   *   this special @ downgrade behavior - they arrive as keyword types when followed by `@`.
+   * - This non-uniformity is historical; future work may standardize all section keywords to downgrade on `@`.
+   *
+   * **State contamination (Issue #260):**
+   * - When section keywords are used as identifiers at SECTION_LEVEL inside CODE sections, the lexer's
+   *   `updateContextForKeyword()` still fires, setting `lastWasSectionKeyword = true` and `currentSectionType`.
+   * - This state contamination is benign for well-formed C/SIDE exports but represents a technical debt.
+   * - The parser must handle these keywords regardless of lexer state pollution.
+   *
    * @returns `true` if the current token can be used as an identifier, `false` otherwise
    *
-   * @see ALLOWED_KEYWORDS_AS_IDENTIFIERS - Set of explicitly allowed keyword tokens (line 51)
+   * @see ALLOWED_KEYWORDS_AS_IDENTIFIERS - Set of explicitly allowed keyword tokens (line 68)
    * @see TokenType - Lexer token definitions (server/src/lexer/tokens.ts)
    * @see keyword-variable-names.test.ts - Comprehensive test coverage and usage examples
+   * @see Issue #260 - Lexer state contamination from section keywords in CODE sections
+   * @see Issue #261 - Labels/Dataset @ downgrade non-uniformity
    */
   private canBeUsedAsIdentifier(): boolean {
     const token = this.peek();

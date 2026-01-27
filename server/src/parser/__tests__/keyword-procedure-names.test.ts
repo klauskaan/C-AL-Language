@@ -21,11 +21,13 @@
  */
 
 import { Lexer } from '../../lexer/lexer';
+import { TokenType } from '../../lexer/tokens';
 import { Parser } from '../parser';
 import {
   BreakStatement,
   CallStatement,
   IfStatement,
+  ObjectKind,
   RepeatStatement,
 } from '../ast';
 
@@ -204,6 +206,629 @@ describe('Parser - Keywords as Procedure Names', () => {
       // Error should mention procedure name or identifier expected
       const errorMessages = errors.map(e => e.message.toLowerCase()).join(' ');
       expect(errorMessages).toMatch(/expected.*procedure name|expected.*identifier|unexpected/);
+    });
+  });
+
+  describe('Section keyword as procedure name', () => {
+    // TDD: These tests verify that section keywords (MenuSuite, Properties, etc.)
+    // can be used as procedure names. They SHOULD FAIL until these keywords are
+    // added to ALLOWED_KEYWORDS_AS_IDENTIFIERS in parser.ts
+
+    it('should parse PROCEDURE MenuSuite@1() declaration', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE MenuSuite@1();
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].name).toBe('MenuSuite');
+    });
+
+    it('should parse PROCEDURE Properties@1() declaration', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Properties@1();
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].name).toBe('Properties');
+    });
+
+    it('should parse PROCEDURE FieldGroups@1() declaration', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE FieldGroups@1();
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].name).toBe('FieldGroups');
+    });
+
+    it('should parse PROCEDURE Actions@1() declaration', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Actions@1();
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].name).toBe('Actions');
+    });
+
+    it('should parse PROCEDURE DataItems@1() declaration', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE DataItems@1();
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].name).toBe('DataItems');
+    });
+
+    it('should parse PROCEDURE Elements@1() declaration', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Elements@1();
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].name).toBe('Elements');
+    });
+  });
+
+  describe('Section keyword as variable name', () => {
+    // TDD: These tests verify that section keywords can be used as variable names
+    // They SHOULD FAIL until these keywords are added to ALLOWED_KEYWORDS_AS_IDENTIFIERS
+
+    it('should parse MenuSuite as variable name', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Test@1();
+    VAR
+      MenuSuite@1000 : Integer;
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      const variables = procedures[0].variables || [];
+      expect(variables).toHaveLength(1);
+      expect(variables[0].name).toBe('MenuSuite');
+    });
+
+    it('should parse Properties as variable name', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Test@1();
+    VAR
+      Properties@1000 : Integer;
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      const variables = procedures[0].variables || [];
+      expect(variables).toHaveLength(1);
+      expect(variables[0].name).toBe('Properties');
+    });
+
+    it('should parse FieldGroups as variable name', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Test@1();
+    VAR
+      FieldGroups@1000 : Integer;
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      const variables = procedures[0].variables || [];
+      expect(variables).toHaveLength(1);
+      expect(variables[0].name).toBe('FieldGroups');
+    });
+
+    it('should parse Actions as variable name', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Test@1();
+    VAR
+      Actions@1000 : Integer;
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      const variables = procedures[0].variables || [];
+      expect(variables).toHaveLength(1);
+      expect(variables[0].name).toBe('Actions');
+    });
+
+    it('should parse DataItems as variable name', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Test@1();
+    VAR
+      DataItems@1000 : Integer;
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      const variables = procedures[0].variables || [];
+      expect(variables).toHaveLength(1);
+      expect(variables[0].name).toBe('DataItems');
+    });
+
+    it('should parse Elements as variable name', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Test@1();
+    VAR
+      Elements@1000 : Integer;
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      const variables = procedures[0].variables || [];
+      expect(variables).toHaveLength(1);
+      expect(variables[0].name).toBe('Elements');
+    });
+  });
+
+  describe('Labels/Dataset with @ suffix - SHOULD PASS immediately', () => {
+    // These keywords are already downgraded to Identifier by the lexer when
+    // followed by @ suffix, so they work without parser changes
+
+    it('should parse Labels as variable name (downgraded by lexer)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Test@1();
+    VAR
+      Labels@1000 : Integer;
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      // Should pass immediately due to lexer downgrade
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      const variables = procedures[0].variables || [];
+      expect(variables).toHaveLength(1);
+      expect(variables[0].name).toBe('Labels');
+    });
+
+    it('should parse Dataset as variable name (downgraded by lexer)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Test@1();
+    VAR
+      Dataset@1000 : Integer;
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      // Should pass immediately due to lexer downgrade
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      const variables = procedures[0].variables || [];
+      expect(variables).toHaveLength(1);
+      expect(variables[0].name).toBe('Dataset');
+    });
+
+    it('should parse PROCEDURE Labels@1() declaration (downgraded by lexer)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Labels@1();
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      // Should pass immediately due to lexer downgrade
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].name).toBe('Labels');
+    });
+
+    it('should parse PROCEDURE Dataset@1() declaration (downgraded by lexer)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Dataset@1();
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      // Should pass immediately due to lexer downgrade
+      expect(parser.getErrors()).toHaveLength(0);
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].name).toBe('Dataset');
+    });
+  });
+
+  describe('Lexer token type verification', () => {
+    // Verify that the lexer correctly emits section keywords as their specific
+    // TokenType at SECTION_LEVEL, and downgrades them to Identifier in code context
+
+    it('should emit Properties as TokenType.Properties at SECTION_LEVEL', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            END;
+  }
+  CODE
+  {
+    PROCEDURE Properties@1();
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Find the PROPERTIES section keyword (should be after opening brace)
+      const sectionPropertiesToken = tokens.find((t, i) =>
+        t.value.toUpperCase() === 'PROPERTIES' &&
+        i > 0 &&
+        tokens[i - 1].type === TokenType.LeftBrace
+      );
+
+      expect(sectionPropertiesToken).toBeDefined();
+      expect(sectionPropertiesToken?.type).toBe(TokenType.Properties);
+
+      // Find the Properties in procedure name context (after PROCEDURE keyword)
+      const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+      const procNameToken = tokens[procIndex + 1];
+
+      expect(procNameToken).toBeDefined();
+      expect(procNameToken.value).toBe('Properties');
+      // In code context, should still be Properties token (parser handles downgrade)
+      expect(procNameToken.type).toBe(TokenType.Properties);
+    });
+
+    it('should emit Actions as TokenType.Actions at SECTION_LEVEL', () => {
+      const code = `OBJECT Page 50000 Test
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1   ;      ;ActionContainer;
+                  Name=TestAction }
+  }
+  CODE
+  {
+    PROCEDURE Actions@1();
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Find the ACTIONS section keyword
+      const sectionActionsToken = tokens.find((t, i) =>
+        t.value.toUpperCase() === 'ACTIONS' &&
+        i > 0 &&
+        tokens[i - 1].type === TokenType.RightBrace
+      );
+
+      expect(sectionActionsToken).toBeDefined();
+      expect(sectionActionsToken?.type).toBe(TokenType.Actions);
+
+      // Find the Actions in procedure name context
+      const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+      const procNameToken = tokens[procIndex + 1];
+
+      expect(procNameToken).toBeDefined();
+      expect(procNameToken.value).toBe('Actions');
+      expect(procNameToken.type).toBe(TokenType.Actions);
+    });
+
+    it('should emit Labels as TokenType.Identifier when followed by @', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Labels@1000 : Integer;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Find the Labels token (should be downgraded to Identifier when followed by @)
+      const labelsTokenIndex = tokens.findIndex(t => t.value === 'Labels');
+      expect(labelsTokenIndex).toBeGreaterThan(-1);
+
+      const labelsToken = tokens[labelsTokenIndex];
+      expect(labelsToken.type).toBe(TokenType.Identifier);
+    });
+
+    it('should emit Dataset as TokenType.Identifier when followed by @', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Dataset@1();
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Find the Dataset token (after PROCEDURE, downgraded to Identifier when followed by @)
+      const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+      const datasetToken = tokens[procIndex + 1];
+
+      expect(datasetToken.value).toBe('Dataset');
+      expect(datasetToken.type).toBe(TokenType.Identifier);
+    });
+  });
+
+  describe('Cross-context regression test', () => {
+    // Verify that a Page can have both an ACTIONS section AND a procedure named Actions
+
+    it('should parse Page with ACTIONS section AND procedure named Actions', () => {
+      const code = `OBJECT Page 50000 Test
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;      ;Container ;
+                  ContainerType=ContentArea }
+  }
+  ACTIONS
+  {
+    { 2   ;      ;ActionContainer;
+                  Name=ActionItems }
+    { 3   ;1     ;Action    ;
+                  Name=TestAction }
+  }
+  CODE
+  {
+    PROCEDURE Actions@1();
+    BEGIN
+      MESSAGE('Actions procedure called');
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(ast.object).not.toBeNull();
+
+      // Verify ACTIONS section exists
+      expect(ast.object?.type).toBe('ObjectDeclaration');
+      expect(ast.object?.objectKind).toBe(ObjectKind.Page);
+      const pageNode = ast.object as any;
+      expect(pageNode.actions).toBeDefined();
+      expect(pageNode.actions?.type).toBe('ActionSection');
+      expect(Array.isArray(pageNode.actions?.actions)).toBe(true);
+      expect(pageNode.actions?.actions.length).toBeGreaterThan(0);
+
+      // Verify Actions procedure exists
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures.some(p => p.name === 'Actions')).toBe(true);
+
+      const actionsProc = procedures.find(p => p.name === 'Actions');
+      expect(actionsProc).toBeDefined();
+      expect(actionsProc?.name).toBe('Actions');
+    });
+  });
+
+  describe('Reserved keywords remain rejected', () => {
+    // Regression guard: control flow keywords should remain disallowed
+
+    const reservedKeywords = ['If', 'While', 'Begin', 'End', 'Div', 'And'];
+
+    reservedKeywords.forEach(keyword => {
+      it(`should reject ${keyword} as procedure name`, () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE ${keyword}@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        parser.parse();
+
+        const errors = parser.getErrors();
+        expect(errors.length).toBeGreaterThan(0);
+      });
+    });
+
+    reservedKeywords.forEach(keyword => {
+      it(`should reject ${keyword} as variable name`, () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      ${keyword}@1000 : Integer;
+
+    PROCEDURE Test@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        parser.parse();
+
+        const errors = parser.getErrors();
+        expect(errors.length).toBeGreaterThan(0);
+      });
     });
   });
 });
