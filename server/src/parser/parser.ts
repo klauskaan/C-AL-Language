@@ -107,6 +107,9 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
   TokenType.Elements,      // Section keyword (ELEMENTS section - XMLport)
   TokenType.Labels,        // Section keyword (LABELS section - Report)
   TokenType.Dataset,       // Section keyword (DATASET section - Report/Page)
+  TokenType.RequestForm,   // Section keyword (REQUESTFORM section - Report)
+  TokenType.RequestPage,   // Section keyword (REQUESTPAGE section - Report)
+  TokenType.MenuNodes,     // Section keyword (MENUNODES section - MenuSuite)
   TokenType.ALOnlyKeyword,         // Enum, Interface, Extends, Implements can be variable names
   TokenType.ALOnlyAccessModifier,  // Internal, Protected, Public can be variable names
 ]);
@@ -4192,7 +4195,7 @@ export class Parser {
    * **Other keywords:** Byte
    * - Less common but valid in specific contexts
    *
-   * **Section keywords:** MenuSuite, Properties, FieldGroups, Actions, DataItems, Elements, Labels, Dataset
+   * **Section keywords:** MenuSuite, Properties, FieldGroups, Actions, DataItems, Elements, Labels, Dataset, RequestForm, RequestPage, MenuNodes
    * - Structural at object level, but can be identifiers inside CODE sections
    * - Lexer behavior (context-dependent):
    *   - At SECTION_LEVEL (procedure declarations): keyword type preserved, parser allows via this set

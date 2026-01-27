@@ -835,6 +835,243 @@ describe('Parser - Keywords as Procedure Names', () => {
     });
   });
 
+  describe('Section keywords without @ suffix - parser allowlist (Issue #263)', () => {
+    /**
+     * TDD TEST SUITE FOR ISSUE #263
+     *
+     * Background: Issue #261 made lexer downgrade section/object keywords to
+     * Identifier when followed by @. However, when NOT followed by @ (bare keyword),
+     * the lexer emits the keyword's specific TokenType. The parser must explicitly
+     * allow these keywords in identifier positions via ALLOWED_KEYWORDS_AS_IDENTIFIERS.
+     *
+     * Goal: RequestForm, RequestPage, and MenuNodes should be usable as:
+     * - Procedure names (without @)
+     * - Variable names (without @)
+     * - Parameter names (without @)
+     *
+     * Test Expectations:
+     * - All 9 tests MUST FAIL initially (not in ALLOWED_KEYWORDS_AS_IDENTIFIERS)
+     * - Tests will pass after adding TokenType.RequestForm, TokenType.RequestPage,
+     *   and TokenType.MenuNodes to ALLOWED_KEYWORDS_AS_IDENTIFIERS
+     *
+     * Note: WITH @ suffix, the lexer downgrades these to Identifier automatically
+     * (covered by issue #261 tests). This tests the WITHOUT @ case.
+     */
+
+    describe('RequestForm as identifier without @ suffix', () => {
+      it('should parse PROCEDURE RequestForm() declaration', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE RequestForm();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+        expect(procedures[0].name).toBe('RequestForm');
+      });
+
+      it('should parse RequestForm as variable name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Test@1();
+    VAR
+      RequestForm : Integer;
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+        const variables = procedures[0].variables || [];
+        expect(variables).toHaveLength(1);
+        expect(variables[0].name).toBe('RequestForm');
+      });
+
+      it('should parse RequestForm as parameter name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Test(RequestForm : Boolean);
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+        const parameters = procedures[0].parameters || [];
+        expect(parameters).toHaveLength(1);
+        expect(parameters[0].name).toBe('RequestForm');
+      });
+    });
+
+    describe('RequestPage as identifier without @ suffix', () => {
+      it('should parse PROCEDURE RequestPage() declaration', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE RequestPage();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+        expect(procedures[0].name).toBe('RequestPage');
+      });
+
+      it('should parse RequestPage as variable name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Test@1();
+    VAR
+      RequestPage : Integer;
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+        const variables = procedures[0].variables || [];
+        expect(variables).toHaveLength(1);
+        expect(variables[0].name).toBe('RequestPage');
+      });
+
+      it('should parse RequestPage as parameter name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Test(RequestPage : Boolean);
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+        const parameters = procedures[0].parameters || [];
+        expect(parameters).toHaveLength(1);
+        expect(parameters[0].name).toBe('RequestPage');
+      });
+    });
+
+    describe('MenuNodes as identifier without @ suffix', () => {
+      it('should parse PROCEDURE MenuNodes() declaration', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE MenuNodes();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+        expect(procedures[0].name).toBe('MenuNodes');
+      });
+
+      it('should parse MenuNodes as variable name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Test@1();
+    VAR
+      MenuNodes : Integer;
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+        const variables = procedures[0].variables || [];
+        expect(variables).toHaveLength(1);
+        expect(variables[0].name).toBe('MenuNodes');
+      });
+
+      it('should parse MenuNodes as parameter name', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Test(MenuNodes : Boolean);
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        expect(parser.getErrors()).toHaveLength(0);
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+        const parameters = procedures[0].parameters || [];
+        expect(parameters).toHaveLength(1);
+        expect(parameters[0].name).toBe('MenuNodes');
+      });
+    });
+  });
+
   describe('Uniform @ downgrade for all section/object keywords (Issue #261)', () => {
     /**
      * TDD TEST SUITE FOR ISSUE #261
