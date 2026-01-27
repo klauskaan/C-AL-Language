@@ -709,7 +709,7 @@ describe('Lexer - General Functionality', () => {
       const state = lexer.getContextState();
 
       expect(state).toBeDefined();
-      const validSections = ['FIELDS', 'KEYS', 'CONTROLS', 'ELEMENTS', 'DATAITEMS', 'ACTIONS', 'DATASET', 'REQUESTPAGE', 'LABELS', null];
+      const validSections = ['CODE', 'FIELDS', 'KEYS', 'CONTROLS', 'ELEMENTS', 'DATAITEMS', 'ACTIONS', 'DATASET', 'REQUESTPAGE', 'LABELS', null];
       expect(validSections).toContain(state.currentSectionType);
     });
 

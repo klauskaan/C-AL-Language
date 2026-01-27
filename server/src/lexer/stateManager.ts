@@ -49,6 +49,7 @@ export enum FieldDefColumn {
  * Section types in C/AL objects
  */
 export type SectionType =
+  | 'CODE'
   | 'FIELDS'
   | 'KEYS'
   | 'CONTROLS'
@@ -303,7 +304,7 @@ export class LexerStateManager {
   /**
    * Mark that we just saw a section keyword (for non-columnar sections)
    * This allows onOpenBrace() to push SECTION_LEVEL without needing a specific section type.
-   * Used for PROPERTIES, CODE, FieldGroups, RequestForm sections that don't use column tracking.
+   * Used for PROPERTIES, FieldGroups, RequestForm sections that don't use column tracking.
    */
   public markSectionKeyword(): void {
     this.lastWasSectionKeyword = true;
@@ -359,7 +360,7 @@ export class LexerStateManager {
     let transition: ContextTransition | null = null;
 
     // Close section when braceDepth drops BELOW entry depth
-    // Note: currentSectionType may be null for non-columnar sections (PROPERTIES, CODE, etc.)
+    // Note: currentSectionType may be null for non-columnar sections (PROPERTIES, FieldGroups, RequestForm)
     if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
         this.sectionEntryDepth !== -1 &&
         this.braceDepth < this.sectionEntryDepth) {

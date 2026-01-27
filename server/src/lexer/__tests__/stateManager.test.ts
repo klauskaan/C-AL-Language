@@ -235,7 +235,7 @@ describe('LexerStateManager', () => {
 
   describe('Section keyword tracking', () => {
     const sections: SectionType[] = [
-      'FIELDS', 'KEYS', 'CONTROLS', 'ELEMENTS', 'DATAITEMS',
+      'CODE', 'FIELDS', 'KEYS', 'CONTROLS', 'ELEMENTS', 'DATAITEMS',
       'ACTIONS', 'DATASET', 'REQUESTPAGE', 'LABELS'
     ];
 
