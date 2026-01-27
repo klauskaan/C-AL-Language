@@ -18,6 +18,91 @@ export enum ExitCategory {
 }
 
 /**
+ * Data type keywords that can function as identifiers when followed by @ or in certain contexts.
+ * Includes keywords like Code, Text, Record, Boolean, etc. that may appear as:
+ * - Data types: Code[20], Record 18, Boolean
+ * - Variable/parameter names: Code@1001, Record@1000
+ * Using a Set provides O(1) lookup performance.
+ */
+const DATA_TYPE_KEYWORDS = new Set<TokenType>([
+  TokenType.Code,
+  TokenType.Text,
+  TokenType.Date_Type,
+  TokenType.Time,
+  TokenType.RecordID,
+  TokenType.RecordRef,
+  TokenType.FieldRef,
+  TokenType.Record,
+  TokenType.Boolean,
+  TokenType.Integer_Type,
+  TokenType.Decimal_Type,
+  TokenType.Time_Type,
+  TokenType.DateTime_Type,
+  TokenType.BigInteger,
+  TokenType.BigText,
+  TokenType.BLOB,
+  TokenType.GUID,
+  TokenType.Duration,
+  TokenType.Option,
+  TokenType.Char,
+  TokenType.Byte,
+  TokenType.TextConst
+]);
+
+/**
+ * Section and object type keywords that are downgraded to identifiers when followed by @.
+ * Pattern: Properties@1000, Table@1001, Actions@1002 in VAR/PARAMETER declarations.
+ * Using a Set provides O(1) lookup performance.
+ */
+const AT_DOWNGRADE_KEYWORDS = new Set<TokenType>([
+  // Section keywords
+  TokenType.Properties,
+  TokenType.FieldGroups,
+  TokenType.Actions,
+  TokenType.DataItems,
+  TokenType.Elements,
+  TokenType.MenuNodes,
+  TokenType.RequestForm,
+  TokenType.Dataset,
+  TokenType.RequestPage,
+  TokenType.Labels,
+  TokenType.Fields,
+  TokenType.Keys,
+  TokenType.Controls,
+  // Object type keywords (no updateContextForKeyword entries, but included
+  // for uniform behavior: Table@1000 should emit Identifier, not Table)
+  TokenType.Table,
+  TokenType.Page,
+  TokenType.Report,
+  TokenType.Codeunit,
+  TokenType.Query,
+  TokenType.XMLport,
+  TokenType.MenuSuite,
+  TokenType.Object
+]);
+
+/**
+ * Section keywords that are downgraded to identifiers when in protected columns,
+ * inside brackets, or in CODE_BLOCK context. Prevents section keywords from
+ * corrupting context when they appear in field/key/control names, ML property
+ * values, or code blocks.
+ * Using a Set provides O(1) lookup performance.
+ */
+const SECTION_KEYWORDS = new Set<TokenType>([
+  TokenType.Code,
+  TokenType.Properties,
+  TokenType.FieldGroups,
+  TokenType.Actions,
+  TokenType.DataItems,
+  TokenType.Elements,
+  TokenType.RequestForm,
+  TokenType.Dataset,
+  TokenType.RequestPage,
+  TokenType.Labels,
+  TokenType.MenuNodes
+]);
+
+/**
  * A single clean exit validation violation.
  */
 export interface ExitViolation {
@@ -977,16 +1062,7 @@ export class Lexer {
     // 2. Data types (Code[20], Text[50], Record 18, RecordID, etc.) - should REMAIN as keywords
     // 3. Identifiers/parameter names (Code@1001, RecordID@1000) - should become IDENTIFIER
     // We need to distinguish based on context
-    const dataTypeKeywords = [
-      TokenType.Code, TokenType.Text, TokenType.Date_Type, TokenType.Time,
-      TokenType.RecordID, TokenType.RecordRef, TokenType.FieldRef,
-      TokenType.Record, TokenType.Boolean, TokenType.Integer_Type,
-      TokenType.Decimal_Type, TokenType.Time_Type,
-      TokenType.DateTime_Type, TokenType.BigInteger, TokenType.BigText,
-      TokenType.BLOB, TokenType.GUID, TokenType.Duration, TokenType.Option,
-      TokenType.Char, TokenType.Byte, TokenType.TextConst
-    ];
-    if (dataTypeKeywords.includes(tokenType)) {
+    if (DATA_TYPE_KEYWORDS.has(tokenType)) {
       const nextChar = this.currentChar();
       const prevToken = this.tokens.length > 0 ? this.tokens[this.tokens.length - 1] : null;
 
@@ -1042,32 +1118,15 @@ export class Lexer {
     // receives Identifier (no matching case), preventing state contamination (see Issue #260).
     //
     // Note: Data type keywords (Code, Text, Record, Boolean, etc.) are already handled
-    // by the dataTypeKeywords check (lines 989-998) before this point.
-    const atDowngradeKeywords = [
-      // Section keywords
-      TokenType.Properties, TokenType.FieldGroups, TokenType.Actions,
-      TokenType.DataItems, TokenType.Elements, TokenType.MenuNodes,
-      TokenType.RequestForm, TokenType.Dataset, TokenType.RequestPage,
-      TokenType.Labels, TokenType.Fields, TokenType.Keys, TokenType.Controls,
-      // Object type keywords (no updateContextForKeyword entries, but included
-      // for uniform behavior: Table@1000 should emit Identifier, not Table)
-      TokenType.Table, TokenType.Page, TokenType.Report,
-      TokenType.Codeunit, TokenType.Query, TokenType.XMLport,
-      TokenType.MenuSuite, TokenType.Object,
-    ];
-    if (atDowngradeKeywords.includes(tokenType) && this.currentChar() === '@') {
+    // by the DATA_TYPE_KEYWORDS check before this point.
+    if (AT_DOWNGRADE_KEYWORDS.has(tokenType) && this.currentChar() === '@') {
       tokenType = TokenType.Identifier;
     }
 
     // Downgrade section keywords to identifiers when in protected columns, inside brackets, or in CODE_BLOCK
     // Prevents section keywords in field/key/control names, ML property values, or code blocks from corrupting context
     const stateForSectionKeywords = this.state.getState();
-    const sectionKeywords = [
-      TokenType.Code, TokenType.Properties, TokenType.FieldGroups,
-      TokenType.Actions, TokenType.DataItems, TokenType.Elements, TokenType.RequestForm,
-      TokenType.Dataset, TokenType.RequestPage, TokenType.Labels, TokenType.MenuNodes
-    ];
-    if (sectionKeywords.includes(tokenType) &&
+    if (SECTION_KEYWORDS.has(tokenType) &&
         (this.shouldProtectFromSectionKeyword() ||
          stateForSectionKeywords.bracketDepth > 0 ||
          this.isInCodeContext())) {
