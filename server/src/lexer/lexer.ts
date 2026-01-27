@@ -1033,13 +1033,29 @@ export class Lexer {
       }
     }
 
-    // Downgrade section keywords to identifiers when used as parameter/variable names
-    // Pattern: "Dataset@1000", "RequestPage@1001", "Labels@1002" in VAR/PARAMETER sections
-    // These should be IDENTIFIER, not section keywords
-    const reportSectionKeywords = [
-      TokenType.Dataset, TokenType.RequestPage, TokenType.Labels
+    // Downgrade section and object type keywords to Identifier when followed by @.
+    // Pattern: "Properties@1000", "Table@1001", "Actions@1002" in VAR/PARAMETER declarations.
+    //
+    // CORRECTNESS INVARIANT: The tokenType variable is shared with the addToken() call
+    // and updateContextForKeyword() call below. Reassigning tokenType to Identifier here
+    // ensures both: (a) the emitted token has the correct type, and (b) updateContextForKeyword
+    // receives Identifier (no matching case), preventing state contamination (see Issue #260).
+    //
+    // Note: Data type keywords (Code, Text, Record, Boolean, etc.) are already handled
+    // by the dataTypeKeywords check (lines 989-998) before this point.
+    const atDowngradeKeywords = [
+      // Section keywords
+      TokenType.Properties, TokenType.FieldGroups, TokenType.Actions,
+      TokenType.DataItems, TokenType.Elements, TokenType.MenuNodes,
+      TokenType.RequestForm, TokenType.Dataset, TokenType.RequestPage,
+      TokenType.Labels, TokenType.Fields, TokenType.Keys, TokenType.Controls,
+      // Object type keywords (no updateContextForKeyword entries, but included
+      // for uniform behavior: Table@1000 should emit Identifier, not Table)
+      TokenType.Table, TokenType.Page, TokenType.Report,
+      TokenType.Codeunit, TokenType.Query, TokenType.XMLport,
+      TokenType.MenuSuite, TokenType.Object,
     ];
-    if (reportSectionKeywords.includes(tokenType) && this.currentChar() === '@') {
+    if (atDowngradeKeywords.includes(tokenType) && this.currentChar() === '@') {
       tokenType = TokenType.Identifier;
     }
 

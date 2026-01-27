@@ -635,8 +635,9 @@ describe('Parser - Keywords as Procedure Names', () => {
 
       expect(procNameToken).toBeDefined();
       expect(procNameToken.value).toBe('Properties');
-      // In code context, should still be Properties token (parser handles downgrade)
-      expect(procNameToken.type).toBe(TokenType.Properties);
+      // Issue #261: Properties@1 should be downgraded to IDENTIFIER when followed by @
+      // This is the uniform @ downgrade behavior for all section/object keywords
+      expect(procNameToken.type).toBe(TokenType.Identifier);
     });
 
     it('should emit Actions as TokenType.Actions at SECTION_LEVEL', () => {
@@ -679,7 +680,9 @@ describe('Parser - Keywords as Procedure Names', () => {
 
       expect(procNameToken).toBeDefined();
       expect(procNameToken.value).toBe('Actions');
-      expect(procNameToken.type).toBe(TokenType.Actions);
+      // Issue #261: Actions@1 should be downgraded to IDENTIFIER when followed by @
+      // This is the uniform @ downgrade behavior for all section/object keywords
+      expect(procNameToken.type).toBe(TokenType.Identifier);
     });
 
     it('should emit Labels as TokenType.Identifier when followed by @', () => {
@@ -828,6 +831,498 @@ describe('Parser - Keywords as Procedure Names', () => {
 
         const errors = parser.getErrors();
         expect(errors.length).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe('Uniform @ downgrade for all section/object keywords (Issue #261)', () => {
+    /**
+     * TDD TEST SUITE FOR ISSUE #261
+     *
+     * Background: Dataset, RequestPage, and Labels already get downgraded to
+     * Identifier by the lexer when followed by @. However, 18 other section/object
+     * keywords do NOT get downgraded, causing parser errors.
+     *
+     * Goal: Uniform behavior - ALL section/object keywords should downgrade to
+     * Identifier when followed by @ in code context.
+     *
+     * Test Expectations:
+     * - Sub-section A (18 tests): MUST FAIL initially
+     * - Sub-section B (3 tests): SHOULD PASS (regression guard)
+     * - Sub-section C (1 test): SHOULD PASS (state non-contamination)
+     */
+
+    describe('Sub-section A: Individual keyword @ downgrade tests (MUST FAIL initially)', () => {
+      // Section keywords (10 tests)
+
+      it('should downgrade Properties to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Properties@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('Properties');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade FieldGroups to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE FieldGroups@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('FieldGroups');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade Actions to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Actions@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('Actions');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade DataItems to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE DataItems@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('DataItems');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade Elements to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Elements@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('Elements');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade MenuNodes to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE MenuNodes@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('MenuNodes');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade RequestForm to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE RequestForm@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('RequestForm');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade Fields to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Fields@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('Fields');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade Keys to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Keys@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('Keys');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade Controls to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Controls@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('Controls');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      // Object type keywords (8 tests)
+
+      it('should downgrade Table to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Table@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('Table');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade Page to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Page@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('Page');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade Report to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Report@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('Report');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade Codeunit to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Codeunit@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('Codeunit');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade Query to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Query@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('Query');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade XMLport to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE XMLport@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('XMLport');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade MenuSuite to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE MenuSuite@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('MenuSuite');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade Object to Identifier when followed by @', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Object@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('Object');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+    });
+
+    describe('Sub-section B: Regression tests for already-working keywords (SHOULD PASS)', () => {
+      // These 3 keywords already get downgraded to Identifier by the lexer
+
+      it('should downgrade Dataset to Identifier when followed by @ (already works)', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Dataset@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('Dataset');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade RequestPage to Identifier when followed by @ (already works)', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE RequestPage@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('RequestPage');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+
+      it('should downgrade Labels to Identifier when followed by @ (already works)', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Labels@1();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
+        expect(procIndex).toBeGreaterThan(-1);
+        const nameToken = tokens[procIndex + 1];
+        expect(nameToken.value).toBe('Labels');
+        expect(nameToken.type).toBe(TokenType.Identifier);
+      });
+    });
+
+    describe('Sub-section C: State non-contamination regression test', () => {
+      // Verifies that using Properties@1() doesn't contaminate lexer state
+      // and cause subsequent Properties sections to fail parsing
+
+      it('should not contaminate state when Properties@ appears in code section', () => {
+        const code = `OBJECT Page 50000 Test
+{
+  PROPERTIES
+  {
+    CaptionML=ENU=Test Page;
+  }
+  CONTROLS
+  {
+    { 1   ;      ;Container ;
+                  ContainerType=ContentArea }
+  }
+  CODE
+  {
+    PROCEDURE Properties@1();
+    BEGIN
+      MESSAGE('Properties procedure called');
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+
+        // Parse should succeed without errors
+        expect(parser.getErrors()).toHaveLength(0);
+        expect(ast.object).not.toBeNull();
+
+        // Verify PROPERTIES section was parsed
+        const pageNode = ast.object as any;
+        expect(pageNode.properties).toBeDefined();
+
+        // Verify Properties procedure exists
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures).toHaveLength(1);
+        expect(procedures[0].name).toBe('Properties');
       });
     });
   });

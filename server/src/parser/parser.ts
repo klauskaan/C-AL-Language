@@ -96,7 +96,8 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
   // These keywords are structural at object level but can be used as identifiers inside CODE sections.
   // At SECTION_LEVEL (procedure declarations): lexer retains keyword types, parser must allow via this set.
   // At CODE_BLOCK (procedure bodies): lexer downgrades to Identifier automatically.
-  // Note: Labels and Dataset have additional @ downgrade behavior (Issue #261).
+  // Note: All section/object keywords are uniformly downgraded to Identifier when followed by @ (Issue #261).
+  // ALLOWED_KEYWORDS_AS_IDENTIFIERS still necessary for keywords used WITHOUT @ suffix in identifier position.
   // State contamination: updateContextForKeyword fires at SECTION_LEVEL setting lastWasSectionKeyword (Issue #260).
   TokenType.MenuSuite,     // Object type keyword (same family as Table/Page/Report/Codeunit/Query/XMLport)
   TokenType.Properties,    // Section keyword (PROPERTIES section)
@@ -104,8 +105,8 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
   TokenType.Actions,       // Section keyword (ACTIONS section - Page/Report)
   TokenType.DataItems,     // Section keyword (DATAITEMS section - Report)
   TokenType.Elements,      // Section keyword (ELEMENTS section - XMLport)
-  TokenType.Labels,        // Section keyword (LABELS section - Report); @ downgrade per Issue #261
-  TokenType.Dataset,       // Section keyword (DATASET section - Report/Page); @ downgrade per Issue #261
+  TokenType.Labels,        // Section keyword (LABELS section - Report)
+  TokenType.Dataset,       // Section keyword (DATASET section - Report/Page)
   TokenType.ALOnlyKeyword,         // Enum, Interface, Extends, Implements can be variable names
   TokenType.ALOnlyAccessModifier,  // Internal, Protected, Public can be variable names
 ]);
@@ -4313,12 +4314,11 @@ export class Parser {
    * - At CODE_BLOCK (procedure bodies): The lexer automatically downgrades section keywords to Identifier type,
    *   so the parser sees TokenType.Identifier directly.
    *
-   * **Labels/Dataset @ downgrade non-uniformity (Issue #261):**
-   * - When Labels or Dataset keywords are followed by `@` (identifier position), the lexer downgrades them
-   *   to Identifier type even at SECTION_LEVEL.
-   * - Other section keywords (Properties, FieldGroups, Actions, DataItems, Elements, MenuSuite) do NOT have
-   *   this special @ downgrade behavior - they arrive as keyword types when followed by `@`.
-   * - This non-uniformity is historical; future work may standardize all section keywords to downgrade on `@`.
+   * **Uniform @ downgrade behavior (Issue #261 - RESOLVED):**
+   * - All section and object type keywords are uniformly downgraded to Identifier when followed by `@`.
+   * - Keywords like `Properties@1000`, `Table@1001`, `Labels@1002` arrive as TokenType.Identifier.
+   * - ALLOWED_KEYWORDS_AS_IDENTIFIERS is still necessary for keywords used WITHOUT `@` suffix in identifier
+   *   contexts (e.g., `Properties := 5;` where the keyword arrives as TokenType.Properties).
    *
    * **State contamination (Issue #260):**
    * - When section keywords are used as identifiers at SECTION_LEVEL inside CODE sections, the lexer's
