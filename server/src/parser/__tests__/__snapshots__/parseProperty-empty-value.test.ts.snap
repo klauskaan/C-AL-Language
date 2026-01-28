@@ -1,0 +1,133 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Parser - Empty/Malformed Property Values in parseProperty() SNAPSHOT: Property value parsing results should match snapshot for PROPERTIES with empty Description value 1`] = `
+{
+  "endToken": {
+    "column": 32,
+    "endOffset": 146,
+    "line": 10,
+    "startOffset": 145,
+    "type": "RIGHT_BRACE",
+    "value": "}",
+  },
+  "properties": [
+    {
+      "endToken": {
+        "column": 23,
+        "endOffset": 94,
+        "line": 8,
+        "startOffset": 93,
+        "type": "SEMICOLON",
+        "value": ";",
+      },
+      "name": "DataPerCompany",
+      "startToken": {
+        "column": 5,
+        "endOffset": 89,
+        "line": 8,
+        "startOffset": 75,
+        "type": "IDENTIFIER",
+        "value": "DataPerCompany",
+      },
+      "type": "Property",
+      "value": "Yes",
+      "valueTokens": [
+        {
+          "column": 20,
+          "endOffset": 93,
+          "line": 8,
+          "startOffset": 90,
+          "type": "IDENTIFIER",
+          "value": "Yes",
+        },
+      ],
+    },
+    {
+      "endToken": {
+        "column": 18,
+        "endOffset": 113,
+        "line": 9,
+        "startOffset": 112,
+        "type": "SEMICOLON",
+        "value": ";",
+      },
+      "name": "Description",
+      "startToken": {
+        "column": 5,
+        "endOffset": 110,
+        "line": 9,
+        "startOffset": 99,
+        "type": "IDENTIFIER",
+        "value": "Description",
+      },
+      "type": "Property",
+      "value": "",
+      "valueTokens": undefined,
+    },
+    {
+      "endToken": {
+        "column": 30,
+        "endOffset": 144,
+        "line": 10,
+        "startOffset": 143,
+        "type": "IDENTIFIER",
+        "value": "r",
+      },
+      "name": "Permissions",
+      "startToken": {
+        "column": 5,
+        "endOffset": 129,
+        "line": 10,
+        "startOffset": 118,
+        "type": "IDENTIFIER",
+        "value": "Permissions",
+      },
+      "type": "Property",
+      "value": "TableData 18=r",
+      "valueTokens": [
+        {
+          "column": 17,
+          "endOffset": 139,
+          "line": 10,
+          "startOffset": 130,
+          "type": "IDENTIFIER",
+          "value": "TableData",
+        },
+        {
+          "column": 27,
+          "endOffset": 142,
+          "line": 10,
+          "startOffset": 140,
+          "type": "INTEGER",
+          "value": "18",
+        },
+        {
+          "column": 29,
+          "endOffset": 143,
+          "line": 10,
+          "startOffset": 142,
+          "type": "EQUAL",
+          "value": "=",
+        },
+        {
+          "column": 30,
+          "endOffset": 144,
+          "line": 10,
+          "startOffset": 143,
+          "type": "IDENTIFIER",
+          "value": "r",
+        },
+      ],
+    },
+  ],
+  "startToken": {
+    "column": 3,
+    "endOffset": 66,
+    "line": 6,
+    "startOffset": 56,
+    "type": "PROPERTIES",
+    "value": "PROPERTIES",
+  },
+  "type": "PropertySection",
+}
+`;

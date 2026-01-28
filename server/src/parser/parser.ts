@@ -494,9 +494,7 @@ export class Parser {
         // Safety: if depth goes negative, we've consumed too many closing braces
         // This means we've exited the property value and should stop
         if (braceDepth < 0) {
-          // Report error only if there's no whitespace between = and }
-          // (whitespace is a valid value in C/AL, e.g., InstructionalTextML= )
-          const hasWhitespace = equalsToken.endOffset < currentToken.startOffset;
+          const hasWhitespace = this.hasWhitespaceBetween(equalsToken, currentToken);
           if (!hasWhitespace) {
             // Truly empty/malformed: no tokens and no whitespace (e.g., ActionList=})
             this.recordError(`Empty or malformed value for property '${sanitizeContent(name)}'`, currentToken);
@@ -1103,9 +1101,7 @@ export class Parser {
               } else if (currentToken.type === TokenType.RightBrace) {
                 braceDepth--;
                 if (braceDepth < 0) {
-                  // Report error only if there's no whitespace between = and }
-                  // (whitespace is a valid value in C/AL, e.g., InstructionalTextML= )
-                  const hasWhitespace = equalsToken.endOffset < currentToken.startOffset;
+                  const hasWhitespace = this.hasWhitespaceBetween(equalsToken, currentToken);
                   if (!hasWhitespace) {
                     // Truly empty/malformed: no tokens and no whitespace (e.g., ActionList=})
                     this.recordError(`Empty or malformed value for property '${sanitizeContent(name)}'`, currentToken);
@@ -4025,6 +4021,22 @@ export class Parser {
   private check(type: TokenType): boolean {
     if (this.isAtEnd()) return false;
     return this.peek().type === type;
+  }
+
+  /**
+   * Check if there is whitespace between two consecutive tokens.
+   * Used to distinguish valid "Property= }" (whitespace value) from
+   * malformed "Property=}" (no value, no whitespace).
+   *
+   * In C/AL, whitespace is a valid property value. When tokens are adjacent
+   * (endOffset == startOffset), there is no gap and therefore no whitespace.
+   *
+   * @param token1 First token (typically the equals sign)
+   * @param token2 Second token (typically the closing brace)
+   * @returns true if there is any gap between tokens (whitespace present)
+   */
+  private hasWhitespaceBetween(token1: Token, token2: Token): boolean {
+    return token1.endOffset < token2.startOffset;
   }
 
   /**
