@@ -841,10 +841,6 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       const obj = result.ast.object as ObjectDeclaration;
       expect(obj.code).toBeDefined();
       expect(obj.code?.type).toBe('CodeSection');
-
-      // Verify that the CODE section contains the variable
-      // This ensures recovery didn't consume into the CODE section
-      expect(obj.code).toBeTruthy();
     });
 
     it('should recover from missing GUID', () => {

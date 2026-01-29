@@ -1653,6 +1653,45 @@ export class Parser {
 
   /**
    * Parse ELEMENTS section (XMLport only)
+   *
+   * IMPORTANT: This method uses custom brace-depth recovery instead of
+   * parseWithRecovery(). This is intentional and necessary.
+   *
+   * XMLport elements have a unique nested brace structure:
+   * ```
+   * ELEMENTS
+   * {
+   *   { [{GUID-1}]; name1; ... }    <- Element 1
+   *   { [{GUID-2}]; name2; ... }    <- Element 2
+   * }
+   * ```
+   *
+   * The GUID uses braces: `[{xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}]`
+   * This creates nested braces within each element.
+   *
+   * Why parseWithRecovery() fails:
+   * - parseWithRecovery() recovers by scanning for RightBrace tokens
+   * - On malformed input, it would stop at the GUID's inner `}`
+   *   instead of the element's closing `}`
+   * - This corrupts parsing state and causes cascade failures
+   *
+   * Example failure scenario:
+   * ```
+   * { [{GUID}]; MALFORMED_CONTENT }
+   *           ^-- parseWithRecovery stops here (wrong!)
+   *                                           ^-- correct stop point
+   * ```
+   *
+   * The custom recovery tracks brace depth to distinguish:
+   * - sectionBraceDepth + 1: section closing brace (stop recovery)
+   * - sectionBraceDepth + 2+: element/GUID braces (skip, continue)
+   *
+   * Design decision documented in issue #270. See also synchronize()
+   * for the global error recovery strategy.
+   *
+   * @see synchronize() - global recovery, different purpose
+   * @see parseWithRecovery() - standard pattern, not suitable here
+   * @see https://github.com/klauskaan/C-AL-Language/issues/270
    */
   private parseElementsSection(): ElementsSection {
     const startToken = this.consume(TokenType.Elements, 'Expected ELEMENTS');
@@ -1670,8 +1709,7 @@ export class Parser {
       } catch (error) {
         if (error instanceof ParseError) {
           this.errors.push(error);
-          // Skip to next element or end of section
-          // Consume tokens until we find a RightBrace that closes the current element
+          // Custom depth-aware recovery - see method JSDoc for why parseWithRecovery() cannot be used
           while (!this.isAtEnd()) {
             if (this.check(TokenType.RightBrace)) {
               // Check if this RightBrace closes an element or the section
@@ -1704,6 +1742,17 @@ export class Parser {
     };
   }
 
+  /**
+   * Parse a single XMLport element.
+   *
+   * Element structure with nested braces:
+   * ```
+   * { [{GUID}]; IndentLevel; Name; NodeType; SourceType; [Properties] }
+   *   ^------^
+   *   Nested braces - this is why parseElementsSection needs
+   *   custom depth-aware recovery instead of parseWithRecovery()
+   * ```
+   */
   private parseXMLportElement(): XMLportElement {
     const startToken = this.consume(TokenType.LeftBrace, 'Expected {');
 
