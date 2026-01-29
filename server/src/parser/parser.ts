@@ -1709,8 +1709,8 @@ export class Parser {
   /**
    * Parse ELEMENTS section (XMLport only)
    *
-   * IMPORTANT: This method uses custom brace-depth recovery instead of
-   * parseWithRecovery(). This is intentional and necessary.
+   * IMPORTANT: This method uses custom element-local depth tracking for error
+   * recovery instead of parseWithRecovery(). This is intentional and necessary.
    *
    * XMLport elements have a unique nested brace structure:
    * ```
@@ -1737,20 +1737,36 @@ export class Parser {
    *                                           ^-- correct stop point
    * ```
    *
-   * The custom recovery tracks brace depth to distinguish:
-   * - sectionBraceDepth + 1: section closing brace (stop recovery)
-   * - sectionBraceDepth + 2+: element/GUID braces (skip, continue)
+   * Why this.braceDepth is unreliable:
+   * - Malformed GUIDs like `{12345-{1234...}` contain unbalanced braces
+   * - These corrupt this.braceDepth DURING parsing, BEFORE recovery starts
+   * - By the time we reach the catch block, this.braceDepth cannot be trusted
+   * - Issue #273 documents this problem and the element-local solution
    *
-   * Design decision documented in issue #270. See also synchronize()
+   * Element-local depth tracking (the fix):
+   * - Track depth locally from recovery start (recoveryDepth = 0)
+   * - Increment for { tokens, decrement for } tokens
+   * - When recoveryDepth goes negative, we've exited the element
+   * - Section keyword escape hatch: stop if we hit FIELDS/KEYS/etc. at depth 0
+   *
+   * Section keyword escape hatch details:
+   * - Uses isSectionKeyword() to correctly identify section keywords
+   * - Handles CODE/CONTROLS which require lookahead for '{' to distinguish
+   *   from identifier usage ("Code" field names, "Code[20]" data types)
+   * - Only triggers at recoveryDepth === 1 (inside element body, not nested deeper)
+   *   to detect if we've overrun into a following section
+   *
+   * Design decision documented in issues #270 and #273. See also synchronize()
    * for the global error recovery strategy.
    *
    * @see synchronize() - global recovery, different purpose
    * @see parseWithRecovery() - standard pattern, not suitable here
+   * @see isSectionKeyword() - handles CODE/CONTROLS lookahead correctly
    * @see https://github.com/klauskaan/C-AL-Language/issues/270
+   * @see https://github.com/klauskaan/C-AL-Language/issues/273
    */
   private parseElementsSection(): ElementsSection {
     const startToken = this.consume(TokenType.Elements, 'Expected ELEMENTS');
-    const sectionBraceDepth = this.braceDepth;
     this.consume(TokenType.LeftBrace, 'Expected {');
 
     const flatElements: XMLportElement[] = [];
@@ -1764,22 +1780,48 @@ export class Parser {
       } catch (error) {
         if (error instanceof ParseError) {
           this.errors.push(error);
-          // Custom depth-aware recovery - see method JSDoc for why parseWithRecovery() cannot be used
-          while (!this.isAtEnd()) {
-            if (this.check(TokenType.RightBrace)) {
-              // Check if this RightBrace closes an element or the section
-              if (this.braceDepth === sectionBraceDepth + 1) {
-                // This is the section closing brace, stop here without advancing
-                break;
-              } else if (this.braceDepth === sectionBraceDepth + 2) {
-                // This closes an element (we're inside the element at depth +2)
-                // Consume it and stop to allow next iteration to parse next element
+          // Custom depth-aware recovery using element-local depth tracking.
+          //
+          // WHY NOT use this.braceDepth?
+          // Malformed GUIDs containing unbalanced braces (e.g., {12345-{1234...})
+          // corrupt this.braceDepth during parsing BEFORE recovery starts.
+          // By the time we reach the catch block, this.braceDepth is unreliable.
+          //
+          // STRATEGY:
+          // 1. Start recoveryDepth = 1 because parseXMLportElement() has already consumed the opening {
+          // 2. Scan for closing } of the element, skipping to next element when found
+          // 3. Section keyword escape hatch prevents consuming next section
+
+          let recoveryDepth = 1; // We're inside the element (opened brace already consumed)
+          let foundElementClose = false;
+
+          while (!this.isAtEnd() && !foundElementClose) {
+            const peekType = this.peek().type;
+
+            // Section keyword escape hatch: stop if we hit a section keyword
+            // This prevents recovery from consuming CODE, PROPERTIES, etc.
+            if (recoveryDepth === 1 && this.isSectionKeyword(peekType)) {
+              break;
+            }
+
+            // Track brace depth
+            if (peekType === TokenType.LeftBrace) {
+              recoveryDepth++;
+            } else if (peekType === TokenType.RightBrace) {
+              recoveryDepth--;
+              if (recoveryDepth === 0) {
+                // Found the closing brace of the element - consume it and exit recovery
                 this.advance();
+                foundElementClose = true;
                 break;
               }
             }
+
             this.advance();
           }
+
+          // If we exited the loop without finding the element close, we hit a section keyword
+          // or EOF. Just continue - don't consume any more tokens.
         } else {
           throw error;
         }
@@ -1818,6 +1860,16 @@ export class Parser {
     let guid = '';
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
       guid += this.advance().value;
+    }
+
+    // Check for unbalanced braces - if GUID contains {, it must also contain }
+    const openBraces = (guid.match(/\{/g) || []).length;
+    const closeBraces = (guid.match(/\}/g) || []).length;
+    if (openBraces !== closeBraces) {
+      this.recordError(
+        `Malformed GUID: unbalanced braces (${openBraces} '{' vs ${closeBraces} '}')`,
+        this.peek()
+      );
     }
 
     this.consume(TokenType.RightBrace, 'Expected } in GUID');
