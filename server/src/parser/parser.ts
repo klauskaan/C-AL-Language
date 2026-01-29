@@ -287,8 +287,9 @@ export class Parser {
                    token.type === TokenType.Dataset ||
                    token.type === TokenType.RequestPage ||
                    token.type === TokenType.Labels ||
-                   token.type === TokenType.RequestForm) {
-          // Skip unsupported sections (DATAITEMS, DATASET, REQUESTPAGE, LABELS, REQUESTFORM)
+                   token.type === TokenType.RequestForm ||
+                   token.type === TokenType.MenuNodes) {
+          // Skip unsupported sections (DATAITEMS, DATASET, REQUESTPAGE, LABELS, REQUESTFORM, MENUNODES)
           // These sections have complex nested structures that aren't fully parsed yet
           this.skipUnsupportedSection(token.type);
         } else {
@@ -4612,7 +4613,8 @@ export class Parser {
         type === TokenType.RequestPage ||
         type === TokenType.Labels ||
         type === TokenType.Elements ||
-        type === TokenType.RequestForm) {
+        type === TokenType.RequestForm ||
+        type === TokenType.MenuNodes) {
       return true;
     }
 
