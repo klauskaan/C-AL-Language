@@ -116,14 +116,27 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
 ]);
 
 /**
- * All section keywords that can appear at the object level in C/AL.
+ * All section keywords that can appear at the object level in C/AL (14 keywords).
  * Used by isSectionKeyword() and synchronize() for error recovery.
+ *
+ * This is distinct from lexer.ts SECTION_KEYWORDS (11 keywords) which is used
+ * for identifier downgrading. The parser includes three additional keywords:
+ * - Fields: Table field definitions section
+ * - Keys: Table key definitions section
+ * - Controls: Page/Form control definitions section
+ *
+ * These three keywords cannot appear as identifiers in contexts where the lexer
+ * performs downgrading (field names, key names, control names, ML properties, code blocks),
+ * so they are excluded from the lexer set. However, they are section keywords
+ * for error recovery purposes in the parser.
  *
  * Note: Code and Controls require special handling (must be followed by '{')
  * to distinguish from use as identifiers. The isSectionKeyword() method
  * handles this distinction separately before checking this set.
+ *
+ * @internal Exported for testing only. Do not use outside of parser tests.
  */
-const SECTION_KEYWORDS = new Set<TokenType>([
+export const SECTION_KEYWORDS = new Set<TokenType>([
   TokenType.Properties,
   TokenType.Fields,
   TokenType.Keys,
@@ -144,13 +157,15 @@ const SECTION_KEYWORDS = new Set<TokenType>([
  * Section keywords that are ALWAYS skipped via skipUnsupportedSection().
  * These sections have complex nested structures that are not parsed.
  *
- * Note: This set excludes:
+ * This set excludes:
  * - Actions: Has dedicated parseActionSection() with fallback to skip on error
  * - Controls: Has dedicated parseControlSection() with fallback to skip on error
  * - Elements: XMLport ELEMENTS are fully parsed; only Query ELEMENTS are skipped
  *             (handled specially in the section parsing loop)
+ *
+ * @internal Exported for testing only. Do not use outside of parser tests.
  */
-const UNSUPPORTED_SECTIONS = new Set<TokenType>([
+export const UNSUPPORTED_SECTIONS = new Set<TokenType>([
   TokenType.MenuNodes,
   TokenType.DataItems,
   TokenType.Dataset,
