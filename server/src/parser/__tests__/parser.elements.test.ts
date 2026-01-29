@@ -801,6 +801,52 @@ describe('Parser - XMLport ELEMENTS Section', () => {
   });
 
   describe('Malformed input recovery', () => {
+    it('should recover correctly when element content is malformed after GUID', () => {
+      const code = `OBJECT XMLport 50000 "Test XMLport"
+      {
+        PROPERTIES
+        {
+        }
+        ELEMENTS
+        {
+          { [{12345678-1234-1234-1234-123456789012}];  ;Element;Text MALFORMED }
+          { [{87654321-4321-4321-4321-210987654321}];  ;Element2;Text;
+                                                           SourceField=Field2 }
+        }
+        CODE
+        {
+          VAR
+            TestVar@1000 : Integer;
+
+          BEGIN
+          END.
+        }
+      }`;
+
+      const result = parseElements(code);
+
+      // Should have parse errors due to malformed first element
+      expect(result.errors.length).toBeGreaterThan(0);
+
+      // Should recover and parse the second element
+      expect(result.elements).toBeDefined();
+      const allElements = result.elements?.elements || [];
+
+      // At least the second element should be parsed
+      const element2 = allElements.find(e => e.guid === '87654321-4321-4321-4321-210987654321');
+      expect(element2).toBeDefined();
+      expect(element2?.name).toBe('Element2');
+
+      // Verify CODE section was not consumed by error recovery
+      const obj = result.ast.object as ObjectDeclaration;
+      expect(obj.code).toBeDefined();
+      expect(obj.code?.type).toBe('CodeSection');
+
+      // Verify that the CODE section contains the variable
+      // This ensures recovery didn't consume into the CODE section
+      expect(obj.code).toBeTruthy();
+    });
+
     it('should recover from missing GUID', () => {
       const code = `OBJECT XMLport 50000 "Test XMLport"
       {

@@ -1671,13 +1671,17 @@ export class Parser {
         if (error instanceof ParseError) {
           this.errors.push(error);
           // Skip to next element or end of section
-          // Consume tokens until we find a RightBrace at the section level
+          // Consume tokens until we find a RightBrace that closes the current element
           while (!this.isAtEnd()) {
             if (this.check(TokenType.RightBrace)) {
-              // Check if this RightBrace closes an element (depth > sectionBraceDepth + 1)
-              // or closes the section (depth == sectionBraceDepth + 1)
+              // Check if this RightBrace closes an element or the section
               if (this.braceDepth === sectionBraceDepth + 1) {
-                // This is the section closing brace, stop here
+                // This is the section closing brace, stop here without advancing
+                break;
+              } else if (this.braceDepth === sectionBraceDepth + 2) {
+                // This closes an element (we're inside the element at depth +2)
+                // Consume it and stop to allow next iteration to parse next element
+                this.advance();
                 break;
               }
             }
@@ -1726,7 +1730,7 @@ export class Parser {
     // Parse element name - accumulate tokens until next semicolon (handles names like "Country/Region Code")
     let name = '';
     let lastToken: Token | null = null;
-    while (!this.check(TokenType.Semicolon) && !this.isAtEnd()) {
+    while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
       const token = this.advance();
       // Preserve whitespace between tokens based on source positions
       if (lastToken !== null && token.startOffset > lastToken.endOffset) {
@@ -1738,10 +1742,10 @@ export class Parser {
     name = name.trim();  // Remove leading/trailing whitespace
     this.consume(TokenType.Semicolon, 'Expected ; after element name');
 
-    // Parse node type (Element or Attribute) - accumulate until semicolon
+    // Parse node type (Element or Attribute) - accumulate until semicolon or right brace
     let nodeTypeStr = '';
     lastToken = null;
-    while (!this.check(TokenType.Semicolon) && !this.isAtEnd()) {
+    while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
       const token = this.advance();
       if (lastToken !== null && token.startOffset > lastToken.endOffset) {
         nodeTypeStr += ' ';
@@ -1753,18 +1757,43 @@ export class Parser {
     const nodeType = this.normalizeXMLportNodeType(nodeTypeStr);
     this.consume(TokenType.Semicolon, 'Expected ; after node type');
 
-    // Parse source type (Text, Table, or Field) - accumulate until semicolon or right brace
+    // Parse source type (Text, Table, or Field) - just ONE token expected
+    // If next token is Semicolon or RightBrace, sourceType is empty
     let sourceTypeStr = '';
-    lastToken = null;
-    while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+    let sourceTypeStartToken: Token | null = null;
+    if (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
       const token = this.advance();
-      if (lastToken !== null && token.startOffset > lastToken.endOffset) {
-        sourceTypeStr += ' ';
+      sourceTypeStartToken = token;
+      sourceTypeStr = token.value;
+      // Check if the next token is "=" which indicates this is a property, not a source type
+      if (this.check(TokenType.Equal)) {
+        // This was actually a property, not a source type - we parsed it by mistake
+        // Don't consume the "=", just treat sourceType as empty
+        this.current--;  // Back up to before the token we just consumed
+        sourceTypeStr = '';
       }
-      sourceTypeStr += token.value;
-      lastToken = token;
     }
     sourceTypeStr = sourceTypeStr.trim();
+
+    // Validate that source type is a single valid token (no extra content)
+    const sourceTypeTokens = sourceTypeStr.split(/\s+/);
+    if (sourceTypeTokens.length > 1) {
+      const invalidPart = sourceTypeTokens.slice(1).join(' ');
+      throw this.createParseError(
+        `Invalid content in source type: '${invalidPart}' (XMLport source type must be Text, Table, or Field)`,
+        lastToken || sourceTypeStartToken || this.previous()
+      );
+    }
+
+    // Validate that source type is one of the valid values
+    const normalized = sourceTypeStr.toLowerCase();
+    if (normalized !== 'text' && normalized !== 'table' && normalized !== 'field' && sourceTypeStr !== '') {
+      throw this.createParseError(
+        `Invalid source type '${sourceTypeStr}' (must be Text, Table, or Field)`,
+        lastToken || sourceTypeStartToken || this.previous()
+      );
+    }
+
     const sourceType = this.normalizeXMLportSourceType(sourceTypeStr);
 
     // Optional semicolon after source type (present if there are properties/triggers)
