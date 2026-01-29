@@ -1656,17 +1656,36 @@ export class Parser {
    */
   private parseElementsSection(): ElementsSection {
     const startToken = this.consume(TokenType.Elements, 'Expected ELEMENTS');
+    const sectionBraceDepth = this.braceDepth;
     this.consume(TokenType.LeftBrace, 'Expected {');
 
     const flatElements: XMLportElement[] = [];
 
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
-      const element = this.parseWithRecovery(
-        () => this.parseXMLportElement(),
-        [TokenType.LeftBrace, TokenType.RightBrace]
-      );
-      if (element) {
-        flatElements.push(element);
+      try {
+        const element = this.parseXMLportElement();
+        if (element) {
+          flatElements.push(element);
+        }
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Skip to next element or end of section
+          // Consume tokens until we find a RightBrace at the section level
+          while (!this.isAtEnd()) {
+            if (this.check(TokenType.RightBrace)) {
+              // Check if this RightBrace closes an element (depth > sectionBraceDepth + 1)
+              // or closes the section (depth == sectionBraceDepth + 1)
+              if (this.braceDepth === sectionBraceDepth + 1) {
+                // This is the section closing brace, stop here
+                break;
+              }
+            }
+            this.advance();
+          }
+        } else {
+          throw error;
+        }
       }
     }
 
@@ -4641,6 +4660,8 @@ export class Parser {
   private synchronize(): void {
     const startToken = this.peek();
     let tokenCount = 0;
+    // Remember the depth where the error occurred
+    const errorDepth = this.braceDepth;
 
     this.advance();
     tokenCount++;
@@ -4663,18 +4684,37 @@ export class Parser {
         case TokenType.FieldGroups:
         case TokenType.Code:
         case TokenType.Controls:
+        // Unsupported section keywords (skipped but recognized for error recovery)
+        case TokenType.Actions:
+        case TokenType.DataItems:
+        case TokenType.Dataset:
+        case TokenType.RequestPage:
+        case TokenType.Labels:
+        case TokenType.Elements:
+        case TokenType.RequestForm:
+        case TokenType.MenuNodes:
         case TokenType.Procedure:
         case TokenType.Function:
         case TokenType.Trigger:
         case TokenType.Begin:
         case TokenType.End:
         case TokenType.Var:
-        case TokenType.RightBrace:
           // Record skipped region before returning
           if (tokenCount > 0) {
             this.recordSkippedRegion(startToken, this.previous(), tokenCount, 'Error recovery');
           }
           return;
+        case TokenType.RightBrace:
+          // Only stop at RightBrace if we're back to a level OUTSIDE the error context
+          // If error occurred at depth N, we need to get back to depth < N to stop at RightBrace
+          if (this.braceDepth < errorDepth) {
+            // Record skipped region before returning
+            if (tokenCount > 0) {
+              this.recordSkippedRegion(startToken, this.previous(), tokenCount, 'Error recovery');
+            }
+            return;
+          }
+          break;
       }
 
       this.advance();
