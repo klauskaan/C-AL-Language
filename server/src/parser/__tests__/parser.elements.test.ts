@@ -826,7 +826,8 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       const result = parseElements(code);
 
       // Should have parse errors due to malformed first element
-      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.errors.length).toBeGreaterThanOrEqual(1);
+      expect(result.errors[0].message).toMatch(/Expected|malformed|unexpected/i);
 
       // Should recover and parse the second element
       expect(result.elements).toBeDefined();
@@ -836,6 +837,7 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       const element2 = allElements.find(e => e.guid === '87654321-4321-4321-4321-210987654321');
       expect(element2).toBeDefined();
       expect(element2?.name).toBe('Element2');
+      expect(element2?.sourceType).toBe('Text');
 
       // Verify CODE section was not consumed by error recovery
       const obj = result.ast.object as ObjectDeclaration;
@@ -854,22 +856,31 @@ describe('Parser - XMLport ELEMENTS Section', () => {
           { ;1 ;element1            ;Element ;Text     }
           { [{GUID-2}];2 ;element2            ;Element ;Text     }
         }
+        CODE
+        {
+          VAR
+            TestVar@1000 : Integer;
+
+          BEGIN
+          END.
+        }
       }`;
 
       const result = parseElements(code);
 
       // Should have errors but continue parsing
+      expect(result.errors.length).toBeGreaterThanOrEqual(1);
       expect(result.elements).toBeDefined();
 
-      // Parser might not recover from malformed input - if it doesn't parse anything, that's acceptable
+      // Parser should recover and parse the second element
       const allElements = result.elements?.elements || [];
-      if (allElements.length > 0) {
-        const validElements = allElements.filter(e => e.guid === 'GUID-2');
-        expect(validElements.length).toBeGreaterThan(0);
-      } else {
-        // Parser didn't recover - acceptable for now
-        expect(allElements.length).toBeGreaterThanOrEqual(0);
-      }
+      const validElements = allElements.filter(e => e.guid === 'GUID-2');
+      expect(validElements.length).toBeGreaterThan(0);
+
+      // CODE section should be intact
+      const obj = result.ast.object as ObjectDeclaration;
+      expect(obj.code).toBeDefined();
+      expect(obj.code?.type).toBe('CodeSection');
     });
 
     it('should recover from malformed GUID format', () => {
@@ -883,18 +894,30 @@ describe('Parser - XMLport ELEMENTS Section', () => {
           { [INVALID];1 ;element1            ;Element ;Text     }
           { [{GUID-2}];2 ;element2            ;Element ;Text     }
         }
+        CODE
+        {
+          VAR
+            TestVar@1000 : Integer;
+
+          BEGIN
+          END.
+        }
       }`;
 
       const result = parseElements(code);
 
+      expect(result.errors.length).toBeGreaterThanOrEqual(1);
       expect(result.elements).toBeDefined();
+
       const allElements = result.elements?.elements || [];
-      if (allElements.length > 0) {
-        const validElements = allElements.filter(e => e.guid === 'GUID-2');
-        expect(validElements.length).toBeGreaterThan(0);
-      } else {
-        expect(allElements.length).toBeGreaterThanOrEqual(0);
-      }
+      const validElements = allElements.filter(e => e.guid === 'GUID-2');
+      expect(validElements.length).toBeGreaterThan(0);
+      expect(validElements[0].name).toBe('element2');
+
+      // CODE section should be intact
+      const obj = result.ast.object as ObjectDeclaration;
+      expect(obj.code).toBeDefined();
+      expect(obj.code?.type).toBe('CodeSection');
     });
 
     it('should handle missing node type', () => {
@@ -908,18 +931,39 @@ describe('Parser - XMLport ELEMENTS Section', () => {
           { [{GUID-1}];0 ;element1            ; ;Text     }
           { [{GUID-2}];0 ;element2            ;Element ;Text     }
         }
+        CODE
+        {
+          VAR
+            TestVar@1000 : Integer;
+
+          BEGIN
+          END.
+        }
       }`;
 
       const result = parseElements(code);
 
+      // Missing NodeType defaults to 'Element' - this is intentional, not an error
+      expect(result.errors.length).toBe(0);
       expect(result.elements).toBeDefined();
+
       const allElements = result.elements?.elements || [];
-      if (allElements.length > 0) {
-        const validElements = allElements.filter(e => e.guid === 'GUID-2');
-        expect(validElements.length).toBeGreaterThan(0);
-      } else {
-        expect(allElements.length).toBeGreaterThanOrEqual(0);
-      }
+      expect(allElements.length).toBeGreaterThanOrEqual(2);
+
+      // First element should have default NodeType
+      const element1 = allElements.find(e => e.guid === 'GUID-1');
+      expect(element1).toBeDefined();
+      expect(element1?.nodeType).toBe('Element'); // Default applied
+
+      // Second element should have explicit NodeType
+      const element2 = allElements.find(e => e.guid === 'GUID-2');
+      expect(element2).toBeDefined();
+      expect(element2?.nodeType).toBe('Element');
+
+      // CODE section should be intact
+      const obj = result.ast.object as ObjectDeclaration;
+      expect(obj.code).toBeDefined();
+      expect(obj.code?.type).toBe('CodeSection');
     });
 
     it('should handle missing source type', () => {
@@ -933,18 +977,399 @@ describe('Parser - XMLport ELEMENTS Section', () => {
           { [{GUID-1}];0 ;element1            ;Element ; }
           { [{GUID-2}];0 ;element2            ;Element ;Text     }
         }
+        CODE
+        {
+          VAR
+            TestVar@1000 : Integer;
+
+          BEGIN
+          END.
+        }
       }`;
 
       const result = parseElements(code);
 
+      // Missing SourceType defaults to 'Text' - this is intentional, not an error
+      expect(result.errors.length).toBe(0);
       expect(result.elements).toBeDefined();
+
       const allElements = result.elements?.elements || [];
-      if (allElements.length > 0) {
-        const validElements = allElements.filter(e => e.guid === 'GUID-2');
-        expect(validElements.length).toBeGreaterThan(0);
-      } else {
-        expect(allElements.length).toBeGreaterThanOrEqual(0);
-      }
+      expect(allElements.length).toBeGreaterThanOrEqual(2);
+
+      // First element should have default SourceType
+      const element1 = allElements.find(e => e.guid === 'GUID-1');
+      expect(element1).toBeDefined();
+      expect(element1?.sourceType).toBe('Text'); // Default applied
+
+      // Second element should have explicit SourceType
+      const element2 = allElements.find(e => e.guid === 'GUID-2');
+      expect(element2).toBeDefined();
+      expect(element2?.sourceType).toBe('Text');
+
+      // CODE section should be intact
+      const obj = result.ast.object as ObjectDeclaration;
+      expect(obj.code).toBeDefined();
+      expect(obj.code?.type).toBe('CodeSection');
+    });
+  });
+
+  describe('Comprehensive error recovery tests', () => {
+    it.skip('should recover from malformed GUID with missing closing brace', () => {
+      // SKIPPED: Parser bug - braceDepth corruption prevents recovery
+      // When GUID is malformed with missing closing brace, braceDepth state gets corrupted
+      // and subsequent elements/sections cannot be parsed correctly.
+      // See issue #273
+      const code = `OBJECT XMLport 50000 "Test XMLport"
+      {
+        PROPERTIES
+        {
+        }
+        ELEMENTS
+        {
+          { [12345678-1234-1234-1234-123456789012}];0 ;element1            ;Element ;Text     }
+          { [{87654321-4321-4321-4321-210987654321}];1 ;element2            ;Element ;Text     }
+        }
+        CODE
+        {
+          VAR
+            TestVar@1000 : Integer;
+
+          BEGIN
+          END.
+        }
+      }`;
+
+      const result = parseElements(code);
+
+      // Should have at least one error for malformed GUID
+      expect(result.errors.length).toBeGreaterThanOrEqual(1);
+      expect(result.errors[0].message).toMatch(/Expected.*\}|Expected.*\]|malformed|GUID/i);
+
+      // Subsequent valid element MUST be parsed
+      const allElements = result.elements?.elements || [];
+      const element2 = allElements.find(e => e.guid === '87654321-4321-4321-4321-210987654321');
+      expect(element2).toBeDefined();
+      expect(element2?.guid).toBe('87654321-4321-4321-4321-210987654321');
+
+      // CODE section MUST be intact
+      const obj = result.ast.object as ObjectDeclaration;
+      expect(obj.code).toBeDefined();
+      expect(obj.code?.type).toBe('CodeSection');
+    });
+
+    it.skip('should recover from malformed GUID with missing opening bracket', () => {
+      // SKIPPED: Parser bug - braceDepth corruption prevents recovery
+      // Same root cause as missing closing brace - braceDepth state corruption.
+      // See issue #273
+      const code = `OBJECT XMLport 50000 "Test XMLport"
+      {
+        PROPERTIES
+        {
+        }
+        ELEMENTS
+        {
+          { {12345678-1234-1234-1234-123456789012}];0 ;element1            ;Element ;Text     }
+          { [{87654321-4321-4321-4321-210987654321}];1 ;element2            ;Element ;Text     }
+        }
+        CODE
+        {
+          VAR
+            TestVar@1000 : Integer;
+
+          BEGIN
+          END.
+        }
+      }`;
+
+      const result = parseElements(code);
+
+      // Should have at least one error for malformed GUID
+      expect(result.errors.length).toBeGreaterThanOrEqual(1);
+      expect(result.errors[0].message).toMatch(/Expected.*\[|malformed|GUID/i);
+
+      // Subsequent element MUST be parsed
+      const allElements = result.elements?.elements || [];
+      const element2 = allElements.find(e => e.name === 'element2');
+      expect(element2).toBeDefined();
+      expect(element2?.name).toBe('element2');
+
+      // CODE section MUST be intact
+      const obj = result.ast.object as ObjectDeclaration;
+      expect(obj.code).toBeDefined();
+      expect(obj.code?.type).toBe('CodeSection');
+    });
+
+    it('should recover from multiple consecutive malformed elements', () => {
+      const code = `OBJECT XMLport 50000 "Test XMLport"
+      {
+        PROPERTIES
+        {
+        }
+        ELEMENTS
+        {
+          { [{BROKEN-1}];0 ;malformed1          ; ;      }
+          { [INVALID];0 ;malformed2          ;Element ;Text     }
+          { ;0 ;malformed3          ;Element ;Text     }
+          { [{VALID-GUID}];0 ;valid1              ;Element ;Text     }
+        }
+        CODE
+        {
+          VAR
+            TestVar@1000 : Integer;
+
+          BEGIN
+          END.
+        }
+      }`;
+
+      const result = parseElements(code);
+
+      // Should have at least 2 errors for the malformed elements
+      // (First element with empty NodeType/SourceType uses defaults and parses successfully)
+      expect(result.errors.length).toBeGreaterThanOrEqual(2);
+
+      // Verify at least 1 valid element was parsed
+      const allElements = result.elements?.elements || [];
+      const validElement = allElements.find(e => e.guid === 'VALID-GUID');
+      expect(validElement).toBeDefined();
+      expect(validElement?.guid).toBe('VALID-GUID');
+      expect(validElement?.name).toBe('valid1');
+
+      // CODE section MUST be intact
+      const obj = result.ast.object as ObjectDeclaration;
+      expect(obj.code).toBeDefined();
+      expect(obj.code?.type).toBe('CodeSection');
+    });
+
+    it.skip('should recover from deeply nested property values with trigger followed by malformed element', () => {
+      // SKIPPED: Parser bug - braceDepth corruption prevents recovery
+      // After parsing complex triggers with nested braces, braceDepth state is corrupted
+      // and malformed elements cannot be recovered properly.
+      // See issue #273
+      const code = `OBJECT XMLport 50000 "Test XMLport"
+      {
+        PROPERTIES
+        {
+        }
+        ELEMENTS
+        {
+          { [{GUID-1}];0 ;element1            ;Element ;Table   ;
+                                                SourceTable=Table18;
+                                                Import::OnBeforeInsertRecord=BEGIN
+                                                                               IF x > 0 THEN BEGIN
+                                                                                 y := 1;
+                                                                                 IF z THEN
+                                                                                   w := 2;
+                                                                               END;
+                                                                             END;
+                                                                              }
+          { [MALFORMED;0 ;broken              ;Element ;Text     }
+          { [{GUID-2}];1 ;element2            ;Element ;Text     }
+        }
+        CODE
+        {
+          VAR
+            TestVar@1000 : Integer;
+
+          BEGIN
+          END.
+        }
+      }`;
+
+      const result = parseElements(code);
+
+      // Should have at least one error for malformed element
+      expect(result.errors.length).toBeGreaterThanOrEqual(1);
+
+      // Subsequent element should be parsed correctly
+      const allElements = result.elements?.elements || [];
+      const element2 = allElements.find(e => e.name === 'element2');
+      expect(element2).toBeDefined();
+      expect(element2?.sourceType).toBe('Text');
+
+      // CODE section MUST be intact
+      const obj = result.ast.object as ObjectDeclaration;
+      expect(obj.code).toBeDefined();
+      expect(obj.code?.type).toBe('CodeSection');
+    });
+
+    it.skip('should recover at section boundary when last element is malformed', () => {
+      // SKIPPED: Parser bug - recovery loop doesn't check for section keywords
+      // The synchronize() recovery loop consumes tokens until closing brace,
+      // but doesn't stop at section keywords (CODE, REQUESTPAGE, etc.).
+      // This causes subsequent sections to be consumed by error recovery.
+      // See issue #274
+      const code = `OBJECT XMLport 50000 "Test XMLport"
+      {
+        PROPERTIES
+        {
+        }
+        ELEMENTS
+        {
+          { [{VALID-GUID-1}];0 ;validElement        ;Element ;Text     }
+          { [{BROKEN-GUID}];0 ;brokenElement       ;Element ;Text
+        }
+        CODE
+        {
+          VAR
+            x@1000 : Integer;
+
+          BEGIN
+          END.
+        }
+      }`;
+
+      const result = parseElements(code);
+
+      // Should have at least one error
+      expect(result.errors.length).toBeGreaterThanOrEqual(1);
+
+      // First valid element should be parsed
+      const allElements = result.elements?.elements || [];
+      const firstElement = allElements.find(e => e.guid === 'VALID-GUID-1');
+      expect(firstElement).toBeDefined();
+      expect(firstElement?.name).toBe('validElement');
+
+      // CODE section MUST be parsed - recovery should stop at closing brace
+      const obj = result.ast.object as ObjectDeclaration;
+      expect(obj.code).toBeDefined();
+      expect(obj.code?.type).toBe('CodeSection');
+      // Verify CODE section has variables
+      expect(obj.code?.variables).toBeDefined();
+    });
+
+    it.skip('should handle unicode and special characters in element names with malformed entries', () => {
+      // SKIPPED: Parser bug - braceDepth corruption prevents recovery
+      // The malformed GUID at the start corrupts braceDepth state.
+      // See issue #273
+      const code = `OBJECT XMLport 50000 "Test XMLport"
+      {
+        PROPERTIES
+        {
+        }
+        ELEMENTS
+        {
+          { [MALFORMED;0 ;Værdi               ;Element ;Text     }
+          { [{GUID-UNICODE}];1 ;País                ;Element ;Text     }
+          { [{GUID-SLASH}];1 ;Country/Region  ;Attribute;Text    }
+        }
+        CODE
+        {
+          VAR
+            TestVar@1000 : Integer;
+
+          BEGIN
+          END.
+        }
+      }`;
+
+      const result = parseElements(code);
+
+      // Should have at least one error for malformed element
+      expect(result.errors.length).toBeGreaterThanOrEqual(1);
+
+      // Subsequent element with unicode should be parsed
+      const allElements = result.elements?.elements || [];
+      const unicodeElement = allElements.find(e => e.name === 'País' || e.name?.includes('Pa'));
+      expect(unicodeElement).toBeDefined();
+
+      // CODE section MUST be intact
+      const obj = result.ast.object as ObjectDeclaration;
+      expect(obj.code).toBeDefined();
+      expect(obj.code?.type).toBe('CodeSection');
+    });
+
+    it.skip('should recover from unclosed brace inside GUID', () => {
+      // SKIPPED: Parser bug - unclosed brace in GUID causes subsequent element to be lost
+      // When GUID has internal brace like {12345-{1234-1234}, the extra { breaks brace counting.
+      // This causes the second element to not be parsed due to braceDepth corruption.
+      // See issue #273
+      const code = `OBJECT XMLport 50000 "Test XMLport"
+      {
+        PROPERTIES
+        {
+        }
+        ELEMENTS
+        {
+          { [{12345-{1234-1234}];0 ;element1            ;Element ;Text     }
+          { [{VALID-GUID}];1 ;element2            ;Element ;Text     }
+        }
+        CODE
+        {
+          VAR
+            TestVar@1000 : Integer;
+
+          BEGIN
+          END.
+        }
+      }`;
+
+      const result = parseElements(code);
+
+      // When bug #273 is fixed, GUID parsing should tolerate internal braces
+      // and subsequent elements should still parse correctly
+      expect(result.errors.length).toBe(0);
+
+      // First element should capture internal content
+      const allElements = result.elements?.elements || [];
+      const element1 = allElements.find(e => e.name === 'element1');
+      expect(element1).toBeDefined();
+      expect(element1?.guid).toBe('12345-{1234-1234'); // Captures until first }
+
+      // Second element should be parsed
+      const element2 = allElements.find(e => e.guid === 'VALID-GUID');
+      expect(element2).toBeDefined();
+      expect(element2?.name).toBe('element2');
+
+      // CODE section MUST be intact
+      const obj = result.ast.object as ObjectDeclaration;
+      expect(obj.code).toBeDefined();
+      expect(obj.code?.type).toBe('CodeSection');
+    });
+
+    it.skip('should handle corrupted GUID with unbalanced braces without corrupting braceDepth state', () => {
+      // SKIPPED: Parser bug - braceDepth corruption prevents recovery
+      // Unbalanced braces in GUID corrupt the braceDepth state, preventing
+      // subsequent elements from being parsed correctly.
+      // See issue #273
+      const code = `OBJECT XMLport 50000 "Test XMLport"
+      {
+        PROPERTIES
+        {
+        }
+        ELEMENTS
+        {
+          { [{12345}}}];0 ;element1            ;Element ;Text     }
+          { [{VALID-GUID}];1 ;element2            ;Element ;Text     }
+          { [{ANOTHER-GUID}];2 ;element3            ;Element ;Text     }
+        }
+        CODE
+        {
+          VAR
+            TestVar@1000 : Integer;
+
+          BEGIN
+          END.
+        }
+      }`;
+
+      const result = parseElements(code);
+
+      // Should have at least one error
+      expect(result.errors.length).toBeGreaterThanOrEqual(1);
+
+      // braceDepth state should not be corrupted - subsequent elements should parse
+      const allElements = result.elements?.elements || [];
+      const element2 = allElements.find(e => e.guid === 'VALID-GUID');
+      const element3 = allElements.find(e => e.guid === 'ANOTHER-GUID');
+
+      // At least one subsequent element should be parsed (proves braceDepth not corrupted)
+      expect(element2 || element3).toBeDefined();
+
+      // CODE section MUST be intact
+      const obj = result.ast.object as ObjectDeclaration;
+      expect(obj.code).toBeDefined();
+      expect(obj.code?.type).toBe('CodeSection');
     });
   });
 
