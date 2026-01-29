@@ -99,6 +99,7 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
   // Note: All section/object keywords are uniformly downgraded to Identifier when followed by @ (Issue #261).
   // ALLOWED_KEYWORDS_AS_IDENTIFIERS still necessary for keywords used WITHOUT @ suffix in identifier position.
   // State contamination: updateContextForKeyword fires at SECTION_LEVEL setting lastWasSectionKeyword (Issue #260).
+  // See also: SECTION_KEYWORDS constant for the authoritative list of section keywords used in error recovery.
   TokenType.MenuSuite,     // Object type keyword (same family as Table/Page/Report/Codeunit/Query/XMLport)
   TokenType.Properties,    // Section keyword (PROPERTIES section)
   TokenType.FieldGroups,   // Section keyword (FIELDGROUPS section)
@@ -112,6 +113,50 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
   TokenType.MenuNodes,     // Section keyword (MENUNODES section - MenuSuite)
   TokenType.ALOnlyKeyword,         // Enum, Interface, Extends, Implements can be variable names
   TokenType.ALOnlyAccessModifier,  // Internal, Protected, Public can be variable names
+]);
+
+/**
+ * All section keywords that can appear at the object level in C/AL.
+ * Used by isSectionKeyword() and synchronize() for error recovery.
+ *
+ * Note: Code and Controls require special handling (must be followed by '{')
+ * to distinguish from use as identifiers. The isSectionKeyword() method
+ * handles this distinction separately before checking this set.
+ */
+const SECTION_KEYWORDS = new Set<TokenType>([
+  TokenType.Properties,
+  TokenType.Fields,
+  TokenType.Keys,
+  TokenType.FieldGroups,
+  TokenType.Code,
+  TokenType.Controls,
+  TokenType.MenuNodes,
+  TokenType.Actions,
+  TokenType.DataItems,
+  TokenType.Dataset,
+  TokenType.RequestPage,
+  TokenType.Labels,
+  TokenType.Elements,
+  TokenType.RequestForm,
+]);
+
+/**
+ * Section keywords that are ALWAYS skipped via skipUnsupportedSection().
+ * These sections have complex nested structures that are not parsed.
+ *
+ * Note: This set excludes:
+ * - Actions: Has dedicated parseActionSection() with fallback to skip on error
+ * - Controls: Has dedicated parseControlSection() with fallback to skip on error
+ * - Elements: XMLport ELEMENTS are fully parsed; only Query ELEMENTS are skipped
+ *             (handled specially in the section parsing loop)
+ */
+const UNSUPPORTED_SECTIONS = new Set<TokenType>([
+  TokenType.MenuNodes,
+  TokenType.DataItems,
+  TokenType.Dataset,
+  TokenType.RequestPage,
+  TokenType.Labels,
+  TokenType.RequestForm,
 ]);
 
 /**
@@ -283,12 +328,7 @@ export class Parser {
             // Query ELEMENTS have different format - not yet supported
             this.skipUnsupportedSection(TokenType.Elements);
           }
-        } else if (token.type === TokenType.DataItems ||
-                   token.type === TokenType.Dataset ||
-                   token.type === TokenType.RequestPage ||
-                   token.type === TokenType.Labels ||
-                   token.type === TokenType.RequestForm ||
-                   token.type === TokenType.MenuNodes) {
+        } else if (UNSUPPORTED_SECTIONS.has(token.type)) {
           // Skip unsupported sections (DATAITEMS, DATASET, REQUESTPAGE, LABELS, REQUESTFORM, MENUNODES)
           // These sections have complex nested structures that aren't fully parsed yet
           this.skipUnsupportedSection(token.type);
@@ -4699,23 +4739,8 @@ export class Parser {
    * the section keyword from false positives.
    */
   private isSectionKeyword(type: TokenType): boolean {
-    // Non-CODE/CONTROLS section keywords are unambiguous
-    if (type === TokenType.Properties ||
-        type === TokenType.Fields ||
-        type === TokenType.Keys ||
-        type === TokenType.FieldGroups ||
-        type === TokenType.Actions ||
-        type === TokenType.DataItems ||
-        type === TokenType.Dataset ||
-        type === TokenType.RequestPage ||
-        type === TokenType.Labels ||
-        type === TokenType.Elements ||
-        type === TokenType.RequestForm ||
-        type === TokenType.MenuNodes) {
-      return true;
-    }
-
     // Special case for CODE and CONTROLS: must be followed by '{'
+    // to distinguish section keyword from identifier usage.
     // The lexer never emits Whitespace/NewLine tokens (they're skipped during tokenization).
     // See also: peekNextMeaningfulToken() which documents this invariant.
     if (type === TokenType.Code || type === TokenType.Controls) {
@@ -4728,7 +4753,8 @@ export class Parser {
       return false;
     }
 
-    return false;
+    // All other section keywords are unambiguous
+    return SECTION_KEYWORDS.has(type);
   }
 
   /**
@@ -4754,30 +4780,24 @@ export class Parser {
         return;
       }
 
-      // Stop at section keywords or structural tokens
-      switch (this.peek().type) {
-        case TokenType.Properties:
-        case TokenType.Fields:
-        case TokenType.Keys:
-        case TokenType.FieldGroups:
-        case TokenType.Code:
-        case TokenType.Controls:
-        // Unsupported section keywords (skipped but recognized for error recovery)
-        case TokenType.Actions:
-        case TokenType.DataItems:
-        case TokenType.Dataset:
-        case TokenType.RequestPage:
-        case TokenType.Labels:
-        case TokenType.Elements:
-        case TokenType.RequestForm:
-        case TokenType.MenuNodes:
+      const peekType = this.peek().type;
+
+      // Stop at section keywords (centralized list)
+      if (SECTION_KEYWORDS.has(peekType)) {
+        if (tokenCount > 0) {
+          this.recordSkippedRegion(startToken, this.previous(), tokenCount, 'Error recovery');
+        }
+        return;
+      }
+
+      // Stop at other structural tokens (not section keywords)
+      switch (peekType) {
         case TokenType.Procedure:
         case TokenType.Function:
         case TokenType.Trigger:
         case TokenType.Begin:
         case TokenType.End:
         case TokenType.Var:
-          // Record skipped region before returning
           if (tokenCount > 0) {
             this.recordSkippedRegion(startToken, this.previous(), tokenCount, 'Error recovery');
           }
