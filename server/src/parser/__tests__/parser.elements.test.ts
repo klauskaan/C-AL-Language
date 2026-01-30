@@ -1194,11 +1194,10 @@ describe('Parser - XMLport ELEMENTS Section', () => {
     });
 
     it('should recover at section boundary when last element is malformed', () => {
-      // SKIPPED: Parser bug - recovery loop doesn't check for section keywords
-      // The synchronize() recovery loop consumes tokens until closing brace,
-      // but doesn't stop at section keywords (CODE, REQUESTPAGE, etc.).
-      // This causes subsequent sections to be consumed by error recovery.
-      // See issue #274
+      // Verifies fix for issue #274: ELEMENTS recovery now stops at section boundaries.
+      // When the last element is malformed (missing closing brace), recovery detects
+      // section keywords (CODE, REQUESTPAGE, etc.) and stops, allowing subsequent
+      // sections to parse correctly.
       const code = `OBJECT XMLport 50000 "Test XMLport"
       {
         PROPERTIES
