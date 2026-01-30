@@ -1193,7 +1193,7 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       expect(obj.code?.type).toBe('CodeSection');
     });
 
-    it.skip('should recover at section boundary when last element is malformed', () => {
+    it('should recover at section boundary when last element is malformed', () => {
       // SKIPPED: Parser bug - recovery loop doesn't check for section keywords
       // The synchronize() recovery loop consumes tokens until closing brace,
       // but doesn't stop at section keywords (CODE, REQUESTPAGE, etc.).

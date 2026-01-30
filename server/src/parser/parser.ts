@@ -1771,7 +1771,9 @@ export class Parser {
 
     const flatElements: XMLportElement[] = [];
 
-    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+    // Note: isSectionKeyword() does lookahead for CODE/CONTROLS (checks if next token is {).
+    // This works here because peek() returns the unconsumed token at `current`.
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
       try {
         const element = this.parseXMLportElement();
         if (element) {
@@ -1810,7 +1812,31 @@ export class Parser {
             } else if (peekType === TokenType.RightBrace) {
               recoveryDepth--;
               if (recoveryDepth === 0) {
-                // Found the closing brace of the element - consume it and exit recovery
+                // Before consuming the closing brace, check if it closes the element or the section.
+                // If the next token after this brace is a section keyword or EOF, this brace
+                // closes the ELEMENTS section, not the element. Don't consume it.
+                const nextToken = this.peekAhead(1);
+                let isSectionEnd = !nextToken || nextToken.type === TokenType.EOF;
+
+                // For CODE/CONTROLS, check if they're followed by {
+                if (!isSectionEnd && nextToken && (nextToken.type === TokenType.Code || nextToken.type === TokenType.Controls)) {
+                  const tokenAfterCodeControl = this.peekAhead(2);
+                  isSectionEnd = tokenAfterCodeControl?.type === TokenType.LeftBrace;
+                }
+
+                // For other keywords, check if they're in SECTION_KEYWORDS
+                if (!isSectionEnd && nextToken) {
+                  isSectionEnd = SECTION_KEYWORDS.has(nextToken.type);
+                }
+
+                if (isSectionEnd) {
+                  // This brace closes the ELEMENTS section, not the element.
+                  // Stop recovery without consuming it.
+                  foundElementClose = true;
+                  break;
+                }
+
+                // This brace closes the element - consume it and exit recovery
                 this.advance();
                 foundElementClose = true;
                 break;
@@ -1976,6 +2002,38 @@ export class Parser {
 
       if (result.triggers.length > 0) {
         triggers = result.triggers;
+      }
+    }
+
+    // Check if the next token is a RightBrace. If so, verify it's the element's closing brace
+    // and not the ELEMENTS section's closing brace. If it might be the section's closing brace
+    // (i.e., followed by a section keyword), throw an error to trigger recovery.
+    if (this.check(TokenType.RightBrace)) {
+      const nextBrace = this.peek();
+      const tokenAfterBrace = this.peekAhead(1);
+
+      // Check if the token after the closing brace is a section keyword
+      let isFollowedBySectionKeyword = false;
+      if (tokenAfterBrace) {
+        // For CODE/CONTROLS, we need to check if they're followed by { to be a section keyword
+        if (tokenAfterBrace.type === TokenType.Code || tokenAfterBrace.type === TokenType.Controls) {
+          const tokenAfterCodeControl = this.peekAhead(2);
+          isFollowedBySectionKeyword = tokenAfterCodeControl?.type === TokenType.LeftBrace;
+        } else {
+          // For other keywords, they're unambiguous section keywords
+          isFollowedBySectionKeyword = SECTION_KEYWORDS.has(tokenAfterBrace.type);
+        }
+      }
+
+      // If the brace is followed by a section keyword or EOF, it's likely the ELEMENTS section's
+      // closing brace, not this element's closing brace. This indicates the element is malformed
+      // (missing its own closing brace).
+      if (tokenAfterBrace &&
+          (isFollowedBySectionKeyword || tokenAfterBrace.type === TokenType.EOF)) {
+        throw this.createParseError(
+          `Malformed element: missing closing brace for element '${name}' (found section keyword or EOF instead)`,
+          nextBrace
+        );
       }
     }
 
