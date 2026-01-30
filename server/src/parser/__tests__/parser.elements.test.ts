@@ -839,6 +839,9 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       expect(element2?.name).toBe('Element2');
       expect(element2?.sourceType).toBe('Text');
 
+      // Verify malformed element was NOT captured
+      expect(allElements.find(e => e.guid === '12345678-1234-1234-1234-123456789012')).toBeUndefined();
+
       // Verify CODE section was not consumed by error recovery
       const obj = result.ast.object as ObjectDeclaration;
       expect(obj.code).toBeDefined();
@@ -881,6 +884,9 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       expect(allElements[0].guid).toBe('GUID-2');
       expect(allElements[0].name).toBe('element2');
 
+      // Verify malformed element was NOT captured
+      expect(allElements.find(e => e.name === 'element1')).toBeUndefined();
+
       // CODE section should be intact
       const obj = result.ast.object as ObjectDeclaration;
       expect(obj.code).toBeDefined();
@@ -920,6 +926,10 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       // Verify the valid element
       expect(allElements[0].guid).toBe('GUID-2');
       expect(allElements[0].name).toBe('element2');
+
+      // Verify malformed elements were NOT captured
+      expect(allElements.find(e => e.guid === 'INVALID')).toBeUndefined();
+      expect(allElements.find(e => e.name === 'element1')).toBeUndefined();
 
       // CODE section should be intact
       const obj = result.ast.object as ObjectDeclaration;
@@ -1021,6 +1031,12 @@ describe('Parser - XMLport ELEMENTS Section', () => {
   });
 
   describe('Comprehensive error recovery tests', () => {
+    /**
+     * Recovery tests use a three-layer assertion strategy:
+     * 1. Count: Exact number of valid elements captured
+     * 2. Positive: Valid elements exist with correct data
+     * 3. Negative: Malformed elements NOT captured (prevents garbage capture)
+     */
     it('should recover from malformed GUID with missing closing brace', () => {
       // SKIPPED: Parser bug - braceDepth corruption prevents recovery
       // When GUID is malformed with missing closing brace, braceDepth state gets corrupted
@@ -1060,6 +1076,9 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       // Verify the valid element
       expect(allElements[0].guid).toBe('87654321-4321-4321-4321-210987654321');
       expect(allElements[0].name).toBe('element2');
+
+      // Verify malformed element was NOT captured
+      expect(allElements.find(e => e.name === 'element1')).toBeUndefined();
 
       // CODE section MUST be intact
       const obj = result.ast.object as ObjectDeclaration;
@@ -1105,6 +1124,9 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       // Verify the valid element
       expect(allElements[0].guid).toBe('87654321-4321-4321-4321-210987654321');
       expect(allElements[0].name).toBe('element2');
+
+      // Verify malformed element was NOT captured
+      expect(allElements.find(e => e.name === 'element1')).toBeUndefined();
 
       // CODE section MUST be intact
       const obj = result.ast.object as ObjectDeclaration;
@@ -1156,6 +1178,11 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       expect(validElement).toBeDefined();
       expect(validElement?.guid).toBe('VALID-GUID');
       expect(validElement?.name).toBe('valid1');
+
+      // Verify malformed elements were NOT captured
+      expect(allElements.find(e => e.guid === 'INVALID')).toBeUndefined();
+      expect(allElements.find(e => e.name === 'malformed2')).toBeUndefined();
+      expect(allElements.find(e => e.name === 'malformed3')).toBeUndefined();
 
       // CODE section MUST be intact
       const obj = result.ast.object as ObjectDeclaration;
@@ -1209,6 +1236,9 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       expect(element2).toBeDefined();
       expect(element2?.sourceType).toBe('Text');
 
+      // Verify malformed element was NOT captured
+      expect(allElements.find(e => e.name === 'broken')).toBeUndefined();
+
       // CODE section MUST be intact
       const obj = result.ast.object as ObjectDeclaration;
       expect(obj.code).toBeDefined();
@@ -1250,6 +1280,10 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       const firstElement = allElements.find(e => e.guid === 'VALID-GUID-1');
       expect(firstElement).toBeDefined();
       expect(firstElement?.name).toBe('validElement');
+
+      // Verify malformed element was NOT captured
+      expect(allElements.find(e => e.guid === 'BROKEN-GUID')).toBeUndefined();
+      expect(allElements.find(e => e.name === 'brokenElement')).toBeUndefined();
 
       // CODE section MUST be parsed - recovery should stop at closing brace
       const obj = result.ast.object as ObjectDeclaration;
@@ -1293,6 +1327,9 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       const allElements = result.elements?.elements || [];
       const unicodeElement = allElements.find(e => e.name === 'País' || e.name?.includes('Pa'));
       expect(unicodeElement).toBeDefined();
+
+      // Verify malformed element was NOT captured
+      expect(allElements.find(e => e.name === 'Værdi')).toBeUndefined();
 
       // CODE section MUST be intact
       const obj = result.ast.object as ObjectDeclaration;
@@ -1343,6 +1380,10 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       // Verify second element was parsed correctly
       expect(allElements[1].guid).toBe('VALID-GUID');
       expect(allElements[1].name).toBe('element2');
+
+      // Note: No negative assertion needed - this test verifies that elements with
+      // internal unclosed braces are still captured (GUID truncated at first `}`).
+      // This is intentional tolerance/partial recovery behavior, not rejection.
 
       // CODE section MUST be intact
       const obj = result.ast.object as ObjectDeclaration;
