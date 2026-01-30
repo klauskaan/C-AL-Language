@@ -874,8 +874,12 @@ describe('Parser - XMLport ELEMENTS Section', () => {
 
       // Parser should recover and parse the second element
       const allElements = result.elements?.elements || [];
-      const validElements = allElements.filter(e => e.guid === 'GUID-2');
-      expect(validElements.length).toBeGreaterThan(0);
+      // Verify total element count - only valid elements captured (first malformed, second valid)
+      expect(allElements.length).toBe(1);
+
+      // Verify the valid element
+      expect(allElements[0].guid).toBe('GUID-2');
+      expect(allElements[0].name).toBe('element2');
 
       // CODE section should be intact
       const obj = result.ast.object as ObjectDeclaration;
@@ -910,9 +914,12 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       expect(result.elements).toBeDefined();
 
       const allElements = result.elements?.elements || [];
-      const validElements = allElements.filter(e => e.guid === 'GUID-2');
-      expect(validElements.length).toBeGreaterThan(0);
-      expect(validElements[0].name).toBe('element2');
+      // Verify total element count - only valid elements captured (first malformed, second valid)
+      expect(allElements.length).toBe(1);
+
+      // Verify the valid element
+      expect(allElements[0].guid).toBe('GUID-2');
+      expect(allElements[0].name).toBe('element2');
 
       // CODE section should be intact
       const obj = result.ast.object as ObjectDeclaration;
@@ -1047,9 +1054,12 @@ describe('Parser - XMLport ELEMENTS Section', () => {
 
       // Subsequent valid element MUST be parsed
       const allElements = result.elements?.elements || [];
-      const element2 = allElements.find(e => e.guid === '87654321-4321-4321-4321-210987654321');
-      expect(element2).toBeDefined();
-      expect(element2?.guid).toBe('87654321-4321-4321-4321-210987654321');
+      // Verify total element count - only valid elements captured (first malformed, second valid)
+      expect(allElements.length).toBe(1);
+
+      // Verify the valid element
+      expect(allElements[0].guid).toBe('87654321-4321-4321-4321-210987654321');
+      expect(allElements[0].name).toBe('element2');
 
       // CODE section MUST be intact
       const obj = result.ast.object as ObjectDeclaration;
@@ -1089,9 +1099,12 @@ describe('Parser - XMLport ELEMENTS Section', () => {
 
       // Subsequent element MUST be parsed
       const allElements = result.elements?.elements || [];
-      const element2 = allElements.find(e => e.name === 'element2');
-      expect(element2).toBeDefined();
-      expect(element2?.name).toBe('element2');
+      // Verify total element count - only valid elements captured (first malformed, second valid)
+      expect(allElements.length).toBe(1);
+
+      // Verify the valid element
+      expect(allElements[0].guid).toBe('87654321-4321-4321-4321-210987654321');
+      expect(allElements[0].name).toBe('element2');
 
       // CODE section MUST be intact
       const obj = result.ast.object as ObjectDeclaration;
@@ -1318,16 +1331,18 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       // subsequent elements and sections (the key fix for bug #273)
       expect(result.errors.length).toBeGreaterThanOrEqual(1);
 
-      // First element should capture internal content
+      // Both elements should be recovered (first with truncated GUID, second valid)
       const allElements = result.elements?.elements || [];
-      const element1 = allElements.find(e => e.name === 'element1');
-      expect(element1).toBeDefined();
-      expect(element1?.guid).toBe('12345-{1234-1234'); // Captures until first }
+      // Verify total element count - both elements captured despite malformation
+      expect(allElements.length).toBe(2);
 
-      // Second element should be parsed
-      const element2 = allElements.find(e => e.guid === 'VALID-GUID');
-      expect(element2).toBeDefined();
-      expect(element2?.name).toBe('element2');
+      // Verify first element captured internal content
+      expect(allElements[0].name).toBe('element1');
+      expect(allElements[0].guid).toBe('12345-{1234-1234'); // Captures until first }
+
+      // Verify second element was parsed correctly
+      expect(allElements[1].guid).toBe('VALID-GUID');
+      expect(allElements[1].name).toBe('element2');
 
       // CODE section MUST be intact
       const obj = result.ast.object as ObjectDeclaration;
