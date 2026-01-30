@@ -1130,6 +1130,15 @@ describe('Parser - XMLport ELEMENTS Section', () => {
 
       // Verify at least 1 valid element was parsed
       const allElements = result.elements?.elements || [];
+
+      // Verify total element count - only valid elements captured
+      expect(allElements.length).toBe(2);
+
+      // Verify first element (BROKEN-1 with defaults) was parsed
+      expect(allElements[0].guid).toBe('BROKEN-1');
+      expect(allElements[0].name).toBe('malformed1');
+
+      // Existing assertions already verify element 4 (VALID-GUID)
       const validElement = allElements.find(e => e.guid === 'VALID-GUID');
       expect(validElement).toBeDefined();
       expect(validElement?.guid).toBe('VALID-GUID');
