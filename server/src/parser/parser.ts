@@ -319,7 +319,7 @@ export class Parser {
           // Parse object-level VAR section
           // These variables should be included in the CODE section
           this.parseVariableDeclarations(objectLevelVariables);
-        } else if (this.isCodeSectionKeyword()) {
+        } else if (this.check(TokenType.Code) && this.isFollowedByLeftBrace()) {
           code = this.parseCodeSection();
           // Prepend object-level variables to code section variables
           if (objectLevelVariables.length > 0 && code) {
@@ -533,8 +533,7 @@ export class Parser {
            this.check(TokenType.Elements) ||
            this.check(TokenType.RequestForm))) {
         // Peek ahead to see if this keyword is followed by '{'
-        const nextToken = this.tokens[this.current + 1];
-        if (nextToken && nextToken.type === TokenType.LeftBrace) {
+        if (this.isFollowedByLeftBrace()) {
           break;
         }
       }
@@ -1142,8 +1141,7 @@ export class Parser {
                    this.check(TokenType.Elements) ||
                    this.check(TokenType.RequestForm))) {
                 // Peek ahead to see if this keyword is followed by '{'
-                const nextToken = this.tokens[this.current + 1];
-                if (nextToken && nextToken.type === TokenType.LeftBrace) {
+                if (this.isFollowedByLeftBrace()) {
                   break;
                 }
               }
@@ -4266,6 +4264,21 @@ export class Parser {
   }
 
   /**
+   * Checks if the next token after the current position is a left brace '{'.
+   * Used to distinguish section keywords (CODE {, CONTROLS {) from identifiers
+   * or type names (Code[20], Variant Code).
+   *
+   * Note: The lexer skips whitespace, so this.current + 1 is the next meaningful token.
+   *
+   * @returns true if the token at current + 1 is a left brace
+   */
+  private isFollowedByLeftBrace(): boolean {
+    const nextIndex = this.current + 1;
+    return nextIndex < this.tokens.length &&
+           this.tokens[nextIndex].type === TokenType.LeftBrace;
+  }
+
+  /**
    * Helper methods
    */
   private tokenTypeToObjectKind(type: TokenType): ObjectKind {
@@ -4832,27 +4845,6 @@ export class Parser {
   }
 
   /**
-   * Check if the current token is a real CODE section (not Code as field name/type).
-   * Looks ahead to see if CODE is followed by a left brace '{'.
-   * Uses lookahead without advancing parser state.
-   *
-   * Note: The lexer already skips whitespace/newlines, so the next token
-   * is immediately available at this.current + 1.
-   */
-  private isCodeSectionKeyword(): boolean {
-    const currentToken = this.peek();
-    if (currentToken.type !== TokenType.Code) {
-      return false;
-    }
-
-    // Look ahead to the next token (lexer already skipped whitespace)
-    const nextIndex = this.current + 1;
-
-    // Check if next token is a left brace
-    return nextIndex < this.tokens.length && this.tokens[nextIndex].type === TokenType.LeftBrace;
-  }
-
-  /**
    * Check if a token type represents an object section keyword.
    *
    * IMPORTANT: The lexer sometimes tokenizes keywords even when they appear in other contexts:
@@ -4869,13 +4861,7 @@ export class Parser {
     // The lexer never emits Whitespace/NewLine tokens (they're skipped during tokenization).
     // See also: peekNextMeaningfulToken() which documents this invariant.
     if (type === TokenType.Code || type === TokenType.Controls) {
-      const nextIndex = this.current + 1;
-      // Bounds check and verify next token is LEFT_BRACE
-      if (nextIndex < this.tokens.length) {
-        return this.tokens[nextIndex].type === TokenType.LeftBrace;
-      }
-      // CODE/CONTROLS at end of file is not a section keyword
-      return false;
+      return this.isFollowedByLeftBrace();
     }
 
     // All other section keywords are unambiguous
