@@ -444,7 +444,7 @@ export class Parser {
    */
   private parsePropertySection(): PropertySection {
     const startToken = this.consume(TokenType.Properties, 'Expected PROPERTIES');
-    this.consume(TokenType.LeftBrace, 'Expected {');
+    this.consume(TokenType.LeftBrace, 'Expected { to open PROPERTIES section');
 
     const properties: Property[] = [];
 
@@ -458,7 +458,7 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close PROPERTIES section');
 
     return {
       type: 'PropertySection',
@@ -622,7 +622,7 @@ export class Parser {
    */
   private parseFieldSection(): FieldSection {
     const startToken = this.consume(TokenType.Fields, 'Expected FIELDS');
-    this.consume(TokenType.LeftBrace, 'Expected {');
+    this.consume(TokenType.LeftBrace, 'Expected { to open FIELDS section');
 
     const fields: FieldDeclaration[] = [];
 
@@ -636,7 +636,7 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close FIELDS section');
 
     return {
       type: 'FieldSection',
@@ -647,7 +647,7 @@ export class Parser {
   }
 
   private parseField(): FieldDeclaration {
-    const startToken = this.consume(TokenType.LeftBrace, 'Expected {');
+    const startToken = this.consume(TokenType.LeftBrace, 'Expected { to open field definition');
 
     // Field number
     const fieldNoToken = this.consume(TokenType.Integer, 'Expected field number');
@@ -745,7 +745,7 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close field definition');
 
     return {
       type: 'FieldDeclaration',
@@ -1238,7 +1238,7 @@ export class Parser {
    */
   private parseKeySection(): KeySection {
     const startToken = this.consume(TokenType.Keys, 'Expected KEYS');
-    this.consume(TokenType.LeftBrace, 'Expected {');
+    this.consume(TokenType.LeftBrace, 'Expected { to open KEYS section');
 
     const keys: KeyDeclaration[] = [];
 
@@ -1252,7 +1252,7 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close KEYS section');
 
     return {
       type: 'KeySection',
@@ -1263,7 +1263,7 @@ export class Parser {
   }
 
   private parseKey(): KeyDeclaration {
-    const startToken = this.consume(TokenType.LeftBrace, 'Expected {');
+    const startToken = this.consume(TokenType.LeftBrace, 'Expected { to open key definition');
 
     const fields: string[] = [];
 
@@ -1282,7 +1282,7 @@ export class Parser {
       this.advance();
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close key definition');
 
     return {
       type: 'KeyDeclaration',
@@ -1298,7 +1298,7 @@ export class Parser {
    */
   private parseFieldGroupSection(): FieldGroupSection {
     const startToken = this.consume(TokenType.FieldGroups, 'Expected FIELDGROUPS');
-    this.consume(TokenType.LeftBrace, 'Expected {');
+    this.consume(TokenType.LeftBrace, 'Expected { to open FIELDGROUPS section');
 
     const fieldGroups: FieldGroup[] = [];
 
@@ -1320,7 +1320,7 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close FIELDGROUPS section');
 
     return {
       type: 'FieldGroupSection',
@@ -1331,7 +1331,7 @@ export class Parser {
   }
 
   private parseFieldGroup(): FieldGroup {
-    const startToken = this.consume(TokenType.LeftBrace, 'Expected {');
+    const startToken = this.consume(TokenType.LeftBrace, 'Expected { to open field group definition');
 
     // Column 1: ID (integer)
     const idToken = this.consume(TokenType.Integer, 'Expected field group ID');
@@ -1384,7 +1384,7 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close field group definition');
 
     return {
       type: 'FieldGroup',
@@ -1401,7 +1401,7 @@ export class Parser {
    */
   private parseActionSection(): ActionSection {
     const startToken = this.consume(TokenType.Actions, 'Expected ACTIONS');
-    this.consume(TokenType.LeftBrace, 'Expected {');
+    this.consume(TokenType.LeftBrace, 'Expected { to open ACTIONS section');
 
     const flatActions: ActionDeclaration[] = [];
 
@@ -1415,7 +1415,7 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close ACTIONS section');
     const hierarchicalActions = this.buildActionHierarchy(flatActions);
 
     return {
@@ -1427,7 +1427,7 @@ export class Parser {
   }
 
   private parseActionItem(): ActionDeclaration {
-    const startToken = this.consume(TokenType.LeftBrace, 'Expected {');
+    const startToken = this.consume(TokenType.LeftBrace, 'Expected { to open action definition');
 
     // Column 1: Action ID
     const idToken = this.consume(TokenType.Integer, 'Expected action ID');
@@ -1471,7 +1471,7 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close action definition');
 
     return {
       type: 'ActionDeclaration',
@@ -1554,7 +1554,7 @@ export class Parser {
    */
   private parseControlSection(): ControlSection {
     const startToken = this.consume(TokenType.Controls, 'Expected CONTROLS');
-    this.consume(TokenType.LeftBrace, 'Expected {');
+    this.consume(TokenType.LeftBrace, 'Expected { to open CONTROLS section');
 
     const flatControls: ControlDeclaration[] = [];
 
@@ -1569,7 +1569,7 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, "Expected '}' after CONTROLS section");
+    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close CONTROLS section');
     const hierarchicalControls = this.buildControlHierarchy(flatControls);
 
     return {
@@ -1581,7 +1581,7 @@ export class Parser {
   }
 
   private parseControlItem(): ControlDeclaration {
-    const startToken = this.consume(TokenType.LeftBrace, 'Expected {');
+    const startToken = this.consume(TokenType.LeftBrace, 'Expected { to open control definition');
 
     // Column 1: Control ID
     const idToken = this.consume(TokenType.Integer, 'Expected control ID');
@@ -1625,7 +1625,7 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close control definition');
 
     return {
       type: 'ControlDeclaration',
@@ -1765,7 +1765,7 @@ export class Parser {
    */
   private parseElementsSection(): ElementsSection {
     const startToken = this.consume(TokenType.Elements, 'Expected ELEMENTS');
-    this.consume(TokenType.LeftBrace, 'Expected {');
+    this.consume(TokenType.LeftBrace, 'Expected { to open ELEMENTS section');
 
     const flatElements: XMLportElement[] = [];
 
@@ -1852,7 +1852,7 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close ELEMENTS section');
     const hierarchicalElements = this.buildElementHierarchy(flatElements);
 
     return {
@@ -1875,7 +1875,7 @@ export class Parser {
    * ```
    */
   private parseXMLportElement(): XMLportElement {
-    const startToken = this.consume(TokenType.LeftBrace, 'Expected {');
+    const startToken = this.consume(TokenType.LeftBrace, 'Expected { to open element definition');
 
     // Parse GUID: [{GUID-VALUE}]
     this.consume(TokenType.LeftBracket, 'Expected [ for GUID');
@@ -2035,7 +2035,7 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected }');
+    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close element definition');
 
     return {
       type: 'XMLportElement',
@@ -4180,7 +4180,7 @@ export class Parser {
    *   [1, 5..10, 20] - mixed
    */
   private parseSetLiteral(): Expression {
-    const startToken = this.consume(TokenType.LeftBracket, 'Expected [');
+    const startToken = this.consume(TokenType.LeftBracket, 'Expected [ to open set literal');
     const elements: (Expression | RangeExpression)[] = [];
 
     // Empty set
