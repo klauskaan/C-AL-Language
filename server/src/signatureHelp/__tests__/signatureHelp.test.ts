@@ -421,5 +421,16 @@ describe('SignatureHelpProvider', () => {
       expect(help).not.toBeNull();
       expect(help?.activeParameter).toBe(0);
     });
+
+    it('should clamp activeParameter to 0 for zero-parameter function with excess commas', () => {
+      // TODAY has zero parameters
+      // Providing multiple commas should clamp activeParameter to 0, not go negative
+      const doc = createDocument('TODAY(a, b, c, ');
+      const help = provider.getSignatureHelp(doc, Position.create(0, 15));
+
+      expect(help).not.toBeNull();
+      // With 3 commas, raw activeParameter would be 3, but should clamp to 0
+      expect(help?.activeParameter).toBe(0);
+    });
   });
 });
