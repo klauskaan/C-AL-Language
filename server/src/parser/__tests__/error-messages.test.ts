@@ -1033,9 +1033,10 @@ describe('Parser - Error Messages with Context', () => {
     });
   });
 
-  describe('Case statement errors', () => {
-    it('should report error for missing colon after case branch value', () => {
-      const code = `OBJECT Codeunit 50000 Test
+  describe('Phase 1 error messages (Issue #285)', () => {
+    describe('Case statement errors', () => {
+      it('should report error for missing colon after case branch value', () => {
+        const code = `OBJECT Codeunit 50000 Test
 {
   CODE
   {
@@ -1049,21 +1050,73 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
 
-      parser.parse();
-      const errors = parser.getErrors();
+        parser.parse();
+        const errors = parser.getErrors();
 
-      expect(errors.length).toBeGreaterThan(0);
-      expect(errors[0].message).toContain('Expected : after case branch value');
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain('Expected : after case branch value');
+      });
+
+      it('should report error for missing colon after multiple case values', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1, 2, 3 EXIT;
+      END;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain('Expected : after case branch value');
+      });
+
+      it('should report error for missing colon after case range expression', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1..10 EXIT;
+      END;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain('Expected : after case branch value');
+      });
     });
-  });
 
-  describe('Set literal errors', () => {
-    it('should report specific error for unclosed set literal', () => {
-      const code = `OBJECT Codeunit 50000 Test
+    describe('Set literal errors', () => {
+      it('should report specific error for unclosed set literal', () => {
+        const code = `OBJECT Codeunit 50000 Test
 {
   CODE
   {
@@ -1075,21 +1128,45 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
 
-      parser.parse();
-      const errors = parser.getErrors();
+        parser.parse();
+        const errors = parser.getErrors();
 
-      expect(errors.length).toBeGreaterThan(0);
-      expect(errors[0].message).toContain('Expected ] after set literal');
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain('Expected ] after set literal');
+      });
+
+      it('should report error for set literal with keyword as first element', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Value : Integer;
+    BEGIN
+      IF Value IN [ THEN;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain('Expected ] after set literal');
+      });
     });
-  });
 
-  describe('EXIT statement errors', () => {
-    it('should report error for missing closing parenthesis in EXIT', () => {
-      const code = `OBJECT Codeunit 50000 Test
+    describe('EXIT statement errors', () => {
+      it('should report error for missing closing parenthesis in EXIT', () => {
+        const code = `OBJECT Codeunit 50000 Test
 {
   CODE
   {
@@ -1101,15 +1178,155 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
 
-      parser.parse();
-      const errors = parser.getErrors();
+        parser.parse();
+        const errors = parser.getErrors();
 
-      expect(errors.length).toBeGreaterThan(0);
-      expect(errors[0].message).toContain('Expected ) after EXIT value');
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain('Expected ) after EXIT value');
+      });
+
+      it('should report error for unclosed empty EXIT parentheses', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      EXIT(;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain('Expected ) after EXIT value');
+      });
+    });
+  });
+
+  describe('Phase 1 error recovery tests', () => {
+    describe('CASE statement error recovery', () => {
+      // TODO: Parser doesn't recover properly from missing colon in CASE - see issue #290
+      it.skip('should continue parsing after missing colon in CASE branch', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1 EXIT;
+      END;
+    END;
+
+    PROCEDURE AnotherProc();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Should report the error
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain('Expected : after case branch value');
+
+        // Should NOT consume AnotherProc - both procedures should be in AST
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(2);
+        expect(procedures[0].name).toBe('TestProc');
+        expect(procedures[1].name).toBe('AnotherProc');
+      });
+    });
+
+    describe('Set literal error recovery', () => {
+      // TODO: Parser doesn't recover properly from unclosed set literal - see issue #290
+      it.skip('should continue parsing after unclosed set literal', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Value : Integer;
+    BEGIN
+      IF Value IN [1, 2, 3 THEN;
+    END;
+
+    PROCEDURE AnotherProc();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Should report the error
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain('Expected ] after set literal');
+
+        // Should NOT consume AnotherProc - both procedures should be in AST
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(2);
+        expect(procedures[0].name).toBe('TestProc');
+        expect(procedures[1].name).toBe('AnotherProc');
+      });
+    });
+
+    describe('EXIT statement error recovery', () => {
+      it('should continue parsing after unclosed EXIT parenthesis', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      EXIT(x;
+    END;
+
+    PROCEDURE AnotherProc();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Should report the error
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain('Expected ) after EXIT value');
+
+        // Should NOT consume AnotherProc - both procedures should be in AST
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(2);
+        expect(procedures[0].name).toBe('TestProc');
+        expect(procedures[1].name).toBe('AnotherProc');
+      });
     });
   });
 
