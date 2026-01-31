@@ -2439,6 +2439,53 @@ describe('Parser - Multi-word Property Names', () => {
       const propertyErrors = errors.filter(e => e.message.includes('='));
       expect(propertyErrors.length).toBeGreaterThanOrEqual(2);
     });
+
+    it('should handle partial multi-word property names gracefully (issue #179)', () => {
+      // Regression test: Parser should not crash when multi-word property name is incomplete
+      // Example: "SQL Data" appears instead of "SQL Data Type"
+      const code = `OBJECT Table 50000 Test {
+        FIELDS {
+          { 1 ; ; Field ; Code20 ; SQL Data }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Verify no crash - AST is defined
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+
+      // Verify error is reported (missing '=')
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors.some(e => e.message.includes('='))).toBe(true);
+    });
+
+    it('should handle single-word partial property names (issue #179)', () => {
+      // Regression test: Single word when multi-word property expected
+      // Example: "Version" appears instead of "Version List"
+      const code = `OBJECT Table 50000 Test {
+        PROPERTIES {
+          Version
+        }
+        FIELDS {
+          { 1 ; ; Field ; Code20 }
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const ast = parser.parse();
+
+      // Verify no crash - AST is defined
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+
+      // Verify error is reported for malformed property
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors.some(e => e.message.includes('='))).toBe(true);
+    });
   });
 });
 
