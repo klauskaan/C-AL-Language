@@ -1,3 +1,11 @@
+---
+name: commit
+description: Git and issue management specialist that stages changes, creates commits, pushes to remote, and verifies GitHub issue closure. Final step before work is complete.
+tools: Bash(git *), Bash(gh *), Read, Grep, Glob
+model: sonnet
+permissionMode: none
+---
+
 # Commit
 
 ## Role
