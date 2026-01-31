@@ -1078,6 +1078,7 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       expect(allElements[0].name).toBe('element2');
 
       // Verify malformed element was NOT captured
+      expect(allElements.find(e => e.guid === '12345678-1234-1234-1234-123456789012')).toBeUndefined();
       expect(allElements.find(e => e.name === 'element1')).toBeUndefined();
 
       // CODE section MUST be intact
@@ -1126,6 +1127,7 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       expect(allElements[0].name).toBe('element2');
 
       // Verify malformed element was NOT captured
+      expect(allElements.find(e => e.guid === '12345678-1234-1234-1234-123456789012')).toBeUndefined();
       expect(allElements.find(e => e.name === 'element1')).toBeUndefined();
 
       // CODE section MUST be intact
@@ -1237,6 +1239,7 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       expect(element2?.sourceType).toBe('Text');
 
       // Verify malformed element was NOT captured
+      expect(allElements.find(e => e.guid === 'MALFORMED')).toBeUndefined();
       expect(allElements.find(e => e.name === 'broken')).toBeUndefined();
 
       // CODE section MUST be intact
@@ -1329,6 +1332,7 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       expect(unicodeElement).toBeDefined();
 
       // Verify malformed element was NOT captured
+      expect(allElements.find(e => e.guid === 'MALFORMED')).toBeUndefined();
       expect(allElements.find(e => e.name === 'Værdi')).toBeUndefined();
 
       // CODE section MUST be intact
