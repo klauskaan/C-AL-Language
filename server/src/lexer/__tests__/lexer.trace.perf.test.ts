@@ -18,6 +18,178 @@
 import { Lexer } from '../lexer';
 
 describe('Trace callback performance', () => {
+  // Named constants for test configuration
+  const WARMUP_ITERATIONS = 500;
+  const SAMPLES_PER_MEASUREMENT = 20;
+  const ITERATIONS_PER_SAMPLE = 5000;
+  const OVERHEAD_THRESHOLD_PERCENT = 8;
+  const MAX_RETRY_ATTEMPTS = 3;
+  const REQUIRED_PASSES = 2;
+
+  /**
+   * Measurement result structure
+   */
+  interface MeasurementResult {
+    overheadPct: number;
+    avgDisabled: number;
+    avgEnabled: number;
+    stdDevDisabled: number;
+    stdDevEnabled: number;
+    cvDisabled: number;
+    cvEnabled: number;
+  }
+
+  /**
+   * Attempt result structure
+   */
+  interface AttemptResult {
+    passed: boolean;
+    overheadPct: number;
+    avgDisabled: number;
+    avgEnabled: number;
+    stdDevDisabled: number;
+    stdDevEnabled: number;
+    cvDisabled: number;
+    cvEnabled: number;
+  }
+
+  /**
+   * Retry result structure
+   */
+  interface RetryResult {
+    passed: boolean;
+    attempts: AttemptResult[];
+  }
+
+  /**
+   * Measures trace callback overhead using interleaved sampling methodology
+   */
+  function measureTraceOverhead(code: string): MeasurementResult {
+    // Create Lexer instances outside the measurement loop
+    const lexerDisabled = new Lexer(code);
+    const lexerEnabled = new Lexer(code, { trace: () => {} });
+
+    // Warm-up: stabilize JIT compilation and reduce variance
+    for (let i = 0; i < WARMUP_ITERATIONS; i++) {
+      lexerDisabled.tokenize();
+      lexerEnabled.tokenize();
+    }
+
+    // Run multiple samples with interleaved order
+    const disabledTimes: number[] = [];
+    const enabledTimes: number[] = [];
+
+    for (let sample = 0; sample < SAMPLES_PER_MEASUREMENT; sample++) {
+      // Interleaved sampling: alternate measurement order to eliminate order bias
+      if (sample % 2 === 0) {
+        // Even samples: measure disabled first
+        const startDisabled = performance.now();
+        for (let i = 0; i < ITERATIONS_PER_SAMPLE; i++) {
+          lexerDisabled.tokenize();
+        }
+        disabledTimes.push(performance.now() - startDisabled);
+
+        const startEnabled = performance.now();
+        for (let i = 0; i < ITERATIONS_PER_SAMPLE; i++) {
+          lexerEnabled.tokenize();
+        }
+        enabledTimes.push(performance.now() - startEnabled);
+      } else {
+        // Odd samples: measure enabled first
+        const startEnabled = performance.now();
+        for (let i = 0; i < ITERATIONS_PER_SAMPLE; i++) {
+          lexerEnabled.tokenize();
+        }
+        enabledTimes.push(performance.now() - startEnabled);
+
+        const startDisabled = performance.now();
+        for (let i = 0; i < ITERATIONS_PER_SAMPLE; i++) {
+          lexerDisabled.tokenize();
+        }
+        disabledTimes.push(performance.now() - startDisabled);
+      }
+    }
+
+    // Calculate means
+    const avgDisabled = disabledTimes.reduce((a, b) => a + b) / SAMPLES_PER_MEASUREMENT;
+    const avgEnabled = enabledTimes.reduce((a, b) => a + b) / SAMPLES_PER_MEASUREMENT;
+
+    // Calculate standard deviations
+    const stdDevDisabled = Math.sqrt(
+      disabledTimes.reduce((sum, t) => sum + Math.pow(t - avgDisabled, 2), 0) / (SAMPLES_PER_MEASUREMENT - 1)
+    );
+    const stdDevEnabled = Math.sqrt(
+      enabledTimes.reduce((sum, t) => sum + Math.pow(t - avgEnabled, 2), 0) / (SAMPLES_PER_MEASUREMENT - 1)
+    );
+
+    // Calculate coefficient of variation (CV = stdDev / mean)
+    const cvDisabled = (stdDevDisabled / avgDisabled) * 100;
+    const cvEnabled = (stdDevEnabled / avgEnabled) * 100;
+
+    // Calculate overhead percentage
+    const overheadPct = ((avgEnabled - avgDisabled) / avgDisabled) * 100;
+
+    return {
+      overheadPct,
+      avgDisabled,
+      avgEnabled,
+      stdDevDisabled,
+      stdDevEnabled,
+      cvDisabled,
+      cvEnabled
+    };
+  }
+
+  /**
+   * Runs measurement with retry logic using 2/3 majority vote
+   *
+   * Exit conditions:
+   * - Early success: 2 passes achieved
+   * - Early failure: Mathematically impossible to reach 2 passes
+   * - Max attempts: Reached MAX_RETRY_ATTEMPTS
+   */
+  function runWithRetry(code: string): RetryResult {
+    const attempts: AttemptResult[] = [];
+    let passCount = 0;
+
+    for (let attemptNum = 1; attemptNum <= MAX_RETRY_ATTEMPTS; attemptNum++) {
+      const result = measureTraceOverhead(code);
+      const passed = result.overheadPct <= OVERHEAD_THRESHOLD_PERCENT;
+
+      attempts.push({
+        passed,
+        overheadPct: result.overheadPct,
+        avgDisabled: result.avgDisabled,
+        avgEnabled: result.avgEnabled,
+        stdDevDisabled: result.stdDevDisabled,
+        stdDevEnabled: result.stdDevEnabled,
+        cvDisabled: result.cvDisabled,
+        cvEnabled: result.cvEnabled
+      });
+
+      if (passed) {
+        passCount++;
+      }
+
+      // Early exit: 2 passes achieved
+      if (passCount >= REQUIRED_PASSES) {
+        break;
+      }
+
+      // Early exit: mathematically impossible to reach 2 passes
+      const remainingAttempts = MAX_RETRY_ATTEMPTS - attemptNum;
+      const maxPossiblePasses = passCount + remainingAttempts;
+      if (maxPossiblePasses < REQUIRED_PASSES) {
+        break;
+      }
+    }
+
+    return {
+      passed: passCount >= REQUIRED_PASSES,
+      attempts
+    };
+  }
+
   /**
    * Performance Test 1: Short-circuit effectiveness
    *
@@ -32,11 +204,25 @@ describe('Trace callback performance', () => {
    * - Warm-up: 500 iterations to stabilize JIT compilation
    * - Interleaved sampling: Alternate measurement order (disabled/enabled or enabled/disabled)
    * - Measurement: Reuse Lexer instances, call tokenize() 5000 times per sample
-   * - Statistical validation: Welch's t-test with 95% confidence (p < 0.05)
    * - Assertion: Overhead should be ≤8% (with short-circuit) vs ≥15% (without short-circuit)
+   * - Retry strategy: 2/3 majority vote to handle transient system load spikes
    *
    * Investigation found actual overhead is 0.5-6% with the short-circuit.
    * If the short-circuit is removed, overhead jumps to 15%+, causing this test to fail.
+   *
+   * Retry Strategy:
+   * Performance tests are sensitive to transient system load (OS background tasks, GC, etc.).
+   * Instead of using a higher threshold (which would hide real regressions), we use a 2/3
+   * majority vote: test passes if at least 2 out of 3 attempts pass the 8% threshold.
+   *
+   * Why 2/3 majority?
+   * - 1/1 (no retry): Too fragile - single spike fails the test
+   * - 1/3 (any pass): Too lenient - could mask real regressions
+   * - 2/3 (majority): Balanced - tolerates transient spikes, catches consistent regressions
+   *
+   * All overhead values are logged to enable trend analysis. If values are consistently
+   * near the threshold (e.g., 7.5%, 7.8%, 7.9%), that may indicate a real regression
+   * even if the test passes.
    */
   it('should keep trace callback overhead below 8% when enabled', () => {
     // Medium-complexity C/AL code that produces multiple trace events
@@ -52,88 +238,34 @@ describe('Trace callback performance', () => {
       END;
     `;
 
-    // Create Lexer instances outside the measurement loop
-    const lexerDisabled = new Lexer(code);
-    const lexerEnabled = new Lexer(code, { trace: () => {} });
+    // Run measurement with retry logic
+    const result = runWithRetry(code);
 
-    // Warm-up: 500 iterations to stabilize JIT compilation and reduce variance
-    for (let i = 0; i < 500; i++) {
-      lexerDisabled.tokenize();
-      lexerEnabled.tokenize();
-    }
+    // Always log ALL attempt overhead percentages for trend analysis
+    console.log(`Trace callback performance (${REQUIRED_PASSES}/${MAX_RETRY_ATTEMPTS} majority, threshold: ${OVERHEAD_THRESHOLD_PERCENT}%)`);
+    console.log(`${'═'.repeat(59)}`);
+    console.log('');
 
-    // Run multiple samples with interleaved order
-    // Use 5000 iterations per sample to get more stable measurements
-    const samples = 20;
-    const iterationsPerSample = 5000;
-    const disabledTimes: number[] = [];
-    const enabledTimes: number[] = [];
+    result.attempts.forEach((attempt, index) => {
+      const attemptNum = index + 1;
+      const status = attempt.passed ? 'PASS' : 'FAIL';
+      console.log(`Attempt ${attemptNum}/${MAX_RETRY_ATTEMPTS}: ${attempt.overheadPct.toFixed(1)}% overhead [${status}]`);
+      console.log(`  Disabled: ${attempt.avgDisabled.toFixed(2)}ms (σ=${attempt.stdDevDisabled.toFixed(1)}ms, CV=${attempt.cvDisabled.toFixed(1)}%)`);
+      console.log(`  Enabled:  ${attempt.avgEnabled.toFixed(2)}ms (σ=${attempt.stdDevEnabled.toFixed(1)}ms, CV=${attempt.cvEnabled.toFixed(1)}%)`);
+      console.log('');
+    });
 
-    for (let sample = 0; sample < samples; sample++) {
-      // Interleaved sampling: alternate measurement order to eliminate order bias
-      if (sample % 2 === 0) {
-        // Even samples: measure disabled first
-        const startDisabled = performance.now();
-        for (let i = 0; i < iterationsPerSample; i++) {
-          lexerDisabled.tokenize();
-        }
-        disabledTimes.push(performance.now() - startDisabled);
+    console.log(`${'─'.repeat(59)}`);
+    const passCount = result.attempts.filter(a => a.passed).length;
+    const finalStatus = result.passed ? 'PASS' : 'FAIL';
+    console.log(`Result: ${finalStatus} (${passCount}/${result.attempts.length} attempts succeeded)`);
 
-        const startEnabled = performance.now();
-        for (let i = 0; i < iterationsPerSample; i++) {
-          lexerEnabled.tokenize();
-        }
-        enabledTimes.push(performance.now() - startEnabled);
-      } else {
-        // Odd samples: measure enabled first
-        const startEnabled = performance.now();
-        for (let i = 0; i < iterationsPerSample; i++) {
-          lexerEnabled.tokenize();
-        }
-        enabledTimes.push(performance.now() - startEnabled);
+    const overheadValues = result.attempts.map(a => `${a.overheadPct.toFixed(1)}%`).join(', ');
+    console.log(`Overhead values: ${overheadValues} (review for concerning trends)`);
+    console.log(`${'─'.repeat(59)}`);
 
-        const startDisabled = performance.now();
-        for (let i = 0; i < iterationsPerSample; i++) {
-          lexerDisabled.tokenize();
-        }
-        disabledTimes.push(performance.now() - startDisabled);
-      }
-    }
-
-    // Calculate means
-    const avgDisabled = disabledTimes.reduce((a, b) => a + b) / samples;
-    const avgEnabled = enabledTimes.reduce((a, b) => a + b) / samples;
-
-    // Calculate standard deviations
-    const stdDevDisabled = Math.sqrt(
-      disabledTimes.reduce((sum, t) => sum + Math.pow(t - avgDisabled, 2), 0) / (samples - 1)
-    );
-    const stdDevEnabled = Math.sqrt(
-      enabledTimes.reduce((sum, t) => sum + Math.pow(t - avgEnabled, 2), 0) / (samples - 1)
-    );
-
-    // Calculate coefficient of variation (CV = stdDev / mean)
-    const cvDisabled = (stdDevDisabled / avgDisabled) * 100;
-    const cvEnabled = (stdDevEnabled / avgEnabled) * 100;
-
-    // Calculate overhead percentage
-    const overheadPct = ((avgEnabled - avgDisabled) / avgDisabled) * 100;
-
-    // Debug output BEFORE assertion (ensures visibility when test fails)
-    console.log(`Performance measurements (interleaved sampling):`);
-    console.log(`  Disabled avg: ${avgDisabled.toFixed(2)}ms (σ=${stdDevDisabled.toFixed(2)}ms, CV=${cvDisabled.toFixed(1)}%)`);
-    console.log(`  Enabled avg:  ${avgEnabled.toFixed(2)}ms (σ=${stdDevEnabled.toFixed(2)}ms, CV=${cvEnabled.toFixed(1)}%)`);
-    console.log(`  Overhead: ${overheadPct.toFixed(1)}%`);
-    console.log(`  Status: ${overheadPct <= 8 ? 'PASS (short-circuit working)' : 'FAIL (short-circuit broken)'}`);
-    console.log(`  Expected range: 0-8% (with short-circuit) vs 15%+ (without short-circuit)`);
-
-    // The primary assertion: overhead should be ≤8% (validates short-circuit is working)
-    // If short-circuit is removed, overhead would be 15%+ and test would fail.
-    //
-    // Note on CV validation: We skip CV validation when running in a full test suite,
-    // as system load causes high variance. The important metric is the overhead value,
-    // not the variance. When overhead is consistently ≤8%, the short-circuit is working.
-    expect(overheadPct).toBeLessThanOrEqual(8);
+    // Final assertion: test passes if 2/3 majority achieved threshold
+    expect(result.passed).toBe(true);
   });
 
   /**
