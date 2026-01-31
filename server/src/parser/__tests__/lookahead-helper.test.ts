@@ -102,8 +102,10 @@ describe('isFollowedByLeftBrace() helper', () => {
       const parser = new Parser(lexer.tokenize());
       const ast = parser.parse();
 
-      // Parser handles EOF gracefully
-      expect(parser.getErrors()).toHaveLength(0);
+      // Parser handles EOF gracefully, but reports missing opening brace
+      const errors = parser.getErrors();
+      expect(errors).toHaveLength(1);
+      expect(errors[0].message).toContain('Expected { to open CODE section');
       // Parser should not crash
       expect(ast).toBeDefined();
     });
@@ -121,8 +123,10 @@ describe('isFollowedByLeftBrace() helper', () => {
       const parser = new Parser(lexer.tokenize());
       const ast = parser.parse();
 
-      // Parser handles EOF gracefully
-      expect(parser.getErrors()).toHaveLength(0);
+      // Parser handles EOF gracefully, but reports missing opening brace
+      const errors = parser.getErrors();
+      expect(errors).toHaveLength(1);
+      expect(errors[0].message).toContain('Expected { to open CODE section');
       expect(ast).toBeDefined();
     });
 
@@ -440,8 +444,10 @@ describe('isFollowedByLeftBrace() helper', () => {
       const parser = new Parser(lexer.tokenize());
       const ast = parser.parse();
 
-      // Parser recovers gracefully from "CODE INVALID TOKEN"
-      expect(parser.getErrors()).toHaveLength(0);
+      // Parser recovers gracefully from "CODE INVALID TOKEN", but reports missing opening brace
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThanOrEqual(1);
+      expect(errors.some(e => e.message.includes('Expected { to open CODE section'))).toBe(true);
       expect(ast).toBeDefined();
     });
 
@@ -461,8 +467,10 @@ describe('isFollowedByLeftBrace() helper', () => {
       const parser = new Parser(lexer.tokenize());
       const ast = parser.parse();
 
-      // Parser recovers gracefully from missing brace
-      expect(parser.getErrors()).toHaveLength(0);
+      // Parser recovers gracefully from missing brace, but reports error
+      const errors = parser.getErrors();
+      expect(errors).toHaveLength(1);
+      expect(errors[0].message).toContain('Expected { to open CODE section');
       expect(ast).toBeDefined();
     });
   });

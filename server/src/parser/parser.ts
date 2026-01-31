@@ -319,7 +319,7 @@ export class Parser {
           // Parse object-level VAR section
           // These variables should be included in the CODE section
           this.parseVariableDeclarations(objectLevelVariables);
-        } else if (this.check(TokenType.Code) && this.isFollowedByLeftBrace()) {
+        } else if (this.check(TokenType.Code)) {
           code = this.parseCodeSection();
           // Prepend object-level variables to code section variables
           if (objectLevelVariables.length > 0 && code) {
@@ -458,7 +458,14 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close PROPERTIES section');
+    let endToken: Token;
+    if (this.check(TokenType.RightBrace)) {
+      endToken = this.advance();
+    } else {
+      // Missing closing brace - record error but return the section
+      this.recordError('Expected } to close PROPERTIES section');
+      endToken = this.previous();
+    }
 
     return {
       type: 'PropertySection',
@@ -636,7 +643,14 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close FIELDS section');
+    let endToken: Token;
+    if (this.check(TokenType.RightBrace)) {
+      endToken = this.advance();
+    } else {
+      // Missing closing brace - record error but return the section
+      this.recordError('Expected } to close FIELDS section');
+      endToken = this.previous();
+    }
 
     return {
       type: 'FieldSection',
@@ -1270,7 +1284,14 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close KEYS section');
+    let endToken: Token;
+    if (this.check(TokenType.RightBrace)) {
+      endToken = this.advance();
+    } else {
+      // Missing closing brace - record error but return the section
+      this.recordError('Expected } to close KEYS section');
+      endToken = this.previous();
+    }
 
     return {
       type: 'KeySection',
@@ -1338,7 +1359,14 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close FIELDGROUPS section');
+    let endToken: Token;
+    if (this.check(TokenType.RightBrace)) {
+      endToken = this.advance();
+    } else {
+      // Missing closing brace - record error but return the section
+      this.recordError('Expected } to close FIELDGROUPS section');
+      endToken = this.previous();
+    }
 
     return {
       type: 'FieldGroupSection',
@@ -1576,7 +1604,7 @@ export class Parser {
 
     const flatControls: ControlDeclaration[] = [];
 
-    while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type) && !this.check(TokenType.Code)) {
       // Use parseWithRecovery for each control item
       const control = this.parseWithRecovery(
         () => this.parseControlItem(),
@@ -1587,7 +1615,15 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close CONTROLS section');
+    let endToken: Token;
+    if (this.check(TokenType.RightBrace)) {
+      endToken = this.advance();
+    } else {
+      // Missing closing brace - record error but return the section
+      this.recordError('Expected } to close CONTROLS section');
+      endToken = this.previous();
+    }
+
     const hierarchicalControls = this.buildControlHierarchy(flatControls);
 
     return {
@@ -1787,9 +1823,9 @@ export class Parser {
 
     const flatElements: XMLportElement[] = [];
 
-    // Note: isSectionKeyword() does lookahead for CODE/CONTROLS (checks if next token is {).
-    // This works here because peek() returns the unconsumed token at `current`.
-    while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
+    // Note: Parsing uses both isSectionKeyword() lookahead AND explicit CODE/CONTROLS checks
+    // to handle malformed code where braces are missing.
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type) && !this.check(TokenType.Code) && !this.check(TokenType.Controls)) {
       try {
         const element = this.parseXMLportElement();
         if (element) {
@@ -1818,7 +1854,7 @@ export class Parser {
 
             // Section keyword escape hatch: stop if we hit a section keyword
             // This prevents recovery from consuming CODE, PROPERTIES, etc.
-            if (recoveryDepth === 1 && this.isSectionKeyword(peekType)) {
+            if (recoveryDepth === 1 && (this.isSectionKeyword(peekType) || peekType === TokenType.Code)) {
               break;
             }
 
@@ -1870,7 +1906,15 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close ELEMENTS section');
+    let endToken: Token;
+    if (this.check(TokenType.RightBrace)) {
+      endToken = this.advance();
+    } else {
+      // Missing closing brace - record error but return the section
+      this.recordError('Expected } to close ELEMENTS section');
+      endToken = this.previous();
+    }
+
     const hierarchicalElements = this.buildElementHierarchy(flatElements);
 
     return {
@@ -2141,6 +2185,9 @@ export class Parser {
     // Consume opening brace of CODE section (if present)
     if (this.check(TokenType.LeftBrace)) {
       this.advance();
+    } else {
+      // Missing opening brace - record error but continue parsing
+      this.recordError('Expected { to open CODE section');
     }
 
     const variables: VariableDeclaration[] = [];
@@ -4870,8 +4917,9 @@ export class Parser {
    * - "Code" in "Item Tracking Code" (captions)
    * - "Code" in "Code[20]" (data types)
    *
-   * For CODE specifically, we MUST check that it's followed by '{' to distinguish
-   * the section keyword from false positives.
+   * For CODE and CONTROLS specifically, we check that they're followed by '{' to distinguish
+   * the section keyword from false positives. However, parsing loops also add explicit checks
+   * for these keywords to handle malformed code where braces are missing.
    */
   private isSectionKeyword(type: TokenType): boolean {
     // Special case for CODE and CONTROLS: must be followed by '{'
