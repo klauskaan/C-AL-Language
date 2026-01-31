@@ -1668,7 +1668,7 @@ describe('Parser - Error Messages with Context', () => {
       });
 
       // TODO #182: Re-enable after implementing Phase 2b error messages
-      it.skip('should provide context for missing } to close field definition', () => {
+      it('should provide context for missing } to close field definition', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -1767,7 +1767,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      it.skip('should provide context for missing } to close key definition', () => {
+      it('should provide context for missing } to close key definition', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -1869,16 +1869,18 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      it.skip('should provide context for missing } to close field group definition', () => {
+      it('should provide context for missing } to close field group definition', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
   {
     { 1 ; ; No. ; Code20 }
+    { 2 ; ; Name ; Text50 }
   }
   FIELDGROUPS
   {
-    { 1 ; DropDown ; No.
+    { 1 ; DropDown ; No., Name
+    { 2 ; Brick ; No. }
   }
 }`;
         const lexer = new Lexer(code);
@@ -1959,12 +1961,13 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      it.skip('should provide context for missing } to close action definition', () => {
+      it('should provide context for missing } to close action definition', () => {
         const code = `OBJECT Page 21 Customer
 {
   ACTIONS
   {
-    { 1 ; ActionContainer ; Processing ; ActionContainerType=ActionItems
+    { 1 ; 0 ; ActionContainer ; ActionContainerType=ActionItems
+    { 2 ; 1 ; Action ; Enabled=Yes }
   }
 }`;
         const lexer = new Lexer(code);
@@ -2045,13 +2048,13 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      it.skip('should provide context for missing } to close control definition', () => {
+      it('should provide context for missing } to close control definition', () => {
         const code = `OBJECT Page 21 Customer
 {
   CONTROLS
   {
-    { 1 ; Container ; ContentArea ; ContainerType=ContentArea
-    { 2 ; Group ; Items ; GroupType=Group }
+    { 1 ; 0 ; Container ; ContainerType=ContentArea
+    { 2 ; 1 ; Group ; GroupType=Group }
   }
 }`;
         const lexer = new Lexer(code);
@@ -2132,12 +2135,13 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      it.skip('should provide context for missing } to close element definition', () => {
+      it('should provide context for missing } to close element definition', () => {
         const code = `OBJECT XMLport 99999 Test
 {
   ELEMENTS
   {
-    { 1 ; Element ; Customer ; NodeType=Element
+    { [{12345678-1234-1234-1234-123456789012}] ; 0 ; Customer ; Element ; Table ; SourceTable=Customer
+    { [{87654321-4321-4321-4321-210987654321}] ; 0 ; Item ; Element ; Table }
   }
 }`;
         const lexer = new Lexer(code);

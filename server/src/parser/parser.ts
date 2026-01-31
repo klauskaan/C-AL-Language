@@ -1100,7 +1100,7 @@ export class Parser {
     const properties: Property[] = [];
     const triggers: TriggerDeclaration[] = [];
 
-    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.check(TokenType.LeftBrace)) {
       const result = this.parseWithRecovery(
         () => {
           const { name, startToken } = this.accumulatePropertyName();
@@ -1151,6 +1151,24 @@ export class Parser {
 
               // Track brace depth for nested structures like ActionList=ACTIONS { ... }
               if (currentToken.type === TokenType.LeftBrace) {
+                // If we see { at depth 0 and not after a container keyword, it likely starts a new item
+                if (braceDepth === 0 && bracketDepth === 0) {
+                  // Check if the previous token was a keyword indicating nested structure
+                  const prevTokenType = lastToken?.type;
+                  const isNestedStructure =
+                    prevTokenType === TokenType.Actions ||
+                    prevTokenType === TokenType.Controls ||
+                    prevTokenType === TokenType.Elements;
+
+                  if (!isNestedStructure) {
+                    // This { likely starts a new item definition, stop parsing property value
+                    // Put the { back by decrementing position
+                    this.current--;
+                    // Remove the { from valueTokens since we didn't consume it
+                    valueTokens.pop();
+                    break;
+                  }
+                }
                 braceDepth++;
               } else if (currentToken.type === TokenType.RightBrace) {
                 braceDepth--;
@@ -1278,7 +1296,7 @@ export class Parser {
     }
 
     // Skip any remaining content until }
-    while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type) && !this.check(TokenType.LeftBrace)) {
       this.advance();
     }
 
@@ -1358,7 +1376,7 @@ export class Parser {
       let currentFieldTokens: string[] = [];
       let lastEndOffset = -1;
 
-      while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
+      while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type) && !this.check(TokenType.LeftBrace)) {
         if (this.check(TokenType.Comma)) {
           // End of current field
           if (currentFieldTokens.length > 0) {
