@@ -148,12 +148,15 @@ describe('Trace callback performance', () => {
    * - Early failure: Mathematically impossible to reach 2 passes
    * - Max attempts: Reached MAX_RETRY_ATTEMPTS
    */
-  function runWithRetry(code: string): RetryResult {
+  function runWithRetry(
+    code: string,
+    measureFn: (code: string) => MeasurementResult = measureTraceOverhead
+  ): RetryResult {
     const attempts: AttemptResult[] = [];
     let passCount = 0;
 
     for (let attemptNum = 1; attemptNum <= MAX_RETRY_ATTEMPTS; attemptNum++) {
-      const result = measureTraceOverhead(code);
+      const result = measureFn(code);
       const passed = result.overheadPct <= OVERHEAD_THRESHOLD_PERCENT;
 
       attempts.push({
@@ -293,5 +296,98 @@ describe('Trace callback performance', () => {
     // Assert: Callback was invoked at least once
     // (Should be invoked many times - once per token, context change, flag change, etc.)
     expect(callbackInvocationCount).toBeGreaterThan(0);
+  });
+
+  describe('runWithRetry unit tests', () => {
+    /**
+     * Helper to create mock MeasurementResult objects
+     */
+    function mockResult(passed: boolean): MeasurementResult {
+      return {
+        overheadPct: passed ? 5.0 : 15.0,
+        avgDisabled: 100.0,
+        avgEnabled: passed ? 105.0 : 115.0,
+        stdDevDisabled: 2.0,
+        stdDevEnabled: 2.5,
+        cvDisabled: 2.0,
+        cvEnabled: 2.4
+      };
+    }
+
+    it('should exit early after 2 passes [PASS, PASS]', () => {
+      const mockMeasure = jest.fn<MeasurementResult, [string]>()
+        .mockReturnValueOnce(mockResult(true))
+        .mockReturnValueOnce(mockResult(true));
+
+      const result = runWithRetry('test code', mockMeasure);
+
+      expect(result.passed).toBe(true);
+      expect(result.attempts.length).toBe(2);
+      expect(mockMeasure).toHaveBeenCalledTimes(2);
+    });
+
+    it('should pass with 2/3 majority [PASS, FAIL, PASS]', () => {
+      const mockMeasure = jest.fn<MeasurementResult, [string]>()
+        .mockReturnValueOnce(mockResult(true))
+        .mockReturnValueOnce(mockResult(false))
+        .mockReturnValueOnce(mockResult(true));
+
+      const result = runWithRetry('test code', mockMeasure);
+
+      expect(result.passed).toBe(true);
+      expect(result.attempts.length).toBe(3);
+      expect(mockMeasure).toHaveBeenCalledTimes(3);
+    });
+
+    it('should exit early when success impossible [FAIL, FAIL]', () => {
+      const mockMeasure = jest.fn<MeasurementResult, [string]>()
+        .mockReturnValueOnce(mockResult(false))
+        .mockReturnValueOnce(mockResult(false));
+
+      const result = runWithRetry('test code', mockMeasure);
+
+      expect(result.passed).toBe(false);
+      expect(result.attempts.length).toBe(2);
+      expect(mockMeasure).toHaveBeenCalledTimes(2);
+    });
+
+    it('should pass with 2/3 majority [FAIL, PASS, PASS]', () => {
+      const mockMeasure = jest.fn<MeasurementResult, [string]>()
+        .mockReturnValueOnce(mockResult(false))
+        .mockReturnValueOnce(mockResult(true))
+        .mockReturnValueOnce(mockResult(true));
+
+      const result = runWithRetry('test code', mockMeasure);
+
+      expect(result.passed).toBe(true);
+      expect(result.attempts.length).toBe(3);
+      expect(mockMeasure).toHaveBeenCalledTimes(3);
+    });
+
+    it('should fail when majority not achieved [PASS, FAIL, FAIL]', () => {
+      const mockMeasure = jest.fn<MeasurementResult, [string]>()
+        .mockReturnValueOnce(mockResult(true))
+        .mockReturnValueOnce(mockResult(false))
+        .mockReturnValueOnce(mockResult(false));
+
+      const result = runWithRetry('test code', mockMeasure);
+
+      expect(result.passed).toBe(false);
+      expect(result.attempts.length).toBe(3);
+      expect(mockMeasure).toHaveBeenCalledTimes(3);
+    });
+
+    it('should not exit early after single failure [FAIL, ...]', () => {
+      const mockMeasure = jest.fn<MeasurementResult, [string]>()
+        .mockReturnValueOnce(mockResult(false))
+        .mockReturnValueOnce(mockResult(true))
+        .mockReturnValueOnce(mockResult(true));
+
+      const result = runWithRetry('test code', mockMeasure);
+
+      expect(result.passed).toBe(true);
+      expect(result.attempts.length).toBe(3);
+      expect(mockMeasure).toHaveBeenCalledTimes(3);
+    });
   });
 });
