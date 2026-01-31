@@ -1133,9 +1133,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(errors[0].message).toContain('Expected { to open PROPERTIES section');
       });
 
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
-      it.skip('should provide context for missing } to close PROPERTIES section', () => {
+      it('should provide context for missing } to close PROPERTIES section', () => {
         const code = `OBJECT Codeunit 1 Test
 {
   PROPERTIES
@@ -1161,8 +1159,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     describe('FIELDS section', () => {
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
+      // TODO #182: Re-enable after implementing Phase 2b error messages
       it.skip('should provide context for missing { to open FIELDS section', () => {
         const code = `OBJECT Table 18 Customer
 {
@@ -1181,8 +1178,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(errors[0].message).toContain('Expected { to open FIELDS section');
       });
 
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
+      // TODO #182: Re-enable after implementing Phase 2b error messages
       it.skip('should provide context for missing } to close FIELDS section', () => {
         const code = `OBJECT Table 18 Customer
 {
@@ -1226,8 +1222,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
+      // TODO #182: Re-enable after implementing Phase 2b error messages
       it.skip('should provide context for missing } to close field definition', () => {
         const code = `OBJECT Table 18 Customer
 {
@@ -1250,9 +1245,8 @@ describe('Parser - Error Messages with Context', () => {
       });
     });
 
+    // TODO #182: Re-enable KEYS section tests after implementing Phase 2b error messages
     describe('KEYS section', () => {
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
       it.skip('should provide context for missing { to open KEYS section', () => {
         const code = `OBJECT Table 18 Customer
 {
@@ -1276,8 +1270,6 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
       it.skip('should provide context for missing } to close KEYS section', () => {
         const code = `OBJECT Table 18 Customer
 {
@@ -1330,8 +1322,6 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
       it.skip('should provide context for missing } to close key definition', () => {
         const code = `OBJECT Table 18 Customer
 {
@@ -1358,9 +1348,8 @@ describe('Parser - Error Messages with Context', () => {
       });
     });
 
+    // TODO #182: Re-enable FIELDGROUPS section tests after implementing Phase 2b error messages
     describe('FIELDGROUPS section', () => {
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
       it.skip('should provide context for missing { to open FIELDGROUPS section', () => {
         const code = `OBJECT Table 18 Customer
 {
@@ -1384,8 +1373,6 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
       it.skip('should provide context for missing } to close FIELDGROUPS section', () => {
         const code = `OBJECT Table 18 Customer
 {
@@ -1437,8 +1424,6 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
       it.skip('should provide context for missing } to close field group definition', () => {
         const code = `OBJECT Table 18 Customer
 {
@@ -1464,9 +1449,8 @@ describe('Parser - Error Messages with Context', () => {
       });
     });
 
+    // TODO #182: Re-enable ACTIONS section tests after implementing Phase 2b error messages
     describe('ACTIONS section', () => {
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
       it.skip('should provide context for missing { to open ACTIONS section', () => {
         const code = `OBJECT Page 21 Customer
 {
@@ -1486,8 +1470,6 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
       it.skip('should provide context for missing } to close ACTIONS section', () => {
         const code = `OBJECT Page 21 Customer
 {
@@ -1532,8 +1514,6 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
       it.skip('should provide context for missing } to close action definition', () => {
         const code = `OBJECT Page 21 Customer
 {
@@ -1555,9 +1535,8 @@ describe('Parser - Error Messages with Context', () => {
       });
     });
 
+    // TODO #182: Re-enable CONTROLS section tests after implementing Phase 2b error messages
     describe('CONTROLS section', () => {
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
       it.skip('should provide context for missing { to open CONTROLS section', () => {
         const code = `OBJECT Page 21 Customer
 {
@@ -1577,8 +1556,6 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
       it.skip('should provide context for missing } to close CONTROLS section', () => {
         const code = `OBJECT Page 21 Customer
 {
@@ -1623,8 +1600,6 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
       it.skip('should provide context for missing } to close control definition', () => {
         const code = `OBJECT Page 21 Customer
 {
@@ -1647,6 +1622,7 @@ describe('Parser - Error Messages with Context', () => {
       });
     });
 
+    // TODO #182: Re-enable ELEMENTS section tests after implementing Phase 2b error messages
     describe('ELEMENTS section', () => {
       it('should provide context for missing { to open ELEMENTS section', () => {
         const code = `OBJECT XMLport 99999 Test
@@ -1667,8 +1643,6 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
       it.skip('should provide context for missing } to close ELEMENTS section', () => {
         const code = `OBJECT XMLport 99999 Test
 {
@@ -1713,8 +1687,6 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
       it.skip('should provide context for missing } to close element definition', () => {
         const code = `OBJECT XMLport 99999 Test
 {

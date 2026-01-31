@@ -448,7 +448,7 @@ export class Parser {
 
     const properties: Property[] = [];
 
-    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
       const property = this.parseWithRecovery(
         () => this.parseProperty(),
         [TokenType.Semicolon, TokenType.RightBrace]
@@ -626,7 +626,7 @@ export class Parser {
 
     const fields: FieldDeclaration[] = [];
 
-    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
       const field = this.parseWithRecovery(
         () => this.parseField(),
         [TokenType.LeftBrace, TokenType.RightBrace]
@@ -1242,7 +1242,7 @@ export class Parser {
 
     const keys: KeyDeclaration[] = [];
 
-    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
       const key = this.parseWithRecovery(
         () => this.parseKey(),
         [TokenType.LeftBrace, TokenType.RightBrace]
@@ -1278,7 +1278,7 @@ export class Parser {
     }
 
     // Skip any remaining content until }
-    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
       this.advance();
     }
 
@@ -1302,7 +1302,7 @@ export class Parser {
 
     const fieldGroups: FieldGroup[] = [];
 
-    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
       const fieldGroup = this.parseWithRecovery(
         () => this.parseFieldGroup(),
         [TokenType.LeftBrace, TokenType.RightBrace]
@@ -1358,7 +1358,7 @@ export class Parser {
       let currentFieldTokens: string[] = [];
       let lastEndOffset = -1;
 
-      while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
         if (this.check(TokenType.Comma)) {
           // End of current field
           if (currentFieldTokens.length > 0) {
@@ -1405,7 +1405,7 @@ export class Parser {
 
     const flatActions: ActionDeclaration[] = [];
 
-    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
       const action = this.parseWithRecovery(
         () => this.parseActionItem(),
         [TokenType.LeftBrace, TokenType.RightBrace]
@@ -1558,7 +1558,7 @@ export class Parser {
 
     const flatControls: ControlDeclaration[] = [];
 
-    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
       // Use parseWithRecovery for each control item
       const control = this.parseWithRecovery(
         () => this.parseControlItem(),
