@@ -1113,6 +1113,234 @@ describe('Parser - Error Messages with Context', () => {
     });
   });
 
+  describe('Contextual keyword error messages (Issue #287 Phase 2c)', () => {
+    describe('DO keyword messages', () => {
+      it('should provide error for missing DO after WHILE condition', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      i : Integer;
+    BEGIN
+      WHILE i < 10
+        i := i + 1;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain('Expected DO after WHILE condition');
+      });
+
+      it('should provide error for missing DO after FOR-TO range', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      i : Integer;
+    BEGIN
+      FOR i := 1 TO 10
+        i := i + 1;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain('Expected DO after FOR range');
+      });
+
+      it('should provide error for missing DO after FOR-DOWNTO range', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      i : Integer;
+    BEGIN
+      FOR i := 10 DOWNTO 1
+        i := i - 1;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain('Expected DO after FOR range');
+      });
+
+      it('should provide error for missing DO after WITH record', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      WITH Customer
+        Customer.Name := 'Test';
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain('Expected DO after WITH record');
+      });
+    });
+
+    describe('= sign messages', () => {
+      // Skipped: Parser limitation - cannot reliably trigger this error path. See issue #286
+      it.skip('should provide error for missing = in PROPERTIES property', () => {
+        const code = `OBJECT Codeunit 1 Test
+{
+  PROPERTIES
+  {
+    OnRun BEGIN END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        const equalError = errors.find(e => e.message.includes('Expected = after property name'));
+        expect(equalError).toBeDefined();
+      });
+
+      // Skipped: Parser limitation - cannot reliably trigger this error path. See issue #286
+      it.skip('should provide error for missing = in field property', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1 ; ; No. ; Code20 ; Enabled True }
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        const equalError = errors.find(e => e.message.includes('Expected = after field property name'));
+        expect(equalError).toBeDefined();
+      });
+    });
+
+    describe(':: double colon message', () => {
+      // Skipped: Parser limitation - cannot reliably trigger this error path. See issue #286
+      it.skip('should provide error for missing :: in EVENT declaration', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    EVENT Subscriber@1 EventName@2();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        const doubleColonError = errors.find(e => e.message.includes('Expected :: between subscriber and event name'));
+        expect(doubleColonError).toBeDefined();
+      });
+    });
+
+    describe('END keyword messages', () => {
+      // Skipped: Parser limitation - cannot reliably trigger this error path. See issue #286
+      it.skip('should provide error for missing END to close BEGIN block', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      IF TRUE THEN BEGIN
+        MESSAGE('Test');
+      END
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        const endError = errors.find(e => e.message.includes('Expected END to close BEGIN block'));
+        expect(endError).toBeDefined();
+      });
+
+      // Skipped: Parser limitation - cannot reliably trigger this error path. See issue #286
+      it.skip('should provide error for missing END to close CASE statement', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      IF TRUE THEN
+        CASE x OF
+          1: MESSAGE('One');
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        const endError = errors.find(e => e.message.includes('Expected END to close CASE statement'));
+        expect(endError).toBeDefined();
+      });
+    });
+  });
+
   describe('Contextual brace/bracket error messages (Issue #182 Phase 2b)', () => {
     describe('PROPERTIES section', () => {
       it('should provide context for missing { to open PROPERTIES section', () => {

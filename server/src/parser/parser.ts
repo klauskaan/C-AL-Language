@@ -471,7 +471,7 @@ export class Parser {
   private parseProperty(): Property {
     const { name, startToken } = this.accumulatePropertyName();
 
-    const equalsToken = this.consume(TokenType.Equal, 'Expected =');
+    const equalsToken = this.consume(TokenType.Equal, 'Expected = after property name');
 
     // Check if this is a property trigger (value starts with VAR or BEGIN)
     // Property triggers: OnRun, OnValidate, OnLookup, OnInit, OnOpenPage, etc.
@@ -1105,7 +1105,7 @@ export class Parser {
         () => {
           const { name, startToken } = this.accumulatePropertyName();
 
-          const equalsToken = this.consume(TokenType.Equal, 'Expected =');
+          const equalsToken = this.consume(TokenType.Equal, 'Expected = after field property name');
 
           // Check if this is a trigger (starts with BEGIN or VAR) or regular property
           if (this.check(TokenType.Begin) || this.check(TokenType.Var)) {
@@ -2765,7 +2765,7 @@ export class Parser {
     const subscriberName = this.parseEventQualifiedName();
 
     // Expect :: scope resolution operator
-    this.consume(TokenType.DoubleColon, 'Expected ::');
+    this.consume(TokenType.DoubleColon, 'Expected :: between subscriber and event name');
 
     // Parse event name (e.g., "PictureAvailable@10" or "ControlAddInReady@8")
     const eventName = this.parseEventQualifiedName();
@@ -2867,7 +2867,7 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.End, 'Expected END');
+    const endToken = this.consume(TokenType.End, 'Expected END to close BEGIN block');
 
     return {
       type: 'BlockStatement',
@@ -3229,7 +3229,7 @@ export class Parser {
     const condition = this.parseExpression();
 
     // DO
-    this.consume(TokenType.Do, 'Expected DO');
+    this.consume(TokenType.Do, 'Expected DO after WHILE condition');
 
     // Parse body
     let body: Statement;
@@ -3350,7 +3350,7 @@ export class Parser {
     const to = this.parseExpression();
 
     // DO
-    this.consume(TokenType.Do, 'Expected DO');
+    this.consume(TokenType.Do, 'Expected DO after FOR range');
 
     // Parse body
     let body: Statement;
@@ -3408,7 +3408,7 @@ export class Parser {
       branches.push(this.parseCaseBranch());
     }
 
-    this.consume(TokenType.End, 'Expected END');
+    this.consume(TokenType.End, 'Expected END to close CASE statement');
     if (this.check(TokenType.Semicolon)) {
       this.advance();
     }
@@ -3593,7 +3593,7 @@ export class Parser {
     const record = this.parseExpression();
 
     // DO keyword
-    this.consume(TokenType.Do, 'Expected DO');
+    this.consume(TokenType.Do, 'Expected DO after WITH record');
 
     // Parse body (can be BEGIN-END block or single statement)
     let body: Statement;
