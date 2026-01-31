@@ -168,6 +168,20 @@ describe('SignatureHelpProvider', () => {
       expect(help).not.toBeNull();
       expect(help?.activeParameter).toBe(2);
     });
+
+    it('should clamp activeParameter when exceeding parameter count', () => {
+      // ROUND has 3 parameters: Number, Precision (optional), Direction (optional)
+      // Providing 7 commas should clamp to max parameter index
+      const doc = createDocument('ROUND(x, y, z, a, b, c, d, ');
+      const help = provider.getSignatureHelp(doc, Position.create(0, 27));
+
+      expect(help).not.toBeNull();
+      // activeParameter should be clamped to parameters.length - 1
+      // Even with 7 commas (activeParameter would be 7), it should clamp to max index
+      const maxIndex = help!.signatures[0].parameters!.length - 1;
+      expect(help?.activeParameter).toBe(maxIndex);
+      expect(help?.activeParameter).toBeLessThan(7); // Should not be the raw count
+    });
   });
 
   describe('Nested Function Calls', () => {
