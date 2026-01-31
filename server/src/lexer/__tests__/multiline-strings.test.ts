@@ -297,4 +297,57 @@ Continuation line.;ENU=English version';`;
       expect(tokens[0].value).toBe('Unix\nWindows\r\nOldMac\rEnd');
     });
   });
+
+  describe('Unicode with line endings', () => {
+    // Complements Category 7 in line-endings.test.ts (which tests Unicode in comments/quoted identifiers)
+    // These tests verify Unicode in multi-line STRING LITERALS
+
+    it('should handle Unicode with mixed line endings in string', () => {
+      const code = "'Café\nкириллица\r\n日本語\rEnd'";
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.String);
+      expect(tokens[0].value).toBe('Café\nкириллица\r\n日本語\rEnd');
+    });
+
+    it('should track line numbers correctly with Unicode and line endings', () => {
+      const code = "'Café\nкириллица\r\n日本語\rEnd' VAR";
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.String);
+      expect(tokens[0].line).toBe(1);
+      // VAR should be on line 4 (after LF, CRLF, CR)
+      expect(tokens[1].type).toBe(TokenType.Var);
+      expect(tokens[1].line).toBe(4);
+    });
+
+    it('should handle emoji in multi-line strings', () => {
+      const code = "'Hello 🌍\nWorld 🔵\r\nWave 👋'";
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.String);
+      expect(tokens[0].value).toBe('Hello 🌍\nWorld 🔵\r\nWave 👋');
+    });
+
+    it('should handle precomposed Unicode characters across line boundaries', () => {
+      const code = "'naïve\r\nÅngström\nŁódź'";
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.String);
+      expect(tokens[0].value).toBe('naïve\r\nÅngström\nŁódź');
+    });
+
+    it('should handle right-to-left text with line endings', () => {
+      const code = "'مرحبا\r\nשלום\nПривет'";
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.String);
+      expect(tokens[0].value).toBe('مرحبا\r\nשלום\nПривет');
+    });
+  });
 });
