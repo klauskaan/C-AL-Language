@@ -1032,4 +1032,84 @@ describe('Parser - Error Messages with Context', () => {
       });
     });
   });
+
+  describe('Case statement errors', () => {
+    it('should report error for missing colon after case branch value', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1 EXIT;
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].message).toContain('Expected : after case branch value');
+    });
+  });
+
+  describe('Set literal errors', () => {
+    it('should report specific error for unclosed set literal', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Value : Integer;
+    BEGIN
+      IF Value IN [1, 2, 3 THEN;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].message).toContain('Expected ] after set literal');
+    });
+  });
+
+  describe('EXIT statement errors', () => {
+    it('should report error for missing closing parenthesis in EXIT', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      EXIT(x;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].message).toContain('Expected ) after EXIT value');
+    });
+  });
 });
