@@ -1234,6 +1234,9 @@ describe('Parser - XMLport ELEMENTS Section', () => {
 
       // Subsequent element should be parsed correctly
       const allElements = result.elements?.elements || [];
+      // Verify total element count - valid elements captured (element1 and element2, malformed skipped)
+      expect(allElements.length).toBe(2);
+
       const element2 = allElements.find(e => e.name === 'element2');
       expect(element2).toBeDefined();
       expect(element2?.sourceType).toBe('Text');
