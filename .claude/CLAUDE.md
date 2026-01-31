@@ -43,8 +43,11 @@ We work as **pair programming partners**:
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ 4. IMPLEMENT                                                │
-│    Execute plan tasks with assigned agents                  │
+│    senior-developer → execute plan                          │
 │    test-runner → verify tests pass                          │
+│                                                             │
+│    senior-developer returns REJECTED?                       │
+│       └─ Back to step 2 with feedback from rejection        │
 │                                                             │
 │    Tests still fail after implementation?                   │
 │       ├─ Minor bug → fix and retry                          │
@@ -70,11 +73,14 @@ We work as **pair programming partners**:
 │    Design flaw found? → back to step 2 (re-plan)            │
 └─────────────────────────────────────────────────────────────┘
                           ↓
-              Issues found? → FIX (implementer) → back to REVIEW
+              Issues found? → FIX (senior-developer) → back to REVIEW
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ 6. COMMIT AND PUSH                                          │
-│    file-ops → create commit with meaningful message and push│
+│    commit → stage, commit, push, verify                     │
+│    - Commit message MUST include "Fixes #X" to close issue  │
+│    - Verify issue is CLOSED after push                      │
+│    - Exclude temporary/debug files from staging             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -131,6 +137,8 @@ Use these to determine next step at each workflow checkpoint.
 | IMPLEMENT | Tests fail, fix <20 lines, matches plan | Fix and retry |
 | IMPLEMENT | Tests fail, fix contradicts plan | Back to PLAN |
 | IMPLEMENT | Tests fail, wrong root cause revealed | Back to INVESTIGATE |
+| IMPLEMENT | Senior-developer returns REJECTED | Back to PLAN with rejection feedback |
+| IMPLEMENT | Senior-developer confidence LOW | Proceed to REVIEW, flag for deep review |
 | REVIEW | All feedback dispositioned, reviewer approves | Proceed to COMMIT AND PUSH |
 | REVIEW | ACCEPT-FIX items remain | Fix and request re-review |
 | REVIEW | Missing test coverage identified | Add tests (ACCEPT-FIX), re-review |
@@ -335,12 +343,13 @@ If in doubt whether something qualifies, create a follow-up issue instead of exp
 ### Sonnet (Medium - balanced)
 | Agent | Purpose |
 |-------|---------|
-| **implementer** | Code changes, features, bug fixes |
+| **senior-developer** | Code changes, features, bug fixes (see agents/senior-developer.md) |
 | **test-writer** | Write/update tests, snapshots |
 | **typescript-reviewer** | Type safety, TS best practices |
 | **cal-expert** | C/AL correctness, AL prevention |
 | **refactorer** | Code cleanup, pattern application |
-| **file-ops** | Git commits, push to remote, branches, file management |
+| **commit** | Stage, commit, push, verify issue closure (see agents/commit.md) |
+| **file-ops** | Branches, file management, other git operations |
 
 ### Opus (Hard - deep analysis)
 | Agent | Purpose |
@@ -517,3 +526,5 @@ Apply this check when you first encounter a TypeScript error during any workflow
 5. **code-detective for non-obvious issues** - Deep investigation prevents wasted work
 6. **Only explicit "APPROVED" exits review loops** - "Conditional approval" or "LGTM if you clarify X" requires resuming the reviewer with clarifications, not asking the user for permission to proceed (incident: 2026-01-19)
 7. **Explicit assumptions + lightweight verification** - Architect states assumptions explicitly, adversarial-reviewer flags critical items with [VERIFY], orchestrator confirms with fresh tool calls. Mitigates silent tool failures without excessive overhead (EmptySetValidator implementation, 2026-01-23)
+8. **Explicit issue closure** - Commit messages must use "Fixes #X" format (not just "#X"); verify issue state after push. Auto-close failures require manual `gh issue close` (incident: 2026-01-31)
+9. **Implementation verification** - Senior-developer must re-read files after editing to confirm changes were applied; agents can claim success without actual changes due to silent tool failures (incident: 2026-01-31)
