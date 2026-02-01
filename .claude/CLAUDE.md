@@ -203,9 +203,15 @@ Use these to determine next step at each workflow checkpoint.
 | MERGE | STRUCTURAL/SEMANTIC conflict | Escalate to senior-merge-engineer |
 | MERGE | All strategies fail, can re-approach | Back to PLAN with dual-session context |
 | MERGE | Goal conflict or complexity exceeds bounds | Escalate to human (last resort) |
+| RUN TESTS (coverage task) | All tests pass | Good - existing code works, commit as-is |
+| RUN TESTS (coverage task) | Tests fail revealing bugs | Skip with .skip() + create tracking issues |
+| RUN TESTS (coverage task) | Tests fail with wrong expectations | Fix test expectations to match actual behavior |
+| RUN TESTS (coverage task) | Cannot determine if bug or wrong expectation | Investigate actual behavior, then disposition |
 
 **TDD Rule:** Tests MUST fail first (for new bugs). Passing tests = wrong diagnosis.
 **Exception:** Regression tests, refactoring, test-after for legacy code.
+
+**Exception for Test Coverage Tasks:** When adding tests for existing functionality (not fixing bugs), tests may pass (good) or fail (revealing bugs). Failing tests should be skipped with `.skip()` and bugs tracked in separate issues.
 
 **TDD for New Features:** Tests fail because the code doesn't exist yet. The PLAN phase provides the design; tests encode that design as assertions.
 - **Outside-In:** Start with acceptance criteria from the plan, drill down to units
