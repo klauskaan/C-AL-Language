@@ -2186,14 +2186,36 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Parser consumes subsequent object sections as element properties. Needs new issue.
-      it.skip('should provide context for missing } to close ELEMENTS section', () => {
+      it('should provide context for missing } to close ELEMENTS section', () => {
         const code = `OBJECT XMLport 99999 Test
 {
   ELEMENTS
   {
     { [{12345678-1234-1234-1234-123456789012}] ; ; Customer ; Element ; Text }
     { [{87654321-4321-4321-4321-210987654321}] ; 1 ; Name ; Attribute ; Text }
+
+  CODE
+  {
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        const closeError = errors.find(e => e.message.includes('Expected } to close ELEMENTS section'));
+        expect(closeError).toBeDefined();
+      });
+
+      it('should detect missing } to close ELEMENTS section with single element', () => {
+        const code = `OBJECT XMLport 99999 Test
+{
+  ELEMENTS
+  {
+    { [{12345678-1234-1234-1234-123456789012}] ; ; Customer ; Element ; Text }
 
   CODE
   {

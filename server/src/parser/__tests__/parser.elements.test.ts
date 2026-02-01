@@ -1253,9 +1253,9 @@ describe('Parser - XMLport ELEMENTS Section', () => {
 
     it('should recover at section boundary when last element is malformed', () => {
       // Verifies fix for issue #274: ELEMENTS recovery now stops at section boundaries.
-      // When the last element is malformed (missing closing brace), recovery detects
-      // section keywords (CODE, REQUESTPAGE, etc.) and stops, allowing subsequent
-      // sections to parse correctly.
+      // When the ELEMENTS section is missing its closing brace, the parser captures
+      // syntactically complete elements and reports a section-level error, allowing
+      // subsequent sections to parse correctly.
       const code = `OBJECT XMLport 50000 "Test XMLport"
       {
         PROPERTIES
@@ -1287,9 +1287,16 @@ describe('Parser - XMLport ELEMENTS Section', () => {
       expect(firstElement).toBeDefined();
       expect(firstElement?.name).toBe('validElement');
 
-      // Verify malformed element was NOT captured
-      expect(allElements.find(e => e.guid === 'BROKEN-GUID')).toBeUndefined();
-      expect(allElements.find(e => e.name === 'brokenElement')).toBeUndefined();
+      // Verify element IS captured - it's syntactically complete, only section/element braces are missing
+      const brokenElement = allElements.find(e => e.guid === 'BROKEN-GUID');
+      expect(brokenElement).toBeDefined();
+      expect(brokenElement?.name).toBe('brokenElement');
+
+      // Verify error is about missing closing brace (section-level or element-level)
+      const hasBraceError = result.errors.some(
+        err => err.message.includes('Expected }') || err.message.includes('closing brace')
+      );
+      expect(hasBraceError).toBe(true);
 
       // CODE section MUST be parsed - recovery should stop at closing brace
       const obj = result.ast.object as ObjectDeclaration;
