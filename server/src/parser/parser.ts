@@ -2065,38 +2065,6 @@ export class Parser {
       }
     }
 
-    // Check if the next token is a RightBrace. If so, verify it's the element's closing brace
-    // and not the ELEMENTS section's closing brace. If it might be the section's closing brace
-    // (i.e., followed by a section keyword), throw an error to trigger recovery.
-    if (this.check(TokenType.RightBrace)) {
-      const nextBrace = this.peek();
-      const tokenAfterBrace = this.peekAhead(1);
-
-      // Check if the token after the closing brace is a section keyword
-      let isFollowedBySectionKeyword = false;
-      if (tokenAfterBrace) {
-        // For CODE/CONTROLS, we need to check if they're followed by { to be a section keyword
-        if (tokenAfterBrace.type === TokenType.Code || tokenAfterBrace.type === TokenType.Controls) {
-          const tokenAfterCodeControl = this.peekAhead(2);
-          isFollowedBySectionKeyword = tokenAfterCodeControl?.type === TokenType.LeftBrace;
-        } else {
-          // For other keywords, they're unambiguous section keywords
-          isFollowedBySectionKeyword = SECTION_KEYWORDS.has(tokenAfterBrace.type);
-        }
-      }
-
-      // If the brace is followed by a section keyword or EOF, it's likely the ELEMENTS section's
-      // closing brace, not this element's closing brace. This indicates the element is malformed
-      // (missing its own closing brace).
-      if (tokenAfterBrace &&
-          (isFollowedBySectionKeyword || tokenAfterBrace.type === TokenType.EOF)) {
-        throw this.createParseError(
-          `Malformed element: missing closing brace for element '${name}' (found section keyword or EOF instead)`,
-          nextBrace
-        );
-      }
-    }
-
     const endToken = this.consume(TokenType.RightBrace, 'Expected } to close element definition');
 
     return {
