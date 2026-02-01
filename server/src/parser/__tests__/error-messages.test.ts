@@ -1586,8 +1586,8 @@ describe('Parser - Error Messages with Context', () => {
         expect(endError).toBeDefined();
       });
 
-      // Skipped: Outer BEGIN block error detected before CASE statement error (architectural)
-      it.skip('should provide error for missing END to close CASE statement', () => {
+      // Re-enabled for Issue #297: CASE statement END detection
+      it('should provide error for missing END to close CASE statement', () => {
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1612,6 +1612,201 @@ describe('Parser - Error Messages with Context', () => {
         expect(errors.length).toBeGreaterThan(0);
         const endError = errors.find(e => e.message.includes('Expected END to close CASE statement'));
         expect(endError).toBeDefined();
+      });
+
+      it('should report CASE statement missing END, not BEGIN block error', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+      // Missing END to close CASE
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        // Should report CASE error, not BEGIN error
+        const caseErrors = errors.filter(e =>
+          e.message.includes('Expected END to close CASE statement')
+        );
+        const beginErrors = errors.filter(e =>
+          e.message.includes('Expected END to close BEGIN block')
+        );
+
+        expect(caseErrors.length).toBeGreaterThan(0);
+        expect(beginErrors).toHaveLength(0);
+      });
+
+      it('should detect nested CASE statements both missing END', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      a : Integer;
+      b : Integer;
+    BEGIN
+      CASE a OF
+        1:
+          CASE b OF
+            2: MESSAGE('Inner');
+          // Inner CASE missing END
+        // Outer CASE missing END
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        const caseErrors = errors.filter(e =>
+          e.message.includes('Expected END to close CASE statement')
+        );
+
+        expect(caseErrors.length).toBeGreaterThanOrEqual(1);
+      });
+
+      it('should correctly parse valid nested CASE statements', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      a : Integer;
+      b : Integer;
+      c : Integer;
+    BEGIN
+      CASE a OF
+        1:
+          CASE b OF
+            2:
+              CASE c OF
+                3: MESSAGE('Deep');
+              END;
+          END;
+      END;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        const caseErrors = errors.filter(e =>
+          e.message.includes('CASE')
+        );
+
+        expect(caseErrors).toHaveLength(0);
+      });
+
+      it('should detect CASE missing END followed by IF statement (current limitation)', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+      // Missing END to close CASE
+      IF TRUE THEN
+        MESSAGE('After CASE');
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        // NOTE: This test documents current behavior - the heuristic does NOT
+        // trigger when END is followed by IF/WHILE/FOR (intentional conservatism).
+        // The CASE error may not be detected in this scenario.
+        // Tracked in issue #314
+
+        expect(errors.length).toBeGreaterThan(0);
+        // Just verify we get SOME error - exact error type varies
+      });
+
+      it('should detect CASE missing END when branch contains BEGIN block', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: BEGIN
+             MESSAGE('In block');
+           END;
+        // Missing END to close CASE
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        const caseErrors = errors.filter(e =>
+          e.message.includes('Expected END to close CASE statement')
+        );
+
+        expect(caseErrors.length).toBeGreaterThan(0);
+      });
+
+      it('should correctly parse CASE followed by more statements', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+      END;
+      IF TRUE THEN
+        MESSAGE('After CASE');
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors).toHaveLength(0);
       });
     });
   });
