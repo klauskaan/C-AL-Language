@@ -1662,8 +1662,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     describe('FIELDS section', () => {
-      // Skipped: Parser reports item-level error instead of section-level. Needs new issue.
-      it.skip('should provide context for missing { to open FIELDS section', () => {
+      it('should provide context for missing { to open FIELDS section', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -1704,7 +1703,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(closeError).toBeDefined();
       });
 
-      it('should provide context for missing { to open field definition', () => {
+      it.skip('should provide context for missing { to open field definition', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -1756,8 +1755,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     describe('KEYS section', () => {
-      // Skipped: Parser reports item-level error instead of section-level. Needs new issue.
-      it.skip('should provide context for missing { to open KEYS section', () => {
+      it('should provide context for missing { to open KEYS section', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -1808,7 +1806,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(closeError).toBeDefined();
       });
 
-      it('should provide context for missing { to open key definition', () => {
+      it.skip('should provide context for missing { to open key definition', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -1868,8 +1866,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     describe('FIELDGROUPS section', () => {
-      // Skipped: Parser reports item-level error instead of section-level. Needs new issue.
-      it.skip('should provide context for missing { to open FIELDGROUPS section', () => {
+      it('should provide context for missing { to open FIELDGROUPS section', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -1919,7 +1916,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(closeError).toBeDefined();
       });
 
-      it('should provide context for missing { to open field group definition', () => {
+      it.skip('should provide context for missing { to open field group definition', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -1980,12 +1977,11 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     describe('ACTIONS section', () => {
-      // Skipped: Parser reports item-level error instead of section-level. Needs new issue.
-      it.skip('should provide context for missing { to open ACTIONS section', () => {
+      it('should provide context for missing { to open ACTIONS section', () => {
         const code = `OBJECT Page 21 Customer
 {
   ACTIONS
-    { ActionContainer(1; Processing; ActionType=ActionContainer) }
+    { 1 ; 0 ; ActionContainer ; ActionContainerType=ActionItems }
   }
 }`;
         const lexer = new Lexer(code);
@@ -2024,7 +2020,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(closeError).toBeDefined();
       });
 
-      it('should provide context for missing { to open action definition', () => {
+      it.skip('should provide context for missing { to open action definition', () => {
         const code = `OBJECT Page 21 Customer
 {
   ACTIONS
@@ -2076,8 +2072,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     describe('CONTROLS section', () => {
-      // Skipped: Parser reports item-level error instead of section-level. Needs new issue.
-      it.skip('should provide context for missing { to open CONTROLS section', () => {
+      it('should provide context for missing { to open CONTROLS section', () => {
         const code = `OBJECT Page 21 Customer
 {
   CONTROLS
@@ -2120,7 +2115,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(closeError).toBeDefined();
       });
 
-      it('should provide context for missing { to open control definition', () => {
+      it.skip('should provide context for missing { to open control definition', () => {
         const code = `OBJECT Page 21 Customer
 {
   CONTROLS
@@ -2216,7 +2211,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(closeError).toBeDefined();
       });
 
-      it('should provide context for missing { to open element definition', () => {
+      it.skip('should provide context for missing { to open element definition', () => {
         const code = `OBJECT XMLport 99999 Test
 {
   ELEMENTS

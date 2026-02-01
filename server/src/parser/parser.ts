@@ -629,7 +629,7 @@ export class Parser {
    */
   private parseFieldSection(): FieldSection {
     const startToken = this.consume(TokenType.Fields, 'Expected FIELDS');
-    this.consume(TokenType.LeftBrace, 'Expected { to open FIELDS section');
+    this.consumeSectionBrace('FIELDS', (t) => t === TokenType.Integer);
 
     const fields: FieldDeclaration[] = [];
 
@@ -1270,7 +1270,7 @@ export class Parser {
    */
   private parseKeySection(): KeySection {
     const startToken = this.consume(TokenType.Keys, 'Expected KEYS');
-    this.consume(TokenType.LeftBrace, 'Expected { to open KEYS section');
+    this.consumeSectionBrace('KEYS', (t) => t === TokenType.Semicolon);
 
     const keys: KeyDeclaration[] = [];
 
@@ -1337,7 +1337,7 @@ export class Parser {
    */
   private parseFieldGroupSection(): FieldGroupSection {
     const startToken = this.consume(TokenType.FieldGroups, 'Expected FIELDGROUPS');
-    this.consume(TokenType.LeftBrace, 'Expected { to open FIELDGROUPS section');
+    this.consumeSectionBrace('FIELDGROUPS', (t) => t === TokenType.Integer);
 
     const fieldGroups: FieldGroup[] = [];
 
@@ -1447,7 +1447,7 @@ export class Parser {
    */
   private parseActionSection(): ActionSection {
     const startToken = this.consume(TokenType.Actions, 'Expected ACTIONS');
-    this.consume(TokenType.LeftBrace, 'Expected { to open ACTIONS section');
+    this.consumeSectionBrace('ACTIONS', (t) => t === TokenType.Integer);
 
     const flatActions: ActionDeclaration[] = [];
 
@@ -1600,7 +1600,7 @@ export class Parser {
    */
   private parseControlSection(): ControlSection {
     const startToken = this.consume(TokenType.Controls, 'Expected CONTROLS');
-    this.consume(TokenType.LeftBrace, 'Expected { to open CONTROLS section');
+    this.consumeSectionBrace('CONTROLS', (t) => t === TokenType.Integer);
 
     const flatControls: ControlDeclaration[] = [];
 
@@ -4802,6 +4802,51 @@ export class Parser {
     const sanitizedType = sanitizeTokenType(current.type as string);
     const enhancedMessage = `${message}, but found '${sanitizeContent(current.value)}' (${sanitizedType})`;
     throw this.createParseError(enhancedMessage, current);
+  }
+
+  /**
+   * Consume the opening brace for a section, with lookahead validation.
+   *
+   * When a section opening brace is missing, the parser greedily consumes
+   * the first item's opening brace as the section's brace. This method detects
+   * that situation by peeking at the token after the brace and checking if it
+   * matches the expected item content pattern.
+   *
+   * Detection is deliberately CONSERVATIVE to avoid false positives:
+   * - Only triggers section-level error when highly confident
+   * - Ambiguous cases fall through to item parser (produces reasonable error)
+   *
+   * @param sectionName Name of the section for error messages (e.g., "FIELDS")
+   * @param isItemContentToken Predicate to check if token indicates item content
+   *        (i.e., we consumed an item brace instead of section brace)
+   * @returns The opening brace token if valid, or previous token if error recorded
+   */
+  private consumeSectionBrace(
+    sectionName: string,
+    isItemContentToken: (tokenType: TokenType | undefined) => boolean
+  ): Token {
+    if (!this.check(TokenType.LeftBrace)) {
+      // No brace at all - record error and return previous token
+      this.recordError(`Expected { to open ${sectionName} section`);
+      return this.previous();
+    }
+
+    // Peek at token after the brace to validate we're consuming a section brace
+    const tokenAfterBrace = this.peekAhead(1);
+
+    // Check if we're about to consume an item brace instead of section brace
+    // This is detected when the token after { matches item content pattern
+    if (isItemContentToken(tokenAfterBrace?.type)) {
+      // We would consume an item brace as section brace
+      // Record section-level error but do NOT consume the brace
+      // This allows item parsing to proceed normally
+      this.recordError(`Expected { to open ${sectionName} section`);
+      return this.previous();
+    }
+
+    // Either valid section brace ({ followed by { or }) or ambiguous case
+    // In ambiguous cases, consume as section brace and let item parser handle errors
+    return this.advance();
   }
 
   public getErrors(): ParseError[] {
