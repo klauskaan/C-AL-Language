@@ -3512,6 +3512,23 @@ export class Parser {
       }
     }
 
+    // Before consuming END, check if it likely belongs to outer structure
+    if (this.isEndForOuterStructure()) {
+      // END followed by section close or procedure boundary
+      // This END likely belongs to outer BEGIN block
+      this.recordError('Expected END to close CASE statement', this.peek());
+      // Return partial node without consuming END
+      // Let outer parseBlock() consume it and succeed
+      return {
+        type: 'CaseStatement',
+        expression,
+        branches,
+        elseBranch,
+        startToken,
+        endToken: this.previous()  // Last token before END (partial node marker)
+      };
+    }
+
     this.consume(TokenType.End, 'Expected END to close CASE statement');
     if (this.check(TokenType.Semicolon)) {
       this.advance();
@@ -4558,6 +4575,54 @@ export class Parser {
       return undefined;
     }
     return this.tokens[index];
+  }
+
+  /**
+   * Check if the current END token likely belongs to an outer structure.
+   *
+   * When CASE is missing its END, the END we see belongs to an enclosing
+   * BEGIN block. We detect this conservatively by checking what follows END:
+   * - END; followed by } → outer structure (section/object close)
+   * - END; followed by PROCEDURE/TRIGGER/EVENT/FUNCTION → outer structure (next procedure)
+   *
+   * This is deliberately CONSERVATIVE to avoid false positives:
+   * - Only triggers when followed by clear outer-structure signals
+   * - Does NOT trigger on statements like IF, WHILE (could be valid)
+   *
+   * @returns true if END likely belongs to outer structure
+   */
+  private isEndForOuterStructure(): boolean {
+    if (!this.check(TokenType.End)) {
+      return false;
+    }
+
+    // Look at what follows: END ; ???
+    // peekAhead(1) = ; or next token
+    // peekAhead(2) = token after ;
+    const afterEnd = this.peekAhead(1);
+    let checkToken = afterEnd;
+
+    if (afterEnd?.type === TokenType.Semicolon) {
+      checkToken = this.peekAhead(2);
+    }
+
+    if (!checkToken) {
+      return false; // EOF - ambiguous, don't trigger
+    }
+
+    // Clear outer-structure signals
+    const outerStructureTokens = [
+      TokenType.RightBrace,    // Closing section/object
+      TokenType.Procedure,     // Next procedure
+      TokenType.Trigger,       // Next trigger
+      TokenType.Event,         // Next event
+      TokenType.Function,      // Next function
+    ];
+
+    // Also check by value for } in case token type is not properly set
+    const isClosingBrace = checkToken.value === '}';
+
+    return outerStructureTokens.includes(checkToken.type) || isClosingBrace;
   }
 
   /**
