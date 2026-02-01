@@ -1179,6 +1179,30 @@ describe('Parser - Error Messages with Context', () => {
         expect(errors[0].message).toContain('Expected ] after set literal');
       });
 
+      it('should report error for unclosed set literal with trailing comma before error', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Value : Integer;
+    BEGIN
+      IF Value IN [1, 2, THEN;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain('Expected ] after set literal');
+      });
+
       it('should report error for set literal with keyword as first element', () => {
         const code = `OBJECT Codeunit 50000 Test
 {
