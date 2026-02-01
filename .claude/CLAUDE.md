@@ -578,6 +578,24 @@ Note: There is no separate compile command for server-only. The root `npm run co
 
 Apply this check when you first encounter a TypeScript error during any workflow step. A 5-second compile saves minutes of chasing phantom errors.
 
+**Exception: Test Files (*.test.ts, *.spec.ts)**
+
+Jest test files may show false positive TypeScript errors for globals like `describe`, `it`, `expect`, `beforeEach`, `afterEach`, and `jest`. This occurs because VS Code's TypeScript server may not recognize the test file's tsconfig scope, even though `@types/jest` is installed.
+
+**Symptoms:** IDE shows "Cannot find name 'describe'" or similar for Jest globals in test files.
+
+**Workarounds:**
+1. **Restart TypeScript server:** `Ctrl+Shift+P` → "TypeScript: Restart TS Server"
+2. **Verify by running tests:** `cd server && npm test`
+
+If tests pass after step 2, the IDE errors are false positives - ignore them.
+
+**Summary:**
+| File Type | Verification Method |
+|-----------|---------------------|
+| Source files (`*.ts` in `src/`, `server/src/`) | `npm run compile` |
+| Test files (`*.test.ts`, `*.spec.ts`) | Restart TS server, or `cd server && npm test` |
+
 ---
 
 ## Available Skills
