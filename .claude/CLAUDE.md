@@ -185,6 +185,10 @@ Use these to determine next step at each workflow checkpoint.
 | TDD | Tests pass immediately | STOP - misdiagnosis, back to INVESTIGATE |
 | TDD | Tests cannot be written (unclear spec) | Back to PLAN for clarification |
 | TDD | Existing tests need modification | Confirm behavior change is intended |
+| TDD (coverage task) | All tests pass | Existing code works as expected - proceed to REVIEW |
+| TDD (coverage task) | Tests fail revealing actual bug | Mark test with .skip(), create bug issue, proceed to REVIEW |
+| TDD (coverage task) | Tests fail due to wrong expectation | Correct test to match documented behavior, re-run |
+| TDD (coverage task) | Uncertain if bug or wrong expectation | Default to skip + track; investigate if pattern repeats |
 | IMPLEMENT | Tests pass, matches plan | Proceed to REVIEW |
 | IMPLEMENT | Tests pass, minor deviations | Proceed to REVIEW, flag deviations |
 | IMPLEMENT | Tests fail, fix <20 lines, matches plan | Fix and retry |
@@ -205,13 +209,25 @@ Use these to determine next step at each workflow checkpoint.
 | MERGE | Goal conflict or complexity exceeds bounds | Escalate to human (last resort) |
 
 **TDD Rule:** Tests MUST fail first (for new bugs). Passing tests = wrong diagnosis.
-**Exception:** Regression tests, refactoring, test-after for legacy code.
+**Exception:** Regression tests, refactoring, test-after for legacy code, and test coverage tasks (see below).
 
 **TDD for New Features:** Tests fail because the code doesn't exist yet. The PLAN phase provides the design; tests encode that design as assertions.
 - **Outside-In:** Start with acceptance criteria from the plan, drill down to units
 - **Inside-Out:** Start with core logic units from the plan, compose upward
 - Choose based on what's clearest: user-facing behavior (outside-in) or internal logic (inside-out)
 - If tests pass immediately for a new feature, investigate: either existing code already satisfies the requirement (design overlap) or the tests are asserting the wrong thing
+
+**Test Coverage Tasks:** When the task is adding test coverage for existing functionality (not fixing bugs), passing tests are the expected outcome - they confirm the code works correctly.
+
+How to identify a coverage task:
+- Goal is documenting/verifying existing behavior, not changing it
+- No specific bug report or failure to fix
+- Success means tests match current implementation
+
+Failing tests require disposition:
+- **Reveals actual bug:** Mark with `.skip('Bug: [description] - see #XXX')`, create tracking issue, proceed to REVIEW
+- **Wrong test expectation:** Correct the test to match documented/intended behavior, re-run
+- **Uncertain:** Default to skip + track; investigate if the pattern repeats across multiple tests
 
 **Review Rule:** adversarial-reviewer is MANDATORY before every commit.
 - Not optional, even for "trivial" changes
