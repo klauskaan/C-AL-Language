@@ -538,4 +538,327 @@ describe('Parser - Nested CASE Error Recovery', () => {
       expect(colonError?.token.line).toBe(14);
     });
   });
+
+  describe('Issue #298 - Malformed function call consumes identifier case values', () => {
+    it('should recover from malformed function call and recognize identifier case value', () => {
+      // EXPECTED TO FAIL: parseFunctionCallIfPresent silently consumes all tokens including "Ready:"
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestCase@1();
+    VAR
+      x@1000 : Integer;
+      Ready@1001 : Integer;
+    BEGIN
+      CASE x OF
+        SomeFunc(arg:
+        Ready: MESSAGE('Ready');
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should report error for malformed function call (missing closing paren)
+      expect(errors.length).toBeGreaterThan(0);
+      const hasError = errors.some(e =>
+        e.message.includes('function') ||
+        e.message.includes('Expected') ||
+        e.message.includes('arguments') ||
+        e.message.includes(')')
+      );
+      expect(hasError).toBe(true);
+
+      // Should still parse the CASE statement
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures.length).toBe(1);
+      const statements = procedures[0]?.body || [];
+      const caseStmt = statements[0] as CaseStatement;
+
+      expect(caseStmt).toBeDefined();
+      expect(caseStmt.type).toBe('CaseStatement');
+
+      // Should have recovered and found the identifier case value branch
+      // BUG: Currently parser consumes "Ready: MESSAGE('Ready');" as function arguments
+      // Expected: 1 branch with identifier case value "Ready"
+      // Actual: 0 branches or malformed structure
+      expect(caseStmt.branches.length).toBeGreaterThanOrEqual(1);
+      expect(caseStmt.branches[0]?.values?.[0]?.type).toBe('Identifier');
+      expect((caseStmt.branches[0]?.values?.[0] as any)?.name).toBe('Ready');
+    });
+
+    it.skip('should recover from malformed function call and recognize quoted identifier case value', () => {
+      // Deferred to Issue #318: Incomplete function calls without arguments
+      // EXPECTED TO FAIL: Quoted identifiers also consumed during function call parsing
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestCase@1();
+    VAR
+      x@1000 : Integer;
+    BEGIN
+      CASE x OF
+        BrokenFunc(
+        "My Value": MESSAGE('Value');
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should report error for malformed function call
+      expect(errors.length).toBeGreaterThan(0);
+
+      // Should have recognized quoted identifier as case value
+      const procedures = ast.object?.code?.procedures || [];
+      const statements = procedures[0]?.body || [];
+      const caseStmt = statements[0] as CaseStatement;
+
+      expect(caseStmt.type).toBe('CaseStatement');
+      expect(caseStmt.branches.length).toBeGreaterThanOrEqual(1);
+      expect(caseStmt.branches[0]?.values?.[0]?.type).toBe('Identifier');
+    });
+
+    it.skip('should recover to multiple identifier case values after malformed function', () => {
+      // Deferred to Issue #319: CASE branch values appear as null in AST
+      // EXPECTED TO FAIL: Multiple branches after error all consumed
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestCase@1();
+    VAR
+      x@1000 : Integer;
+      Ready@1001 : Integer;
+      Done@1002 : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        BadFunc(x:
+        Ready: MESSAGE('Ready');
+        Done: MESSAGE('Done');
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should report error for malformed function call
+      expect(errors.length).toBeGreaterThan(0);
+
+      // Should have all branches: '1:', 'Ready:', and 'Done:'
+      const procedures = ast.object?.code?.procedures || [];
+      const statements = procedures[0]?.body || [];
+      const caseStmt = statements[0] as CaseStatement;
+
+      expect(caseStmt.type).toBe('CaseStatement');
+      // BUG: Currently only 1 branch (the '1:'), rest consumed as function args
+      // Expected: 3 branches
+      expect(caseStmt.branches.length).toBe(3);
+
+      // Verify branch names
+      const branchValues = caseStmt.branches.map(b => {
+        const val = b.values[0];
+        if (val.type === 'NumberLiteral') return (val as any).value;
+        if (val.type === 'Identifier') return (val as any).name;
+        return null;
+      });
+      expect(branchValues).toContain(1);
+      expect(branchValues).toContain('Ready');
+      expect(branchValues).toContain('Done');
+    });
+
+    it('should not consume subsequent procedures during error recovery', () => {
+      // EXPECTED TO FAIL: SecondProc might be consumed if recovery goes too far
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE FirstProc@1();
+    VAR
+      x@1000 : Integer;
+      Ready@1001 : Integer;
+    BEGIN
+      CASE x OF
+        Broken(
+        Ready: MESSAGE('Ready');
+      END;
+    END;
+
+    PROCEDURE SecondProc@2();
+    BEGIN
+      MESSAGE('Second');
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+
+      // Should preserve both procedures - recovery must not consume beyond END;
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures.length).toBe(2);
+      expect(procedures[0].name).toBe('FirstProc');
+      expect(procedures[1].name).toBe('SecondProc');
+
+      // Verify SecondProc has its body
+      expect(procedures[1].body).toBeDefined();
+      expect(procedures[1].body.length).toBeGreaterThan(0);
+    });
+
+    it('should handle identifier case value with empty previous branch', () => {
+      // Test case without malformed call - identifier should parse normally
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestCase@1();
+    VAR
+      x@1000 : Integer;
+      Ready@1001 : Integer;
+    BEGIN
+      CASE x OF
+        1:
+        Ready: MESSAGE('Ready');
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should parse successfully (empty branches are valid in C/AL)
+      expect(errors.length).toBe(0);
+
+      // Should have two branches: '1:' (empty) and 'Ready:'
+      const procedures = ast.object?.code?.procedures || [];
+      const statements = procedures[0]?.body || [];
+      const caseStmt = statements[0] as CaseStatement;
+
+      expect(caseStmt.type).toBe('CaseStatement');
+      // BUG: May only have 1 branch if identifier not recognized
+      expect(caseStmt.branches.length).toBe(2);
+    });
+
+    it('should distinguish identifier case value from function argument identifier', () => {
+      // Verify parser doesn't falsely detect identifiers in function arguments as case values
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestCase@1();
+    VAR
+      x@1000 : Integer;
+      Ready@1001 : Integer;
+      a@1002 : Integer;
+      b@1003 : Integer;
+      c@1004 : Integer;
+    BEGIN
+      CASE x OF
+        1: SomeFunc(a, b, c);
+        Ready: MESSAGE('Ready');
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should parse successfully - no false positives from function args
+      expect(errors.length).toBe(0);
+
+      // Should have exactly two branches: '1:' and 'Ready:'
+      const procedures = ast.object?.code?.procedures || [];
+      const statements = procedures[0]?.body || [];
+      const caseStmt = statements[0] as CaseStatement;
+
+      expect(caseStmt.type).toBe('CaseStatement');
+      expect(caseStmt.branches.length).toBe(2);
+
+      // First branch is numeric literal 1
+      expect(caseStmt.branches[0].values[0].type).toBe('Literal');
+
+      // Second branch is identifier Ready
+      expect(caseStmt.branches[1].values[0].type).toBe('Identifier');
+      expect((caseStmt.branches[1].values[0] as any).name).toBe('Ready');
+    });
+
+    it.skip('should recover at identifier followed by colon, not identifier followed by comma', () => {
+      // Deferred to Issue #320: Missing colon in CASE values not recovered properly
+      // EXPECTED TO FAIL: During error recovery, stop at "ValidIdent:" not at "a" in args
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestCase@1();
+    VAR
+      x@1000 : Integer;
+      ValidIdent@1001 : Integer;
+      a@1002 : Integer;
+      b@1003 : Integer;
+      c@1004 : Integer;
+    BEGIN
+      CASE x OF
+        1 SomeFunc(a, b, c);
+        ValidIdent: MESSAGE('Valid');
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should report error for missing colon after '1'
+      expect(errors.length).toBeGreaterThan(0);
+      const colonError = errors.find(e => e.message.includes('Expected : after case branch value'));
+      expect(colonError).toBeDefined();
+
+      // Should have recovered and parsed 'ValidIdent:' as a valid branch
+      // Recovery must look ahead: identifier + colon = recovery point
+      //                          identifier + comma = keep consuming
+      const procedures = ast.object?.code?.procedures || [];
+      const statements = procedures[0]?.body || [];
+      const caseStmt = statements[0] as CaseStatement;
+
+      expect(caseStmt.type).toBe('CaseStatement');
+      expect(caseStmt.branches.length).toBeGreaterThanOrEqual(2);
+
+      // Second branch should be ValidIdent
+      const lastBranch = caseStmt.branches[caseStmt.branches.length - 1];
+      expect(lastBranch.values[0].type).toBe('Identifier');
+      expect((lastBranch.values[0] as any).name).toBe('ValidIdent');
+    });
+
+  });
 });

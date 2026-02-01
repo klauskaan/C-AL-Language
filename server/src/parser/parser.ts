@@ -3487,12 +3487,17 @@ export class Parser {
             if (this.check(TokenType.Else)) {
               break;
             }
+            // Stop at procedure boundaries - don't consume into next procedure
+            if (this.check(TokenType.Procedure) || this.check(TokenType.Trigger) ||
+                this.check(TokenType.Event)) {
+              break;
+            }
             // Stop at semicolon - likely ends the branch statement
             if (this.check(TokenType.Semicolon)) {
               this.advance();
               break;
             }
-            // Stop at potential next case value (number or string)
+            // Stop at potential next case value (number, string, or identifier)
             // But we need to be careful not to stop mid-expression
             if (this.check(TokenType.Integer) || this.check(TokenType.Decimal) ||
                 this.check(TokenType.String)) {
@@ -3501,6 +3506,15 @@ export class Parser {
               if (next && (next.type === TokenType.Colon || next.type === TokenType.DotDot ||
                            next.type === TokenType.Comma)) {
                 // This looks like a case value - stop here so the loop tries again
+                break;
+              }
+            }
+            // Stop at potential identifier case value (simple identifier or quoted)
+            // Note: Use Colon/DotDot only for identifiers (not Comma) to avoid false positives
+            // from function arguments like SomeFunc(a, b, c) where comma separates args
+            if (this.check(TokenType.Identifier) || this.check(TokenType.QuotedIdentifier)) {
+              const next = this.peekNextMeaningfulToken(1);
+              if (next && (next.type === TokenType.Colon || next.type === TokenType.DotDot)) {
                 break;
               }
             }
@@ -3534,14 +3548,15 @@ export class Parser {
       this.advance();
     }
 
-    return {
-      type: 'CaseStatement',
+    const result = {
+      type: 'CaseStatement' as const,
       expression,
       branches,
       elseBranch,
       startToken,
       endToken: this.previous()
     };
+    return result;
   }
 
   /**
@@ -3573,6 +3588,20 @@ export class Parser {
       // Don't consume the token, create EmptyStatement
       const startToken = this.previous();
       statements.push({ type: 'EmptyStatement', startToken, endToken: startToken });
+    } else if (this.check(TokenType.Identifier) || this.check(TokenType.QuotedIdentifier)) {
+      // For identifiers, verify it's actually a case value (not a statement start)
+      const next = this.peekNextMeaningfulToken(1);
+      if (next && (next.type === TokenType.Colon || next.type === TokenType.DotDot)) {
+        // Empty branch - next token is identifier case value
+        const startToken = this.previous();
+        statements.push({ type: 'EmptyStatement', startToken, endToken: startToken });
+      } else {
+        // Not a case value, parse as statement
+        const stmt = this.parseStatement();
+        if (stmt) {
+          statements.push(stmt);
+        }
+      }
     } else {
       const stmt = this.parseStatement();
       if (stmt) {
@@ -4243,6 +4272,16 @@ export class Parser {
 
     while (!this.check(TokenType.RightParen) && !this.isAtEnd()) {
       args.push(this.parseExpression());
+
+      // Check for colon after expression - indicates malformed argument like "arg:"
+      // This triggers CASE error recovery for patterns like: SomeFunc(arg: Ready: MESSAGE('Ready');
+      if (this.check(TokenType.Colon)) {
+        throw this.createParseError(
+          `Expected ',' or ')' in function arguments, but found '${sanitizeContent(this.peek().value)}'`,
+          this.peek()
+        );
+      }
+
       if (this.check(TokenType.Comma)) {
         this.advance();
       }
