@@ -477,6 +477,8 @@ export class LexerStateManager {
     // If we're in a property value, only enter CODE_BLOCK if it's a trigger property
     if (this.inPropertyValue) {
       if (this.isTriggerProperty()) {
+        // Reset bracketDepth when entering code section - unclosed brackets in property values shouldn't poison code sections
+        this.bracketDepth = 0;
         return this.pushContext(LexerContext.CODE_BLOCK);
       }
       // Otherwise: BEGIN is just a property value identifier, don't change context
@@ -491,6 +493,8 @@ export class LexerStateManager {
         // At SECTION_LEVEL, BEGIN may have been tracked as a potential property name by onIdentifier().
         // Once we transition to CODE_BLOCK, that tracking is invalid - any '=' is an assignment, not property syntax.
         this.lastPropertyName = '';
+        // Reset bracketDepth when entering code section - unclosed brackets in property values shouldn't poison code sections
+        this.bracketDepth = 0;
         return this.pushContext(LexerContext.CODE_BLOCK);
       }
     }
@@ -542,6 +546,8 @@ export class LexerStateManager {
     // Guard against malformed input (only push when already in code)
     if (currentContext === LexerContext.CODE_BLOCK ||
         currentContext === LexerContext.CASE_BLOCK) {
+      // Reset bracketDepth when entering case block - unclosed brackets in property values shouldn't poison code sections
+      this.bracketDepth = 0;
       return this.pushContext(LexerContext.CASE_BLOCK);
     }
     return null;

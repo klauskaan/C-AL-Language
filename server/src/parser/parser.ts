@@ -2923,12 +2923,20 @@ export class Parser {
     const statements: Statement[] = [];
 
     while (!this.check(TokenType.End) && !this.isAtEnd()) {
-      const stmt = this.parseWithRecovery(
-        () => this.parseStatement(),
-        [TokenType.Semicolon, TokenType.End]
-      );
-      if (stmt) {
-        statements.push(stmt);
+      try {
+        const stmt = this.parseStatement();
+        if (stmt) {
+          statements.push(stmt);
+        }
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Use depth-aware recovery instead of flat recovery
+          // Only use Semicolon as base token - END is handled by depth tracking
+          this.recoverToTokensDepthAware([TokenType.Semicolon], true);
+        } else {
+          throw error;
+        }
       }
     }
 
@@ -3470,7 +3478,44 @@ export class Parser {
         break;
       }
 
-      branches.push(this.parseCaseBranch());
+      try {
+        branches.push(this.parseCaseBranch());
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Recover within the CASE statement - skip to next case value or ELSE/END
+          while (!this.isAtEnd()) {
+            // Stop at END (closes the case)
+            if (this.check(TokenType.End)) {
+              break;
+            }
+            // Stop at ELSE
+            if (this.check(TokenType.Else)) {
+              break;
+            }
+            // Stop at semicolon - likely ends the branch statement
+            if (this.check(TokenType.Semicolon)) {
+              this.advance();
+              break;
+            }
+            // Stop at potential next case value (number or string)
+            // But we need to be careful not to stop mid-expression
+            if (this.check(TokenType.Integer) || this.check(TokenType.Decimal) ||
+                this.check(TokenType.String)) {
+              // Peek ahead to see if this looks like a case value
+              const next = this.peekNextMeaningfulToken(1);
+              if (next && (next.type === TokenType.Colon || next.type === TokenType.DotDot ||
+                           next.type === TokenType.Comma)) {
+                // This looks like a case value - stop here so the loop tries again
+                break;
+              }
+            }
+            this.advance();
+          }
+        } else {
+          throw error;
+        }
+      }
     }
 
     this.consume(TokenType.End, 'Expected END to close CASE statement');
@@ -4261,64 +4306,105 @@ export class Parser {
 
     // Parse elements
     do {
-      // Check for open-ended range: ..end
-      if (this.check(TokenType.DotDot)) {
-        const rangeStart = this.advance();
-        const end = this.parseExpression();
-        elements.push({
-          type: 'RangeExpression',
-          start: null,
-          end,
-          operatorToken: rangeStart,
-          startToken: rangeStart,
-          endToken: end.endToken
-        } as RangeExpression);
-      } else {
-        // Parse start of element or range
-        const start = this.parseExpression();
-
-        // Check if this is a range: start..end or start..
+      try {
+        // Check for open-ended range: ..end
         if (this.check(TokenType.DotDot)) {
-          const operatorToken = this.advance(); // consume '..'
+          const rangeStart = this.advance();
+          const end = this.parseExpression();
+          elements.push({
+            type: 'RangeExpression',
+            start: null,
+            end,
+            operatorToken: rangeStart,
+            startToken: rangeStart,
+            endToken: end.endToken
+          } as RangeExpression);
+        } else {
+          // Parse start of element or range
+          const start = this.parseExpression();
 
-          // Check for closed range (start..end) vs open-ended range (start..)
-          if (!this.check(TokenType.Comma) && !this.check(TokenType.RightBracket)) {
-            // Closed range: start..end
-            const end = this.parseExpression();
-            elements.push({
-              type: 'RangeExpression',
-              start,
-              end,
-              operatorToken,
-              startToken: start.startToken,
-              endToken: end.endToken
-            } as RangeExpression);
+          // Check if this is a range: start..end or start..
+          if (this.check(TokenType.DotDot)) {
+            const operatorToken = this.advance(); // consume '..'
+
+            // Check for closed range (start..end) vs open-ended range (start..)
+            if (!this.check(TokenType.Comma) && !this.check(TokenType.RightBracket)) {
+              // Closed range: start..end
+              const end = this.parseExpression();
+              elements.push({
+                type: 'RangeExpression',
+                start,
+                end,
+                operatorToken,
+                startToken: start.startToken,
+                endToken: end.endToken
+              } as RangeExpression);
+            } else {
+              // Open-ended range: start..
+              elements.push({
+                type: 'RangeExpression',
+                start,
+                end: null,
+                operatorToken,
+                startToken: start.startToken,
+                endToken: this.previous()
+              } as RangeExpression);
+            }
           } else {
-            // Open-ended range: start..
-            elements.push({
-              type: 'RangeExpression',
-              start,
-              end: null,
-              operatorToken,
-              startToken: start.startToken,
-              endToken: this.previous()
-            } as RangeExpression);
+            // Discrete element
+            elements.push(start);
+          }
+        }
+
+        // Continue if comma present
+        if (this.check(TokenType.Comma)) {
+          this.advance();
+        } else {
+          break;
+        }
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Recover from expression parsing errors in set literal
+          // Skip to next comma, right bracket, or statement terminator
+          while (!this.isAtEnd()) {
+            if (this.check(TokenType.RightBracket) ||
+                this.check(TokenType.Comma) ||
+                this.check(TokenType.Semicolon) ||
+                this.check(TokenType.Then) ||
+                this.check(TokenType.Do) ||
+                this.check(TokenType.End)) {
+              break;
+            }
+            this.advance();
+          }
+          // If we found a comma, consume it and continue
+          if (this.check(TokenType.Comma)) {
+            this.advance();
+            continue;
+          } else {
+            // Otherwise exit the do-while loop
+            break;
           }
         } else {
-          // Discrete element
-          elements.push(start);
+          throw error;
         }
       }
+    } while (!this.check(TokenType.RightBracket) &&
+             !this.check(TokenType.Then) &&
+             !this.check(TokenType.Do) &&
+             !this.check(TokenType.End) &&
+             !this.check(TokenType.Else) &&
+             !this.isAtEnd());
 
-      // Continue if comma present
-      if (this.check(TokenType.Comma)) {
-        this.advance();
-      } else {
-        break;
-      }
-    } while (!this.check(TokenType.RightBracket) && !this.isAtEnd());
-
-    const endToken = this.consume(TokenType.RightBracket, 'Expected ] after set literal');
+    let endToken: Token;
+    if (this.check(TokenType.RightBracket)) {
+      endToken = this.advance();
+    } else {
+      // Missing closing bracket - create synthetic token at current position
+      this.recordError('Expected ] after set literal', this.peek());
+      endToken = this.peek();
+    }
 
     return {
       type: 'SetLiteral',
@@ -4818,6 +4904,100 @@ export class Parser {
       this.recordSkippedRegion(skipStartToken, this.previous(), skipCount, 'Error recovery');
     }
 
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
+    }
+  }
+
+  /**
+   * Recover parser state with awareness of BEGIN/END and CASE/END nesting depth.
+   *
+   * Unlike recoverToTokens(), this method tracks:
+   * - BEGIN/END pairs (blocks)
+   * - CASE/END pairs (case statements - note: CASE uses END without BEGIN)
+   *
+   * This prevents consuming END tokens that belong to outer structures.
+   *
+   * END-terminated structures in C/AL:
+   * - BEGIN...END (blocks)
+   * - CASE...OF...END (case statements)
+   *
+   * NOT END-terminated (use single statement or BEGIN-END):
+   * - REPEAT...UNTIL (uses UNTIL)
+   * - WITH...DO, IF...THEN, WHILE...DO, FOR...DO
+   *
+   * @param tokens - Base recovery tokens (typically [Semicolon])
+   * @param stopAtProcedureBoundary - If true, also stop at PROCEDURE/TRIGGER/FUNCTION/EVENT
+   */
+  private recoverToTokensDepthAware(
+    tokens: TokenType[],
+    stopAtProcedureBoundary: boolean = true
+  ): void {
+    const skipStartToken = this.peek();
+    let skipCount = 0;
+
+    // Track BEGIN/END nesting (blocks)
+    // Starts at 1 because we're inside a BEGIN block when this is called from parseBlock
+    let beginEndDepth = 1;
+
+    // Track CASE/END nesting (case statements use END without BEGIN)
+    let caseDepth = 0;
+
+    // Procedure boundary tokens - these indicate we've overrun into next procedure
+    const procedureBoundaryTokens = [
+      TokenType.Procedure,
+      TokenType.Trigger,
+      TokenType.Function,
+      TokenType.Event
+    ];
+
+    while (!this.isAtEnd()) {
+      const current = this.peek();
+
+      // Stop at procedure boundaries (safety net - we've gone too far)
+      if (stopAtProcedureBoundary && procedureBoundaryTokens.includes(current.type)) {
+        break;
+      }
+
+      // Track BEGIN - opens a new block
+      if (current.type === TokenType.Begin) {
+        beginEndDepth++;
+      }
+
+      // Track CASE - opens a case statement (uses END without BEGIN)
+      if (current.type === TokenType.Case) {
+        caseDepth++;
+      }
+
+      // Track END - closes either a CASE or a BEGIN block
+      if (current.type === TokenType.End) {
+        if (caseDepth > 0) {
+          // This END closes a CASE statement
+          caseDepth--;
+        } else if (beginEndDepth > 1) {
+          // This END closes a nested BEGIN block (not our outer block)
+          beginEndDepth--;
+        } else {
+          // beginEndDepth === 1 and caseDepth === 0
+          // This END would close our containing BEGIN block - stop here, don't consume
+          break;
+        }
+      }
+
+      // Check base recovery tokens (typically Semicolon)
+      if (tokens.some(t => this.check(t))) {
+        break;
+      }
+
+      this.advance();
+      skipCount++;
+    }
+
+    if (skipCount > 0) {
+      this.recordSkippedRegion(skipStartToken, this.previous(), skipCount, 'Error recovery');
+    }
+
+    // Consume semicolon if that's where we stopped
     if (this.check(TokenType.Semicolon)) {
       this.advance();
     }

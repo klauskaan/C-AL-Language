@@ -1133,14 +1133,14 @@ export class Lexer {
       tokenType = TokenType.Identifier;
     }
 
-    // Downgrade BEGIN/END to identifiers when inside brackets OR in non-trigger property values
+    // Downgrade BEGIN/END to identifiers in non-trigger property values
     // Prevents BEGIN/END in property values (e.g., InitValue=Begin or OptionCaptionML=[ENU=Begin,End]) from being treated as code delimiters
     // BUT: Keep BEGIN/END as keywords for:
     // - Trigger properties (OnInsert, OnModify, etc.) where they delimit code blocks
     // - CODE_BLOCK context (actual code, not property values)
     const stateForBeginEnd = this.state.getState();
     if ((tokenType === TokenType.Begin || tokenType === TokenType.End) &&
-        (stateForBeginEnd.bracketDepth > 0 ||
+        ((stateForBeginEnd.bracketDepth > 0 && !this.isInCodeContext()) ||
          (stateForBeginEnd.inPropertyValue &&
           !this.isTriggerProperty() &&
           this.getCurrentContext() !== LexerContext.CODE_BLOCK))) {

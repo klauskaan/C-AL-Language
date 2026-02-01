@@ -1215,8 +1215,7 @@ describe('Parser - Error Messages with Context', () => {
 
   describe('Phase 1 error recovery tests', () => {
     describe('CASE statement error recovery', () => {
-      // TODO: Parser doesn't recover properly from missing colon in CASE - see issue #290
-      it.skip('should continue parsing after missing colon in CASE branch', () => {
+      it('should continue parsing after missing colon in CASE branch', () => {
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1255,8 +1254,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     describe('Set literal error recovery', () => {
-      // TODO: Parser doesn't recover properly from unclosed set literal - see issue #290
-      it.skip('should continue parsing after unclosed set literal', () => {
+      it('should continue parsing after unclosed set literal', () => {
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1434,8 +1432,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     describe('= sign messages', () => {
-      // Skipped: Parser limitation - cannot reliably trigger this error path. See issue #286
-      it.skip('should provide error for missing = in PROPERTIES property', () => {
+      it('should provide error for missing = in PROPERTIES property', () => {
         const code = `OBJECT Codeunit 1 Test
 {
   PROPERTIES
@@ -1455,8 +1452,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(equalError).toBeDefined();
       });
 
-      // Skipped: Parser limitation - cannot reliably trigger this error path. See issue #286
-      it.skip('should provide error for missing = in field property', () => {
+      it('should provide error for missing = in field property', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -1478,8 +1474,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     describe(':: double colon message', () => {
-      // Skipped: Parser limitation - cannot reliably trigger this error path. See issue #286
-      it.skip('should provide error for missing :: in EVENT declaration', () => {
+      it('should provide error for missing :: in EVENT declaration', () => {
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1503,8 +1498,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     describe('END keyword messages', () => {
-      // Skipped: Parser limitation - cannot reliably trigger this error path. See issue #286
-      it.skip('should provide error for missing END to close BEGIN block', () => {
+      it('should provide error for missing END to close BEGIN block', () => {
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1528,7 +1522,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(endError).toBeDefined();
       });
 
-      // Skipped: Parser limitation - cannot reliably trigger this error path. See issue #286
+      // Skipped: Outer BEGIN block error detected before CASE statement error (architectural)
       it.skip('should provide error for missing END to close CASE statement', () => {
         const code = `OBJECT Codeunit 50000 Test
 {
@@ -1604,7 +1598,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     describe('FIELDS section', () => {
-      // TODO #182: Re-enable after implementing Phase 2b error messages
+      // Skipped: Parser reports item-level error instead of section-level. Needs new issue.
       it.skip('should provide context for missing { to open FIELDS section', () => {
         const code = `OBJECT Table 18 Customer
 {
@@ -1623,8 +1617,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(errors[0].message).toContain('Expected { to open FIELDS section');
       });
 
-      // TODO #182: Re-enable after implementing Phase 2b error messages
-      it.skip('should provide context for missing } to close FIELDS section', () => {
+      it('should provide context for missing } to close FIELDS section', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -1690,8 +1683,8 @@ describe('Parser - Error Messages with Context', () => {
       });
     });
 
-    // TODO #182: Re-enable KEYS section tests after implementing Phase 2b error messages
     describe('KEYS section', () => {
+      // Skipped: Parser reports item-level error instead of section-level. Needs new issue.
       it.skip('should provide context for missing { to open KEYS section', () => {
         const code = `OBJECT Table 18 Customer
 {
@@ -1715,7 +1708,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      it.skip('should provide context for missing } to close KEYS section', () => {
+      it('should provide context for missing } to close KEYS section', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -1793,8 +1786,8 @@ describe('Parser - Error Messages with Context', () => {
       });
     });
 
-    // TODO #182: Re-enable FIELDGROUPS section tests after implementing Phase 2b error messages
     describe('FIELDGROUPS section', () => {
+      // Skipped: Parser reports item-level error instead of section-level. Needs new issue.
       it.skip('should provide context for missing { to open FIELDGROUPS section', () => {
         const code = `OBJECT Table 18 Customer
 {
@@ -1818,7 +1811,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      it.skip('should provide context for missing } to close FIELDGROUPS section', () => {
+      it('should provide context for missing } to close FIELDGROUPS section', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -1896,8 +1889,8 @@ describe('Parser - Error Messages with Context', () => {
       });
     });
 
-    // TODO #182: Re-enable ACTIONS section tests after implementing Phase 2b error messages
     describe('ACTIONS section', () => {
+      // Skipped: Parser reports item-level error instead of section-level. Needs new issue.
       it.skip('should provide context for missing { to open ACTIONS section', () => {
         const code = `OBJECT Page 21 Customer
 {
@@ -1917,13 +1910,13 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      it.skip('should provide context for missing } to close ACTIONS section', () => {
+      it('should provide context for missing } to close ACTIONS section', () => {
         const code = `OBJECT Page 21 Customer
 {
   ACTIONS
   {
-    { 1 ; ActionContainer ; Processing ; ActionContainerType=ActionItems }
-    { 2 ; Action ; Processing ; Enabled=Yes }
+    { 1 ; 0 ; ActionContainer ; ActionContainerType=ActionItems }
+    { 2 ; 0 ; Action ; Enabled=Yes }
 
   CONTROLS
   {
@@ -1983,13 +1976,13 @@ describe('Parser - Error Messages with Context', () => {
       });
     });
 
-    // TODO #182: Re-enable CONTROLS section tests after implementing Phase 2b error messages
     describe('CONTROLS section', () => {
+      // Skipped: Parser reports item-level error instead of section-level. Needs new issue.
       it.skip('should provide context for missing { to open CONTROLS section', () => {
         const code = `OBJECT Page 21 Customer
 {
   CONTROLS
-    { 1 ; Container ; ContentArea ; ContainerType=ContentArea }
+    { 1 ; 0 ; Container ; ContainerType=ContentArea }
   }
 }`;
         const lexer = new Lexer(code);
@@ -2004,13 +1997,13 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      it.skip('should provide context for missing } to close CONTROLS section', () => {
+      it('should provide context for missing } to close CONTROLS section', () => {
         const code = `OBJECT Page 21 Customer
 {
   CONTROLS
   {
-    { 1 ; Container ; ContentArea ; ContainerType=ContentArea }
-    { 2 ; Group ; Items ; GroupType=Group }
+    { 1 ; 0 ; Container ; ContainerType=ContentArea }
+    { 2 ; 0 ; Group ; GroupType=Group }
 
   CODE
   {
@@ -2033,7 +2026,7 @@ describe('Parser - Error Messages with Context', () => {
 {
   CONTROLS
   {
-    1 ; Container ; ContentArea ; ContainerType=ContentArea }
+    1 ; 0 ; Container ; ContainerType=ContentArea }
   }
 }`;
         const lexer = new Lexer(code);
@@ -2070,13 +2063,12 @@ describe('Parser - Error Messages with Context', () => {
       });
     });
 
-    // TODO #182: Re-enable ELEMENTS section tests after implementing Phase 2b error messages
     describe('ELEMENTS section', () => {
       it('should provide context for missing { to open ELEMENTS section', () => {
         const code = `OBJECT XMLport 99999 Test
 {
   ELEMENTS
-    1 ; Element ; Customer ; NodeType=Element }
+    [{12345678-1234-1234-1234-123456789012}] ; ; Element ; Element ; Text }
   }
 }`;
         const lexer = new Lexer(code);
@@ -2091,13 +2083,14 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
+      // Skipped: Parser consumes subsequent object sections as element properties. Needs new issue.
       it.skip('should provide context for missing } to close ELEMENTS section', () => {
         const code = `OBJECT XMLport 99999 Test
 {
   ELEMENTS
   {
-    { 1 ; Element ; Customer ; NodeType=Element }
-    { 2 ; Element ; Item ; NodeType=Element }
+    { [{12345678-1234-1234-1234-123456789012}] ; ; Customer ; Element ; Text }
+    { [{87654321-4321-4321-4321-210987654321}] ; 1 ; Name ; Attribute ; Text }
 
   CODE
   {
@@ -2120,7 +2113,7 @@ describe('Parser - Error Messages with Context', () => {
 {
   ELEMENTS
   {
-    1 ; Element ; Customer ; NodeType=Element }
+    [{12345678-1234-1234-1234-123456789012}] ; ; Element ; Element ; Text }
   }
 }`;
         const lexer = new Lexer(code);
@@ -2158,8 +2151,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     describe('Set literal', () => {
-      // Skipped: Parser loop termination doesn't detect section boundaries
-      // Tracked in issue #286
+      // Skipped: Parser takes wrong path when [ is missing. Needs new issue.
       it.skip('should provide context for missing [ to open set literal', () => {
         const code = `OBJECT Codeunit 50000 Test
 {
