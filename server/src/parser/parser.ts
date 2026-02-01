@@ -1808,14 +1808,17 @@ export class Parser {
    * - Only triggers at recoveryDepth === 1 (inside element body, not nested deeper)
    *   to detect if we've overrun into a following section
    *
-   * Design decision documented in issues #270 and #273. See also synchronize()
-   * for the global error recovery strategy.
+   * Design decision documented in issues #270 and #273. Recovery vs normal path
+   * asymmetry explained in issues #296 and #306. See also synchronize() for the
+   * global error recovery strategy.
    *
    * @see synchronize() - global recovery, different purpose
    * @see parseWithRecovery() - standard pattern, not suitable here
    * @see isSectionKeyword() - handles CODE/CONTROLS lookahead correctly
    * @see https://github.com/klauskaan/C-AL-Language/issues/270
    * @see https://github.com/klauskaan/C-AL-Language/issues/273
+   * @see https://github.com/klauskaan/C-AL-Language/issues/296
+   * @see https://github.com/klauskaan/C-AL-Language/issues/306
    */
   private parseElementsSection(): ElementsSection {
     const startToken = this.consume(TokenType.Elements, 'Expected ELEMENTS');
@@ -1845,6 +1848,27 @@ export class Parser {
           // 1. Start recoveryDepth = 1 because parseXMLportElement() has already consumed the opening {
           // 2. Scan for closing } of the element, skipping to next element when found
           // 3. Section keyword escape hatch prevents consuming next section
+          //
+          // WHY RECOVERY NEEDS SECTION-BOUNDARY CHECKS BUT NORMAL PARSING DOESN'T:
+          //
+          // Normal path (the while loop condition in parseElementsSection):
+          //   The loop condition checks for RightBrace, section keywords, and CODE/CONTROLS
+          //   BEFORE attempting to parse each element. When we hit the ELEMENTS section's
+          //   closing brace or a section keyword, the loop exits cleanly without ever
+          //   entering parseXMLportElement() in an invalid state.
+          //
+          // Recovery path (this block):
+          //   We're mid-recovery after a parse error. The loop condition already passed
+          //   (we were inside an element), but the element was malformed. We must now
+          //   scan forward through tokens, but we don't know if the next } we find:
+          //     a) Closes the broken element (consume it), OR
+          //     b) Closes the ELEMENTS section (don't consume - let caller handle)
+          //
+          //   The section-boundary check (when recoveryDepth reaches 0 after decrement)
+          //   resolves this ambiguity by examining what follows the }. If it's a section
+          //   keyword or EOF, the brace closes the section, not the element.
+          //
+          // See issues #296 (original bug) and #306 (this documentation).
 
           let recoveryDepth = 1; // We're inside the element (opened brace already consumed)
           let foundElementClose = false;
@@ -1864,6 +1888,8 @@ export class Parser {
             } else if (peekType === TokenType.RightBrace) {
               recoveryDepth--;
               if (recoveryDepth === 0) {
+                // SECTION-BOUNDARY CHECK (see "WHY RECOVERY NEEDS..." comment above)
+                //
                 // Before consuming the closing brace, check if it closes the element or the section.
                 // If the next token after this brace is a section keyword or EOF, this brace
                 // closes the ELEMENTS section, not the element. Don't consume it.
