@@ -13,6 +13,38 @@ We work as **pair programming partners**:
 
 ---
 
+## Session Lifecycle
+
+**Session Model:** Each Claude Code session operates in its own git worktree. The main repository is reserved for merging completed work.
+
+```
+SESSION START              SESSION WORK                    SESSION END
+───────────────────────────────────────────────────────────────────────
+Create worktree     →      Steps 1-6                  →    Step 7: MERGE
+(file-ops agent)           (work in worktree)              (merge to main)
+                                                                ↓
+                                                           Cleanup worktree
+```
+
+**Session Startup Protocol:**
+1. Orchestrator receives issue to work on (e.g., #303)
+2. Orchestrator calls file-ops agent: "Create worktree for issue 303"
+3. file-ops executes: `git worktree add ../worktree-issue-303 -b issue-303 origin/main`
+4. All subsequent work happens in the worktree
+5. Normal workflow begins (INVESTIGATE, PLAN, etc.)
+
+**Naming Convention:** `worktree-issue-{number}` in parent directory (e.g., `../worktree-issue-303`)
+
+**Abandoned Session Cleanup:**
+If a session is abandoned without completing merge, manual cleanup is required (see file-ops.md for detailed commands):
+```bash
+git worktree remove ../worktree-issue-NNN --force
+git branch -D issue-NNN
+git push origin --delete issue-NNN  # if branch was pushed
+```
+
+---
+
 ## Core Workflow
 
 **Principle:** Main conversation orchestrates, agents execute. Delegate ALL work to agents.
@@ -76,11 +108,32 @@ We work as **pair programming partners**:
               Issues found? → FIX (senior-developer) → back to REVIEW
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ 6. COMMIT AND PUSH                                          │
-│    commit → stage, commit, push, verify                     │
-│    - Commit message MUST include "Fixes #X" to close issue  │
-│    - Verify issue is CLOSED after push                      │
+│ 6. COMMIT TO BRANCH                                         │
+│    commit → stage, commit, push to feature branch           │
+│    - Push to origin/issue-NNN (not main)                    │
+│    - Commit message includes "Fixes #X" (closes on merge)   │
 │    - Exclude temporary/debug files from staging             │
+│    - STATUS: COMMITTED - proceed to MERGE step              │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 7. MERGE AND CLEANUP                                        │
+│                                                             │
+│    Tier 1: merge-agent (Sonnet)                             │
+│    ├─ Classify conflict (TRIVIAL/TEXTUAL/STRUCTURAL/SEMANTIC)│
+│    ├─ Resolve TRIVIAL/TEXTUAL conflicts                     │
+│    └─ Escalate STRUCTURAL/SEMANTIC to Tier 2                │
+│                                                             │
+│    Tier 2: senior-merge-engineer (Opus)                     │
+│    ├─ Try 5 strategies: Composition → Temporal → Interface  │
+│    │                    → Scope → Hybrid                    │
+│    ├─ Verify preservation (textual + behavioral)            │
+│    └─ Complete | Re-plan | Escalate to human (last resort)  │
+│                                                             │
+│    After resolution:                                        │
+│    ├─ Merge branch into main, push                          │
+│    ├─ Verify issue is CLOSED                                │
+│    └─ Cleanup: remove worktree, delete branches             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -144,6 +197,12 @@ Use these to determine next step at each workflow checkpoint.
 | REVIEW | Missing test coverage identified | Add tests (ACCEPT-FIX), re-review |
 | REVIEW | Design flaw found | Back to PLAN |
 | REVIEW | Scope creep detected | Revert unplanned changes, re-review |
+| COMMIT | Push to branch succeeds | Proceed to MERGE AND CLEANUP |
+| COMMIT | Push fails | Report error, do not force push |
+| MERGE | TRIVIAL/TEXTUAL conflict | merge-agent resolves |
+| MERGE | STRUCTURAL/SEMANTIC conflict | Escalate to senior-merge-engineer |
+| MERGE | All strategies fail, can re-approach | Back to PLAN with dual-session context |
+| MERGE | Goal conflict or complexity exceeds bounds | Escalate to human (last resort) |
 
 **TDD Rule:** Tests MUST fail first (for new bugs). Passing tests = wrong diagnosis.
 **Exception:** Regression tests, refactoring, test-after for legacy code.
@@ -348,8 +407,9 @@ If in doubt whether something qualifies, create a follow-up issue instead of exp
 | **typescript-reviewer** | Type safety, TS best practices |
 | **cal-expert** | C/AL correctness, AL prevention |
 | **refactorer** | Code cleanup, pattern application |
-| **commit** | Stage, commit, push, verify issue closure (see agents/commit.md) |
+| **commit** | Stage, commit, push to branch (see agents/commit.md) |
 | **file-ops** | Branches, file management, other git operations |
+| **merge-agent** | First-attempt merge, objective classification, TRIVIAL/TEXTUAL conflicts |
 
 ### Opus (Hard - deep analysis)
 | Agent | Purpose |
@@ -357,6 +417,7 @@ If in doubt whether something qualifies, create a follow-up issue instead of exp
 | **code-detective** | Root cause investigation, impact analysis |
 | **adversarial-reviewer** | Find bugs, edge cases, security issues; classify Boy Scout items; recommend issue creation |
 | **architect** | Design decisions, architectural reviews |
+| **senior-merge-engineer** | Expert merge resolution, 5 strategies, preservation verification |
 
 ---
 
@@ -528,3 +589,4 @@ Apply this check when you first encounter a TypeScript error during any workflow
 7. **Explicit assumptions + lightweight verification** - Architect states assumptions explicitly, adversarial-reviewer flags critical items with [VERIFY], orchestrator confirms with fresh tool calls. Mitigates silent tool failures without excessive overhead (EmptySetValidator implementation, 2026-01-23)
 8. **Explicit issue closure** - Commit messages must use "Fixes #X" format (not just "#X"); verify issue state after push. Auto-close failures require manual `gh issue close` (incident: 2026-01-31)
 9. **Implementation verification** - Senior-developer must re-read files after editing to confirm changes were applied; agents can claim success without actual changes due to silent tool failures (incident: 2026-01-31)
+10. **Worktree-based parallel sessions** - Each session works in its own worktree; main is reserved for merging. Two-tier merge resolution (merge-agent → senior-merge-engineer) handles conflicts with objective classification and progressive strategies.

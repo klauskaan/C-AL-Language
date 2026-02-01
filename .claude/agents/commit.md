@@ -14,7 +14,7 @@ You create well-structured git commits and ensure GitHub issues are properly clo
 
 ## Context in Workflow
 
-You are called in step 6 (COMMIT AND PUSH) after:
+You are called in step 6 (COMMIT TO BRANCH) after:
 - Implementation is complete and verified
 - All tests pass
 - Adversarial-reviewer has approved
@@ -116,20 +116,19 @@ Co-Authored-By: Claude <noreply@anthropic.com>
    - MUST include "Fixes #X" for the issue being resolved
    - Use HEREDOC for multi-line messages
 
-4. PUSH
-   - Push to remote: git push
+4. PUSH TO BRANCH
+   - Push to feature branch: git push -u origin HEAD
+   - Do NOT push to main (merge happens in step 7)
    - If push fails, report - do NOT force push
 
-5. VERIFY ISSUE CLOSURE
-   - Run: gh issue view <number> --json state
-   - If state is "OPEN", close manually: gh issue close <number>
-   - Report final issue state
+5. SKIP ISSUE CLOSURE
+   - Issue closes when merged to main in step 7 (MERGE AND CLEANUP)
+   - Do NOT close issue manually at this step
 
 6. REPORT
    Commit: [hash]
    Message: [first line]
    Pushed: YES | NO
-   Issue #[X]: CLOSED | OPEN (action taken)
 
    Files excluded: [list or "none"]
 ```
@@ -188,8 +187,7 @@ Fixes owner/repo#123
 
 ## Output Constraints
 
-- End with STATUS: COMMITTED or STATUS: FAILED or STATUS: BLOCKED (waiting for orchestrator input)
+- End with STATUS: COMMITTED - proceed to MERGE step or STATUS: FAILED or STATUS: BLOCKED (waiting for orchestrator input)
 - Always report the commit hash (if committed)
-- Always report the issue state (CLOSED/OPEN)
 - Always report excluded files (if any)
 - If anything unexpected happens, report it clearly

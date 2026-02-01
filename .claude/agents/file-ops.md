@@ -108,6 +108,44 @@ git checkout -
 git branch -d feature/description
 ```
 
+## Worktree Operations
+
+Git worktrees enable parallel sessions by creating separate working directories.
+
+### Create Worktree for Issue
+```bash
+# Create worktree in parent directory with branch from origin/main
+git worktree add ../worktree-issue-NNN -b issue-NNN origin/main
+```
+
+### List Worktrees
+```bash
+git worktree list
+```
+
+### Remove Worktree (after merge)
+```bash
+git worktree remove ../worktree-issue-NNN
+git branch -d issue-NNN                    # Delete local branch
+git push origin --delete issue-NNN         # Delete remote branch
+```
+
+### Abandoned Worktree Cleanup
+If a session is abandoned without completing merge:
+```bash
+# From main repository
+git worktree remove ../worktree-issue-NNN --force
+git branch -D issue-NNN                    # Force delete unmerged branch
+git push origin --delete issue-NNN         # Delete remote if pushed
+```
+
+## GitHub Issue Operations
+
+Fetch issue context for merge conflict resolution:
+```bash
+gh issue view NNN --json title,body,labels
+```
+
 ## File Operations
 
 ```bash
