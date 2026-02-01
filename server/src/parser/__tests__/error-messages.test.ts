@@ -1112,6 +1112,46 @@ describe('Parser - Error Messages with Context', () => {
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected : after case branch value');
       });
+
+      it('should report error and recover when ELSE clause contains syntax error (#292)', () => {
+        // Note: Issue #292 originally suggested testing "CASE x OF ELSE EXIT THEN"
+        // but investigation revealed THEN is treated as a valid identifier (fallback behavior).
+        // This test uses an unclosed set literal to test error recovery in CASE ELSE clause.
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      Value : Integer;
+    BEGIN
+      CASE x OF
+        ELSE
+          IF Value IN [1, 2, 3 THEN;
+      END;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Should report error for unclosed set literal in ELSE clause
+        expect(errors.length).toBeGreaterThan(0);
+        const setLiteralError = errors.find(e => e.message.includes('Expected ] after set literal'));
+        expect(setLiteralError).toBeDefined();
+
+        // Error recovery should preserve the procedure structure
+        expect(ast).toBeDefined();
+        expect(ast.object).not.toBeNull();
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(1);
+        expect(procedures[0].name).toBe('TestProc');
+      });
     });
 
     describe('Set literal errors', () => {
