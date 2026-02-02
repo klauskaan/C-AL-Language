@@ -142,11 +142,30 @@ git show-ref --verify refs/remotes/origin/issue-NNN
 |----------|-------------|------------|---------------------|----------------------|---------------------|--------|
 | **Abandoned worktree** | Yes | Clean (no changes) | Yes | N/A | Yes | Auto-cleanup: Remove worktree, delete branch, recreate |
 | **In-progress worktree** | Yes | Has changes | Yes | N/A | Yes | Escalate to user: "Active work found. Force cleanup? [y/N]" |
-| **Orphaned directory** | Yes | Not a git repo | No | N/A | No | Remove directory, create fresh |
+| **Orphaned directory (empty)** | Yes | Not a git repo | No | N/A | No | Auto-remove: `rmdir`, create fresh |
+| **Orphaned directory (has content)** | Yes | Not a git repo | No | N/A | No | Escalate: Show contents, require confirmation |
 | **Unrelated directory** | Yes | Not a git repo | Yes | N/A | No | Escalate to user: "Path occupied. Move? [y/N]" |
 | **Orphaned branch** | No | N/A | Yes | N/A | No | Reuse branch: `git worktree add ../worktree-issue-NNN issue-NNN` |
 | **Remote branch exists** | No | N/A | No | Yes | No | Track remote: `git worktree add ../worktree-issue-NNN -b issue-NNN origin/issue-NNN` |
 | **Fresh start** | No | N/A | No | No | No | Create new: `git worktree add ../worktree-issue-NNN -b issue-NNN origin/main` |
+
+**Orphaned Directory Safety Model:**
+
+The `worktree-issue-{number}` naming convention is distinctive but not unique - users may have unrelated directories with similar names. To prevent accidental data loss:
+
+- **Empty directories:** Removed automatically using `rmdir`, which fails atomically if the directory has any content (including hidden files). This handles true worktree remnants from failed cleanups.
+- **Non-empty directories:** Always escalate to user with full `ls -la` output. We never auto-delete files, even "trivial" ones like `.gitignore`, because hidden files may contain sensitive data (`.env`, `.credentials`, etc.).
+
+**Distinguishing Orphaned vs Unrelated Directories:**
+
+Both are "not a git repo" but differ in local branch state:
+
+| Scenario | Local Branch `issue-NNN` | Implication |
+|----------|--------------------------|-------------|
+| **Orphaned directory** | Does not exist | Directory is likely a remnant or coincidentally named |
+| **Unrelated directory** | Exists (points elsewhere) | Branch name is in use for different work; higher collision risk |
+
+The "Unrelated directory" scenario always escalates because the existing branch suggests intentional use of that issue number.
 
 **Handling Specific Scenarios:**
 
@@ -167,11 +186,46 @@ echo "Manual intervention required."
 ```
 
 **Orphaned Directory (not a git repo):**
+
+Directories matching the worktree path that are not git repos require safety classification before removal.
+
+*Step 1: Attempt atomic removal (safe for empty directories)*
 ```bash
-# Remove and recreate
-rm -rf ../worktree-issue-NNN
-git worktree add ../worktree-issue-NNN -b issue-NNN origin/main
+# rmdir only succeeds if directory is empty - atomic and safe
+if rmdir ../worktree-issue-NNN 2>/dev/null; then
+    echo "Removed empty orphaned directory"
+    git worktree add ../worktree-issue-NNN -b issue-NNN origin/main
+    # Done - proceed with work
+else
+    # Directory has content or permission error - classify further
+    :
+fi
 ```
+
+*Step 2: If rmdir fails, check why and escalate*
+```bash
+# Check if we can read the directory
+if ! ls -la ../worktree-issue-NNN >/dev/null 2>&1; then
+    echo "ERROR: Cannot access ../worktree-issue-NNN (permission denied or other error)"
+    echo "Manual intervention required."
+    # Escalate to user
+else
+    # Directory has content - show inventory and escalate
+    echo "ERROR: ../worktree-issue-NNN exists with content but is not a git repo"
+    echo ""
+    echo "Directory contents:"
+    ls -la ../worktree-issue-NNN
+    echo ""
+    echo "This may be an unrelated directory that coincidentally matches the naming pattern."
+    echo "Manual intervention required. Options:"
+    echo "  1. Backup first: mv ../worktree-issue-NNN ../worktree-issue-NNN.backup"
+    echo "  2. Remove if certain this is safe: rm -rf ../worktree-issue-NNN"
+    echo "  3. Abort and use a different issue number"
+    # Escalate to user - do not proceed automatically
+fi
+```
+
+**Important:** Never auto-delete a directory containing files. The `rmdir` command provides atomic safety - it physically cannot remove a non-empty directory.
 
 **Orphaned Branch (branch exists but no worktree):**
 ```bash
