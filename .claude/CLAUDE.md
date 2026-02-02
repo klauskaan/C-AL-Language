@@ -641,3 +641,159 @@ If tests pass after step 2, the IDE errors are false positives - ignore them.
 8. **Explicit issue closure** - Commit messages must use "Fixes #X" format (not just "#X"); verify issue state after push. Auto-close failures require manual `gh issue close` (incident: 2026-01-31)
 9. **Implementation verification** - Senior-developer must re-read files after editing to confirm changes were applied; agents can claim success without actual changes due to silent tool failures (incident: 2026-01-31)
 10. **Worktree-based parallel sessions** - Each session works in its own worktree; main is reserved for merging. Two-tier merge resolution (merge-agent → senior-merge-engineer) handles conflicts with objective classification and progressive strategies.
+
+---
+
+## Documentation Style Guide
+
+This section documents the structure patterns used in CLAUDE.md to maintain consistency when adding or editing content.
+
+### Current State
+
+The document uses several structural patterns, some more consistently than others:
+
+| Pattern | Status | Examples |
+|---------|--------|----------|
+| Rule + Exception | Canonical | Lines 228-229 (`**TDD Rule:**` / `**Exception:**`) |
+| Definition + Applicability | Canonical | Lines 381-392 (`**Boy Scout Rule:**` with applies/does-not lists) |
+| Protocol (numbered steps) | Canonical | Lines 394-421 (Boy Scout Protocol) |
+| Table Reference | Canonical | Lines 186-226 (Checkpoint Decision Tables) |
+| Problem-Solution | Canonical | Lines 459-472 (Known Issues format) |
+
+**Legacy patterns** work but should not be replicated. When editing sections with legacy patterns, consider normalizing to canonical form as a Boy Scout improvement.
+
+### Canonical Patterns
+
+**1. Rule + Exception**
+
+Use when: Stating a general rule that has known exceptions.
+
+```
+**[Rule Name] Rule:** [Concise rule statement]
+**Exception:** [When the rule does not apply]
+```
+
+Canonical example: Lines 228-229
+- `**TDD Rule:**` states the rule
+- `**Exception:**` on the following line lists exceptions
+
+**2. Definition + Applicability**
+
+Use when: Defining a concept and clarifying its scope.
+
+```
+**[Concept Name]:** [Definition]
+
+Applies when [criteria are]:
+- [Criterion 1]
+- [Criterion 2]
+
+Does NOT apply to:
+- [Exclusion 1]
+- [Exclusion 2]
+```
+
+Canonical example: Lines 381-392 (Boy Scout Rule)
+
+**3. Protocol (Numbered Steps)**
+
+Use when: Documenting a multi-step process with clear sequencing.
+
+```
+**[Protocol Name]:**
+
+When [trigger condition]:
+
+1. **[Actor/Step name]** [action]
+   - [Detail]
+   - [Detail]
+
+2. **[Next step]** [action]
+   - [Detail]
+```
+
+Canonical example: Lines 394-421 (Boy Scout Protocol)
+
+**4. Table Reference**
+
+Use when: Presenting decision criteria, mappings, or structured comparisons.
+
+```
+**[Section Name]:**
+
+Use these to [purpose].
+
+| Column 1 | Column 2 | Column 3 |
+|----------|----------|----------|
+| Value | Value | Value |
+```
+
+Canonical example: Lines 186-226 (Checkpoint Decision Tables)
+
+**5. Problem-Solution**
+
+Use when: Documenting known issues, workarounds, or troubleshooting.
+
+```
+**[Issue Name] (TEMPORARY WORKAROUND)**
+
+**Symptom:** [What the user observes]
+
+**Root Cause:** [Why it happens]
+
+**Workaround:** [Steps to resolve]
+[Numbered steps if multiple]
+
+**When to remove this section:** [Condition for obsolescence]
+```
+
+Canonical example: Lines 459-472 (Agent Resume Failure)
+
+### Header Variants
+
+| Variant | Format | Body Location | Use Case |
+|---------|--------|---------------|----------|
+| **Standalone** | `**Exception:**` | Same line, immediately after colon | Brief inline clarifications |
+| **Descriptive** | `**Exception: [Scope]**` | Subsequent lines (after blank line) | Multi-line explanations with titled sections |
+
+**Standalone** (body on same line):
+```
+**Exception:** Regression tests, refactoring, test-after for legacy code, and test coverage tasks.
+
+**Note:** This guidance is approximate.
+```
+
+**Descriptive** (body on subsequent lines):
+```
+**Exception: Test Files (*.test.ts, *.spec.ts)**
+
+Jest test files may show false positive TypeScript errors for globals like `describe`, `it`, `expect`, `beforeEach`, `afterEach`, and `jest`.
+```
+
+The standalone variant is preferred for general exceptions. Use the descriptive variant when the scope qualification in the header aids comprehension.
+
+### Anti-Patterns
+
+Avoid these patterns when adding documentation:
+
+| Anti-Pattern | Problem | Instead |
+|--------------|---------|---------|
+| Inline exceptions | `**Rule:** X (except Y)` | Use separate `**Exception:**` line |
+| Unmarked notes | Prose asides without headers | Use `**Note:**` header |
+| Mixed list styles | Switching between `-` and `*` | Use `-` consistently |
+| Deep nesting | More than 2 indent levels in lists | Restructure or use subsections |
+| Orphan headers | Bold header with no following content | Combine with content or remove |
+
+### Pattern Selection
+
+When adding new content, select the pattern based on what you are documenting:
+
+| Documenting... | Use Pattern |
+|----------------|-------------|
+| A rule with exceptions | Rule + Exception |
+| A concept with scope boundaries | Definition + Applicability |
+| A multi-step workflow | Protocol |
+| Decision criteria or mappings | Table Reference |
+| A known issue or workaround | Problem-Solution |
+
+**When in doubt:** Use Rule + Bullet List. It is the simplest pattern and can be refactored later if a more specific pattern becomes appropriate.
