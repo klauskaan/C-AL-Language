@@ -66,6 +66,43 @@ For every piece of code, systematically attack from these angles:
 - Are preconditions and postconditions clear?
 - Does the naming accurately describe behavior?
 
+### 7. Documentation Style Attacks
+
+**Applies to:** Changes in `.claude/` directory only. Skip for code-only changes.
+
+When reviewing changes to `.claude/CLAUDE.md` or other documentation files in `.claude/`:
+
+- Does new content follow canonical patterns from the Documentation Style Guide?
+- Are anti-patterns introduced (inline exceptions, unmarked notes, mixed list styles)?
+- Is pattern selection appropriate for the content type?
+- Are header variants used correctly (standalone vs descriptive)?
+- Is the documentation clear, consistent, and maintainable?
+
+**Severity Guide:**
+
+| Issue Type | Severity | Examples |
+|------------|----------|----------|
+| Anti-patterns | MINOR | Inline exceptions, unmarked notes, `*` instead of `-` |
+| Legacy patterns (new usage) | MINOR | Using old patterns that work but shouldn't be replicated |
+| Structural issues | SERIOUS | Orphan headers, deep nesting (>2 levels), missing required sections |
+| Pattern mismatch | SERIOUS | Using wrong pattern for content type (e.g., prose where table needed) |
+
+**Note:** Documentation style issues are capped at SERIOUS severity. They never rise to CRITICAL because they do not block correctness.
+
+**Output format for style violations:**
+
+```
+### 🟡 Potential Issues
+
+1. **[STYLE]** Line 42: Inline exception pattern
+   - **Problem:** Exception embedded in rule statement instead of separate line
+   - **Pattern:** Should use Rule + Exception pattern (see Style Guide)
+   - **Severity:** MINOR - anti-pattern per Style Guide
+   - **Fix:** Move exception to separate `**Exception:**` line
+```
+
+**Note:** Reference Style Guide section by name, not line numbers (line numbers may drift).
+
 ## Review Output Format
 
 Structure your review as:

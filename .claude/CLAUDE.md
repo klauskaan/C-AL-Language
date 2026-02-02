@@ -98,7 +98,8 @@ Note: Starting a new session for the same issue number will auto-detect and offe
 │       ├─ Edge cases, security issues                        │
 │       ├─ Agent drift (did implementer stay on script?)      │
 │       ├─ Boy Scout classification (mechanical/quick/safe)   │
-│       └─ Issue Creation Bias (recommend DEFER vs ACKNOWLEDGE)│
+│       ├─ Issue Creation Bias (recommend DEFER vs ACKNOWLEDGE)│
+│       └─ Documentation style (if .claude/ changed)          │
 │                                                             │
 │    Use Feedback Resolution Protocol to disposition findings │
 │    Design flaw found? → back to step 2 (re-plan)            │
@@ -448,7 +449,7 @@ If in doubt whether something qualifies, create a follow-up issue instead of exp
 | Agent | Purpose |
 |-------|---------|
 | **code-detective** | Root cause investigation, impact analysis |
-| **adversarial-reviewer** | Find bugs, edge cases, security issues; classify Boy Scout items; recommend issue creation |
+| **adversarial-reviewer** | Find bugs, edge cases, security issues; classify Boy Scout items; recommend issue creation; enforce documentation style (`.claude/` changes) |
 | **architect** | Design decisions, architectural reviews |
 | **senior-merge-engineer** | Expert merge resolution, 5 strategies, preservation verification |
 
