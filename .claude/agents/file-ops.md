@@ -128,18 +128,25 @@ git show-ref --verify refs/heads/issue-NNN
 
 # Step 4: Check if worktree is registered
 git worktree list | grep worktree-issue-NNN
+
+# Step 5: Check if remote branch exists (fetch first)
+git fetch origin --prune
+git show-ref --verify refs/remotes/origin/issue-NNN
 ```
+
+**Check Order:** Execute Steps 1-5 in sequence to gather state. The decision table scenarios below are organized by scenario type (abandoned, in-progress, orphaned, etc.), not by check execution order. "Fresh start" is the fallback when no other scenario matches.
 
 **Path Collision Decision Table:**
 
-| Scenario | Path Exists | Git Status | Branch Exists | Worktree Registered | Action |
-|----------|-------------|------------|---------------|---------------------|--------|
-| **Abandoned worktree** | Yes | Clean (no changes) | Yes | Yes | Auto-cleanup: Remove worktree, delete branch, recreate |
-| **In-progress worktree** | Yes | Has changes | Yes | Yes | Escalate to user: "Active work found. Force cleanup? [y/N]" |
-| **Orphaned directory** | Yes | Not a git repo | No | No | Remove directory, create fresh |
-| **Unrelated directory** | Yes | Not a git repo | Yes | No | Escalate to user: "Path occupied. Move? [y/N]" |
-| **Orphaned branch** | No | N/A | Yes | No | Reuse branch: `git worktree add ../worktree-issue-NNN issue-NNN` |
-| **Fresh start** | No | N/A | No | No | Create new: `git worktree add ../worktree-issue-NNN -b issue-NNN origin/main` |
+| Scenario | Path Exists | Git Status | Local Branch Exists | Remote Branch Exists | Worktree Registered | Action |
+|----------|-------------|------------|---------------------|----------------------|---------------------|--------|
+| **Abandoned worktree** | Yes | Clean (no changes) | Yes | N/A | Yes | Auto-cleanup: Remove worktree, delete branch, recreate |
+| **In-progress worktree** | Yes | Has changes | Yes | N/A | Yes | Escalate to user: "Active work found. Force cleanup? [y/N]" |
+| **Orphaned directory** | Yes | Not a git repo | No | N/A | No | Remove directory, create fresh |
+| **Unrelated directory** | Yes | Not a git repo | Yes | N/A | No | Escalate to user: "Path occupied. Move? [y/N]" |
+| **Orphaned branch** | No | N/A | Yes | N/A | No | Reuse branch: `git worktree add ../worktree-issue-NNN issue-NNN` |
+| **Remote branch exists** | No | N/A | No | Yes | No | Track remote: `git worktree add ../worktree-issue-NNN -b issue-NNN origin/issue-NNN` |
+| **Fresh start** | No | N/A | No | No | No | Create new: `git worktree add ../worktree-issue-NNN -b issue-NNN origin/main` |
 
 **Handling Specific Scenarios:**
 
@@ -171,6 +178,15 @@ git worktree add ../worktree-issue-NNN -b issue-NNN origin/main
 # Reuse existing branch
 git worktree add ../worktree-issue-NNN issue-NNN
 ```
+
+**Remote Branch Exists (no local branch):**
+```bash
+# Fetch latest and track remote branch
+git fetch origin
+git worktree add ../worktree-issue-NNN -b issue-NNN origin/issue-NNN
+```
+
+**Note:** This creates a local tracking branch from the remote. The worktree will contain the previous session's pushed work.
 
 **Cleanup Failure Handling:**
 
