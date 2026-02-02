@@ -119,6 +119,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     it('should provide context for missing semicolon in fields', () => {
+      // Location assertions depend on fixture structure - do not reformat
       const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -136,6 +137,8 @@ describe('Parser - Error Messages with Context', () => {
       expect(errors.length).toBeGreaterThan(0);
       // Issue #3: Should provide contextual error message
       expect(errors[0].message).toMatch(/Expected ; after field/i);
+      expect(errors[0].token.line).toBe(5);
+      expect(errors[0].token.column).toBe(14);
     });
   });
 
@@ -528,6 +531,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     it('should include context for missing colon in variable declaration', () => {
+      // Location assertions depend on fixture structure - do not reformat
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -549,9 +553,12 @@ describe('Parser - Error Messages with Context', () => {
       expect(errors.length).toBeGreaterThan(0);
       // Should provide context about missing colon in variable declaration
       expect(errors[0].message).toMatch(/Expected : (after variable|in variable declaration)/i);
+      expect(errors[0].token.line).toBe(7);
+      expect(errors[0].token.column).toBe(15);
     });
 
     it('should include context for missing closing bracket in array', () => {
+      // Location assertions depend on fixture structure - do not reformat
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -575,9 +582,12 @@ describe('Parser - Error Messages with Context', () => {
       const bracketError = errors.find(e => e.message.includes(']'));
       expect(bracketError).toBeDefined();
       expect(bracketError?.message).toMatch(/Expected \] (after|in array)/i);
+      expect(bracketError?.token.line).toBe(7);
+      expect(bracketError?.token.column).toBe(28);
     });
 
     it('should include context for missing closing paren in parameters', () => {
+      // Location assertions depend on fixture structure - do not reformat
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -599,6 +609,8 @@ describe('Parser - Error Messages with Context', () => {
       const parenError = errors.find(e => e.message.includes(')'));
       expect(parenError).toBeDefined();
       expect(parenError?.message).toMatch(/Expected \) (after|in parameter)/i);
+      expect(parenError?.token.line).toBe(6);
+      expect(parenError?.token.column).toBe(5);
     });
   });
 
@@ -1036,6 +1048,7 @@ describe('Parser - Error Messages with Context', () => {
   describe('Phase 1 error messages (Issue #285)', () => {
     describe('Case statement errors', () => {
       it('should report error for missing colon after case branch value', () => {
+        // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1059,9 +1072,12 @@ describe('Parser - Error Messages with Context', () => {
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected : after case branch value');
+        expect(errors[0].token.line).toBe(10);
+        expect(errors[0].token.column).toBe(11);
       });
 
       it('should report error for missing colon after multiple case values', () => {
+        // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1085,9 +1101,12 @@ describe('Parser - Error Messages with Context', () => {
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected : after case branch value');
+        expect(errors[0].token.line).toBe(10);
+        expect(errors[0].token.column).toBe(17);
       });
 
       it('should report error for missing colon after case range expression', () => {
+        // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1111,6 +1130,8 @@ describe('Parser - Error Messages with Context', () => {
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected : after case branch value');
+        expect(errors[0].token.line).toBe(10);
+        expect(errors[0].token.column).toBe(15);
       });
 
       it('should report error and recover when ELSE clause contains syntax error (#292)', () => {
@@ -1156,6 +1177,7 @@ describe('Parser - Error Messages with Context', () => {
 
     describe('Set literal errors', () => {
       it('should report specific error for unclosed set literal', () => {
+        // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1177,6 +1199,8 @@ describe('Parser - Error Messages with Context', () => {
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected ] after set literal');
+        expect(errors[0].token.line).toBe(9);
+        expect(errors[0].token.column).toBe(28);
       });
 
       it('should report error for unclosed set literal with trailing comma before error', () => {
@@ -1230,6 +1254,7 @@ describe('Parser - Error Messages with Context', () => {
 
     describe('EXIT statement errors', () => {
       it('should report error for missing closing parenthesis in EXIT', () => {
+        // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1251,9 +1276,12 @@ describe('Parser - Error Messages with Context', () => {
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected ) after EXIT value');
+        expect(errors[0].token.line).toBe(9);
+        expect(errors[0].token.column).toBe(13);
       });
 
       it('should report error for unclosed empty EXIT parentheses', () => {
+        // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1273,6 +1301,8 @@ describe('Parser - Error Messages with Context', () => {
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected ) after EXIT value');
+        expect(errors[0].token.line).toBe(8);
+        expect(errors[0].token.column).toBe(5);
       });
     });
   });
@@ -1395,6 +1425,7 @@ describe('Parser - Error Messages with Context', () => {
   describe('Contextual keyword error messages (Issue #287 Phase 2c)', () => {
     describe('DO keyword messages', () => {
       it('should provide error for missing DO after WHILE condition', () => {
+        // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1417,9 +1448,12 @@ describe('Parser - Error Messages with Context', () => {
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected DO after WHILE condition');
+        expect(errors[0].token.line).toBe(10);
+        expect(errors[0].token.column).toBe(9);
       });
 
       it('should provide error for missing DO after FOR-TO range', () => {
+        // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1442,9 +1476,12 @@ describe('Parser - Error Messages with Context', () => {
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected DO after FOR range');
+        expect(errors[0].token.line).toBe(10);
+        expect(errors[0].token.column).toBe(9);
       });
 
       it('should provide error for missing DO after FOR-DOWNTO range', () => {
+        // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1467,9 +1504,12 @@ describe('Parser - Error Messages with Context', () => {
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected DO after FOR range');
+        expect(errors[0].token.line).toBe(10);
+        expect(errors[0].token.column).toBe(9);
       });
 
       it('should provide error for missing DO after WITH record', () => {
+        // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1492,6 +1532,8 @@ describe('Parser - Error Messages with Context', () => {
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected DO after WITH record');
+        expect(errors[0].token.line).toBe(10);
+        expect(errors[0].token.column).toBe(9);
       });
     });
 
@@ -1563,6 +1605,7 @@ describe('Parser - Error Messages with Context', () => {
 
     describe('END keyword messages', () => {
       it('should provide error for missing END to close BEGIN block', () => {
+        // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1584,6 +1627,8 @@ describe('Parser - Error Messages with Context', () => {
         expect(errors.length).toBeGreaterThan(0);
         const endError = errors.find(e => e.message.includes('Expected END to close BEGIN block'));
         expect(endError).toBeDefined();
+        expect(endError?.token.line).toBe(11);
+        expect(endError?.token.column).toBe(2);
       });
 
       // Re-enabled for Issue #297: CASE statement END detection
