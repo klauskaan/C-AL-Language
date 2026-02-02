@@ -235,8 +235,7 @@ git worktree add ../worktree-issue-NNN issue-NNN
 
 **Remote Branch Exists (no local branch):**
 ```bash
-# Fetch latest and track remote branch
-git fetch origin
+# Track remote branch (fetch already performed in detection phase)
 git worktree add ../worktree-issue-NNN -b issue-NNN origin/issue-NNN
 ```
 
