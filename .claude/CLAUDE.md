@@ -29,19 +29,18 @@ Create worktree     →      Steps 1-6                  →    Step 7: MERGE
 **Session Startup Protocol:**
 1. Orchestrator receives issue to work on (e.g., #303)
 2. Orchestrator calls file-ops agent: "Create worktree for issue 303"
-3. file-ops executes: `git worktree add ../worktree-issue-303 -b issue-303 origin/main`
+3. file-ops checks for path collision, handles per scenarios in file-ops.md
+   - Clean collision: auto-cleanup and recreate
+   - In-progress collision: escalates to user for decision
 4. All subsequent work happens in the worktree
 5. Normal workflow begins (INVESTIGATE, PLAN, etc.)
 
 **Naming Convention:** `worktree-issue-{number}` in parent directory (e.g., `../worktree-issue-303`)
 
 **Abandoned Session Cleanup:**
-If a session is abandoned without completing merge, manual cleanup is required (see file-ops.md for detailed commands):
-```bash
-git worktree remove ../worktree-issue-NNN --force
-git branch -D issue-NNN
-git push origin --delete issue-NNN  # if branch was pushed
-```
+If a session is abandoned without completing merge, manual cleanup is required. See file-ops.md "Abandoned Worktree Cleanup" section for commands.
+
+Note: Starting a new session for the same issue number will auto-detect and offer cleanup options.
 
 ---
 
