@@ -660,6 +660,7 @@ The document uses several structural patterns, some more consistently than other
 | Protocol (numbered steps) | Canonical | Lines 394-421 (Boy Scout Protocol) |
 | Table Reference | Canonical | Lines 186-226 (Checkpoint Decision Tables) |
 | Problem-Solution | Canonical | Lines 459-472 (Known Issues format) |
+| Rule + Bullet List | Canonical | Lines 250-253 (`**Review Rule:**` with rationale bullets) |
 
 **Legacy patterns** work but should not be replicated. When editing sections with legacy patterns, consider normalizing to canonical form as a Boy Scout improvement.
 
@@ -750,6 +751,23 @@ Use when: Documenting known issues, workarounds, or troubleshooting.
 
 Canonical example: Lines 459-472 (Agent Resume Failure)
 
+**6. Rule + Bullet List**
+
+Use when: Stating a rule, guideline, or concept with supporting details that do not fit the other patterns (no exceptions to separate, no applicability boundaries, no steps, no table, no problem-solution format).
+
+```
+**[Name]:** [Optional inline summary]
+- [Supporting point, rationale, or elaboration]
+- [Additional point]
+- [Additional point]
+```
+
+Canonical example: Lines 250-253 (Review Rule)
+- `**Review Rule:**` states the rule with optional inline summary
+- Bullet points provide rationale (why the rule exists)
+
+Secondary example: Lines 297-301 (Issue Creation Bias) - demonstrates concept with elaborative examples
+
 ### Header Variants
 
 | Variant | Format | Body Location | Use Case |
@@ -796,5 +814,6 @@ When adding new content, select the pattern based on what you are documenting:
 | A multi-step workflow | Protocol |
 | Decision criteria or mappings | Table Reference |
 | A known issue or workaround | Problem-Solution |
+| A rule with rationale or elaboration | Rule + Bullet List |
 
-**When in doubt:** Use Rule + Bullet List. It is the simplest pattern and can be refactored later if a more specific pattern becomes appropriate.
+**When in doubt:** Use Rule + Bullet List (Pattern #6). It is the simplest pattern and can be refactored later if a more specific pattern becomes appropriate.
