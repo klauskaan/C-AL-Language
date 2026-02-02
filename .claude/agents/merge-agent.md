@@ -140,8 +140,44 @@ git fetch origin main
 git merge --no-commit --no-ff origin/main
 ```
 
-### Step 2: Classify Conflicts
-If conflicts exist:
+### Step 2: Check Merge Status
+
+After the merge command, check whether conflicts exist:
+
+```bash
+# List any conflicted files
+CONFLICTS=$(git diff --name-only --diff-filter=U)
+
+# Check result
+if [ -z "$CONFLICTS" ]; then
+    echo "Clean merge - no conflicts"
+else
+    echo "Conflicts detected in:"
+    echo "$CONFLICTS"
+fi
+```
+
+**Decision Branch:**
+
+| Condition | How to Detect | Action |
+|-----------|---------------|--------|
+| No conflicts | `git diff --name-only --diff-filter=U` returns empty output | Run tests, then skip to **Step 6: Complete Merge** |
+| Conflicts exist | `git diff --name-only --diff-filter=U` returns file names | Proceed to **Step 3: Classify Conflicts** |
+
+**Clean Merge Path Verification:**
+
+Even when no conflicts exist, verification is required before completing:
+
+```bash
+# Run tests to verify merge doesn't break anything
+cd server && npm test
+
+# If tests pass → Proceed to Step 6: Complete Merge
+# If tests fail → Apply Retry Strategy (same as Step 5)
+```
+
+### Step 3: Classify Conflicts
+When conflicts are detected (Step 2 returned file names):
 ```bash
 # List conflicted files
 git diff --name-only --diff-filter=U
@@ -153,7 +189,7 @@ git diff <file>
 # If ANY conflicts are STRUCTURAL or SEMANTIC → ESCALATE immediately
 ```
 
-### Step 3: Resolve TRIVIAL/TEXTUAL Conflicts
+### Step 4: Resolve TRIVIAL/TEXTUAL Conflicts
 ```bash
 # Still on feature branch issue-NNN
 # Edit conflicted files
@@ -164,7 +200,7 @@ git diff <file>
 git add <resolved-files>
 ```
 
-### Step 4: Verify Preservation
+### Step 5: Verify Preservation
 ```bash
 # Still on feature branch issue-NNN
 # Review resolution
@@ -177,12 +213,35 @@ cd server && npm test
 # If still failing → ESCALATE
 ```
 
-### Step 5: Complete Merge
+### Step 6: Complete Merge
+
+**Note:** This step is reached via two paths:
+- **Clean merge path** (from Step 2): No conflicts detected
+- **Conflict resolution path** (from Step 5): Conflicts resolved and verified
+
+#### Commit Message Templates
+
+**For Clean Merge Path (no conflicts):**
+```bash
+# Still on feature branch issue-NNN - commit the clean merge
+git commit -m "$(cat <<'EOF'
+Merge branch 'origin/main' into issue-<number>
+
+Clean merge - no conflicts detected.
+
+Verification:
+- All tests passing
+
+Fixes #<number>
+EOF
+)"
+```
+
+**For Conflict Resolution Path:**
 ```bash
 # Still on feature branch issue-NNN - commit the merge resolution
-# Commit merge
 git commit -m "$(cat <<'EOF'
-Merge feature branch for issue #<number>
+Merge branch 'origin/main' into issue-<number>
 
 Resolved conflicts:
 - <file1>: <classification> - <brief description>
@@ -195,7 +254,10 @@ Verification:
 Fixes #<number>
 EOF
 )"
+```
 
+#### Complete Integration
+```bash
 # Switch to main branch for final merge
 git checkout main
 
@@ -232,6 +294,30 @@ Verification:
 - [x] All tests passing (X tests, Y ms)
 - [x] No new TypeScript errors
 - [x] Conflict markers removed
+
+Actions:
+- Merged to main: <commit-sha>
+- Pushed to remote: <timestamp>
+- Feature branch deleted
+- Issue #<number> closed
+
+Next Steps: None (merge complete)
+```
+
+### Clean Merge (No Conflicts)
+
+```markdown
+STATUS: MERGED (Clean)
+
+Branch: <feature-branch>
+Issue: #<number>
+
+Merge Result: No conflicts detected
+
+Verification:
+- [x] Merge applied cleanly
+- [x] All tests passing (X tests, Y ms)
+- [x] No new TypeScript errors
 
 Actions:
 - Merged to main: <commit-sha>
