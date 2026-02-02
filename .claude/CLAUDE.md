@@ -160,10 +160,28 @@ To mitigate silent tool failures ([anthropics/claude-code#16861](https://github.
 **When to use [VERIFY]:**
 - ✓ Plan depends on modifying a specific file
 - ✓ Plan depends on calling a specific function with particular signature
-- ✓ Investigation was conducted many turns ago (stale state risk)
+- ✓ Investigation is potentially stale (see Staleness Indicators below)
 - ✗ General architectural assumptions ("this pattern is common")
 - ✗ Code behavior (TDD will catch)
 - ✗ Type signatures (TypeScript compiler will catch)
+
+**Staleness Indicators:**
+
+Adversarial-reviewer should flag assumptions with [VERIFY] when staleness risk is elevated. Use these observable indicators rather than counting exchanges (which agents cannot measure programmatically):
+
+| Indicator | Staleness Risk | Action |
+|-----------|----------------|--------|
+| Investigation in same workflow step | Low | Normal review |
+| Investigation before a re-plan cycle | Medium | Flag file-dependent assumptions |
+| Investigation preceded significant implementation | High | Flag all critical path assumptions |
+| Investigation from a previous session | Very High | Flag and verify explicitly |
+
+**Heuristics for reviewers:**
+- When in doubt, flag it. Verification is cheap; missed staleness is expensive.
+- File existence and function signatures are highest priority for [VERIFY].
+- If orchestrator has made implementation attempts since investigation, assume elevated staleness risk.
+
+**Note:** This guidance is approximate. The goal is catching stale state before it derails implementation, not precise measurement. The adversarial-reviewer uses judgment informed by these indicators.
 
 **Checkpoint Decision Tables:**
 
