@@ -113,10 +113,81 @@ git branch -d feature/description
 Git worktrees enable parallel sessions by creating separate working directories.
 
 ### Create Worktree for Issue
+
+Before creating a worktree, check for path collisions:
+
 ```bash
-# Create worktree in parent directory with branch from origin/main
+# Step 1: Check if path exists
+test -d ../worktree-issue-NNN && echo "Path exists" || echo "Path clear"
+
+# Step 2: If path exists, check its status
+git -C ../worktree-issue-NNN status --porcelain 2>/dev/null
+
+# Step 3: Check if branch exists
+git show-ref --verify refs/heads/issue-NNN
+
+# Step 4: Check if worktree is registered
+git worktree list | grep worktree-issue-NNN
+```
+
+**Path Collision Decision Table:**
+
+| Scenario | Path Exists | Git Status | Branch Exists | Worktree Registered | Action |
+|----------|-------------|------------|---------------|---------------------|--------|
+| **Abandoned worktree** | Yes | Clean (no changes) | Yes | Yes | Auto-cleanup: Remove worktree, delete branch, recreate |
+| **In-progress worktree** | Yes | Has changes | Yes | Yes | Escalate to user: "Active work found. Force cleanup? [y/N]" |
+| **Orphaned directory** | Yes | Not a git repo | No | No | Remove directory, create fresh |
+| **Unrelated directory** | Yes | Not a git repo | Yes | No | Escalate to user: "Path occupied. Move? [y/N]" |
+| **Orphaned branch** | No | N/A | Yes | No | Reuse branch: `git worktree add ../worktree-issue-NNN issue-NNN` |
+| **Fresh start** | No | N/A | No | No | Create new: `git worktree add ../worktree-issue-NNN -b issue-NNN origin/main` |
+
+**Handling Specific Scenarios:**
+
+**Abandoned Worktree (clean, no changes):**
+```bash
+# Auto-cleanup and recreate
+git worktree remove ../worktree-issue-NNN --force
+git branch -D issue-NNN
 git worktree add ../worktree-issue-NNN -b issue-NNN origin/main
 ```
+
+**In-Progress Worktree (has uncommitted changes):**
+```bash
+# Escalate to user - DO NOT auto-cleanup
+echo "ERROR: Active work found in ../worktree-issue-NNN"
+git -C ../worktree-issue-NNN status --short
+echo "Manual intervention required."
+```
+
+**Orphaned Directory (not a git repo):**
+```bash
+# Remove and recreate
+rm -rf ../worktree-issue-NNN
+git worktree add ../worktree-issue-NNN -b issue-NNN origin/main
+```
+
+**Orphaned Branch (branch exists but no worktree):**
+```bash
+# Reuse existing branch
+git worktree add ../worktree-issue-NNN issue-NNN
+```
+
+**Cleanup Failure Handling:**
+
+If `git worktree remove` fails:
+```bash
+# Prune stale worktree references
+git worktree prune
+
+# Retry removal
+git worktree remove ../worktree-issue-NNN --force
+
+# If still fails, manual cleanup
+rm -rf ../worktree-issue-NNN
+git worktree prune
+```
+
+**Note:** If collision is for a different issue number than the one you're trying to create, escalate to user immediately - do not auto-cleanup unrelated work.
 
 ### List Worktrees
 ```bash
