@@ -12,9 +12,74 @@
  */
 
 import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { Parser, PROCEDURE_BOUNDARY_TOKENS } from '../parser';
 import { ObjectDeclaration, CaseStatement, RangeExpression, Literal } from '../ast';
 import { TokenType } from '../../lexer/tokens';
+
+describe('Parser - Module Constants', () => {
+  describe('PROCEDURE_BOUNDARY_TOKENS', () => {
+    it('should be exported and accessible', () => {
+      expect(PROCEDURE_BOUNDARY_TOKENS).toBeDefined();
+    });
+
+    it('should be a Set for O(1) lookup performance', () => {
+      expect(PROCEDURE_BOUNDARY_TOKENS).toBeInstanceOf(Set);
+    });
+
+    it('should contain exactly 4 procedure boundary tokens', () => {
+      expect(PROCEDURE_BOUNDARY_TOKENS.size).toBe(4);
+    });
+
+    it('should contain Procedure token', () => {
+      expect(PROCEDURE_BOUNDARY_TOKENS.has(TokenType.Procedure)).toBe(true);
+    });
+
+    it('should contain Function token', () => {
+      expect(PROCEDURE_BOUNDARY_TOKENS.has(TokenType.Function)).toBe(true);
+    });
+
+    it('should contain Trigger token', () => {
+      expect(PROCEDURE_BOUNDARY_TOKENS.has(TokenType.Trigger)).toBe(true);
+    });
+
+    it('should contain Event token', () => {
+      expect(PROCEDURE_BOUNDARY_TOKENS.has(TokenType.Event)).toBe(true);
+    });
+
+    it('should NOT contain Begin token', () => {
+      expect(PROCEDURE_BOUNDARY_TOKENS.has(TokenType.Begin)).toBe(false);
+    });
+
+    it('should NOT contain End token', () => {
+      expect(PROCEDURE_BOUNDARY_TOKENS.has(TokenType.End)).toBe(false);
+    });
+
+    it('should NOT contain Local token', () => {
+      expect(PROCEDURE_BOUNDARY_TOKENS.has(TokenType.Local)).toBe(false);
+    });
+
+    it('should NOT contain Code token', () => {
+      expect(PROCEDURE_BOUNDARY_TOKENS.has(TokenType.Code)).toBe(false);
+    });
+
+    it('should contain only the expected procedure boundary tokens', () => {
+      const expectedTokens = [
+        TokenType.Procedure,
+        TokenType.Function,
+        TokenType.Trigger,
+        TokenType.Event,
+      ];
+
+      // Verify all expected tokens are present
+      expectedTokens.forEach(token => {
+        expect(PROCEDURE_BOUNDARY_TOKENS.has(token)).toBe(true);
+      });
+
+      // Verify size matches (no extra tokens)
+      expect(PROCEDURE_BOUNDARY_TOKENS.size).toBe(expectedTokens.length);
+    });
+  });
+});
 
 describe('Parser - Basic Functionality', () => {
   describe('Parser initialization', () => {

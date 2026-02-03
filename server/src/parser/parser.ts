@@ -154,6 +154,25 @@ export const SECTION_KEYWORDS = new Set<TokenType>([
 ]);
 
 /**
+ * Tokens that indicate a procedure/function boundary in the CODE section.
+ * Used by error recovery logic to prevent consuming into the next procedure.
+ *
+ * These are the keywords that can start a new code unit within a CODE section:
+ * - PROCEDURE: Standard procedure declaration
+ * - FUNCTION: Function declaration (legacy, but valid)
+ * - TRIGGER: Event trigger declaration
+ * - EVENT: Event publisher/subscriber declaration
+ *
+ * @internal Exported for testing only. Do not use outside of parser tests.
+ */
+export const PROCEDURE_BOUNDARY_TOKENS = new Set<TokenType>([
+  TokenType.Procedure,
+  TokenType.Function,
+  TokenType.Trigger,
+  TokenType.Event,
+]);
+
+/**
  * Section keywords that are ALWAYS skipped via skipUnsupportedSection().
  * These sections have complex nested structures that are not parsed.
  *
@@ -2262,9 +2281,7 @@ export class Parser {
           // Note: BEGIN is intentionally NOT a stopping token here - if we're
           // recovering from "PROCEDURE BEGIN" (invalid), we need to skip past
           // the BEGIN to find the next real procedure declaration
-          while (!this.check(TokenType.Procedure) && !this.check(TokenType.Function) &&
-                 !this.check(TokenType.Trigger) && !this.check(TokenType.Event) &&
-                 !this.isAtEnd()) {
+          while (!PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type) && !this.isAtEnd()) {
             this.advance();
           }
         } else {
@@ -2558,8 +2575,43 @@ export class Parser {
     // Parse body
     const body: Statement[] = [];
     if (this.check(TokenType.Begin)) {
-      const block = this.parseBlock();
-      body.push(...block.statements);
+      try {
+        const block = this.parseBlock();
+        body.push(...block.statements);
+      } catch (error) {
+        if (error instanceof ParseError) {
+          // parseBlock threw because it couldn't find END (probably hit procedure boundary)
+          // Record the error but continue - we still want to create the procedure
+          this.errors.push(error);
+
+          // If we're at a procedure boundary, don't try to recover further
+          // The outer parseCodeSection will handle finding the next procedure
+          if (PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
+            // Just return what we have so far
+            const proc: ProcedureDeclaration = {
+              type: 'ProcedureDeclaration',
+              name,
+              nameToken,
+              parameters,
+              returnType,
+              isLocal,
+              variables,
+              body,
+              startToken,
+              endToken: this.previous()
+            };
+            if (attributes.length > 0) {
+              proc.attributes = attributes;
+            }
+            return proc;
+          }
+
+          // Otherwise, re-throw to let outer catch handle it
+          throw error;
+        } else {
+          throw error;
+        }
+      }
     }
 
     // Skip semicolon after END
@@ -2928,6 +2980,12 @@ export class Parser {
           // Use depth-aware recovery instead of flat recovery
           // Only use Semicolon as base token - END is handled by depth tracking
           this.recoverToTokensDepthAware([TokenType.Semicolon], true);
+
+          // If recovery stopped at a procedure boundary, exit the block parsing loop
+          // to let the outer CODE section parser handle the next procedure
+          if (PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
+            break;
+          }
         } else {
           throw error;
         }
@@ -2945,12 +3003,19 @@ export class Parser {
   }
 
   private parseStatement(): Statement | null {
+    const token = this.peek();
+
+    // Check for procedure boundaries that should never start a statement
+    // These indicate we've hit the next procedure/function/trigger/event declaration
+    if (PROCEDURE_BOUNDARY_TOKENS.has(token.type)) {
+      throw this.createParseError(`Unexpected ${token.value} - expected statement or END`);
+    }
+
     // Check for AL-only access modifiers and other non-keyword AL-only features
     // We do NOT universally check for ALOnlyKeyword here because keywords like ENUM, INTERFACE
     // can be used as identifiers in statements (e.g., "Enum := 1").
     // However, we DO check for suspicious patterns that suggest AL-only constructs
     // (e.g., "ENUM Type { }" which looks like an enum declaration).
-    const token = this.peek();
     if (token.type === TokenType.ALOnlyAccessModifier) {
       // Look ahead to distinguish between:
       // - "Public.FINDFIRST" (variable used with member access)
@@ -3466,7 +3531,8 @@ export class Parser {
     const branches: CaseBranch[] = [];
     let elseBranch: Statement[] | null = null;
 
-    while (!this.check(TokenType.End) && !this.isAtEnd()) {
+    while (!this.check(TokenType.End) && !this.isAtEnd() &&
+           !PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
       if (this.check(TokenType.Else)) {
         elseBranch = this.parseCaseElseBranch();
         break;
@@ -3488,8 +3554,7 @@ export class Parser {
               break;
             }
             // Stop at procedure boundaries - don't consume into next procedure
-            if (this.check(TokenType.Procedure) || this.check(TokenType.Trigger) ||
-                this.check(TokenType.Event)) {
+            if (PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
               break;
             }
             // Stop at semicolon - likely ends the branch statement
@@ -4129,6 +4194,16 @@ export class Parser {
       return this.parseIdentifierExpression();
     }
 
+    // Procedure boundaries should never appear in expressions
+    // They indicate we've hit the next declaration - don't consume
+    if (PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
+      const token = this.peek();
+      throw this.createParseError(
+        `Unexpected ${token.value} in expression - expected value or identifier`,
+        token
+      );
+    }
+
     // Fallback - consume token and return identifier
     // This handles other keywords used as identifiers (e.g., CODEUNIT, DATABASE, REPORT in expressions)
     const fallbackToken = this.advance();
@@ -4622,7 +4697,7 @@ export class Parser {
    * When CASE is missing its END, the END we see belongs to an enclosing
    * BEGIN block. We detect this conservatively by checking what follows END:
    * - END; followed by } → outer structure (section/object close)
-   * - END; followed by PROCEDURE/TRIGGER/EVENT/FUNCTION → outer structure (next procedure)
+   * - END; followed by procedure boundary (see PROCEDURE_BOUNDARY_TOKENS) → outer structure (next procedure)
    *
    * This is deliberately CONSERVATIVE to avoid false positives:
    * - Only triggers when followed by clear outer-structure signals
@@ -4649,19 +4724,12 @@ export class Parser {
       return false; // EOF - ambiguous, don't trigger
     }
 
-    // Clear outer-structure signals
-    const outerStructureTokens = [
-      TokenType.RightBrace,    // Closing section/object
-      TokenType.Procedure,     // Next procedure
-      TokenType.Trigger,       // Next trigger
-      TokenType.Event,         // Next event
-      TokenType.Function,      // Next function
-    ];
-
     // Also check by value for } in case token type is not properly set
     const isClosingBrace = checkToken.value === '}';
 
-    return outerStructureTokens.includes(checkToken.type) || isClosingBrace;
+    return checkToken.type === TokenType.RightBrace ||
+           PROCEDURE_BOUNDARY_TOKENS.has(checkToken.type) ||
+           isClosingBrace;
   }
 
   /**
@@ -5086,20 +5154,12 @@ export class Parser {
     // Track CASE/END nesting (case statements use END without BEGIN)
     let caseDepth = 0;
 
-    // Procedure boundary tokens - these indicate we've overrun into next procedure
-    const procedureBoundaryTokens = [
-      TokenType.Procedure,
-      TokenType.Trigger,
-      TokenType.Function,
-      TokenType.Event
-    ];
-
     while (!this.isAtEnd()) {
       const current = this.peek();
 
       // Stop at procedure boundaries (safety net - we've gone too far)
-      if (stopAtProcedureBoundary && procedureBoundaryTokens.includes(current.type)) {
-        break;
+      if (stopAtProcedureBoundary && PROCEDURE_BOUNDARY_TOKENS.has(current.type)) {
+        break;  // Do NOT advance past procedure boundary - let caller decide
       }
 
       // Track BEGIN - opens a new block
