@@ -1154,7 +1154,10 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
   });
 
   describe('Edge cases', () => {
-    it('should handle loop as THEN branch of IF', () => {
+    it('should reject orphaned ELSE when IF has semicolon-terminated loop', () => {
+      // When IF's then-branch (WHILE) is terminated by semicolon, IF cannot claim ELSE.
+      // With no outer construct (CASE/outer IF) to claim it, ELSE is orphaned = syntax error.
+      // Per investigation of #310: zero occurrences of orphaned ELSE found in 7,677 real NAV files.
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1178,17 +1181,13 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
       const ast = parser.parse();
       const errors = parser.getErrors();
 
-      expect(errors.length).toBe(0);
-
-      const procedures = ast.object?.code?.procedures || [];
-      const body = procedures[0]?.body || [];
-      const ifStmt = body[0] as IfStatement;
-
-      // WHILE is THEN branch
-      expect(ifStmt.thenBranch.type).toBe('WhileStatement');
-
-      // IF should NOT have elseBranch (WHILE terminated by semicolon)
-      expect(ifStmt.elseBranch).toBeNull();
+      // ELSE is orphaned - should be rejected by INVALID_EXPRESSION_STARTERS guard
+      expect(errors.length).toBeGreaterThan(0);
+      const hasElseError = errors.some(e =>
+        e.message.includes('ELSE') ||
+        e.message.includes('cannot start an expression')
+      );
+      expect(hasElseError).toBe(true);
     });
 
     it('should handle sequential IF statements', () => {

@@ -115,6 +115,7 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
   TokenType.ALOnlyAccessModifier,  // Internal, Protected, Public can be variable names
 ]);
 
+
 /**
  * Control-flow keywords that should NEVER appear in expression position.
  * When encountered in parsePrimary(), these indicate a syntax error rather
@@ -3026,6 +3027,7 @@ export class Parser {
     };
   }
 
+
   private parseStatement(): Statement | null {
     const token = this.peek();
 
@@ -3033,6 +3035,18 @@ export class Parser {
     // These indicate we've hit the next procedure/function/trigger/event declaration
     if (PROCEDURE_BOUNDARY_TOKENS.has(token.type)) {
       throw this.createParseError(`Unexpected ${token.value} - expected statement or END`);
+    }
+
+    // Issue #310: Check for orphaned ELSE (ELSE without a preceding IF at this nesting level)
+    // ELSE can only be valid if it's part of an IF or CASE statement's else branch.
+    // If we encounter ELSE here at statement position, it's orphaned = syntax error.
+    if (token.type === TokenType.Else) {
+      this.recordError(
+        `Unexpected ELSE - cannot start a statement. ELSE must follow IF or CASE.`,
+        token
+      );
+      this.advance();
+      return null;
     }
 
     // Check for AL-only access modifiers and other non-keyword AL-only features
@@ -4166,33 +4180,33 @@ export class Parser {
     // Check for AL-only tokens that are genuinely invalid in expressions
     // (TernaryOperator and PreprocessorDirective), but NOT ALOnlyKeyword
     // because keywords like ENUM, INTERFACE can be used as identifiers in expressions
-    const token = this.peek();
-    if (token.type === TokenType.TernaryOperator) {
+    const currentToken = this.peek();
+    if (currentToken.type === TokenType.TernaryOperator) {
       this.recordError(
         `AL-only ternary operator (? :) is not supported in C/AL. Use IF-THEN-ELSE instead.`,
-        token
+        currentToken
       );
       this.advance();
       return {
         type: 'Identifier',
         name: '?',
         isQuoted: false,
-        startToken: token,
-        endToken: token
+        startToken: currentToken,
+        endToken: currentToken
       } as Identifier;
     }
-    if (token.type === TokenType.PreprocessorDirective) {
+    if (currentToken.type === TokenType.PreprocessorDirective) {
       this.recordError(
-        `AL-only preprocessor directive '${sanitizeContent(token.value)}' is not supported in C/AL`,
-        token
+        `AL-only preprocessor directive '${sanitizeContent(currentToken.value)}' is not supported in C/AL`,
+        currentToken
       );
       this.advance();
       return {
         type: 'Identifier',
-        name: token.value,
+        name: currentToken.value,
         isQuoted: false,
-        startToken: token,
-        endToken: token
+        startToken: currentToken,
+        endToken: currentToken
       } as Identifier;
     }
 
@@ -4210,6 +4224,12 @@ export class Parser {
       return expr;
     }
 
+    // Set literal (standalone - typically used with IN operator)
+    // Parse it to get proper error messages if malformed
+    if (this.check(TokenType.LeftBracket)) {
+      return this.parseSetLiteral();
+    }
+
     // Identifier (with optional member access and function calls)
     // Also handle keywords that can be used as identifiers
     if (this.check(TokenType.Identifier) ||
@@ -4217,6 +4237,7 @@ export class Parser {
         this.canBeUsedAsIdentifier()) {
       return this.parseIdentifierExpression();
     }
+
 
     // Procedure boundaries should never appear in expressions
     // They indicate we've hit the next declaration - don't consume
@@ -4592,7 +4613,20 @@ export class Parser {
         }
       } catch (error) {
         if (error instanceof ParseError) {
-          this.errors.push(error);
+          // Check if this error is about a keyword at expression start
+          // If so, and we found a stop token, don't record it (let the set literal parser report "Expected ]")
+          const isKeywordError = error.message.includes('at expression start');
+          const foundStopToken = this.check(TokenType.RightBracket) ||
+                                 this.check(TokenType.Then) ||
+                                 this.check(TokenType.Do) ||
+                                 this.check(TokenType.End) ||
+                                 this.check(TokenType.Else);
+
+          // Only record the error if it's not a keyword error, or if we didn't find a stop token
+          if (!isKeywordError || !foundStopToken) {
+            this.errors.push(error);
+          }
+
           // Recover from expression parsing errors in set literal
           // Skip to next comma, right bracket, or statement terminator
           while (!this.isAtEnd()) {
