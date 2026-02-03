@@ -18,6 +18,9 @@ import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../../parser/parser';
 import { EmptySetValidator } from '../emptySetValidator';
 import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver';
+import { SymbolTable } from '../../symbols/symbolTable';
+import { BuiltinRegistry } from '../../semantic/builtinRegistry';
+import { ValidationContext } from '../../semantic/types';
 
 /**
  * Helper to parse C/AL code and run empty set validation
@@ -28,8 +31,18 @@ function validateEmptySet(code: string) {
   const parser = new Parser(tokens);
   const ast = parser.parse();
 
+  const symbolTable = new SymbolTable();
+  const builtins = new BuiltinRegistry();
+
+  const context: ValidationContext = {
+    ast,
+    symbolTable,
+    builtins,
+    documentUri: 'file:///test.cal'
+  };
+
   const validator = new EmptySetValidator();
-  return validator.validate(ast);
+  return validator.validate(context);
 }
 
 describe('EmptySetValidator - Basic Empty Sets', () => {

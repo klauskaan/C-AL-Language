@@ -410,6 +410,36 @@ export class SymbolTable {
     const scope = this.getScopeAtOffset(offset);
     return scope.getSymbol(name);
   }
+
+  /**
+   * Helper method to define a global symbol for testing purposes.
+   * Creates a synthetic token and adds the symbol to the root scope.
+   * @param symbol - Symbol definition with name, kind, type, and offsets
+   */
+  public defineGlobal(symbol: {
+    name: string;
+    kind: 'variable' | 'parameter' | 'field' | 'procedure' | 'function';
+    type?: string;
+    startOffset: number;
+    endOffset: number;
+  }): void {
+    // Create a synthetic token for the symbol
+    const syntheticToken: Token = {
+      type: 'IDENTIFIER' as any,
+      value: symbol.name,
+      line: 1,
+      column: 1,
+      startOffset: symbol.startOffset,
+      endOffset: symbol.endOffset
+    };
+
+    this.rootScope.addSymbol({
+      name: symbol.name,
+      kind: symbol.kind,
+      type: symbol.type,
+      token: syntheticToken
+    });
+  }
 }
 
 /**

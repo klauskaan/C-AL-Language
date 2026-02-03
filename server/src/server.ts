@@ -50,7 +50,7 @@ import { WorkspaceSymbolProvider } from './workspaceSymbol';
 import { FoldingRangeProvider } from './foldingRange/foldingRangeProvider';
 import { SymbolTable } from './symbols/symbolTable';
 import { formatError } from './utils/sanitize';
-import { EmptySetValidator } from './validation/emptySetValidator';
+import { SemanticAnalyzer } from './semantic/semanticAnalyzer';
 import { DepthLimitedWalker } from './visitor/depthLimitedWalker';
 
 // Create a connection for the server
@@ -95,8 +95,8 @@ const workspaceSymbolProvider = new WorkspaceSymbolProvider(
 // FoldingRange provider (code folding)
 const foldingRangeProvider = new FoldingRangeProvider();
 
-// EmptySet validator (semantic validation)
-const emptySetValidator = new EmptySetValidator();
+// Semantic analyzer (runs all semantic validations)
+const semanticAnalyzer = new SemanticAnalyzer();
 
 // Depth-limited walker (stack overflow protection - Issue #220)
 const depthLimitedWalker = new DepthLimitedWalker();
@@ -428,6 +428,9 @@ connection.onFoldingRanges((params: FoldingRangeParams): FoldingRange[] => {
   }
 });
 
+// Debounce timer for semantic analysis (split diagnostic strategy - Issue #183)
+let pendingSemanticAnalysis: NodeJS.Timeout | null = null;
+
 // Handle document changes - invalidate cache and revalidate
 documents.onDidChangeContent(change => {
   // CRITICAL: Clear cache before validation to ensure fresh parse
@@ -440,11 +443,13 @@ documents.onDidOpen(event => {
   validateTextDocument(event.document);
 });
 
-// Validate and provide diagnostics
+// Validate and provide diagnostics (split strategy - Issue #183)
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
   try {
+    const uri = textDocument.uri;
+
     // Parse document and get cached errors (no double parsing!)
-    const { ast, errors } = parseDocument(textDocument);
+    const { ast, symbolTable, errors } = parseDocument(textDocument);
 
     // Convert parse errors to diagnostics
     const parseDiagnostics: Diagnostic[] = errors.map(error => ({
@@ -458,19 +463,37 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
       source: 'cal'
     }));
 
-    // Run semantic validations
-    const semanticDiagnostics = emptySetValidator.validate(ast);
+    // IMMEDIATE: Send parse diagnostics (preserve current responsive UX)
+    connection.sendDiagnostics({ uri, diagnostics: parseDiagnostics });
 
-    // Check for excessive nesting depth (DoS protection - Issue #220)
-    depthLimitedWalker.resetDiagnostics();
-    depthLimitedWalker.walk(ast, {}); // Empty visitor - just checking depth
-    const depthDiagnostics = depthLimitedWalker.getDiagnostics();
+    // DEBOUNCED: Semantic analysis (300ms delay)
+    if (pendingSemanticAnalysis) {
+      clearTimeout(pendingSemanticAnalysis);
+    }
 
-    // Merge all diagnostics
-    const allDiagnostics = [...parseDiagnostics, ...semanticDiagnostics, ...depthDiagnostics];
+    pendingSemanticAnalysis = setTimeout(() => {
+      pendingSemanticAnalysis = null;
 
-    // Send combined diagnostics to client
-    connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: allDiagnostics });
+      try {
+        // Run semantic validations
+        const semanticDiagnostics = semanticAnalyzer.analyze(ast, symbolTable, uri);
+
+        // Check for excessive nesting depth (DoS protection - Issue #220)
+        depthLimitedWalker.resetDiagnostics();
+        depthLimitedWalker.walk(ast, {}); // Empty visitor - just checking depth
+        const depthDiagnostics = depthLimitedWalker.getDiagnostics();
+
+        // Merge all diagnostics (parse + semantic + depth)
+        const allDiagnostics = [...parseDiagnostics, ...semanticDiagnostics, ...depthDiagnostics];
+
+        // Send combined diagnostics to client
+        connection.sendDiagnostics({ uri, diagnostics: allDiagnostics });
+      } catch (error) {
+        connection.console.error(`Error in semantic analysis: ${formatError(error)}`);
+        // On error, send only parse diagnostics
+        connection.sendDiagnostics({ uri, diagnostics: parseDiagnostics });
+      }
+    }, 300);
   } catch (error) {
     connection.console.error(`Error validating document: ${formatError(error)}`);
   }
@@ -507,6 +530,11 @@ function parseDocument(document: TextDocument): ParsedDocument {
 
 // Clear cache when document is closed
 documents.onDidClose(event => {
+  // Cancel pending semantic analysis
+  if (pendingSemanticAnalysis) {
+    clearTimeout(pendingSemanticAnalysis);
+    pendingSemanticAnalysis = null;
+  }
   documentCache.delete(event.document.uri);
 });
 

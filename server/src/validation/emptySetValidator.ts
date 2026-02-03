@@ -9,6 +9,7 @@ import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver';
 import { CALDocument, BinaryExpression, Expression, SetLiteral } from '../parser/ast';
 import { ASTWalker } from '../visitor/astWalker';
 import { ASTVisitor } from '../visitor/astVisitor';
+import { Validator, ValidationContext } from '../semantic/types';
 
 /**
  * Visitor that collects diagnostics for empty sets in IN expressions
@@ -68,19 +69,23 @@ class EmptySetValidatorVisitor implements Partial<ASTVisitor> {
 
 /**
  * Validator that detects empty sets used with the IN operator.
+ * Implements the Validator interface for semantic analysis pipeline.
  */
-export class EmptySetValidator {
+export class EmptySetValidator implements Validator {
+  /** Validator name for logging and debugging */
+  public readonly name = 'EmptySetValidator';
+
   /**
    * Validates the AST for empty set usage in IN expressions.
    *
-   * @param ast - The parsed C/AL document AST
+   * @param context - Validation context containing AST and other analysis data
    * @returns Array of diagnostics (warnings for empty sets in IN expressions)
    */
-  validate(ast: CALDocument): Diagnostic[] {
+  validate(context: ValidationContext): Diagnostic[] {
     const visitor = new EmptySetValidatorVisitor();
     const walker = new ASTWalker();
 
-    walker.walk(ast, visitor);
+    walker.walk(context.ast, visitor);
 
     return visitor.diagnostics;
   }
