@@ -12,6 +12,9 @@
  * Note: Break and Exit are intentionally EXCLUDED:
  * - Break is a valid procedure name (Issue #258)
  * - Exit can take expression arguments
+ *
+ * Issue #329: Added test coverage for keywords after binary/unary operators
+ *              (tests currently skipped - see #331 for parser bug fix)
  */
 
 import { Lexer } from '../../lexer/lexer';
@@ -556,6 +559,318 @@ OBJECT Codeunit 50000 "Test"
 
       // AST should parse without errors
       expect(ast).toBeDefined();
+    });
+  });
+
+  describe('Keywords after logical/arithmetic operators', () => {
+    describe('Binary operators (AND, OR, XOR, DIV, MOD, IN)', () => {
+      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+        const code = `
+OBJECT Codeunit 50000 "Test"
+{
+  CODE
+  {
+    PROCEDURE Test();
+    VAR
+      x : Integer;
+      y : Integer;
+    BEGIN
+      x := y AND THEN;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+        const { ast, errors } = parseCode(code);
+
+        // Should report error for control-flow keyword in expression
+        expect(errors.length).toBeGreaterThan(0);
+        const keywordError = errors.find(e =>
+          e.message.includes('Unexpected keyword') &&
+          e.message.includes('in expression') &&
+          e.message.includes('THEN')
+        );
+        expect(keywordError).toBeDefined();
+
+        // AST should still parse (graceful recovery)
+        expect(ast).toBeDefined();
+      });
+
+      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+        const code = `
+OBJECT Codeunit 50000 "Test"
+{
+  CODE
+  {
+    PROCEDURE Test();
+    VAR
+      x : Integer;
+      y : Integer;
+    BEGIN
+      x := y OR THEN;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+        const { ast, errors } = parseCode(code);
+
+        // Should report error for control-flow keyword in expression
+        expect(errors.length).toBeGreaterThan(0);
+        const keywordError = errors.find(e =>
+          e.message.includes('Unexpected keyword') &&
+          e.message.includes('in expression') &&
+          e.message.includes('THEN')
+        );
+        expect(keywordError).toBeDefined();
+
+        // AST should still parse (graceful recovery)
+        expect(ast).toBeDefined();
+      });
+
+      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+        const code = `
+OBJECT Codeunit 50000 "Test"
+{
+  CODE
+  {
+    PROCEDURE Test();
+    VAR
+      x : Integer;
+      y : Integer;
+    BEGIN
+      x := y XOR THEN;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+        const { ast, errors } = parseCode(code);
+
+        // Should report error for control-flow keyword in expression
+        expect(errors.length).toBeGreaterThan(0);
+        const keywordError = errors.find(e =>
+          e.message.includes('Unexpected keyword') &&
+          e.message.includes('in expression') &&
+          e.message.includes('THEN')
+        );
+        expect(keywordError).toBeDefined();
+
+        // AST should still parse (graceful recovery)
+        expect(ast).toBeDefined();
+      });
+
+      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+        const code = `
+OBJECT Codeunit 50000 "Test"
+{
+  CODE
+  {
+    PROCEDURE Test();
+    VAR
+      x : Integer;
+      y : Integer;
+    BEGIN
+      x := y DIV THEN;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+        const { ast, errors } = parseCode(code);
+
+        // Should report error for control-flow keyword in expression
+        expect(errors.length).toBeGreaterThan(0);
+        const keywordError = errors.find(e =>
+          e.message.includes('Unexpected keyword') &&
+          e.message.includes('in expression') &&
+          e.message.includes('THEN')
+        );
+        expect(keywordError).toBeDefined();
+
+        // AST should still parse (graceful recovery)
+        expect(ast).toBeDefined();
+      });
+
+      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+        const code = `
+OBJECT Codeunit 50000 "Test"
+{
+  CODE
+  {
+    PROCEDURE Test();
+    VAR
+      x : Integer;
+      y : Integer;
+    BEGIN
+      x := y MOD THEN;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+        const { ast, errors } = parseCode(code);
+
+        // Should report error for control-flow keyword in expression
+        expect(errors.length).toBeGreaterThan(0);
+        const keywordError = errors.find(e =>
+          e.message.includes('Unexpected keyword') &&
+          e.message.includes('in expression') &&
+          e.message.includes('THEN')
+        );
+        expect(keywordError).toBeDefined();
+
+        // AST should still parse (graceful recovery)
+        expect(ast).toBeDefined();
+      });
+
+      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+        const code = `
+OBJECT Codeunit 50000 "Test"
+{
+  CODE
+  {
+    PROCEDURE Test();
+    VAR
+      x : Integer;
+      y : Integer;
+    BEGIN
+      x := y IN THEN;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+        const { ast, errors } = parseCode(code);
+
+        // Should report error for control-flow keyword in expression
+        expect(errors.length).toBeGreaterThan(0);
+        const keywordError = errors.find(e =>
+          e.message.includes('Unexpected keyword') &&
+          e.message.includes('in expression') &&
+          e.message.includes('THEN')
+        );
+        expect(keywordError).toBeDefined();
+
+        // AST should still parse (graceful recovery)
+        expect(ast).toBeDefined();
+      });
+    });
+
+    describe('Unary NOT operator', () => {
+      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+        const code = `
+OBJECT Codeunit 50000 "Test"
+{
+  CODE
+  {
+    PROCEDURE Test();
+    VAR
+      x : Boolean;
+    BEGIN
+      x := NOT THEN;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+        const { ast, errors } = parseCode(code);
+
+        expect(errors.length).toBeGreaterThan(0);
+        const keywordError = errors.find(e =>
+          e.message.includes('Unexpected keyword') &&
+          e.message.includes('in expression') &&
+          e.message.includes('THEN')
+        );
+        expect(keywordError).toBeDefined();
+        expect(ast).toBeDefined();
+      });
+    });
+
+    describe('Nested expressions', () => {
+      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+        const code = `
+OBJECT Codeunit 50000 "Test"
+{
+  CODE
+  {
+    PROCEDURE Test();
+    VAR
+      x : Integer;
+      y : Integer;
+    BEGIN
+      x := (y + (THEN));
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+        const { ast, errors } = parseCode(code);
+
+        expect(errors.length).toBeGreaterThan(0);
+        const keywordError = errors.find(e =>
+          e.message.includes('Unexpected keyword') &&
+          e.message.includes('in expression') &&
+          e.message.includes('THEN')
+        );
+        expect(keywordError).toBeDefined();
+        expect(ast).toBeDefined();
+      });
+    });
+
+    describe('Multiple errors', () => {
+      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+        const code = `
+OBJECT Codeunit 50000 "Test"
+{
+  CODE
+  {
+    PROCEDURE Test();
+    VAR
+      x : Integer;
+    BEGIN
+      x := THEN + ELSE;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+        const { ast, errors } = parseCode(code);
+
+        // Should report at least 2 errors (one for THEN, one for ELSE)
+        expect(errors.length).toBeGreaterThanOrEqual(2);
+
+        const thenError = errors.find(e =>
+          e.message.includes('Unexpected keyword') &&
+          e.message.includes('THEN')
+        );
+        const elseError = errors.find(e =>
+          e.message.includes('Unexpected keyword') &&
+          e.message.includes('ELSE')
+        );
+
+        expect(thenError).toBeDefined();
+        expect(elseError).toBeDefined();
+        expect(ast).toBeDefined();
+      });
     });
   });
 });
