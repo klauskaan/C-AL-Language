@@ -14,7 +14,7 @@
  * - Exit can take expression arguments
  *
  * Issue #329: Added test coverage for keywords after binary/unary operators
- *              (tests currently skipped - see #331 for parser bug fix)
+ * Issue #331: Fixed test assertions to use e.token?.value for sanitized error messages
  */
 
 import { Lexer } from '../../lexer/lexer';
@@ -564,7 +564,7 @@ OBJECT Codeunit 50000 "Test"
 
   describe('Keywords after logical/arithmetic operators', () => {
     describe('Binary operators (AND, OR, XOR, DIV, MOD, IN)', () => {
-      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+      it('should detect control-flow keyword THEN after AND operator', () => {
         const code = `
 OBJECT Codeunit 50000 "Test"
 {
@@ -589,16 +589,19 @@ OBJECT Codeunit 50000 "Test"
         expect(errors.length).toBeGreaterThan(0);
         const keywordError = errors.find(e =>
           e.message.includes('Unexpected keyword') &&
-          e.message.includes('in expression') &&
-          e.message.includes('THEN')
+          e.token?.value === 'THEN'
         );
         expect(keywordError).toBeDefined();
+        if (keywordError) {
+          expect(keywordError.message).toContain('Unexpected keyword');
+          expect(keywordError.token?.value).toBe('THEN');
+        }
 
         // AST should still parse (graceful recovery)
         expect(ast).toBeDefined();
       });
 
-      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+      it('should detect control-flow keyword THEN after OR operator', () => {
         const code = `
 OBJECT Codeunit 50000 "Test"
 {
@@ -623,16 +626,19 @@ OBJECT Codeunit 50000 "Test"
         expect(errors.length).toBeGreaterThan(0);
         const keywordError = errors.find(e =>
           e.message.includes('Unexpected keyword') &&
-          e.message.includes('in expression') &&
-          e.message.includes('THEN')
+          e.token?.value === 'THEN'
         );
         expect(keywordError).toBeDefined();
+        if (keywordError) {
+          expect(keywordError.message).toContain('Unexpected keyword');
+          expect(keywordError.token?.value).toBe('THEN');
+        }
 
         // AST should still parse (graceful recovery)
         expect(ast).toBeDefined();
       });
 
-      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+      it('should detect control-flow keyword THEN after XOR operator', () => {
         const code = `
 OBJECT Codeunit 50000 "Test"
 {
@@ -657,16 +663,19 @@ OBJECT Codeunit 50000 "Test"
         expect(errors.length).toBeGreaterThan(0);
         const keywordError = errors.find(e =>
           e.message.includes('Unexpected keyword') &&
-          e.message.includes('in expression') &&
-          e.message.includes('THEN')
+          e.token?.value === 'THEN'
         );
         expect(keywordError).toBeDefined();
+        if (keywordError) {
+          expect(keywordError.message).toContain('Unexpected keyword');
+          expect(keywordError.token?.value).toBe('THEN');
+        }
 
         // AST should still parse (graceful recovery)
         expect(ast).toBeDefined();
       });
 
-      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+      it('should detect control-flow keyword THEN after DIV operator', () => {
         const code = `
 OBJECT Codeunit 50000 "Test"
 {
@@ -691,16 +700,19 @@ OBJECT Codeunit 50000 "Test"
         expect(errors.length).toBeGreaterThan(0);
         const keywordError = errors.find(e =>
           e.message.includes('Unexpected keyword') &&
-          e.message.includes('in expression') &&
-          e.message.includes('THEN')
+          e.token?.value === 'THEN'
         );
         expect(keywordError).toBeDefined();
+        if (keywordError) {
+          expect(keywordError.message).toContain('Unexpected keyword');
+          expect(keywordError.token?.value).toBe('THEN');
+        }
 
         // AST should still parse (graceful recovery)
         expect(ast).toBeDefined();
       });
 
-      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+      it('should detect control-flow keyword THEN after MOD operator', () => {
         const code = `
 OBJECT Codeunit 50000 "Test"
 {
@@ -725,16 +737,19 @@ OBJECT Codeunit 50000 "Test"
         expect(errors.length).toBeGreaterThan(0);
         const keywordError = errors.find(e =>
           e.message.includes('Unexpected keyword') &&
-          e.message.includes('in expression') &&
-          e.message.includes('THEN')
+          e.token?.value === 'THEN'
         );
         expect(keywordError).toBeDefined();
+        if (keywordError) {
+          expect(keywordError.message).toContain('Unexpected keyword');
+          expect(keywordError.token?.value).toBe('THEN');
+        }
 
         // AST should still parse (graceful recovery)
         expect(ast).toBeDefined();
       });
 
-      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+      it('should detect control-flow keyword THEN after IN operator', () => {
         const code = `
 OBJECT Codeunit 50000 "Test"
 {
@@ -759,10 +774,13 @@ OBJECT Codeunit 50000 "Test"
         expect(errors.length).toBeGreaterThan(0);
         const keywordError = errors.find(e =>
           e.message.includes('Unexpected keyword') &&
-          e.message.includes('in expression') &&
-          e.message.includes('THEN')
+          e.token?.value === 'THEN'
         );
         expect(keywordError).toBeDefined();
+        if (keywordError) {
+          expect(keywordError.message).toContain('Unexpected keyword');
+          expect(keywordError.token?.value).toBe('THEN');
+        }
 
         // AST should still parse (graceful recovery)
         expect(ast).toBeDefined();
@@ -770,7 +788,7 @@ OBJECT Codeunit 50000 "Test"
     });
 
     describe('Unary NOT operator', () => {
-      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+      it('should detect control-flow keyword THEN after NOT operator', () => {
         const code = `
 OBJECT Codeunit 50000 "Test"
 {
@@ -793,16 +811,19 @@ OBJECT Codeunit 50000 "Test"
         expect(errors.length).toBeGreaterThan(0);
         const keywordError = errors.find(e =>
           e.message.includes('Unexpected keyword') &&
-          e.message.includes('in expression') &&
-          e.message.includes('THEN')
+          e.token?.value === 'THEN'
         );
         expect(keywordError).toBeDefined();
+        if (keywordError) {
+          expect(keywordError.message).toContain('Unexpected keyword');
+          expect(keywordError.token?.value).toBe('THEN');
+        }
         expect(ast).toBeDefined();
       });
     });
 
     describe('Nested expressions', () => {
-      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+      it('should detect control-flow keyword THEN in nested parentheses', () => {
         const code = `
 OBJECT Codeunit 50000 "Test"
 {
@@ -826,16 +847,19 @@ OBJECT Codeunit 50000 "Test"
         expect(errors.length).toBeGreaterThan(0);
         const keywordError = errors.find(e =>
           e.message.includes('Unexpected keyword') &&
-          e.message.includes('in expression') &&
-          e.message.includes('THEN')
+          e.token?.value === 'THEN'
         );
         expect(keywordError).toBeDefined();
+        if (keywordError) {
+          expect(keywordError.message).toContain('Unexpected keyword');
+          expect(keywordError.token?.value).toBe('THEN');
+        }
         expect(ast).toBeDefined();
       });
     });
 
     describe('Multiple errors', () => {
-      it.skip('Bug: Parser does not detect control-flow keywords after binary/unary operators - see #331', () => {
+      it('should detect multiple control-flow keywords THEN and ELSE', () => {
         const code = `
 OBJECT Codeunit 50000 "Test"
 {
@@ -860,15 +884,23 @@ OBJECT Codeunit 50000 "Test"
 
         const thenError = errors.find(e =>
           e.message.includes('Unexpected keyword') &&
-          e.message.includes('THEN')
+          e.token?.value === 'THEN'
         );
         const elseError = errors.find(e =>
           e.message.includes('Unexpected keyword') &&
-          e.message.includes('ELSE')
+          e.token?.value === 'ELSE'
         );
 
         expect(thenError).toBeDefined();
+        if (thenError) {
+          expect(thenError.message).toContain('Unexpected keyword');
+          expect(thenError.token?.value).toBe('THEN');
+        }
         expect(elseError).toBeDefined();
+        if (elseError) {
+          expect(elseError.message).toContain('Unexpected keyword');
+          expect(elseError.token?.value).toBe('ELSE');
+        }
         expect(ast).toBeDefined();
       });
     });
