@@ -18,8 +18,8 @@ import { CaseStatement } from '../ast';
 
 describe('Parser - Nested CASE Error Recovery', () => {
   describe('Issue #299 exact example', () => {
-    // BLOCKED: Issue #310 - Parser bug - set literal vs indexer ambiguity needs investigation
     it.skip('should detect malformed statement in inner CASE branch', () => {
+      // BLOCKED: Test uses invalid C/AL syntax (Option A,B,C) - needs test fixture fix
       // Issue #299: Original example from investigation
       // CASE x OF 1: CASE y OF A: [malformed statement;
       const code = `OBJECT Codeunit 50000 Test
@@ -52,11 +52,19 @@ describe('Parser - Nested CASE Error Recovery', () => {
 
       // Error should be detected (set literal or statement error)
       const hasError = errors.some(e =>
-        e.message.includes('Expected ] after set literal') ||
-        e.message.includes('statement') ||
-        e.message.includes('identifier')
+        e.message.includes('Expected ]') ||
+        e.message.includes('set literal') ||
+        e.message.includes('unexpected token')
       );
       expect(hasError).toBe(true);
+
+      // Verify error points to line 13 (where [ appears)
+      const relevantError = errors.find(e =>
+        e.message.includes('Expected ]') ||
+        e.message.includes('set literal') ||
+        e.message.includes('unexpected token')
+      );
+      expect(relevantError?.token.line).toBe(13);
 
       // Parser should complete (not throw)
       expect(ast).toBeDefined();
@@ -860,5 +868,95 @@ describe('Parser - Nested CASE Error Recovery', () => {
       expect((lastBranch.values[0] as any).name).toBe('ValidIdent');
     });
 
+  });
+
+  describe('Issue #310 - Left bracket at statement position', () => {
+    it('should report error for [ at statement position', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/01/26;
+    Time=12:00:00;
+  }
+  PROPERTIES
+  {
+  }
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    BEGIN
+      [ malformed;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      expect(errors.length).toBeGreaterThan(0);
+      const hasError = errors.some(e =>
+        e.message.includes('Expected ]') ||
+        e.message.includes('set literal') ||
+        e.message.includes('cannot start an expression')
+      );
+      expect(hasError).toBe(true);
+
+      // Parser should complete (not throw)
+      expect(ast).toBeDefined();
+      expect(ast.object).not.toBeNull();
+    });
+
+    it('should report clear error for control flow keyword at expression start', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/01/26;
+    Time=12:00:00;
+  }
+  PROPERTIES
+  {
+  }
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    BEGIN
+      x := END;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      expect(errors.length).toBeGreaterThan(0);
+      const hasError = errors.some(e =>
+        e.message.includes('Unexpected token') ||
+        e.message.includes('cannot start an expression') ||
+        e.message.includes('END')
+      );
+      expect(hasError).toBe(true);
+
+      // Parser should complete (not throw)
+      expect(ast).toBeDefined();
+      expect(ast.object).not.toBeNull();
+    });
   });
 });

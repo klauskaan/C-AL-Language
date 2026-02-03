@@ -331,9 +331,10 @@ describe('Parser - BREAK Statement', () => {
       expect(breakStmt.type).toBe('BreakStatement');
     });
 
-    it('should parse BREAK in empty control flow pattern', () => {
+    it('should reject orphaned ELSE after BREAK', () => {
       // Edge case: IF TRUE THEN BREAK; ELSE;
-      // Semicolon after BREAK terminates the IF, so ELSE does NOT belong to IF
+      // Semicolon after BREAK terminates the IF, leaving ELSE orphaned = syntax error.
+      // Per investigation of #310: zero occurrences of orphaned ELSE found in 7,677 real NAV files.
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -355,18 +356,13 @@ describe('Parser - BREAK Statement', () => {
       const ast = parser.parse();
       const errors = parser.getErrors();
 
-      expect(errors).toHaveLength(0);
-
-      const procedure = ast.object!.code!.procedures[0];
-      const whileStmt = procedure.body[0] as any;
-      const ifStmt = whileStmt.body;
-      expect(ifStmt.type).toBe('IfStatement');
-
-      const breakStmt = ifStmt.thenBranch;
-      expect(breakStmt.type).toBe('BreakStatement');
-
-      // IF should NOT have elseBranch (semicolon after BREAK terminates it)
-      expect(ifStmt.elseBranch).toBeNull();
+      // ELSE is orphaned - should be rejected by INVALID_EXPRESSION_STARTERS guard
+      expect(errors.length).toBeGreaterThan(0);
+      const hasElseError = errors.some(e =>
+        e.message.includes('ELSE') ||
+        e.message.includes('cannot start an expression')
+      );
+      expect(hasElseError).toBe(true);
     });
   });
 

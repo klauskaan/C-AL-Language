@@ -115,6 +115,7 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
   TokenType.ALOnlyAccessModifier,  // Internal, Protected, Public can be variable names
 ]);
 
+
 /**
  * All section keywords that can appear at the object level in C/AL (14 keywords).
  * Used by isSectionKeyword() and synchronize() for error recovery.
@@ -2945,12 +2946,25 @@ export class Parser {
   }
 
   private parseStatement(): Statement | null {
+    const token = this.peek();
+
+    // Issue #310: Check for orphaned ELSE (ELSE without a preceding IF at this nesting level)
+    // ELSE can only be valid if it's part of an IF or CASE statement's else branch.
+    // If we encounter ELSE here at statement position, it's orphaned = syntax error.
+    if (token.type === TokenType.Else) {
+      this.recordError(
+        `Unexpected ELSE - cannot start a statement. ELSE must follow IF or CASE.`,
+        token
+      );
+      this.advance();
+      return null;
+    }
+
     // Check for AL-only access modifiers and other non-keyword AL-only features
     // We do NOT universally check for ALOnlyKeyword here because keywords like ENUM, INTERFACE
     // can be used as identifiers in statements (e.g., "Enum := 1").
     // However, we DO check for suspicious patterns that suggest AL-only constructs
     // (e.g., "ENUM Type { }" which looks like an enum declaration).
-    const token = this.peek();
     if (token.type === TokenType.ALOnlyAccessModifier) {
       // Look ahead to distinguish between:
       // - "Public.FINDFIRST" (variable used with member access)
@@ -4077,33 +4091,33 @@ export class Parser {
     // Check for AL-only tokens that are genuinely invalid in expressions
     // (TernaryOperator and PreprocessorDirective), but NOT ALOnlyKeyword
     // because keywords like ENUM, INTERFACE can be used as identifiers in expressions
-    const token = this.peek();
-    if (token.type === TokenType.TernaryOperator) {
+    const currentToken = this.peek();
+    if (currentToken.type === TokenType.TernaryOperator) {
       this.recordError(
         `AL-only ternary operator (? :) is not supported in C/AL. Use IF-THEN-ELSE instead.`,
-        token
+        currentToken
       );
       this.advance();
       return {
         type: 'Identifier',
         name: '?',
         isQuoted: false,
-        startToken: token,
-        endToken: token
+        startToken: currentToken,
+        endToken: currentToken
       } as Identifier;
     }
-    if (token.type === TokenType.PreprocessorDirective) {
+    if (currentToken.type === TokenType.PreprocessorDirective) {
       this.recordError(
-        `AL-only preprocessor directive '${sanitizeContent(token.value)}' is not supported in C/AL`,
-        token
+        `AL-only preprocessor directive '${sanitizeContent(currentToken.value)}' is not supported in C/AL`,
+        currentToken
       );
       this.advance();
       return {
         type: 'Identifier',
-        name: token.value,
+        name: currentToken.value,
         isQuoted: false,
-        startToken: token,
-        endToken: token
+        startToken: currentToken,
+        endToken: currentToken
       } as Identifier;
     }
 
@@ -4121,12 +4135,37 @@ export class Parser {
       return expr;
     }
 
+    // Set literal (standalone - typically used with IN operator)
+    // Parse it to get proper error messages if malformed
+    if (this.check(TokenType.LeftBracket)) {
+      return this.parseSetLiteral();
+    }
+
     // Identifier (with optional member access and function calls)
     // Also handle keywords that can be used as identifiers
     if (this.check(TokenType.Identifier) ||
         this.check(TokenType.QuotedIdentifier) ||
         this.canBeUsedAsIdentifier()) {
       return this.parseIdentifierExpression();
+    }
+
+    // Guard: Certain keywords cannot start expressions and should error
+    // END, BEGIN, THEN, DO, OF, TO, UNTIL, DOWNTO are structural keywords that should not appear at expression level
+    const guardToken = this.peek();
+    if (guardToken.type === TokenType.End ||
+        guardToken.type === TokenType.Begin ||
+        guardToken.type === TokenType.Then ||
+        guardToken.type === TokenType.Do ||
+        guardToken.type === TokenType.Of ||
+        guardToken.type === TokenType.To ||
+        guardToken.type === TokenType.Until ||
+        guardToken.type === TokenType.DownTo) {
+      // For keywords like THEN, DO, END in set literal contexts, throw so parent can catch and recover
+      // For keywords like END in regular expression contexts, throw so error can be recorded
+      throw this.createParseError(
+        `Unexpected token '${sanitizeContent(guardToken.value)}' at expression start`,
+        guardToken
+      );
     }
 
     // Fallback - consume token and return identifier
@@ -4414,7 +4453,20 @@ export class Parser {
         }
       } catch (error) {
         if (error instanceof ParseError) {
-          this.errors.push(error);
+          // Check if this error is about a keyword at expression start
+          // If so, and we found a stop token, don't record it (let the set literal parser report "Expected ]")
+          const isKeywordError = error.message.includes('at expression start');
+          const foundStopToken = this.check(TokenType.RightBracket) ||
+                                 this.check(TokenType.Then) ||
+                                 this.check(TokenType.Do) ||
+                                 this.check(TokenType.End) ||
+                                 this.check(TokenType.Else);
+
+          // Only record the error if it's not a keyword error, or if we didn't find a stop token
+          if (!isKeywordError || !foundStopToken) {
+            this.errors.push(error);
+          }
+
           // Recover from expression parsing errors in set literal
           // Skip to next comma, right bracket, or statement terminator
           while (!this.isAtEnd()) {
