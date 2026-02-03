@@ -861,4 +861,50 @@ describe('Parser - Nested CASE Error Recovery', () => {
     });
 
   });
+
+  describe('Issue #317 - CASE error recovery consumes FUNCTION declarations', () => {
+    it('should not consume FUNCTION declaration during CASE error recovery', () => {
+      // EXPECTED TO FAIL: parseCaseStatement error recovery checks for Procedure/Trigger/Event
+      // but is MISSING Function, so it can consume tokens from a following FUNCTION declaration
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: BEGIN
+          MESSAGE('One');
+          // Missing END - malformed CASE branch
+
+    FUNCTION NextFunc() : Integer;
+    BEGIN
+      EXIT(42);
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should report error for malformed CASE
+      expect(errors.length).toBeGreaterThan(0);
+
+      // BUG: FUNCTION gets consumed by CASE error recovery because recovery
+      // doesn't stop at Function boundaries (only Procedure/Trigger/Event)
+      // EXPECTED: Both TestProc procedure and NextFunc function should be in AST
+      // ACTUAL: NextFunc is consumed as part of CASE error recovery
+      const procedures = ast.object?.code?.procedures || [];
+
+      // Should have 2 procedures (PROCEDURE and FUNCTION are both stored in procedures array)
+      expect(procedures.length).toBe(2);
+      expect(procedures[0].name).toBe('TestProc');
+      expect(procedures[1].name).toBe('NextFunc');
+    });
+  });
 });
