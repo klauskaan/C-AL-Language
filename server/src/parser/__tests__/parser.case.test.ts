@@ -916,6 +916,121 @@ describe('Parser - Nested CASE Error Recovery', () => {
     });
   });
 
+  describe('Issue #326 - CASE error recovery boundary tests', () => {
+    it('should not consume PROCEDURE declaration during CASE error recovery', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: BEGIN
+          MESSAGE('One');
+          // Missing END - malformed CASE branch
+
+    PROCEDURE NextProc();
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should report error for malformed CASE
+      expect(errors.length).toBeGreaterThan(0);
+
+      // Both procedures should be preserved in AST (not consumed by error recovery)
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures.length).toBe(2);
+      expect(procedures[0].name).toBe('TestProc');
+      expect(procedures[1].name).toBe('NextProc');
+    });
+
+    it('should not consume TRIGGER declaration during CASE error recovery', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: BEGIN
+          MESSAGE('One');
+          // Missing END - malformed CASE branch
+
+    TRIGGER OnRun();
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should report error for malformed CASE
+      expect(errors.length).toBeGreaterThan(0);
+
+      // Procedure and trigger should be preserved (not consumed by error recovery)
+      const procedures = ast.object?.code?.procedures || [];
+      const triggers = ast.object?.code?.triggers || [];
+      expect(procedures.length).toBe(1);
+      expect(procedures[0].name).toBe('TestProc');
+      expect(triggers.length).toBe(1);
+      expect(triggers[0].name).toBe('OnRun');
+    });
+
+    it('should not consume EVENT declaration during CASE error recovery', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: BEGIN
+          MESSAGE('One');
+          // Missing END - malformed CASE branch
+
+    EVENT WebViewer@1::DocumentReady@2();
+    BEGIN
+    END;
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should report error for malformed CASE
+      expect(errors.length).toBeGreaterThan(0);
+
+      // Procedure and event should be preserved (not consumed by error recovery)
+      const procedures = ast.object?.code?.procedures || [];
+      const events = ast.object?.code?.events || [];
+      expect(procedures.length).toBe(1);
+      expect(procedures[0].name).toBe('TestProc');
+      expect(events.length).toBe(1);
+      expect(events[0].subscriberName).toBe('WebViewer@1');
+      expect(events[0].eventName).toBe('DocumentReady@2');
+    });
+  });
+
   describe('Issue #310 - Left bracket at statement position', () => {
     it('should report error for [ at statement position', () => {
       const code = `OBJECT Codeunit 50000 Test
