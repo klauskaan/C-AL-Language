@@ -116,6 +116,30 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
 ]);
 
 /**
+ * Control-flow keywords that should NEVER appear in expression position.
+ * When encountered in parsePrimary(), these indicate a syntax error rather
+ * than an identifier. The parser records an error and recovers.
+ *
+ * IMPORTANT: Break is intentionally EXCLUDED from this set.
+ * Real NAV code uses "Break" as a procedure name (Issue #258, REP6005597.TXT:835).
+ * Break is in ALLOWED_KEYWORDS_AS_IDENTIFIERS for this reason.
+ *
+ * Exit is also excluded because it takes an optional expression argument
+ * EXIT(value), so it can legitimately appear at expression boundaries.
+ */
+const CONTROL_FLOW_KEYWORDS = new Set<TokenType>([
+  TokenType.Then,      // IF ... THEN
+  TokenType.Else,      // IF ... ELSE, CASE ... ELSE
+  TokenType.Do,        // WHILE ... DO, FOR ... DO
+  TokenType.Of,        // CASE ... OF
+  TokenType.To,        // FOR ... TO
+  TokenType.DownTo,    // FOR ... DOWNTO
+  TokenType.Until,     // REPEAT ... UNTIL
+  TokenType.Begin,     // Block start
+  TokenType.End,       // Block/statement terminator
+]);
+
+/**
  * All section keywords that can appear at the object level in C/AL (14 keywords).
  * Used by isSectionKeyword() and synchronize() for error recovery.
  *
@@ -4202,6 +4226,85 @@ export class Parser {
         `Unexpected ${token.value} in expression - expected value or identifier`,
         token
       );
+    }
+
+    // Check for control-flow keywords that are never valid in expressions
+    // These indicate a syntax error - record and recover
+    const cfToken = this.peek();
+    if (CONTROL_FLOW_KEYWORDS.has(cfToken.type)) {
+      // Skip the error for orphaned keywords at statement level
+      // An orphaned keyword is one that appears where a statement would be expected
+      // (like "ELSE;" without an IF). This happens when the previous statement ended,
+      // and we're at statement level, not in an expression context.
+      //
+      // Key indicators of expression context: operator/assignment before the keyword
+      const previousToken = this.previous();
+      const nextToken = this.peekNextMeaningfulToken(1);
+      const isInExpressionContext = previousToken && (
+        previousToken.type === TokenType.LeftBracket ||  // [THEN
+        previousToken.type === TokenType.LeftParen ||    // func(THEN)
+        previousToken.type === TokenType.Comma ||        // a, THEN
+        previousToken.type === TokenType.Colon ||        // [THEN :
+        previousToken.type === TokenType.Plus ||         // x + THEN
+        previousToken.type === TokenType.Minus ||        // x - THEN
+        previousToken.type === TokenType.Multiply ||     // x * THEN
+        previousToken.type === TokenType.Divide ||       // x / THEN
+        previousToken.type === TokenType.Equal ||        // x = THEN
+        previousToken.type === TokenType.NotEqual ||     // x <> THEN
+        previousToken.type === TokenType.Less ||         // x < THEN
+        previousToken.type === TokenType.LessEqual ||    // x <= THEN
+        previousToken.type === TokenType.Greater ||      // x > THEN
+        previousToken.type === TokenType.GreaterEqual || // x >= THEN
+        previousToken.type === TokenType.Assign ||       // x := THEN
+        previousToken.type === TokenType.PlusAssign ||   // x += THEN
+        previousToken.type === TokenType.MinusAssign ||  // x -= THEN
+        previousToken.type === TokenType.MultiplyAssign || // x *= THEN
+        previousToken.type === TokenType.DivideAssign ||  // x /= THEN
+        // Logical and arithmetic operators
+        previousToken.type === TokenType.Not ||          // NOT THEN
+        previousToken.type === TokenType.And ||          // x AND THEN
+        previousToken.type === TokenType.Or ||           // x OR THEN
+        previousToken.type === TokenType.Xor ||          // x XOR THEN
+        previousToken.type === TokenType.Div ||          // x DIV THEN
+        previousToken.type === TokenType.Mod ||          // x MOD THEN
+        previousToken.type === TokenType.In ||           // x IN THEN
+        // Statement keyword that can be followed by an expression
+        previousToken.type === TokenType.Exit            // EXIT THEN
+      );
+
+      // Also check if we're in a set literal context
+      // Either: previous token is `[` (directly after opening bracket)
+      // Or: next token is a set continuation character (`,`, `]`, `:`)
+      // Note: LeftBracket appears in both checks (expression context AND set literal context)
+      // This overlap is intentional - the combined condition ensures set literals suppress
+      // the error (only error if isInExpressionContext AND NOT isInSetLiteralContext)
+      const isInSetLiteralContext = (
+        previousToken?.type === TokenType.LeftBracket ||  // [THEN directly
+        (nextToken && (
+          nextToken.type === TokenType.Comma ||
+          nextToken.type === TokenType.RightBracket ||
+          nextToken.type === TokenType.Colon  // [THEN : ... ] in set range
+        ))
+      );
+
+      // Report error only if we're in a true expression context AND not in a set literal
+      // Set literals handle their own error messages for invalid elements
+      if (isInExpressionContext && !isInSetLiteralContext) {
+        this.recordError(
+          `Unexpected keyword '${sanitizeContent(cfToken.value)}' in expression. Missing statement or operator before '${sanitizeContent(cfToken.value)}'.`,
+          cfToken
+        );
+        this.advance();
+        return {
+          type: 'Identifier',
+          name: cfToken.value,
+          isQuoted: false,
+          startToken: cfToken,
+          endToken: cfToken
+        } as Identifier;
+      }
+      // If not in a true expression context, fall through to fallback handling
+      // (including set literals, orphaned keywords, etc.)
     }
 
     // Fallback - consume token and return identifier
