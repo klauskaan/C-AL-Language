@@ -6,6 +6,13 @@
  * - Context about where in the object definition the error occurred
  * - Token type information for debugging
  *
+ * === Error Location Assertion Strategy ===
+ * See: .claude/skills/cal-dev-guide/SKILL.md "Error Location Assertion Strategy"
+ *
+ * Tier 1 tests (exact location): Tests with "do not reformat" comments
+ * Tier 2 tests (range): Tests with toBeGreaterThanOrEqual/toBeLessThanOrEqual on line numbers
+ * Tier 3 tests (detection only): Tests that only check error existence/message content
+ *
  * These tests validate issue #40: Add more context to parser error messages
  */
 

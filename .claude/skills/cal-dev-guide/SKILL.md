@@ -259,3 +259,220 @@ npm test -- --watch
 - Create brittle tests
 - Share state between tests
 - Commit broken tests
+
+## Error Location Assertion Strategy
+
+**Purpose:** Prevent location regressions (like Issue #308) while avoiding excessive test brittleness.
+
+**Tier System:**
+
+| Tier | When to Use | Location Assertions | Fixture Stability |
+|------|-------------|---------------------|-------------------|
+| **Tier 1** | Location is the bug/feature being tested | Exact line AND column | "do not reformat" comment required |
+| **Tier 2** | Location affects user experience | Within logical block | Comment recommended |
+| **Tier 3** | Testing error detection only | None | No constraint |
+
+### Tier Selection Flowchart
+
+Use this decision tree when writing new error tests:
+
+```
+Start: What is the test's PURPOSE?
+  │
+  ├─▶ "Error appears on wrong line" (Issue #308)
+  │   └─▶ TIER 1: Location IS the bug
+  │
+  ├─▶ "IDE squiggle in wrong place"
+  │   └─▶ TIER 1: Location affects UX
+  │
+  ├─▶ "GitHub issue mentions line/column"
+  │   └─▶ TIER 1: Location is explicit requirement
+  │
+  ├─▶ "Error should be in general region, exact token unimportant"
+  │   │   (e.g., anywhere within 10-line CASE block is OK,
+  │   │    but outside the construct would be wrong)
+  │   └─▶ TIER 2: Block containment matters
+  │
+  └─▶ "Parser detects this error at all"
+      └─▶ TIER 3: Detection only
+```
+
+### Tier 1: Exact Location Assertions
+
+**Use when:** The error's precise location is the subject of a GitHub issue OR affects IDE presentation.
+
+**Requirements:**
+- Assert BOTH `line` AND `column` with exact values
+- Include `// Location assertions depend on fixture structure - do not reformat` comment
+- Fixture formatting is frozen; any change breaks the test intentionally
+
+**Template:**
+```typescript
+it('should report missing colon on correct line (#308)', () => {
+  // Location assertions depend on fixture structure - do not reformat
+  const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1 EXIT;
+      END;
+    END;
+  }
+}`;
+  const lexer = new Lexer(code);
+  const tokens = lexer.tokenize();
+  const parser = new Parser(tokens);
+
+  parser.parse();
+  const errors = parser.getErrors();
+
+  const colonError = errors.find(e => e.message.includes('Expected :'));
+  expect(colonError).toBeDefined();
+  expect(colonError!.token.line).toBe(11);     // Tier 1: exact line
+  expect(colonError!.token.column).toBe(9);    // Tier 1: exact column
+});
+```
+
+**Note:** See `server/src/parser/__tests__/error-messages.test.ts` for import statements (`Lexer`, `Parser`).
+
+### Tier 2: Range/Block Assertions
+
+**Use when:** Error should appear within a logical code region, but exact position is an implementation detail.
+
+**Semantics:** "Within logical block" means:
+- Error line is within the start/end lines of the containing construct
+- For multi-line constructs: `startLine <= errorLine <= endLine`
+- For single-line constructs: exact line match (degrades to Tier 1)
+
+**Template:**
+```typescript
+it('should report error within CASE block', () => {
+  // CASE block spans lines 9-12
+  const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        2: MESSAGE('Two');
+      END;
+    END;
+  }
+}`;
+  const lexer = new Lexer(code);
+  const tokens = lexer.tokenize();
+  const parser = new Parser(tokens);
+
+  parser.parse();
+  const errors = parser.getErrors();
+
+  // Hypothetical: parser detects an issue somewhere in the CASE block
+  const caseError = errors.find(e => e.message.includes('CASE'));
+  expect(caseError).toBeDefined();
+  // Tier 2: within CASE block (lines 9-12)
+  expect(caseError!.token.line).toBeGreaterThanOrEqual(9);
+  expect(caseError!.token.line).toBeLessThanOrEqual(12);
+});
+```
+
+### Tier 3: Detection Only
+
+**Use when:** Testing that the parser detects an error at all; location is not relevant.
+
+**Template:**
+```typescript
+it('should detect invalid keyword in expression', () => {
+  const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      x := BEGIN;  // Invalid - BEGIN cannot appear in expression
+    END;
+  }
+}`;
+  const lexer = new Lexer(code);
+  const tokens = lexer.tokenize();
+  const parser = new Parser(tokens);
+
+  parser.parse();
+  const errors = parser.getErrors();
+
+  // Tier 3: detection only, no location assertion
+  expect(errors.length).toBeGreaterThan(0);
+  const keywordError = errors.find(e => e.message.includes('unexpected'));
+  expect(keywordError).toBeDefined();
+});
+```
+
+### Multi-Error Tests
+
+When a test checks multiple errors, each error can have a DIFFERENT tier:
+
+```typescript
+it('should detect multiple errors with mixed precision', () => {
+  // Location assertions depend on fixture structure - do not reformat
+  const code = `OBJECT Table 18 Test
+{
+  FIELDS
+  {
+    { abc ; ; No. ; Code20 }     // Error 1: invalid field number (Tier 3)
+    { 2 ; ; Name ; Text50 }      // Valid
+    { 3  ; Desc ; Text100 }      // Error 2: missing semicolon (Tier 1)
+  }
+}`;
+  const lexer = new Lexer(code);
+  const tokens = lexer.tokenize();
+  const parser = new Parser(tokens);
+
+  parser.parse();
+  const errors = parser.getErrors();
+
+  // Error 1: Tier 3 - just detecting invalid field number
+  const fieldNumError = errors.find(e => e.message.includes('Expected field number'));
+  expect(fieldNumError).toBeDefined();
+
+  // Error 2: Tier 1 - location is the issue being fixed
+  const semicolonError = errors.find(e => e.message.includes('Expected ;'));
+  expect(semicolonError).toBeDefined();
+  expect(semicolonError!.token.line).toBe(7);
+  expect(semicolonError!.token.column).toBe(10);
+});
+```
+
+### Migration Guidance
+
+**Existing tests without location assertions:** No mandatory upgrade.
+- Tests written as Tier 3 remain Tier 3 unless a regression proves location matters
+- When a location bug is filed (like #308), upgrade the relevant test to Tier 1
+
+**Upgrade triggers:**
+- GitHub issue filed reporting incorrect error location → Tier 1
+- IDE presentation bug filed → Tier 1
+- Reviewer notes location should be stable → Tier 2
+
+**Target coverage:** No percentage target. Coverage is event-driven:
+- Each location-specific bug report adds one Tier 1 test
+- Systematic upgrade for test coverage is tracked separately in Issue #234 (Error Location Test Coverage Audit)
+
+### Validation Criterion
+
+This strategy is validated if it would catch Issue #308:
+
+| #308 Scenario | Strategy Application |
+|---------------|---------------------|
+| "Error reported on wrong line" | Bug IS about location → Tier 1 |
+| Test written with exact assertion | `expect(error.token.line).toBe(11)` |
+| Regression introduced | Test fails immediately |
+
+Without this strategy, a Tier 3 test would not have caught the regression because it only checked "error exists."
