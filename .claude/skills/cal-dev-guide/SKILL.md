@@ -309,6 +309,7 @@ Start: What is the test's PURPOSE?
 **Template:**
 ```typescript
 it('should report missing colon on correct line (#308)', () => {
+  // prettier-ignore
   // Location assertions depend on fixture structure - do not reformat
   const code = `OBJECT Codeunit 50000 Test
 {
@@ -337,6 +338,8 @@ it('should report missing colon on correct line (#308)', () => {
   expect(colonError!.token.column).toBe(9);    // Tier 1: exact column
 });
 ```
+
+**Rationale:** Automated formatters can silently break parser tests by normalizing whitespace that is semantically significant for error position testing. The dual-comment pattern provides defense-in-depth: the human-readable comment for human readers, prettier-ignore for tooling.
 
 **Note:** See `server/src/parser/__tests__/error-messages.test.ts` for import statements (`Lexer`, `Parser`).
 

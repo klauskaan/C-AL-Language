@@ -126,6 +126,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     it('should provide context for missing semicolon in fields', () => {
+      // prettier-ignore
       // Location assertions depend on fixture structure - do not reformat
       const code = `OBJECT Table 18 Customer
 {
@@ -538,6 +539,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     it('should include context for missing colon in variable declaration', () => {
+      // prettier-ignore
       // Location assertions depend on fixture structure - do not reformat
       const code = `OBJECT Codeunit 50000 Test
 {
@@ -565,6 +567,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     it('should include context for missing closing bracket in array', () => {
+      // prettier-ignore
       // Location assertions depend on fixture structure - do not reformat
       const code = `OBJECT Codeunit 50000 Test
 {
@@ -594,6 +597,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     it('should include context for missing closing paren in parameters', () => {
+      // prettier-ignore
       // Location assertions depend on fixture structure - do not reformat
       const code = `OBJECT Codeunit 50000 Test
 {
@@ -1055,6 +1059,7 @@ describe('Parser - Error Messages with Context', () => {
   describe('Phase 1 error messages (Issue #285)', () => {
     describe('Case statement errors', () => {
       it('should report error for missing colon after case branch value', () => {
+        // prettier-ignore
         // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
@@ -1084,6 +1089,7 @@ describe('Parser - Error Messages with Context', () => {
       });
 
       it('should report error for missing colon after multiple case values', () => {
+        // prettier-ignore
         // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
@@ -1113,6 +1119,7 @@ describe('Parser - Error Messages with Context', () => {
       });
 
       it('should report error for missing colon after case range expression', () => {
+        // prettier-ignore
         // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
@@ -1184,6 +1191,7 @@ describe('Parser - Error Messages with Context', () => {
 
     describe('Set literal errors', () => {
       it('should report specific error for unclosed set literal', () => {
+        // prettier-ignore
         // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
@@ -1263,6 +1271,7 @@ describe('Parser - Error Messages with Context', () => {
 
     describe('EXIT statement errors', () => {
       it('should report error for missing closing parenthesis in EXIT', () => {
+        // prettier-ignore
         // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
@@ -1290,6 +1299,7 @@ describe('Parser - Error Messages with Context', () => {
       });
 
       it('should report error for unclosed empty EXIT parentheses', () => {
+        // prettier-ignore
         // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
@@ -1434,6 +1444,7 @@ describe('Parser - Error Messages with Context', () => {
   describe('Contextual keyword error messages (Issue #287 Phase 2c)', () => {
     describe('DO keyword messages', () => {
       it('should provide error for missing DO after WHILE condition', () => {
+        // prettier-ignore
         // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
@@ -1462,6 +1473,7 @@ describe('Parser - Error Messages with Context', () => {
       });
 
       it('should provide error for missing DO after FOR-TO range', () => {
+        // prettier-ignore
         // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
@@ -1490,6 +1502,7 @@ describe('Parser - Error Messages with Context', () => {
       });
 
       it('should provide error for missing DO after FOR-DOWNTO range', () => {
+        // prettier-ignore
         // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
@@ -1518,6 +1531,7 @@ describe('Parser - Error Messages with Context', () => {
       });
 
       it('should provide error for missing DO after WITH record', () => {
+        // prettier-ignore
         // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
@@ -1614,6 +1628,7 @@ describe('Parser - Error Messages with Context', () => {
 
     describe('END keyword messages', () => {
       it('should provide error for missing END to close BEGIN block', () => {
+        // prettier-ignore
         // Location assertions depend on fixture structure - do not reformat
         const code = `OBJECT Codeunit 50000 Test
 {
