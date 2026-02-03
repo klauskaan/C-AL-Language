@@ -3049,6 +3049,74 @@ export class Parser {
       return null;
     }
 
+    // Issue #327: Check for orphaned control-flow keywords
+    // But ONLY if they don't appear in a context that suggests expression continuation
+    // (like after EXIT or other keywords that can take optional expressions)
+    // This avoids conflict with issue #301's expression-level error reporting
+
+    const previousToken = this.previous();
+    // Check if we might be in an expression continuation context
+    const couldBeExpressionContinuation = previousToken && (
+      previousToken.type === TokenType.Exit ||        // EXIT <expr>
+      previousToken.type === TokenType.Assign ||      // x := <expr>
+      previousToken.type === TokenType.LeftParen ||   // func(<expr>)
+      previousToken.type === TokenType.Comma          // a, <expr>
+    );
+
+    if (!couldBeExpressionContinuation && token.type === TokenType.Do) {
+      this.recordError(
+        `Unexpected DO - cannot start a statement. DO must follow WHILE or FOR.`,
+        token
+      );
+      this.advance();
+      return null;
+    }
+
+    if (!couldBeExpressionContinuation && token.type === TokenType.Of) {
+      this.recordError(
+        `Unexpected OF - cannot start a statement. OF must follow CASE expression.`,
+        token
+      );
+      this.advance();
+      return null;
+    }
+
+    if (!couldBeExpressionContinuation && token.type === TokenType.Then) {
+      this.recordError(
+        `Unexpected THEN - cannot start a statement. THEN must follow IF condition.`,
+        token
+      );
+      this.advance();
+      return null;
+    }
+
+    if (!couldBeExpressionContinuation && token.type === TokenType.To) {
+      this.recordError(
+        `Unexpected TO - cannot start a statement. TO must be part of FOR loop.`,
+        token
+      );
+      this.advance();
+      return null;
+    }
+
+    if (!couldBeExpressionContinuation && token.type === TokenType.DownTo) {
+      this.recordError(
+        `Unexpected DOWNTO - cannot start a statement. DOWNTO must be part of FOR loop.`,
+        token
+      );
+      this.advance();
+      return null;
+    }
+
+    if (!couldBeExpressionContinuation && token.type === TokenType.Until) {
+      this.recordError(
+        `Unexpected UNTIL - cannot start a statement. UNTIL must follow REPEAT body.`,
+        token
+      );
+      this.advance();
+      return null;
+    }
+
     // Check for AL-only access modifiers and other non-keyword AL-only features
     // We do NOT universally check for ALOnlyKeyword here because keywords like ENUM, INTERFACE
     // can be used as identifiers in statements (e.g., "Enum := 1").
