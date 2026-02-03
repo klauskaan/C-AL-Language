@@ -450,6 +450,37 @@ it('should detect multiple errors with mixed precision', () => {
 });
 ```
 
+### Error Selection Pattern
+
+**Rule:** Prefer `errors.find()` when testing specific errors to avoid dependence on error ordering.
+**Exception:** Use `errors[0]` only when testing the first/only error is explicitly the goal.
+
+This pattern applies to all tiers. Even in Tier 1 tests with exact location assertions, using `find()` ensures the test targets the intended error.
+
+**Rationale:** Parser error ordering is an implementation detail. Tests that assume a specific order (e.g., `errors[0]`) become brittle when:
+- Error recovery logic changes
+- New errors are detected earlier in the parse
+- Validation order is refactored
+
+**Comparison:**
+
+```typescript
+// BRITTLE: Depends on error ordering
+const errors = parser.getErrors();
+expect(errors[0].message).toContain('Expected :');  // Fails if another error appears first
+
+// ROBUST: Finds the specific error regardless of order
+const errors = parser.getErrors();
+const colonError = errors.find(e => e.message.includes('Expected :'));
+expect(colonError).toBeDefined();
+expect(colonError!.token.line).toBe(11);
+```
+
+**When `errors[0]` is appropriate:**
+- Test explicitly verifies "the FIRST error reported is X"
+- Test verifies exactly one error exists (`expect(errors).toHaveLength(1)` followed by `errors[0]`)
+- Test is documenting error priority/ordering as a feature
+
 ### Migration Guidance
 
 **Existing tests without location assertions:** No mandatory upgrade.
