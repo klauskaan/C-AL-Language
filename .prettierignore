@@ -1,0 +1,8 @@
+# Prettier ignore patterns for C/AL Language Support Extension
+#
+# Note: Tier 1 test fixtures in error-messages.test.ts use inline
+# // prettier-ignore comments for surgical protection. This file
+# is provided for future use if broader exclusions are needed.
+#
+# Current strategy: Inline // prettier-ignore before each Tier 1 fixture
+# See: .claude/skills/cal-dev-guide/SKILL.md "Error Location Assertion Strategy"
