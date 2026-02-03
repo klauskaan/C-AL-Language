@@ -873,4 +873,197 @@ OBJECT Codeunit 50000 "Test"
       });
     });
   });
+
+  describe('Control-flow keywords in set literals and array subscripts (Issue #328)', () => {
+    it('should report error for single keyword in set literal', () => {
+      const code = `
+OBJECT Codeunit 50000 "Test"
+{
+  CODE
+  {
+    PROCEDURE Test();
+    VAR
+      x : Integer;
+    BEGIN
+      IF x IN [THEN] THEN EXIT;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+      const { ast, errors } = parseCode(code);
+
+      // Should report error for control-flow keyword in set literal
+      expect(errors.length).toBeGreaterThan(0);
+      const keywordError = errors.find(e =>
+        e.message.includes('Unexpected keyword') &&
+        e.token?.value === 'THEN'
+      );
+      expect(keywordError).toBeDefined();
+      if (keywordError) {
+        expect(keywordError.message).toContain('Unexpected keyword');
+        expect(keywordError.token?.value).toBe('THEN');
+      }
+
+      // AST should still parse (graceful recovery)
+      expect(ast).toBeDefined();
+    });
+
+    it('should report error for multiple keywords in set literal', () => {
+      const code = `
+OBJECT Codeunit 50000 "Test"
+{
+  CODE
+  {
+    PROCEDURE Test();
+    VAR
+      x : Integer;
+    BEGIN
+      IF x IN [BEGIN, END] THEN EXIT;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+      const { ast, errors } = parseCode(code);
+
+      // Should report errors for both keywords
+      expect(errors.length).toBeGreaterThan(0);
+
+      // Check for BEGIN keyword error
+      const beginError = errors.find(e =>
+        e.message.includes('Unexpected keyword') &&
+        e.token?.value === 'BEGIN'
+      );
+      expect(beginError).toBeDefined();
+      if (beginError) {
+        expect(beginError.message).toContain('Unexpected keyword');
+        expect(beginError.token?.value).toBe('BEGIN');
+      }
+
+      // Check for END keyword error
+      // Note: END may trigger error recovery before parsePrimary reports "Unexpected keyword",
+      // so we accept any error mentioning END (e.g., "Expected ]" or "Expected THEN")
+      const endError = errors.find(e => e.token?.value === 'END');
+      expect(endError).toBeDefined();
+      if (endError) {
+        expect(endError.token?.value).toBe('END');
+      }
+
+      // AST should still parse (graceful recovery)
+      expect(ast).toBeDefined();
+    });
+
+    it('should report error for keyword as range end in set literal', () => {
+      const code = `
+OBJECT Codeunit 50000 "Test"
+{
+  CODE
+  {
+    PROCEDURE Test();
+    VAR
+      x : Integer;
+    BEGIN
+      IF x IN [1..THEN] THEN EXIT;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+      const { ast, errors } = parseCode(code);
+
+      // Should report error for control-flow keyword as range end
+      expect(errors.length).toBeGreaterThan(0);
+      const keywordError = errors.find(e =>
+        e.message.includes('Unexpected keyword') &&
+        e.token?.value === 'THEN'
+      );
+      expect(keywordError).toBeDefined();
+      if (keywordError) {
+        expect(keywordError.message).toContain('Unexpected keyword');
+        expect(keywordError.token?.value).toBe('THEN');
+      }
+
+      // AST should still parse (graceful recovery)
+      expect(ast).toBeDefined();
+    });
+
+    it('should report error for keyword in array subscript', () => {
+      const code = `
+OBJECT Codeunit 50000 "Test"
+{
+  CODE
+  {
+    PROCEDURE Test();
+    VAR
+      MyArray : array[10] of Integer;
+    BEGIN
+      MyArray[THEN] := 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+      const { ast, errors } = parseCode(code);
+
+      // Should report error for control-flow keyword in array subscript
+      expect(errors.length).toBeGreaterThan(0);
+      const keywordError = errors.find(e =>
+        e.message.includes('Unexpected keyword') &&
+        e.token?.value === 'THEN'
+      );
+      expect(keywordError).toBeDefined();
+      if (keywordError) {
+        expect(keywordError.message).toContain('Unexpected keyword');
+        expect(keywordError.token?.value).toBe('THEN');
+      }
+
+      // AST should still parse (graceful recovery)
+      expect(ast).toBeDefined();
+    });
+
+    it('should report error for keyword as range start in set literal', () => {
+      const code = `
+OBJECT Codeunit 50000 "Test"
+{
+  CODE
+  {
+    PROCEDURE Test();
+    VAR
+      x : Integer;
+    BEGIN
+      IF x IN [ELSE..10] THEN EXIT;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+      const { ast, errors } = parseCode(code);
+
+      // Should report error for control-flow keyword as range start
+      expect(errors.length).toBeGreaterThan(0);
+      const keywordError = errors.find(e =>
+        e.message.includes('Unexpected keyword') &&
+        e.token?.value === 'ELSE'
+      );
+      expect(keywordError).toBeDefined();
+      if (keywordError) {
+        expect(keywordError.message).toContain('Unexpected keyword');
+        expect(keywordError.token?.value).toBe('ELSE');
+      }
+
+      // AST should still parse (graceful recovery)
+      expect(ast).toBeDefined();
+    });
+  });
 });

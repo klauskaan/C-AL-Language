@@ -1248,7 +1248,9 @@ describe('Parser - Error Messages with Context', () => {
         const errors = parser.getErrors();
 
         expect(errors.length).toBeGreaterThan(0);
-        expect(errors[0].message).toContain('Expected ] after set literal');
+        // After fix for issue #328, control-flow keywords in set literals
+        // are reported as "Unexpected keyword" errors (not "Expected ]")
+        expect(errors[0].message).toContain('Unexpected keyword');
       });
     });
 

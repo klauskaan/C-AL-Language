@@ -4260,12 +4260,12 @@ export class Parser {
       //
       // Key indicators of expression context: operator/assignment before the keyword
       const previousToken = this.previous();
-      const nextToken = this.peekNextMeaningfulToken(1);
       const isInExpressionContext = previousToken && (
         previousToken.type === TokenType.LeftBracket ||  // [THEN
         previousToken.type === TokenType.LeftParen ||    // func(THEN)
         previousToken.type === TokenType.Comma ||        // a, THEN
         previousToken.type === TokenType.Colon ||        // [THEN :
+        previousToken.type === TokenType.DotDot ||       // [1..THEN] (range)
         previousToken.type === TokenType.Plus ||         // x + THEN
         previousToken.type === TokenType.Minus ||        // x - THEN
         previousToken.type === TokenType.Multiply ||     // x * THEN
@@ -4293,24 +4293,8 @@ export class Parser {
         previousToken.type === TokenType.Exit            // EXIT THEN
       );
 
-      // Also check if we're in a set literal context
-      // Either: previous token is `[` (directly after opening bracket)
-      // Or: next token is a set continuation character (`,`, `]`, `:`)
-      // Note: LeftBracket appears in both checks (expression context AND set literal context)
-      // This overlap is intentional - the combined condition ensures set literals suppress
-      // the error (only error if isInExpressionContext AND NOT isInSetLiteralContext)
-      const isInSetLiteralContext = (
-        previousToken?.type === TokenType.LeftBracket ||  // [THEN directly
-        (nextToken && (
-          nextToken.type === TokenType.Comma ||
-          nextToken.type === TokenType.RightBracket ||
-          nextToken.type === TokenType.Colon  // [THEN : ... ] in set range
-        ))
-      );
-
-      // Report error only if we're in a true expression context AND not in a set literal
-      // Set literals handle their own error messages for invalid elements
-      if (isInExpressionContext && !isInSetLiteralContext) {
+      // Report error if we're in an expression context
+      if (isInExpressionContext) {
         this.recordError(
           `Unexpected keyword '${sanitizeContent(cfToken.value)}' in expression. Missing statement or operator before '${sanitizeContent(cfToken.value)}'.`,
           cfToken
@@ -4613,19 +4597,7 @@ export class Parser {
         }
       } catch (error) {
         if (error instanceof ParseError) {
-          // Check if this error is about a keyword at expression start
-          // If so, and we found a stop token, don't record it (let the set literal parser report "Expected ]")
-          const isKeywordError = error.message.includes('at expression start');
-          const foundStopToken = this.check(TokenType.RightBracket) ||
-                                 this.check(TokenType.Then) ||
-                                 this.check(TokenType.Do) ||
-                                 this.check(TokenType.End) ||
-                                 this.check(TokenType.Else);
-
-          // Only record the error if it's not a keyword error, or if we didn't find a stop token
-          if (!isKeywordError || !foundStopToken) {
-            this.errors.push(error);
-          }
+          this.errors.push(error);
 
           // Recover from expression parsing errors in set literal
           // Skip to next comma, right bracket, or statement terminator
