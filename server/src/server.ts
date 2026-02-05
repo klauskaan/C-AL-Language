@@ -52,6 +52,7 @@ import { SymbolTable } from './symbols/symbolTable';
 import { formatError } from './utils/sanitize';
 import { SemanticAnalyzer } from './semantic/semanticAnalyzer';
 import { DepthLimitedWalker } from './visitor/depthLimitedWalker';
+import { DocumentDebouncer } from './utils/documentDebouncer';
 
 // Create a connection for the server
 const connection = createConnection(ProposedFeatures.all);
@@ -428,8 +429,8 @@ connection.onFoldingRanges((params: FoldingRangeParams): FoldingRange[] => {
   }
 });
 
-// Debounce timer for semantic analysis (split diagnostic strategy - Issue #183)
-let pendingSemanticAnalysis: NodeJS.Timeout | null = null;
+// Per-URI debounce for semantic analysis (split diagnostic strategy - Issue #183)
+const semanticDebouncer = new DocumentDebouncer(300);
 
 // Handle document changes - invalidate cache and revalidate
 documents.onDidChangeContent(change => {
@@ -466,14 +467,12 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     // IMMEDIATE: Send parse diagnostics (preserve current responsive UX)
     connection.sendDiagnostics({ uri, diagnostics: parseDiagnostics });
 
-    // DEBOUNCED: Semantic analysis (300ms delay)
-    if (pendingSemanticAnalysis) {
-      clearTimeout(pendingSemanticAnalysis);
-    }
-
-    pendingSemanticAnalysis = setTimeout(() => {
-      pendingSemanticAnalysis = null;
-
+    // DEBOUNCED: Semantic analysis (300ms delay, per-URI)
+    const version = textDocument.version;
+    semanticDebouncer.schedule(uri, version, (checkUri) => {
+      const doc = documents.get(checkUri);
+      return doc ? { version: doc.version } : undefined;
+    }, () => {
       try {
         // Run semantic validations
         const semanticDiagnostics = semanticAnalyzer.analyze(ast, symbolTable, uri);
@@ -493,7 +492,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
         // On error, send only parse diagnostics
         connection.sendDiagnostics({ uri, diagnostics: parseDiagnostics });
       }
-    }, 300);
+    });
   } catch (error) {
     connection.console.error(`Error validating document: ${formatError(error)}`);
   }
@@ -530,11 +529,8 @@ function parseDocument(document: TextDocument): ParsedDocument {
 
 // Clear cache when document is closed
 documents.onDidClose(event => {
-  // Cancel pending semantic analysis
-  if (pendingSemanticAnalysis) {
-    clearTimeout(pendingSemanticAnalysis);
-    pendingSemanticAnalysis = null;
-  }
+  // Cancel pending semantic analysis for this document
+  semanticDebouncer.cancel(event.document.uri);
   documentCache.delete(event.document.uri);
 });
 
