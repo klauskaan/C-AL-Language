@@ -2,526 +2,85 @@
 
 ## Collaboration Style
 
-We work as **pair programming partners**:
-- Klaus provides vision and direction
-- Claude orchestrates agents and implements solutions
-- We collaborate iteratively with shared responsibility
+We work as **pair programming partners**. Klaus provides vision and direction, Claude orchestrates agents and implements. Proactively share observations and push back when something doesn't feel right.
 
-**Permission granted:** Proactively share observations, concerns, suggestions. Push back on unclear requirements or risky approaches. Your input is valued, not just your execution.
-
-**Never use plan mode.** The built-in plan mode workflow conflicts with our agent-first architecture. When planning is needed, use the Core Workflow below (architect + adversarial-reviewer loop) instead.
+**Never use plan mode.** Use the architect + adversarial-reviewer loop below instead.
 
 ---
 
-## Session Lifecycle
+## Workflow
 
-**Session Model:** Each Claude Code session operates in its own git worktree. The main repository is reserved for merging completed work.
+Implementation work happens in a git worktree (`../worktree-issue-{number}`) to keep main clean. The file-ops agent handles creation, collision detection, and cleanup. No issue number? Create one first via github-issues — even a title and one-line description is enough. The issue gets fleshed out as work progresses.
 
 ```
-SESSION START              SESSION WORK                    SESSION END
-───────────────────────────────────────────────────────────────────────
-Create worktree     →      Steps 1-6                  →    Step 7: MERGE
-(file-ops agent)           (work in worktree)              (merge to main)
-                                                                ↓
-                                                           Cleanup worktree
+1. INVESTIGATE  -  code-detective finds root cause
+2. PLAN         -  architect designs, adversarial-reviewer critiques until approved
+3. TEST FIRST   -  test-writer writes tests, then test-runner verifies they fail
+4. IMPLEMENT    -  senior-developer executes the plan
+5. REVIEW       -  adversarial-reviewer (always), plus typescript-reviewer and/or
+                    cal-expert when relevant (TS changes, C/AL semantics)
+6. COMMIT       -  file-ops commits with "Fixes #X", pushes to feature branch
+7. MERGE        -  merge-agent merges to main, cleans up worktree
+                    (if senior-merge-engineer was needed, run adversarial-reviewer before cleanup)
 ```
 
-**Session Startup Protocol:**
-1. Orchestrator receives issue to work on (e.g., #303)
-2. Orchestrator calls file-ops agent: "Create worktree for issue 303"
-3. file-ops checks for path collision, handles per scenarios in file-ops.md
-   - Clean collision: auto-cleanup and recreate
-   - In-progress collision: escalates to user for decision
-4. All subsequent work happens in the worktree
-5. Normal workflow begins (INVESTIGATE, PLAN, etc.)
+**Skip steps that aren't needed.** Obvious bugs don't need investigation. Trivial changes don't need an architect. Use judgment.
 
-**Naming Convention:** `worktree-issue-{number}` in parent directory (e.g., `../worktree-issue-303`)
+**TDD:** Tests should fail before implementation (bug fixes and new features). If they pass immediately, the diagnosis might be wrong. Exceptions: refactoring, test coverage tasks, regression tests.
 
-**Abandoned Session Cleanup:**
-If a session is abandoned without completing merge, manual cleanup is required. See file-ops.md "Abandoned Worktree Cleanup" section for commands.
+**Review is mandatory.** adversarial-reviewer runs before every commit. It catches scope creep and drift that compound if unchecked.
 
-Note: Starting a new session for the same issue number will auto-detect and offer cleanup options.
+**When things go wrong:**
+- Tests fail after implementation? Small fix → just fix it. Design flaw → re-plan. Wrong root cause → re-investigate.
+- Senior-developer returns REJECTED? Back to PLAN with the rejection feedback.
+- Reviewer finds issues? Fix them, get re-reviewed. Design flaw → back to plan.
+- Going in circles? Stop after 2-3 iterations and escalate to the user with what you've tried.
+
+**Feedback:** When reviewers give feedback, handle each item:
+- **Fix it** — in PLAN: architect revises; in REVIEW: senior-developer changes code
+- **Defer it** — spawn github-issues agent to create a tracking issue, then move on
+- **Acknowledge it** — valid observation, no action needed (meta-observations only)
+- **Dismiss it** — not applicable, explain why
+
+Only an explicit "APPROVED" exits the loop — "approved if you clarify X" means clarify X first. Report all feedback items and their dispositions to the user for visibility.
+
+**Boy Scout Rule:** Fix trivial issues (unused imports, typos, formatting) spotted during review. If it needs tests or touches other files, create an issue instead.
+
+**Assumption verification:** During planning, the architect lists key assumptions. The reviewer flags critical ones with `[VERIFY]`. The orchestrator confirms flagged items with fresh tool calls before proceeding.
 
 ---
 
-## Core Workflow
-
-**Principle:** Main conversation orchestrates, agents execute. Delegate ALL work to agents.
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 1. INVESTIGATE (Opus)                                       │
-│    code-detective → root cause, impact, design advice       │
-│    Skip if: typo fix, obvious cause, user explained it      │
-└─────────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────┐
-│ 2. PLAN (Opus loop)                                         │
-│    architect → creates plan with explicit assumptions       │
-│    adversarial-reviewer → critiques plan, flags [VERIFY]    │
-│    orchestrator → verifies flagged assumptions (fresh calls)│
-│    Loop until reviewer explicitly approves the plan         │
-│    Use Feedback Resolution Protocol                         │
-└─────────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────┐
-│ 3. WRITE TESTS FIRST (TDD)                                  │
-│    test-writer → write tests that SHOULD FAIL               │
-│    test-runner → verify tests fail                          │
-│                                                             │
-│    Tests pass immediately? → Misdiagnosis! Back to step 1   │
-└─────────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────┐
-│ 4. IMPLEMENT                                                │
-│    senior-developer → execute plan                          │
-│    test-runner → verify tests pass                          │
-│                                                             │
-│    senior-developer returns REJECTED?                       │
-│       └─ Back to step 2 with feedback from rejection        │
-│                                                             │
-│    Tests still fail after implementation?                   │
-│       ├─ Minor bug → fix and retry                          │
-│       │  (Fix is <20 lines AND matches plan spirit)         │
-│       ├─ Design flaw → back to step 2                       │
-│       │  (Contradicts plan OR >50 lines OR 3+ tries)        │
-│       └─ Root cause wrong → back to step 1                  │
-│          (Problem in different component than investigated) │
-└─────────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────┐
-│ 5. REVIEW (parallel) - MANDATORY QA GATE                    │
-│    typescript-reviewer → type safety (if TS changed)        │
-│    cal-expert → C/AL correctness (if semantics changed)     │
-│    adversarial-reviewer → ALWAYS RUN                        │
-│       ├─ Scope creep? (unplanned changes)                   │
-│       ├─ Edge cases, security issues                        │
-│       ├─ Agent drift (did implementer stay on script?)      │
-│       ├─ Boy Scout classification (mechanical/quick/safe)   │
-│       ├─ Issue Creation Bias (recommend DEFER vs ACKNOWLEDGE)│
-│       └─ Documentation style (if .claude/ changed)          │
-│                                                             │
-│    Use Feedback Resolution Protocol to disposition findings │
-│    Design flaw found? → back to step 2 (re-plan)            │
-└─────────────────────────────────────────────────────────────┘
-                          ↓
-              Issues found? → FIX (senior-developer) → back to REVIEW
-                          ↓
-┌─────────────────────────────────────────────────────────────┐
-│ 6. COMMIT TO BRANCH                                         │
-│    commit → stage, commit, push to feature branch           │
-│    - Push to origin/issue-NNN (not main)                    │
-│    - Commit message includes "Fixes #X" (closes on merge)   │
-│    - Exclude temporary/debug files from staging             │
-│    - STATUS: COMMITTED - proceed to MERGE step              │
-└─────────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────┐
-│ 7. MERGE AND CLEANUP                                        │
-│                                                             │
-│    Tier 1: merge-agent (Sonnet)                             │
-│    ├─ Classify conflict (TRIVIAL/TEXTUAL/STRUCTURAL/SEMANTIC)│
-│    ├─ Resolve TRIVIAL/TEXTUAL conflicts                     │
-│    └─ Escalate STRUCTURAL/SEMANTIC to Tier 2                │
-│                                                             │
-│    Tier 2: senior-merge-engineer (Opus)                     │
-│    ├─ Try 5 strategies: Composition → Temporal → Interface  │
-│    │                    → Scope → Hybrid                    │
-│    ├─ Verify preservation (textual + behavioral)            │
-│    └─ Complete | Re-plan | Escalate to human (last resort)  │
-│                                                             │
-│    After resolution:                                        │
-│    ├─ Merge branch into main, push                          │
-│    ├─ Verify issue is CLOSED                                │
-│    └─ Cleanup: remove worktree, delete branches             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**Assumption Verification (PLAN Phase):**
-
-To mitigate silent tool failures ([anthropics/claude-code#16861](https://github.com/anthropics/claude-code/issues/16861)), the PLAN phase includes lightweight verification:
-
-1. **Architect lists explicit assumptions** in the plan:
-   - "Assumes validation/index.ts exists and exports validators"
-   - "Assumes SetLiteral AST node has endToken field"
-   - "Assumes ASTWalker supports visitBinaryExpression"
-
-2. **Adversarial-reviewer flags critical assumptions** during critique:
-   - Add `[VERIFY]` tag to items requiring verification
-   - Flag when: Plan depends on specific file/function existence
-   - Don't flag: General patterns, things TDD will catch, TypeScript type checks
-
-3. **Orchestrator verifies flagged items** with fresh tool calls:
-   - File existence: `ls path/to/file` or `Glob`
-   - Function signatures: `Grep` for function definition
-   - Scope: Only `[VERIFY]`-flagged items, keep it lightweight
-
-4. **Verification failures** trigger plan revision back to architect
-
-**When to use [VERIFY]:**
-- ✓ Plan depends on modifying a specific file
-- ✓ Plan depends on calling a specific function with particular signature
-- ✓ Investigation is potentially stale (see Staleness Indicators below)
-- ✗ General architectural assumptions ("this pattern is common")
-- ✗ Code behavior (TDD will catch)
-- ✗ Type signatures (TypeScript compiler will catch)
-
-**Staleness Indicators:**
-
-Adversarial-reviewer should flag assumptions with [VERIFY] when staleness risk is elevated. Use these observable indicators rather than counting exchanges (which agents cannot measure programmatically):
-
-| Indicator | Staleness Risk | Action |
-|-----------|----------------|--------|
-| Investigation in same workflow step | Low | Normal review |
-| Investigation before a re-plan cycle | Medium | Flag file-dependent assumptions |
-| Investigation preceded significant implementation | High | Flag all critical path assumptions |
-| Investigation from a previous session | Very High | Flag and verify explicitly |
-
-**Heuristics for reviewers:**
-- When in doubt, flag it. Verification is cheap; missed staleness is expensive.
-- File existence and function signatures are highest priority for [VERIFY].
-- If orchestrator has made implementation attempts since investigation, assume elevated staleness risk.
-
-**Note:** This guidance is approximate. The goal is catching stale state before it derails implementation, not precise measurement. The adversarial-reviewer uses judgment informed by these indicators.
-
-**Checkpoint Decision Tables:**
-
-Use these to determine next step at each workflow checkpoint.
-
-| After Step | Condition | Decision |
-|------------|-----------|----------|
-| INVESTIGATE | Root cause is clear and localized | Proceed to PLAN |
-| INVESTIGATE | Multiple possible causes identified | Deepen investigation OR proceed with hypotheses noted |
-| INVESTIGATE | Contradicts user's stated assumption | Pause, confirm with user |
-| INVESTIGATE | Conflicting existing test/behavior found | Confirm intent with user OR investigate why conflict exists |
-| PLAN | Reviewer explicitly approves | Proceed to WRITE TESTS |
-| PLAN | Reviewer finds gap in approach | Revise plan, re-submit |
-| PLAN | Verification fails (file doesn't exist, etc.) | Revise plan with correct assumptions |
-| PLAN | Reviewer discovers conflicting existing behavior | Back to INVESTIGATE |
-| PLAN | Cannot converge after 3 revision cycles | Escalate to user with both positions |
-| TDD | Tests fail as expected | Proceed to IMPLEMENT |
-| TDD | Tests pass immediately | STOP - misdiagnosis, back to INVESTIGATE |
-| TDD | Tests cannot be written (unclear spec) | Back to PLAN for clarification |
-| TDD | Existing tests need modification | Confirm behavior change is intended |
-| TDD (coverage task) | All tests pass | Existing code works as expected - proceed to REVIEW |
-| TDD (coverage task) | Tests fail revealing actual bug | Mark test with .skip(), create bug issue, proceed to REVIEW |
-| TDD (coverage task) | Tests fail due to wrong expectation | Correct test to match documented behavior, re-run |
-| TDD (coverage task) | Uncertain if bug or wrong expectation | Default to skip + track; investigate if pattern repeats |
-| IMPLEMENT | Tests pass, matches plan | Proceed to REVIEW |
-| IMPLEMENT | Tests pass, minor deviations | Proceed to REVIEW, flag deviations |
-| IMPLEMENT | Tests fail, fix <20 lines, matches plan | Fix and retry |
-| IMPLEMENT | Tests fail, fix contradicts plan | Back to PLAN |
-| IMPLEMENT | Tests fail, wrong root cause revealed | Back to INVESTIGATE |
-| IMPLEMENT | Senior-developer returns REJECTED | Back to PLAN with rejection feedback |
-| IMPLEMENT | Senior-developer confidence LOW | Proceed to REVIEW, flag for deep review |
-| REVIEW | All feedback dispositioned, reviewer approves | Proceed to COMMIT AND PUSH |
-| REVIEW | ACCEPT-FIX items remain | Fix and request re-review |
-| REVIEW | Missing test coverage identified | Add tests (ACCEPT-FIX), re-review |
-| REVIEW | Design flaw found | Back to PLAN |
-| REVIEW | Scope creep detected | Revert unplanned changes, re-review |
-| COMMIT | Push to branch succeeds | Proceed to MERGE AND CLEANUP |
-| COMMIT | Push fails | Report error, do not force push |
-| MERGE | TRIVIAL/TEXTUAL conflict | merge-agent resolves |
-| MERGE | STRUCTURAL/SEMANTIC conflict | Escalate to senior-merge-engineer |
-| MERGE | All strategies fail, can re-approach | Back to PLAN with dual-session context |
-| MERGE | Goal conflict or complexity exceeds bounds | Escalate to human (last resort) |
-
-**TDD Rule:** Tests MUST fail first (for new bugs). Passing tests = wrong diagnosis.
-**Exception:** Regression tests, refactoring, test-after for legacy code, and test coverage tasks (see below).
-
-**TDD for New Features:** Tests fail because the code doesn't exist yet. The PLAN phase provides the design; tests encode that design as assertions.
-- **Outside-In:** Start with acceptance criteria from the plan, drill down to units
-- **Inside-Out:** Start with core logic units from the plan, compose upward
-- Choose based on what's clearest: user-facing behavior (outside-in) or internal logic (inside-out)
-- If tests pass immediately for a new feature, investigate: either existing code already satisfies the requirement (design overlap) or the tests are asserting the wrong thing
-
-**Test Coverage Tasks:** When the task is adding test coverage for existing functionality (not fixing bugs), passing tests are the expected outcome - they confirm the code works correctly.
-
-How to identify a coverage task:
-- Goal is documenting/verifying existing behavior, not changing it
-- No specific bug report or failure to fix
-- Success means tests match current implementation
-
-Failing tests require disposition:
-- **Reveals actual bug:** Mark with `.skip('Bug: [description] - see #XXX')`, create tracking issue, proceed to REVIEW
-- **Wrong test expectation:** Correct the test to match documented/intended behavior, re-run
-- **Uncertain:** Default to skip + track; investigate if the pattern repeats across multiple tests
-
-**Review Rule:** adversarial-reviewer is MANDATORY before every commit.
-- Not optional, even for "trivial" changes
-- Prevents scope creep and agent drift
-- Final quality gate: validates only planned changes were made
-
-**Feedback Resolution Protocol:**
-
-When reviewers provide feedback, use this structured process:
-
-*Step 1: Reviewer classifies severity*
-| Severity | Definition | Disposition Constraints |
-|----------|------------|------------------------|
-| **CRITICAL** | Blocks correctness, security, or causes regression | Must ACCEPT-FIX |
-| **SERIOUS** | Significant issue but not blocking | Must ACCEPT-FIX or justify deferral |
-| **MINOR** | Improvement, style, nice-to-have | Any disposition valid |
-
-*Step 2: Reviewee dispositions each item*
-| Disposition | When to Use | Creates Artifact? |
-|-------------|-------------|-------------------|
-| **ACCEPT-FIX** | Valid and actionable now | Code change |
-| **ACCEPT-PARTIAL** | Part valid, remainder deferred/dismissed | Code change + issue (optional) |
-| **ACCEPT-DEFER** | Valid but out of scope | GitHub issue (tracked) |
-| **ACKNOWLEDGE** | Valid observation, no change warranted | None (comment only) |
-| **DISMISS** | Incorrect or not applicable | None (must explain reasoning) |
-
-*Step 3: Resolution*
-- Each item is evaluated independently
-- DISMISS requires specific technical reasoning
-- Reviewer may challenge DISMISS; if unresolved after one rebuttal, escalate to user
-- Loop exits when: ALL items dispositioned AND no ACCEPT-FIX items remain AND reviewer states **"APPROVED: Proceed to [next step]"**
-- **Only explicit "APPROVED: Proceed to [step]" exits the loop.** Conditional statements ("approved if you clarify X"), questions, or clarification requests are feedback requiring iteration - resume the reviewer with your clarification. Do not ask the user for permission to proceed on conditional approval.
-
-*Response Format:*
-```
-### Feedback Response
-| Item | Severity | Disposition | Rationale | Action |
-|------|----------|-------------|-----------|--------|
-| [quote] | CRITICAL | ACCEPT-FIX | [why] | [what changed] |
-| [quote] | MINOR | DISMISS | [why not applicable] | None |
-
-**Request:** RE-REVIEW / APPROVED items only, ready to proceed
-```
-
-**Visibility Rule:** After completing any feedback resolution loop, report ALL items to the user in the standard format table above. This is non-negotiable - the user needs full visibility into what reviewers found and how it was handled. Do not filter or summarize away "minor" items.
-
-The workflow continues after reporting - do not wait for user acknowledgment. If the user provides feedback at any point, treat it as a new iteration entering the Feedback Resolution Protocol, same as reviewer feedback.
-
-**Issue Creation Bias:** When dispositioning feedback, bias toward creating GitHub issues:
-- MINOR items that are valid but out-of-scope → ACCEPT-DEFER (create issue), not ACKNOWLEDGE
-- Only use DISMISS for genuinely incorrect or inapplicable observations
-- When a reviewer explicitly flags an item as "should be tracked," the reviewee should either ACCEPT-DEFER or provide a clear reason why tracking is unnecessary
-- ACKNOWLEDGE is appropriate for meta-observations that don't prescribe a specific action, such as "this area is particularly complex" or "consider revisiting if requirements change"
-
-*Boundary with Boy Scout Rule:* Issue Creation Bias applies to items that do NOT qualify for Boy Scout Rule. For Boy Scout-eligible items (mechanical, quick, safe), fix inline. For Boy Scout-excluded items (different files, requires tests, "while I'm here" refactoring), ACCEPT-DEFER to track.
-
-**Adversarial-Reviewer Disposition Guidance:**
-
-For each MINOR finding, the adversarial-reviewer provides guidance:
-
-| Finding Type | Recommended Disposition | Re-Review Required? |
-|--------------|------------------------|---------------------|
-| MINOR, Boy Scout eligible | `[BOY-SCOUT]` flag | Yes (lightweight) |
-| MINOR, valid but out of scope | Recommend ACCEPT-DEFER | Confirm issue created |
-| MINOR, meta-observation only | Recommend ACKNOWLEDGE | No |
-
-*Issue Creation Bias:*
-- **Bias toward ACCEPT-DEFER** for valid concerns that should be tracked
-- **ACKNOWLEDGE only** for meta-observations that don't prescribe specific action
-  - Example ACKNOWLEDGE: "This module is growing complex"
-  - Example ACCEPT-DEFER: "Consider adding validation in adjacent function"
-
-*Output Format Example:*
-```
-### Review Findings
-
-1. **[BOY-SCOUT]** Unused import on line 42 (MINOR)
-2. Error handling in function bar() could be improved (MINOR - recommend ACCEPT-DEFER)
-3. This pattern appears in multiple places (MINOR - recommend ACKNOWLEDGE as design observation)
-4. Missing null check on user input (SERIOUS - ACCEPT-FIX required)
-
-**Status:** CHANGES REQUIRED - Fix item #4, apply Boy Scout #1, create issue for #2
-```
-
-**Re-Plan Rule:** When implementation reveals fundamental problems, go back and re-plan.
-
-Loop back to step 2 (PLAN) when:
-- Implementation requires a significantly different approach than planned
-- Tests still fail and the fix would contradict the original design
-- Reviewer finds a design flaw (not just a bug) in the implementation
-- The implementation causes regressions the plan did not anticipate
-
-See Checkpoint Decision Tables above for complete decision criteria.
-
-**Precedence:** If reviewer finds BOTH design flaws AND minor bugs, go to step 2 immediately. Do not fix minor bugs first - they may be invalidated by the new design, causing wasted work.
-
-Loop back to step 1 (INVESTIGATE) when:
-- The root cause was misdiagnosed
-- Implementation reveals the problem is in a different component
-- New information invalidates the original investigation
-
-Continue to REVIEW when:
-- Tests pass and implementation matches the plan
-- Only minor adjustments were needed from the original approach
-- Issues are localized bugs, not systemic design problems
-
-**Loop Governance:**
-
-Loops are governed by the Feedback Resolution Protocol, not hard iteration counts.
-
-*Iteration Definition:* One iteration = one complete feedback-response cycle within the current step.
-- PLAN step: architect submits → reviewer responds → architect revises = 1 iteration
-- REVIEW step: reviewer provides feedback → implementer addresses → re-review = 1 iteration
-
-*Progress Indicators* (at least one should improve each iteration):
-- [ ] Number of open ACCEPT-FIX items decreasing
-- [ ] Tests moving from fail to pass
-- [ ] Implementation converging toward plan
-- [ ] No new CRITICAL/SERIOUS issues discovered
-
-*Stall Detection:* If NO progress indicators improve for 2 consecutive iterations, escalate to user with:
-- What was attempted
-- What keeps failing
-- Specific decision or input needed
-
-*Escalation Triggers:*
-- DISMISS disputed after one good-faith rebuttal
-- Same feedback appears 3+ times without resolution
-- Circular dependencies (fix A breaks B, fix B breaks A)
-- Progress stalls (no improvement for 2 iterations)
-
-Before escalating, attempt ONE good-faith resolution proposal. Escalate only if that fails.
-
-**Boy Scout Rule:** Fix minor issues identified during review before committing.
-
-Applies when reviewers flag issues that are:
-- **Mechanical:** Formatting, unused imports/variables, typos in comments, stray console.logs
-- **Quick:** Estimated <2 minutes AND <10 lines changed
-- **Safe:** Cannot break tests or change behavior
-
-Does NOT apply to:
-- Naming improvements beyond the directly changed code
-- "While I'm here" refactoring of adjacent code
-- Issues in files unrelated to the current fix
-- Anything requiring new tests or test updates
-
-**Boy Scout Protocol:**
-
-When adversarial-reviewer flags Boy Scout-eligible items during review:
-
-1. **Adversarial-reviewer flags with `[BOY-SCOUT]` tag** in their feedback
-   - Item must meet all Boy Scout criteria (mechanical, quick, safe)
-   - Example: `[BOY-SCOUT] Remove unused import on line 42`
-
-2. **Reviewee/Implementer applies fix**
-   - Fix the flagged item inline
-   - No separate disposition needed (implicit ACCEPT-FIX)
-
-3. **Adversarial-reviewer performs Lightweight Re-Review**
-   - Scope: ONLY the Boy Scout fix(es)
-   - Checklist:
-     - [ ] Fix matches what was flagged
-     - [ ] No unrelated changes introduced
-     - [ ] No new issues created
-   - Response: "BOY-SCOUT VERIFIED" or flags new issue if problems found
-
-4. **Proceed to COMMIT** only after adversarial-reviewer confirms
-
-*Efficiency:* Lightweight re-review is faster than full review because scope is explicitly limited to flagged items and adversarial-reviewer already knows what to expect.
-
-*If re-review finds issues:* Treat as new feedback, iterate normally.
-
-These cleanup changes are **exempt from scope-creep detection and TDD requirements**.
-If in doubt whether something qualifies, create a follow-up issue instead of expanding scope.
-
----
-
-## Agent Tiers
-
-### Haiku (Trivial - fast, cheap)
-| Agent | Purpose |
-|-------|---------|
-| **test-runner** | Run tests, analyze failures |
-| **github-issues** | Create/update issues, check duplicates |
-| **quick-fix** | Typos, comments, obvious 1-line fixes (still requires review) |
-| **explorer** | Find files, search patterns, map structure |
-
-### Sonnet (Medium - balanced)
-| Agent | Purpose |
-|-------|---------|
-| **senior-developer** | Code changes, features, bug fixes (see agents/senior-developer.md) |
-| **test-writer** | Write/update tests, snapshots |
-| **typescript-reviewer** | Type safety, TS best practices |
-| **cal-expert** | C/AL correctness, AL prevention |
-| **refactorer** | Code cleanup, pattern application |
-| **commit** | Stage, commit, push to branch (see agents/commit.md) |
-| **file-ops** | Branches, file management, other git operations |
-| **merge-agent** | First-attempt merge, objective classification, TRIVIAL/TEXTUAL conflicts |
-
-### Opus (Hard - deep analysis)
-| Agent | Purpose |
-|-------|---------|
-| **code-detective** | Root cause investigation, impact analysis |
-| **adversarial-reviewer** | Find bugs, edge cases, security issues; classify Boy Scout items; recommend issue creation; enforce documentation style (`.claude/` changes) |
-| **architect** | Design decisions, architectural reviews |
-| **senior-merge-engineer** | Expert merge resolution, 5 strategies, preservation verification |
-
----
-
-## Known Issues & Workarounds
-
-**Agent Resume Failure (TEMPORARY WORKAROUND)**
-
-**Symptom:** Architect agent (and possibly others) returns 0 tokens with no reply when resumed during review/revision cycles.
-
-**Root Cause:** Known bug tracked in [anthropics/claude-code#16861](https://github.com/anthropics/claude-code/issues/16861). When an agent's session has hidden tool use concurrency errors, attempting to resume fails silently with `API Error: 400 due to tool use concurrency issues`.
-
-**Workaround:** If an agent returns 0 tokens on resume:
-1. Retry the same task WITHOUT the resume parameter (start fresh)
-2. Provide full context in the prompt (investigation findings, plan decisions, current step) since the agent won't have conversation history
-3. Continue the workflow normally
-
-**Impact:** Tool calls may fail silently in the original agent session, causing incomplete investigation. Our multi-agent review approach (architect → adversarial-reviewer) helps catch these gaps since the reviewer runs fresh tool calls.
-
-**When to remove this section:** When [issue #16861](https://github.com/anthropics/claude-code/issues/16861) is resolved and agents consistently resume successfully without failures.
-
----
-
-## Skill Auto-Triggers
-
-Invoke these skills BEFORE starting work:
-
-| Working on... | Invoke |
-|---------------|--------|
-| Adding syntax/keywords | `/cal-al-boundaries` then `/cal-syntax` |
-| Lexer/parser files | `/cal-parser-development` |
-| LSP providers | `/cal-provider-development` |
-| Writing tests | `/cal-dev-guide` |
-| C/AL text format | `/cal-object-format` |
+## Agents
+
+| Agent | Model | Purpose |
+|-------|-------|---------|
+| **code-detective** | Opus | Root cause investigation, impact analysis |
+| **architect** | Opus | Implementation planning, design decisions |
+| **adversarial-reviewer** | Opus | Code review, find bugs, prevent scope creep |
+| **senior-developer** | Sonnet | All implementation: features, fixes, refactoring, trivial changes |
+| **test-writer** | Sonnet | Write tests (TDD workflow) |
+| **test-runner** | Haiku | Run tests, analyze failures |
+| **typescript-reviewer** | Sonnet | Type safety, TS best practices |
+| **cal-expert** | Sonnet | C/AL correctness, AL prevention |
+| **file-ops** | Sonnet | Git operations: commits, branches, worktrees |
+| **merge-agent** | Sonnet | Merge branches, resolve simple conflicts |
+| **senior-merge-engineer** | Opus | Complex merge conflict resolution |
+| **github-issues** | Haiku | Create/update GitHub issues |
 
 ---
 
 ## Critical Context
 
-### C/AL ≠ AL
-- **C/AL:** NAV 2009-2018 (this extension)
-- **AL:** Business Central 2019+ (NOT supported)
-- **Never add AL-only features** - causes NAV compilation errors
+### C/AL is not AL
+- **C/AL:** NAV 2013 through BC14 (this extension)
+- **AL:** BC15+ (NOT supported)
+- **Never add AL-only features** — causes NAV compilation errors. Use `/cal-reference` to check.
 
-### test/REAL/ - Proprietary NAV Objects
-
-Real NAV C/AL objects (gitignored). **Read freely for analysis; never copy to committed files.**
-
-| Action | Allowed? |
-|--------|----------|
-| Read/parse files | Yes |
-| Reference file:line in conversations | Yes |
-| Quote fragments to illustrate parsing issues | Yes |
-| Copy content to test/fixtures/ or any committed file | No |
-| Quote in GitHub issues, PRs, or commit messages | No |
-| Use object IDs 6000000+ in fixtures | No |
-
-Create synthetic fixtures in test/fixtures/ that mimic structure without copying actual code.
+### test/REAL/ — Proprietary NAV Objects
+Real NAV C/AL objects (gitignored). Read freely for analysis, never copy content to committed files or reference in public artifacts (PRs, issues, commit messages). Create synthetic fixtures instead.
 
 ### File Encoding
-
-NAV exports C/AL files using the Windows OEM codepage, which varies by regional settings:
-- **Western Europe:** CP850 (ø=0x9B, æ=0x91, å=0x86)
-- **US:** CP437 (different character mappings)
-- **NAV 2015+:** Can export UTF-8 with BOM (depends on export settings; CP850 output is still possible)
-
-**For development work:**
-- `server/src/utils/encoding.ts` provides CP850 detection heuristics for direct file reading scenarios (used by validation scripts and standalone tools)
-- The LSP server relies on VS Code's encoding handling via the TextDocuments API; it does not perform runtime encoding detection
-- `files.autoGuessEncoding: true` is configured in `.vscode/settings.json`
-- If auto-detection fails, manually reopen with correct encoding via status bar
+NAV exports use Windows OEM codepages (typically CP850 for Western Europe). The LSP server relies on VS Code's encoding handling. `files.autoGuessEncoding: true` is configured in `.vscode/settings.json`.
 
 ---
 
@@ -556,264 +115,47 @@ NAV exports C/AL files using the Windows OEM codepage, which varies by regional 
 
 ## Commands
 
-```bash
-# Build
-npm run compile              # Build all
-npm run watch               # Watch mode
-
-# Test (from server/)
-cd server && npm test                 # All tests (~7-14s)
-cd server && npm test -- --watch      # TDD mode
-cd server && npm test -- --coverage   # Coverage
-cd server && npm test -- -u           # Update snapshots
-
-# Performance
-cd server && npm run perf:quick       # Quick benchmark
-cd server && npm run perf:standard    # Standard suite
-```
-
----
-
-## TypeScript Diagnostic Verification
-
-**Rule:** Always recompile before investigating TypeScript errors.
-
-IDE diagnostics can be stale. Before spending time investigating a TypeScript error:
+Test commands run from `server/` — check CWD first, you may already be there.
 
 ```bash
-# From project root - compiles BOTH client (src/) and server (server/src/)
-npm run compile
+npm run compile                       # Build all (from project root)
+npm run watch                         # Watch mode (from project root)
+npm test                              # All tests (from server/)
+npm test -- --watch                   # TDD mode
+npm test -- --coverage                # Coverage
+npm test -- -u                        # Update snapshots
+npm run perf:quick                    # Quick benchmark
 ```
 
-Note: There is no separate compile command for server-only. The root `npm run compile` handles both codebases via `tsconfig.json` (client) and `tsconfig.server.json` (server).
-
-**Workflow:**
-1. Encounter a TypeScript error in diagnostics
-2. Run `npm run compile` from project root
-3. If error disappears: was stale, continue working
-4. If error persists: investigate the real issue
-5. If compile fails with a *different* error: fix that first (may be causing cascade)
-
-Apply this check when you first encounter a TypeScript error during any workflow step. A 5-second compile saves minutes of chasing phantom errors.
-
-**Exception: Test Files (*.test.ts, *.spec.ts)**
-
-Jest test files may show false positive TypeScript errors for globals like `describe`, `it`, `expect`, `beforeEach`, `afterEach`, and `jest`. This occurs because VS Code's TypeScript server may not recognize the test file's tsconfig scope, even though `@types/jest` is installed.
-
-**Symptoms:** IDE shows "Cannot find name 'describe'" or similar for Jest globals in test files.
-
-**Workarounds:**
-1. **Restart TypeScript server:** `Ctrl+Shift+P` → "TypeScript: Restart TS Server"
-2. **Verify by running tests:** `cd server && npm test`
-
-If tests pass after step 2, the IDE errors are false positives - ignore them.
-
-**Summary:**
-| File Type | Verification Method |
-|-----------|---------------------|
-| Source files (`*.ts` in `src/`, `server/src/`) | `npm run compile` |
-| Test files (`*.test.ts`, `*.spec.ts`) | Restart TS server, or `cd server && npm test` |
+**TypeScript errors:** Run `npm run compile` before investigating — IDE diagnostics can be stale. Test files showing false positives for Jest globals (`describe`, `it`) are normal; verify by running the tests.
 
 ---
 
-## Available Skills
+## Skills
 
-| Skill | Purpose |
-|-------|---------|
-| `/cal-syntax` | C/AL keywords, operators, data types |
-| `/cal-al-boundaries` | What NOT to add (AL-only features) |
-| `/cal-object-format` | C/SIDE text export format |
-| `/cal-parser-development` | Lexer/parser internals |
-| `/cal-provider-development` | LSP provider patterns |
-| `/cal-dev-guide` | Testing, development workflow |
+Invoke before working on related areas:
 
----
-
-## Workflow Learnings
-
-**Validated Practices:**
-1. **adversarial-reviewer in PLAN phase** - Catches conflicting assumptions before implementation (Controls keyword fix)
-2. **TDD validation** - Tests MUST fail first or diagnosis is wrong
-3. **Mandatory adversarial-reviewer before COMMIT** - Final quality gate catches gaps
-4. **Re-review after fixes** - Ensures fixes don't introduce new issues
-5. **code-detective for non-obvious issues** - Deep investigation prevents wasted work
-6. **Only explicit "APPROVED" exits review loops** - "Conditional approval" or "LGTM if you clarify X" requires resuming the reviewer with clarifications, not asking the user for permission to proceed (incident: 2026-01-19)
-7. **Explicit assumptions + lightweight verification** - Architect states assumptions explicitly, adversarial-reviewer flags critical items with [VERIFY], orchestrator confirms with fresh tool calls. Mitigates silent tool failures without excessive overhead (EmptySetValidator implementation, 2026-01-23)
-8. **Explicit issue closure** - Commit messages must use "Fixes #X" format (not just "#X"); verify issue state after push. Auto-close failures require manual `gh issue close` (incident: 2026-01-31)
-9. **Implementation verification** - Senior-developer must re-read files after editing to confirm changes were applied; agents can claim success without actual changes due to silent tool failures (incident: 2026-01-31)
-10. **Worktree-based parallel sessions** - Each session works in its own worktree; main is reserved for merging. Two-tier merge resolution (merge-agent → senior-merge-engineer) handles conflicts with objective classification and progressive strategies.
+| Working on... | Invoke |
+|---------------|--------|
+| Adding syntax/keywords | `/cal-reference` |
+| Lexer/parser files | `/cal-parser-development` |
+| LSP providers | `/cal-provider-development` |
+| Writing tests | `/cal-dev-guide` |
+| C/AL text format | `/cal-object-format` |
 
 ---
 
-## Documentation Style Guide
+## Practices
 
-This section documents the structure patterns used in CLAUDE.md to maintain consistency when adding or editing content.
+Things we've learned:
+1. **Adversarial review in PLAN phase** catches conflicting assumptions early
+2. **TDD validation** — tests must fail first or the diagnosis is suspect
+3. **Verify edits** — re-read files after editing; silent tool failures happen
+4. **Explicit issue closure** — use `Fixes #X` in commit messages, not just `#X`
+5. **Agent resume can fail** — if an agent returns nothing on resume, start it fresh with full context
 
-### Current State
+---
 
-The document uses several structural patterns, some more consistently than others:
+## Known Issues
 
-| Pattern | Status | Examples |
-|---------|--------|----------|
-| Rule + Exception | Canonical | Lines 228-229 (`**TDD Rule:**` / `**Exception:**`) |
-| Definition + Applicability | Canonical | Lines 381-392 (`**Boy Scout Rule:**` with applies/does-not lists) |
-| Protocol (numbered steps) | Canonical | Lines 394-421 (Boy Scout Protocol) |
-| Table Reference | Canonical | Lines 186-226 (Checkpoint Decision Tables) |
-| Problem-Solution | Canonical | Lines 459-472 (Known Issues format) |
-| Rule + Bullet List | Canonical | Lines 250-253 (`**Review Rule:**` with rationale bullets) |
-
-**Legacy patterns** work but should not be replicated. When editing sections with legacy patterns, consider normalizing to canonical form as a Boy Scout improvement.
-
-### Canonical Patterns
-
-**1. Rule + Exception**
-
-Use when: Stating a general rule that has known exceptions.
-
-```
-**[Rule Name] Rule:** [Concise rule statement]
-**Exception:** [When the rule does not apply]
-```
-
-Canonical example: Lines 228-229
-- `**TDD Rule:**` states the rule
-- `**Exception:**` on the following line lists exceptions
-
-**2. Definition + Applicability**
-
-Use when: Defining a concept and clarifying its scope.
-
-```
-**[Concept Name]:** [Definition]
-
-Applies when [criteria are]:
-- [Criterion 1]
-- [Criterion 2]
-
-Does NOT apply to:
-- [Exclusion 1]
-- [Exclusion 2]
-```
-
-Canonical example: Lines 381-392 (Boy Scout Rule)
-
-**3. Protocol (Numbered Steps)**
-
-Use when: Documenting a multi-step process with clear sequencing.
-
-```
-**[Protocol Name]:**
-
-When [trigger condition]:
-
-1. **[Actor/Step name]** [action]
-   - [Detail]
-   - [Detail]
-
-2. **[Next step]** [action]
-   - [Detail]
-```
-
-Canonical example: Lines 394-421 (Boy Scout Protocol)
-
-**4. Table Reference**
-
-Use when: Presenting decision criteria, mappings, or structured comparisons.
-
-```
-**[Section Name]:**
-
-Use these to [purpose].
-
-| Column 1 | Column 2 | Column 3 |
-|----------|----------|----------|
-| Value | Value | Value |
-```
-
-Canonical example: Lines 186-226 (Checkpoint Decision Tables)
-
-**5. Problem-Solution**
-
-Use when: Documenting known issues, workarounds, or troubleshooting.
-
-```
-**[Issue Name] (TEMPORARY WORKAROUND)**
-
-**Symptom:** [What the user observes]
-
-**Root Cause:** [Why it happens]
-
-**Workaround:** [Steps to resolve]
-[Numbered steps if multiple]
-
-**When to remove this section:** [Condition for obsolescence]
-```
-
-Canonical example: Lines 459-472 (Agent Resume Failure)
-
-**6. Rule + Bullet List**
-
-Use when: Stating a rule, guideline, or concept with supporting details that do not fit the other patterns (no exceptions to separate, no applicability boundaries, no steps, no table, no problem-solution format).
-
-```
-**[Name]:** [Optional inline summary]
-- [Supporting point, rationale, or elaboration]
-- [Additional point]
-- [Additional point]
-```
-
-Canonical example: Lines 250-253 (Review Rule)
-- `**Review Rule:**` states the rule with optional inline summary
-- Bullet points provide rationale (why the rule exists)
-
-Secondary example: Lines 297-301 (Issue Creation Bias) - demonstrates concept with elaborative examples
-
-### Header Variants
-
-| Variant | Format | Body Location | Use Case |
-|---------|--------|---------------|----------|
-| **Standalone** | `**Exception:**` | Same line, immediately after colon | Brief inline clarifications |
-| **Descriptive** | `**Exception: [Scope]**` | Subsequent lines (after blank line) | Multi-line explanations with titled sections |
-
-**Standalone** (body on same line):
-```
-**Exception:** Regression tests, refactoring, test-after for legacy code, and test coverage tasks.
-
-**Note:** This guidance is approximate.
-```
-
-**Descriptive** (body on subsequent lines):
-```
-**Exception: Test Files (*.test.ts, *.spec.ts)**
-
-Jest test files may show false positive TypeScript errors for globals like `describe`, `it`, `expect`, `beforeEach`, `afterEach`, and `jest`.
-```
-
-The standalone variant is preferred for general exceptions. Use the descriptive variant when the scope qualification in the header aids comprehension.
-
-### Anti-Patterns
-
-Avoid these patterns when adding documentation:
-
-| Anti-Pattern | Problem | Instead |
-|--------------|---------|---------|
-| Inline exceptions | `**Rule:** X (except Y)` | Use separate `**Exception:**` line |
-| Unmarked notes | Prose asides without headers | Use `**Note:**` header |
-| Mixed list styles | Switching between `-` and `*` | Use `-` consistently |
-| Deep nesting | More than 2 indent levels in lists | Restructure or use subsections |
-| Orphan headers | Bold header with no following content | Combine with content or remove |
-
-### Pattern Selection
-
-When adding new content, select the pattern based on what you are documenting:
-
-| Documenting... | Use Pattern |
-|----------------|-------------|
-| A rule with exceptions | Rule + Exception |
-| A concept with scope boundaries | Definition + Applicability |
-| A multi-step workflow | Protocol |
-| Decision criteria or mappings | Table Reference |
-| A known issue or workaround | Problem-Solution |
-| A rule with rationale or elaboration | Rule + Bullet List |
-
-**When in doubt:** Use Rule + Bullet List (Pattern #6). It is the simplest pattern and can be refactored later if a more specific pattern becomes appropriate.
+**Agent Resume Failure:** Tracked in [claude-code#16861](https://github.com/anthropics/claude-code/issues/16861). If an agent returns 0 tokens on resume, retry without the resume parameter and provide full context in the prompt.

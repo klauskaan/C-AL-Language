@@ -43,11 +43,11 @@ c-al-extension/
 npm run compile              # Build extension + server
 npm run watch               # Watch mode
 
-# Test (from server/)
-cd server && npm test                 # Run all ~2500 tests
-cd server && npm test -- --watch      # Watch mode (TDD)
-cd server && npm test -- --coverage   # Coverage report
-cd server && npm test -- -u           # Update snapshots
+# Test (run from server/ — check CWD first, you may already be there)
+npm test                 # Run all ~2500 tests
+npm test -- --watch      # Watch mode (TDD)
+npm test -- --coverage   # Coverage report
+npm test -- -u           # Update snapshots
 
 # Specific tests
 npm test -- lexer.test.ts             # File pattern
@@ -242,7 +242,7 @@ npm test -- --watch
 2. **Don't treat all `{ }` as comments** - Context matters
 3. **Don't ignore `@` numbering** - Essential for symbols
 4. **Don't forget `BEGIN END.`** - Period is mandatory
-5. **Don't add AL-only features** - Use /cal-al-boundaries skill
+5. **Don't add AL-only features** - Use /cal-reference skill
 6. **Don't skip version checks** - Some features are NAV 2016+ only
 
 ## Test Best Practices
