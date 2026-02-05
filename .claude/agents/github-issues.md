@@ -3,6 +3,7 @@ name: github-issues
 description: Creates and updates GitHub issues for out-of-scope work. Checks for duplicates first.
 tools: Bash(gh issue*), Bash(gh search*), Read, Grep, Glob
 model: haiku
+color: cyan
 permissionMode: none
 ---
 

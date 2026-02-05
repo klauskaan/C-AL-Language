@@ -3,6 +3,7 @@ name: cal-expert
 description: C/AL language expert ensuring correct NAV 2013–BC14 support and preventing AL contamination.
 tools: Read, Grep, Glob, WebFetch
 model: sonnet
+color: orange
 permissionMode: default
 skills: cal-reference, cal-object-format
 ---

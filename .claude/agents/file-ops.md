@@ -3,6 +3,7 @@ name: file-ops
 description: Git operations specialist — commits, branches, worktrees, and file management.
 tools: Bash(git *), Bash(gh *), Read, Grep, Glob
 model: sonnet
+color: cyan
 permissionMode: none
 ---
 

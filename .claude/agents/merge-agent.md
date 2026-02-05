@@ -1,6 +1,7 @@
 ---
 name: merge-agent
 model: sonnet
+color: cyan
 tools:
   - Bash(git *)
   - Bash(gh *)

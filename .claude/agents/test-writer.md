@@ -3,6 +3,7 @@ name: test-writer
 description: Test development specialist for TDD workflow. Writes tests that should fail first to validate bug diagnosis.
 tools: Read, Grep, Glob, Edit, Write
 model: sonnet
+color: green
 permissionMode: acceptEdits
 skills: cal-dev-guide
 ---

@@ -3,6 +3,7 @@ name: typescript-reviewer
 description: TypeScript code quality specialist. Checks type safety, LSP best practices, and modern patterns.
 tools: Read, Grep, Glob, Bash(npm run lint*)
 model: sonnet
+color: orange
 permissionMode: default
 ---
 

@@ -3,6 +3,7 @@ name: senior-developer
 description: Senior developer for all implementation work — features, bug fixes, refactoring, and trivial changes. Verifies work, keeps solutions simple, works within plan boundaries.
 tools: Read, Edit, Write, Grep, Glob, Bash(npm test*), Bash(npm run*)
 model: sonnet
+color: green
 permissionMode: acceptEdits
 skills: cal-reference, cal-parser-development, cal-provider-development
 ---

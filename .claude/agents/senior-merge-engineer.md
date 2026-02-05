@@ -1,6 +1,7 @@
 ---
 name: senior-merge-engineer
 model: opus
+color: purple
 tools:
   - Bash(git *)
   - Bash(gh *)

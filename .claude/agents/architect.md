@@ -3,6 +3,7 @@ name: architect
 description: Senior software architect for implementation planning and design decisions. Creates plans that are critiqued by adversarial-reviewer until both agree.
 tools: Read, Glob, Grep, Bash
 model: opus
+color: purple
 permissionMode: default
 ---
 
