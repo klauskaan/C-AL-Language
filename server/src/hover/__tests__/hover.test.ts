@@ -7,6 +7,7 @@ import { SymbolTable } from '../../symbols/symbolTable';
 import { Position, MarkupKind } from 'vscode-languageserver';
 import { createMockToken, createDocument } from '../../__tests__/testUtils';
 import { Token, TokenType } from '../../lexer/tokens';
+import { BuiltinRegistry } from '../../builtins';
 
 
 /**
@@ -23,7 +24,7 @@ describe('HoverProvider', () => {
   let provider: HoverProvider;
 
   beforeEach(() => {
-    provider = new HoverProvider();
+    provider = new HoverProvider(new BuiltinRegistry());
   });
 
   describe('Symbol Hover', () => {
@@ -295,7 +296,7 @@ describe('HoverProvider', () => {
   describe('CODE Keyword Disambiguation', () => {
     it('should show "Section Keyword" when hovering CODE section keyword (TokenType.Code)', () => {
       const doc = createDocument('CODE');
-      const provider = new HoverProvider();
+      const provider = new HoverProvider(new BuiltinRegistry());
       const tokens: Token[] = [{
         type: TokenType.Code,
         value: 'CODE',
@@ -314,7 +315,7 @@ describe('HoverProvider', () => {
 
     it('should show "C/AL Data Type" when hovering CODE data type (TokenType.Code_Type)', () => {
       const doc = createDocument('myVar : Code[20]');
-      const provider = new HoverProvider();
+      const provider = new HoverProvider(new BuiltinRegistry());
       const tokens: Token[] = [{
         type: TokenType.Code_Type,
         value: 'Code',
@@ -333,7 +334,7 @@ describe('HoverProvider', () => {
 
     it('should use fallback to "Section Keyword" when no tokens provided', () => {
       const doc = createDocument('CODE');
-      const provider = new HoverProvider();
+      const provider = new HoverProvider(new BuiltinRegistry());
 
       const hover = provider.getHover(doc, Position.create(0, 2));
 

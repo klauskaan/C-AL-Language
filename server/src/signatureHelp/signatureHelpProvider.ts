@@ -39,7 +39,12 @@ interface ParsedParameter {
  * Extends ProviderBase for shared text scanning utilities
  */
 export class SignatureHelpProvider extends ProviderBase {
-  private registry = new BuiltinRegistry();
+  private registry: BuiltinRegistry;
+
+  constructor(builtins: BuiltinRegistry) {
+    super();
+    this.registry = builtins;
+  }
 
   /**
    * Get signature help for a function call at the cursor position

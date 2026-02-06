@@ -49,9 +49,9 @@ function getKeywordHover(keyword: string, tokenType?: TokenType): string | null 
 export class HoverProvider extends ProviderBase {
   private registry: BuiltinRegistry;
 
-  constructor() {
+  constructor(builtins: BuiltinRegistry) {
     super();
-    this.registry = new BuiltinRegistry();
+    this.registry = builtins;
   }
 
   /**

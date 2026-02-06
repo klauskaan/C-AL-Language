@@ -25,9 +25,9 @@ export class SemanticAnalyzer {
   /** Validation pipeline that runs all validators */
   private pipeline: ValidationPipeline;
 
-  constructor() {
-    // Initialize builtin registry
-    this.builtins = new BuiltinRegistry();
+  constructor(builtins: BuiltinRegistry) {
+    // Store injected builtin registry
+    this.builtins = builtins;
 
     // Initialize validation pipeline
     this.pipeline = new ValidationPipeline();
