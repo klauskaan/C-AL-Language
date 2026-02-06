@@ -602,6 +602,442 @@ describe('TypeResolver', () => {
     });
   });
 
+  describe('parser-produced compound type patterns', () => {
+    describe('Group A - embedded size patterns', () => {
+      it('should resolve Code20 to Code with length 20', () => {
+        const dataType = createDataType('Code20', { length: 20 });
+        const resolved = resolveType(dataType);
+
+        expect(isTextType(resolved)).toBe(true);
+        expect((resolved as TextType).isCode).toBe(true);
+        expect((resolved as TextType).maxLength).toBe(20);
+      });
+
+      it('should resolve Text50 to Text with length 50', () => {
+        const dataType = createDataType('Text50', { length: 50 });
+        const resolved = resolveType(dataType);
+
+        expect(isTextType(resolved)).toBe(true);
+        expect((resolved as TextType).isCode).toBe(false);
+        expect((resolved as TextType).maxLength).toBe(50);
+      });
+
+      it('should resolve Text100 to Text with length 100', () => {
+        const dataType = createDataType('Text100', { length: 100 });
+        const resolved = resolveType(dataType);
+
+        expect(isTextType(resolved)).toBe(true);
+        expect((resolved as TextType).isCode).toBe(false);
+        expect((resolved as TextType).maxLength).toBe(100);
+      });
+
+      it('should resolve Decimal5 to Decimal with length 5', () => {
+        const dataType = createDataType('Decimal5', { length: 5 });
+        const resolved = resolveType(dataType);
+
+        expect(isPrimitiveType(resolved)).toBe(true);
+        expect((resolved as PrimitiveType).name).toBe(PrimitiveName.Decimal);
+      });
+
+      it('should resolve CODE10 (uppercase) to Code with length 10', () => {
+        const dataType = createDataType('CODE10', { length: 10 });
+        const resolved = resolveType(dataType);
+
+        expect(isTextType(resolved)).toBe(true);
+        expect((resolved as TextType).isCode).toBe(true);
+        expect((resolved as TextType).maxLength).toBe(10);
+      });
+
+      it('should resolve text30 (lowercase) to Text with length 30', () => {
+        const dataType = createDataType('text30', { length: 30 });
+        const resolved = resolveType(dataType);
+
+        expect(isTextType(resolved)).toBe(true);
+        expect((resolved as TextType).isCode).toBe(false);
+        expect((resolved as TextType).maxLength).toBe(30);
+      });
+
+      it('should resolve TeXt25 (mixed case) to Text with length 25', () => {
+        const dataType = createDataType('TeXt25', { length: 25 });
+        const resolved = resolveType(dataType);
+
+        expect(isTextType(resolved)).toBe(true);
+        expect((resolved as TextType).isCode).toBe(false);
+        expect((resolved as TextType).maxLength).toBe(25);
+      });
+    });
+
+    describe('Group B - bracket notation', () => {
+      it('should resolve Text[30] to Text with length 30', () => {
+        const dataType = createDataType('Text[30]', { length: 30 });
+        const resolved = resolveType(dataType);
+
+        expect(isTextType(resolved)).toBe(true);
+        expect((resolved as TextType).isCode).toBe(false);
+        expect((resolved as TextType).maxLength).toBe(30);
+      });
+
+      it('should resolve Code[10] to Code with length 10', () => {
+        const dataType = createDataType('Code[10]', { length: 10 });
+        const resolved = resolveType(dataType);
+
+        expect(isTextType(resolved)).toBe(true);
+        expect((resolved as TextType).isCode).toBe(true);
+        expect((resolved as TextType).maxLength).toBe(10);
+      });
+
+      it('should resolve TEXT[50] (uppercase) to Text with length 50', () => {
+        const dataType = createDataType('TEXT[50]', { length: 50 });
+        const resolved = resolveType(dataType);
+
+        expect(isTextType(resolved)).toBe(true);
+        expect((resolved as TextType).isCode).toBe(false);
+        expect((resolved as TextType).maxLength).toBe(50);
+      });
+
+      it('should resolve code[20] (lowercase) to Code with length 20', () => {
+        const dataType = createDataType('code[20]', { length: 20 });
+        const resolved = resolveType(dataType);
+
+        expect(isTextType(resolved)).toBe(true);
+        expect((resolved as TextType).isCode).toBe(true);
+        expect((resolved as TextType).maxLength).toBe(20);
+      });
+    });
+
+    describe('Group C - space + object ID', () => {
+      it('should resolve "Record 18" to Record with tableId 18', () => {
+        const dataType = createDataType('Record 18', { tableId: 18 });
+        const resolved = resolveType(dataType);
+
+        expect(isRecordType(resolved)).toBe(true);
+        expect((resolved as RecordType).tableId).toBe(18);
+      });
+
+      it('should resolve "Record 27" to Record with tableId 27', () => {
+        const dataType = createDataType('Record 27', { tableId: 27 });
+        const resolved = resolveType(dataType);
+
+        expect(isRecordType(resolved)).toBe(true);
+        expect((resolved as RecordType).tableId).toBe(27);
+      });
+
+      it('should resolve "Codeunit 80" to Codeunit with codeunitId 80', () => {
+        const dataType = createDataType('Codeunit 80', { tableId: 80 });
+        const resolved = resolveType(dataType);
+
+        expect(isCodeunitType(resolved)).toBe(true);
+        expect((resolved as CodeunitType).codeunitId).toBe(80);
+      });
+
+      it('should resolve "Codeunit 1" to Codeunit with codeunitId 1', () => {
+        const dataType = createDataType('Codeunit 1', { tableId: 1 });
+        const resolved = resolveType(dataType);
+
+        expect(isCodeunitType(resolved)).toBe(true);
+        expect((resolved as CodeunitType).codeunitId).toBe(1);
+      });
+
+      it('should resolve "RECORD 18" (uppercase) to Record with tableId 18', () => {
+        const dataType = createDataType('RECORD 18', { tableId: 18 });
+        const resolved = resolveType(dataType);
+
+        expect(isRecordType(resolved)).toBe(true);
+        expect((resolved as RecordType).tableId).toBe(18);
+      });
+
+      it('should resolve "codeunit 80" (lowercase) to Codeunit with codeunitId 80', () => {
+        const dataType = createDataType('codeunit 80', { tableId: 80 });
+        const resolved = resolveType(dataType);
+
+        expect(isCodeunitType(resolved)).toBe(true);
+        expect((resolved as CodeunitType).codeunitId).toBe(80);
+      });
+
+      it('should resolve "ReCord 27" (mixed case) to Record with tableId 27', () => {
+        const dataType = createDataType('ReCord 27', { tableId: 27 });
+        const resolved = resolveType(dataType);
+
+        expect(isRecordType(resolved)).toBe(true);
+        expect((resolved as RecordType).tableId).toBe(27);
+      });
+    });
+
+    describe('Group D - prefix collision prevention', () => {
+      it('should resolve TextConst to unknown type (not Text)', () => {
+        const dataType = createDataType('TextConst');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: TextConst');
+      });
+
+      it('should resolve RecordRef to unknown type (not Record)', () => {
+        const dataType = createDataType('RecordRef');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: RecordRef');
+      });
+
+      it('should resolve RecordID to unknown type (not Record)', () => {
+        const dataType = createDataType('RecordID');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: RecordID');
+      });
+
+      it('should resolve CodeunitRunner to unknown type (not Codeunit)', () => {
+        const dataType = createDataType('CodeunitRunner');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: CodeunitRunner');
+      });
+
+      it('should resolve TextHandler to unknown type (not Text)', () => {
+        const dataType = createDataType('TextHandler');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: TextHandler');
+      });
+
+      it('should resolve CodeBuilder to unknown type (not Code)', () => {
+        const dataType = createDataType('CodeBuilder');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: CodeBuilder');
+      });
+    });
+
+    describe('Group E - other unknown types', () => {
+      it('should resolve DotNet to unknown type', () => {
+        const dataType = createDataType('DotNet');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: DotNet');
+      });
+
+      it('should resolve Automation to unknown type', () => {
+        const dataType = createDataType('Automation');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: Automation');
+      });
+
+      it('should resolve Variant to unknown type', () => {
+        const dataType = createDataType('Variant');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: Variant');
+      });
+
+      it('should resolve BLOB to unknown type', () => {
+        const dataType = createDataType('BLOB');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: BLOB');
+      });
+
+      it('should resolve BigText to unknown type', () => {
+        const dataType = createDataType('BigText');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: BigText');
+      });
+
+      it('should resolve DateFormula to unknown type', () => {
+        const dataType = createDataType('DateFormula');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: DateFormula');
+      });
+
+      it('should resolve FieldRef to unknown type', () => {
+        const dataType = createDataType('FieldRef');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: FieldRef');
+      });
+
+      it('should resolve KeyRef to unknown type', () => {
+        const dataType = createDataType('KeyRef');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: KeyRef');
+      });
+
+      it('should resolve Dialog to unknown type', () => {
+        const dataType = createDataType('Dialog');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: Dialog');
+      });
+
+      it('should resolve File to unknown type', () => {
+        const dataType = createDataType('File');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: File');
+      });
+
+      it('should resolve InStream to unknown type', () => {
+        const dataType = createDataType('InStream');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: InStream');
+      });
+
+      it('should resolve OutStream to unknown type', () => {
+        const dataType = createDataType('OutStream');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: OutStream');
+      });
+
+      it('should resolve OCX to unknown type', () => {
+        const dataType = createDataType('OCX');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: OCX');
+      });
+
+      it('should resolve "Page 21" to unknown type', () => {
+        const dataType = createDataType('Page 21');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: Page 21');
+      });
+
+      it('should resolve "Report 206" to unknown type', () => {
+        const dataType = createDataType('Report 206');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+        expect((resolved as UnknownType).reason).toBe('Unrecognized type: Report 206');
+      });
+    });
+
+    describe('Group F - regression tests (bare types)', () => {
+      it('should still resolve bare Code type', () => {
+        const dataType = createDataType('Code');
+        const resolved = resolveType(dataType);
+
+        expect(isTextType(resolved)).toBe(true);
+        expect((resolved as TextType).isCode).toBe(true);
+        expect((resolved as TextType).maxLength).toBeUndefined();
+      });
+
+      it('should still resolve bare Text type', () => {
+        const dataType = createDataType('Text');
+        const resolved = resolveType(dataType);
+
+        expect(isTextType(resolved)).toBe(true);
+        expect((resolved as TextType).isCode).toBe(false);
+        expect((resolved as TextType).maxLength).toBeUndefined();
+      });
+
+      it('should still resolve bare Record type', () => {
+        const dataType = createDataType('Record');
+        const resolved = resolveType(dataType);
+
+        expect(isRecordType(resolved)).toBe(true);
+        expect((resolved as RecordType).tableId).toBe(0);
+      });
+
+      it('should still resolve bare Codeunit type', () => {
+        const dataType = createDataType('Codeunit');
+        const resolved = resolveType(dataType);
+
+        expect(isCodeunitType(resolved)).toBe(true);
+        expect((resolved as CodeunitType).codeunitId).toBe(0);
+      });
+
+      it('should still resolve bare Decimal type', () => {
+        const dataType = createDataType('Decimal');
+        const resolved = resolveType(dataType);
+
+        expect(isPrimitiveType(resolved)).toBe(true);
+        expect((resolved as PrimitiveType).name).toBe(PrimitiveName.Decimal);
+      });
+
+      it('should still resolve bare Integer type', () => {
+        const dataType = createDataType('Integer');
+        const resolved = resolveType(dataType);
+
+        expect(isPrimitiveType(resolved)).toBe(true);
+        expect((resolved as PrimitiveType).name).toBe(PrimitiveName.Integer);
+      });
+    });
+
+    describe('Group G - edge cases', () => {
+      it('should resolve empty typeName to unknown', () => {
+        const dataType = createDataType('');
+        const resolved = resolveType(dataType);
+
+        expect(isUnknownType(resolved)).toBe(true);
+      });
+
+      it('should resolve Option type with inline option string', () => {
+        const dataType = createDataType('Option', { optionString: 'Open,Released' });
+        const resolved = resolveType(dataType);
+
+        expect(isOptionType(resolved)).toBe(true);
+        expect((resolved as OptionType).values).toEqual(['Open', 'Released']);
+      });
+
+      it('should resolve Record without tableId to Record with tableId 0', () => {
+        const dataType = createDataType('Record');
+        const resolved = resolveType(dataType);
+
+        expect(isRecordType(resolved)).toBe(true);
+        expect((resolved as RecordType).tableId).toBe(0);
+      });
+
+      it('should resolve Codeunit without tableId to Codeunit with codeunitId 0', () => {
+        const dataType = createDataType('Codeunit');
+        const resolved = resolveType(dataType);
+
+        expect(isCodeunitType(resolved)).toBe(true);
+        expect((resolved as CodeunitType).codeunitId).toBe(0);
+      });
+
+      it('should resolve "Record" with trailing whitespace to Record', () => {
+        const dataType = createDataType('Record ', { tableId: 18 });
+        const resolved = resolveType(dataType);
+
+        expect(isRecordType(resolved)).toBe(true);
+        expect((resolved as RecordType).tableId).toBe(18);
+      });
+
+      it('should resolve compound type with length mismatch (Text50 with length 30)', () => {
+        // Parser might provide inconsistent data - should use length parameter
+        const dataType = createDataType('Text50', { length: 30 });
+        const resolved = resolveType(dataType);
+
+        expect(isTextType(resolved)).toBe(true);
+        expect((resolved as TextType).maxLength).toBe(30);
+      });
+    });
+  });
+
   describe('edge cases', () => {
     it('should handle all primitive type name variations', () => {
       const primitiveNames = [

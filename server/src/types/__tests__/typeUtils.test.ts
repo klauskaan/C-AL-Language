@@ -15,7 +15,9 @@ import {
   createOptionType,
   createTextType,
   createCodeunitType,
-  createUnknownType
+  createUnknownType,
+  isAssignmentCompatible,
+  inferLiteralType
 } from '../typeUtils';
 
 import {
@@ -995,5 +997,280 @@ describe('Integration Tests', () => {
       );
       expect(typeToString(customerArray)).toBe('Array[100] of Record Customer');
     });
+  });
+});
+
+describe('isAssignmentCompatible', () => {
+  describe('Same-type assignments', () => {
+    it('should allow Integer to Integer', () => {
+      const source = createPrimitiveType(PrimitiveName.Integer);
+      const target = createPrimitiveType(PrimitiveName.Integer);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Text[50] to Text[50]', () => {
+      const source = createTextType(50, false);
+      const target = createTextType(50, false);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Boolean to Boolean', () => {
+      const source = createPrimitiveType(PrimitiveName.Boolean);
+      const target = createPrimitiveType(PrimitiveName.Boolean);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Record 18 to Record 18', () => {
+      const source = createRecordType(18, 'Customer');
+      const target = createRecordType(18, 'Customer');
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Option to Option (same values)', () => {
+      const source = createOptionType(['Open', 'Closed']);
+      const target = createOptionType(['Open', 'Closed']);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+  });
+
+  describe('Numeric widening (compatible)', () => {
+    it('should allow Integer to Decimal', () => {
+      const source = createPrimitiveType(PrimitiveName.Integer);
+      const target = createPrimitiveType(PrimitiveName.Decimal);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Char to Integer', () => {
+      const source = createPrimitiveType(PrimitiveName.Char);
+      const target = createPrimitiveType(PrimitiveName.Integer);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Byte to Integer', () => {
+      const source = createPrimitiveType(PrimitiveName.Byte);
+      const target = createPrimitiveType(PrimitiveName.Integer);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Integer to BigInteger', () => {
+      const source = createPrimitiveType(PrimitiveName.Integer);
+      const target = createPrimitiveType(PrimitiveName.BigInteger);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow BigInteger to Decimal', () => {
+      const source = createPrimitiveType(PrimitiveName.BigInteger);
+      const target = createPrimitiveType(PrimitiveName.Decimal);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+  });
+
+  describe('Numeric narrowing (incompatible)', () => {
+    it('should reject Decimal to Integer', () => {
+      const source = createPrimitiveType(PrimitiveName.Decimal);
+      const target = createPrimitiveType(PrimitiveName.Integer);
+      expect(isAssignmentCompatible(source, target)).toBe(false);
+    });
+  });
+
+  describe('Text/Code interoperability', () => {
+    it('should allow Text to Code', () => {
+      const source = createTextType(50, false);
+      const target = createTextType(50, true);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Code to Text', () => {
+      const source = createTextType(20, true);
+      const target = createTextType(20, false);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Text[50] to Text[100] (widening)', () => {
+      const source = createTextType(50, false);
+      const target = createTextType(100, false);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Code[20] to Code[10] (runtime truncates)', () => {
+      const source = createTextType(20, true);
+      const target = createTextType(10, true);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+  });
+
+  describe('Char to string conversion', () => {
+    it('should allow Char to Text', () => {
+      const source = createPrimitiveType(PrimitiveName.Char);
+      const target = createTextType();
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Char to Code', () => {
+      const source = createPrimitiveType(PrimitiveName.Char);
+      const target = createTextType(undefined, true);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+  });
+
+  describe('Option interoperability', () => {
+    it('should allow Integer to Option', () => {
+      const source = createPrimitiveType(PrimitiveName.Integer);
+      const target = createOptionType(['Open', 'Closed']);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Option to Integer', () => {
+      const source = createOptionType(['Open', 'Closed']);
+      const target = createPrimitiveType(PrimitiveName.Integer);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+  });
+
+  describe('Record compatibility', () => {
+    it('should allow Record 18 to Record 18 (same table)', () => {
+      const source = createRecordType(18, 'Customer');
+      const target = createRecordType(18, 'Customer');
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should reject Record 18 to Record 27 (different tables)', () => {
+      const source = createRecordType(18, 'Customer');
+      const target = createRecordType(27, 'Item');
+      expect(isAssignmentCompatible(source, target)).toBe(false);
+    });
+
+    it('should allow Record 18 (temp) to Record 18 (isTemporary ignored)', () => {
+      const source = createRecordType(18, 'Customer', true);
+      const target = createRecordType(18, 'Customer', false);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+  });
+
+  describe('Incompatible type assignments', () => {
+    it('should reject Date to Integer', () => {
+      const source = createPrimitiveType(PrimitiveName.Date);
+      const target = createPrimitiveType(PrimitiveName.Integer);
+      expect(isAssignmentCompatible(source, target)).toBe(false);
+    });
+
+    it('should reject Boolean to Integer', () => {
+      const source = createPrimitiveType(PrimitiveName.Boolean);
+      const target = createPrimitiveType(PrimitiveName.Integer);
+      expect(isAssignmentCompatible(source, target)).toBe(false);
+    });
+
+    it('should reject Text to Integer', () => {
+      const source = createTextType(50);
+      const target = createPrimitiveType(PrimitiveName.Integer);
+      expect(isAssignmentCompatible(source, target)).toBe(false);
+    });
+
+    it('should reject Integer to Text', () => {
+      const source = createPrimitiveType(PrimitiveName.Integer);
+      const target = createTextType(50);
+      expect(isAssignmentCompatible(source, target)).toBe(false);
+    });
+
+    it('should reject Record to Integer', () => {
+      const source = createRecordType(18, 'Customer');
+      const target = createPrimitiveType(PrimitiveName.Integer);
+      expect(isAssignmentCompatible(source, target)).toBe(false);
+    });
+
+    it('should reject Boolean to Text', () => {
+      const source = createPrimitiveType(PrimitiveName.Boolean);
+      const target = createTextType(50);
+      expect(isAssignmentCompatible(source, target)).toBe(false);
+    });
+  });
+
+  describe('Unknown type passthrough', () => {
+    it('should allow Unknown to Integer (bail out)', () => {
+      const source = createUnknownType('Unresolved');
+      const target = createPrimitiveType(PrimitiveName.Integer);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Integer to Unknown (bail out)', () => {
+      const source = createPrimitiveType(PrimitiveName.Integer);
+      const target = createUnknownType('Unresolved');
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Unknown to Unknown (bail out)', () => {
+      const source = createUnknownType('Unresolved 1');
+      const target = createUnknownType('Unresolved 2');
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+  });
+
+  describe('Edge cases', () => {
+    it('should allow Codeunit 80 to Codeunit 80 (same ID)', () => {
+      const source = createCodeunitType(80, 'Sales-Post');
+      const target = createCodeunitType(80, 'Sales-Post');
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should reject Codeunit 80 to Codeunit 81 (different IDs)', () => {
+      const source = createCodeunitType(80, 'Sales-Post');
+      const target = createCodeunitType(81, 'Purch.-Post');
+      expect(isAssignmentCompatible(source, target)).toBe(false);
+    });
+  });
+});
+
+describe('inferLiteralType', () => {
+  it('should infer Integer from integer literal', () => {
+    const type = inferLiteralType('integer');
+    expect(type.kind).toBe('primitive');
+    expect((type as any).name).toBe(PrimitiveName.Integer);
+  });
+
+  it('should infer Decimal from decimal literal', () => {
+    const type = inferLiteralType('decimal');
+    expect(type.kind).toBe('primitive');
+    expect((type as any).name).toBe(PrimitiveName.Decimal);
+  });
+
+  it('should infer Boolean from boolean literal', () => {
+    const type = inferLiteralType('boolean');
+    expect(type.kind).toBe('primitive');
+    expect((type as any).name).toBe(PrimitiveName.Boolean);
+  });
+
+  it('should infer unlimited Text from string literal', () => {
+    const type = inferLiteralType('string');
+    expect(type.kind).toBe('text');
+    expect((type as any).isCode).toBe(false);
+    expect((type as any).maxLength).toBeUndefined();
+  });
+
+  it('should infer Date from date literal', () => {
+    const type = inferLiteralType('date');
+    expect(type.kind).toBe('primitive');
+    expect((type as any).name).toBe(PrimitiveName.Date);
+  });
+
+  it('should infer Time from time literal', () => {
+    const type = inferLiteralType('time');
+    expect(type.kind).toBe('primitive');
+    expect((type as any).name).toBe(PrimitiveName.Time);
+  });
+
+  it('should infer DateTime from datetime literal', () => {
+    const type = inferLiteralType('datetime');
+    expect(type.kind).toBe('primitive');
+    expect((type as any).name).toBe(PrimitiveName.DateTime);
+  });
+
+  it('should return Unknown for unrecognized literal type', () => {
+    const type = inferLiteralType('unknown-literal');
+    expect(type.kind).toBe('unknown');
+  });
+
+  it('should return Unknown for empty string', () => {
+    const type = inferLiteralType('');
+    expect(type.kind).toBe('unknown');
   });
 });

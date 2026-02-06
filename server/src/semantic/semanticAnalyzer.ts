@@ -14,6 +14,7 @@ import { ValidationContext } from './types';
 import { EmptySetValidator } from '../validation/emptySetValidator';
 import { UndefinedIdentifierValidator } from '../validation/undefinedIdentifierValidator';
 import { UnusedVariableValidator } from '../validation/unusedVariableValidator';
+import { TypeMismatchValidator } from '../validation/typeMismatchValidator';
 
 export class SemanticAnalyzer {
   /** Builtin function and method registry */
@@ -45,6 +46,9 @@ export class SemanticAnalyzer {
 
     // Register UnusedVariableValidator
     this.pipeline.registerValidator(new UnusedVariableValidator());
+
+    // Register TypeMismatchValidator
+    this.pipeline.registerValidator(new TypeMismatchValidator());
 
     // Future validators will be registered here:
     // this.pipeline.registerValidator(new TypeCheckValidator());

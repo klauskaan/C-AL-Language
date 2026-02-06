@@ -887,6 +887,229 @@ function areUnknownTypesEqual(typeA: UnknownType, typeB: UnknownType): boolean {
 }
 
 // ============================================================================
+// Type Compatibility Functions
+// ============================================================================
+
+/**
+ * Determines if a source type can be assigned to a target type according to
+ * C/AL type compatibility rules.
+ *
+ * This function implements the 26 compatibility rules from C/AL:
+ * 1. Identical types are always compatible
+ * 2. Unknown types always return true (bail out)
+ * 3. Numeric widening: Char → Integer, Byte → Integer, Integer → BigInteger,
+ *    Integer → Decimal, BigInteger → Decimal
+ * 4. Numeric narrowing: Decimal → Integer is NOT allowed
+ * 5. Text/Code interoperability: Text ↔ Code (bidirectional)
+ * 6. Text length: Any length to any length (runtime truncates)
+ * 7. Char to Text/Code conversion
+ * 8. Option/Integer interoperability (bidirectional)
+ * 9. Record compatibility by tableId (isTemporary ignored)
+ * 10. Codeunit compatibility by ID
+ *
+ * @param sourceType - The type being assigned from
+ * @param targetType - The type being assigned to
+ * @returns True if the assignment is compatible, false otherwise
+ *
+ * @example
+ * // Compatible: Integer to Decimal
+ * isAssignmentCompatible(
+ *   createPrimitiveType(PrimitiveName.Integer),
+ *   createPrimitiveType(PrimitiveName.Decimal)
+ * ); // true
+ *
+ * @example
+ * // Incompatible: Decimal to Integer
+ * isAssignmentCompatible(
+ *   createPrimitiveType(PrimitiveName.Decimal),
+ *   createPrimitiveType(PrimitiveName.Integer)
+ * ); // false
+ */
+export function isAssignmentCompatible(sourceType: Type, targetType: Type): boolean {
+  // Bail out for unknown types (cannot validate)
+  if (isUnknownType(targetType) || isUnknownType(sourceType)) {
+    return true;
+  }
+
+  // Identical types are always compatible
+  if (areTypesEqual(targetType, sourceType)) {
+    return true;
+  }
+
+  // Numeric type compatibility
+  if (isPrimitiveType(targetType) && isPrimitiveType(sourceType)) {
+    // Char → Integer
+    if (sourceType.name === PrimitiveName.Char && targetType.name === PrimitiveName.Integer) {
+      return true;
+    }
+
+    // Byte → Integer
+    if (sourceType.name === PrimitiveName.Byte && targetType.name === PrimitiveName.Integer) {
+      return true;
+    }
+
+    // Integer → BigInteger
+    if (sourceType.name === PrimitiveName.Integer && targetType.name === PrimitiveName.BigInteger) {
+      return true;
+    }
+
+    // Integer → Decimal
+    if (sourceType.name === PrimitiveName.Integer && targetType.name === PrimitiveName.Decimal) {
+      return true;
+    }
+
+    // BigInteger → Decimal
+    if (sourceType.name === PrimitiveName.BigInteger && targetType.name === PrimitiveName.Decimal) {
+      return true;
+    }
+
+    // Char → BigInteger (transitive: Char → Integer → BigInteger)
+    if (sourceType.name === PrimitiveName.Char && targetType.name === PrimitiveName.BigInteger) {
+      return true;
+    }
+
+    // Char → Decimal (transitive: Char → Integer → Decimal)
+    if (sourceType.name === PrimitiveName.Char && targetType.name === PrimitiveName.Decimal) {
+      return true;
+    }
+
+    // Byte → BigInteger (transitive: Byte → Integer → BigInteger)
+    if (sourceType.name === PrimitiveName.Byte && targetType.name === PrimitiveName.BigInteger) {
+      return true;
+    }
+
+    // Byte → Decimal (transitive: Byte → Integer → Decimal)
+    if (sourceType.name === PrimitiveName.Byte && targetType.name === PrimitiveName.Decimal) {
+      return true;
+    }
+
+    // Decimal → Integer is NOT allowed (narrowing)
+    if (sourceType.name === PrimitiveName.Decimal && targetType.name === PrimitiveName.Integer) {
+      return false;
+    }
+  }
+
+  // Text/Code interoperability
+  if (isTextType(targetType) && isTextType(sourceType)) {
+    // Text ↔ Code (bidirectional)
+    // Any length to any length (runtime truncates)
+    return true;
+  }
+
+  // Char to Text/Code conversion
+  if (isPrimitiveType(sourceType) && sourceType.name === PrimitiveName.Char && isTextType(targetType)) {
+    return true;
+  }
+
+  // Option/Integer interoperability (bidirectional)
+  if (isOptionType(targetType) && isPrimitiveType(sourceType) && sourceType.name === PrimitiveName.Integer) {
+    return true;
+  }
+
+  if (isPrimitiveType(targetType) && targetType.name === PrimitiveName.Integer && isOptionType(sourceType)) {
+    return true;
+  }
+
+  // Record compatibility by tableId (isTemporary ignored)
+  if (isRecordType(targetType) && isRecordType(sourceType)) {
+    return targetType.tableId === sourceType.tableId;
+  }
+
+  // Codeunit compatibility by ID
+  if (isCodeunitType(targetType) && isCodeunitType(sourceType)) {
+    return targetType.codeunitId === sourceType.codeunitId;
+  }
+
+  // Array compatibility (element type must be compatible, dimensions must match)
+  if (isArrayType(targetType) && isArrayType(sourceType)) {
+    // Dimensions must match exactly
+    if (targetType.dimensions.length !== sourceType.dimensions.length) {
+      return false;
+    }
+    for (let i = 0; i < targetType.dimensions.length; i++) {
+      if (targetType.dimensions[i] !== sourceType.dimensions[i]) {
+        return false;
+      }
+    }
+    // Element types must be compatible
+    return isAssignmentCompatible(sourceType.elementType, targetType.elementType);
+  }
+
+  // Option-to-Option compatibility (all option types are compatible)
+  if (isOptionType(targetType) && isOptionType(sourceType)) {
+    return true;
+  }
+
+  // All other combinations are incompatible
+  return false;
+}
+
+/**
+ * Infers a semantic Type from a literal type string.
+ *
+ * This function maps literal type identifiers (typically from lexer token types)
+ * to their corresponding semantic Type objects. It is used during type inference
+ * when analyzing literal expressions like integers, strings, dates, etc.
+ *
+ * Supported literal types:
+ * - 'integer' → Integer primitive type
+ * - 'decimal' → Decimal primitive type
+ * - 'boolean' → Boolean primitive type
+ * - 'string' → Unlimited Text type
+ * - 'date' → Date primitive type
+ * - 'time' → Time primitive type
+ * - 'datetime' → DateTime primitive type
+ *
+ * @param literalType - The literal type string (case-insensitive)
+ * @returns The inferred semantic Type object
+ *
+ * @example
+ * // Infer integer literal
+ * const intType = inferLiteralType('integer');
+ * // intType.kind === 'primitive', intType.name === PrimitiveName.Integer
+ *
+ * @example
+ * // Infer string literal
+ * const strType = inferLiteralType('string');
+ * // strType.kind === 'text', strType.maxLength === undefined, strType.isCode === false
+ *
+ * @example
+ * // Unknown literal type
+ * const unknownType = inferLiteralType('unknown-type');
+ * // unknownType.kind === 'unknown'
+ */
+export function inferLiteralType(literalType: string): Type {
+  const normalizedType = literalType.toLowerCase();
+
+  switch (normalizedType) {
+    case 'integer':
+      return createPrimitiveType(PrimitiveName.Integer);
+
+    case 'decimal':
+      return createPrimitiveType(PrimitiveName.Decimal);
+
+    case 'boolean':
+      return createPrimitiveType(PrimitiveName.Boolean);
+
+    case 'string':
+      // String literals map to unlimited Text
+      return createTextType(undefined, false);
+
+    case 'date':
+      return createPrimitiveType(PrimitiveName.Date);
+
+    case 'time':
+      return createPrimitiveType(PrimitiveName.Time);
+
+    case 'datetime':
+      return createPrimitiveType(PrimitiveName.DateTime);
+
+    default:
+      return createUnknownType(`Unrecognized literal type: ${literalType}`);
+  }
+}
+
+// ============================================================================
 // Type Factory Functions
 // ============================================================================
 // These factory functions provide a convenient way to create type instances

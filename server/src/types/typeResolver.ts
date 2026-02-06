@@ -58,6 +58,32 @@ const DEFAULT_OPTIONS: TypeResolverOptions = {
 };
 
 /**
+ * Extracts the base type name from a potentially compound typeName.
+ *
+ * The parser may produce compound typeNames like:
+ * - "Code20", "Text50" - embedded size patterns
+ * - "Text[30]", "Code[10]" - bracket notation
+ * - "Record 18", "Codeunit 80" - space + object ID
+ *
+ * This function extracts just the alphabetic base type name (e.g., "code",
+ * "text", "record", "codeunit") for dispatch to the appropriate resolver.
+ *
+ * @param typeName - The potentially compound typeName (already lowercased)
+ * @returns The base type name (alphabetic prefix)
+ *
+ * @example
+ * extractBaseTypeName('code20') // 'code'
+ * extractBaseTypeName('text[50]') // 'text'
+ * extractBaseTypeName('record 18') // 'record'
+ * extractBaseTypeName('integer') // 'integer'
+ */
+function extractBaseTypeName(typeName: string): string {
+  // Extract leading alphabetic characters only
+  const match = typeName.match(/^[a-z]+/);
+  return match ? match[0] : typeName;
+}
+
+/**
  * Resolves a syntactic DataType AST node to a semantic Type object.
  *
  * This is the main entry point for type resolution. It examines the
@@ -108,35 +134,36 @@ export function resolveType(
   options: TypeResolverOptions = DEFAULT_OPTIONS
 ): Type {
   const typeName = dataType.typeName.toLowerCase();
+  const baseType = extractBaseTypeName(typeName);
 
   // Try to resolve as primitive type
-  const primitiveType = resolvePrimitiveType(typeName);
+  const primitiveType = resolvePrimitiveType(baseType);
   if (primitiveType) {
     return primitiveType;
   }
 
+  // Try to resolve as codeunit type
+  if (baseType === 'codeunit') {
+    return resolveCodeunitType(dataType);
+  }
+
   // Try to resolve as text/code type
-  if (typeName === 'text' || typeName === 'code') {
-    return resolveTextType(dataType, typeName === 'code');
+  if (baseType === 'text' || baseType === 'code') {
+    return resolveTextType(dataType, baseType === 'code');
   }
 
   // Try to resolve as record type
-  if (typeName === 'record') {
+  if (baseType === 'record') {
     return resolveRecordType(dataType, options);
   }
 
   // Try to resolve as option type
-  if (typeName === 'option') {
+  if (baseType === 'option') {
     return resolveOptionType(dataType);
   }
 
-  // Try to resolve as codeunit type
-  if (typeName === 'codeunit') {
-    return resolveCodeunitType(dataType);
-  }
-
-  // Try to resolve as array type (detected by typeName starting with 'array')
-  if (typeName.startsWith('array')) {
+  // Try to resolve as array type
+  if (baseType === 'array') {
     return resolveArrayType(dataType, options);
   }
 
@@ -412,8 +439,9 @@ function parseOptionString(optionString: string | undefined): string[] {
  *
  * The codeunitId is extracted from the DataType AST node. Due to how the parser
  * currently structures DataType nodes, the codeunit ID may be stored in the
- * tableId field (which is reused for object references). When no ID is present,
- * it defaults to 0.
+ * tableId field (which is reused for object references). When tableId is not
+ * set, this function attempts to parse the object ID from the typeName field
+ * using the pattern "Codeunit <id>" (e.g., "Codeunit 80").
  *
  * Note: The codeunitName field is left empty because resolving the codeunit
  * name from its ID requires symbol table lookup, which is beyond the scope
@@ -429,11 +457,24 @@ function parseOptionString(optionString: string | undefined): string[] {
  * @returns A CodeunitType with codeunitId and empty codeunitName
  *
  * @example
- * // Codeunit type with explicit ID
+ * // Codeunit type with explicit ID in tableId
  * const codeunitDataType: DataType = {
  *   type: 'DataType',
  *   typeName: 'Codeunit',
  *   tableId: 80, // Reused for codeunit ID
+ *   startToken: token,
+ *   endToken: token
+ * };
+ * const resolved = resolveCodeunitType(codeunitDataType);
+ * // resolved.kind === 'codeunit'
+ * // resolved.codeunitId === 80
+ * // resolved.codeunitName === ''
+ *
+ * @example
+ * // Codeunit type with ID in typeName
+ * const codeunitDataType: DataType = {
+ *   type: 'DataType',
+ *   typeName: 'Codeunit 80',
  *   startToken: token,
  *   endToken: token
  * };
@@ -457,11 +498,19 @@ function parseOptionString(optionString: string | undefined): string[] {
  * // resolved.codeunitName === ''
  */
 function resolveCodeunitType(dataType: DataType): CodeunitType {
-  // In the current AST, codeunit references may use tableId field
-  // or may not have an ID at all (just the type declaration)
+  let codeunitId = dataType.tableId ?? 0;
+
+  // If tableId is not set, try to parse from typeName pattern "Codeunit <id>"
+  if (!codeunitId) {
+    const match = dataType.typeName.match(/\s+(\d+)/);
+    if (match) {
+      codeunitId = parseInt(match[1], 10);
+    }
+  }
+
   return {
     kind: 'codeunit',
-    codeunitId: dataType.tableId ?? 0,
+    codeunitId,
     codeunitName: '' // Codeunit name lookup would require symbol resolution
   };
 }

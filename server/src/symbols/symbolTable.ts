@@ -8,6 +8,7 @@ import {
   FieldDeclaration
 } from '../parser/ast';
 import { Type } from '../types/types';
+import { resolveType, resolveVariableType } from '../types/typeResolver';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { ASTWalker } from '../visitor/astWalker';
 
@@ -164,7 +165,8 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
       name: node.fieldName,
       kind: 'field',
       token: node.nameToken,
-      type: node.dataType.typeName
+      type: node.dataType.typeName,
+      resolvedType: resolveType(node.dataType)
     });
 
     // Field triggers are now handled by the walker traversing node.triggers
@@ -180,7 +182,8 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
       name: node.name,
       kind: 'variable',
       token: node.startToken,
-      type: node.dataType.typeName
+      type: node.dataType.typeName,
+      resolvedType: resolveVariableType(node)
     });
   }
 
@@ -207,7 +210,8 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
         name: param.name,
         kind: 'parameter',
         token: param.startToken,
-        type: param.dataType.typeName
+        type: param.dataType.typeName,
+        resolvedType: resolveType(param.dataType)
       });
     }
 
@@ -221,7 +225,8 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
         name: variable.name,
         kind: 'variable',
         token: variable.startToken,
-        type: variable.dataType.typeName
+        type: variable.dataType.typeName,
+        resolvedType: resolveVariableType(variable)
       });
     }
 
@@ -251,7 +256,8 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
         name: variable.name,
         kind: 'variable',
         token: variable.startToken,
-        type: variable.dataType.typeName
+        type: variable.dataType.typeName,
+        resolvedType: resolveVariableType(variable)
       });
     }
 
@@ -282,7 +288,8 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
         name: param.name,
         kind: 'parameter',
         token: param.startToken,
-        type: param.dataType.typeName
+        type: param.dataType.typeName,
+        resolvedType: resolveType(param.dataType)
       });
     }
 
@@ -292,7 +299,8 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
         name: variable.name,
         kind: 'variable',
         token: variable.startToken,
-        type: variable.dataType.typeName
+        type: variable.dataType.typeName,
+        resolvedType: resolveVariableType(variable)
       });
     }
 
