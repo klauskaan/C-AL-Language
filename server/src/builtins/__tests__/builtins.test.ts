@@ -252,4 +252,73 @@ describe('Builtins Module', () => {
       expect(registry.getGlobalFunctionDeprecation('CALCTIME')).toBeUndefined();
     });
   });
+
+  describe('Registry Getter Methods', () => {
+    let registry: BuiltinRegistry;
+
+    beforeEach(() => {
+      registry = new BuiltinRegistry();
+    });
+
+    it('should return full function object for global function', () => {
+      const func = registry.getGlobalFunction('MESSAGE');
+      expect(func).toBeDefined();
+      expect(func?.name).toBe('MESSAGE');
+      expect(func?.signature).toBeDefined();
+      expect(func?.documentation).toBeDefined();
+      expect(func?.category).not.toBe('record');
+    });
+
+    it('should return full function object for record method', () => {
+      const func = registry.getRecordMethod('FIND');
+      expect(func).toBeDefined();
+      expect(func?.name).toBe('FIND');
+      expect(func?.signature).toBeDefined();
+      expect(func?.documentation).toBeDefined();
+      expect(func?.category).toBe('record');
+    });
+
+    it('should be case-insensitive for getGlobalFunction', () => {
+      expect(registry.getGlobalFunction('MESSAGE')).toBeDefined();
+      expect(registry.getGlobalFunction('message')).toBeDefined();
+      expect(registry.getGlobalFunction('MeSsAgE')).toBeDefined();
+      expect(registry.getGlobalFunction('MESSAGE')?.name).toBe('MESSAGE');
+    });
+
+    it('should be case-insensitive for getRecordMethod', () => {
+      expect(registry.getRecordMethod('FIND')).toBeDefined();
+      expect(registry.getRecordMethod('find')).toBeDefined();
+      expect(registry.getRecordMethod('FiNd')).toBeDefined();
+      expect(registry.getRecordMethod('FIND')?.name).toBe('FIND');
+    });
+
+    it('should return undefined for non-existent global function', () => {
+      expect(registry.getGlobalFunction('NOTAFUNCTION')).toBeUndefined();
+      expect(registry.getGlobalFunction('CALCTIME')).toBeUndefined();
+    });
+
+    it('should return undefined for non-existent record method', () => {
+      expect(registry.getRecordMethod('NOTAMETHOD')).toBeUndefined();
+    });
+
+    it('should handle dual-purpose RENAME correctly', () => {
+      const globalRename = registry.getGlobalFunction('RENAME');
+      const recordRename = registry.getRecordMethod('RENAME');
+
+      expect(globalRename).toBeDefined();
+      expect(recordRename).toBeDefined();
+      expect(globalRename?.category).toBe('file');
+      expect(recordRename?.category).toBe('record');
+    });
+
+    it('should handle dual-purpose COPY correctly', () => {
+      const globalCopy = registry.getGlobalFunction('COPY');
+      const recordCopy = registry.getRecordMethod('COPY');
+
+      expect(globalCopy).toBeDefined();
+      expect(recordCopy).toBeDefined();
+      expect(globalCopy?.category).toBe('file');
+      expect(recordCopy?.category).toBe('record');
+    });
+  });
 });

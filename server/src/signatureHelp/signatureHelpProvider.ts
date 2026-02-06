@@ -14,7 +14,7 @@ import {
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SymbolTable } from '../symbols/symbolTable';
 import { CALDocument } from '../parser/ast';
-import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from '../completion/builtins';
+import { BuiltinFunction, BuiltinRegistry } from '../builtins';
 import { ProviderBase } from '../providers/providerBase';
 
 /**
@@ -39,9 +39,8 @@ interface ParsedParameter {
  * Extends ProviderBase for shared text scanning utilities
  */
 export class SignatureHelpProvider extends ProviderBase {
-  constructor() {
-    super();
-  }
+  private registry = new BuiltinRegistry();
+
   /**
    * Get signature help for a function call at the cursor position
    */
@@ -62,16 +61,12 @@ export class SignatureHelpProvider extends ProviderBase {
 
     if (context.isMethodCall) {
       // Look in record methods
-      func = RECORD_METHODS.find(
-        m => m.name.toLowerCase() === context.functionName.toLowerCase()
-      );
+      func = this.registry.getRecordMethod(context.functionName);
     }
 
     if (!func) {
       // Look in built-in functions
-      func = BUILTIN_FUNCTIONS.find(
-        f => f.name.toLowerCase() === context.functionName.toLowerCase()
-      );
+      func = this.registry.getGlobalFunction(context.functionName);
     }
 
     // Check user-defined procedures from symbol table using scope-aware lookup

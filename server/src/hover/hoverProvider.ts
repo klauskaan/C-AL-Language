@@ -13,7 +13,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SymbolTable, Symbol } from '../symbols/symbolTable';
 import { CALDocument, ProcedureDeclaration } from '../parser/ast';
 import { Token, KEYWORDS } from '../lexer/tokens';
-import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from '../completion/builtins';
+import { BuiltinFunction, BuiltinRegistry } from '../builtins';
 import { ProviderBase } from '../providers/providerBase';
 import { getMetadataByKeyword, getHoverLabel } from '../shared/keywordMetadata';
 
@@ -42,6 +42,13 @@ function getKeywordHover(keyword: string): Hover | null {
  * Extends ProviderBase to reuse common text scanning utilities
  */
 export class HoverProvider extends ProviderBase {
+  private registry: BuiltinRegistry;
+
+  constructor() {
+    super();
+    this.registry = new BuiltinRegistry();
+  }
+
   /**
    * Get hover information for a position in the document
    */
@@ -212,9 +219,7 @@ export class HoverProvider extends ProviderBase {
    * Get hover information for a built-in function
    */
   private getBuiltinFunctionHover(name: string): Hover | null {
-    const lowerName = name.toLowerCase();
-
-    const func = BUILTIN_FUNCTIONS.find(f => f.name.toLowerCase() === lowerName);
+    const func = this.registry.getGlobalFunction(name);
     if (func) {
       return this.buildBuiltinHover(func);
     }
@@ -226,9 +231,7 @@ export class HoverProvider extends ProviderBase {
    * Get hover information for a Record method
    */
   private getRecordMethodHover(name: string): Hover | null {
-    const lowerName = name.toLowerCase();
-
-    const method = RECORD_METHODS.find(m => m.name.toLowerCase() === lowerName);
+    const method = this.registry.getRecordMethod(name);
     if (method) {
       return this.buildBuiltinHover(method, 'Record Method');
     }
