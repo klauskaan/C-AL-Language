@@ -62,6 +62,7 @@ describe('SemanticAnalyzer - Basic Analysis', () => {
     const parser = new Parser(tokens);
     const ast = parser.parse();
     const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast);
 
     const diagnostics = analyzer.analyze(
       ast,
@@ -162,6 +163,7 @@ describe('SemanticAnalyzer - ValidationContext', () => {
     const parser = new Parser(tokens);
     const ast = parser.parse();
     const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast);
 
     // Add a symbol to verify it's passed correctly
     symbolTable.defineGlobal({
@@ -198,6 +200,7 @@ describe('SemanticAnalyzer - ValidationContext', () => {
     const parser = new Parser(tokens);
     const ast = parser.parse();
     const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast);
 
     const diagnostics = analyzer.analyze(
       ast,
@@ -254,6 +257,7 @@ describe('SemanticAnalyzer - Integration with Validators', () => {
     const parser = new Parser(tokens);
     const ast = parser.parse();
     const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast);
 
     const diagnostics = analyzer.analyze(
       ast,
@@ -294,6 +298,7 @@ describe('SemanticAnalyzer - Integration with Validators', () => {
     const parser = new Parser(tokens);
     const ast = parser.parse();
     const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast);
 
     const diagnostics = analyzer.analyze(
       ast,
@@ -400,6 +405,7 @@ describe('SemanticAnalyzer - Real-World Patterns', () => {
     const parser = new Parser(tokens);
     const ast = parser.parse();
     const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast);
 
     const diagnostics = analyzer.analyze(
       ast,
@@ -448,6 +454,7 @@ describe('SemanticAnalyzer - Real-World Patterns', () => {
     const parser = new Parser(tokens);
     const ast = parser.parse();
     const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast);
 
     expect(() => {
       analyzer.analyze(ast, symbolTable, 'file:///test.cal');
@@ -477,6 +484,7 @@ describe('SemanticAnalyzer - Real-World Patterns', () => {
     const parser = new Parser(tokens);
     const ast = parser.parse();
     const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast);
 
     const diagnostics = analyzer.analyze(
       ast,
@@ -518,6 +526,7 @@ describe('SemanticAnalyzer - Edge Cases', () => {
     const parser = new Parser(tokens);
     const ast = parser.parse();
     const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast);
 
     expect(() => {
       analyzer.analyze(ast, symbolTable, 'file:///large.cal');
