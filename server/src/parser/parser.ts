@@ -104,7 +104,6 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
   TokenType.Properties,    // Section keyword (PROPERTIES section)
   TokenType.FieldGroups,   // Section keyword (FIELDGROUPS section)
   TokenType.Actions,       // Section keyword (ACTIONS section - Page/Report)
-  TokenType.DataItems,     // Section keyword (DATAITEMS section - Report)
   TokenType.Elements,      // Section keyword (ELEMENTS section - XMLport)
   TokenType.Labels,        // Section keyword (LABELS section - Report)
   TokenType.Dataset,       // Section keyword (DATASET section - Report/Page)
@@ -170,7 +169,6 @@ export const SECTION_KEYWORDS = new Set<TokenType>([
   TokenType.Controls,
   TokenType.MenuNodes,
   TokenType.Actions,
-  TokenType.DataItems,
   TokenType.Dataset,
   TokenType.RequestPage,
   TokenType.Labels,
@@ -211,7 +209,6 @@ export const PROCEDURE_BOUNDARY_TOKENS = new Set<TokenType>([
  */
 export const UNSUPPORTED_SECTIONS = new Set<TokenType>([
   TokenType.MenuNodes,
-  TokenType.DataItems,
   TokenType.Dataset,
   TokenType.RequestPage,
   TokenType.Labels,
@@ -580,7 +577,6 @@ export class Parser {
       if (braceDepth === 0 && bracketDepth === 0 && value.length > 0 &&
           (this.check(TokenType.Actions) ||
            this.check(TokenType.Controls) ||
-           this.check(TokenType.DataItems) ||
            this.check(TokenType.Elements) ||
            this.check(TokenType.RequestForm))) {
         // Peek ahead to see if this keyword is followed by '{'
@@ -1195,7 +1191,6 @@ export class Parser {
               if (braceDepth === 0 && bracketDepth === 0 && value.length > 0 &&
                   (this.check(TokenType.Actions) ||
                    this.check(TokenType.Controls) ||
-                   this.check(TokenType.DataItems) ||
                    this.check(TokenType.Elements) ||
                    this.check(TokenType.RequestForm))) {
                 // Peek ahead to see if this keyword is followed by '{'

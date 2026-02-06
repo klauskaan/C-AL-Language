@@ -837,18 +837,18 @@ describe('Lexer - Section Keywords in Field Names', () => {
     });
   });
 
-  describe('DATAITEMS section - section keywords in dataitem names', () => {
+  describe('ELEMENTS section - section keywords in dataitem names', () => {
     describe('Individual section keywords in dataitem names (COL_3)', () => {
       it('should handle "Code" as dataitem name without corrupting context', () => {
-        const code = `DATAITEMS
+        const code = `ELEMENTS
 {
-  { Code ; Table ; Code ; DataItemTable=Customer }
+  { Code ; Table ; Code ; SourceType=Text}
 }`;
         const lexer = new Lexer(code);
         const tokens = lexer.tokenize();
 
         const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
-        expect(rightBraces.length).toBe(2); // DATAITEMS section + dataitem
+        expect(rightBraces.length).toBe(2); // ELEMENTS section + dataitem
 
         const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
         expect(unknownTokens).toHaveLength(0);
@@ -858,9 +858,9 @@ describe('Lexer - Section Keywords in Field Names', () => {
       });
 
       it('should handle "Properties" as dataitem name without corrupting context', () => {
-        const code = `DATAITEMS
+        const code = `ELEMENTS
 {
-  { Properties ; ; Properties ; DataItemTable=Item }
+  { Properties ; ; Properties ; SourceType=Text}
 }`;
         const lexer = new Lexer(code);
         const tokens = lexer.tokenize();
@@ -876,9 +876,9 @@ describe('Lexer - Section Keywords in Field Names', () => {
       });
 
       it('should handle "BEGIN" as dataitem name without corrupting context', () => {
-        const code = `DATAITEMS
+        const code = `ELEMENTS
 {
-  { BEGIN ; ; BEGIN ; DataItemTable=Customer }
+  { BEGIN ; ; BEGIN ; SourceType=Text}
 }`;
         const lexer = new Lexer(code);
         const tokens = lexer.tokenize();
@@ -894,9 +894,9 @@ describe('Lexer - Section Keywords in Field Names', () => {
       });
 
       it('should handle "END" as dataitem name without corrupting context', () => {
-        const code = `DATAITEMS
+        const code = `ELEMENTS
 {
-  { END ; ; END ; DataItemTable=Customer }
+  { END ; ; END ; SourceType=Text}
 }`;
         const lexer = new Lexer(code);
         const tokens = lexer.tokenize();
@@ -912,20 +912,20 @@ describe('Lexer - Section Keywords in Field Names', () => {
       });
     });
 
-    describe('Cascading corruption in DATAITEMS section', () => {
+    describe('Cascading corruption in ELEMENTS section', () => {
       it('should handle multiple dataitems with section keyword names', () => {
-        const code = `DATAITEMS
+        const code = `ELEMENTS
 {
-  { Code ; ; Code ; DataItemTable=Customer }
-  { Properties ; ; Properties ; DataItemTable=Item }
-  { BEGIN ; ; BEGIN ; DataItemTable=Vendor }
-  { END ; ; END ; DataItemTable=Location }
+  { Code ; ; Code ; SourceType=Text}
+  { Properties ; ; Properties ; SourceType=Text}
+  { BEGIN ; ; BEGIN ; SourceType=Text}
+  { END ; ; END ; SourceType=Text}
 }`;
         const lexer = new Lexer(code);
         const tokens = lexer.tokenize();
 
         const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
-        expect(rightBraces.length).toBe(5); // DATAITEMS section + 4 dataitems
+        expect(rightBraces.length).toBe(5); // ELEMENTS section + 4 dataitems
 
         const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
         expect(unknownTokens).toHaveLength(0);
@@ -935,13 +935,13 @@ describe('Lexer - Section Keywords in Field Names', () => {
       });
     });
 
-    describe('Mixed case in DATAITEMS section', () => {
+    describe('Mixed case in ELEMENTS section', () => {
       it('should handle mixed case section keywords in dataitem names', () => {
-        const code = `DATAITEMS
+        const code = `ELEMENTS
 {
-  { code ; ; code ; DataItemTable=Customer }
-  { PROPERTIES ; ; PROPERTIES ; DataItemTable=Item }
-  { Begin ; ; Begin ; DataItemTable=Vendor }
+  { code ; ; code ; SourceType=Text}
+  { PROPERTIES ; ; PROPERTIES ; SourceType=Text}
+  { Begin ; ; Begin ; SourceType=Text}
 }`;
         const lexer = new Lexer(code);
         const tokens = lexer.tokenize();
@@ -965,13 +965,13 @@ describe('Lexer - Section Keywords in Field Names', () => {
   {
     CaptionML=ENU=Test Report;
   }
-  DATAITEMS
+  ELEMENTS
   {
     { Customer          ;         ;Customer                          }
-    { Code              ;         ;Code           ;DataItemTable=18 }
-    { Properties        ;         ;Properties     ;DataItemTable=18 }
-    { BEGIN             ;         ;BEGIN          ;DataItemTable=18 }
-    { END               ;         ;END            ;DataItemTable=18 }
+    { Code              ;         ;Code           ;SourceType=Text}
+    { Properties        ;         ;Properties     ;SourceType=Text}
+    { BEGIN             ;         ;BEGIN          ;SourceType=Text}
+    { END               ;         ;END            ;SourceType=Text}
   }
   REQUESTPAGE
   {
@@ -1250,7 +1250,7 @@ describe('Lexer - Section Keywords in Field Names', () => {
   });
 
   describe('Cross-section integration - all structured sections', () => {
-    it('should handle section keywords across FIELDS, CONTROLS, ELEMENTS, DATAITEMS, and ACTIONS', () => {
+    it('should handle section keywords across FIELDS, CONTROLS, ELEMENTS, ELEMENTS, and ACTIONS', () => {
       const code = `OBJECT Page 50000 Complete Test
 {
   PROPERTIES
@@ -1286,21 +1286,21 @@ describe('Lexer - Section Keywords in Field Names', () => {
       expect(leftBraces.length).toBe(rightBraces.length);
     });
 
-    it('should handle Report with DATAITEMS containing section keyword names', () => {
+    it('should handle Report with ELEMENTS containing section keyword names', () => {
       const code = `OBJECT Report 50000 Complete Report
 {
   PROPERTIES
   {
     CaptionML=ENU=Complete Report;
   }
-  DATAITEMS
+  ELEMENTS
   {
     { Customer    ;         ;Customer                }
     { Code        ;         ;Code        ;OnPreDataItem=BEGIN
                                                        x := 1;
                                                      END; }
-    { Properties  ;         ;Properties  ;DataItemTable=18 }
-    { BEGIN       ;         ;BEGIN       ;DataItemTable=18 }
+    { Properties  ;         ;Properties  ;SourceType=Text}
+    { BEGIN       ;         ;BEGIN       ;SourceType=Text}
   }
   REQUESTPAGE
   {

@@ -54,7 +54,6 @@ export type SectionType =
   | 'KEYS'
   | 'CONTROLS'
   | 'ELEMENTS'
-  | 'DATAITEMS'
   | 'ACTIONS'
   | 'DATASET'
   | 'REQUESTPAGE'
@@ -227,7 +226,6 @@ export class LexerStateManager {
    * - KEYS: Protect COL_1-2 (structural columns)
    * - CONTROLS: Protect COL_1-3 (structural columns)
    * - ELEMENTS: Protect COL_1-4 (structural columns)
-   * - DATAITEMS: Protect COL_1-4 (structural columns)
    * - ACTIONS: Protect COL_1-3 (structural columns)
    */
   private shouldProtectStructuralColumn(): boolean {
@@ -238,7 +236,6 @@ export class LexerStateManager {
     switch (this.currentSectionType) {
       case 'FIELDS':
       case 'ELEMENTS':
-      case 'DATAITEMS':
         // Protect all structural columns (COL_1-4)
         return this.fieldDefColumn === FieldDefColumn.COL_1 ||
                this.fieldDefColumn === FieldDefColumn.COL_2 ||
@@ -340,7 +337,6 @@ export class LexerStateManager {
          this.currentSectionType === 'KEYS' ||
          this.currentSectionType === 'CONTROLS' ||
          this.currentSectionType === 'ELEMENTS' ||
-         this.currentSectionType === 'DATAITEMS' ||
          this.currentSectionType === 'ACTIONS')) {
       this.fieldDefColumn = FieldDefColumn.COL_1;
     }
