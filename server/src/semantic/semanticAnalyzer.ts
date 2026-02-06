@@ -12,6 +12,7 @@ import { BuiltinRegistry } from './builtinRegistry';
 import { ValidationPipeline } from './validationPipeline';
 import { ValidationContext } from './types';
 import { EmptySetValidator } from '../validation/emptySetValidator';
+import { UndefinedIdentifierValidator } from '../validation/undefinedIdentifierValidator';
 
 export class SemanticAnalyzer {
   /** Builtin function and method registry */
@@ -38,8 +39,10 @@ export class SemanticAnalyzer {
     // Register EmptySetValidator (modified to use ValidationContext)
     this.pipeline.registerValidator(new EmptySetValidator());
 
+    // Register UndefinedIdentifierValidator
+    this.pipeline.registerValidator(new UndefinedIdentifierValidator());
+
     // Future validators will be registered here:
-    // this.pipeline.registerValidator(new UndefinedIdentifierValidator());
     // this.pipeline.registerValidator(new TypeCheckValidator());
     // etc.
   }

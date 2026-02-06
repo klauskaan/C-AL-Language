@@ -441,23 +441,3 @@ export class SymbolTable {
     });
   }
 }
-
-/**
- * Validate identifiers in the AST and find undefined variables
- */
-export class IdentifierValidator {
-  /**
-   * Find all undefined variable references in the document
-   * Returns an array of tokens representing undefined identifiers
-   */
-  public findUndefinedReferences(_tokens: Token[], _symbolTable: SymbolTable): Token[] {
-    const undefinedRefs: Token[] = [];
-
-    // For now, we'll do a simple check: any identifier that's not in the symbol table
-    // is considered potentially undefined. This is very basic and will have false positives.
-
-    // TODO: Implement proper scope tracking and AST traversal for accurate checking
-
-    return undefinedRefs;
-  }
-}
