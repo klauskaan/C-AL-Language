@@ -1,5 +1,6 @@
 ---
 name: senior-merge-engineer
+description: Expert merge conflict resolution with progressive strategy attempts for STRUCTURAL/SEMANTIC conflicts
 model: opus
 color: purple
 tools:

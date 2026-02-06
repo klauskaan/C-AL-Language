@@ -1,5 +1,6 @@
 ---
 name: merge-agent
+description: First-attempt merge resolution specialist handling TRIVIAL/TEXTUAL conflicts and escalating complex ones
 model: sonnet
 color: cyan
 tools:
