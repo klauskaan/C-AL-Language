@@ -21,6 +21,22 @@ Expert merge conflict resolution. Called when merge-agent escalates STRUCTURAL o
 
 **Other session always wins.** Their code is merged, tested, and immutable. You adapt the current session's work to coexist with theirs.
 
+## Deletion Conflicts
+
+A deletion conflict occurs when main deleted code that the feature branch
+still references or retains. The "other session always wins" principle
+applies directly: the deletion on main was intentional and tested.
+
+Resolution approach:
+1. Accept the deletion (main's version)
+2. Adapt the feature branch's code to work without the deleted code
+3. If the feature branch *cannot* work without the deleted code, this is
+   a goal conflict — escalate to the user
+
+Never reintroduce deleted code to satisfy the feature branch. If the feature
+branch added new code that calls deleted functions/methods, update the new
+code to use whatever replaced the deleted code on main.
+
 ## Resolution Strategies
 
 Try in order, skip when criteria clearly don't apply:
