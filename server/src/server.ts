@@ -54,12 +54,16 @@ import { SemanticAnalyzer } from './semantic/semanticAnalyzer';
 import { DepthLimitedWalker } from './visitor/depthLimitedWalker';
 import { DocumentDebouncer } from './utils/documentDebouncer';
 import { CALSettings, defaultSettings } from './settings';
+import { BuiltinRegistry } from './builtins';
 
 // Create a connection for the server
 const connection = createConnection(ProposedFeatures.all);
 
 // Create a text document manager
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+
+// Shared builtin registry (injected into providers)
+const builtinRegistry = new BuiltinRegistry();
 
 // Semantic tokens provider
 const semanticTokensProvider = new SemanticTokensProvider();
@@ -68,10 +72,10 @@ const semanticTokensProvider = new SemanticTokensProvider();
 const completionProvider = new CompletionProvider();
 
 // Hover provider
-const hoverProvider = new HoverProvider();
+const hoverProvider = new HoverProvider(builtinRegistry);
 
 // Signature help provider
-const signatureHelpProvider = new SignatureHelpProvider();
+const signatureHelpProvider = new SignatureHelpProvider(builtinRegistry);
 
 // Definition provider
 const definitionProvider = new DefinitionProvider();
@@ -98,7 +102,7 @@ const workspaceSymbolProvider = new WorkspaceSymbolProvider(
 const foldingRangeProvider = new FoldingRangeProvider();
 
 // Semantic analyzer (runs all semantic validations)
-const semanticAnalyzer = new SemanticAnalyzer();
+const semanticAnalyzer = new SemanticAnalyzer(builtinRegistry);
 
 // Depth-limited walker (stack overflow protection - Issue #220)
 const depthLimitedWalker = new DepthLimitedWalker();

@@ -18,16 +18,17 @@ import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../../parser/parser';
 import { SymbolTable } from '../../symbols/symbolTable';
 import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver';
+import { BuiltinRegistry } from '../../builtins';
 
 describe('SemanticAnalyzer - Instantiation', () => {
   it('should create a semantic analyzer', () => {
-    const analyzer = new SemanticAnalyzer();
+    const analyzer = new SemanticAnalyzer(new BuiltinRegistry());
     expect(analyzer).toBeDefined();
   });
 
   it('should be able to create multiple analyzers', () => {
-    const analyzer1 = new SemanticAnalyzer();
-    const analyzer2 = new SemanticAnalyzer();
+    const analyzer1 = new SemanticAnalyzer(new BuiltinRegistry());
+    const analyzer2 = new SemanticAnalyzer(new BuiltinRegistry());
 
     expect(analyzer1).toBeDefined();
     expect(analyzer2).toBeDefined();
@@ -39,7 +40,7 @@ describe('SemanticAnalyzer - Basic Analysis', () => {
   let analyzer: SemanticAnalyzer;
 
   beforeEach(() => {
-    analyzer = new SemanticAnalyzer();
+    analyzer = new SemanticAnalyzer(new BuiltinRegistry());
   });
 
   it('should return empty diagnostics for valid code', () => {
@@ -127,7 +128,7 @@ describe('SemanticAnalyzer - ValidationContext', () => {
   let analyzer: SemanticAnalyzer;
 
   beforeEach(() => {
-    analyzer = new SemanticAnalyzer();
+    analyzer = new SemanticAnalyzer(new BuiltinRegistry());
   });
 
   it('should provide ValidationContext with ast', () => {
@@ -233,7 +234,7 @@ describe('SemanticAnalyzer - Integration with Validators', () => {
   let analyzer: SemanticAnalyzer;
 
   beforeEach(() => {
-    analyzer = new SemanticAnalyzer();
+    analyzer = new SemanticAnalyzer(new BuiltinRegistry());
   });
 
   it('should return diagnostics from EmptySetValidator', () => {
@@ -315,7 +316,7 @@ describe('SemanticAnalyzer - Error Handling', () => {
   let analyzer: SemanticAnalyzer;
 
   beforeEach(() => {
-    analyzer = new SemanticAnalyzer();
+    analyzer = new SemanticAnalyzer(new BuiltinRegistry());
   });
 
   it('should handle parse errors gracefully', () => {
@@ -374,7 +375,7 @@ describe('SemanticAnalyzer - Real-World Patterns', () => {
   let analyzer: SemanticAnalyzer;
 
   beforeEach(() => {
-    analyzer = new SemanticAnalyzer();
+    analyzer = new SemanticAnalyzer(new BuiltinRegistry());
   });
 
   it('should analyze Sales-Post pattern correctly', () => {
@@ -504,7 +505,7 @@ describe('SemanticAnalyzer - Edge Cases', () => {
   let analyzer: SemanticAnalyzer;
 
   beforeEach(() => {
-    analyzer = new SemanticAnalyzer();
+    analyzer = new SemanticAnalyzer(new BuiltinRegistry());
   });
 
   it('should handle very large files', () => {
@@ -594,7 +595,7 @@ describe('SemanticAnalyzer - Settings Integration', () => {
   let analyzer: SemanticAnalyzer;
 
   beforeEach(() => {
-    analyzer = new SemanticAnalyzer();
+    analyzer = new SemanticAnalyzer(new BuiltinRegistry());
   });
 
   /**

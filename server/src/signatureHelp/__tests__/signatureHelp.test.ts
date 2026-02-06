@@ -6,6 +6,7 @@ import { SignatureHelpProvider } from '../signatureHelpProvider';
 import { SymbolTable } from '../../symbols/symbolTable';
 import { Position, MarkupKind } from 'vscode-languageserver';
 import { createMockToken, createDocument } from '../../__tests__/testUtils';
+import { BuiltinRegistry } from '../../builtins';
 
 /**
  * Helper to get documentation content from signature help
@@ -22,7 +23,7 @@ describe('SignatureHelpProvider', () => {
   let provider: SignatureHelpProvider;
 
   beforeEach(() => {
-    provider = new SignatureHelpProvider();
+    provider = new SignatureHelpProvider(new BuiltinRegistry());
   });
 
   describe('Built-in Functions', () => {
