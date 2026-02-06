@@ -8,30 +8,30 @@
  * It does NOT include syntactic keywords like IF, THEN, BEGIN, END, etc.
  */
 
-import { BUILTIN_FUNCTIONS, RECORD_METHODS } from './builtinData';
+import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from './builtinData';
 
 export class BuiltinRegistry {
   /**
    * Global builtin functions that can be called without a receiver
    * Examples: MESSAGE, ERROR, CONFIRM, FORMAT, STRLEN
-   * Maps function name (uppercase) to deprecation reason (undefined if not deprecated)
+   * Maps function name (uppercase) to full function object
    */
-  private globalFunctions: Map<string, string | undefined> = new Map();
+  private globalFunctions: Map<string, BuiltinFunction> = new Map();
 
   /**
    * Record methods that can be called on Record variables
    * Examples: FIND, GET, INSERT, MODIFY, DELETE, SETRANGE, FINDSET, NEXT
-   * Maps method name (uppercase) to deprecation reason (undefined if not deprecated)
+   * Maps method name (uppercase) to full function object
    */
-  private recordMethods: Map<string, string | undefined> = new Map();
+  private recordMethods: Map<string, BuiltinFunction> = new Map();
 
   constructor() {
     // Build maps from the data arrays
     for (const fn of BUILTIN_FUNCTIONS) {
-      this.globalFunctions.set(fn.name.toUpperCase(), fn.deprecated);
+      this.globalFunctions.set(fn.name.toUpperCase(), fn);
     }
     for (const method of RECORD_METHODS) {
-      this.recordMethods.set(method.name.toUpperCase(), method.deprecated);
+      this.recordMethods.set(method.name.toUpperCase(), method);
     }
   }
 
@@ -57,22 +57,28 @@ export class BuiltinRegistry {
   }
 
   /**
+   * Get the full function object for a global function (case-insensitive)
+   * Returns undefined if not found
+   */
+  public getGlobalFunction(name: string): BuiltinFunction | undefined {
+    return this.globalFunctions.get(name.toUpperCase());
+  }
+
+  /**
+   * Get the full function object for a record method (case-insensitive)
+   * Returns undefined if not found
+   */
+  public getRecordMethod(name: string): BuiltinFunction | undefined {
+    return this.recordMethods.get(name.toUpperCase());
+  }
+
+  /**
    * Get deprecation reason for a builtin (case-insensitive)
    * Returns undefined if the builtin is not deprecated or not found
    */
   public getDeprecationReason(name: string): string | undefined {
     const key = name.toUpperCase();
-
-    // Check global functions first
-    if (this.globalFunctions.has(key)) {
-      return this.globalFunctions.get(key);
-    }
-
-    // Check record methods
-    if (this.recordMethods.has(key)) {
-      return this.recordMethods.get(key);
-    }
-
-    return undefined;
+    const func = this.globalFunctions.get(key) || this.recordMethods.get(key);
+    return func?.deprecated;
   }
 }
