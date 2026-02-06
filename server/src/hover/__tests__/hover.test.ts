@@ -394,6 +394,76 @@ describe('HoverProvider', () => {
     });
   });
 
+  describe('Deprecated Functions', () => {
+    it('should show deprecation notice in hover for deprecated functions', () => {
+      const doc = createDocument('Rec.RECORDLEVELLOCKING');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const hover = provider.getHover(doc, Position.create(0, 15), undefined, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('**Deprecated:**');
+    });
+
+    it('should include deprecation reason in hover content', () => {
+      const doc = createDocument('Rec.RECORDLEVELLOCKING');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const hover = provider.getHover(doc, Position.create(0, 15), undefined, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('Always returns TRUE in SQL Server-based versions');
+    });
+
+    it('should show deprecation notice after original documentation', () => {
+      const doc = createDocument('Rec.RECORDLEVELLOCKING');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const hover = provider.getHover(doc, Position.create(0, 15), undefined, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      // Check that original documentation appears before deprecation notice
+      const docIndex = content.indexOf('record-level locking');
+      const deprecatedIndex = content.indexOf('**Deprecated:**');
+      expect(docIndex).toBeGreaterThan(-1);
+      expect(deprecatedIndex).toBeGreaterThan(-1);
+      expect(docIndex).toBeLessThan(deprecatedIndex);
+    });
+
+    it('should not show deprecation notice for non-deprecated functions', () => {
+      const doc = createDocument('MESSAGE');
+
+      const hover = provider.getHover(doc, Position.create(0, 4));
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).not.toContain('**Deprecated:**');
+    });
+
+    it('should show deprecation notice for deprecated Record methods in method context', () => {
+      const doc = createDocument('Rec.RECORDLEVELLOCKING');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const hover = provider.getHover(doc, Position.create(0, 15), undefined, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('**Deprecated:**');
+      expect(content).toContain('Always returns TRUE in SQL Server-based versions');
+    });
+  });
+
   describe('Performance', () => {
     it('should complete hover requests quickly', () => {
       const doc = createDocument('MESSAGE');

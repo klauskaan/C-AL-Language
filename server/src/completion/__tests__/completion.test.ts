@@ -6,8 +6,8 @@
 import { CompletionProvider } from '../completionProvider';
 import { BUILTIN_FUNCTIONS, RECORD_METHODS } from '../builtins';
 import { SymbolTable } from '../../symbols/symbolTable';
-import { CompletionItemKind, Position } from 'vscode-languageserver';
-import { createMockToken, createDocument, parseAndBuildSymbols } from '../../__tests__/testUtils';
+import { CompletionItemKind, CompletionItemTag, Position } from 'vscode-languageserver';
+import { createMockToken, createDocument } from '../../__tests__/testUtils';
 
 describe('CompletionProvider', () => {
   let provider: CompletionProvider;
@@ -380,6 +380,58 @@ describe('CompletionProvider', () => {
         expect(method.documentation).toBeDefined();
         expect(method.category).toBe('record');
       }
+    });
+  });
+
+  describe('Deprecated Functions', () => {
+    it('should apply CompletionItemTag.Deprecated to deprecated functions', () => {
+      const doc = createDocument('Rec.');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const items = provider.getCompletions(doc, Position.create(0, 4), undefined, symbolTable, '.');
+
+      const recordLevelLockingItem = items.find(i => i.label === 'RECORDLEVELLOCKING');
+      expect(recordLevelLockingItem).toBeDefined();
+      expect(recordLevelLockingItem?.tags).toContain(CompletionItemTag.Deprecated);
+    });
+
+    it('should append deprecation text to completion item documentation', () => {
+      const doc = createDocument('Rec.');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const items = provider.getCompletions(doc, Position.create(0, 4), undefined, symbolTable, '.');
+
+      const recordLevelLockingItem = items.find(i => i.label === 'RECORDLEVELLOCKING');
+      expect(recordLevelLockingItem).toBeDefined();
+      expect(recordLevelLockingItem?.documentation).toContain('**Deprecated:**');
+      expect(recordLevelLockingItem?.documentation).toContain('Always returns TRUE in SQL Server-based versions');
+    });
+
+    it('should include original documentation before deprecation notice', () => {
+      const doc = createDocument('Rec.');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const items = provider.getCompletions(doc, Position.create(0, 4), undefined, symbolTable, '.');
+
+      const recordLevelLockingItem = items.find(i => i.label === 'RECORDLEVELLOCKING');
+      expect(recordLevelLockingItem).toBeDefined();
+      expect(recordLevelLockingItem?.documentation).toContain('record-level locking');
+      expect(recordLevelLockingItem?.documentation).toContain('**Deprecated:**');
+    });
+
+    it('should not apply deprecated tag to non-deprecated functions', () => {
+      const doc = createDocument('MES');
+      const items = provider.getCompletions(doc, Position.create(0, 3));
+
+      const messageItem = items.find(i => i.label === 'MESSAGE');
+      expect(messageItem).toBeDefined();
+      expect(messageItem?.tags).toBeUndefined();
     });
   });
 
