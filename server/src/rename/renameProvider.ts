@@ -11,6 +11,7 @@ import { SymbolTable } from '../symbols/symbolTable';
 import { Lexer } from '../lexer/lexer';
 import { Token, TokenType, KEYWORDS } from '../lexer/tokens';
 import { ReferenceProvider } from '../references/referenceProvider';
+import { findTokenAtOffset } from '../shared/tokenSearch';
 
 /**
  * Provider for rename operations (F2)
@@ -34,9 +35,10 @@ export class RenameProvider extends ProviderBase {
     ast: CALDocument | undefined,
     symbolTable: SymbolTable | undefined
   ): { range: Range; placeholder: string } | null {
+    const offset = document.offsetAt(position);
+
     // Check if we're on a multi-token field (cursor might be on a token or between tokens)
     if (ast) {
-      const offset = document.offsetAt(position);
       const field = this.findFieldByPartialToken(ast, offset);
       if (field) {
         // Use field's full range instead of single token
@@ -45,7 +47,9 @@ export class RenameProvider extends ProviderBase {
     }
 
     // Not a multi-token field, get token at position for regular identifier
-    const token = this.getTokenAtPosition(document, position);
+    const text = document.getText();
+    const tokens = new Lexer(text).tokenize();
+    const token = findTokenAtOffset(tokens, offset);
     if (!token) {
       return null;
     }
@@ -110,7 +114,8 @@ export class RenameProvider extends ProviderBase {
       symbolType = 'field';
     } else {
       // Not a multi-token field, get token at position for regular rename
-      const token = this.getTokenAtPosition(document, position);
+      const tokens = new Lexer(document.getText()).tokenize();
+      const token = findTokenAtOffset(tokens, offset);
       if (!token || !this.isRenameableToken(token)) {
         return null;
       }
@@ -164,42 +169,6 @@ export class RenameProvider extends ProviderBase {
         [document.uri]: edits
       }
     };
-  }
-
-  /**
-   * Find the token at the given position by tokenizing the document.
-   * Returns the token that contains the cursor position.
-   *
-   * @param document - The text document
-   * @param position - The cursor position
-   * @returns The token at the position, or undefined if not found
-   */
-  private getTokenAtPosition(document: TextDocument, position: Position): Token | undefined {
-    const text = document.getText();
-    const offset = document.offsetAt(position);
-
-    // Tokenize the document
-    const lexer = new Lexer(text);
-    const tokens = lexer.tokenize();
-
-    // Find the token that contains the cursor position
-    // Note: endOffset is exclusive (one past the last character of the token)
-    for (const token of tokens) {
-      // Skip whitespace and comment tokens
-      if (token.type === TokenType.Whitespace ||
-          token.type === TokenType.NewLine ||
-          token.type === TokenType.Comment) {
-        continue;
-      }
-
-      // Check if cursor is within this token's range
-      // For quoted identifiers, the cursor can be anywhere within the quotes
-      if (token.startOffset <= offset && offset < token.endOffset) {
-        return token;
-      }
-    }
-
-    return undefined;
   }
 
   /**
@@ -382,9 +351,10 @@ export class RenameProvider extends ProviderBase {
     }
 
     // Filter references to only those that resolve to the same symbol definition
+    const tokens = new Lexer(document.getText()).tokenize();
     return references.filter(ref => {
-      // Get the actual token at the reference position to get the correct offset
-      const refToken = this.getTokenAtPosition(document, ref.range.start);
+      const refOffset = document.offsetAt(ref.range.start);
+      const refToken = findTokenAtOffset(tokens, refOffset);
       if (!refToken) {
         return false;
       }
@@ -521,11 +491,8 @@ export class RenameProvider extends ProviderBase {
 
       // For unquoted multi-token fields, check if this token starts a sequence matching the field name
       // We check all tokens (including keywords) because field names can contain reserved words
-      // Skip only structural and non-word tokens
-      if (token.type === TokenType.Whitespace ||
-          token.type === TokenType.NewLine ||
-          token.type === TokenType.Comment ||
-          token.type === TokenType.LeftParen ||
+      // Skip only structural tokens
+      if (token.type === TokenType.LeftParen ||
           token.type === TokenType.RightParen ||
           token.type === TokenType.Semicolon) {
         continue;
