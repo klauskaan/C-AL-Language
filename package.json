@@ -130,7 +130,7 @@
     "compile": "tsc -b tsconfig.json && tsc -b tsconfig.server.json",
     "watch": "tsc -b -w tsconfig.json tsconfig.server.json",
     "test": "node ./out/test/runTest.js",
-    "postinstall": "cd server && npm install",
+    "postinstall": "git config core.hooksPath .githooks 2>/dev/null || true && cd server && npm install",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "mode": "node toggle-highlighting-mode.js",

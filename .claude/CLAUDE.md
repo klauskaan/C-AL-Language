@@ -84,6 +84,9 @@ Real NAV C/AL objects (gitignored). Read freely for analysis, never copy content
 ### File Encoding
 NAV exports use Windows OEM codepages (typically CP850 for Western Europe). The LSP server relies on VS Code's encoding handling. `files.autoGuessEncoding: true` is configured in `.vscode/settings.json`.
 
+### Git Hooks
+Custom hooks live in `.githooks/` (not `.git/hooks/`). `core.hooksPath` is auto-configured via `npm install`. The `pre-merge-commit` hook warns on deletion reintroduction (defense-in-depth for the rebase-before-merge workflow). See `.githooks/README.md` for details and known coverage gaps.
+
 ---
 
 ## Architecture
