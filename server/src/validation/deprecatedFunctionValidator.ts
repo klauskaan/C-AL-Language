@@ -32,7 +32,7 @@ class DeprecatedFunctionValidatorVisitor implements Partial<ASTVisitor> {
       const methodName = memberExpr.property.name;
 
       // Check if this is a deprecated builtin record method
-      const deprecationReason = this.context.builtins.getDeprecationReason(methodName);
+      const deprecationReason = this.context.builtins.getRecordMethodDeprecation(methodName);
 
       if (deprecationReason !== undefined) {
         this.reportDeprecated(memberExpr.property, methodName.toUpperCase());
@@ -45,7 +45,7 @@ class DeprecatedFunctionValidatorVisitor implements Partial<ASTVisitor> {
       const functionName = identifier.name;
 
       // Check if this is a deprecated builtin global function
-      const deprecationReason = this.context.builtins.getDeprecationReason(functionName);
+      const deprecationReason = this.context.builtins.getGlobalFunctionDeprecation(functionName);
 
       // Only report if it's actually a builtin (not shadowed by local symbol)
       if (deprecationReason !== undefined && this.isActualBuiltin(identifier)) {

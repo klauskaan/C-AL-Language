@@ -218,7 +218,7 @@ describe('Builtins Module', () => {
       );
       expect(recordlevelLocking?.deprecated).toBeDefined();
 
-      const reason = registry.getDeprecationReason('RECORDLEVELLOCKING');
+      const reason = registry.getRecordMethodDeprecation('RECORDLEVELLOCKING');
       expect(reason).toBe(recordlevelLocking?.deprecated);
     });
 
@@ -226,7 +226,7 @@ describe('Builtins Module', () => {
       const consistent = RECORD_METHODS.find((fn) => fn.name === 'CONSISTENT');
       expect(consistent?.deprecated).toBeDefined();
 
-      const reason = registry.getDeprecationReason('CONSISTENT');
+      const reason = registry.getRecordMethodDeprecation('CONSISTENT');
       expect(reason).toBe(consistent?.deprecated);
     });
 
@@ -234,19 +234,22 @@ describe('Builtins Module', () => {
       const getrecordid = RECORD_METHODS.find((fn) => fn.name === 'GETRECORDID');
       expect(getrecordid?.deprecated).toBeDefined();
 
-      const reason = registry.getDeprecationReason('GETRECORDID');
+      const reason = registry.getRecordMethodDeprecation('GETRECORDID');
       expect(reason).toBe(getrecordid?.deprecated);
     });
 
-    it('should return undefined for non-deprecated functions', () => {
-      expect(registry.getDeprecationReason('MESSAGE')).toBeUndefined();
-      expect(registry.getDeprecationReason('FIND')).toBeUndefined();
-      expect(registry.getDeprecationReason('INSERT')).toBeUndefined();
+    it('should return undefined for non-deprecated record methods', () => {
+      expect(registry.getRecordMethodDeprecation('FIND')).toBeUndefined();
+      expect(registry.getRecordMethodDeprecation('INSERT')).toBeUndefined();
+    });
+
+    it('should return undefined for global functions', () => {
+      expect(registry.getGlobalFunctionDeprecation('MESSAGE')).toBeUndefined();
     });
 
     it('should return undefined for non-existent functions', () => {
-      expect(registry.getDeprecationReason('NOTAFUNCTION')).toBeUndefined();
-      expect(registry.getDeprecationReason('CALCTIME')).toBeUndefined();
+      expect(registry.getRecordMethodDeprecation('NOTAFUNCTION')).toBeUndefined();
+      expect(registry.getGlobalFunctionDeprecation('CALCTIME')).toBeUndefined();
     });
   });
 });

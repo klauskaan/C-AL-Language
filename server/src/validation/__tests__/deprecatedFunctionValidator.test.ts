@@ -883,6 +883,68 @@ describe('DeprecatedFunctionValidator - Diagnostic Range Accuracy', () => {
   });
 });
 
+describe('DeprecatedFunctionValidator - Context-specific deprecation lookup', () => {
+  it('should NOT flag bare CONSISTENT(TRUE) call without receiver and without shadowing procedure', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE DoCheck();
+    BEGIN
+      CONSISTENT(TRUE);
+    END;
+  }
+}`;
+
+    const diagnostics = validateDeprecatedFunctions(code);
+
+    // CONSISTENT is a record method, not a global function
+    // Calling it without a receiver should NOT produce a deprecation warning
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should NOT flag bare RECORDLEVELLOCKING() call without receiver and without shadowing procedure', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE CheckLocking();
+    BEGIN
+      IF RECORDLEVELLOCKING() THEN
+        MESSAGE('Locking enabled');
+    END;
+  }
+}`;
+
+    const diagnostics = validateDeprecatedFunctions(code);
+
+    // RECORDLEVELLOCKING is a record method, not a global function
+    // Calling it without a receiver should NOT produce a deprecation warning
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should NOT flag bare GETRECORDID() call without receiver and without shadowing procedure', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE GetID();
+    VAR
+      RecID : RecordID;
+    BEGIN
+      RecID := GETRECORDID();
+    END;
+  }
+}`;
+
+    const diagnostics = validateDeprecatedFunctions(code);
+
+    // GETRECORDID is a record method, not a global function
+    // Calling it without a receiver should NOT produce a deprecation warning
+    expect(diagnostics).toHaveLength(0);
+  });
+});
+
 describe('DeprecatedFunctionValidator - Configuration (warnDeprecated setting)', () => {
   /**
    * Helper to parse C/AL code and run deprecated function validation with settings
