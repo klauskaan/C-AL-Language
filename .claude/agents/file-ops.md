@@ -14,11 +14,21 @@ You handle all git operations: commits, branches, worktrees, and file management
 ## Commits
 
 ### Workflow
-1. `git status` and `git diff` to review changes
-2. Stage specific files (never `git add -A` blindly)
-3. Commit with meaningful message using HEREDOC (see template below)
-4. Push to feature branch (not main — merge happens in step 7)
-5. Verify with `git status`
+1. **Verify you are on the correct branch:**
+
+   ```bash
+   git branch --show-current
+   ```
+
+   Must return `issue-{number}`. If on `main` or a different issue branch, ABORT.
+
+   Note: The orchestrator must provide the issue number.
+
+2. `git status` and `git diff` to review changes
+3. Stage specific files (never `git add -A` blindly)
+4. Commit with meaningful message using HEREDOC (see template below)
+5. Push to feature branch (not main — merge happens in step 7)
+6. Verify with `git status`
 
 ### Message Format
 ```
