@@ -768,15 +768,45 @@ describe('UnusedVariableValidator - Edge Cases', () => {
         CODE {
           PROCEDURE TestProc();
           VAR
-            TEMPORARY TempCustomer : Record 18;
+            TempCustomer : TEMPORARY Record 18;
           BEGIN
             TempCustomer.INIT;
           END;
         }
       }`;
 
-      const diagnostics = validateUnusedVariables(code);
+      // Inline setup to access both diagnostics and symbol table
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
 
+      const symbolTable = new SymbolTable();
+      symbolTable.buildFromAST(ast);
+
+      const builtins = new BuiltinRegistry();
+
+      const context: ValidationContext = {
+        ast,
+        symbolTable,
+        builtins,
+        documentUri: 'file:///test.cal'
+      };
+
+      const validator = new UnusedVariableValidator();
+      const diagnostics = validator.validate(context);
+
+      // Verify the variable was created in the symbol table
+      const rootScope = symbolTable.getRootScope();
+      const procScope = rootScope.children.find(
+        child => child.getOwnSymbol('TempCustomer') !== undefined
+      );
+      expect(procScope).toBeDefined();
+      const tempCustomer = procScope!.getSymbol('TempCustomer');
+      expect(tempCustomer).toBeDefined();
+      expect(tempCustomer!.name).toBe('TempCustomer');
+
+      // Verify no unused variable diagnostic
       const tempError = diagnostics.find(d => d.message.includes('TempCustomer'));
       expect(tempError).toBeUndefined();
     });
