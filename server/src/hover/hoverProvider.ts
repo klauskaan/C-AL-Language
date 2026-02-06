@@ -15,204 +15,26 @@ import { CALDocument, ProcedureDeclaration } from '../parser/ast';
 import { Token, KEYWORDS } from '../lexer/tokens';
 import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from '../completion/builtins';
 import { ProviderBase } from '../providers/providerBase';
-
-/** Keywords that represent data types */
-const DATA_TYPE_KEYWORDS = new Set([
-  'boolean', 'integer', 'decimal', 'text', 'code', 'date', 'time', 'datetime',
-  'record', 'recordid', 'recordref', 'fieldref', 'biginteger', 'bigtext',
-  'blob', 'guid', 'duration', 'option', 'char', 'byte', 'textconst'
-]);
-
-/** Keywords that represent control flow */
-const CONTROL_FLOW_KEYWORDS = new Set([
-  'if', 'then', 'else', 'case', 'of', 'while', 'do', 'repeat', 'until',
-  'for', 'to', 'downto', 'exit', 'break', 'begin', 'end'
-]);
-
-/** Keywords that represent object types */
-const OBJECT_TYPE_KEYWORDS = new Set([
-  'table', 'page', 'report', 'codeunit', 'query', 'xmlport', 'menusuite'
-]);
-
-/** Keywords that represent declarations */
-const DECLARATION_KEYWORDS = new Set([
-  'procedure', 'function', 'local', 'var', 'trigger', 'event'
-]);
-
-/** Keywords that represent operators */
-const OPERATOR_KEYWORDS = new Set([
-  'div', 'mod', 'and', 'or', 'not', 'xor', 'in'
-]);
+import { getMetadataByKeyword, getHoverLabel } from '../shared/keywordMetadata';
 
 /**
  * Get hover information for a keyword
  */
 function getKeywordHover(keyword: string): Hover | null {
-  const lowerKeyword = keyword.toLowerCase();
-
-  // Check data types
-  if (DATA_TYPE_KEYWORDS.has(lowerKeyword)) {
-    return {
-      contents: {
-        kind: MarkupKind.Markdown,
-        value: `**${keyword.toUpperCase()}**\n\n*C/AL Data Type*\n\n${getDataTypeDescription(lowerKeyword)}`
-      }
-    };
+  const metadata = getMetadataByKeyword(keyword);
+  if (!metadata) {
+    return null;
   }
 
-  // Check control flow
-  if (CONTROL_FLOW_KEYWORDS.has(lowerKeyword)) {
-    return {
-      contents: {
-        kind: MarkupKind.Markdown,
-        value: `**${keyword.toUpperCase()}**\n\n*Control Flow Keyword*\n\n${getControlFlowDescription(lowerKeyword)}`
-      }
-    };
-  }
+  const label = getHoverLabel(metadata.category);
+  const description = metadata.description || '';
 
-  // Check object types
-  if (OBJECT_TYPE_KEYWORDS.has(lowerKeyword)) {
-    return {
-      contents: {
-        kind: MarkupKind.Markdown,
-        value: `**${keyword.toUpperCase()}**\n\n*C/AL Object Type*\n\n${getObjectTypeDescription(lowerKeyword)}`
-      }
-    };
-  }
-
-  // Check declarations
-  if (DECLARATION_KEYWORDS.has(lowerKeyword)) {
-    return {
-      contents: {
-        kind: MarkupKind.Markdown,
-        value: `**${keyword.toUpperCase()}**\n\n*Declaration Keyword*\n\n${getDeclarationDescription(lowerKeyword)}`
-      }
-    };
-  }
-
-  // Check operators
-  if (OPERATOR_KEYWORDS.has(lowerKeyword)) {
-    return {
-      contents: {
-        kind: MarkupKind.Markdown,
-        value: `**${keyword.toUpperCase()}**\n\n*Operator*\n\n${getOperatorDescription(lowerKeyword)}`
-      }
-    };
-  }
-
-  // Check boolean constants
-  if (lowerKeyword === 'true' || lowerKeyword === 'false') {
-    return {
-      contents: {
-        kind: MarkupKind.Markdown,
-        value: `**${keyword.toUpperCase()}**\n\n*Boolean Constant*`
-      }
-    };
-  }
-
-  return null;
-}
-
-/**
- * Get description for data type keywords
- */
-function getDataTypeDescription(keyword: string): string {
-  const descriptions: Record<string, string> = {
-    'boolean': 'Stores TRUE or FALSE values.',
-    'integer': 'Stores whole numbers from -2,147,483,647 to 2,147,483,647.',
-    'decimal': 'Stores decimal numbers with up to 18 significant digits.',
-    'text': 'Stores alphanumeric strings up to 1024 characters.',
-    'code': 'Stores alphanumeric strings, automatically converted to uppercase.',
-    'date': 'Stores date values.',
-    'time': 'Stores time values.',
-    'datetime': 'Stores combined date and time values.',
-    'record': 'Represents a row in a database table.',
-    'recordid': 'Uniquely identifies a record in a table.',
-    'recordref': 'Generic reference to any record type.',
-    'fieldref': 'Generic reference to any field type.',
-    'biginteger': 'Stores large integers from -9,223,372,036,854,775,807 to 9,223,372,036,854,775,807.',
-    'bigtext': 'Stores large text values up to 2GB.',
-    'blob': 'Stores binary large objects.',
-    'guid': 'Stores globally unique identifiers.',
-    'duration': 'Stores time spans in milliseconds.',
-    'option': 'Stores a set of predefined values.',
-    'char': 'Stores a single character.',
-    'byte': 'Stores a single byte (0-255).',
-    'textconst': 'Stores translatable text constants.'
+  return {
+    contents: {
+      kind: MarkupKind.Markdown,
+      value: `**${keyword.toUpperCase()}**\n\n*${label}*${description ? `\n\n${description}` : ''}`
+    }
   };
-  return descriptions[keyword] || '';
-}
-
-/**
- * Get description for control flow keywords
- */
-function getControlFlowDescription(keyword: string): string {
-  const descriptions: Record<string, string> = {
-    'if': 'Executes code conditionally. Use with THEN and optionally ELSE.',
-    'then': 'Follows IF condition to specify code to execute when true.',
-    'else': 'Specifies code to execute when IF condition is false.',
-    'case': 'Multi-way branch based on expression value. Use with OF.',
-    'of': 'Introduces case alternatives in a CASE statement.',
-    'while': 'Executes code repeatedly while condition is true. Use with DO.',
-    'do': 'Follows WHILE or FOR to introduce the loop body.',
-    'repeat': 'Executes code at least once, then repeats while condition is false.',
-    'until': 'Ends REPEAT loop when condition becomes true.',
-    'for': 'Executes code a fixed number of times. Use with TO or DOWNTO.',
-    'to': 'Increments loop counter in FOR loop.',
-    'downto': 'Decrements loop counter in FOR loop.',
-    'exit': 'Exits the current procedure/trigger, optionally returning a value.',
-    'break': 'Exits the current loop immediately.',
-    'begin': 'Starts a compound statement block.',
-    'end': 'Ends a compound statement block.'
-  };
-  return descriptions[keyword] || '';
-}
-
-/**
- * Get description for object type keywords
- */
-function getObjectTypeDescription(keyword: string): string {
-  const descriptions: Record<string, string> = {
-    'table': 'Defines a database table with fields, keys, and triggers.',
-    'page': 'Defines a user interface for viewing and editing data.',
-    'report': 'Defines a report for printing or exporting data.',
-    'codeunit': 'Contains business logic as procedures and functions.',
-    'query': 'Defines a database query combining data from multiple tables.',
-    'xmlport': 'Imports and exports data in XML or text format.',
-    'menusuite': 'Defines navigation menus (deprecated in newer versions).'
-  };
-  return descriptions[keyword] || '';
-}
-
-/**
- * Get description for declaration keywords
- */
-function getDeclarationDescription(keyword: string): string {
-  const descriptions: Record<string, string> = {
-    'procedure': 'Declares a procedure that can be called from other code.',
-    'function': 'Alias for PROCEDURE (same functionality).',
-    'local': 'Marks a procedure as local (not visible outside the object).',
-    'var': 'Declares variables or marks parameters as passed by reference.',
-    'trigger': 'Declares an event handler triggered by system events.',
-    'event': 'Declares a handler for DotNet control add-in events (NAV 2016+).'
-  };
-  return descriptions[keyword] || '';
-}
-
-/**
- * Get description for operator keywords
- */
-function getOperatorDescription(keyword: string): string {
-  const descriptions: Record<string, string> = {
-    'div': 'Integer division (discards remainder).',
-    'mod': 'Modulo operator (returns remainder of division).',
-    'and': 'Logical AND operator.',
-    'or': 'Logical OR operator.',
-    'not': 'Logical NOT operator (negation).',
-    'xor': 'Logical exclusive OR operator.',
-    'in': 'Tests if value is in a set or range.'
-  };
-  return descriptions[keyword] || '';
 }
 
 /**

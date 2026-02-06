@@ -13,96 +13,12 @@ import {
 } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
-import { KEYWORDS, TokenType } from '../lexer/tokens';
+import { KEYWORDS } from '../lexer/tokens';
 import { SymbolTable, Symbol, Scope } from '../symbols/symbolTable';
 import { CALDocument } from '../parser/ast';
 import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from './builtins';
 import { ProviderBase } from '../providers/providerBase';
-
-/**
- * Categories of keywords for completion
- */
-const KEYWORD_CATEGORIES: Map<TokenType, CompletionItemKind> = new Map([
-  // Object types - use Class
-  [TokenType.Table, CompletionItemKind.Class],
-  [TokenType.Page, CompletionItemKind.Class],
-  [TokenType.Report, CompletionItemKind.Class],
-  [TokenType.Codeunit, CompletionItemKind.Class],
-  [TokenType.Query, CompletionItemKind.Class],
-  [TokenType.XMLport, CompletionItemKind.Class],
-  [TokenType.MenuSuite, CompletionItemKind.Class],
-
-  // Data types - use TypeParameter
-  [TokenType.Boolean, CompletionItemKind.TypeParameter],
-  [TokenType.Integer_Type, CompletionItemKind.TypeParameter],
-  [TokenType.Decimal_Type, CompletionItemKind.TypeParameter],
-  [TokenType.Text, CompletionItemKind.TypeParameter],
-  [TokenType.Code_Type, CompletionItemKind.TypeParameter],
-  [TokenType.Date_Type, CompletionItemKind.TypeParameter],
-  [TokenType.Time_Type, CompletionItemKind.TypeParameter],
-  [TokenType.DateTime_Type, CompletionItemKind.TypeParameter],
-  [TokenType.Record, CompletionItemKind.TypeParameter],
-  [TokenType.RecordID, CompletionItemKind.TypeParameter],
-  [TokenType.RecordRef, CompletionItemKind.TypeParameter],
-  [TokenType.FieldRef, CompletionItemKind.TypeParameter],
-  [TokenType.BigInteger, CompletionItemKind.TypeParameter],
-  [TokenType.BigText, CompletionItemKind.TypeParameter],
-  [TokenType.BLOB, CompletionItemKind.TypeParameter],
-  [TokenType.GUID, CompletionItemKind.TypeParameter],
-  [TokenType.Duration, CompletionItemKind.TypeParameter],
-  [TokenType.Option, CompletionItemKind.TypeParameter],
-  [TokenType.Char, CompletionItemKind.TypeParameter],
-  [TokenType.Byte, CompletionItemKind.TypeParameter],
-  [TokenType.TextConst, CompletionItemKind.TypeParameter],
-
-  // Control flow - use Keyword
-  [TokenType.If, CompletionItemKind.Keyword],
-  [TokenType.Then, CompletionItemKind.Keyword],
-  [TokenType.Else, CompletionItemKind.Keyword],
-  [TokenType.Case, CompletionItemKind.Keyword],
-  [TokenType.Of, CompletionItemKind.Keyword],
-  [TokenType.While, CompletionItemKind.Keyword],
-  [TokenType.Do, CompletionItemKind.Keyword],
-  [TokenType.Repeat, CompletionItemKind.Keyword],
-  [TokenType.Until, CompletionItemKind.Keyword],
-  [TokenType.For, CompletionItemKind.Keyword],
-  [TokenType.To, CompletionItemKind.Keyword],
-  [TokenType.DownTo, CompletionItemKind.Keyword],
-  [TokenType.Exit, CompletionItemKind.Keyword],
-  [TokenType.Break, CompletionItemKind.Keyword],
-  [TokenType.Begin, CompletionItemKind.Keyword],
-  [TokenType.End, CompletionItemKind.Keyword],
-
-  // Procedure/Function
-  [TokenType.Procedure, CompletionItemKind.Keyword],
-  [TokenType.Function, CompletionItemKind.Keyword],
-  [TokenType.Local, CompletionItemKind.Keyword],
-  [TokenType.Var, CompletionItemKind.Keyword],
-  [TokenType.Trigger, CompletionItemKind.Keyword],
-
-  // Operators as keywords
-  [TokenType.Div, CompletionItemKind.Operator],
-  [TokenType.Mod, CompletionItemKind.Operator],
-  [TokenType.And, CompletionItemKind.Operator],
-  [TokenType.Or, CompletionItemKind.Operator],
-  [TokenType.Not, CompletionItemKind.Operator],
-  [TokenType.Xor, CompletionItemKind.Operator],
-  [TokenType.In, CompletionItemKind.Operator],
-
-  // Other
-  [TokenType.With, CompletionItemKind.Keyword],
-  [TokenType.Array, CompletionItemKind.Keyword],
-  [TokenType.Temporary, CompletionItemKind.Keyword],
-  [TokenType.True, CompletionItemKind.Constant],
-  [TokenType.False, CompletionItemKind.Constant],
-
-  // Sections
-  [TokenType.Properties, CompletionItemKind.Keyword],
-  [TokenType.Fields, CompletionItemKind.Keyword],
-  [TokenType.Keys, CompletionItemKind.Keyword],
-  [TokenType.FieldGroups, CompletionItemKind.Keyword],
-  [TokenType.Code, CompletionItemKind.Keyword],
-]);
+import { getMetadataByTokenType } from '../shared/keywordMetadata';
 
 /**
  * Map symbol kind to completion item kind
@@ -184,74 +100,15 @@ export class CompletionProvider extends ProviderBase {
     for (const [keyword, tokenType] of KEYWORDS) {
       // Use proper case for display (capitalize first letter)
       const displayName = keyword.toUpperCase();
-      const kind = KEYWORD_CATEGORIES.get(tokenType) || CompletionItemKind.Keyword;
+      const metadata = getMetadataByTokenType(tokenType);
 
       this.keywordItems.push({
         label: displayName,
-        kind: kind,
+        kind: metadata?.completionKind || CompletionItemKind.Keyword,
         insertText: displayName,
-        detail: this.getKeywordDetail(tokenType)
+        detail: metadata?.category
       });
     }
-  }
-
-  /**
-   * Get detail text for keyword based on category
-   */
-  private getKeywordDetail(tokenType: TokenType): string {
-    // Object types
-    if ([TokenType.Table, TokenType.Page, TokenType.Report, TokenType.Codeunit,
-         TokenType.Query, TokenType.XMLport, TokenType.MenuSuite].includes(tokenType)) {
-      return 'Object Type';
-    }
-
-    // Data types
-    if ([TokenType.Boolean, TokenType.Integer_Type, TokenType.Decimal_Type,
-         TokenType.Text, TokenType.Code_Type, TokenType.Date_Type, TokenType.Time_Type,
-         TokenType.DateTime_Type, TokenType.Record, TokenType.RecordID,
-         TokenType.RecordRef, TokenType.FieldRef, TokenType.BigInteger,
-         TokenType.BigText, TokenType.BLOB, TokenType.GUID, TokenType.Duration,
-         TokenType.Option, TokenType.Char, TokenType.Byte, TokenType.TextConst].includes(tokenType)) {
-      return 'Data Type';
-    }
-
-    // Control flow
-    if ([TokenType.If, TokenType.Then, TokenType.Else, TokenType.Case, TokenType.Of,
-         TokenType.While, TokenType.Do, TokenType.Repeat, TokenType.Until,
-         TokenType.For, TokenType.To, TokenType.DownTo, TokenType.Exit,
-         TokenType.Break].includes(tokenType)) {
-      return 'Control Flow';
-    }
-
-    // Procedure/Function keywords
-    if ([TokenType.Procedure, TokenType.Function, TokenType.Local,
-         TokenType.Var, TokenType.Trigger].includes(tokenType)) {
-      return 'Declaration';
-    }
-
-    // Block keywords
-    if ([TokenType.Begin, TokenType.End].includes(tokenType)) {
-      return 'Block';
-    }
-
-    // Boolean constants
-    if ([TokenType.True, TokenType.False].includes(tokenType)) {
-      return 'Boolean Constant';
-    }
-
-    // Operators
-    if ([TokenType.Div, TokenType.Mod, TokenType.And, TokenType.Or,
-         TokenType.Not, TokenType.Xor, TokenType.In].includes(tokenType)) {
-      return 'Operator';
-    }
-
-    // Sections
-    if ([TokenType.Properties, TokenType.Fields, TokenType.Keys,
-         TokenType.FieldGroups, TokenType.Code].includes(tokenType)) {
-      return 'Section';
-    }
-
-    return 'Keyword';
   }
 
   /**
