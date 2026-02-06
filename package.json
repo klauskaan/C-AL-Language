@@ -114,6 +114,12 @@
           "default": true,
           "description": "Enable semantic highlighting from the Language Server. When disabled, only TextMate grammar highlighting is used. Useful for debugging highlighting issues.",
           "scope": "window"
+        },
+        "cal.diagnostics.warnDeprecated": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show warnings for deprecated functions (e.g., GETRECORDID, RECORDLEVELLOCKING, CONSISTENT). When disabled, deprecated function diagnostics are suppressed.",
+          "scope": "resource"
         }
       }
     }

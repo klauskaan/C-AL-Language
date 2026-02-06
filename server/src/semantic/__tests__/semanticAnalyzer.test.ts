@@ -589,3 +589,143 @@ describe('SemanticAnalyzer - Edge Cases', () => {
     }).not.toThrow();
   });
 });
+
+describe('SemanticAnalyzer - Settings Integration', () => {
+  let analyzer: SemanticAnalyzer;
+
+  beforeEach(() => {
+    analyzer = new SemanticAnalyzer();
+  });
+
+  /**
+   * Helper to analyze with optional settings parameter
+   */
+  function analyzeWithSettings(
+    code: string,
+    options?: { warnDeprecated?: boolean }
+  ): Diagnostic[] {
+    const lexer = new Lexer(code);
+    const tokens = lexer.tokenize();
+    const parser = new Parser(tokens);
+    const ast = parser.parse();
+    const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast);
+
+    // Build proper settings structure
+    const settings = options ? {
+      diagnostics: {
+        warnDeprecated: options.warnDeprecated ?? true
+      }
+    } : undefined;
+
+    return analyzer.analyze(
+      ast,
+      symbolTable,
+      'file:///test.cal',
+      settings
+    );
+  }
+
+  it('should produce deprecated warnings when settings not provided (default behavior)', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE CheckLocking();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      IF Customer.RECORDLEVELLOCKING() THEN
+        MESSAGE('Locking enabled');
+    END;
+  }
+}`;
+
+    const diagnostics = analyzeWithSettings(code);
+
+    // Default behavior: show deprecated warnings
+    const deprecatedWarning = diagnostics.find(d =>
+      d.message.includes('RECORDLEVELLOCKING is deprecated')
+    );
+    expect(deprecatedWarning).toBeDefined();
+  });
+
+  it('should produce deprecated warnings when warnDeprecated is true', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE GetID();
+    VAR
+      Customer : Record 18;
+      RecID : RecordID;
+    BEGIN
+      RecID := Customer.GETRECORDID();
+    END;
+  }
+}`;
+
+    const diagnostics = analyzeWithSettings(code, { warnDeprecated: true });
+
+    // Should show deprecated warnings
+    const deprecatedWarning = diagnostics.find(d =>
+      d.message.includes('GETRECORDID is deprecated')
+    );
+    expect(deprecatedWarning).toBeDefined();
+  });
+
+  it('should suppress deprecated warnings when warnDeprecated is false', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE MarkConsistent();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.CONSISTENT(TRUE);
+    END;
+  }
+}`;
+
+    const diagnostics = analyzeWithSettings(code, { warnDeprecated: false });
+
+    // Should NOT show deprecated warnings
+    const deprecatedWarning = diagnostics.find(d =>
+      d.message.includes('CONSISTENT is deprecated')
+    );
+    expect(deprecatedWarning).toBeUndefined();
+  });
+
+  it('should still run other validators when warnDeprecated is false', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestBoth();
+    VAR
+      Customer : Record 18;
+      x : Integer;
+    BEGIN
+      Customer.CONSISTENT(TRUE);
+      IF x IN [] THEN
+        EXIT;
+    END;
+  }
+}`;
+
+    const diagnostics = analyzeWithSettings(code, { warnDeprecated: false });
+
+    // Deprecated warning should be suppressed
+    const deprecatedWarning = diagnostics.find(d =>
+      d.message.includes('CONSISTENT is deprecated')
+    );
+    expect(deprecatedWarning).toBeUndefined();
+
+    // But EmptySetValidator should still work
+    const emptySetWarning = diagnostics.find(d =>
+      d.message.includes('Empty set in IN expression')
+    );
+    expect(emptySetWarning).toBeDefined();
+  });
+});

@@ -53,6 +53,7 @@ import { formatError } from './utils/sanitize';
 import { SemanticAnalyzer } from './semantic/semanticAnalyzer';
 import { DepthLimitedWalker } from './visitor/depthLimitedWalker';
 import { DocumentDebouncer } from './utils/documentDebouncer';
+import { CALSettings, defaultSettings } from './settings';
 
 // Create a connection for the server
 const connection = createConnection(ProposedFeatures.all);
@@ -158,7 +159,52 @@ connection.onInitialize((params: InitializeParams) => {
 
 connection.onInitialized(() => {
   connection.console.log('C/AL Language Server initialized');
+  updateSettings();
 });
+
+// Handle configuration changes
+connection.onDidChangeConfiguration(() => {
+  updateSettings();
+});
+
+/**
+ * Update settings from client and re-validate all documents
+ */
+async function updateSettings(): Promise<void> {
+  try {
+    // Query narrow section (cal.diagnostics)
+    const config = await connection.workspace.getConfiguration('cal.diagnostics');
+
+    // Defensive null checking
+    if (config !== null && typeof config === 'object') {
+      const diagnosticsConfig = config as { warnDeprecated?: unknown };
+
+      // Extract warnDeprecated with type safety
+      const warnDeprecated = typeof diagnosticsConfig.warnDeprecated === 'boolean'
+        ? diagnosticsConfig.warnDeprecated
+        : defaultSettings.diagnostics.warnDeprecated;
+
+      // Update settings
+      currentSettings = {
+        diagnostics: {
+          warnDeprecated
+        }
+      };
+
+      connection.console.log(`Settings updated: warnDeprecated=${warnDeprecated}`);
+    } else {
+      // Config query returned null/undefined - use defaults
+      currentSettings = defaultSettings;
+      connection.console.log('Settings update: config query returned null, using defaults');
+    }
+
+    // Re-validate all open documents
+    documents.all().forEach(doc => validateTextDocument(doc));
+  } catch (error) {
+    connection.console.error(`Error updating settings: ${formatError(error)}`);
+    // On error, keep current settings
+  }
+}
 
 // Handle semantic tokens request
 connection.languages.semanticTokens.on((params: SemanticTokensParams) => {
@@ -432,6 +478,9 @@ connection.onFoldingRanges((params: FoldingRangeParams): FoldingRange[] => {
 // Per-URI debounce for semantic analysis (split diagnostic strategy - Issue #183)
 const semanticDebouncer = new DocumentDebouncer(300);
 
+// Settings cache (defaults to standard values)
+let currentSettings: CALSettings = defaultSettings;
+
 // Handle document changes - invalidate cache and revalidate
 documents.onDidChangeContent(change => {
   // CRITICAL: Clear cache before validation to ensure fresh parse
@@ -474,8 +523,8 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
       return doc ? { version: doc.version } : undefined;
     }, () => {
       try {
-        // Run semantic validations
-        const semanticDiagnostics = semanticAnalyzer.analyze(ast, symbolTable, uri);
+        // Run semantic validations with current settings
+        const semanticDiagnostics = semanticAnalyzer.analyze(ast, symbolTable, uri, currentSettings);
 
         // Check for excessive nesting depth (DoS protection - Issue #220)
         depthLimitedWalker.resetDiagnostics();

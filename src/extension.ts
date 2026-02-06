@@ -63,7 +63,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
     documentSelector: [{ scheme: 'file', language: 'cal' }],
     synchronize: {
       // Notify the server about file changes to '.cal' files contained in the workspace
-      fileEvents: workspace.createFileSystemWatcher('**/*.cal')
+      fileEvents: workspace.createFileSystemWatcher('**/*.cal'),
+      configurationSection: 'cal'
     },
     // Disable semantic tokens if user setting is false
     initializationOptions: {

@@ -16,6 +16,7 @@ import { UndefinedIdentifierValidator } from '../validation/undefinedIdentifierV
 import { UnusedVariableValidator } from '../validation/unusedVariableValidator';
 import { TypeMismatchValidator } from '../validation/typeMismatchValidator';
 import { DeprecatedFunctionValidator } from '../validation/deprecatedFunctionValidator';
+import { CALSettings } from '../settings';
 
 export class SemanticAnalyzer {
   /** Builtin function and method registry */
@@ -65,19 +66,22 @@ export class SemanticAnalyzer {
    * @param ast - Parsed AST to analyze
    * @param symbolTable - Symbol table for the document
    * @param documentUri - URI of the document being analyzed
+   * @param settings - Optional user settings
    * @returns Array of diagnostics (may be empty)
    */
   public analyze(
     ast: CALDocument,
     symbolTable: SymbolTable,
-    documentUri: string
+    documentUri: string,
+    settings?: CALSettings
   ): Diagnostic[] {
     // Assemble validation context
     const context: ValidationContext = {
       ast,
       symbolTable,
       builtins: this.builtins,
-      documentUri
+      documentUri,
+      settings
     };
 
     // Run validation pipeline

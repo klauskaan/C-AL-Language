@@ -882,3 +882,126 @@ describe('DeprecatedFunctionValidator - Diagnostic Range Accuracy', () => {
     expect(range.start.character).toBeLessThan(range.end.character);
   });
 });
+
+describe('DeprecatedFunctionValidator - Configuration (warnDeprecated setting)', () => {
+  /**
+   * Helper to parse C/AL code and run deprecated function validation with settings
+   */
+  function validateDeprecatedFunctionsWithSettings(
+    code: string,
+    warnDeprecated?: boolean
+  ): Diagnostic[] {
+    const lexer = new Lexer(code);
+    const tokens = lexer.tokenize();
+    const parser = new Parser(tokens);
+    const ast = parser.parse();
+
+    const symbolTable = new SymbolTable();
+    const builtins = new BuiltinRegistry();
+
+    const context: ValidationContext = {
+      ast,
+      symbolTable,
+      builtins,
+      documentUri: 'file:///test.cal',
+      settings: warnDeprecated !== undefined ? {
+        diagnostics: {
+          warnDeprecated
+        }
+      } : undefined
+    };
+
+    const validator = new DeprecatedFunctionValidator();
+    return validator.validate(context);
+  }
+
+  it('should suppress warnings when warnDeprecated is false', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE CheckLocking();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      IF Customer.RECORDLEVELLOCKING() THEN
+        MESSAGE('Locking enabled');
+    END;
+  }
+}`;
+
+    const diagnostics = validateDeprecatedFunctionsWithSettings(code, false);
+
+    // When warnDeprecated is false, no diagnostics should be returned
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should show warnings when warnDeprecated is true', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE GetID();
+    VAR
+      Customer : Record 18;
+      RecID : RecordID;
+    BEGIN
+      RecID := Customer.GETRECORDID();
+    END;
+  }
+}`;
+
+    const diagnostics = validateDeprecatedFunctionsWithSettings(code, true);
+
+    // When warnDeprecated is true, diagnostics should be returned
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].message).toBe('GETRECORDID is deprecated and should not be used');
+  });
+
+  it('should show warnings when settings is undefined (backward compatibility)', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE MarkConsistent();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.CONSISTENT(TRUE);
+    END;
+  }
+}`;
+
+    // Pass undefined for settings to test default behavior
+    const diagnostics = validateDeprecatedFunctionsWithSettings(code, undefined);
+
+    // When settings is undefined, default to showing warnings
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].message).toBe('CONSISTENT is deprecated and should not be used');
+  });
+
+  it('should suppress all deprecated warnings for multiple calls when disabled', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestMultiple();
+    VAR
+      Customer : Record 18;
+      Vendor : Record 23;
+      RecID : RecordID;
+    BEGIN
+      IF Customer.RECORDLEVELLOCKING() THEN
+        Customer.CONSISTENT(TRUE);
+      Vendor.CONSISTENT(FALSE);
+      RecID := Customer.GETRECORDID();
+    END;
+  }
+}`;
+
+    const diagnostics = validateDeprecatedFunctionsWithSettings(code, false);
+
+    // All deprecated method warnings should be suppressed
+    expect(diagnostics).toHaveLength(0);
+  });
+});

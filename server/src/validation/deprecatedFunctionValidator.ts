@@ -108,6 +108,11 @@ export class DeprecatedFunctionValidator implements Validator {
    * @returns Array of diagnostics (hints for deprecated functions)
    */
   validate(context: ValidationContext): Diagnostic[] {
+    // Early return if warnDeprecated is disabled
+    if (context.settings?.diagnostics?.warnDeprecated === false) {
+      return [];
+    }
+
     const visitor = new DeprecatedFunctionValidatorVisitor(context);
     const walker = new ASTWalker();
 

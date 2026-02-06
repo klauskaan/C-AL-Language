@@ -8,6 +8,7 @@ import { CALDocument } from '../parser/ast';
 import { SymbolTable } from '../symbols/symbolTable';
 import { BuiltinRegistry } from './builtinRegistry';
 import { Diagnostic } from 'vscode-languageserver';
+import { CALSettings } from '../settings';
 
 /**
  * ValidationContext provides all information needed for semantic validation.
@@ -25,6 +26,9 @@ export interface ValidationContext {
 
   /** Document URI for diagnostic reporting */
   documentUri: string;
+
+  /** User settings (optional) */
+  settings?: CALSettings;
 }
 
 /**
