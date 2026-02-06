@@ -34,7 +34,7 @@ For this C/AL extension specifically:
 
 Flag trivial cleanup with `[BOY-SCOUT]` when the fix is mechanical, quick (<10 lines), and safe (can't break tests). Examples: unused imports, typos, stray console.logs. These get fixed inline before commit.
 
-## Disposition Guidance
+## Issue Creation Bias
 
 For MINOR findings that are valid but out of scope, recommend **ACCEPT-DEFER** (create a GitHub issue) rather than ACKNOWLEDGE. Reserve ACKNOWLEDGE for meta-observations that don't prescribe a specific action ("this area is complex"). Bias toward tracking work, not losing it.
 

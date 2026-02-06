@@ -55,6 +55,10 @@ Assess whether current session can achieve its goal differently:
 - **No, complexity exceeds limits:** Escalate to human with specific blockers
 - **No, goals conflict:** Escalate to human asking which goal has priority
 
+## Issue Creation Bias
+
+If you discover unrelated issues while resolving conflicts (code smells, inconsistencies between the merged codebases, loose ends from the merge), list them under a `### Issues to Create` heading in your output. Each item should be a one-liner suitable for a GitHub issue title. The orchestrator will route these to github-issues.
+
 ## Output
 
 End with `STATUS: MERGED`, `STATUS: RE-PLAN REQUIRED`, or `STATUS: ESCALATED` with clear reasoning.

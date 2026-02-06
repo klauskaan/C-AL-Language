@@ -24,7 +24,7 @@ Implementation work happens in a git worktree (`../worktree-issue-{number}`) to 
                     (if senior-merge-engineer was needed, run adversarial-reviewer before cleanup)
 ```
 
-**Skip steps that aren't needed.** Obvious bugs don't need investigation. Trivial changes don't need an architect. Use judgment.
+**Skip steps that aren't needed.** Trivial changes don't need an architect. Use judgment — but lean toward investigating. A detailed issue description tells you WHAT is happening, not WHY. Skip the detective only when the root cause is genuinely obvious (single file, clear cause, no ambiguity about where to fix). For bugs and non-trivial features, default to investigating.
 
 **TDD:** Tests should fail before implementation (bug fixes and new features). If they pass immediately, the diagnosis might be wrong. Exceptions: refactoring, test coverage tasks, regression tests.
 
@@ -41,6 +41,8 @@ Implementation work happens in a git worktree (`../worktree-issue-{number}`) to 
 - **Defer it** — spawn github-issues agent to create a tracking issue, then move on
 - **Acknowledge it** — valid observation, no action needed (meta-observations only)
 - **Dismiss it** — not applicable, explain why
+
+**Issue Creation Bias.** When a finding is valid but out-of-scope, prefer creating a tracking issue over acknowledging and moving on. Untracked observations get lost. This bias applies across all phases — investigation, planning, and review.
 
 Only an explicit "APPROVED" exits the loop — "approved if you clarify X" means clarify X first. Report all feedback items and their dispositions to the user for visibility.
 
