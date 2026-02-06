@@ -73,23 +73,24 @@ export class BuiltinRegistry {
   }
 
   /**
-   * Get deprecation reason for a global function (case-insensitive)
+   * Get deprecation reason for a global function specifically (case-insensitive)
    * Returns undefined if the function is not deprecated or not found
    */
   public getGlobalFunctionDeprecation(name: string): string | undefined {
-    return this.globalFunctions.get(name.toUpperCase())?.deprecated;
+    return this.getGlobalFunction(name)?.deprecated;
   }
 
   /**
-   * Get deprecation reason for a record method (case-insensitive)
+   * Get deprecation reason for a record method specifically (case-insensitive)
    * Returns undefined if the method is not deprecated or not found
    */
   public getRecordMethodDeprecation(name: string): string | undefined {
-    return this.recordMethods.get(name.toUpperCase())?.deprecated;
+    return this.getRecordMethod(name)?.deprecated;
   }
 
   /**
    * Get deprecation reason for a builtin (case-insensitive)
+   * Checks global functions first, then record methods
    * Returns undefined if the builtin is not deprecated or not found
    */
   public getDeprecationReason(name: string): string | undefined {
