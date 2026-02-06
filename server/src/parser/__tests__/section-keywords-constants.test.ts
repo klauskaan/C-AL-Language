@@ -35,8 +35,8 @@ import { TokenType } from '../../lexer/tokens';
 
 describe('SECTION_KEYWORDS (error recovery)', () => {
   // Regression guard: ensure count doesn't drift unexpectedly
-  it('should contain exactly 14 keywords', () => {
-    expect(SECTION_KEYWORDS.size).toBe(14);
+  it('should contain exactly 13 keywords', () => {
+    expect(SECTION_KEYWORDS.size).toBe(13);
   });
 
   // Test each keyword individually for clarity
@@ -72,10 +72,6 @@ describe('SECTION_KEYWORDS (error recovery)', () => {
     expect(SECTION_KEYWORDS.has(TokenType.Actions)).toBe(true);
   });
 
-  it('should include DataItems', () => {
-    expect(SECTION_KEYWORDS.has(TokenType.DataItems)).toBe(true);
-  });
-
   it('should include Dataset', () => {
     expect(SECTION_KEYWORDS.has(TokenType.Dataset)).toBe(true);
   });
@@ -104,17 +100,13 @@ describe('SECTION_KEYWORDS (error recovery)', () => {
 
 describe('UNSUPPORTED_SECTIONS (always skipped)', () => {
   // Regression guard: ensure count doesn't drift unexpectedly
-  it('should contain exactly 6 keywords', () => {
-    expect(UNSUPPORTED_SECTIONS.size).toBe(6);
+  it('should contain exactly 5 keywords', () => {
+    expect(UNSUPPORTED_SECTIONS.size).toBe(5);
   });
 
   // Test each keyword individually
   it('should include MenuNodes', () => {
     expect(UNSUPPORTED_SECTIONS.has(TokenType.MenuNodes)).toBe(true);
-  });
-
-  it('should include DataItems', () => {
-    expect(UNSUPPORTED_SECTIONS.has(TokenType.DataItems)).toBe(true);
   });
 
   it('should include Dataset', () => {

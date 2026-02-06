@@ -59,7 +59,6 @@ const AT_DOWNGRADE_KEYWORDS = new Set<TokenType>([
   TokenType.Properties,
   TokenType.FieldGroups,
   TokenType.Actions,
-  TokenType.DataItems,
   TokenType.Elements,
   TokenType.MenuNodes,
   TokenType.RequestForm,
@@ -93,7 +92,6 @@ const SECTION_KEYWORDS = new Set<TokenType>([
   TokenType.Properties,
   TokenType.FieldGroups,
   TokenType.Actions,
-  TokenType.DataItems,
   TokenType.Elements,
   TokenType.RequestForm,
   TokenType.Dataset,
@@ -1292,27 +1290,6 @@ export class Lexer {
           }
           if (stateBefore_Elements.currentSectionType !== stateAfter_Elements.currentSectionType) {
             this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_Elements.currentSectionType, to: stateAfter_Elements.currentSectionType } }));
-          }
-        }
-        break;
-
-      case TokenType.DataItems:
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
-        {
-          const stateBefore_DataItems = this.state.getState();
-          if (stateBefore_DataItems.inPropertyValue) { break; }
-          // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
-          if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              stateBefore_DataItems.currentSectionType === 'CODE') {
-            break;
-          }
-          this.state.onSectionKeyword('DATAITEMS');
-          const stateAfter_DataItems = this.state.getState();
-          if (stateBefore_DataItems.lastWasSectionKeyword !== stateAfter_DataItems.lastWasSectionKeyword) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_DataItems.lastWasSectionKeyword, to: stateAfter_DataItems.lastWasSectionKeyword } }));
-          }
-          if (stateBefore_DataItems.currentSectionType !== stateAfter_DataItems.currentSectionType) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_DataItems.currentSectionType, to: stateAfter_DataItems.currentSectionType } }));
           }
         }
         break;

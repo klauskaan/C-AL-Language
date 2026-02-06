@@ -158,46 +158,6 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
     });
   });
 
-  describe('DataItems section as recovery point', () => {
-    it('should stop error recovery at DATAITEMS section boundary', () => {
-      const source = `
-        OBJECT Report 50000 Test
-        {
-          PROPERTIES
-          {
-            InvalidProperty
-          }
-          DATAITEMS
-          {
-            { 1000;DataItem;               ;DataItemTable=Customer }
-          }
-          CODE
-          {
-            PROCEDURE TestProc@1();
-            BEGIN
-            END;
-
-            BEGIN
-            END.
-          }
-        }
-      `;
-
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-
-      // Should have errors (the PROPERTIES syntax error - missing =)
-      expect(parser.getErrors().length).toBeGreaterThan(0);
-
-      // CODE section should still be parsed (synchronize stopped at DATAITEMS, not CODE)
-      expect(ast.object?.code).not.toBeNull();
-      expect(ast.object?.code?.procedures).toHaveLength(1);
-      expect(ast.object?.code?.procedures[0].name).toBe('TestProc');
-    });
-  });
-
   describe('Dataset section as recovery point', () => {
     it('should stop error recovery at DATASET section boundary', () => {
       const source = `
@@ -415,9 +375,9 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
           {
             CaptionML
           }
-          DATAITEMS
+          LABELS
           {
-            { 1;DataItem1 }
+            { 1;Label1;CaptionML=ENU=Test }
           }
           DATASET
           {
@@ -581,10 +541,6 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
           {
             CaptionML=ENU=Sales Report;
             ProcessingOnly
-          }
-          DATAITEMS
-          {
-            { 1000;DataItem;Customer         ;DataItemTable=Customer }
           }
           DATASET
           {
