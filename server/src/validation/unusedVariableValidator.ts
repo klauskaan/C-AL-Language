@@ -5,7 +5,7 @@
  * Includes write-only variables (assigned but never read).
  *
  * Scope:
- * - Only checks local variables in procedures, triggers, and events
+ * - Only checks local variables in procedures, triggers, events, and property triggers
  * - Does NOT check parameters (caller controls them)
  * - Does NOT check global variables (may be used across procedures)
  *
@@ -25,11 +25,11 @@
 
 import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver';
 import {
-  CALDocument,
   VariableDeclaration,
   ProcedureDeclaration,
   TriggerDeclaration,
   EventDeclaration,
+  Property,
   Statement,
   Identifier,
   MemberExpression,
@@ -90,9 +90,13 @@ class UnusedVariableVisitor implements Partial<ASTVisitor> {
   }
 
   /**
-   * Skip field declarations - not relevant for local variable analysis
+   * Visit Property - analyze local variable usage in property trigger if present
+   * Returns false to prevent automatic traversal
    */
-  visitFieldDeclaration(): false {
+  visitProperty(node: Property): false {
+    if (node.triggerBody) {
+      this.analyzeScope(node.triggerVariables || [], node.triggerBody);
+    }
     return false;
   }
 
