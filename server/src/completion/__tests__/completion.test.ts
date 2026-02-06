@@ -543,7 +543,7 @@ describe('CompletionProvider', () => {
       const consistentItem = items.find(i => i.label === 'CONSISTENT');
       expect(consistentItem).toBeDefined();
       const documentation = consistentItem?.documentation as string;
-      const docIndex = documentation.indexOf('consistent');
+      const docIndex = documentation.indexOf('Marks the record as consistent');
       const deprecatedIndex = documentation.indexOf('**Deprecated:**');
       expect(docIndex).toBeGreaterThan(-1);
       expect(deprecatedIndex).toBeGreaterThan(-1);

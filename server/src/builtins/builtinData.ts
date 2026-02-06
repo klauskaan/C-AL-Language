@@ -8,6 +8,15 @@ export interface BuiltinFunction {
   signature: string;
   documentation: string;
   category: 'dialog' | 'record' | 'string' | 'math' | 'date' | 'system' | 'file' | 'report';
+  /**
+   * Deprecation reason, shown to users.
+   * Style guide:
+   * - Complete sentences with trailing periods
+   * - Two-part structure when applicable: explanation + recommendation
+   * - Capital first letter
+   * - UPPERCASE function names
+   * - Concise (1-2 sentences max)
+   */
   deprecated?: string;
 }
 
@@ -741,7 +750,7 @@ export const RECORD_METHODS: BuiltinFunction[] = [
     signature: '(): Boolean',
     documentation: 'Returns TRUE if record-level locking is enabled.',
     category: 'record',
-    deprecated: 'Always returns TRUE in SQL Server-based versions. No longer meaningful'
+    deprecated: 'Always returns TRUE in SQL Server-based versions. Can be safely removed.'
   },
 
   // Table information
@@ -798,7 +807,7 @@ export const RECORD_METHODS: BuiltinFunction[] = [
     signature: '(): RecordID',
     documentation: 'Returns the RecordID of the current record.',
     category: 'record',
-    deprecated: 'Use RECORDID instead'
+    deprecated: 'Use RECORDID instead.'
   },
 
   // BLOB handling
@@ -821,7 +830,7 @@ export const RECORD_METHODS: BuiltinFunction[] = [
     signature: '(Value)',
     documentation: 'Marks the record as consistent (TRUE) or inconsistent (FALSE).',
     category: 'record',
-    deprecated: 'Transaction consistency is managed automatically. Rarely needed'
+    deprecated: 'Transaction consistency is managed automatically.'
   },
   {
     name: 'SETRECFILTER',
