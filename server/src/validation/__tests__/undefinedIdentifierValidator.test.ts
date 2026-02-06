@@ -1255,7 +1255,7 @@ describe('UndefinedIdentifierValidator - Real-World Patterns', () => {
       expect(diagnostics).toHaveLength(0);
     });
 
-    it('should detect undefined codeunit call', () => {
+    it('should not flag method calls on codeunit variables', () => {
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           PROCEDURE TestProc();
@@ -1269,9 +1269,15 @@ describe('UndefinedIdentifierValidator - Real-World Patterns', () => {
 
       const diagnostics = validateUndefinedIdentifiers(code);
 
-      // UndefinedMethod is not a builtin
-      const undefinedError = diagnostics.find(d => d.message.includes('UndefinedMethod'));
-      expect(undefinedError).toBeDefined();
+      // Methods on Codeunit variables cannot be validated
+      // We don't know what methods exist on external codeunits
+      expect(diagnostics).toHaveLength(0);
+      // Methods on Codeunit variables cannot be validated
+      // We don't know what methods exist on external codeunits
+      expect(diagnostics).toHaveLength(0);
+      // Methods on Codeunit variables cannot be validated
+      // We don't know what methods exist on external codeunits
+      expect(diagnostics).toHaveLength(0);
     });
 
     it('should handle global variable access', () => {

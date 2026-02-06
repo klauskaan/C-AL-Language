@@ -215,7 +215,7 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
     const endCharacter = endToken.column + (endToken.endOffset - endToken.startOffset) - 1;
 
     this.diagnostics.push({
-      message: `Undefined identifier '${node.name}'`,
+      message: `Undefined identifier: '${node.name}'`,
       severity: DiagnosticSeverity.Warning,
       range: {
         start: {
