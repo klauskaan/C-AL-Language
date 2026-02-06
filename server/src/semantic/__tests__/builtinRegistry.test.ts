@@ -6,9 +6,6 @@
  * - Global functions: MESSAGE, ERROR, FORMAT, CONFIRM, etc.
  * - Record methods: FIND, GET, INSERT, MODIFY, DELETE, etc.
  * - NOT included: Syntactic keywords (IF, THEN, BEGIN, END)
- *
- * Test Strategy: These tests SHOULD FAIL initially since BuiltinRegistry
- * doesn't exist yet. This validates the tests are meaningful (TDD approach).
  */
 
 import { BuiltinRegistry } from '../builtinRegistry';
