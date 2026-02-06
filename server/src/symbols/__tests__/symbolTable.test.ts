@@ -13,10 +13,7 @@ import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../../parser/parser';
 import { Scope, SymbolTable, Symbol } from '../symbolTable';
 import { Token, TokenType } from '../../lexer/tokens';
-import {
-  CALDocument,
-  DataType
-} from '../../parser/ast';
+import { CALDocument } from '../../parser/ast';
 
 /**
  * Helper to lex and parse C/AL code into an AST
@@ -314,6 +311,106 @@ describe('Scope Class', () => {
       const child = new Scope(parent);
 
       expect(child.hasSymbol('unknown')).toBe(false);
+    });
+  });
+
+  describe('Scope boundary behavior (endOffset exclusive)', () => {
+    it('should resolve offset at startOffset to child scope', () => {
+      const code = `OBJECT Table 18 Customer
+{
+  CODE
+  {
+    PROCEDURE TestProc()
+    BEGIN
+    END;
+  }
+}`;
+      const symbolTable = buildSymbolTable(code);
+      const rootScope = symbolTable.getRootScope();
+
+      const procSymbol = symbolTable.getSymbol('TestProc');
+      expect(procSymbol).toBeDefined();
+
+      const childScope = rootScope.children[0];
+      expect(childScope).toBeDefined();
+
+      const scopeAtStart = symbolTable.getScopeAtOffset(childScope.startOffset);
+      expect(scopeAtStart).toBe(childScope);
+    });
+
+    it('should resolve offset at endOffset - 1 to child scope', () => {
+      const code = `OBJECT Table 18 Customer
+{
+  CODE
+  {
+    PROCEDURE TestProc()
+    BEGIN
+    END;
+  }
+}`;
+      const symbolTable = buildSymbolTable(code);
+      const rootScope = symbolTable.getRootScope();
+
+      const procSymbol = symbolTable.getSymbol('TestProc');
+      expect(procSymbol).toBeDefined();
+
+      const childScope = rootScope.children[0];
+      expect(childScope).toBeDefined();
+
+      const scopeAtLastChar = symbolTable.getScopeAtOffset(childScope.endOffset - 1);
+      expect(scopeAtLastChar).toBe(childScope);
+    });
+
+    it('should resolve offset at endOffset to parent scope', () => {
+      const code = `OBJECT Table 18 Customer
+{
+  CODE
+  {
+    PROCEDURE TestProc()
+    BEGIN
+    END;
+  }
+}`;
+      const symbolTable = buildSymbolTable(code);
+      const rootScope = symbolTable.getRootScope();
+
+      const procSymbol = symbolTable.getSymbol('TestProc');
+      expect(procSymbol).toBeDefined();
+
+      const childScope = rootScope.children[0];
+      expect(childScope).toBeDefined();
+
+      const scopeAtEnd = symbolTable.getScopeAtOffset(childScope.endOffset);
+      expect(scopeAtEnd).toBe(rootScope);
+    });
+
+    it('should correctly handle adjacent scopes without overlap', () => {
+      const code = `OBJECT Table 18 Customer
+{
+  CODE
+  {
+    PROCEDURE ProcA()
+    BEGIN
+    END;
+
+    PROCEDURE ProcB()
+    BEGIN
+    END;
+  }
+}`;
+      const symbolTable = buildSymbolTable(code);
+      const rootScope = symbolTable.getRootScope();
+
+      expect(rootScope.children.length).toBeGreaterThanOrEqual(2);
+
+      const scope1 = rootScope.children[0];
+      const scope2 = rootScope.children[1];
+
+      const atEndOfScope1 = symbolTable.getScopeAtOffset(scope1.endOffset);
+      expect(atEndOfScope1).toBe(rootScope);
+
+      const atStartOfScope2 = symbolTable.getScopeAtOffset(scope2.startOffset);
+      expect(atStartOfScope2).toBe(scope2);
     });
   });
 

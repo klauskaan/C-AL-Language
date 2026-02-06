@@ -155,12 +155,40 @@ export enum TokenType {
   PreprocessorDirective = 'PREPROCESSOR_DIRECTIVE'  // #if, #else, #endif not supported in C/AL
 }
 
+/**
+ * Codebase-wide offset convention:
+ *
+ * All `endOffset` fields throughout this codebase use exclusive (half-open interval) semantics.
+ * Offsets form half-open intervals: [startOffset, endOffset)
+ *
+ * This means:
+ * - startOffset: Inclusive start position (0-indexed)
+ * - endOffset: Exclusive end position (one past the last character)
+ * - Length: endOffset - startOffset
+ * - Substring extraction: document.substring(startOffset, endOffset)
+ *
+ * Example: For "OBJECT" at offset 0:
+ *   startOffset = 0
+ *   endOffset = 6
+ *   document.substring(0, 6) = "OBJECT"
+ *
+ * This convention applies universally to:
+ * - Token offsets (this file)
+ * - Scope offsets (scope tracking)
+ * - TriviaSpan offsets (trivia handling)
+ * - All other offset-based ranges in the codebase
+ *
+ * For detailed explanation and validation examples, see:
+ * server/src/validation/positionValidator.ts
+ */
 export interface Token {
   type: TokenType;
   value: string;
   line: number;
   column: number;
+  /** Inclusive start position in the document (0-indexed) */
   startOffset: number;
+  /** Exclusive end position in the document (one past the last character). Together with startOffset, forms a half-open interval [startOffset, endOffset) */
   endOffset: number;
 }
 

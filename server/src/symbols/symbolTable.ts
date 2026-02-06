@@ -48,10 +48,10 @@ export class Scope {
   /** Child scopes (procedures, triggers) */
   public children: Scope[] = [];
 
-  /** Start offset of this scope in the document */
+  /** Inclusive start position in the document (0-indexed). Forms a half-open interval [startOffset, endOffset) with endOffset. */
   public startOffset: number = 0;
 
-  /** End offset of this scope in the document */
+  /** Exclusive end position in the document (one past the last character). Defaults to Number.MAX_SAFE_INTEGER for the root scope as a sentinel value to encompass the entire document. */
   public endOffset: number = Number.MAX_SAFE_INTEGER;
 
   /**
@@ -397,7 +397,7 @@ export class SymbolTable {
   private findScopeAtOffset(scope: Scope, offset: number): Scope {
     // Check each child scope to see if the offset falls within it
     for (const child of scope.children) {
-      if (offset >= child.startOffset && offset <= child.endOffset) {
+      if (offset >= child.startOffset && offset < child.endOffset) {
         // Recursively search within this child scope for deeper matches
         return this.findScopeAtOffset(child, offset);
       }
