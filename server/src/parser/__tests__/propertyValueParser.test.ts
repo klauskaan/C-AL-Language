@@ -1,28 +1,20 @@
 /**
- * TDD TESTS: PropertyValueParser - CalcFormula and TableRelation Mini-Parser
+ * PropertyValueParser - CalcFormula and TableRelation Mini-Parser Tests
  *
- * These tests define the expected behavior for parsing complex property values
- * into structured AST nodes using the PropertyValueParser class.
- *
- * EXPECTED INITIAL STATE: ALL TESTS SHOULD FAIL
- * - PropertyValueParser class does not exist yet
- * - CalcFormulaNode, TableRelationNode, and related AST types don't exist
- * - This is phase 2 of issue #9 - we already have valueTokens from phase 1
- *
- * This is the TDD validation step - tests fail first, then we implement
- * the mini-parser to make them pass.
+ * Tests for parsing complex property values into structured AST nodes.
  *
  * Context: Issue #9 - Parse CalcFormula and TableRelation with mini-parser
  * - Step 1 (complete): Property.valueTokens captures tokens
  * - Step 2 (this file): PropertyValueParser consumes tokens to create AST
  *
- * The PropertyValueParser should:
- * 1. Accept an array of tokens (from Property.valueTokens)
- * 2. Parse CalcFormula: Sum/Count/Lookup/Exist/Min/Max/Average with WHERE clauses
- * 3. Parse TableRelation: simple/qualified table refs with WHERE and IF/ELSE
- * 4. Return structured AST nodes with proper type information
- * 5. Gracefully handle malformed input (return null on parse failure)
- * 6. Preserve position information from original tokens
+ * The PropertyValueParser:
+ * 1. Accepts an array of tokens (from Property.valueTokens)
+ * 2. Parses CalcFormula: Sum/Count/Lookup/Exist/Min/Max/Average with WHERE clauses
+ * 3. Parses TableRelation: simple/qualified table refs with WHERE and IF/ELSE
+ * 4. Returns structured AST nodes with proper type information
+ * 5. Gracefully handles malformed input (returns null on parse failure)
+ * 6. Preserves position information from original tokens
+ * 7. Collects diagnostics for parse failures (issue #193)
  *
  * Test Coverage:
  * - CalcFormula: All aggregation functions (Sum, Count, Lookup, Exist, Min, Max, Average)
@@ -33,6 +25,7 @@
  * - TableRelation: WHERE clauses with predicates
  * - TableRelation: Conditional IF/ELSE relations (including nested IF/ELSE)
  * - Error handling: Malformed expressions, missing tokens, unexpected tokens
+ * - Diagnostic reporting: Error messages with token positions (issue #193)
  * - Edge cases: Empty input, whitespace, incomplete expressions
  */
 
@@ -79,7 +72,6 @@ describe('PropertyValueParser - CalcFormula Parsing', () => {
         }
       }`;
 
-      // EXPECTED TO FAIL: PropertyValueParser doesn't exist
       const tokens = getPropertyValueTokens(code, 'CalcFormula');
       const parser = new PropertyValueParser(tokens);
       const result = parser.parseCalcFormula();
@@ -390,7 +382,6 @@ describe('PropertyValueParser - TableRelation Parsing', () => {
       const parser = new PropertyValueParser(tokens);
       const result = parser.parseTableRelation();
 
-      // EXPECTED TO FAIL: PropertyValueParser doesn't exist
       expect(result).toBeDefined();
       expect(result?.type).toBe('TableRelationNode');
       expect(result?.tableName).toBe('Customer');
@@ -643,9 +634,6 @@ describe('PropertyValueParser - TableRelation Parsing', () => {
   });
 
   describe('TableRelation IF/ELSE IF/ELSE chain as flat array (issue #228)', () => {
-    // EXPECTED TO FAIL: Parser currently produces nested structure
-    // Should produce flat array per ast.ts:186-191
-
     it('should parse IF/ELSE IF/ELSE chain as flat array with 3 branches', () => {
       // Main test case for issue #228
       const code = `OBJECT Table 1 Test {
@@ -819,7 +807,6 @@ describe('PropertyValueParser - Error Handling', () => {
       const parser = new PropertyValueParser([]);
       const result = parser.parseCalcFormula();
 
-      // EXPECTED TO FAIL: PropertyValueParser doesn't exist
       expect(result).toBeNull();
     });
 
@@ -882,8 +869,6 @@ describe('PropertyValueParser - Error Handling', () => {
       const parser = new PropertyValueParser(tokens);
       const result = parser.parseTableRelation();
 
-      // EXPECTED TO FAIL: Parser currently accepts this malformed input
-      // Should reject trailing "garbage" token after valid TableRelation
       expect(result).toBeNull();
     });
 
@@ -903,8 +888,6 @@ describe('PropertyValueParser - Error Handling', () => {
       const parser = new PropertyValueParser(tokens);
       const result = parser.parseCalcFormula();
 
-      // EXPECTED TO FAIL: Parser currently accepts this malformed input
-      // Should reject trailing tokens after valid CalcFormula
       expect(result).toBeNull();
     });
 
@@ -1098,6 +1081,347 @@ describe('PropertyValueParser - Integration with Property.valueTokens', () => {
 
       expect(result).toBeDefined();
       expect(result?.tableName).toBe('Customer');
+    });
+  });
+});
+
+describe('PropertyValueParser - Diagnostic Reporting', () => {
+  describe('CalcFormula diagnostics', () => {
+    it('should report diagnostic for empty input', () => {
+      const parser = new PropertyValueParser([]);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeNull();
+
+      const diagnostics = parser.getDiagnostics();
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0].message).toContain('end of input');
+    });
+
+    it('should report diagnostic for invalid aggregation function', () => {
+      const tokens: Token[] = [
+        { type: TokenType.Identifier, value: 'InvalidFunc', line: 1, column: 1, startOffset: 0, endOffset: 11 },
+        { type: TokenType.LeftParen, value: '(', line: 1, column: 12, startOffset: 12, endOffset: 13 },
+        { type: TokenType.Identifier, value: 'Table', line: 1, column: 13, startOffset: 13, endOffset: 18 },
+        { type: TokenType.RightParen, value: ')', line: 1, column: 18, startOffset: 18, endOffset: 19 },
+      ];
+
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeNull();
+
+      const diagnostics = parser.getDiagnostics();
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0].message).toMatch(/expected.*aggregation function/i);
+      expect(diagnostics[0].token.value).toBe('InvalidFunc');
+    });
+
+    it('should report diagnostic for missing opening parenthesis', () => {
+      const tokens: Token[] = [
+        { type: TokenType.Identifier, value: 'Sum', line: 1, column: 1, startOffset: 0, endOffset: 3 },
+        { type: TokenType.QuotedIdentifier, value: 'Sales Line', line: 2, column: 5, startOffset: 10, endOffset: 22 },
+      ];
+
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeNull();
+
+      const diagnostics = parser.getDiagnostics();
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0].message).toMatch(/expected.*\(/i);
+      expect(diagnostics[0].token.value).toBe('Sales Line');
+    });
+
+    it('should report diagnostic for missing table reference', () => {
+      const tokens: Token[] = [
+        { type: TokenType.Identifier, value: 'Sum', line: 1, column: 1, startOffset: 0, endOffset: 3 },
+        { type: TokenType.LeftParen, value: '(', line: 1, column: 4, startOffset: 4, endOffset: 5 },
+        { type: TokenType.RightParen, value: ')', line: 1, column: 5, startOffset: 5, endOffset: 6 },
+      ];
+
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeNull();
+
+      const diagnostics = parser.getDiagnostics();
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0].message).toMatch(/expected.*table/i);
+      expect(diagnostics[0].token.type).toBe(TokenType.RightParen);
+    });
+
+    it('should report diagnostic for missing field name after dot', () => {
+      const tokens: Token[] = [
+        { type: TokenType.Identifier, value: 'Sum', line: 1, column: 1, startOffset: 0, endOffset: 3 },
+        { type: TokenType.LeftParen, value: '(', line: 1, column: 4, startOffset: 4, endOffset: 5 },
+        { type: TokenType.QuotedIdentifier, value: 'Sales Line', line: 1, column: 5, startOffset: 5, endOffset: 17 },
+        { type: TokenType.Dot, value: '.', line: 1, column: 17, startOffset: 17, endOffset: 18 },
+        { type: TokenType.RightParen, value: ')', line: 1, column: 18, startOffset: 18, endOffset: 19 },
+      ];
+
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeNull();
+
+      const diagnostics = parser.getDiagnostics();
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0].message).toMatch(/expected.*field/i);
+      expect(diagnostics[0].token.type).toBe(TokenType.RightParen);
+    });
+
+    it('should report diagnostic for trailing tokens after CalcFormula', () => {
+      const tokens: Token[] = [
+        { type: TokenType.Identifier, value: 'Sum', line: 1, column: 1, startOffset: 0, endOffset: 3 },
+        { type: TokenType.LeftParen, value: '(', line: 1, column: 4, startOffset: 4, endOffset: 5 },
+        { type: TokenType.QuotedIdentifier, value: 'Sales Line', line: 1, column: 5, startOffset: 5, endOffset: 17 },
+        { type: TokenType.Dot, value: '.', line: 1, column: 17, startOffset: 17, endOffset: 18 },
+        { type: TokenType.Identifier, value: 'Amount', line: 1, column: 18, startOffset: 18, endOffset: 24 },
+        { type: TokenType.RightParen, value: ')', line: 1, column: 24, startOffset: 24, endOffset: 25 },
+        { type: TokenType.Identifier, value: 'garbage', line: 1, column: 26, startOffset: 26, endOffset: 33 },
+      ];
+
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeNull();
+
+      const diagnostics = parser.getDiagnostics();
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0].message).toMatch(/unexpected.*token/i);
+      expect(diagnostics[0].token.value).toBe('garbage');
+    });
+
+    it('should report diagnostic with correct token position', () => {
+      const tokens: Token[] = [
+        { type: TokenType.Identifier, value: 'Sum', line: 3, column: 15, startOffset: 50, endOffset: 53 },
+        { type: TokenType.LeftParen, value: '(', line: 3, column: 18, startOffset: 54, endOffset: 55 },
+        { type: TokenType.Identifier, value: 'InvalidTable', line: 5, column: 20, startOffset: 100, endOffset: 112 },
+        { type: TokenType.Dot, value: '.', line: 5, column: 32, startOffset: 112, endOffset: 113 },
+        // Missing field name after dot - this will cause an error at the synthetic EOF token
+      ];
+
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeNull();
+
+      const diagnostics = parser.getDiagnostics();
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0].message).toContain("Expected field name after '.'");
+
+      // Verify diagnostic token preserves position from peekOrEOF() (synthetic EOF)
+      // When we fail to parse field after dot, we call recordDiagnostic without explicit token,
+      // so it uses peekOrEOF() which creates synthetic EOF at last token's end position
+      const diagnostic = diagnostics[0];
+      expect(diagnostic.token.type).toBe(TokenType.EOF);
+    });
+  });
+
+  describe('TableRelation diagnostics', () => {
+    it('should report diagnostic for empty input', () => {
+      const parser = new PropertyValueParser([]);
+      const result = parser.parseTableRelation();
+
+      expect(result).toBeNull();
+
+      const diagnostics = parser.getDiagnostics();
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0].message).toContain('end of input');
+    });
+
+    it('should report diagnostic for trailing tokens after simple relation', () => {
+      const tokens: Token[] = [
+        { type: TokenType.Identifier, value: 'Customer', line: 1, column: 1, startOffset: 0, endOffset: 8 },
+        { type: TokenType.Identifier, value: 'garbage', line: 1, column: 10, startOffset: 10, endOffset: 17 },
+      ];
+
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).toBeNull();
+
+      const diagnostics = parser.getDiagnostics();
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0].message).toMatch(/unexpected.*token/i);
+      expect(diagnostics[0].token.value).toBe('garbage');
+    });
+
+    it('should report diagnostic for trailing tokens after conditional relation', () => {
+      const tokens: Token[] = [
+        { type: TokenType.If, value: 'IF', line: 1, column: 1, startOffset: 0, endOffset: 2 },
+        { type: TokenType.LeftParen, value: '(', line: 1, column: 4, startOffset: 4, endOffset: 5 },
+        { type: TokenType.Identifier, value: 'Type', line: 1, column: 5, startOffset: 5, endOffset: 9 },
+        { type: TokenType.Equal, value: '=', line: 1, column: 9, startOffset: 9, endOffset: 10 },
+        { type: TokenType.Identifier, value: 'CONST', line: 1, column: 10, startOffset: 10, endOffset: 15 },
+        { type: TokenType.LeftParen, value: '(', line: 1, column: 15, startOffset: 15, endOffset: 16 },
+        { type: TokenType.Identifier, value: 'Item', line: 1, column: 16, startOffset: 16, endOffset: 20 },
+        { type: TokenType.RightParen, value: ')', line: 1, column: 20, startOffset: 20, endOffset: 21 },
+        { type: TokenType.RightParen, value: ')', line: 1, column: 21, startOffset: 21, endOffset: 22 },
+        { type: TokenType.Identifier, value: 'Item', line: 1, column: 23, startOffset: 23, endOffset: 27 },
+        { type: TokenType.Identifier, value: 'garbage', line: 1, column: 28, startOffset: 28, endOffset: 35 },
+      ];
+
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).toBeNull();
+
+      const diagnostics = parser.getDiagnostics();
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0].message).toMatch(/unexpected.*token/i);
+      expect(diagnostics[0].token.value).toBe('garbage');
+    });
+
+    it('should report diagnostic for malformed WHERE clause', () => {
+      const tokens: Token[] = [
+        { type: TokenType.Identifier, value: 'Customer', line: 1, column: 1, startOffset: 0, endOffset: 8 },
+        { type: TokenType.Identifier, value: 'WHERE', line: 1, column: 10, startOffset: 10, endOffset: 15 },
+        { type: TokenType.LeftParen, value: '(', line: 1, column: 16, startOffset: 16, endOffset: 17 },
+        { type: TokenType.Identifier, value: 'Blocked', line: 1, column: 17, startOffset: 17, endOffset: 24 },
+        { type: TokenType.Equal, value: '=', line: 1, column: 24, startOffset: 24, endOffset: 25 },
+        // Missing CONST/FIELD/FILTER predicate
+        { type: TokenType.RightParen, value: ')', line: 1, column: 25, startOffset: 25, endOffset: 26 },
+      ];
+
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).toBeNull();
+
+      const diagnostics = parser.getDiagnostics();
+      expect(diagnostics).toHaveLength(1);
+      // Generic message since sub-methods don't record diagnostics (per plan)
+      expect(diagnostics[0].message).toContain('Malformed WHERE clause');
+      expect(diagnostics[0].token.type).toBe(TokenType.RightParen);
+    });
+  });
+
+  describe('First-error-wins policy', () => {
+    it('should produce at most one diagnostic for multiple errors in CalcFormula', () => {
+      // Multiple errors: invalid function, missing paren, etc.
+      const tokens: Token[] = [
+        { type: TokenType.Identifier, value: 'InvalidFunc', line: 1, column: 1, startOffset: 0, endOffset: 11 },
+        { type: TokenType.QuotedIdentifier, value: 'Sales Line', line: 1, column: 12, startOffset: 12, endOffset: 24 },
+        // No opening paren, no closing paren, no field name
+      ];
+
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeNull();
+
+      const diagnostics = parser.getDiagnostics();
+      // Should report first error encountered, not all errors
+      expect(diagnostics.length).toBeLessThanOrEqual(1);
+    });
+
+    it('should produce at most one diagnostic for multiple errors in TableRelation', () => {
+      // Multiple errors: malformed IF, missing condition, etc.
+      const tokens: Token[] = [
+        { type: TokenType.If, value: 'IF', line: 1, column: 1, startOffset: 0, endOffset: 2 },
+        { type: TokenType.Identifier, value: 'Type', line: 1, column: 4, startOffset: 4, endOffset: 8 },
+        // Missing opening paren, missing operator, missing value, etc.
+      ];
+
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).toBeNull();
+
+      const diagnostics = parser.getDiagnostics();
+      // Should report first error encountered, not all errors
+      expect(diagnostics.length).toBeLessThanOrEqual(1);
+    });
+  });
+
+  describe('Successful parse produces empty diagnostics', () => {
+    it('should have empty diagnostics array for successful CalcFormula parse', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; Total ; Decimal ;
+            CalcFormula=Sum("Sales Line".Amount) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).not.toBeNull();
+
+      const diagnostics = parser.getDiagnostics();
+      expect(diagnostics).toHaveLength(0);
+    });
+
+    it('should have empty diagnostics array for successful TableRelation parse', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; CustomerNo ; Code20 ;
+            TableRelation=Customer }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+
+      const diagnostics = parser.getDiagnostics();
+      expect(diagnostics).toHaveLength(0);
+    });
+  });
+
+  describe('Integration with main Parser', () => {
+    it('should forward CalcFormula diagnostic to parser errors', () => {
+      // Malformed CalcFormula: missing opening paren
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; Total ; Decimal ;
+            CalcFormula=Sum "Sales Line".Amount) }
+        }
+      }`;
+
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      parser.parse();
+
+      const errors = parser.getErrors();
+
+      // Should have at least one error related to CalcFormula parsing
+      const calcFormulaError = errors.find(e =>
+        e.message.includes('CalcFormula') ||
+        e.message.includes('expected') ||
+        e.message.includes('(')
+      );
+      expect(calcFormulaError).toBeDefined();
+    });
+
+    it('should forward TableRelation diagnostic to parser errors', () => {
+      // Malformed TableRelation: trailing garbage
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; CustomerNo ; Code20 ;
+            TableRelation=Customer garbage }
+        }
+      }`;
+
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      parser.parse();
+
+      const errors = parser.getErrors();
+
+      // Should have at least one error related to TableRelation parsing
+      const tableRelationError = errors.find(e =>
+        e.message.includes('TableRelation') ||
+        e.message.includes('unexpected') ||
+        e.message.includes('garbage')
+      );
+      expect(tableRelationError).toBeDefined();
     });
   });
 });

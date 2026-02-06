@@ -8,6 +8,23 @@ import {
 } from './ast';
 
 /**
+ * Lightweight diagnostic collected during property value parsing.
+ *
+ * Intentionally NOT a ParseError -- PropertyValueParser operates outside
+ * the main Parser's sanitization boundary. The main Parser converts these
+ * to ParseError instances via createParseError(), which applies stripPaths()
+ * and other sanitization.
+ *
+ * Callers using the static factory methods do not receive diagnostics.
+ * Use the instance API (construct, parse, getDiagnostics) when diagnostics
+ * are needed.
+ */
+export interface PropertyValueDiagnostic {
+  message: string;
+  token: Token;
+}
+
+/**
  * PropertyValueParser - Mini-parser for complex property values
  *
  * Parses CalcFormula and TableRelation property values from token arrays.
@@ -35,6 +52,7 @@ import {
 export class PropertyValueParser {
   private tokens: Token[];
   private position: number = 0;
+  private diagnostics: PropertyValueDiagnostic[] = [];
 
   /**
    * Set of token types that cannot be treated as identifiers in property value contexts.
@@ -69,7 +87,22 @@ export class PropertyValueParser {
   }
 
   /**
+   * Get diagnostics collected during parsing
+   */
+  public getDiagnostics(): PropertyValueDiagnostic[] {
+    return this.diagnostics;
+  }
+
+  /**
+   * Record a diagnostic during parsing
+   */
+  private recordDiagnostic(message: string, token?: Token): void {
+    this.diagnostics.push({ message, token: token ?? this.peekOrEOF() });
+  }
+
+  /**
    * Static factory method for parsing CalcFormula
+   * Note: Diagnostics are not returned. Use instance API when diagnostics are needed.
    */
   static parseCalcFormula(tokens: Token[]): CalcFormulaNode | null {
     const parser = new PropertyValueParser(tokens);
@@ -78,6 +111,7 @@ export class PropertyValueParser {
 
   /**
    * Static factory method for parsing TableRelation
+   * Note: Diagnostics are not returned. Use instance API when diagnostics are needed.
    */
   static parseTableRelation(tokens: Token[]): TableRelationNode | null {
     const parser = new PropertyValueParser(tokens);
@@ -103,6 +137,7 @@ export class PropertyValueParser {
   parseCalcFormula(): CalcFormulaNode | null {
     try {
       if (this.isAtEnd()) {
+        this.recordDiagnostic('Expected aggregation function, got end of input');
         return null;
       }
 
@@ -111,17 +146,20 @@ export class PropertyValueParser {
       // Parse aggregation function
       const aggregationFunction = this.parseAggregationFunction();
       if (!aggregationFunction) {
+        this.recordDiagnostic('Expected aggregation function (Sum, Count, Lookup, Exist, Min, Max, Average)');
         return null;
       }
 
       // Expect opening parenthesis
       if (!this.match(TokenType.LeftParen)) {
+        this.recordDiagnostic("Expected '(' after aggregation function");
         return null;
       }
 
       // Parse table reference
       const sourceTable = this.parseIdentifierValue();
       if (!sourceTable) {
+        this.recordDiagnostic("Expected table reference after '('");
         return null;
       }
 
@@ -130,6 +168,7 @@ export class PropertyValueParser {
       if (this.match(TokenType.Dot)) {
         const field = this.parseIdentifierValue();
         if (!field) {
+          this.recordDiagnostic("Expected field name after '.'");
           return null;
         }
         sourceField = field;
@@ -141,6 +180,7 @@ export class PropertyValueParser {
         this.advance(); // consume WHERE
         const wc = this.parseWhereClause();
         if (!wc) {
+          this.recordDiagnostic('Malformed WHERE clause');
           return null;
         }
         whereClause = wc;
@@ -152,6 +192,7 @@ export class PropertyValueParser {
 
       // Reject if there are unconsumed tokens (trailing garbage)
       if (!this.isAtEnd()) {
+        this.recordDiagnostic('Unexpected token after CalcFormula expression');
         return null;
       }
 
@@ -165,6 +206,7 @@ export class PropertyValueParser {
         endToken
       };
     } catch {
+      this.recordDiagnostic('Unexpected error parsing CalcFormula');
       return null;
     }
   }
@@ -188,6 +230,7 @@ export class PropertyValueParser {
   parseTableRelation(): TableRelationNode | null {
     try {
       if (this.isAtEnd()) {
+        this.recordDiagnostic('Expected table name or IF, got end of input');
         return null;
       }
 
@@ -197,6 +240,7 @@ export class PropertyValueParser {
       if (this.check(TokenType.If)) {
         const conditionalRelations = this.parseConditionalRelations();
         if (!conditionalRelations || conditionalRelations.length === 0) {
+          this.recordDiagnostic('Malformed conditional TableRelation');
           return null;
         }
 
@@ -204,6 +248,7 @@ export class PropertyValueParser {
 
         // Reject if there are unconsumed tokens (trailing garbage)
         if (!this.isAtEnd()) {
+          this.recordDiagnostic('Unexpected token after TableRelation expression');
           return null;
         }
 
@@ -218,6 +263,7 @@ export class PropertyValueParser {
       // Parse simple table relation
       const tableName = this.parseIdentifierValue();
       if (!tableName) {
+        this.recordDiagnostic('Expected table name');
         return null;
       }
 
@@ -226,6 +272,7 @@ export class PropertyValueParser {
       if (this.match(TokenType.Dot)) {
         const field = this.parseIdentifierValue();
         if (!field) {
+          this.recordDiagnostic("Expected field name after '.'");
           return null;
         }
         fieldName = field;
@@ -237,6 +284,7 @@ export class PropertyValueParser {
         this.advance(); // consume WHERE
         const wc = this.parseWhereClause();
         if (!wc) {
+          this.recordDiagnostic('Malformed WHERE clause');
           return null;
         }
         whereClause = wc;
@@ -246,6 +294,7 @@ export class PropertyValueParser {
 
       // Reject if there are unconsumed tokens (trailing garbage)
       if (!this.isAtEnd()) {
+        this.recordDiagnostic('Unexpected token after TableRelation expression');
         return null;
       }
 
@@ -258,6 +307,7 @@ export class PropertyValueParser {
         endToken
       };
     } catch {
+      this.recordDiagnostic('Unexpected error parsing TableRelation');
       return null;
     }
   }

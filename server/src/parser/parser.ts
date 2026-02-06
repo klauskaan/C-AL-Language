@@ -655,9 +655,17 @@ export class Parser {
       const lowerName = name.toLowerCase();
 
       if (lowerName === 'calcformula') {
-        property.calcFormula = PropertyValueParser.parseCalcFormula(valueTokens) ?? undefined;
+        const pvp = new PropertyValueParser(valueTokens);
+        property.calcFormula = pvp.parseCalcFormula() ?? undefined;
+        for (const diag of pvp.getDiagnostics()) {
+          this.recordError(diag.message, diag.token);
+        }
       } else if (lowerName === 'tablerelation') {
-        property.tableRelation = PropertyValueParser.parseTableRelation(valueTokens) ?? undefined;
+        const pvp = new PropertyValueParser(valueTokens);
+        property.tableRelation = pvp.parseTableRelation() ?? undefined;
+        for (const diag of pvp.getDiagnostics()) {
+          this.recordError(diag.message, diag.token);
+        }
       }
     }
 
@@ -1277,9 +1285,17 @@ export class Parser {
               const lowerName = name.toLowerCase();
 
               if (lowerName === 'calcformula') {
-                property.calcFormula = PropertyValueParser.parseCalcFormula(valueTokens) ?? undefined;
+                const pvp = new PropertyValueParser(valueTokens);
+                property.calcFormula = pvp.parseCalcFormula() ?? undefined;
+                for (const diag of pvp.getDiagnostics()) {
+                  this.recordError(diag.message, diag.token);
+                }
               } else if (lowerName === 'tablerelation') {
-                property.tableRelation = PropertyValueParser.parseTableRelation(valueTokens) ?? undefined;
+                const pvp = new PropertyValueParser(valueTokens);
+                property.tableRelation = pvp.parseTableRelation() ?? undefined;
+                for (const diag of pvp.getDiagnostics()) {
+                  this.recordError(diag.message, diag.token);
+                }
               }
             }
 
