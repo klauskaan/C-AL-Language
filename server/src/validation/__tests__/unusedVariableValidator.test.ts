@@ -969,6 +969,215 @@ describe('UnusedVariableValidator - Diagnostic Properties', () => {
   });
 });
 
+describe('UnusedVariableValidator - Field Triggers', () => {
+  describe('Variables in field trigger scopes', () => {
+    it('should detect unused variable in OnValidate trigger', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1   ;   ;"No."           ;Code20
+                                       OnValidate=VAR
+                                                    UnusedInValidate : Integer;
+                                                  BEGIN
+                                                    MESSAGE('Validating');
+                                                  END;
+                                                   }
+        }
+        CODE {
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const unusedError = diagnostics.find(d => d.message.includes('UnusedInValidate'));
+      expect(unusedError).toBeDefined();
+      expect(unusedError!.message).toBe("Variable 'UnusedInValidate' is declared but never used");
+    });
+
+    it('should not warn for used variable in OnValidate trigger', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1   ;   ;"No."           ;Code20
+                                       OnValidate=VAR
+                                                    UsedInValidate : Integer;
+                                                  BEGIN
+                                                    UsedInValidate := 10;
+                                                    MESSAGE(FORMAT(UsedInValidate));
+                                                  END;
+                                                   }
+        }
+        CODE {
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const usedError = diagnostics.find(d => d.message.includes('UsedInValidate'));
+      expect(usedError).toBeUndefined();
+    });
+
+    it('should detect unused variable in OnLookup trigger', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1   ;   ;"No."           ;Code20
+                                       OnLookup=VAR
+                                                  UnusedInLookup : Text;
+                                                BEGIN
+                                                  MESSAGE('Looking up');
+                                                END;
+                                                 }
+        }
+        CODE {
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const unusedError = diagnostics.find(d => d.message.includes('UnusedInLookup'));
+      expect(unusedError).toBeDefined();
+    });
+
+    it('should isolate scopes: unused in field trigger, used in CODE procedure', () => {
+      const code = `OBJECT Table 18 Customer {
+        FIELDS {
+          { 1   ;   ;"No."           ;Code20
+                                       OnValidate=VAR
+                                                    x : Integer;
+                                                  BEGIN
+                                                  END;
+                                                   }
+        }
+        CODE {
+          PROCEDURE TestProc();
+          VAR
+            x : Integer;
+          BEGIN
+            MESSAGE(FORMAT(x));
+          END;
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      // Should warn only about field trigger's x, not procedure's x
+      const xErrors = diagnostics.filter(d => d.message.includes("'x'"));
+      expect(xErrors).toHaveLength(1);
+    });
+  });
+});
+
+describe('UnusedVariableValidator - Property Triggers', () => {
+  describe('Variables in property trigger scopes', () => {
+    it('should detect unused variable in OnRun property trigger (Codeunit)', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        PROPERTIES {
+          OnRun=VAR
+                  UnusedInOnRun : Integer;
+                BEGIN
+                  MESSAGE('Running');
+                END;
+        }
+        CODE {
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const unusedError = diagnostics.find(d => d.message.includes('UnusedInOnRun'));
+      expect(unusedError).toBeDefined();
+      expect(unusedError!.message).toBe("Variable 'UnusedInOnRun' is declared but never used");
+    });
+
+    it('should not warn for used variable in OnRun property trigger', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        PROPERTIES {
+          OnRun=VAR
+                  UsedInOnRun : Text;
+                BEGIN
+                  UsedInOnRun := 'Hello';
+                  MESSAGE(UsedInOnRun);
+                END;
+        }
+        CODE {
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const usedError = diagnostics.find(d => d.message.includes('UsedInOnRun'));
+      expect(usedError).toBeUndefined();
+    });
+
+    it('should handle property trigger with no variables', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        PROPERTIES {
+          OnRun=BEGIN MESSAGE('Hello'); END;
+        }
+        CODE {
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      expect(diagnostics).toHaveLength(0);
+    });
+
+    it('should detect unused variable in property trigger with empty body', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        PROPERTIES {
+          OnRun=VAR
+                  UnusedInEmpty : Integer;
+                BEGIN
+                END;
+        }
+        CODE {
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const unusedError = diagnostics.find(d => d.message.includes('UnusedInEmpty'));
+      expect(unusedError).toBeDefined();
+    });
+  });
+});
+
+describe('UnusedVariableValidator - Combined Field and Property Triggers', () => {
+  describe('Mixed trigger types in same object', () => {
+    it('should detect unused variables in both field trigger and property trigger independently', () => {
+      const code = `OBJECT Table 18 Customer {
+        PROPERTIES {
+          OnInsert=VAR
+                     UnusedInProperty : Integer;
+                   BEGIN
+                     MESSAGE('Inserting');
+                   END;
+        }
+        FIELDS {
+          { 1   ;   ;"No."           ;Code20
+                                       OnValidate=VAR
+                                                    UnusedInField : Text;
+                                                  BEGIN
+                                                    MESSAGE('Validating');
+                                                  END;
+                                                   }
+        }
+        CODE {
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const propertyError = diagnostics.find(d => d.message.includes('UnusedInProperty'));
+      const fieldError = diagnostics.find(d => d.message.includes('UnusedInField'));
+
+      expect(propertyError).toBeDefined();
+      expect(propertyError!.message).toBe("Variable 'UnusedInProperty' is declared but never used");
+      expect(fieldError).toBeDefined();
+      expect(fieldError!.message).toBe("Variable 'UnusedInField' is declared but never used");
+    });
+  });
+});
+
 describe('UnusedVariableValidator - Real-World Patterns', () => {
   describe('Common C/AL patterns', () => {
     it('should not warn for record looping pattern', () => {
