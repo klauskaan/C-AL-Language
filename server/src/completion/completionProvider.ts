@@ -9,6 +9,7 @@
 import {
   CompletionItem,
   CompletionItemKind,
+  CompletionItemTag,
   Position
 } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -128,13 +129,21 @@ function mapSymbolKind(kind: Symbol['kind']): CompletionItemKind {
  * Build completion item from builtin function
  */
 function buildBuiltinItem(func: BuiltinFunction): CompletionItem {
-  return {
+  const item: CompletionItem = {
     label: func.name,
     kind: CompletionItemKind.Function,
     detail: func.signature,
     documentation: func.documentation,
     insertText: func.name
   };
+
+  // Add deprecation indicator if the function is deprecated
+  if (func.deprecated) {
+    item.tags = [CompletionItemTag.Deprecated];
+    item.documentation = `${func.documentation}\n\n**Deprecated:** ${func.deprecated}`;
+  }
+
+  return item;
 }
 
 /**

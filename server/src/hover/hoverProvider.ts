@@ -419,11 +419,17 @@ export class HoverProvider extends ProviderBase {
    */
   private buildBuiltinHover(func: BuiltinFunction, label?: string): Hover {
     const categoryLabel = label || this.getCategoryLabel(func.category);
+    let content = `**${func.name}**${func.signature}\n\n*${categoryLabel}*\n\n${func.documentation}`;
+
+    // Add deprecation warning if the function is deprecated
+    if (func.deprecated) {
+      content += `\n\n**Deprecated:** ${func.deprecated}`;
+    }
 
     return {
       contents: {
         kind: MarkupKind.Markdown,
-        value: `**${func.name}**${func.signature}\n\n*${categoryLabel}*\n\n${func.documentation}`
+        value: content
       }
     };
   }
