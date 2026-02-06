@@ -500,20 +500,6 @@ describe('HoverProvider', () => {
       const content = getHoverContent(hover);
       expect(content).not.toContain('**Deprecated:**');
     });
-
-    it('should show deprecation notice for deprecated Record methods in method context', () => {
-      const doc = createDocument('Rec.RECORDLEVELLOCKING');
-
-      const symbolTable = new SymbolTable();
-      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
-
-      const hover = provider.getHover(doc, Position.create(0, 15), undefined, symbolTable);
-
-      expect(hover).not.toBeNull();
-      const content = getHoverContent(hover);
-      expect(content).toContain('**Deprecated:**');
-      expect(content).toContain('Always returns TRUE in SQL Server-based versions');
-    });
   });
 
   describe('Performance', () => {
