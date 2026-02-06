@@ -571,7 +571,7 @@ describe('HoverProvider', () => {
 
       expect(hover).not.toBeNull();
       const content = getHoverContent(hover);
-      const docIndex = content.indexOf('consistent');
+      const docIndex = content.indexOf('Marks the record as consistent');
       const deprecatedIndex = content.indexOf('**Deprecated:**');
       expect(docIndex).toBeGreaterThan(-1);
       expect(deprecatedIndex).toBeGreaterThan(-1);
