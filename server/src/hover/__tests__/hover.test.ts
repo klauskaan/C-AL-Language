@@ -514,6 +514,68 @@ describe('HoverProvider', () => {
       expect(content).toContain('**Deprecated:**');
       expect(content).toContain('Always returns TRUE in SQL Server-based versions');
     });
+
+    it('should show deprecation notice for GETRECORDID method', () => {
+      const doc = createDocument('Rec.GETRECORDID');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const hover = provider.getHover(doc, Position.create(0, 10), undefined, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('**Deprecated:**');
+      expect(content).toContain('Use RECORDID instead');
+    });
+
+    it('should show original documentation before deprecation for GETRECORDID', () => {
+      const doc = createDocument('Rec.GETRECORDID');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const hover = provider.getHover(doc, Position.create(0, 10), undefined, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      const docIndex = content.indexOf('RecordID of the current record');
+      const deprecatedIndex = content.indexOf('**Deprecated:**');
+      expect(docIndex).toBeGreaterThan(-1);
+      expect(deprecatedIndex).toBeGreaterThan(-1);
+      expect(docIndex).toBeLessThan(deprecatedIndex);
+    });
+
+    it('should show deprecation notice for CONSISTENT method', () => {
+      const doc = createDocument('Rec.CONSISTENT');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const hover = provider.getHover(doc, Position.create(0, 10), undefined, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('**Deprecated:**');
+      expect(content).toContain('Transaction consistency is managed automatically');
+    });
+
+    it('should show original documentation before deprecation for CONSISTENT', () => {
+      const doc = createDocument('Rec.CONSISTENT');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const hover = provider.getHover(doc, Position.create(0, 10), undefined, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      const docIndex = content.indexOf('consistent');
+      const deprecatedIndex = content.indexOf('**Deprecated:**');
+      expect(docIndex).toBeGreaterThan(-1);
+      expect(deprecatedIndex).toBeGreaterThan(-1);
+      expect(docIndex).toBeLessThan(deprecatedIndex);
+    });
   });
 
   describe('Performance', () => {
