@@ -93,15 +93,31 @@ ABORT: Not on main branch. Merge-agent must operate in the main working tree on 
 **Step 2.** Update local main to match the remote (before checking out the feature branch):
 
 ```bash
-git pull --ff-only
+git pull --ff-only 2>&1
 ```
 
-If this fails, ABORT:
+If this fails, inspect the error output to determine the cause:
 
-```
-ABORT: Failed to fast-forward local main. This should not happen in normal workflow.
-Investigate before merging.
-```
+- **Divergence** (output contains "Not possible to fast-forward"): local main has commits that origin/main does not.
+
+  ```
+  ABORT: Local main has diverged from origin/main. This should not happen in normal workflow.
+  Investigate before merging.
+  ```
+
+- **Network failure** (output contains "Could not resolve host", "Could not read from remote repository", "Failed to connect", "Connection refused", or "unable to access"): the remote is unreachable.
+
+  ```
+  ABORT: Cannot reach remote. Check network connectivity and try again.
+  ```
+
+- **Other failure**: include the actual error output in the abort message.
+
+  ```
+  ABORT: git pull --ff-only failed unexpectedly:
+  {error output}
+  Investigate before merging.
+  ```
 
 **Step 3.** Check out the feature branch and rebase onto main:
 
