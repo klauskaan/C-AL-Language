@@ -9,7 +9,7 @@
  * - CONSISTENT() - deprecated method for marking records as consistent/inconsistent
  *
  * Diagnostic:
- * - Message: "[MethodName] is deprecated and should not be used"
+ * - Message: "[MethodName] is deprecated. [specific reason from builtinData.ts]"
  * - Severity: Hint (information level)
  * - Tags: [DiagnosticTag.Deprecated] (enables strikethrough in IDE)
  * - Source: 'cal'
@@ -67,7 +67,7 @@ describe('DeprecatedFunctionValidator - Deprecated Record Methods', () => {
 
       expect(diagnostics).toHaveLength(1);
       const diag = diagnostics[0];
-      expect(diag.message).toBe('RECORDLEVELLOCKING is deprecated and should not be used');
+      expect(diag.message).toBe('RECORDLEVELLOCKING is deprecated. Always returns TRUE in SQL Server-based versions. No longer meaningful');
       expect(diag.severity).toBe(DiagnosticSeverity.Hint);
       expect(diag.tags).toEqual([DiagnosticTag.Deprecated]);
       expect(diag.source).toBe('cal');
@@ -91,7 +91,7 @@ describe('DeprecatedFunctionValidator - Deprecated Record Methods', () => {
       const diagnostics = validateDeprecatedFunctions(code);
 
       expect(diagnostics).toHaveLength(1);
-      expect(diagnostics[0].message).toBe('RECORDLEVELLOCKING is deprecated and should not be used');
+      expect(diagnostics[0].message).toBe('RECORDLEVELLOCKING is deprecated. Always returns TRUE in SQL Server-based versions. No longer meaningful');
     });
 
     it('should flag RecordLevelLocking() in mixed case', () => {
@@ -112,7 +112,7 @@ describe('DeprecatedFunctionValidator - Deprecated Record Methods', () => {
       const diagnostics = validateDeprecatedFunctions(code);
 
       expect(diagnostics).toHaveLength(1);
-      expect(diagnostics[0].message).toBe('RECORDLEVELLOCKING is deprecated and should not be used');
+      expect(diagnostics[0].message).toBe('RECORDLEVELLOCKING is deprecated. Always returns TRUE in SQL Server-based versions. No longer meaningful');
     });
   });
 
@@ -136,7 +136,7 @@ describe('DeprecatedFunctionValidator - Deprecated Record Methods', () => {
 
       expect(diagnostics).toHaveLength(1);
       const diag = diagnostics[0];
-      expect(diag.message).toBe('GETRECORDID is deprecated and should not be used');
+      expect(diag.message).toBe('GETRECORDID is deprecated. Use RECORDID instead');
       expect(diag.severity).toBe(DiagnosticSeverity.Hint);
       expect(diag.tags).toEqual([DiagnosticTag.Deprecated]);
       expect(diag.source).toBe('cal');
@@ -159,7 +159,7 @@ describe('DeprecatedFunctionValidator - Deprecated Record Methods', () => {
       const diagnostics = validateDeprecatedFunctions(code);
 
       expect(diagnostics).toHaveLength(1);
-      expect(diagnostics[0].message).toBe('GETRECORDID is deprecated and should not be used');
+      expect(diagnostics[0].message).toBe('GETRECORDID is deprecated. Use RECORDID instead');
     });
 
     it('should flag GetRecordId() in mixed case', () => {
@@ -179,7 +179,7 @@ describe('DeprecatedFunctionValidator - Deprecated Record Methods', () => {
       const diagnostics = validateDeprecatedFunctions(code);
 
       expect(diagnostics).toHaveLength(1);
-      expect(diagnostics[0].message).toBe('GETRECORDID is deprecated and should not be used');
+      expect(diagnostics[0].message).toBe('GETRECORDID is deprecated. Use RECORDID instead');
     });
   });
 
@@ -202,7 +202,7 @@ describe('DeprecatedFunctionValidator - Deprecated Record Methods', () => {
 
       expect(diagnostics).toHaveLength(1);
       const diag = diagnostics[0];
-      expect(diag.message).toBe('CONSISTENT is deprecated and should not be used');
+      expect(diag.message).toBe('CONSISTENT is deprecated. Transaction consistency is managed automatically. Rarely needed');
       expect(diag.severity).toBe(DiagnosticSeverity.Hint);
       expect(diag.tags).toEqual([DiagnosticTag.Deprecated]);
       expect(diag.source).toBe('cal');
@@ -225,7 +225,7 @@ describe('DeprecatedFunctionValidator - Deprecated Record Methods', () => {
       const diagnostics = validateDeprecatedFunctions(code);
 
       expect(diagnostics).toHaveLength(1);
-      expect(diagnostics[0].message).toBe('CONSISTENT is deprecated and should not be used');
+      expect(diagnostics[0].message).toBe('CONSISTENT is deprecated. Transaction consistency is managed automatically. Rarely needed');
     });
 
     it('should flag Consistent() in mixed case', () => {
@@ -245,7 +245,7 @@ describe('DeprecatedFunctionValidator - Deprecated Record Methods', () => {
       const diagnostics = validateDeprecatedFunctions(code);
 
       expect(diagnostics).toHaveLength(1);
-      expect(diagnostics[0].message).toBe('CONSISTENT is deprecated and should not be used');
+      expect(diagnostics[0].message).toBe('CONSISTENT is deprecated. Transaction consistency is managed automatically. Rarely needed');
     });
   });
 });
@@ -302,7 +302,7 @@ describe('DeprecatedFunctionValidator - Multiple Calls', () => {
 
     expect(diagnostics).toHaveLength(2);
     diagnostics.forEach(d => {
-      expect(d.message).toBe('CONSISTENT is deprecated and should not be used');
+      expect(d.message).toBe('CONSISTENT is deprecated. Transaction consistency is managed automatically. Rarely needed');
       expect(d.severity).toBe(DiagnosticSeverity.Hint);
     });
   });
@@ -325,7 +325,7 @@ describe('DeprecatedFunctionValidator - Multiple Calls', () => {
     const diagnostics = validateDeprecatedFunctions(code);
 
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toBe('RECORDLEVELLOCKING is deprecated and should not be used');
+    expect(diagnostics[0].message).toBe('RECORDLEVELLOCKING is deprecated. Always returns TRUE in SQL Server-based versions. No longer meaningful');
   });
 });
 
@@ -621,7 +621,7 @@ describe('DeprecatedFunctionValidator - User-Defined Procedure Shadowing', () =>
 
     // Should only flag the record method call, not the direct procedure call
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toBe('CONSISTENT is deprecated and should not be used');
+    expect(diagnostics[0].message).toBe('CONSISTENT is deprecated. Transaction consistency is managed automatically. Rarely needed');
   });
 
   it('should NOT flag user-defined RECORDLEVELLOCKING procedure when called directly', () => {
@@ -670,7 +670,7 @@ describe('DeprecatedFunctionValidator - User-Defined Procedure Shadowing', () =>
 
     // Should only flag the record method call
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toBe('RECORDLEVELLOCKING is deprecated and should not be used');
+    expect(diagnostics[0].message).toBe('RECORDLEVELLOCKING is deprecated. Always returns TRUE in SQL Server-based versions. No longer meaningful');
   });
 
   it('should NOT flag user-defined GETRECORDID procedure when called directly', () => {
@@ -757,7 +757,7 @@ describe('DeprecatedFunctionValidator - Edge Cases', () => {
     const diagnostics = validateDeprecatedFunctions(code);
 
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toBe('CONSISTENT is deprecated and should not be used');
+    expect(diagnostics[0].message).toBe('CONSISTENT is deprecated. Transaction consistency is managed automatically. Rarely needed');
   });
 
   it('should handle chained method calls', () => {
@@ -779,7 +779,7 @@ describe('DeprecatedFunctionValidator - Edge Cases', () => {
     const diagnostics = validateDeprecatedFunctions(code);
 
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toBe('CONSISTENT is deprecated and should not be used');
+    expect(diagnostics[0].message).toBe('CONSISTENT is deprecated. Transaction consistency is managed automatically. Rarely needed');
   });
 });
 
@@ -851,7 +851,7 @@ describe('DeprecatedFunctionValidator - Real-World Patterns', () => {
     const diagnostics = validateDeprecatedFunctions(code);
 
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toBe('CONSISTENT is deprecated and should not be used');
+    expect(diagnostics[0].message).toBe('CONSISTENT is deprecated. Transaction consistency is managed automatically. Rarely needed');
   });
 });
 
@@ -1017,7 +1017,7 @@ describe('DeprecatedFunctionValidator - Configuration (warnDeprecated setting)',
 
     // When warnDeprecated is true, diagnostics should be returned
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toBe('GETRECORDID is deprecated and should not be used');
+    expect(diagnostics[0].message).toBe('GETRECORDID is deprecated. Use RECORDID instead');
   });
 
   it('should show warnings when settings is undefined (backward compatibility)', () => {
@@ -1039,7 +1039,7 @@ describe('DeprecatedFunctionValidator - Configuration (warnDeprecated setting)',
 
     // When settings is undefined, default to showing warnings
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toBe('CONSISTENT is deprecated and should not be used');
+    expect(diagnostics[0].message).toBe('CONSISTENT is deprecated. Transaction consistency is managed automatically. Rarely needed');
   });
 
   it('should suppress all deprecated warnings for multiple calls when disabled', () => {

@@ -35,7 +35,7 @@ class DeprecatedFunctionValidatorVisitor implements Partial<ASTVisitor> {
       const deprecationReason = this.context.builtins.getRecordMethodDeprecation(methodName);
 
       if (deprecationReason !== undefined) {
-        this.reportDeprecated(memberExpr.property, methodName.toUpperCase());
+        this.reportDeprecated(memberExpr.property, methodName.toUpperCase(), deprecationReason);
       }
     }
     // Handle direct function calls like FUNCTION() (secondary - for future global functions)
@@ -49,7 +49,7 @@ class DeprecatedFunctionValidatorVisitor implements Partial<ASTVisitor> {
 
       // Only report if it's actually a builtin (not shadowed by local symbol)
       if (deprecationReason !== undefined && this.isActualBuiltin(identifier)) {
-        this.reportDeprecated(identifier, functionName.toUpperCase());
+        this.reportDeprecated(identifier, functionName.toUpperCase(), deprecationReason);
       }
     }
   }
@@ -73,9 +73,9 @@ class DeprecatedFunctionValidatorVisitor implements Partial<ASTVisitor> {
   /**
    * Report a deprecated function call
    */
-  private reportDeprecated(node: Identifier, functionName: string): void {
+  private reportDeprecated(node: Identifier, functionName: string, reason: string): void {
     this.diagnostics.push({
-      message: `${functionName} is deprecated and should not be used`,
+      message: `${functionName} is deprecated. ${reason}`,
       severity: DiagnosticSeverity.Hint,
       range: {
         start: {
