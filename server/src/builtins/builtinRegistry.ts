@@ -57,22 +57,20 @@ export class BuiltinRegistry {
   }
 
   /**
-   * Get deprecation reason for a builtin (case-insensitive)
-   * Returns undefined if the builtin is not deprecated or not found
+   * Get deprecation reason for a global function (case-insensitive)
+   * Returns undefined if the function is not deprecated or not found
    */
-  public getDeprecationReason(name: string): string | undefined {
+  public getGlobalFunctionDeprecation(name: string): string | undefined {
     const key = name.toUpperCase();
+    return this.globalFunctions.get(key);
+  }
 
-    // Check global functions first
-    if (this.globalFunctions.has(key)) {
-      return this.globalFunctions.get(key);
-    }
-
-    // Check record methods
-    if (this.recordMethods.has(key)) {
-      return this.recordMethods.get(key);
-    }
-
-    return undefined;
+  /**
+   * Get deprecation reason for a record method (case-insensitive)
+   * Returns undefined if the method is not deprecated or not found
+   */
+  public getRecordMethodDeprecation(name: string): string | undefined {
+    const key = name.toUpperCase();
+    return this.recordMethods.get(key);
   }
 }
