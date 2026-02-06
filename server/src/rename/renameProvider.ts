@@ -183,7 +183,7 @@ export class RenameProvider extends ProviderBase {
     const tokens = lexer.tokenize();
 
     // Find the token that contains the cursor position
-    // Note: endOffset is inclusive (the last character of the token)
+    // Note: endOffset is exclusive (one past the last character of the token)
     for (const token of tokens) {
       // Skip whitespace and comment tokens
       if (token.type === TokenType.Whitespace ||
