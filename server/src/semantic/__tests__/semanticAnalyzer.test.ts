@@ -52,7 +52,7 @@ describe('SemanticAnalyzer - Basic Analysis', () => {
       x : Integer;
     BEGIN
       x := 42;
-      MESSAGE('Hello');
+      MESSAGE(FORMAT(x));
     END;
   }
 }`;
