@@ -13,6 +13,7 @@ import { ValidationPipeline } from './validationPipeline';
 import { ValidationContext } from './types';
 import { EmptySetValidator } from '../validation/emptySetValidator';
 import { UndefinedIdentifierValidator } from '../validation/undefinedIdentifierValidator';
+import { DeprecatedFunctionValidator } from '../validation/deprecatedFunctionValidator';
 
 export class SemanticAnalyzer {
   /** Builtin function and method registry */
@@ -41,6 +42,9 @@ export class SemanticAnalyzer {
 
     // Register UndefinedIdentifierValidator
     this.pipeline.registerValidator(new UndefinedIdentifierValidator());
+
+    // Register DeprecatedFunctionValidator
+    this.pipeline.registerValidator(new DeprecatedFunctionValidator());
 
     // Future validators will be registered here:
     // this.pipeline.registerValidator(new TypeCheckValidator());
