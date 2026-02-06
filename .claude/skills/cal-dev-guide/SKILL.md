@@ -303,6 +303,7 @@ Start: What is the test's PURPOSE?
 
 **Requirements:**
 - Assert BOTH `line` AND `column` with exact values
+- Add `// prettier-ignore` comment before the warning comment to protect from automated formatting
 - Include `// Location assertions depend on fixture structure - do not reformat` comment
 - Fixture formatting is frozen; any change breaks the test intentionally
 
