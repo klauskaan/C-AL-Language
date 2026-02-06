@@ -78,11 +78,36 @@ Rebase the feature branch onto the latest main so it incorporates any
 deletions, renames, or refactors that landed after the branch forked.
 This prevents the merge from silently reintroducing deleted code.
 
-In the main working tree, check out the feature branch and rebase:
+**Step 1.** Verify you are on the main branch:
+
+```bash
+git branch --show-current  # must return "main"
+```
+
+If not on `main`, ABORT:
+
+```
+ABORT: Not on main branch. Merge-agent must operate in the main working tree on the main branch.
+```
+
+**Step 2.** Update local main to match the remote (before checking out the feature branch):
+
+```bash
+git pull --ff-only
+```
+
+If this fails, ABORT:
+
+```
+ABORT: Failed to fast-forward local main. This should not happen in normal workflow.
+Investigate before merging.
+```
+
+**Step 3.** Check out the feature branch and rebase onto main:
+
 ```bash
 git checkout issue-{number}
-git fetch origin main
-git rebase origin/main
+git rebase main
 ```
 
 - If rebase succeeds: continue to merge (checkout main first)
