@@ -1,0 +1,94 @@
+#!/bin/bash
+#
+# Git pre-merge-commit hook for deletion reintroduction detection
+# =================================================================
+#
+# This hook warns when a merge reintroduces lines that were deleted
+# on the target branch since the merge base. Part of the defense-in-depth
+# strategy for the rebase-before-merge workflow.
+#
+# COVERAGE GAP: Only fires for clean auto-merges, not conflict-resolution
+# commits (those use the regular 'commit' hook, not 'pre-merge-commit').
+#
+
+set -u
+
+# File patterns to check for deletion reintroduction (array to prevent glob expansion)
+FILE_PATTERNS=( '*.ts' '*.js' '*.json' '*.md' '*.cal' '*.txt' '*.TXT' '*.yml' )
+
+# Trivial line pattern (lines to ignore)
+TRIVIAL_PATTERN='^\s*$|^\s*[\{\}\(\);]\s*$|^\s*(BEGIN|END;?|VAR|PROCEDURE|TRIGGER|LOCAL|IF|ELSE|REPEAT|UNTIL)\s*$|^\s*(import|require|export)\b'
+
+# Triple validation: GIT_REFLOG_ACTION exists, starts with "merge ", and resolves
+if [[ -z "${GIT_REFLOG_ACTION:-}" ]]; then
+    exit 0
+fi
+
+if [[ ! "$GIT_REFLOG_ACTION" =~ ^merge[[:space:]] ]]; then
+    exit 0
+fi
+
+# Extract merge source from GIT_REFLOG_ACTION (format: "merge <source>")
+MERGE_SOURCE="${GIT_REFLOG_ACTION#merge }"
+
+if [[ -z "$MERGE_SOURCE" ]]; then
+    exit 0
+fi
+
+# Resolve to commit SHA (graceful exit if it fails)
+MERGE_COMMIT=$(git rev-parse --verify "$MERGE_SOURCE" 2>/dev/null) || exit 0
+
+if [[ -z "$MERGE_COMMIT" ]]; then
+    exit 0
+fi
+
+# Compute merge base
+MERGE_BASE=$(git merge-base HEAD "$MERGE_COMMIT" 2>/dev/null) || exit 0
+
+if [[ -z "$MERGE_BASE" ]]; then
+    exit 0
+fi
+
+# Create temporary files for comparison
+DELETED_LINES=$(mktemp)
+ADDED_LINES=$(mktemp)
+REINTRODUCED=$(mktemp)
+
+# Ensure cleanup on exit
+trap 'rm -f "$DELETED_LINES" "$ADDED_LINES" "$REINTRODUCED"' EXIT
+
+# Find lines deleted on target branch since merge base
+for pattern in "${FILE_PATTERNS[@]}"; do
+    git diff "$MERGE_BASE"..HEAD -- "$pattern" 2>/dev/null | \
+        grep '^-[^-]' | \
+        sed 's/^-//' | \
+        grep -Ev "$TRIVIAL_PATTERN" || true
+done | sort -u > "$DELETED_LINES"
+
+# Find lines added by this merge
+for pattern in "${FILE_PATTERNS[@]}"; do
+    git diff --cached HEAD -- "$pattern" 2>/dev/null | \
+        grep '^+[^+]' | \
+        sed 's/^+//' | \
+        grep -Ev "$TRIVIAL_PATTERN" || true
+done | sort -u > "$ADDED_LINES"
+
+# Find intersection (reintroduced deletions)
+comm -12 "$DELETED_LINES" "$ADDED_LINES" > "$REINTRODUCED"
+
+# Report warnings (non-blocking)
+if [[ -s "$REINTRODUCED" ]]; then
+    echo "WARNING: Merge reintroduces deleted lines:" >&2
+    echo "" >&2
+
+    while IFS= read -r line; do
+        echo "  $line" >&2
+    done < "$REINTRODUCED"
+
+    echo "" >&2
+    echo "These lines were deleted on the target branch but are being added back by this merge." >&2
+    echo "Review the merge to ensure this is intentional." >&2
+fi
+
+# Always exit 0 (non-blocking)
+exit 0
