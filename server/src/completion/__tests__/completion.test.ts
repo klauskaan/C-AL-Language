@@ -441,8 +441,12 @@ describe('CompletionProvider', () => {
 
       const recordLevelLockingItem = items.find(i => i.label === 'RECORDLEVELLOCKING');
       expect(recordLevelLockingItem).toBeDefined();
-      expect(recordLevelLockingItem?.documentation).toContain('record-level locking');
-      expect(recordLevelLockingItem?.documentation).toContain('**Deprecated:**');
+      const documentation = recordLevelLockingItem?.documentation as string;
+      const docIndex = documentation.indexOf('record-level locking');
+      const deprecatedIndex = documentation.indexOf('**Deprecated:**');
+      expect(docIndex).toBeGreaterThan(-1);
+      expect(deprecatedIndex).toBeGreaterThan(-1);
+      expect(docIndex).toBeLessThan(deprecatedIndex);
     });
 
     it('should not apply deprecated tag to non-deprecated functions', () => {
@@ -452,6 +456,96 @@ describe('CompletionProvider', () => {
       const messageItem = items.find(i => i.label === 'MESSAGE');
       expect(messageItem).toBeDefined();
       expect(messageItem?.tags).toBeUndefined();
+    });
+
+    it('should apply CompletionItemTag.Deprecated to GETRECORDID', () => {
+      const doc = createDocument('Rec.');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const items = provider.getCompletions(doc, Position.create(0, 4), undefined, symbolTable, '.');
+
+      const getRecordIdItem = items.find(i => i.label === 'GETRECORDID');
+      expect(getRecordIdItem).toBeDefined();
+      expect(getRecordIdItem?.tags).toContain(CompletionItemTag.Deprecated);
+    });
+
+    it('should append deprecation text to GETRECORDID documentation', () => {
+      const doc = createDocument('Rec.');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const items = provider.getCompletions(doc, Position.create(0, 4), undefined, symbolTable, '.');
+
+      const getRecordIdItem = items.find(i => i.label === 'GETRECORDID');
+      expect(getRecordIdItem).toBeDefined();
+      expect(getRecordIdItem?.documentation).toContain('**Deprecated:**');
+      expect(getRecordIdItem?.documentation).toContain('Use RECORDID instead');
+    });
+
+    it('should include original documentation before deprecation for GETRECORDID', () => {
+      const doc = createDocument('Rec.');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const items = provider.getCompletions(doc, Position.create(0, 4), undefined, symbolTable, '.');
+
+      const getRecordIdItem = items.find(i => i.label === 'GETRECORDID');
+      expect(getRecordIdItem).toBeDefined();
+      const documentation = getRecordIdItem?.documentation as string;
+      const docIndex = documentation.indexOf('RecordID of the current record');
+      const deprecatedIndex = documentation.indexOf('**Deprecated:**');
+      expect(docIndex).toBeGreaterThan(-1);
+      expect(deprecatedIndex).toBeGreaterThan(-1);
+      expect(docIndex).toBeLessThan(deprecatedIndex);
+    });
+
+    it('should apply CompletionItemTag.Deprecated to CONSISTENT', () => {
+      const doc = createDocument('Rec.');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const items = provider.getCompletions(doc, Position.create(0, 4), undefined, symbolTable, '.');
+
+      const consistentItem = items.find(i => i.label === 'CONSISTENT');
+      expect(consistentItem).toBeDefined();
+      expect(consistentItem?.tags).toContain(CompletionItemTag.Deprecated);
+    });
+
+    it('should append deprecation text to CONSISTENT documentation', () => {
+      const doc = createDocument('Rec.');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const items = provider.getCompletions(doc, Position.create(0, 4), undefined, symbolTable, '.');
+
+      const consistentItem = items.find(i => i.label === 'CONSISTENT');
+      expect(consistentItem).toBeDefined();
+      expect(consistentItem?.documentation).toContain('**Deprecated:**');
+      expect(consistentItem?.documentation).toContain('Transaction consistency is managed automatically');
+    });
+
+    it('should include original documentation before deprecation for CONSISTENT', () => {
+      const doc = createDocument('Rec.');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const items = provider.getCompletions(doc, Position.create(0, 4), undefined, symbolTable, '.');
+
+      const consistentItem = items.find(i => i.label === 'CONSISTENT');
+      expect(consistentItem).toBeDefined();
+      const documentation = consistentItem?.documentation as string;
+      const docIndex = documentation.indexOf('consistent');
+      const deprecatedIndex = documentation.indexOf('**Deprecated:**');
+      expect(docIndex).toBeGreaterThan(-1);
+      expect(deprecatedIndex).toBeGreaterThan(-1);
+      expect(docIndex).toBeLessThan(deprecatedIndex);
     });
   });
 
