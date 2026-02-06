@@ -1348,15 +1348,46 @@ export class Parser {
   private parseKey(): KeyDeclaration {
     const startToken = this.consume(TokenType.LeftBrace, 'Expected { to open key definition');
 
+    // Column 1: Empty (skip until first semicolon)
+    while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      this.advance();
+    }
+
     const fields: string[] = [];
 
-    // Parse field list
-    while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
-      const fieldToken = this.advance();
-      fields.push(fieldToken.value);
+    // Consume the semicolon separator (if present)
+    if (this.check(TokenType.Semicolon)) {
+      this.advance();
 
-      if (this.check(TokenType.Comma)) {
-        this.advance();
+      // Column 2: Field list - comma-separated, accumulate tokens with spacing
+      if (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace)) {
+        let currentFieldTokens: string[] = [];
+        let lastEndOffset = -1;
+
+        while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type) && !this.check(TokenType.LeftBrace)) {
+          if (this.check(TokenType.Comma)) {
+            // End of current field
+            if (currentFieldTokens.length > 0) {
+              fields.push(currentFieldTokens.join('').trim());
+              currentFieldTokens = [];
+            }
+            this.advance(); // consume comma
+            lastEndOffset = -1; // reset for next field
+          } else {
+            const token = this.advance();
+            // Add space if there was whitespace between tokens
+            if (lastEndOffset !== -1 && token.startOffset > lastEndOffset) {
+              currentFieldTokens.push(' ');
+            }
+            currentFieldTokens.push(token.value);
+            lastEndOffset = token.endOffset;
+          }
+        }
+
+        // Don't forget last field
+        if (currentFieldTokens.length > 0) {
+          fields.push(currentFieldTokens.join('').trim());
+        }
       }
     }
 
