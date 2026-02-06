@@ -6,6 +6,7 @@ import { HoverProvider } from '../hoverProvider';
 import { SymbolTable } from '../../symbols/symbolTable';
 import { Position, MarkupKind } from 'vscode-languageserver';
 import { createMockToken, createDocument } from '../../__tests__/testUtils';
+import { Token, TokenType } from '../../lexer/tokens';
 
 
 /**
@@ -288,6 +289,57 @@ describe('HoverProvider', () => {
       const content = getHoverContent(hover);
       expect(content).toContain('TRUE');
       expect(content).toContain('Boolean');
+    });
+  });
+
+  describe('CODE Keyword Disambiguation', () => {
+    it('should show "Section Keyword" when hovering CODE section keyword (TokenType.Code)', () => {
+      const doc = createDocument('CODE');
+      const provider = new HoverProvider();
+      const tokens: Token[] = [{
+        type: TokenType.Code,
+        value: 'CODE',
+        line: 0,
+        column: 0,
+        startOffset: 0,
+        endOffset: 4
+      }];
+
+      const hover = provider.getHover(doc, Position.create(0, 2), undefined, undefined, tokens);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('Section Keyword');
+    });
+
+    it('should show "C/AL Data Type" when hovering CODE data type (TokenType.Code_Type)', () => {
+      const doc = createDocument('myVar : Code[20]');
+      const provider = new HoverProvider();
+      const tokens: Token[] = [{
+        type: TokenType.Code_Type,
+        value: 'Code',
+        line: 0,
+        column: 8,
+        startOffset: 8,
+        endOffset: 12
+      }];
+
+      const hover = provider.getHover(doc, Position.create(0, 10), undefined, undefined, tokens);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('C/AL Data Type');
+    });
+
+    it('should use fallback to "Section Keyword" when no tokens provided', () => {
+      const doc = createDocument('CODE');
+      const provider = new HoverProvider();
+
+      const hover = provider.getHover(doc, Position.create(0, 2));
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('Section Keyword');
     });
   });
 

@@ -99,6 +99,26 @@ describe('CompletionProvider', () => {
     });
   });
 
+  describe('CODE Keyword Disambiguation', () => {
+    it('should provide CODE twice with different details (Section and Data Type)', () => {
+      const doc = createDocument('');
+      const provider = new CompletionProvider();
+      const completions = provider.getCompletions(doc, Position.create(0, 0));
+
+      const codeItems = completions.filter(c => c.label === 'CODE');
+      expect(codeItems.length).toBe(2);
+
+      const sectionItem = codeItems.find(c => c.detail === 'Section');
+      const dataTypeItem = codeItems.find(c => c.detail === 'Data Type');
+
+      expect(sectionItem).toBeDefined();
+      expect(sectionItem?.kind).toBe(CompletionItemKind.Keyword);
+
+      expect(dataTypeItem).toBeDefined();
+      expect(dataTypeItem?.kind).toBe(CompletionItemKind.TypeParameter);
+    });
+  });
+
   describe('Phase 2: Global Symbol Completion', () => {
     it('should include symbols from symbol table when provided', () => {
       const doc = createDocument('My');

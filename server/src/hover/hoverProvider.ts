@@ -12,29 +12,33 @@ import {
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SymbolTable, Symbol } from '../symbols/symbolTable';
 import { CALDocument, ProcedureDeclaration } from '../parser/ast';
-import { Token, KEYWORDS } from '../lexer/tokens';
+import { Token, KEYWORDS, TokenType } from '../lexer/tokens';
 import { BuiltinFunction, BuiltinRegistry } from '../builtins';
 import { ProviderBase } from '../providers/providerBase';
-import { getMetadataByKeyword, getHoverLabel } from '../shared/keywordMetadata';
+import { getMetadataByTokenType, getHoverLabel } from '../shared/keywordMetadata';
 
 /**
  * Get hover information for a keyword
  */
-function getKeywordHover(keyword: string): Hover | null {
-  const metadata = getMetadataByKeyword(keyword);
+function getKeywordHover(keyword: string, tokenType?: TokenType): string | null {
+  let metadata;
+  if (tokenType !== undefined) {
+    metadata = getMetadataByTokenType(tokenType);
+  } else {
+    // Fallback: look up keyword in KEYWORDS map to get default token type
+    const defaultTokenType = KEYWORDS.get(keyword.toLowerCase());
+    if (defaultTokenType !== undefined) {
+      metadata = getMetadataByTokenType(defaultTokenType);
+    }
+  }
+
   if (!metadata) {
     return null;
   }
 
   const label = getHoverLabel(metadata.category);
   const description = metadata.description || '';
-
-  return {
-    contents: {
-      kind: MarkupKind.Markdown,
-      value: `**${keyword.toUpperCase()}**\n\n*${label}*${description ? `\n\n${description}` : ''}`
-    }
-  };
+  return `**${label}**: ${keyword.toUpperCase()}\n\n${description}`;
 }
 
 /**
@@ -57,7 +61,7 @@ export class HoverProvider extends ProviderBase {
     position: Position,
     ast?: CALDocument,
     symbolTable?: SymbolTable,
-    _tokens?: Token[]
+    tokens?: Token[]
   ): Hover | null {
     const wordInfo = this.getWordAtPosition(document, position);
     if (!wordInfo) {
@@ -102,9 +106,21 @@ export class HoverProvider extends ProviderBase {
 
     // Check for keyword
     if (KEYWORDS.has(lowerWord)) {
-      const keywordHover = getKeywordHover(word);
-      if (keywordHover) {
-        return keywordHover;
+      // Find token at cursor position for accurate disambiguation
+      let tokenAtCursor: Token | undefined;
+      if (tokens && tokens.length > 0) {
+        const offset = document.offsetAt(position);
+        tokenAtCursor = tokens.find(t => t.startOffset <= offset && offset < t.endOffset);
+      }
+
+      const keywordHoverContent = getKeywordHover(word, tokenAtCursor?.type);
+      if (keywordHoverContent) {
+        return {
+          contents: {
+            kind: MarkupKind.Markdown,
+            value: keywordHoverContent
+          }
+        };
       }
     }
 

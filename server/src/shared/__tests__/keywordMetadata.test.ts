@@ -14,7 +14,6 @@ import {
   KeywordCategory,
   KeywordMetadata,
   getMetadataByTokenType,
-  getMetadataByKeyword,
   getHoverLabel
 } from '../keywordMetadata';
 
@@ -302,158 +301,6 @@ describe('Keyword Metadata', () => {
     });
   });
 
-  describe('getMetadataByKeyword', () => {
-    describe('Case-insensitive lookup', () => {
-      it('should return metadata for "code" keyword (lowercase)', () => {
-        const metadata = getMetadataByKeyword('code');
-
-        expect(metadata).toBeDefined();
-        expect(metadata!.category).toBe('Data Type');
-        expect(metadata!.completionKind).toBe(CompletionItemKind.TypeParameter);
-      });
-
-      it('should return metadata for "CODE" keyword (uppercase)', () => {
-        const metadata = getMetadataByKeyword('CODE');
-
-        expect(metadata).toBeDefined();
-        expect(metadata!.category).toBe('Data Type');
-        expect(metadata!.completionKind).toBe(CompletionItemKind.TypeParameter);
-      });
-
-      it('should return metadata for "Code" keyword (mixed case)', () => {
-        const metadata = getMetadataByKeyword('Code');
-
-        expect(metadata).toBeDefined();
-        expect(metadata!.category).toBe('Data Type');
-        expect(metadata!.completionKind).toBe(CompletionItemKind.TypeParameter);
-      });
-    });
-
-    describe('Preserves hover behavior', () => {
-      it('should return Data Type metadata for "code" keyword', () => {
-        // This preserves the existing hover behavior where "code" shows
-        // as Data Type, not Section
-        const metadata = getMetadataByKeyword('code');
-
-        expect(metadata).toBeDefined();
-        expect(metadata!.category).toBe('Data Type');
-        expect(metadata!.description).toBeDefined();
-      });
-
-      it('should return Control Flow metadata for "begin" keyword', () => {
-        const metadata = getMetadataByKeyword('begin');
-
-        expect(metadata).toBeDefined();
-        expect(metadata!.category).toBe('Control Flow');
-        expect(metadata!.description).toBeDefined();
-      });
-
-      it('should return Boolean Constant metadata for "true" keyword', () => {
-        const metadata = getMetadataByKeyword('true');
-
-        expect(metadata).toBeDefined();
-        expect(metadata!.category).toBe('Boolean Constant');
-        expect(metadata!.description).toBeDefined();
-      });
-
-      it('should return Declaration metadata for "procedure" keyword', () => {
-        const metadata = getMetadataByKeyword('procedure');
-
-        expect(metadata).toBeDefined();
-        expect(metadata!.category).toBe('Declaration');
-        expect(metadata!.description).toBeDefined();
-      });
-    });
-
-    describe('Uncategorized keywords', () => {
-      it('should return undefined for "indataset" (uncategorized)', () => {
-        const metadata = getMetadataByKeyword('indataset');
-
-        expect(metadata).toBeUndefined();
-      });
-
-      it('should return metadata for "temporary" keyword', () => {
-        const metadata = getMetadataByKeyword('temporary');
-
-        expect(metadata).toBeDefined();
-        expect(metadata!.category).toBe('Keyword');
-        expect(metadata!.completionKind).toBe(CompletionItemKind.Keyword);
-      });
-
-      it('should return undefined for "withevents" (uncategorized)', () => {
-        const metadata = getMetadataByKeyword('withevents');
-
-        expect(metadata).toBeUndefined();
-      });
-    });
-
-    describe('Non-existent keywords', () => {
-      it('should return undefined for non-keyword identifier', () => {
-        const metadata = getMetadataByKeyword('MyVariable');
-
-        expect(metadata).toBeUndefined();
-      });
-
-      it('should return undefined for empty string', () => {
-        const metadata = getMetadataByKeyword('');
-
-        expect(metadata).toBeUndefined();
-      });
-    });
-
-    describe('Data types', () => {
-      it('should return metadata for "integer" keyword', () => {
-        const metadata = getMetadataByKeyword('integer');
-
-        expect(metadata).toBeDefined();
-        expect(metadata!.category).toBe('Data Type');
-        expect(metadata!.completionKind).toBe(CompletionItemKind.TypeParameter);
-      });
-
-      it('should return metadata for "boolean" keyword', () => {
-        const metadata = getMetadataByKeyword('boolean');
-
-        expect(metadata).toBeDefined();
-        expect(metadata!.category).toBe('Data Type');
-        expect(metadata!.completionKind).toBe(CompletionItemKind.TypeParameter);
-      });
-
-      it('should return metadata for "text" keyword', () => {
-        const metadata = getMetadataByKeyword('text');
-
-        expect(metadata).toBeDefined();
-        expect(metadata!.category).toBe('Data Type');
-        expect(metadata!.completionKind).toBe(CompletionItemKind.TypeParameter);
-      });
-    });
-
-    describe('Object types', () => {
-      it('should return metadata for "table" keyword', () => {
-        const metadata = getMetadataByKeyword('table');
-
-        expect(metadata).toBeDefined();
-        expect(metadata!.category).toBe('Object Type');
-        expect(metadata!.completionKind).toBe(CompletionItemKind.Class);
-      });
-
-      it('should return metadata for "page" keyword', () => {
-        const metadata = getMetadataByKeyword('page');
-
-        expect(metadata).toBeDefined();
-        expect(metadata!.category).toBe('Object Type');
-        expect(metadata!.completionKind).toBe(CompletionItemKind.Class);
-      });
-
-      it('should return metadata for "codeunit" keyword', () => {
-        const metadata = getMetadataByKeyword('codeunit');
-
-        expect(metadata).toBeDefined();
-        expect(metadata!.category).toBe('Object Type');
-        expect(metadata!.completionKind).toBe(CompletionItemKind.Class);
-      });
-    });
-  });
-
   describe('getHoverLabel', () => {
     it('should return correct label for Data Type category', () => {
       const label = getHoverLabel('Data Type');
@@ -559,39 +406,6 @@ describe('Keyword Metadata', () => {
       expect(metadata).toBeDefined();
       expect(metadata!.description).toBeDefined();
       expect(metadata!.description).toContain('PROCEDURE');
-    });
-  });
-
-  describe('Metadata consistency', () => {
-    it('should return same metadata for TokenType.Begin and keyword "begin"', () => {
-      const byToken = getMetadataByTokenType(TokenType.Begin);
-      const byKeyword = getMetadataByKeyword('begin');
-
-      expect(byToken).toBeDefined();
-      expect(byKeyword).toBeDefined();
-      // Both should have the same category and completion kind
-      expect(byToken!.category).toBe(byKeyword!.category);
-      expect(byToken!.completionKind).toBe(byKeyword!.completionKind);
-    });
-
-    it('should return same metadata for TokenType.Table and keyword "table"', () => {
-      const byToken = getMetadataByTokenType(TokenType.Table);
-      const byKeyword = getMetadataByKeyword('table');
-
-      expect(byToken).toBeDefined();
-      expect(byKeyword).toBeDefined();
-      expect(byToken!.category).toBe(byKeyword!.category);
-      expect(byToken!.completionKind).toBe(byKeyword!.completionKind);
-    });
-
-    it('should return same metadata for TokenType.Integer_Type and keyword "integer"', () => {
-      const byToken = getMetadataByTokenType(TokenType.Integer_Type);
-      const byKeyword = getMetadataByKeyword('integer');
-
-      expect(byToken).toBeDefined();
-      expect(byKeyword).toBeDefined();
-      expect(byToken!.category).toBe(byKeyword!.category);
-      expect(byToken!.completionKind).toBe(byKeyword!.completionKind);
     });
   });
 

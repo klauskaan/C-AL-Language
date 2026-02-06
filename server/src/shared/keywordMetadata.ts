@@ -10,7 +10,7 @@
  */
 
 import { CompletionItemKind } from 'vscode-languageserver';
-import { TokenType, KEYWORDS } from '../lexer/tokens';
+import { TokenType } from '../lexer/tokens';
 
 /**
  * Keyword categories for completion and hover
@@ -390,47 +390,12 @@ export const KEYWORD_METADATA = new Map<TokenType, KeywordMetadata>([
 ]);
 
 /**
- * Keyword metadata map keyed by lowercase keyword string
- * Built programmatically from KEYWORD_METADATA and KEYWORDS map
- * Special handling for 'code' → maps to Code_Type (Data Type) instead of Code (Section)
- */
-export const KEYWORD_STRING_METADATA: ReadonlyMap<string, KeywordMetadata> = (() => {
-  const map = new Map<string, KeywordMetadata>();
-
-  // Build from KEYWORDS map + KEYWORD_METADATA
-  for (const [keyword, tokenType] of KEYWORDS) {
-    const metadata = KEYWORD_METADATA.get(tokenType);
-    if (metadata) {
-      map.set(keyword, metadata);
-    }
-  }
-
-  // Special case: 'code' as string → Data Type (Code_Type), not Section (Code)
-  // This preserves existing hover behavior where hovering over 'code' shows Data Type
-  const codeTypeMetadata = KEYWORD_METADATA.get(TokenType.Code_Type);
-  if (codeTypeMetadata) {
-    map.set('code', codeTypeMetadata);
-  }
-
-  return map;
-})();
-
-/**
  * Get keyword metadata by TokenType
  * @param tokenType - The token type to look up
  * @returns Metadata for the keyword, or undefined if not found
  */
 export function getMetadataByTokenType(tokenType: TokenType): KeywordMetadata | undefined {
   return KEYWORD_METADATA.get(tokenType);
-}
-
-/**
- * Get keyword metadata by keyword string (case-insensitive)
- * @param keyword - The keyword string to look up
- * @returns Metadata for the keyword, or undefined if not found
- */
-export function getMetadataByKeyword(keyword: string): KeywordMetadata | undefined {
-  return KEYWORD_STRING_METADATA.get(keyword.toLowerCase());
 }
 
 /**

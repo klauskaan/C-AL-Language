@@ -14,7 +14,7 @@ import {
 } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
-import { KEYWORDS } from '../lexer/tokens';
+import { KEYWORDS, TokenType } from '../lexer/tokens';
 import { SymbolTable, Symbol, Scope } from '../symbols/symbolTable';
 import { CALDocument } from '../parser/ast';
 import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from './builtins';
@@ -116,6 +116,17 @@ export class CompletionProvider extends ProviderBase {
         kind: metadata?.completionKind || CompletionItemKind.Keyword,
         insertText: displayName,
         detail: metadata?.category
+      });
+    }
+
+    // Add CODE as Data Type (Code_Type) - CODE already added as Section from KEYWORDS loop
+    const codeTypeMetadata = getMetadataByTokenType(TokenType.Code_Type);
+    if (codeTypeMetadata) {
+      this.keywordItems.push({
+        label: 'CODE',
+        kind: CompletionItemKind.TypeParameter,
+        insertText: 'CODE',
+        detail: codeTypeMetadata.category,
       });
     }
   }
