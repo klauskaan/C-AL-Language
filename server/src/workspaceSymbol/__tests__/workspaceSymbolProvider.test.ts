@@ -461,7 +461,7 @@ describe('WorkspaceSymbolProvider', () => {
 
       const keySymbol = result.find((s: SymbolInformation) => s.kind === SymbolKind.Key);
       expect(keySymbol).toBeDefined();
-      expect(keySymbol?.name).toBe('(unnamed key)');
+      expect(keySymbol?.name).toBe('No., Name');
     });
 
     it('should preserve symbol kinds for variables (Variable)', () => {
