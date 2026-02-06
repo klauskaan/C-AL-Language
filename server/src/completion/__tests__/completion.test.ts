@@ -113,9 +113,11 @@ describe('CompletionProvider', () => {
 
       expect(sectionItem).toBeDefined();
       expect(sectionItem?.kind).toBe(CompletionItemKind.Keyword);
+      expect(sectionItem?.documentation).toBe('CODE section marker for procedures and triggers');
 
       expect(dataTypeItem).toBeDefined();
       expect(dataTypeItem?.kind).toBe(CompletionItemKind.TypeParameter);
+      expect(dataTypeItem?.documentation).toBe('CODE data type for alphanumeric strings with fixed or variable length');
     });
   });
 

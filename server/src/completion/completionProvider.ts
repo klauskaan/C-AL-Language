@@ -111,11 +111,17 @@ export class CompletionProvider extends ProviderBase {
       const displayName = keyword.toUpperCase();
       const metadata = getMetadataByTokenType(tokenType);
 
+      // Add documentation for CODE section to differentiate from CODE data type
+      const documentation = displayName === 'CODE' && metadata?.category === 'Section'
+        ? 'CODE section marker for procedures and triggers'
+        : undefined;
+
       this.keywordItems.push({
         label: displayName,
         kind: metadata?.completionKind || CompletionItemKind.Keyword,
         insertText: displayName,
-        detail: metadata?.category
+        detail: metadata?.category,
+        documentation
       });
     }
 
@@ -127,6 +133,7 @@ export class CompletionProvider extends ProviderBase {
         kind: CompletionItemKind.TypeParameter,
         insertText: 'CODE',
         detail: codeTypeMetadata.category,
+        documentation: 'CODE data type for alphanumeric strings with fixed or variable length'
       });
     }
   }
