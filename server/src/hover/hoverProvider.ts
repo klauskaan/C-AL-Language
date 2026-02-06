@@ -16,6 +16,7 @@ import { Token, KEYWORDS, TokenType } from '../lexer/tokens';
 import { BuiltinFunction, BuiltinRegistry } from '../builtins';
 import { ProviderBase } from '../providers/providerBase';
 import { getMetadataByTokenType, getHoverLabel } from '../shared/keywordMetadata';
+import { findTokenAtOffset } from '../shared/tokenSearch';
 
 /**
  * Get hover information for a keyword
@@ -110,7 +111,7 @@ export class HoverProvider extends ProviderBase {
       let tokenAtCursor: Token | undefined;
       if (tokens && tokens.length > 0) {
         const offset = document.offsetAt(position);
-        tokenAtCursor = tokens.find(t => t.startOffset <= offset && offset < t.endOffset);
+        tokenAtCursor = findTokenAtOffset(tokens, offset);
       }
 
       const keywordHoverContent = getKeywordHover(word, tokenAtCursor?.type);
