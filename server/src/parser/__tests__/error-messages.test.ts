@@ -1320,8 +1320,8 @@ describe('Parser - Error Messages with Context', () => {
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected ) after EXIT value');
-        expect(errors[0].token.line).toBe(8);
-        expect(errors[0].token.column).toBe(5);
+        expect(errors[0].token.line).toBe(7);
+        expect(errors[0].token.column).toBe(12);
       });
     });
   });

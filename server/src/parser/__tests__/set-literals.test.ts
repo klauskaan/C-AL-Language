@@ -342,7 +342,7 @@ describe('Set Literals and Range Expressions', () => {
         CODE {
           PROCEDURE FilterQuarterOrders(VAR SalesHeader : Record 36);
           BEGIN
-            SalesHeader.SETFILTER("Order Date", '%1', 010124D..033124D);
+            SalesHeader.SETFILTER("Order Date", '010124D..033124D');
             IF SalesHeader."Order Date" IN [010124D..033124D] THEN
               ProcessOrder();
           END;
@@ -483,6 +483,77 @@ describe('Set Literals and Range Expressions', () => {
 
       // Should either succeed or have minimal errors (trailing comma handling)
       expect(_ast.object).toBeDefined();
+    });
+  });
+
+  describe('Malformed Range Expressions (Issue #362, #363)', () => {
+    it('should report error for semicolon after .. in closed range', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Value IN [1..;] THEN
+              EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const _ast = parser.parse();
+
+      // Should report error for malformed range
+      expect(parser.getErrors().length).toBeGreaterThan(0);
+      const rangeError = parser.getErrors().find(e =>
+        e.message.includes('Unexpected') &&
+        e.message.includes('expected expression')
+      );
+      expect(rangeError).toBeDefined();
+    });
+
+    it('should report error for semicolon after .. in open-start range', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Value IN [..;] THEN
+              EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const _ast = parser.parse();
+
+      // Should report error for malformed range
+      expect(parser.getErrors().length).toBeGreaterThan(0);
+      const rangeError = parser.getErrors().find(e =>
+        e.message.includes('Unexpected') &&
+        e.message.includes('expected expression')
+      );
+      expect(rangeError).toBeDefined();
+    });
+
+    it('should report error for completely open range (no start, no end)', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Value IN [..] THEN
+              EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const _ast = parser.parse();
+
+      // Should report error for malformed range
+      expect(parser.getErrors().length).toBeGreaterThan(0);
+      const rangeError = parser.getErrors().find(e =>
+        e.message.includes('Unexpected') &&
+        e.message.includes('expected expression')
+      );
+      expect(rangeError).toBeDefined();
     });
   });
 
