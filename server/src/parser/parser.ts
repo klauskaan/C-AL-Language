@@ -1610,7 +1610,13 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close ACTIONS section');
+    let endToken: Token;
+    if (this.check(TokenType.RightBrace)) {
+      endToken = this.advance();
+    } else {
+      this.recordError('Expected } to close ACTIONS section');
+      endToken = this.previous();
+    }
     const hierarchicalActions = this.buildActionHierarchy(flatActions);
 
     return {

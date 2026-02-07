@@ -2275,6 +2275,37 @@ describe('Parser - Error Messages with Context', () => {
         expect(closeError).toBeDefined();
       });
 
+      it('should preserve parsed actions in AST despite missing } to close ACTIONS section', () => {
+        const code = `OBJECT Page 21 Customer
+{
+  ACTIONS
+  {
+    { 1 ; 0 ; ActionContainer ; ActionContainerType=ActionItems }
+    { 2 ; 0 ; Action ; Enabled=Yes }
+
+  CONTROLS
+  {
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Verify error is reported (existing behavior)
+        const closeError = errors.find(e => e.message.includes('Expected } to close ACTIONS section'));
+        expect(closeError).toBeDefined();
+
+        // Verify parsed actions are preserved in AST (new requirement)
+        expect(ast.object).not.toBeNull();
+        expect(ast.object!.actions).not.toBeNull();
+        expect(ast.object!.actions!.actions).toHaveLength(2);
+        expect(ast.object!.actions!.actions[0].id).toBe(1);
+        expect(ast.object!.actions!.actions[1].id).toBe(2);
+      });
+
       it.skip('should provide context for missing { to open action definition', () => {
         const code = `OBJECT Page 21 Customer
 {
