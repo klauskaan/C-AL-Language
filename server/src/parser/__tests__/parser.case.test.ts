@@ -375,8 +375,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
   });
 
   describe('Three-level nesting with error in middle level', () => {
-    // BLOCKED: Issue #308 - Parser reports error on wrong line (line 15 instead of 14)
-    it.skip('should detect error in second-level CASE while preserving third level', () => {
+    it('should detect error in second-level CASE while preserving third level', () => {
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE

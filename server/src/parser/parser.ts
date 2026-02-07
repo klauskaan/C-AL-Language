@@ -3786,8 +3786,23 @@ export class Parser {
       values.push(this.parseCaseValue());
     }
 
-    // Colon
-    this.consume(TokenType.Colon, 'Expected : after case branch value');
+    // Manual colon check instead of consume() to control error location.
+    // Two tokens are used deliberately:
+    //   - errorLocation (this.previous()): the case value token, used for error LOCATION
+    //     so the error is reported on the line where the colon was expected
+    //   - errorContext (this.peek()): the unexpected token, used for error DESCRIPTION
+    //     so the message tells the user what was found instead of the colon
+    // Must throw (not recordError) to trigger error recovery in parseCaseStatement().
+    if (!this.check(TokenType.Colon)) {
+      const errorLocation = this.previous();
+      const errorContext = this.peek();
+      const sanitizedType = sanitizeTokenType(errorContext.type);
+      throw this.createParseError(
+        `Expected : after case branch value, but found '${sanitizeContent(errorContext.value)}' (${sanitizedType})`,
+        errorLocation
+      );
+    }
+    this.advance(); // consume the colon
 
     // Parse statement(s)
     const statements: Statement[] = [];
