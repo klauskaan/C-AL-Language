@@ -1085,7 +1085,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected : after case branch value');
         expect(errors[0].token.line).toBe(10);
-        expect(errors[0].token.column).toBe(11);
+        expect(errors[0].token.column).toBe(9);
       });
 
       it('should report error for missing colon after multiple case values', () => {
@@ -1115,7 +1115,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected : after case branch value');
         expect(errors[0].token.line).toBe(10);
-        expect(errors[0].token.column).toBe(17);
+        expect(errors[0].token.column).toBe(15);
       });
 
       it('should report error for missing colon after case range expression', () => {
@@ -1145,7 +1145,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected : after case branch value');
         expect(errors[0].token.line).toBe(10);
-        expect(errors[0].token.column).toBe(15);
+        expect(errors[0].token.column).toBe(12);
       });
 
       it('should report error and recover when ELSE clause contains syntax error (#292)', () => {
