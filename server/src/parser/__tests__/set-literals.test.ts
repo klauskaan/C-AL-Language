@@ -560,6 +560,7 @@ describe('Set Literals and Range Expressions', () => {
       expect(_ast.object).toBeDefined();
     });
 
+    // Issue #362: EOF after range operator
     it('should report error for closed range with EOF after range operator', () => {
       // prettier-ignore
       // Location assertions depend on fixture structure - do not reformat
@@ -576,12 +577,12 @@ describe('Set Literals and Range Expressions', () => {
 
       // Should report error for incomplete range
       expect(errors.length).toBeGreaterThan(0);
-      const rangeError = errors.find(e => e.message.includes('Expected expression after \'..\' in range'));
+      const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
 
-      // Tier 1: Verify error token points to EOF token
+      // Tier 1: Verify error token points to '..' operator token
       expect(rangeError!.token.line).toBe(5);
-      expect(rangeError!.token.column).toBe(29);
+      expect(rangeError!.token.column).toBe(27);
 
       // Parser should not crash
       expect(_ast).toBeDefined();
@@ -607,12 +608,12 @@ describe('Set Literals and Range Expressions', () => {
 
       // Should report error for incomplete range
       expect(errors.length).toBeGreaterThan(0);
-      const rangeError = errors.find(e => e.message.includes('Expected expression after \'..\' in range'));
+      const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
 
-      // Tier 1: Verify error token points to EOF token
+      // Tier 1: Verify error token points to '..' operator token
       expect(rangeError!.token.line).toBe(5);
-      expect(rangeError!.token.column).toBe(28);
+      expect(rangeError!.token.column).toBe(26);
 
       // Parser should not crash
       expect(_ast).toBeDefined();
@@ -620,6 +621,220 @@ describe('Set Literals and Range Expressions', () => {
 
       // Should not have spurious identifier nodes (main validation)
       // Note: With EOF at range operator, parser may not successfully extract procedure structure
+    });
+
+    // Issue #363: Missing delimiter guards after .. in set literal ranges
+    it('should detect missing expression after .. when followed by semicolon', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            x : Integer;
+          BEGIN
+            IF x IN [1..;] THEN EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const _ast = parser.parse();
+
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThanOrEqual(1);
+      const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
+      expect(rangeError).toBeDefined();
+      expect(_ast.object).toBeDefined();
+    });
+
+    it('should detect missing expression after .. when followed by END keyword', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            x : Integer;
+          BEGIN
+            IF x IN [1..END] THEN EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const _ast = parser.parse();
+
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThanOrEqual(1);
+      const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
+      expect(rangeError).toBeDefined();
+      expect(_ast.object).toBeDefined();
+    });
+
+    it('should detect missing expression after .. when followed by THEN keyword', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            x : Integer;
+          BEGIN
+            IF x IN [1..THEN EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const _ast = parser.parse();
+
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThanOrEqual(1);
+      const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
+      expect(rangeError).toBeDefined();
+      expect(_ast.object).toBeDefined();
+    });
+
+    it('should detect missing expression after .. when followed by DO keyword', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            x : Integer;
+          BEGIN
+            WHILE x IN [1..DO
+              x := x + 1;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const _ast = parser.parse();
+
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThanOrEqual(1);
+      const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
+      expect(rangeError).toBeDefined();
+      expect(_ast.object).toBeDefined();
+    });
+
+    it('should detect missing expression after .. in open-start path when followed by semicolon', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            x : Integer;
+          BEGIN
+            IF x IN [..;] THEN EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const _ast = parser.parse();
+
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThanOrEqual(1);
+      const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
+      expect(rangeError).toBeDefined();
+      expect(_ast.object).toBeDefined();
+    });
+
+    it('should detect completely open range with no start or end', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            x : Integer;
+          BEGIN
+            IF x IN [..] THEN EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const _ast = parser.parse();
+
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThanOrEqual(1);
+      const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
+      expect(rangeError).toBeDefined();
+      expect(_ast.object).toBeDefined();
+    });
+
+    it('should detect missing expression after .. in open-start path when followed by comma', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            x : Integer;
+          BEGIN
+            IF x IN [..,1] THEN EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const _ast = parser.parse();
+
+      const errors = parser.getErrors();
+      expect(errors.length).toBeGreaterThanOrEqual(1);
+      const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
+      expect(rangeError).toBeDefined();
+      expect(_ast.object).toBeDefined();
+    });
+
+    // Regression tests: These should parse with 0 errors
+    it('should parse valid open-ended range [1..]', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            x : Integer;
+          BEGIN
+            IF x IN [1..] THEN EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const _ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(_ast.object).toBeDefined();
+    });
+
+    it('should parse valid open-ended range followed by discrete value [1..,2]', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            x : Integer;
+          BEGIN
+            IF x IN [1..,2] THEN EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const _ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(_ast.object).toBeDefined();
+    });
+
+    it('should parse valid open-start range [..100]', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          VAR
+            x : Integer;
+          BEGIN
+            IF x IN [..100] THEN EXIT;
+          END;
+        }
+      }`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const _ast = parser.parse();
+
+      expect(parser.getErrors()).toHaveLength(0);
+      expect(_ast.object).toBeDefined();
     });
   });
 });

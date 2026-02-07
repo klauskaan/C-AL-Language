@@ -1011,15 +1011,14 @@ OBJECT Codeunit 50000 "Test"
       const { ast, errors } = parseCode(code);
 
       // Should report error for control-flow keyword as range end
+      // The new delimiter guard produces a more specific error message
       expect(errors.length).toBeGreaterThan(0);
       const keywordError = errors.find(e =>
-        e.message.includes('Unexpected keyword') &&
-        e.token?.value === 'THEN'
+        /expected expression after '\.\.'/i.test(e.message)
       );
       expect(keywordError).toBeDefined();
       if (keywordError) {
-        expect(keywordError.message).toContain('Unexpected keyword');
-        expect(keywordError.token?.value).toBe('THEN');
+        expect(keywordError.message).toMatch(/expected expression after '\.\.'/i);
       }
 
       // AST should still parse (graceful recovery)

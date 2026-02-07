@@ -4778,27 +4778,34 @@ export class Parser {
         // Check for open-ended range: ..end
         if (this.check(TokenType.DotDot)) {
           const rangeStart = this.advance();
-          if (this.isAtEnd()) {
-            this.recordError("Expected expression after '..' in range", this.peek());
+
+          // Guard: Check for EOF or delimiter tokens after '..'
+          if (this.isAtEnd() || this.check(TokenType.Comma) || this.check(TokenType.RightBracket) ||
+              this.check(TokenType.Semicolon) || this.check(TokenType.End) ||
+              this.check(TokenType.Then) || this.check(TokenType.Do) ||
+              this.check(TokenType.Else)) {
+            // Error: no expression after '..'
+            this.recordError("Expected expression after '..' in set range", this.previous());
             elements.push({
               type: 'RangeExpression',
               start: null,
               end: null,
               operatorToken: rangeStart,
               startToken: rangeStart,
-              endToken: rangeStart
+              endToken: this.previous()
             } as RangeExpression);
-            continue; // Skip to next iteration
+          } else {
+            // Valid: parse the end expression
+            const end = this.parseExpression();
+            elements.push({
+              type: 'RangeExpression',
+              start: null,
+              end,
+              operatorToken: rangeStart,
+              startToken: rangeStart,
+              endToken: end.endToken
+            } as RangeExpression);
           }
-          const end = this.parseExpression();
-          elements.push({
-            type: 'RangeExpression',
-            start: null,
-            end,
-            operatorToken: rangeStart,
-            startToken: rangeStart,
-            endToken: end.endToken
-          } as RangeExpression);
         } else {
           // Parse start of element or range
           const start = this.parseExpression();
@@ -4808,8 +4815,31 @@ export class Parser {
             const operatorToken = this.advance(); // consume '..'
 
             // Check for closed range (start..end) vs open-ended range (start..)
-            if (!this.isAtEnd() && !this.check(TokenType.Comma) && !this.check(TokenType.RightBracket)) {
-              // Closed range: start..end
+            if (this.check(TokenType.Comma) || this.check(TokenType.RightBracket)) {
+              // BRANCH 1: Valid open-ended range (start..)
+              elements.push({
+                type: 'RangeExpression',
+                start,
+                end: null,
+                operatorToken,
+                startToken: start.startToken,
+                endToken: this.previous()
+              } as RangeExpression);
+            } else if (this.isAtEnd() || this.check(TokenType.Semicolon) || this.check(TokenType.End) ||
+                       this.check(TokenType.Then) || this.check(TokenType.Do) ||
+                       this.check(TokenType.Else)) {
+              // BRANCH 2: Error - EOF or delimiter after '..'
+              this.recordError("Expected expression after '..' in set range", this.previous());
+              elements.push({
+                type: 'RangeExpression',
+                start,
+                end: null,
+                operatorToken,
+                startToken: start.startToken,
+                endToken: this.previous()
+              } as RangeExpression);
+            } else {
+              // BRANCH 3: Closed range (start..end)
               const end = this.parseExpression();
               elements.push({
                 type: 'RangeExpression',
@@ -4818,19 +4848,6 @@ export class Parser {
                 operatorToken,
                 startToken: start.startToken,
                 endToken: end.endToken
-              } as RangeExpression);
-            } else {
-              // Open-ended range: start..
-              if (this.isAtEnd()) {
-                this.recordError("Expected expression after '..' in range", this.peek());
-              }
-              elements.push({
-                type: 'RangeExpression',
-                start,
-                end: null,
-                operatorToken,
-                startToken: start.startToken,
-                endToken: this.previous()
               } as RangeExpression);
             }
           } else {
