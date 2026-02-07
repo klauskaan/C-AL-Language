@@ -107,6 +107,11 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
   TokenType.Elements,      // Section keyword (ELEMENTS section - XMLport)
   TokenType.Labels,        // Section keyword (LABELS section - Report)
   TokenType.Dataset,       // Section keyword (DATASET section - Report/Page)
+  // Issue #361: Add missing data type keywords that can be used as identifiers
+  TokenType.BigText,       // Data type keyword (e.g., "BigText" parameter name)
+  TokenType.BLOB,          // Data type keyword (e.g., "BLOB" parameter name)
+  TokenType.GUID,          // Data type keyword (e.g., "GUID" parameter name)
+  TokenType.TextConst,     // Data type keyword (e.g., "TextConst" parameter name)
   TokenType.RequestForm,   // Section keyword (REQUESTFORM section - Report)
   TokenType.RequestPage,   // Section keyword (REQUESTPAGE section - Report)
   TokenType.MenuNodes,     // Section keyword (MENUNODES section - MenuSuite)
@@ -193,6 +198,85 @@ export const PROCEDURE_BOUNDARY_TOKENS = new Set<TokenType>([
   TokenType.Function,
   TokenType.Trigger,
   TokenType.Event,
+]);
+
+/**
+ * Tokens that should NEVER be consumed in parsePrimary() fallback - throw error.
+ * These are structural/boundary tokens that indicate missing expression.
+ *
+ * Issue #361: parsePrimary() should throw on tokens that never start an expression
+ * and would break parsing if consumed. These tokens are "wrong enough" that we
+ * should error without consuming them, preserving the token stream for recovery.
+ *
+ * Note: Minus and Not are NOT in this set - they are handled by parseUnary() before
+ * parsePrimary() is reached, so they are unreachable here.
+ *
+ * @internal
+ */
+const NEVER_PRIMARY_THROW = new Set<TokenType>([
+  TokenType.RightParen,    // Unbalanced closing delimiter
+  TokenType.RightBracket,  // Unbalanced closing delimiter
+  TokenType.RightBrace,    // Unbalanced closing delimiter (code blocks only)
+  TokenType.Semicolon,     // Statement terminator
+  TokenType.LeftBrace,     // Block start (BEGIN...END context)
+  TokenType.If,            // Statement keyword
+  TokenType.While,         // Statement keyword
+  TokenType.Repeat,        // Statement keyword
+  TokenType.For,           // Statement keyword
+  TokenType.Case,          // Statement keyword
+  TokenType.Exit,          // Statement keyword
+  TokenType.With,          // Statement keyword
+  TokenType.EOF,           // End of file
+]);
+
+/**
+ * Tokens that should NEVER be consumed in parsePrimary() fallback - consume and error.
+ * These are operator tokens that require a left operand but have none.
+ *
+ * Issue #361: parsePrimary() should error on tokens that cannot start an expression
+ * but are "close enough" that we should consume them and return an error sentinel.
+ * Consuming these tokens prevents infinite loops when they appear in invalid contexts.
+ *
+ * Binary operators that appear where a primary is expected are always errors:
+ * they require a left operand to be valid. We consume them and return an error
+ * sentinel to allow parsing to continue.
+ *
+ * Note: Minus and Not are NOT in this set - they are handled by parseUnary() before
+ * parsePrimary() is reached, so they are unreachable here.
+ *
+ * @internal
+ */
+const NEVER_PRIMARY_CONSUME = new Set<TokenType>([
+  // Binary arithmetic operators
+  TokenType.Plus,          // Binary + (unary + not in C/AL)
+  TokenType.Multiply,      // Binary * operator
+  TokenType.Divide,        // Binary / operator
+  // Assignment operators
+  TokenType.Assign,        // := assignment
+  TokenType.PlusAssign,    // += compound assignment
+  TokenType.MinusAssign,   // -= compound assignment
+  TokenType.MultiplyAssign, // *= compound assignment
+  TokenType.DivideAssign,  // /= compound assignment
+  // Comparison operators
+  TokenType.Equal,         // = comparison
+  TokenType.NotEqual,      // <> comparison
+  TokenType.Less,          // < comparison
+  TokenType.LessEqual,     // <= comparison
+  TokenType.Greater,       // > comparison
+  TokenType.GreaterEqual,  // >= comparison
+  // Postfix/infix operators
+  TokenType.Dot,           // . member access (requires left operand)
+  // Note: DotDot (..) is NOT in this set - it can start open-ended ranges in set literals: [..100]
+  TokenType.DoubleColon,   // :: scope resolution (requires left operand)
+  TokenType.Colon,         // : type annotation separator
+  TokenType.Comma,         // , list separator
+  // Binary logical/arithmetic keywords
+  TokenType.And,           // AND binary operator
+  TokenType.Or,            // OR binary operator
+  TokenType.Xor,           // XOR binary operator
+  TokenType.Div,           // DIV integer division
+  TokenType.Mod,           // MOD modulo operator
+  TokenType.In,            // IN membership test
 ]);
 
 /**
@@ -4006,8 +4090,15 @@ export class Parser {
     let value: Expression | null = null;
     if (this.check(TokenType.LeftParen)) {
       this.advance();
+      // Check if we have a valid expression start or an immediate closing paren
       if (!this.check(TokenType.RightParen)) {
-        value = this.parseExpression();
+        // If we see a token that can't start an expression, skip parseExpression
+        // to avoid the generic "expected expression" error from parsePrimary
+        // The consume() below will provide the context-specific "Expected ) after EXIT value" error
+        if (!NEVER_PRIMARY_THROW.has(this.peek().type)) {
+          value = this.parseExpression();
+        }
+        // else: skip parseExpression, let consume() handle the error
       }
       this.consume(TokenType.RightParen, 'Expected ) after EXIT value');
     }
@@ -4537,29 +4628,65 @@ export class Parser {
         this.advance();
         return {
           type: 'Identifier',
-          name: cfToken.value,
+          name: '<error>',
           isQuoted: false,
           startToken: cfToken,
           endToken: cfToken
         } as Identifier;
       }
-      // If not in a true expression context, fall through to fallback handling
-      // (including set literals, orphaned keywords, etc.)
+
+      // Control-flow keyword outside expression context - throw without consuming
+      // This prevents infinite loops when orphaned control-flow keywords appear
+      throw this.createParseError(
+        `Unexpected keyword '${sanitizeContent(cfToken.value)}' - expected expression or statement`,
+        cfToken
+      );
     }
 
-    // Fallback - consume token and return identifier
-    // This handles other keywords used as identifiers (e.g., CODEUNIT, DATABASE, REPORT in expressions)
+    // Issue #361: Tokens that should never be consumed as identifiers
+    // These are structural/boundary tokens that indicate missing expression
+    if (NEVER_PRIMARY_THROW.has(this.peek().type)) {
+      const token = this.peek();
+      throw this.createParseError(
+        `Unexpected '${sanitizeContent(token.value)}' - expected expression`,
+        token
+      );
+    }
+
+    // Issue #361: Binary operators that appear where a primary is expected
+    // These require a left operand, so they're always errors here
+    if (NEVER_PRIMARY_CONSUME.has(this.peek().type)) {
+      const token = this.advance();
+      this.recordError(
+        `Unexpected operator '${sanitizeContent(token.value)}' - expected expression`,
+        token
+      );
+      return {
+        type: 'Identifier',
+        name: '<error>',
+        isQuoted: false,
+        startToken: token,
+        endToken: token
+      } as Identifier;
+    }
+
+    // Issue #361: Residual fallback for any remaining tokens
+    // This handles keywords that can be used as identifiers in certain contexts
     const fallbackToken = this.advance();
+    this.recordError(
+      `Unexpected token '${sanitizeContent(fallbackToken.value)}' - expected expression`,
+      fallbackToken
+    );
     const expr: Expression = {
       type: 'Identifier',
-      name: fallbackToken.value,
+      name: '<error>',
       isQuoted: false,
       startToken: fallbackToken,
       endToken: fallbackToken
     } as Identifier;
 
     // Apply postfix operations to fallback expressions too
-    // This allows CODEUNIT::X, DATABASE::Y, etc.
+    // This allows continued parsing after errors
     return this.parsePostfixOperations(expr);
   }
 

@@ -616,6 +616,35 @@ describe('Parser - Nested CASE Error Recovery', () => {
       expect(rangeError!.token.value).toBe('END');
     });
 
+    it('should report error for range at EOF in CASE value (Issue #363)', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1..`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      // Should report error for incomplete range at EOF
+      expect(errors.length).toBeGreaterThan(0);
+      const rangeError = errors.find(e =>
+        e.message.includes('Unexpected') &&
+        e.message.includes('expected expression')
+      );
+      expect(rangeError).toBeDefined();
+    });
+
     it('should accept valid range expression as regression guard', () => {
       const code = `OBJECT Codeunit 50000 Test
 {
