@@ -342,7 +342,7 @@ describe('Set Literals and Range Expressions', () => {
         CODE {
           PROCEDURE FilterQuarterOrders(VAR SalesHeader : Record 36);
           BEGIN
-            SalesHeader.SETFILTER("Order Date", '%1', 010124D..033124D);
+            SalesHeader.SETFILTER("Order Date", '010124D..033124D');
             IF SalesHeader."Order Date" IN [010124D..033124D] THEN
               ProcessOrder();
           END;
