@@ -3846,6 +3846,22 @@ export class Parser {
     // Check for range expression (e.g., 1..10)
     if (this.check(TokenType.DotDot)) {
       const operatorToken = this.advance(); // consume ..
+
+      // Guard: check if next token cannot start an expression
+      if (this.check(TokenType.Colon) || this.check(TokenType.Comma) ||
+          this.check(TokenType.RightParen) || this.check(TokenType.Semicolon) ||
+          this.check(TokenType.End) || this.check(TokenType.Else)) {
+        this.recordError("Expected expression after '..' in range", this.peek());
+        return {
+          type: 'RangeExpression',
+          start: expr,
+          end: null,
+          operatorToken,
+          startToken: expr.startToken,
+          endToken: this.previous()
+        } as RangeExpression;
+      }
+
       const endExpr = this.parseExpression();
       return {
         type: 'RangeExpression',

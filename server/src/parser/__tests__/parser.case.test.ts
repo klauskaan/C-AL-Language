@@ -470,8 +470,10 @@ describe('Parser - Nested CASE Error Recovery', () => {
   });
 
   describe('Malformed expression in nested CASE branch value', () => {
-    // BLOCKED: Issue #309 - Parser silently accepts malformed range '2..)'
-    it.skip('should detect malformed expression in inner CASE branch value', () => {
+    // Issue #309 - Parser should report error for malformed range expressions
+    it('should detect malformed expression in inner CASE branch value', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -500,13 +502,187 @@ describe('Parser - Nested CASE Error Recovery', () => {
       // Should report error for malformed range expression
       expect(errors.length).toBeGreaterThan(0);
 
-      // Error could be about expression or unexpected token
+      // Should report specific error message for incomplete range
+      const rangeError = errors.find(e => e.message.includes('Expected expression after \'..\' in range'));
+      expect(rangeError).toBeDefined();
+
+      // Tier 1: Verify error token points to the delimiter that triggered the guard
+      // The error should point to the ')' token that caused the range parsing to fail
+      expect(rangeError!.token.line).toBe(13);
+      expect(rangeError!.token.column).toBe(16);
+      expect(rangeError!.token.value).toBe(')');
+    });
+  });
+
+  describe('Malformed range expressions in CASE values', () => {
+    it('should report error for range followed by colon', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        2..: EXIT;
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      // Should report error for malformed range expression
+      const rangeError = errors.find(e => e.message.includes('Expected expression after \'..\' in range'));
+      expect(rangeError).toBeDefined();
+
+      // Tier 1: Error token should point to the ':' that triggered the guard
+      expect(rangeError!.token.line).toBe(10);
+      expect(rangeError!.token.column).toBe(12);
+      expect(rangeError!.token.value).toBe(':');
+    });
+
+    it('should report error for range followed by comma in multi-value branch', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        2..,3: EXIT;
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      // Should report error for malformed range expression
+      const rangeError = errors.find(e => e.message.includes('Expected expression after \'..\' in range'));
+      expect(rangeError).toBeDefined();
+
+      // Tier 1: Error token should point to the ',' that triggered the guard
+      expect(rangeError!.token.line).toBe(10);
+      expect(rangeError!.token.column).toBe(12);
+      expect(rangeError!.token.value).toBe(',');
+    });
+
+    it('should report error for range followed by END keyword', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        2..END;
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      // Should report error for malformed range expression
+      const rangeError = errors.find(e => e.message.includes('Expected expression after \'..\' in range'));
+      expect(rangeError).toBeDefined();
+
+      // Tier 1: Error token should point to the 'END' keyword that triggered the guard
+      expect(rangeError!.token.line).toBe(10);
+      expect(rangeError!.token.column).toBe(12);
+      expect(rangeError!.token.value).toBe('END');
+    });
+
+    it('should accept valid range expression as regression guard', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1..10: EXIT;
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      // Valid range should parse without errors
+      expect(errors.length).toBe(0);
+    });
+
+    it('should report error for malformed range at first position in CASE', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        ..1: EXIT;
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      // Should report error for malformed range (starts with ..)
+      // This is a different error than incomplete range - it's an invalid expression start
+      expect(errors.length).toBeGreaterThan(0);
+
+      // The error might be about unexpected token or invalid expression
       const hasError = errors.some(e =>
-        e.message.includes('expression') ||
         e.message.includes('Expected') ||
-        e.message.includes('statement')
+        e.message.includes('Unexpected') ||
+        e.message.includes('expression')
       );
       expect(hasError).toBe(true);
+
+      // Tier 2: Error should be within the CASE block (lines 9-11)
+      const caseError = errors[0];
+      expect(caseError.token.line).toBeGreaterThanOrEqual(9);
+      expect(caseError.token.line).toBeLessThanOrEqual(11);
     });
   });
 
