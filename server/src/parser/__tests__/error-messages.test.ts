@@ -1085,7 +1085,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected : after case branch value');
         expect(errors[0].token.line).toBe(10);
-        expect(errors[0].token.column).toBe(11);
+        expect(errors[0].token.column).toBe(9);
       });
 
       it('should report error for missing colon after multiple case values', () => {
@@ -1115,7 +1115,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected : after case branch value');
         expect(errors[0].token.line).toBe(10);
-        expect(errors[0].token.column).toBe(17);
+        expect(errors[0].token.column).toBe(15);
       });
 
       it('should report error for missing colon after case range expression', () => {
@@ -1145,7 +1145,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected : after case branch value');
         expect(errors[0].token.line).toBe(10);
-        expect(errors[0].token.column).toBe(15);
+        expect(errors[0].token.column).toBe(12);
       });
 
       it('should report error and recover when ELSE clause contains syntax error (#292)', () => {
@@ -1987,10 +1987,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Item-level boundary error recovery not implemented yet.
-      // Recovery assertions added per #294, but parser doesn't recover from missing closing braces.
-      // Re-enable when issue #302 (item-level boundary error recovery) is implemented.
-      it.skip('should provide context for missing } to close field definition', () => {
+      it('should provide context for missing } to close field definition', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -2094,10 +2091,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Item-level boundary error recovery not implemented yet.
-      // Recovery assertions added per #294, but parser doesn't recover from missing closing braces.
-      // Re-enable when issue #302 (item-level boundary error recovery) is implemented.
-      it.skip('should provide context for missing } to close key definition', () => {
+      it('should provide context for missing } to close key definition', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -2204,10 +2198,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Item-level boundary error recovery not implemented yet.
-      // Recovery assertions added per #294, but parser doesn't recover from missing closing braces.
-      // Re-enable when issue #302 (item-level boundary error recovery) is implemented.
-      it.skip('should provide context for missing } to close field group definition', () => {
+      it('should provide context for missing } to close field group definition', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -2304,16 +2295,13 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Item-level boundary error recovery not implemented yet.
-      // Recovery assertions added per #294, but parser doesn't recover from missing closing braces.
-      // Re-enable when issue #302 (item-level boundary error recovery) is implemented.
-      it.skip('should provide context for missing } to close action definition', () => {
+      it('should provide context for missing } to close action definition', () => {
         const code = `OBJECT Page 21 Customer
 {
   ACTIONS
   {
     { 1 ; 0 ; ActionContainer ; ActionContainerType=ActionItems
-    { 2 ; 1 ; Action ; Enabled=Yes }
+    { 2 ; 0 ; Action ; Enabled=Yes }
   }
 }`;
         const lexer = new Lexer(code);
@@ -2399,16 +2387,13 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Item-level boundary error recovery not implemented yet.
-      // Recovery assertions added per #294, but parser doesn't recover from missing closing braces.
-      // Re-enable when issue #302 (item-level boundary error recovery) is implemented.
-      it.skip('should provide context for missing } to close control definition', () => {
+      it('should provide context for missing } to close control definition', () => {
         const code = `OBJECT Page 21 Customer
 {
   CONTROLS
   {
     { 1 ; 0 ; Container ; ContainerType=ContentArea
-    { 2 ; 1 ; Group ; GroupType=Group }
+    { 2 ; 0 ; Group ; GroupType=Group }
   }
 }`;
         const lexer = new Lexer(code);
@@ -2517,10 +2502,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(openError).toBeDefined();
       });
 
-      // Skipped: Item-level boundary error recovery not implemented yet.
-      // Recovery assertions added per #294, but parser doesn't recover from missing closing braces.
-      // Re-enable when issue #302 (item-level boundary error recovery) is implemented.
-      it.skip('should provide context for missing } to close element definition', () => {
+      it('should provide context for missing } to close element definition', () => {
         const code = `OBJECT XMLport 99999 Test
 {
   ELEMENTS

@@ -682,12 +682,23 @@ export class Parser {
     const fields: FieldDeclaration[] = [];
 
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
-      const field = this.parseWithRecovery(
-        () => this.parseField(),
-        [TokenType.LeftBrace, TokenType.RightBrace]
-      );
-      if (field) {
+      try {
+        const field = this.parseField();
         fields.push(field);
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Recover by advancing to the next item's opening brace or section closing brace
+          this.recoverToTokens([TokenType.LeftBrace, TokenType.RightBrace]);
+
+          // Disambiguation: If we stopped at }, check if it's the item's } (followed by {)
+          // or the section's } (end of section). Consume item's } to continue.
+          if (this.check(TokenType.RightBrace) && this.peekAhead(1)?.type === TokenType.LeftBrace) {
+            this.advance(); // Consume the item's closing }, next iteration will parse the item
+          }
+        } else {
+          throw error;
+        }
       }
     }
 
@@ -807,7 +818,20 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close field definition');
+    // Conditional closing brace check (issue #302)
+    // When closing } is missing, record error but return partial item instead of throwing.
+    // This allows the section loop to continue parsing subsequent items.
+    // Note: When the missing } is on the last item, the section's closing } may be
+    // consumed as the item's closing }. This produces a section-level error instead
+    // of an item-level error, which is acceptable for LSP purposes (data completeness
+    // matters more than error precision).
+    let endToken: Token;
+    if (this.check(TokenType.RightBrace)) {
+      endToken = this.advance();
+    } else {
+      this.recordError('Expected } to close field definition');
+      endToken = this.previous();
+    }
 
     return {
       type: 'FieldDeclaration',
@@ -1330,12 +1354,23 @@ export class Parser {
     const keys: KeyDeclaration[] = [];
 
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
-      const key = this.parseWithRecovery(
-        () => this.parseKey(),
-        [TokenType.LeftBrace, TokenType.RightBrace]
-      );
-      if (key) {
+      try {
+        const key = this.parseKey();
         keys.push(key);
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Recover by advancing to the next item's opening brace or section closing brace
+          this.recoverToTokens([TokenType.LeftBrace, TokenType.RightBrace]);
+
+          // Disambiguation: If we stopped at }, check if it's the item's } (followed by {)
+          // or the section's } (end of section). Consume item's } to continue.
+          if (this.check(TokenType.RightBrace) && this.peekAhead(1)?.type === TokenType.LeftBrace) {
+            this.advance(); // Consume the item's closing }, next iteration will parse the item
+          }
+        } else {
+          throw error;
+        }
       }
     }
 
@@ -1407,7 +1442,14 @@ export class Parser {
       this.advance();
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close key definition');
+    // Conditional closing brace check (issue #302)
+    let endToken: Token;
+    if (this.check(TokenType.RightBrace)) {
+      endToken = this.advance();
+    } else {
+      this.recordError('Expected } to close key definition');
+      endToken = this.previous();
+    }
 
     return {
       type: 'KeyDeclaration',
@@ -1428,19 +1470,22 @@ export class Parser {
     const fieldGroups: FieldGroup[] = [];
 
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
-      const fieldGroup = this.parseWithRecovery(
-        () => this.parseFieldGroup(),
-        [TokenType.LeftBrace, TokenType.RightBrace]
-      );
-      if (fieldGroup) {
+      try {
+        const fieldGroup = this.parseFieldGroup();
         fieldGroups.push(fieldGroup);
-      } else if (this.check(TokenType.RightBrace)) {
-        // After error recovery, we may be at an entry's closing brace.
-        // If the next token is '{' (another entry), consume this '}' and continue.
-        // Otherwise, it's the section's closing brace - let the outer loop handle it.
-        const nextToken = this.tokens[this.current + 1];
-        if (nextToken?.type === TokenType.LeftBrace) {
-          this.advance(); // consume entry's closing brace
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Recover by advancing to the next item's opening brace or section closing brace
+          this.recoverToTokens([TokenType.LeftBrace, TokenType.RightBrace]);
+
+          // Disambiguation: If we stopped at }, check if it's the item's } (followed by {)
+          // or the section's } (end of section). Consume item's } to continue.
+          if (this.check(TokenType.RightBrace) && this.peekAhead(1)?.type === TokenType.LeftBrace) {
+            this.advance(); // Consume the item's closing }, next iteration will parse the item
+          }
+        } else {
+          throw error;
         }
       }
     }
@@ -1516,7 +1561,14 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close field group definition');
+    // Conditional closing brace check (issue #302)
+    let endToken: Token;
+    if (this.check(TokenType.RightBrace)) {
+      endToken = this.advance();
+    } else {
+      this.recordError('Expected } to close field group definition');
+      endToken = this.previous();
+    }
 
     return {
       type: 'FieldGroup',
@@ -1538,12 +1590,23 @@ export class Parser {
     const flatActions: ActionDeclaration[] = [];
 
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
-      const action = this.parseWithRecovery(
-        () => this.parseActionItem(),
-        [TokenType.LeftBrace, TokenType.RightBrace]
-      );
-      if (action) {
+      try {
+        const action = this.parseActionItem();
         flatActions.push(action);
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Recover by advancing to the next item's opening brace or section closing brace
+          this.recoverToTokens([TokenType.LeftBrace, TokenType.RightBrace]);
+
+          // Disambiguation: If we stopped at }, check if it's the item's } (followed by {)
+          // or the section's } (end of section). Consume item's } to continue.
+          if (this.check(TokenType.RightBrace) && this.peekAhead(1)?.type === TokenType.LeftBrace) {
+            this.advance(); // Consume the item's closing }, next iteration will parse the item
+          }
+        } else {
+          throw error;
+        }
       }
     }
 
@@ -1603,7 +1666,14 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close action definition');
+    // Conditional closing brace check (issue #302)
+    let endToken: Token;
+    if (this.check(TokenType.RightBrace)) {
+      endToken = this.advance();
+    } else {
+      this.recordError('Expected } to close action definition');
+      endToken = this.previous();
+    }
 
     return {
       type: 'ActionDeclaration',
@@ -1691,13 +1761,23 @@ export class Parser {
     const flatControls: ControlDeclaration[] = [];
 
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type) && !this.check(TokenType.Code)) {
-      // Use parseWithRecovery for each control item
-      const control = this.parseWithRecovery(
-        () => this.parseControlItem(),
-        [TokenType.LeftBrace, TokenType.RightBrace]
-      );
-      if (control) {
+      try {
+        const control = this.parseControlItem();
         flatControls.push(control);
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Recover by advancing to the next item's opening brace or section closing brace
+          this.recoverToTokens([TokenType.LeftBrace, TokenType.RightBrace]);
+
+          // Disambiguation: If we stopped at }, check if it's the item's } (followed by {)
+          // or the section's } (end of section). Consume item's } to continue.
+          if (this.check(TokenType.RightBrace) && this.peekAhead(1)?.type === TokenType.LeftBrace) {
+            this.advance(); // Consume the item's closing }, next iteration will parse the item
+          }
+        } else {
+          throw error;
+        }
       }
     }
 
@@ -1765,7 +1845,14 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close control definition');
+    // Conditional closing brace check (issue #302)
+    let endToken: Token;
+    if (this.check(TokenType.RightBrace)) {
+      endToken = this.advance();
+    } else {
+      this.recordError('Expected } to close control definition');
+      endToken = this.previous();
+    }
 
     return {
       type: 'ControlDeclaration',
@@ -2177,7 +2264,14 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.RightBrace, 'Expected } to close element definition');
+    // Conditional closing brace check (issue #302)
+    let endToken: Token;
+    if (this.check(TokenType.RightBrace)) {
+      endToken = this.advance();
+    } else {
+      this.recordError('Expected } to close element definition');
+      endToken = this.previous();
+    }
 
     return {
       type: 'XMLportElement',
@@ -3786,8 +3880,23 @@ export class Parser {
       values.push(this.parseCaseValue());
     }
 
-    // Colon
-    this.consume(TokenType.Colon, 'Expected : after case branch value');
+    // Manual colon check instead of consume() to control error location.
+    // Two tokens are used deliberately:
+    //   - errorLocation (this.previous()): the case value token, used for error LOCATION
+    //     so the error is reported on the line where the colon was expected
+    //   - errorContext (this.peek()): the unexpected token, used for error DESCRIPTION
+    //     so the message tells the user what was found instead of the colon
+    // Must throw (not recordError) to trigger error recovery in parseCaseStatement().
+    if (!this.check(TokenType.Colon)) {
+      const errorLocation = this.previous();
+      const errorContext = this.peek();
+      const sanitizedType = sanitizeTokenType(errorContext.type);
+      throw this.createParseError(
+        `Expected : after case branch value, but found '${sanitizeContent(errorContext.value)}' (${sanitizedType})`,
+        errorLocation
+      );
+    }
+    this.advance(); // consume the colon
 
     // Parse statement(s)
     const statements: Statement[] = [];
@@ -3846,6 +3955,22 @@ export class Parser {
     // Check for range expression (e.g., 1..10)
     if (this.check(TokenType.DotDot)) {
       const operatorToken = this.advance(); // consume ..
+
+      // Guard: check if next token cannot start an expression
+      if (this.check(TokenType.Colon) || this.check(TokenType.Comma) ||
+          this.check(TokenType.RightParen) || this.check(TokenType.Semicolon) ||
+          this.check(TokenType.End) || this.check(TokenType.Else)) {
+        this.recordError("Expected expression after '..' in range", this.peek());
+        return {
+          type: 'RangeExpression',
+          start: expr,
+          end: null,
+          operatorToken,
+          startToken: expr.startToken,
+          endToken: this.previous()
+        } as RangeExpression;
+      }
+
       const endExpr = this.parseExpression();
       return {
         type: 'RangeExpression',
