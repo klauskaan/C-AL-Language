@@ -620,7 +620,7 @@ export class Parser {
       const block = this.parseBlock();
       const triggerBody = block.statements;
 
-      const endToken = this.consume(TokenType.Semicolon, 'Expected ; after trigger body');
+      const endToken = this.consumeExpected(TokenType.Semicolon, 'Expected ; after trigger body');
 
       return {
         type: 'Property',
@@ -2703,7 +2703,7 @@ export class Parser {
         // Parse post-type modifiers (INDATASET, WITHEVENTS, RUNONCLIENT, SECURITYFILTERING)
         const modifiers = this.parsePostTypeModifiers(true); // true = include INDATASET for variables
 
-        this.consume(TokenType.Semicolon, 'Expected ; after variable declaration');
+        this.consumeExpected(TokenType.Semicolon, 'Expected ; after variable declaration');
 
         const variable: VariableDeclaration = {
           type: 'VariableDeclaration',
@@ -2998,7 +2998,7 @@ export class Parser {
       }
     }
 
-    this.consume(TokenType.RightParen, 'Expected ) after parameter list');
+    this.consumeExpected(TokenType.RightParen, 'Expected ) after parameter list');
 
     // Skip semicolon after procedure declaration
     if (this.check(TokenType.Semicolon)) {
@@ -3243,7 +3243,7 @@ export class Parser {
       }
     }
 
-    const endToken = this.consume(TokenType.End, 'Expected END to close BEGIN block');
+    const endToken = this.consumeExpected(TokenType.End, 'Expected END to close BEGIN block');
 
     return {
       type: 'BlockStatement',
@@ -3623,7 +3623,7 @@ export class Parser {
     const condition = this.parseExpression();
 
     // THEN
-    this.consume(TokenType.Then, 'Expected THEN');
+    this.consumeExpected(TokenType.Then, 'Expected THEN');
 
     // Parse then branch
     let thenBranch: Statement;
@@ -3693,7 +3693,7 @@ export class Parser {
     const condition = this.parseExpression();
 
     // DO
-    this.consume(TokenType.Do, 'Expected DO after WHILE condition');
+    this.consumeExpected(TokenType.Do, 'Expected DO after WHILE condition');
 
     // Parse body
     let body: Statement;
@@ -3807,14 +3807,14 @@ export class Parser {
       this.advance();
       downto = true;
     } else {
-      this.consume(TokenType.To, 'Expected TO or DOWNTO');
+      this.consumeExpected(TokenType.To, 'Expected TO or DOWNTO');
     }
 
     // To expression
     const to = this.parseExpression();
 
     // DO
-    this.consume(TokenType.Do, 'Expected DO after FOR range');
+    this.consumeExpected(TokenType.Do, 'Expected DO after FOR range');
 
     // Parse body
     let body: Statement;
@@ -3857,7 +3857,7 @@ export class Parser {
     const expression = this.parseExpression();
 
     // OF
-    this.consume(TokenType.Of, 'Expected OF');
+    this.consumeExpected(TokenType.Of, 'Expected OF after CASE');
 
     // Parse branches
     const branches: CaseBranch[] = [];
@@ -3940,7 +3940,7 @@ export class Parser {
       };
     }
 
-    this.consume(TokenType.End, 'Expected END to close CASE statement');
+    this.consumeExpected(TokenType.End, 'Expected END to close CASE statement');
     if (this.check(TokenType.Semicolon)) {
       this.advance();
     }
@@ -3970,23 +3970,7 @@ export class Parser {
       values.push(this.parseCaseValue());
     }
 
-    // Manual colon check instead of consume() to control error location.
-    // Two tokens are used deliberately:
-    //   - errorLocation (this.previous()): the case value token, used for error LOCATION
-    //     so the error is reported on the line where the colon was expected
-    //   - errorContext (this.peek()): the unexpected token, used for error DESCRIPTION
-    //     so the message tells the user what was found instead of the colon
-    // Must throw (not recordError) to trigger error recovery in parseCaseStatement().
-    if (!this.check(TokenType.Colon)) {
-      const errorLocation = this.previous();
-      const errorContext = this.peek();
-      const sanitizedType = sanitizeTokenType(errorContext.type);
-      throw this.createParseError(
-        `Expected : after case branch value, but found '${sanitizeContent(errorContext.value)}' (${sanitizedType})`,
-        errorLocation
-      );
-    }
-    this.advance(); // consume the colon
+    this.consumeExpected(TokenType.Colon, 'Expected : after case branch value');
 
     // Parse statement(s)
     const statements: Statement[] = [];
@@ -4106,7 +4090,7 @@ export class Parser {
         }
         // else: skip parseExpression, let consume() handle the error
       }
-      this.consume(TokenType.RightParen, 'Expected ) after EXIT value');
+      this.consumeExpected(TokenType.RightParen, 'Expected ) after EXIT value');
     }
 
     if (this.check(TokenType.Semicolon)) {
@@ -4178,7 +4162,7 @@ export class Parser {
     const record = this.parseExpression();
 
     // DO keyword
-    this.consume(TokenType.Do, 'Expected DO after WITH record');
+    this.consumeExpected(TokenType.Do, 'Expected DO after WITH record');
 
     // Parse body (can be BEGIN-END block or single statement)
     let body: Statement;
@@ -4552,7 +4536,7 @@ export class Parser {
     if (this.check(TokenType.LeftParen)) {
       this.advance();
       const expr = this.parseExpression();
-      this.consume(TokenType.RightParen, 'Expected ) after expression');
+      this.consumeExpected(TokenType.RightParen, 'Expected ) after expression');
       return expr;
     }
 
@@ -4870,7 +4854,7 @@ export class Parser {
       indices.push(this.parseExpression());
     }
 
-    const endToken = this.consume(TokenType.RightBracket, 'Expected ] after array index');
+    const endToken = this.consumeExpected(TokenType.RightBracket, 'Expected ] after array index');
 
     return {
       type: 'ArrayAccessExpression',
@@ -5477,6 +5461,31 @@ export class Parser {
     const sanitizedType = sanitizeTokenType(current.type as string);
     const enhancedMessage = `${message}, but found '${sanitizeContent(current.value)}' (${sanitizedType})`;
     throw this.createParseError(enhancedMessage, current);
+  }
+
+  /**
+   * Consume a token that is expected to follow a preceding construct.
+   *
+   * Unlike consume(), which reports errors at peek() (the next token), this
+   * method reports errors at previous() (the last consumed token). This gives
+   * correct error location when the expected token is missing at end-of-line:
+   * the error appears on the line where the token was expected, not the next line.
+   *
+   * Note: The error's .token field (location) will be previous(), while the error
+   * message describes peek() (what was found instead). This intentional divergence
+   * decouples "where to report" from "what was found".
+   *
+   * Use this for delimiters/keywords that follow expressions, blocks, or
+   * declarations: semicolons after statements, THEN after IF conditions,
+   * DO after WHILE/FOR/WITH, END after blocks, closing parens/brackets.
+   */
+  private consumeExpected(type: TokenType, message: string): Token {
+    if (this.check(type)) return this.advance();
+    const errorLocation = this.previous();
+    const errorContext = this.peek();
+    const sanitizedType = sanitizeTokenType(errorContext.type as string);
+    const enhancedMessage = `${message}, but found '${sanitizeContent(errorContext.value)}' (${sanitizedType})`;
+    throw this.createParseError(enhancedMessage, errorLocation);
   }
 
   /**

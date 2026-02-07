@@ -1295,7 +1295,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected ) after EXIT value');
         expect(errors[0].token.line).toBe(9);
-        expect(errors[0].token.column).toBe(13);
+        expect(errors[0].token.column).toBe(12);
       });
 
       it('should report error for unclosed empty EXIT parentheses', () => {
@@ -1321,7 +1321,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected ) after EXIT value');
         expect(errors[0].token.line).toBe(7);
-        expect(errors[0].token.column).toBe(12);
+        expect(errors[0].token.column).toBe(11);
       });
     });
   });
@@ -1468,8 +1468,8 @@ describe('Parser - Error Messages with Context', () => {
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected DO after WHILE condition');
-        expect(errors[0].token.line).toBe(10);
-        expect(errors[0].token.column).toBe(9);
+        expect(errors[0].token.line).toBe(9);
+        expect(errors[0].token.column).toBe(17);
       });
 
       it('should provide error for missing DO after FOR-TO range', () => {
@@ -1497,8 +1497,8 @@ describe('Parser - Error Messages with Context', () => {
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected DO after FOR range');
-        expect(errors[0].token.line).toBe(10);
-        expect(errors[0].token.column).toBe(9);
+        expect(errors[0].token.line).toBe(9);
+        expect(errors[0].token.column).toBe(21);
       });
 
       it('should provide error for missing DO after FOR-DOWNTO range', () => {
@@ -1526,8 +1526,8 @@ describe('Parser - Error Messages with Context', () => {
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected DO after FOR range');
-        expect(errors[0].token.line).toBe(10);
-        expect(errors[0].token.column).toBe(9);
+        expect(errors[0].token.line).toBe(9);
+        expect(errors[0].token.column).toBe(26);
       });
 
       it('should provide error for missing DO after WITH record', () => {
@@ -1555,8 +1555,8 @@ describe('Parser - Error Messages with Context', () => {
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected DO after WITH record');
-        expect(errors[0].token.line).toBe(10);
-        expect(errors[0].token.column).toBe(9);
+        expect(errors[0].token.line).toBe(9);
+        expect(errors[0].token.column).toBe(12);
       });
     });
 
@@ -1652,7 +1652,7 @@ describe('Parser - Error Messages with Context', () => {
         const endError = errors.find(e => e.message.includes('Expected END to close BEGIN block'));
         expect(endError).toBeDefined();
         expect(endError?.token.line).toBe(11);
-        expect(endError?.token.column).toBe(2);
+        expect(endError?.token.column).toBe(1);
       });
 
       // Re-enabled for Issue #297: CASE statement END detection
