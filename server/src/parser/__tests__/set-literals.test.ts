@@ -559,5 +559,67 @@ describe('Set Literals and Range Expressions', () => {
       // Should handle error gracefully
       expect(_ast.object).toBeDefined();
     });
+
+    it('should report error for closed range with EOF after range operator', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Value IN [1..`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const _ast = parser.parse();
+
+      const errors = parser.getErrors();
+
+      // Should report error for incomplete range
+      expect(errors.length).toBeGreaterThan(0);
+      const rangeError = errors.find(e => e.message.includes('Expected expression after \'..\' in range'));
+      expect(rangeError).toBeDefined();
+
+      // Tier 1: Verify error token points to EOF token
+      expect(rangeError!.token.line).toBe(5);
+      expect(rangeError!.token.column).toBe(29);
+
+      // Parser should not crash
+      expect(_ast).toBeDefined();
+      expect(_ast.object).not.toBeNull();
+
+      // Should not have spurious identifier nodes (main validation)
+      // Note: With EOF at range operator, parser may not successfully extract procedure structure
+    });
+
+    it('should report error for open-ended range with EOF after range operator', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE Test();
+          BEGIN
+            IF Value IN [..`;
+      const lexer = new Lexer(code);
+      const parser = new Parser(lexer.tokenize());
+      const _ast = parser.parse();
+
+      const errors = parser.getErrors();
+
+      // Should report error for incomplete range
+      expect(errors.length).toBeGreaterThan(0);
+      const rangeError = errors.find(e => e.message.includes('Expected expression after \'..\' in range'));
+      expect(rangeError).toBeDefined();
+
+      // Tier 1: Verify error token points to EOF token
+      expect(rangeError!.token.line).toBe(5);
+      expect(rangeError!.token.column).toBe(28);
+
+      // Parser should not crash
+      expect(_ast).toBeDefined();
+      expect(_ast.object).not.toBeNull();
+
+      // Should not have spurious identifier nodes (main validation)
+      // Note: With EOF at range operator, parser may not successfully extract procedure structure
+    });
   });
 });

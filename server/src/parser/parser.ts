@@ -3957,7 +3957,7 @@ export class Parser {
       const operatorToken = this.advance(); // consume ..
 
       // Guard: check if next token cannot start an expression
-      if (this.check(TokenType.Colon) || this.check(TokenType.Comma) ||
+      if (this.isAtEnd() || this.check(TokenType.Colon) || this.check(TokenType.Comma) ||
           this.check(TokenType.RightParen) || this.check(TokenType.Semicolon) ||
           this.check(TokenType.End) || this.check(TokenType.Else)) {
         this.recordError("Expected expression after '..' in range", this.peek());
@@ -4778,6 +4778,18 @@ export class Parser {
         // Check for open-ended range: ..end
         if (this.check(TokenType.DotDot)) {
           const rangeStart = this.advance();
+          if (this.isAtEnd()) {
+            this.recordError("Expected expression after '..' in range", this.peek());
+            elements.push({
+              type: 'RangeExpression',
+              start: null,
+              end: null,
+              operatorToken: rangeStart,
+              startToken: rangeStart,
+              endToken: rangeStart
+            } as RangeExpression);
+            continue; // Skip to next iteration
+          }
           const end = this.parseExpression();
           elements.push({
             type: 'RangeExpression',
@@ -4796,7 +4808,7 @@ export class Parser {
             const operatorToken = this.advance(); // consume '..'
 
             // Check for closed range (start..end) vs open-ended range (start..)
-            if (!this.check(TokenType.Comma) && !this.check(TokenType.RightBracket)) {
+            if (!this.isAtEnd() && !this.check(TokenType.Comma) && !this.check(TokenType.RightBracket)) {
               // Closed range: start..end
               const end = this.parseExpression();
               elements.push({
@@ -4809,6 +4821,9 @@ export class Parser {
               } as RangeExpression);
             } else {
               // Open-ended range: start..
+              if (this.isAtEnd()) {
+                this.recordError("Expected expression after '..' in range", this.peek());
+              }
               elements.push({
                 type: 'RangeExpression',
                 start,
