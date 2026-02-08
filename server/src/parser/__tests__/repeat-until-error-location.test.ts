@@ -315,6 +315,32 @@ describe('Parser - REPEAT/UNTIL Error Location', () => {
       expect(untilError!.token.column).toBe(7);
       expect(untilError!.token.value).toBe('REPEAT');
     });
+
+    it('should report error at REPEAT when UNTIL is missing at EOF', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      REPEAT
+        x := 1;`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      parser.parse();
+      const errors = parser.getErrors();
+
+      const untilError = errors.find(e => e.message.includes('Expected UNTIL'));
+      expect(untilError).toBeDefined();
+      // Error should point to REPEAT (line 7), NOT EOF
+      expect(untilError!.token.line).toBe(7);
+      expect(untilError!.token.column).toBe(7);
+      expect(untilError!.token.value).toBe('REPEAT');
+    });
   });
 
   describe('Regression - normal REPEAT/UNTIL still works', () => {
