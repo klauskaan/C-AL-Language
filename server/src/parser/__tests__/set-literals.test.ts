@@ -15,6 +15,8 @@
 
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../parser';
+import { ObjectDeclaration } from '../ast';
+import { TokenType } from '../../lexer/tokens';
 
 describe('Set Literals and Range Expressions', () => {
   describe('Discrete Values', () => {
@@ -756,11 +758,23 @@ describe('Set Literals and Range Expressions', () => {
       const _ast = parser.parse();
 
       const errors = parser.getErrors();
-      expect(errors.length).toBeGreaterThanOrEqual(1);
-      const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
-      expect(rangeError).toBeDefined();
-      expect(rangeError!.token.value).toBe(']');
+      expect(errors.length).toBe(1);
+      expect(errors[0].message).toMatch(/expected expression after '\.\.'/i);
+      expect(errors[0].token.value).toBe(']');
       expect(_ast.object).toBeDefined();
+
+      // Navigate into AST to verify recovery
+      const obj = _ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const ifStmt = proc?.body?.[0] as any;
+      const inExpr = ifStmt.condition;
+      const setLiteral = inExpr.right;
+
+      // Verify ] was consumed as closing bracket, not identifier
+      expect(setLiteral.endToken.type).toBe(TokenType.RightBracket);
+
+      // Verify THEN branch recovered correctly
+      expect(ifStmt.thenBranch.type).toBe('ExitStatement');
     });
 
     it('should detect missing expression after .. in open-start path when followed by comma', () => {
