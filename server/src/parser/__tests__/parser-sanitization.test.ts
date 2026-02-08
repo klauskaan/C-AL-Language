@@ -3,10 +3,6 @@
  *
  * Tests for issue #112: Sanitize token values in parser error messages.
  *
- * IMPORTANT: These tests are EXPECTED TO FAIL initially because parser.ts
- * currently exposes raw token values in error messages. They validate that
- * the sanitization implementation correctly protects sensitive data.
- *
  * Test Coverage:
  * - All 13 locations in parser.ts that expose token.value
  * - Edge cases: empty tokens, very long tokens (>100 chars)
@@ -17,7 +13,7 @@
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../parser';
 
-describe('Parser error message sanitization (EXPECTED TO FAIL)', () => {
+describe('Parser error message sanitization', () => {
   /**
    * Helper to assert sanitization format and absence of raw value
    */

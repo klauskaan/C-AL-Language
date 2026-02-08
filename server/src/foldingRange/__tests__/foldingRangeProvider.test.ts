@@ -1,8 +1,7 @@
 /**
- * Tests for FoldingRangeProvider (TDD - Tests MUST fail initially)
+ * Tests for FoldingRangeProvider
  *
- * These tests validate the code folding functionality following TDD principles.
- * All tests are expected to FAIL initially because FoldingRangeProvider does not exist yet.
+ * These tests validate the code folding functionality.
  *
  * Issue: #32 - Code folding support
  */
@@ -12,7 +11,6 @@ import { Parser } from '../../parser/parser';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { FoldingRange, FoldingRangeKind } from 'vscode-languageserver';
 
-// This import will FAIL - FoldingRangeProvider doesn't exist yet
 import { FoldingRangeProvider } from '../foldingRangeProvider';
 
 /**

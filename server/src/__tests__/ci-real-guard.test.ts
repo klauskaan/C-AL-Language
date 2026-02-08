@@ -9,10 +9,6 @@
  * - These files can be read/parsed for analysis during development
  * - They must NEVER be copied to committed files (fixtures, snapshots, etc.)
  * - The CI guard scans fixtures and snapshots for test/REAL/ path references
- *
- * TDD Note:
- * These tests are EXPECTED TO FAIL initially because ciRealGuard.ts doesn't exist yet.
- * This validates our diagnosis that we need this guard functionality.
  */
 
 import * as fs from 'fs';

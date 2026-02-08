@@ -7,9 +7,6 @@
  * Test Coverage:
  * - compareToBaseline(): Baseline comparison logic
  * - runCICheck(): CI mode execution flow
- *
- * TDD Note: These tests are expected to FAIL initially as the functions
- * don't exist yet. Implementation will follow after test validation.
  */
 
 import * as lexerHealth from '../../../scripts/lexer-health';

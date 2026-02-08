@@ -724,7 +724,6 @@ describe('Parser - Nested CASE Error Recovery', () => {
 
   describe('Issue #298 - Malformed function call consumes identifier case values', () => {
     it('should recover from malformed function call and recognize identifier case value', () => {
-      // EXPECTED TO FAIL: parseFunctionCallIfPresent silently consumes all tokens including "Ready:"
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -865,7 +864,6 @@ describe('Parser - Nested CASE Error Recovery', () => {
     });
 
     it('should not consume subsequent procedures during error recovery', () => {
-      // EXPECTED TO FAIL: SecondProc might be consumed if recovery goes too far
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1041,8 +1039,6 @@ describe('Parser - Nested CASE Error Recovery', () => {
 
   describe('Issue #317 - CASE error recovery consumes FUNCTION declarations', () => {
     it('should not consume FUNCTION declaration during CASE error recovery', () => {
-      // EXPECTED TO FAIL: parseCaseStatement error recovery checks for Procedure/Trigger/Event
-      // but is MISSING Function, so it can consume tokens from a following FUNCTION declaration
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
