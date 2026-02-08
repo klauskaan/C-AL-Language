@@ -1,5 +1,5 @@
 /**
- * TDD TESTS: ActionList Property Parsing in Control Properties
+ * Tests: ActionList Property Parsing in Control Properties
  *
  * Bug: When ActionList=ACTIONS { ... } appears in CONTROL properties (not PROPERTIES section),
  * the parser incorrectly emits "Expected =" errors. This happens because the parseProperty()
@@ -15,9 +15,6 @@
  * - ActionList should parse correctly in both PROPERTIES and CONTROLS sections
  * - Brace depth tracking should handle nested ACTIONS blocks in control properties
  * - No "Expected =" errors when ActionList contains properly nested structure
- *
- * These tests MUST FAIL initially to validate the bug exists.
- * After fix, they should all pass without errors.
  */
 
 import { Lexer } from '../../lexer/lexer';

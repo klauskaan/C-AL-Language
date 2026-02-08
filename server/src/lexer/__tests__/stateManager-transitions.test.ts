@@ -3,9 +3,6 @@
  *
  * These tests verify that StateManager methods return ContextTransition objects
  * that the Lexer can use to emit trace events for context changes.
- *
- * TDD Phase: These tests SHOULD FAIL initially because ContextTransition interface
- * and updated method signatures don't exist yet.
  */
 
 import { LexerStateManager, LexerContext } from '../stateManager';

@@ -1,5 +1,5 @@
 /**
- * TDD TESTS: Empty/Malformed Property Value Fix in parseFieldProperties()
+ * Tests: Empty/Malformed Property Value Fix in parseFieldProperties()
  *
  * Bug: The parser incorrectly reports errors for valid `Property= }` patterns
  * (with whitespace between = and }) but correctly handles truly malformed cases
@@ -14,11 +14,6 @@
  * - Property= } should parse without errors (whitespace is valid)
  * - Property=} should report "Empty or malformed value for property" error
  * - This applies to both TABLE FIELDS and PAGE CONTROLS sections
- *
- * These tests MUST reflect current behavior:
- * - Whitespace value tests SHOULD FAIL initially (parser incorrectly reports errors)
- * - Malformed value tests SHOULD PASS (parser correctly detects the error)
- * After fix, whitespace tests should pass without errors.
  */
 
 import { Lexer } from '../../lexer/lexer';

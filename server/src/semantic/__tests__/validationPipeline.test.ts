@@ -8,9 +8,6 @@
  * - Handle validator errors gracefully (catch, log, continue)
  * - Pass correct ValidationContext to each validator
  * - Return empty diagnostics for empty pipeline
- *
- * Test Strategy: These tests SHOULD FAIL initially since ValidationPipeline
- * doesn't exist yet. This validates the tests are meaningful (TDD approach).
  */
 
 import { ValidationPipeline } from '../validationPipeline';

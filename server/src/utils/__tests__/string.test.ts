@@ -4,8 +4,6 @@
  * Tests for the unescapeCalString utility that converts C/AL escaped strings
  * to their literal values by replacing doubled single quotes ('') with single quotes (').
  *
- * Developed using TDD: tests written first and verified to fail before implementation.
- *
  * Purpose:
  * - Convert C/AL string escaping ('') to actual single quotes (')
  * - Handle edge cases: empty strings, consecutive escapes, boundary positions

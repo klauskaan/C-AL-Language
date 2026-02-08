@@ -8,9 +8,6 @@
  * - Bracket balance (bracketDepth should be 0)
  * - Property value completeness (inPropertyValue should be false)
  * - Field definition completeness (fieldDefColumn should be NONE)
- *
- * These tests are written TDD-style and MUST FAIL initially because the
- * isCleanExit() method doesn't exist yet.
  */
 
 import { Lexer, ExitCategory } from '../lexer';

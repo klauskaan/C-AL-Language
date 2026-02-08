@@ -3,11 +3,7 @@
  *
  * Tests for graceful handling of exceptions thrown by trace callbacks (issue #104).
  *
- * CRITICAL TDD Rule: These tests MUST fail initially because there's currently
- * NO error handling around trace callbacks in the lexer. A throwing callback
- * will crash tokenize().
- *
- * Expected behavior after implementation:
+ * Expected behavior:
  * - Exceptions caught and logged to console.warn
  * - Callback disabled after first exception (fail-once)
  * - Tokenization completes successfully

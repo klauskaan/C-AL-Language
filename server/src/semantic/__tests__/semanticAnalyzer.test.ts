@@ -8,9 +8,6 @@
  * - Returns empty diagnostics for valid code
  * - Returns diagnostics from registered validators
  * - Integrates with ValidationPipeline
- *
- * Test Strategy: These tests SHOULD FAIL initially since SemanticAnalyzer
- * doesn't exist yet. This validates the tests are meaningful (TDD approach).
  */
 
 import { SemanticAnalyzer } from '../semanticAnalyzer';

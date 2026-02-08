@@ -17,12 +17,6 @@
  * PROCEDURE Bar();  // ERROR: Parser thinks this is nested inside Foo()
  * ```
  *
- * TDD EXPECTATION: These tests SHOULD FAIL initially because the bug causes:
- * - The first procedure's END to be consumed by the IF/WHILE/FOR/WITH statement
- * - The first procedure to remain unclosed (missing its closing END)
- * - The second procedure to be incorrectly parsed as nested inside the first
- * - Parse errors when trying to parse the second procedure
- *
  * After the fix, the parser should recognize that control flow statements
  * cannot consume END tokens that belong to enclosing BEGIN-END blocks.
  */

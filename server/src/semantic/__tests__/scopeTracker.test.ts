@@ -10,9 +10,6 @@
  *
  * Key Rule: Inside WITH statements, unknown identifiers might be record fields,
  * so they should NOT be flagged as undefined.
- *
- * Test Strategy: These tests SHOULD FAIL initially since ScopeTracker
- * doesn't exist yet. This validates the tests are meaningful (TDD approach).
  */
 
 import { ScopeTracker } from '../scopeTracker';

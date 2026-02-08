@@ -4,8 +4,6 @@
  * Tests for the sanitization utility that prevents code leakage in error messages,
  * test output, and diagnostic messages.
  *
- * TDD Principle: These tests MUST FAIL initially since the utility doesn't exist yet.
- *
  * Purpose:
  * - Prevent proprietary C/AL code from appearing in logs/errors
  * - Provide safe metadata (length, offset, char codes) instead of content

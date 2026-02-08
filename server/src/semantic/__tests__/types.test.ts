@@ -5,9 +5,6 @@
  * These types define the interfaces for:
  * - Validator: Interface for semantic validators
  * - ValidationContext: Context passed to validators during analysis
- *
- * Test Strategy: These tests SHOULD FAIL initially since the types
- * don't exist yet. This validates the tests are meaningful (TDD approach).
  */
 
 import { Validator, ValidationContext } from '../types';

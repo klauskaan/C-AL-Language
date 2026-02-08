@@ -4,10 +4,6 @@
  * Tests for issue #260: Section keywords used as procedure names inside CODE
  * sections incorrectly set lastWasSectionKeyword=true and corrupt lexer state.
  *
- * TDD VALIDATION:
- * - Group A and B tests MUST FAIL before the fix
- * - Group C regression tests MUST PASS both before and after
- *
  * ROOT CAUSE:
  * When a section keyword (Fields, Keys, Controls, etc.) is used as a procedure name
  * inside a CODE section, the lexer:
