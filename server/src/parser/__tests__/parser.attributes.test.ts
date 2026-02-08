@@ -95,8 +95,8 @@ describe('Parser - Procedure Attributes', () => {
     // See issue #195 for verification of other attribute patterns
 
     it('should parse [Integration(TRUE)] attribute', () => {
-      // TODO: Verify this pattern exists in real NAV files (issue #194)
-      // Real NAV files show [Integration] without arguments
+      // Pattern verified in test/REAL/ (issue #194)
+      // Found 117 occurrences: COD12.TXT, COD1061.TXT, COD1410.TXT, TAB36.TXT, etc.
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           [Integration(TRUE)]
