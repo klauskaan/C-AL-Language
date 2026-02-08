@@ -1343,4 +1343,328 @@ describe('Parser - Nested CASE Error Recovery', () => {
       expect(ast.object).not.toBeNull();
     });
   });
+
+  describe('Issue #386 - CASE ELSE missing END detection', () => {
+    describe('Primary fix scenarios - PROCEDURE/FUNCTION boundary protection', () => {
+      it('should detect CASE ELSE missing END when followed by PROCEDURE', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE FirstProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        ELSE
+          MESSAGE('Else');
+      END;
+
+    PROCEDURE SecondProc();
+    BEGIN
+      MESSAGE('Second');
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Should report error for CASE ELSE missing END
+        expect(errors.length).toBeGreaterThan(0);
+        const caseError = errors.find(e =>
+          e.message.includes('CASE') ||
+          e.message.includes('END') ||
+          e.message.includes('Expected')
+        );
+        expect(caseError).toBeDefined();
+
+        // Should preserve SecondProc - not consumed by CASE error recovery
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(2);
+        expect(procedures[0].name).toBe('FirstProc');
+        expect(procedures[1].name).toBe('SecondProc');
+      });
+
+      it('should detect CASE ELSE missing END when followed by FUNCTION', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE FirstProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        ELSE
+          MESSAGE('Else');
+      END;
+
+    FUNCTION SecondFunc() : Integer;
+    BEGIN
+      EXIT(42);
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Should report error for CASE ELSE missing END
+        expect(errors.length).toBeGreaterThan(0);
+        const caseError = errors.find(e =>
+          e.message.includes('CASE') ||
+          e.message.includes('END') ||
+          e.message.includes('Expected')
+        );
+        expect(caseError).toBeDefined();
+
+        // Should preserve SecondFunc - not consumed by CASE error recovery
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(2);
+        expect(procedures[0].name).toBe('FirstProc');
+        expect(procedures[1].name).toBe('SecondFunc');
+      });
+    });
+
+    describe('Existing detection via outer structure END', () => {
+      it('should detect CASE ELSE missing END when outer END closes parent structure', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        ELSE
+          MESSAGE('Else');
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        // Should report error - outer END is for procedure BEGIN, not CASE
+        expect(errors.length).toBeGreaterThan(0);
+        const caseError = errors.find(e =>
+          e.message.includes('CASE') ||
+          e.message.includes('END') ||
+          e.message.includes('Expected')
+        );
+        expect(caseError).toBeDefined();
+      });
+    });
+
+    describe('Regression guards - valid ELSE branches', () => {
+      it('should parse CASE ELSE with IF inside correctly', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      y : Boolean;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        ELSE
+          IF y THEN
+            MESSAGE('Else-If');
+      END;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        // Should parse without errors
+        expect(errors.length).toBe(0);
+      });
+
+      it('should parse CASE ELSE with BEGIN...END containing IF correctly', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      y : Boolean;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        ELSE
+          BEGIN
+            IF y THEN
+              MESSAGE('Else-If');
+          END;
+      END;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        // Should parse without errors
+        expect(errors.length).toBe(0);
+      });
+
+      it('should parse empty ELSE branch correctly', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        ELSE
+      END;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        // Should parse without errors
+        expect(errors.length).toBe(0);
+      });
+
+      it('should parse CASE ELSE with multiple statements correctly', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      y : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        ELSE BEGIN
+          MESSAGE('Else start');
+          y := 10;
+          MESSAGE('Else end');
+        END;
+      END;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        // Should parse without errors
+        expect(errors.length).toBe(0);
+      });
+    });
+
+    describe('Known limitations - same procedure absorption', () => {
+      it('should detect error when CASE ELSE missing END absorbs IF in same procedure', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      y : Boolean;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        ELSE
+          MESSAGE('Else');
+      IF y THEN
+        MESSAGE('After');
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        // Should report error (IF gets absorbed into ELSE, error when reaching outer END)
+        expect(errors.length).toBeGreaterThan(0);
+        const hasError = errors.some(e =>
+          e.message.includes('CASE') ||
+          e.message.includes('END') ||
+          e.message.includes('Expected')
+        );
+        expect(hasError).toBe(true);
+      });
+
+      it('should detect error when CASE ELSE missing END absorbs WHILE in same procedure', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      y : Boolean;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        ELSE
+          MESSAGE('Else');
+      WHILE y DO
+        EXIT;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        // Should report error (WHILE gets absorbed into ELSE, error when reaching outer END)
+        expect(errors.length).toBeGreaterThan(0);
+        const hasError = errors.some(e =>
+          e.message.includes('CASE') ||
+          e.message.includes('END') ||
+          e.message.includes('Expected')
+        );
+        expect(hasError).toBe(true);
+      });
+    });
+  });
 });
