@@ -3921,6 +3921,18 @@ export class Parser {
       } catch (error) {
         if (error instanceof ParseError) {
           this.errors.push(error);
+
+          // If this is a CaseBranchParseError, create a partial branch with the parsed values
+          if (error instanceof CaseBranchParseError) {
+            branches.push({
+              type: 'CaseBranch',
+              values: error.values,
+              statements: [],
+              startToken: error.branchStartToken,
+              endToken: this.previous()
+            });
+          }
+
           // Recover within the CASE statement - skip to next case value or ELSE/END
           while (!this.isAtEnd()) {
             // Stop at END (closes the case)
@@ -4016,7 +4028,20 @@ export class Parser {
       values.push(this.parseCaseValue());
     }
 
-    this.consumeExpected(TokenType.Colon, 'Expected : after case branch value');
+    // Manual colon check to preserve parsed values in case of error
+    if (!this.check(TokenType.Colon)) {
+      const errorLocation = this.previous();
+      const errorContext = this.peek();
+      const sanitizedType = sanitizeTokenType(errorContext.type as string);
+      const message = `Expected : after case branch value, but found '${sanitizeContent(errorContext.value)}' (${sanitizedType})`;
+      throw new CaseBranchParseError(
+        stripPaths(message),
+        errorLocation,
+        values,
+        branchStart
+      );
+    }
+    this.advance(); // consume the colon
 
     // Parse statement(s)
     const statements: Statement[] = [];
@@ -5954,6 +5979,23 @@ export class ParseError extends Error {
   constructor(message: string, public token: Token) {
     super(`${message} at line ${token.line}, column ${token.column}`);
     this.name = 'ParseError';
+  }
+}
+
+/**
+ * Specialized error thrown when parseCaseBranch() fails after parsing case values
+ * but before/at the colon. Carries the already-parsed values so they can be preserved
+ * in a partial CaseBranch node during error recovery.
+ */
+export class CaseBranchParseError extends ParseError {
+  constructor(
+    message: string,
+    token: Token,
+    public values: Expression[],
+    public branchStartToken: Token
+  ) {
+    super(message, token);
+    this.name = 'CaseBranchParseError';
   }
 }
 

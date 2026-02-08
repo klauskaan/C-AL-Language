@@ -989,9 +989,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
       expect((caseStmt.branches[1].values[0] as any).name).toBe('Ready');
     });
 
-    it.skip('should recover at identifier followed by colon, not identifier followed by comma', () => {
-      // Deferred to Issue #320: Missing colon in CASE values not recovered properly
-      // EXPECTED TO FAIL: During error recovery, stop at "ValidIdent:" not at "a" in args
+    it('should recover at identifier followed by colon, not identifier followed by comma', () => {
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
