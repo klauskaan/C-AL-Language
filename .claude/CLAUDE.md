@@ -24,7 +24,7 @@ Implementation work happens in a git worktree (`../worktree-issue-{number}`) to 
                     (if senior-merge-engineer was needed, run adversarial-reviewer before cleanup)
 ```
 
-**Skip steps that aren't needed.** Trivial changes don't need an architect. Use judgment — but lean toward investigating. A detailed issue description tells you WHAT is happening, not WHY. Skip the detective only when the root cause is genuinely obvious (single file, clear cause, no ambiguity about where to fix). For bugs and non-trivial features, default to investigating.
+**Skip steps that aren't needed.** Trivial changes don't need an architect. Use judgment — but lean toward investigating. A detailed issue description tells you WHAT is happening, not WHY. Skip the detective only after glancing at the relevant code to confirm the root cause is genuinely obvious (single file, clear cause, no ambiguity about where to fix) — don't trust the issue description alone. For bugs and non-trivial features, default to investigating.
 
 **TDD:** Tests should fail before implementation (bug fixes and new features). If they pass immediately, the diagnosis might be wrong. Exceptions: refactoring, test coverage tasks, regression tests.
 
@@ -158,6 +158,7 @@ Things we've learned:
 3. **Verify edits** — re-read files after editing; silent tool failures happen
 4. **Explicit issue closure** — use `Fixes #X` in commit messages, not just `#X`
 5. **Agent resume can fail** — if an agent returns nothing on resume, start it fresh with full context
+6. **Verify before skipping** — glance at the code before skipping code-detective; issue descriptions can be wrong, outdated, or incomplete
 
 ---
 
