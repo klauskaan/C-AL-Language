@@ -409,30 +409,28 @@ describe('Parser - Section EOF Edge Cases', () => {
   });
 
   describe('Error message consistency', () => {
-    it('should use consistent error message format across section types', () => {
-      const sections = [
-        { code: 'OBJECT Table 1 T { FIELDS {', section: 'FIELDS' },
-        { code: 'OBJECT Table 1 T { KEYS {', section: 'KEYS' },
-        { code: 'OBJECT Table 1 T { FIELDGROUPS {', section: 'FIELDGROUPS' },
-        { code: 'OBJECT Page 1 P { ACTIONS {', section: 'ACTIONS' },
-        { code: 'OBJECT Page 1 P { CONTROLS {', section: 'CONTROLS' },
-        { code: 'OBJECT XMLport 1 X { ELEMENTS {', section: 'ELEMENTS' },
-      ];
+    const sections = [
+      { code: 'OBJECT Table 1 T { FIELDS {', section: 'FIELDS' },
+      { code: 'OBJECT Table 1 T { KEYS {', section: 'KEYS' },
+      { code: 'OBJECT Table 1 T { FIELDGROUPS {', section: 'FIELDGROUPS' },
+      { code: 'OBJECT Page 1 P { ACTIONS {', section: 'ACTIONS' },
+      { code: 'OBJECT Page 1 P { CONTROLS {', section: 'CONTROLS' },
+      { code: 'OBJECT XMLport 1 X { ELEMENTS {', section: 'ELEMENTS' },
+    ];
 
-      sections.forEach(({ code, section }) => {
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
+    it.each(sections)('should use consistent error message format for $section section', ({ code, section }) => {
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
 
-        parser.parse();
-        const errors = parser.getErrors();
+      parser.parse();
+      const errors = parser.getErrors();
 
-        const closeError = errors.find(e => e.message.includes(`Expected } to close ${section} section`));
-        expect(closeError).toBeDefined();
-        expect(closeError?.message).toContain('Expected } to close');
-        expect(closeError?.message).toContain(section);
-        expect(closeError?.message).toContain('section');
-      });
+      const closeError = errors.find(e => e.message.includes(`Expected } to close ${section} section`));
+      expect(closeError).toBeDefined();
+      expect(closeError?.message).toContain('Expected } to close');
+      expect(closeError?.message).toContain(section);
+      expect(closeError?.message).toContain('section');
     });
   });
 
