@@ -8,9 +8,6 @@
  *
  * This proves these patterns are VALID C/AL syntax, not errors.
  *
- * TDD EXPECTATION: These tests should FAIL initially, showing that the parser
- * currently rejects valid C/AL syntax. After the parser fix, they will pass.
- *
  * The parser should accept empty control flow bodies when followed by
  * END/ELSE/UNTIL keywords, treating them as implicit EmptyStatement nodes.
  */

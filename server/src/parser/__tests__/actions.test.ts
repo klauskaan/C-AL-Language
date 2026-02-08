@@ -1,10 +1,5 @@
 /**
- * TDD Tests for ACTIONS Section Parsing
- *
- * These tests MUST FAIL initially because:
- * 1. The ACTIONS section parsing is not yet implemented
- * 2. The ActionSection and Action AST node types don't exist
- * 3. The parser currently skips over ActionList=ACTIONS { } blocks
+ * Tests for ACTIONS Section Parsing
  *
  * ACTIONS format (found in Page objects within PROPERTIES section):
  * ```
@@ -24,7 +19,7 @@
  * - IndentLevel 0 = root action
  * - IndentLevel N+1 = child of nearest lower indent level
  *
- * Once implemented, the parser should:
+ * The parser should:
  * - Parse each action entry
  * - Extract id, indentLevel, actionType
  * - Build parent-child hierarchy from indent levels

@@ -4,9 +4,6 @@
  * CONTEXT: NAV exports contain patterns like `VAR ; BEGIN` where empty VAR blocks
  * have trailing semicolons. This is valid C/AL syntax from C/SIDE exports.
  *
- * TDD EXPECTATION: These tests should FAIL initially (except test 7), showing that
- * the parser currently rejects valid C/AL syntax. After the parser fix, they will pass.
- *
  * The parser should skip stray semicolons in VAR blocks and continue parsing,
  * treating them as no-op separators that don't constitute variable declarations.
  */

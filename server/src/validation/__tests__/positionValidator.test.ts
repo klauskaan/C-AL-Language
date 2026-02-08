@@ -2,7 +2,6 @@
  * Position Validator Tests
  *
  * Tests for the position validator utility (Task 4 - Issue #92).
- * Following TDD: These tests are written FIRST and should FAIL until implementation.
  *
  * The position validator verifies that:
  * - Token positions match document content

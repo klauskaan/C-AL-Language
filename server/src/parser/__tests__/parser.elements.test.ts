@@ -1,10 +1,5 @@
 /**
- * TDD Tests for XMLport ELEMENTS Section Parsing
- *
- * These tests MUST FAIL initially because:
- * 1. The ELEMENTS section parsing for XMLport is not yet implemented
- * 2. The parser currently skips over ELEMENTS { } blocks in XMLport objects
- * 3. The parseElementsSection method doesn't exist yet
+ * Tests for XMLport ELEMENTS Section Parsing
  *
  * ELEMENTS format (found in XMLport objects):
  * ```

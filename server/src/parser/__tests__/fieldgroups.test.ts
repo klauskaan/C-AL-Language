@@ -1,9 +1,5 @@
 /**
- * TDD Tests for FIELDGROUPS Parsing
- *
- * These tests MUST FAIL initially because:
- * 1. parseFieldGroupSection() at parser.ts:1057-1076 is a stub that skips parsing
- * 2. FieldGroup interface is missing the `id` field
+ * Tests for FIELDGROUPS Parsing
  *
  * FIELDGROUPS format:
  * ```
@@ -17,7 +13,7 @@
  * - Name is an identifier
  * - FieldList is comma-separated field names (may contain spaces, parentheses, periods)
  *
- * Once implemented, the parser should:
+ * The parser should:
  * - Parse each field group entry
  * - Extract id, name, and fields array
  * - Handle whitespace and special characters in field names

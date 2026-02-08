@@ -4,10 +4,6 @@
  * Tests multi-line string support for C/AL TextConst declarations.
  * Real NAV export files contain TextConst with multi-line string literals
  * spanning 2-3 lines, which are valid in C/AL.
- *
- * EXPECTED BEHAVIOR: These tests MUST FAIL initially to validate TDD approach.
- * The current lexer treats newlines as string terminators, producing UNKNOWN tokens
- * instead of STRING tokens for multi-line strings.
  */
 
 import { Lexer } from '../lexer';

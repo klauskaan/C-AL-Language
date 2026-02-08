@@ -13,10 +13,6 @@
  * doesn't recognize it as a recovery point and may skip past it, consuming
  * subsequent sections.
  *
- * TDD Principle: These tests MUST FAIL first
- * - Before fix: synchronize() doesn't stop at unsupported sections
- * - After fix: synchronize() recognizes them as recovery boundaries
- *
  * Test Strategy:
  * 1. Create intentional parse error (missing = in property assignment)
  * 2. Place error BEFORE an unsupported section keyword

@@ -1,10 +1,5 @@
 /**
- * TDD Tests for CONTROLS Section Parsing
- *
- * These tests MUST FAIL initially because:
- * 1. The CONTROLS section parsing is not yet implemented
- * 2. The ControlSection and ControlDeclaration AST node types don't exist
- * 3. The parser currently skips over CONTROLS { } blocks
+ * Tests for CONTROLS Section Parsing
  *
  * CONTROLS format (found in Page objects):
  * ```
@@ -24,7 +19,7 @@
  * - IndentLevel 0 = root control
  * - IndentLevel N+1 = child of nearest lower indent level
  *
- * Once implemented, the parser should:
+ * The parser should:
  * - Parse each control entry
  * - Extract id, indentLevel, controlType
  * - Build parent-child hierarchy from indent levels

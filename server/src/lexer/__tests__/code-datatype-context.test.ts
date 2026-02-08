@@ -4,10 +4,6 @@
  * Tests that the lexer correctly distinguishes between:
  * - CODE as a section keyword (TokenType.Code)
  * - Code as a data type (TokenType.Code_Type)
- *
- * These tests SHOULD FAIL initially, demonstrating the bug where
- * Code is tokenized as TokenType.Code or Identifier instead of
- * TokenType.Code_Type in variable declarations and return types.
  */
 
 import { Lexer } from '../lexer';

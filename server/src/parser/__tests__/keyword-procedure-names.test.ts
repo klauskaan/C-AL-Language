@@ -13,11 +13,6 @@
  * 1. Allow the keyword in procedure declarations
  * 2. Parse quoted calls correctly as procedure calls
  * 3. Maintain unquoted keyword behavior (e.g., Break = BREAK statement)
- *
- * TDD EXPECTATION:
- * - Tests 1-2 SHOULD FAIL initially (Break not in ALLOWED_KEYWORDS_AS_IDENTIFIERS)
- * - Tests 3-5 SHOULD PASS (regression guards for existing behavior)
- * - Tests will pass after adding TokenType.Break to ALLOWED_KEYWORDS_AS_IDENTIFIERS
  */
 
 import { Lexer } from '../../lexer/lexer';

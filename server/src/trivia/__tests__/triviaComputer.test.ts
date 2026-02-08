@@ -4,9 +4,6 @@
  * Tests for lazy trivia computation utility that extracts whitespace and comments
  * from document positions without modifying the lexer or token interface.
  *
- * IMPORTANT: These tests are written BEFORE implementation (TDD).
- * They MUST fail initially because the implementation doesn't exist yet.
- *
  * Tests cover:
  * - Basic trivia extraction (before first token, between tokens, before EOF, empty trivia)
  * - TriviaSpan interface validation

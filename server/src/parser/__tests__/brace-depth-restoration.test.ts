@@ -18,9 +18,6 @@
  * instead of 0. When skipUnsupportedSection() is called for CONTROLS or ACTIONS,
  * it compares this.braceDepth (corrupted -1) against sectionDepth (correct 1),
  * causing the comparison to never match and the parser to skip until EOF.
- *
- * These tests MUST FAIL before the fix is applied (TDD validation).
- * If they pass immediately, the bug diagnosis is wrong.
  */
 
 import { Lexer } from '../../lexer/lexer';

@@ -6,9 +6,6 @@
  *
  * This feature enables safe validation of object-specific edge cases, such as
  * RDLDATA sections in Report objects.
- *
- * TDD Requirement: These tests MUST FAIL initially since the feature isn't
- * implemented yet. This validates our diagnosis and ensures correct implementation.
  */
 
 import { Lexer } from '../lexer';

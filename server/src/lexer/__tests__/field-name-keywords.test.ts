@@ -26,8 +26,6 @@
  *   { FieldNo ; Enabled ; FieldName ; DataType ; Properties }
  *              ^^^^^^^   ^^^^^^^^^^
  *              Column 2   Column 3 - BEGIN/END here are TEXT, not keywords
- *
- * These tests MUST FAIL initially to validate the bug exists.
  */
 
 import { Lexer } from '../lexer';

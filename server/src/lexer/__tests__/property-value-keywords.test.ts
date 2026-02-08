@@ -15,8 +15,6 @@
  * CORRECT BEHAVIOR:
  * - `InitValue=Begin;` → BEGIN is a TEXT VALUE, no context change
  * - `OnValidate=BEGIN code END;` → BEGIN is CODE START, push CODE_BLOCK context
- *
- * These tests MUST FAIL initially to validate the bug exists.
  */
 
 import { Lexer } from '../lexer';

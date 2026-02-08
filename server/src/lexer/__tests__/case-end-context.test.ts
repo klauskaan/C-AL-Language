@@ -7,8 +7,6 @@
  * BUG: When braces (comments) appear in a CASE branch, the lexer can lose track
  * of the CASE context, causing the CASE's END keyword to be mis-tokenized as
  * an IDENTIFIER instead of TokenType.End. This breaks parsing of subsequent code.
- *
- * These tests SHOULD FAIL initially, demonstrating that the bug exists.
  */
 
 import { Lexer } from '../lexer';
