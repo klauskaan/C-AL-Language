@@ -3586,16 +3586,15 @@ export class Parser {
       case 'WhileStatement':
       case 'ForStatement':
       case 'WithStatement':
-        return this.isStatementTerminatedBySemicolon((stmt as WhileStatement | ForStatement | WithStatement).body);
+        return this.isStatementTerminatedBySemicolon(stmt.body);
 
       // IF statement: Check if the IF can claim a following ELSE
       // If elseBranch exists, check if it's terminated (prevents outer IF from claiming ELSE)
       // If no elseBranch, this IF is "open" and could claim a following ELSE
       case 'IfStatement': {
-        const ifStmt = stmt as IfStatement;
-        if (ifStmt.elseBranch) {
+        if (stmt.elseBranch) {
           // IF with elseBranch: check if complete IF-ELSE ends with semicolon
-          return this.isStatementTerminatedBySemicolon(ifStmt.elseBranch);
+          return this.isStatementTerminatedBySemicolon(stmt.elseBranch);
         } else {
           // IF without elseBranch: this IF is "open" and could claim a following ELSE
           // Don't propagate inner thenBranch termination to outer constructs
@@ -3813,11 +3812,10 @@ export class Parser {
     // Validate that the variable is either an Identifier or MemberExpression
     let variable: Identifier | MemberExpression;
     if (variableExpr.type === 'Identifier') {
-      variable = variableExpr as Identifier;
+      variable = variableExpr;
     } else if (variableExpr.type === 'MemberExpression') {
-      const memberExpr = variableExpr as MemberExpression;
       // Additional validation: ensure the object is a valid lvalue (Identifier or MemberExpression)
-      if (memberExpr.object.type !== 'Identifier' && memberExpr.object.type !== 'MemberExpression') {
+      if (variableExpr.object.type !== 'Identifier' && variableExpr.object.type !== 'MemberExpression') {
         this.recordError('Invalid FOR loop variable: expected identifier or field reference', variableExpr.startToken);
         variable = {
           type: 'Identifier',
@@ -3827,7 +3825,7 @@ export class Parser {
           endToken: this.previous()
         };
       } else {
-        variable = memberExpr;
+        variable = variableExpr;
       }
     } else {
       // Invalid expression type - record error and create synthetic identifier for recovery

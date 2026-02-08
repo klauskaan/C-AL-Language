@@ -28,28 +28,26 @@ class DeprecatedFunctionValidatorVisitor implements Partial<ASTVisitor> {
     // Handle record.METHOD() calls (primary - all 3 deprecated are record methods)
     // Record method calls are ALWAYS flagged (no shadowing possible)
     if (callee.type === 'MemberExpression') {
-      const memberExpr = callee as MemberExpression;
-      const methodName = memberExpr.property.name;
+      const methodName = callee.property.name;
 
       // Check if this is a deprecated builtin record method
       const deprecationReason = this.context.builtins.getRecordMethodDeprecation(methodName);
 
       if (deprecationReason !== undefined) {
-        this.reportDeprecated(memberExpr.property, methodName.toUpperCase(), deprecationReason);
+        this.reportDeprecated(callee.property, methodName.toUpperCase(), deprecationReason);
       }
     }
     // Handle direct function calls like FUNCTION() (secondary - for future global functions)
     // Direct calls need shadowing check because user procedures can override builtins
     else if (callee.type === 'Identifier') {
-      const identifier = callee as Identifier;
-      const functionName = identifier.name;
+      const functionName = callee.name;
 
       // Check if this is a deprecated builtin global function
       const deprecationReason = this.context.builtins.getGlobalFunctionDeprecation(functionName);
 
       // Only report if it's actually a builtin (not shadowed by local symbol)
-      if (deprecationReason !== undefined && this.isActualBuiltin(identifier)) {
-        this.reportDeprecated(identifier, functionName.toUpperCase(), deprecationReason);
+      if (deprecationReason !== undefined && this.isActualBuiltin(callee)) {
+        this.reportDeprecated(callee, functionName.toUpperCase(), deprecationReason);
       }
     }
   }

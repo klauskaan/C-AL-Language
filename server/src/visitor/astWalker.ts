@@ -105,150 +105,150 @@ export class ASTWalker {
     switch (node.type) {
       // Document Level
       case 'CALDocument':
-        this.walkCALDocument(node as CALDocument, visitor);
+        this.walkCALDocument(node, visitor);
         break;
       case 'ObjectDeclaration':
-        this.walkObjectDeclaration(node as ObjectDeclaration, visitor);
+        this.walkObjectDeclaration(node, visitor);
         break;
 
       // Sections
       case 'PropertySection':
-        this.walkPropertySection(node as PropertySection, visitor);
+        this.walkPropertySection(node, visitor);
         break;
       case 'FieldSection':
-        this.walkFieldSection(node as FieldSection, visitor);
+        this.walkFieldSection(node, visitor);
         break;
       case 'KeySection':
-        this.walkKeySection(node as KeySection, visitor);
+        this.walkKeySection(node, visitor);
         break;
       case 'FieldGroupSection':
-        this.walkFieldGroupSection(node as FieldGroupSection, visitor);
+        this.walkFieldGroupSection(node, visitor);
         break;
       case 'ActionSection':
-        this.walkActionSection(node as ActionSection, visitor);
+        this.walkActionSection(node, visitor);
         break;
       case 'ControlSection':
-        this.walkControlSection(node as ControlSection, visitor);
+        this.walkControlSection(node, visitor);
         break;
       case 'ElementsSection':
-        this.walkElementsSection(node as ElementsSection, visitor);
+        this.walkElementsSection(node, visitor);
         break;
       case 'CodeSection':
-        this.walkCodeSection(node as CodeSection, visitor);
+        this.walkCodeSection(node, visitor);
         break;
 
       // Declarations
       case 'Property':
-        this.walkProperty(node as Property, visitor);
+        this.walkProperty(node, visitor);
         break;
       case 'FieldDeclaration':
-        this.walkFieldDeclaration(node as FieldDeclaration, visitor);
+        this.walkFieldDeclaration(node, visitor);
         break;
       case 'KeyDeclaration':
-        this.walkKeyDeclaration(node as KeyDeclaration, visitor);
+        this.walkKeyDeclaration(node, visitor);
         break;
       case 'FieldGroup':
-        this.walkFieldGroup(node as FieldGroup, visitor);
+        this.walkFieldGroup(node, visitor);
         break;
       case 'ActionDeclaration':
-        this.walkActionDeclaration(node as ActionDeclaration, visitor);
+        this.walkActionDeclaration(node, visitor);
         break;
       case 'ControlDeclaration':
-        this.walkControlDeclaration(node as ControlDeclaration, visitor);
+        this.walkControlDeclaration(node, visitor);
         break;
       case 'XMLportElement':
-        this.walkXMLportElement(node as XMLportElement, visitor);
+        this.walkXMLportElement(node, visitor);
         break;
       case 'VariableDeclaration':
-        this.walkVariableDeclaration(node as VariableDeclaration, visitor);
+        this.walkVariableDeclaration(node, visitor);
         break;
       case 'ProcedureDeclaration':
-        this.walkProcedureDeclaration(node as ProcedureDeclaration, visitor);
+        this.walkProcedureDeclaration(node, visitor);
         break;
       case 'ProcedureAttribute':
-        this.walkProcedureAttribute(node as ProcedureAttribute, visitor);
+        this.walkProcedureAttribute(node, visitor);
         break;
       case 'ParameterDeclaration':
-        this.walkParameterDeclaration(node as ParameterDeclaration, visitor);
+        this.walkParameterDeclaration(node, visitor);
         break;
       case 'TriggerDeclaration':
-        this.walkTriggerDeclaration(node as TriggerDeclaration, visitor);
+        this.walkTriggerDeclaration(node, visitor);
         break;
       case 'EventDeclaration':
-        this.walkEventDeclaration(node as EventDeclaration, visitor);
+        this.walkEventDeclaration(node, visitor);
         break;
       case 'DataType':
-        this.walkDataType(node as DataType, visitor);
+        this.walkDataType(node, visitor);
         break;
 
       // Statements
       case 'BlockStatement':
-        this.walkBlockStatement(node as BlockStatement, visitor);
+        this.walkBlockStatement(node, visitor);
         break;
       case 'IfStatement':
-        this.walkIfStatement(node as IfStatement, visitor);
+        this.walkIfStatement(node, visitor);
         break;
       case 'WhileStatement':
-        this.walkWhileStatement(node as WhileStatement, visitor);
+        this.walkWhileStatement(node, visitor);
         break;
       case 'RepeatStatement':
-        this.walkRepeatStatement(node as RepeatStatement, visitor);
+        this.walkRepeatStatement(node, visitor);
         break;
       case 'ForStatement':
-        this.walkForStatement(node as ForStatement, visitor);
+        this.walkForStatement(node, visitor);
         break;
       case 'CaseStatement':
-        this.walkCaseStatement(node as CaseStatement, visitor);
+        this.walkCaseStatement(node, visitor);
         break;
       case 'CaseBranch':
-        this.walkCaseBranch(node as CaseBranch, visitor);
+        this.walkCaseBranch(node, visitor);
         break;
       case 'AssignmentStatement':
-        this.walkAssignmentStatement(node as AssignmentStatement, visitor);
+        this.walkAssignmentStatement(node, visitor);
         break;
       case 'CallStatement':
-        this.walkCallStatement(node as CallStatement, visitor);
+        this.walkCallStatement(node, visitor);
         break;
       case 'ExitStatement':
-        this.walkExitStatement(node as ExitStatement, visitor);
+        this.walkExitStatement(node, visitor);
         break;
       case 'BreakStatement':
-        this.walkBreakStatement(node as BreakStatement, visitor);
+        this.walkBreakStatement(node, visitor);
         break;
       case 'EmptyStatement':
-        this.walkEmptyStatement(node as EmptyStatement, visitor);
+        this.walkEmptyStatement(node, visitor);
         break;
       case 'WithStatement':
-        this.walkWithStatement(node as WithStatement, visitor);
+        this.walkWithStatement(node, visitor);
         break;
 
       // Expressions
       case 'Identifier':
-        this.walkIdentifier(node as Identifier, visitor);
+        this.walkIdentifier(node, visitor);
         break;
       case 'Literal':
-        this.walkLiteral(node as Literal, visitor);
+        this.walkLiteral(node, visitor);
         break;
       case 'BinaryExpression':
-        this.walkBinaryExpression(node as BinaryExpression, visitor);
+        this.walkBinaryExpression(node, visitor);
         break;
       case 'UnaryExpression':
-        this.walkUnaryExpression(node as UnaryExpression, visitor);
+        this.walkUnaryExpression(node, visitor);
         break;
       case 'MemberExpression':
-        this.walkMemberExpression(node as MemberExpression, visitor);
+        this.walkMemberExpression(node, visitor);
         break;
       case 'CallExpression':
-        this.walkCallExpression(node as CallExpression, visitor);
+        this.walkCallExpression(node, visitor);
         break;
       case 'ArrayAccessExpression':
-        this.walkArrayAccessExpression(node as ArrayAccessExpression, visitor);
+        this.walkArrayAccessExpression(node, visitor);
         break;
       case 'SetLiteral':
-        this.walkSetLiteral(node as SetLiteral, visitor);
+        this.walkSetLiteral(node, visitor);
         break;
       case 'RangeExpression':
-        this.walkRangeExpression(node as RangeExpression, visitor);
+        this.walkRangeExpression(node, visitor);
         break;
 
       default:
