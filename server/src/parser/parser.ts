@@ -4902,7 +4902,7 @@ export class Parser {
               this.check(TokenType.Then) || this.check(TokenType.Do) ||
               this.check(TokenType.Else)) {
             // Error: no expression after '..'
-            this.recordError("Expected expression after '..' in set range", this.previous());
+            this.recordError("Expected expression after '..' in set range", this.peek());
             elements.push({
               type: 'RangeExpression',
               start: null,
@@ -4946,7 +4946,7 @@ export class Parser {
                        this.check(TokenType.Then) || this.check(TokenType.Do) ||
                        this.check(TokenType.Else)) {
               // BRANCH 2: Error - EOF or delimiter after '..'
-              this.recordError("Expected expression after '..' in set range", this.previous());
+              this.recordError("Expected expression after '..' in set range", this.peek());
               elements.push({
                 type: 'RangeExpression',
                 start,

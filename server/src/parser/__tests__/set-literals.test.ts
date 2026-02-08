@@ -580,9 +580,9 @@ describe('Set Literals and Range Expressions', () => {
       const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
 
-      // Tier 1: Verify error token points to '..' operator token
+      // Tier 1: Verify error token points to EOF (consistent with parseCaseValue behavior)
       expect(rangeError!.token.line).toBe(5);
-      expect(rangeError!.token.column).toBe(27);
+      expect(rangeError!.token.column).toBe(29);
 
       // Parser should not crash
       expect(_ast).toBeDefined();
@@ -611,9 +611,9 @@ describe('Set Literals and Range Expressions', () => {
       const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
 
-      // Tier 1: Verify error token points to '..' operator token
+      // Tier 1: Verify error token points to EOF (consistent with parseCaseValue behavior)
       expect(rangeError!.token.line).toBe(5);
-      expect(rangeError!.token.column).toBe(26);
+      expect(rangeError!.token.column).toBe(28);
 
       // Parser should not crash
       expect(_ast).toBeDefined();
@@ -643,6 +643,7 @@ describe('Set Literals and Range Expressions', () => {
       expect(errors.length).toBeGreaterThanOrEqual(1);
       const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
+      expect(rangeError!.token.value).toBe(';');
       expect(_ast.object).toBeDefined();
     });
 
@@ -665,6 +666,7 @@ describe('Set Literals and Range Expressions', () => {
       expect(errors.length).toBeGreaterThanOrEqual(1);
       const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
+      expect(rangeError!.token.value).toBe('END');
       expect(_ast.object).toBeDefined();
     });
 
@@ -687,6 +689,7 @@ describe('Set Literals and Range Expressions', () => {
       expect(errors.length).toBeGreaterThanOrEqual(1);
       const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
+      expect(rangeError!.token.value).toBe('THEN');
       expect(_ast.object).toBeDefined();
     });
 
@@ -710,6 +713,7 @@ describe('Set Literals and Range Expressions', () => {
       expect(errors.length).toBeGreaterThanOrEqual(1);
       const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
+      expect(rangeError!.token.value).toBe('DO');
       expect(_ast.object).toBeDefined();
     });
 
@@ -732,6 +736,7 @@ describe('Set Literals and Range Expressions', () => {
       expect(errors.length).toBeGreaterThanOrEqual(1);
       const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
+      expect(rangeError!.token.value).toBe(';');
       expect(_ast.object).toBeDefined();
     });
 
@@ -754,6 +759,7 @@ describe('Set Literals and Range Expressions', () => {
       expect(errors.length).toBeGreaterThanOrEqual(1);
       const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
+      expect(rangeError!.token.value).toBe(']');
       expect(_ast.object).toBeDefined();
     });
 
@@ -776,6 +782,7 @@ describe('Set Literals and Range Expressions', () => {
       expect(errors.length).toBeGreaterThanOrEqual(1);
       const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
+      expect(rangeError!.token.value).toBe(',');
       expect(_ast.object).toBeDefined();
     });
 
