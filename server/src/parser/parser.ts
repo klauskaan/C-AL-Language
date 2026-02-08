@@ -3732,27 +3732,73 @@ export class Parser {
     // Parse body statements
     const body: Statement[] = [];
     while (!this.check(TokenType.Until) && !this.isAtEnd()) {
-      const stmt = this.parseStatement();
-      if (stmt) {
-        body.push(stmt);
+      // Boundary: END at depth 0 belongs to enclosing block
+      if (this.check(TokenType.End)) {
+        break;
+      }
+      // Boundary: procedure/trigger/event/function declaration
+      if (PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
+        break;
+      }
+
+      try {
+        const stmt = this.parseStatement();
+        if (stmt) {
+          body.push(stmt);
+        }
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Mirror parseBlock()'s recovery: skip to semicolon with depth awareness
+          this.recoverToTokensDepthAware([TokenType.Semicolon], true);
+
+          // Recovery skips to the next semicolon (or END/procedure boundary).
+          // If recovery consumed past UNTIL, the missing-UNTIL path below will
+          // report the error. If recovery stopped before UNTIL, the loop
+          // condition re-checks on the next iteration.
+        } else {
+          throw error;
+        }
       }
     }
 
     // UNTIL
-    this.consume(TokenType.Until, 'Expected UNTIL');
-
-    // Parse condition
-    const condition = this.parseExpression();
-
-    // Semicolon after UNTIL condition
-    if (this.check(TokenType.Semicolon)) {
+    if (this.check(TokenType.Until)) {
       this.advance();
+
+      // Parse condition
+      const condition = this.parseExpression();
+
+      // Semicolon after UNTIL condition
+      if (this.check(TokenType.Semicolon)) {
+        this.advance();
+      }
+
+      return {
+        type: 'RepeatStatement',
+        body,
+        condition,
+        startToken,
+        endToken: this.previous()
+      };
     }
+
+    // Missing UNTIL - report error at the REPEAT keyword location
+    this.recordError('Expected UNTIL to close REPEAT statement', startToken);
+
+    // Return partial node with placeholder condition
+    const placeholder: Identifier = {
+      type: 'Identifier',
+      name: '<error>',
+      isQuoted: false,
+      startToken,
+      endToken: startToken
+    };
 
     return {
       type: 'RepeatStatement',
       body,
-      condition,
+      condition: placeholder,
       startToken,
       endToken: this.previous()
     };
