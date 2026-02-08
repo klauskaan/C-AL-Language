@@ -450,7 +450,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -466,7 +465,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -483,7 +481,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -502,7 +499,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -521,7 +517,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -542,7 +537,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -560,7 +554,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -581,7 +574,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -601,7 +593,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -621,7 +612,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -637,7 +627,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -657,7 +646,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -678,7 +666,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -693,7 +680,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -713,7 +699,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -726,7 +711,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -737,7 +721,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -748,7 +731,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -759,7 +741,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -772,7 +753,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -785,7 +765,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -800,7 +779,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -814,7 +792,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -829,7 +806,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -844,7 +820,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -859,7 +834,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -875,7 +849,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -890,7 +863,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -903,7 +875,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -916,7 +887,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -929,7 +899,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -944,7 +913,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -958,7 +926,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -971,7 +938,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -982,7 +948,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -993,7 +958,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1008,7 +972,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1026,7 +989,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1045,7 +1007,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1062,7 +1023,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1079,7 +1039,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1095,7 +1054,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1111,7 +1069,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1128,7 +1085,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1146,7 +1102,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1164,7 +1119,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1179,7 +1133,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1194,7 +1147,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1209,7 +1161,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1227,7 +1178,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1243,7 +1193,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1256,7 +1205,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1271,7 +1219,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1287,7 +1234,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1305,7 +1251,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1321,7 +1266,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -1335,7 +1279,6 @@ describe('Parser - Error Recovery', () => {
       const lexer = new Lexer(code);
       const parser = new Parser(lexer.tokenize());
 
-      expect(() => parser.parse()).not.toThrow();
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
