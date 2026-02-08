@@ -101,6 +101,55 @@ describe('Parser - Section EOF Edge Cases', () => {
     });
   });
 
+  describe('PROPERTIES section at EOF', () => {
+    it('should detect error when PROPERTIES section is unclosed at EOF', () => {
+      const code = `OBJECT Table 18 Customer
+{
+  PROPERTIES
+  {
+    CaptionML=ENU=Customer;
+    DataCaptionFields=No.,Name;
+    LookupPageID=Page22;`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Parser should not throw
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('CALDocument');
+      expect(ast.object).toBeDefined();
+      expect(ast.object?.objectKind).toBe(ObjectKind.Table);
+
+      // Should detect missing closing brace
+      expect(errors.length).toBeGreaterThan(0);
+      const closeError = errors.find(e => e.message.includes('Expected } to close PROPERTIES section'));
+      expect(closeError).toBeDefined();
+    });
+
+    it('should detect error when PROPERTIES section is unclosed with no properties at EOF', () => {
+      const code = `OBJECT Table 18 Customer
+{
+  PROPERTIES
+  {`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      expect(ast).toBeDefined();
+      expect(errors.length).toBeGreaterThan(0);
+      const closeError = errors.find(e => e.message.includes('Expected } to close PROPERTIES section'));
+      expect(closeError).toBeDefined();
+    });
+  });
+
   describe('ACTIONS section at EOF', () => {
     it('should detect error when ACTIONS section is unclosed at EOF', () => {
       const code = `OBJECT Page 21 Customer Card
@@ -410,6 +459,7 @@ describe('Parser - Section EOF Edge Cases', () => {
 
   describe('Error message consistency', () => {
     const sections = [
+      { code: 'OBJECT Table 1 T { PROPERTIES {', section: 'PROPERTIES' },
       { code: 'OBJECT Table 1 T { FIELDS {', section: 'FIELDS' },
       { code: 'OBJECT Table 1 T { KEYS {', section: 'KEYS' },
       { code: 'OBJECT Table 1 T { FIELDGROUPS {', section: 'FIELDGROUPS' },
