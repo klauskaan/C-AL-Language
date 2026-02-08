@@ -766,18 +766,15 @@ describe('Parser - Nested CASE Error Recovery', () => {
       expect(caseStmt).toBeDefined();
       expect(caseStmt.type).toBe('CaseStatement');
 
-      // Should have recovered and found the identifier case value branch
-      // BUG: Currently parser consumes "Ready: MESSAGE('Ready');" as function arguments
-      // Expected: 1 branch with identifier case value "Ready"
-      // Actual: 0 branches or malformed structure
-      expect(caseStmt.branches.length).toBeGreaterThanOrEqual(1);
+      // Should have recovered and found both branches
+      expect(caseStmt.branches.length).toBe(2);
       expect(caseStmt.branches[0]?.values?.[0]?.type).toBe('Identifier');
-      expect((caseStmt.branches[0]?.values?.[0] as any)?.name).toBe('Ready');
+      expect((caseStmt.branches[0]?.values?.[0] as any)?.name).toBe('arg');
+      expect(caseStmt.branches[1]?.values?.[0]?.type).toBe('Identifier');
+      expect((caseStmt.branches[1]?.values?.[0] as any)?.name).toBe('Ready');
     });
 
-    it.skip('should recover from malformed function call and recognize quoted identifier case value', () => {
-      // Deferred to Issue #318: Incomplete function calls without arguments
-      // EXPECTED TO FAIL: Quoted identifiers also consumed during function call parsing
+    it('should recover from malformed function call and recognize quoted identifier case value', () => {
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -843,13 +840,13 @@ describe('Parser - Nested CASE Error Recovery', () => {
       // Should report error for malformed function call
       expect(errors.length).toBeGreaterThan(0);
 
-      // Should have all branches: '1:', 'Ready:', and 'Done:'
+      // Should have all branches: '1:', 'x:', 'Ready:', and 'Done:'
       const procedures = ast.object?.code?.procedures || [];
       const statements = procedures[0]?.body || [];
       const caseStmt = statements[0] as CaseStatement;
 
       expect(caseStmt.type).toBe('CaseStatement');
-      expect(caseStmt.branches.length).toBe(3);
+      expect(caseStmt.branches.length).toBe(4);
 
       // Verify branch names
       const branchValues = caseStmt.branches.map(b => {
@@ -859,6 +856,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
         return null;
       });
       expect(branchValues).toContain(1);
+      expect(branchValues).toContain('x');
       expect(branchValues).toContain('Ready');
       expect(branchValues).toContain('Done');
     });
