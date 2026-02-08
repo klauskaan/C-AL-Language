@@ -26,6 +26,8 @@ Implementation work happens in a git worktree (`../worktree-issue-{number}`) to 
 
 **Skip steps that aren't needed.** Trivial changes don't need an architect. Use judgment — but lean toward investigating. A detailed issue description tells you WHAT is happening, not WHY. Skip the detective only after glancing at the relevant code to confirm the root cause is genuinely obvious (single file, clear cause, no ambiguity about where to fix) — don't trust the issue description alone. For bugs and non-trivial features, default to investigating.
 
+**Staleness of workflow-spawned issues.** Issues created during work on another issue ("Discovered during #N", "Deferred from #N") may go stale if the referenced code changes after filing. When picking up such an issue, check how many commits have touched the relevant files since it was created — count commits, not calendar days. High churn means investigate even if the description looks obvious; no churn means the original observation still holds.
+
 **TDD:** Tests should fail before implementation (bug fixes and new features). If they pass immediately, the diagnosis might be wrong. Exceptions: refactoring, test coverage tasks, regression tests.
 
 **Review is mandatory.** adversarial-reviewer runs before every commit. It catches scope creep and drift that compound if unchecked.
