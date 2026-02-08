@@ -216,8 +216,7 @@ class UsageTrackingVisitor implements Partial<ASTVisitor> {
   visitForStatement(node: ForStatement): false {
     // Mark the control variable as read
     if (node.variable.type === 'Identifier') {
-      const identifier = node.variable as Identifier;
-      const info = this.variables.get(identifier.name.toLowerCase());
+      const info = this.variables.get(node.variable.name.toLowerCase());
       if (info) {
         info.hasRead = true;
       }

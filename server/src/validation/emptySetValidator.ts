@@ -36,12 +36,10 @@ class EmptySetValidatorVisitor implements Partial<ASTVisitor> {
    */
   private checkOperandForEmptySet(operand: Expression): void {
     if (operand.type === 'SetLiteral') {
-      const setLiteral = operand as SetLiteral;
-
       // Empty set has no elements (or only malformed elements that parse as empty)
-      if (setLiteral.elements.length === 0) {
+      if (operand.elements.length === 0) {
         // Use endToken for range calculation, fallback to startToken if missing
-        const endToken = setLiteral.endToken || setLiteral.startToken;
+        const endToken = operand.endToken || operand.startToken;
 
         // Calculate end position using source span (endOffset - startOffset)
         // This handles multi-character tokens (e.g., ']') correctly without relying on token.value
@@ -52,8 +50,8 @@ class EmptySetValidatorVisitor implements Partial<ASTVisitor> {
           severity: DiagnosticSeverity.Warning,
           range: {
             start: {
-              line: setLiteral.startToken.line - 1,    // 1-based to 0-based
-              character: setLiteral.startToken.column - 1
+              line: operand.startToken.line - 1,    // 1-based to 0-based
+              character: operand.startToken.column - 1
             },
             end: {
               line: endToken.line - 1,

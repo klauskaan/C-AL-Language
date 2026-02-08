@@ -58,7 +58,7 @@ class TypeMismatchVisitor implements Partial<ASTVisitor> {
       return false; // Skip complex targets (member access, array indexing, etc.)
     }
 
-    const target = node.target as Identifier;
+    const target = node.target;
 
     // Look up target symbol
     const targetSymbol = this.symbolTable.getSymbolAtOffset(
@@ -83,14 +83,12 @@ class TypeMismatchVisitor implements Partial<ASTVisitor> {
 
     if (node.value.type === 'Literal') {
       // Literal value: infer type from literal
-      const literal = node.value as Literal;
-      valueType = inferLiteralType(literal.literalType);
+      valueType = inferLiteralType(node.value.literalType);
     } else if (node.value.type === 'Identifier') {
       // Identifier value: look up symbol and get resolved type
-      const valueIdent = node.value as Identifier;
       const valueSymbol = this.symbolTable.getSymbolAtOffset(
-        valueIdent.name,
-        valueIdent.startToken.startOffset
+        node.value.name,
+        node.value.startToken.startOffset
       );
 
       if (!valueSymbol || !valueSymbol.resolvedType) {

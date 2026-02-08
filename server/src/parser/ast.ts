@@ -1,15 +1,6 @@
 import { Token } from '../lexer/tokens';
 
 /**
- * Base interface for all AST nodes
- */
-export interface ASTNode {
-  type: string;
-  startToken: Token;
-  endToken: Token;
-}
-
-/**
  * C/AL Object Types
  */
 export enum ObjectKind {
@@ -25,16 +16,20 @@ export enum ObjectKind {
 /**
  * Root node representing a C/AL file (typically one object per file)
  */
-export interface CALDocument extends ASTNode {
+export interface CALDocument {
   type: 'CALDocument';
+  startToken: Token;
+  endToken: Token;
   object: ObjectDeclaration | null;
 }
 
 /**
  * Object declaration (OBJECT Table 18 Customer)
  */
-export interface ObjectDeclaration extends ASTNode {
+export interface ObjectDeclaration {
   type: 'ObjectDeclaration';
+  startToken: Token;
+  endToken: Token;
   objectKind: ObjectKind;
   objectId: number;
   objectName: string;
@@ -51,13 +46,17 @@ export interface ObjectDeclaration extends ASTNode {
 /**
  * PROPERTIES section
  */
-export interface PropertySection extends ASTNode {
+export interface PropertySection {
   type: 'PropertySection';
+  startToken: Token;
+  endToken: Token;
   properties: Property[];
 }
 
-export interface Property extends ASTNode {
+export interface Property {
   type: 'Property';
+  startToken: Token;
+  endToken: Token;
   name: string;
   value: string;
   /** For property triggers (OnRun, OnValidate, etc.), stores the parsed trigger body */
@@ -101,8 +100,10 @@ export interface Property extends ASTNode {
  *   sourceField: undefined  // Count doesn't require a field
  * }
  */
-export interface CalcFormulaNode extends ASTNode {
+export interface CalcFormulaNode {
   type: 'CalcFormulaNode';
+  startToken: Token;
+  endToken: Token;
   /** Aggregation function: Sum, Count, Lookup, Exist, Min, Max, Average */
   aggregationFunction: 'Sum' | 'Count' | 'Lookup' | 'Exist' | 'Min' | 'Max' | 'Average';
   /** Source table name (quoted or unquoted) */
@@ -155,8 +156,10 @@ export interface CalcFormulaNode extends ASTNode {
  *   ]
  * }
  */
-export interface TableRelationNode extends ASTNode {
+export interface TableRelationNode {
   type: 'TableRelationNode';
+  startToken: Token;
+  endToken: Token;
   /** Target table name (for simple, unconditional relations) */
   tableName?: string;
   /** Qualified field name (e.g., "No." in Customer."No.") */
@@ -190,8 +193,10 @@ export interface TableRelationNode extends ASTNode {
  *   { condition: {...Item...}, thenRelation: {...}, elseRelation: {...Resource...} }
  * ]
  */
-export interface ConditionalTableRelation extends ASTNode {
+export interface ConditionalTableRelation {
   type: 'ConditionalTableRelation';
+  startToken: Token;
+  endToken: Token;
   /** The condition to test (e.g., Type=CONST(Item)) */
   condition: WhereConditionNode;
   /** The table relation if condition is true */
@@ -216,8 +221,10 @@ export interface ConditionalTableRelation extends ASTNode {
  *   ]
  * }
  */
-export interface WhereClauseNode extends ASTNode {
+export interface WhereClauseNode {
   type: 'WhereClauseNode';
+  startToken: Token;
+  endToken: Token;
   /** Array of WHERE conditions (comma-separated in source) */
   conditions: WhereConditionNode[];
 }
@@ -265,8 +272,10 @@ export interface WhereClauseNode extends ASTNode {
  *   predicateValue: '1000..9999'
  * }
  */
-export interface WhereConditionNode extends ASTNode {
+export interface WhereConditionNode {
   type: 'WhereConditionNode';
+  startToken: Token;
+  endToken: Token;
   /** Field name being tested (can be quoted or unquoted) */
   fieldName: string;
   /** Comparison operator (typically '=' but could be '<>', '>', '<', etc.) */
@@ -280,13 +289,17 @@ export interface WhereConditionNode extends ASTNode {
 /**
  * FIELDS section
  */
-export interface FieldSection extends ASTNode {
+export interface FieldSection {
   type: 'FieldSection';
+  startToken: Token;
+  endToken: Token;
   fields: FieldDeclaration[];
 }
 
-export interface FieldDeclaration extends ASTNode {
+export interface FieldDeclaration {
   type: 'FieldDeclaration';
+  startToken: Token;
+  endToken: Token;
   fieldNo: number;
   fieldClass: string;  // Reserved column - always empty in NAV exports
   fieldName: string;
@@ -315,8 +328,10 @@ export interface FieldDeclaration extends ASTNode {
  * // Record type
  * { typeName: 'Record 18', tableId: 18 }
  */
-export interface DataType extends ASTNode {
+export interface DataType {
   type: 'DataType';
+  startToken: Token;
+  endToken: Token;
 
   /** Full type name as it appears in source (e.g., 'ARRAY[9,2] OF Decimal', 'Record 18', 'Text50') */
   typeName: string;
@@ -372,13 +387,17 @@ export interface DataType extends ASTNode {
 /**
  * KEYS section
  */
-export interface KeySection extends ASTNode {
+export interface KeySection {
   type: 'KeySection';
+  startToken: Token;
+  endToken: Token;
   keys: KeyDeclaration[];
 }
 
-export interface KeyDeclaration extends ASTNode {
+export interface KeyDeclaration {
   type: 'KeyDeclaration';
+  startToken: Token;
+  endToken: Token;
   fields: string[];
   properties: PropertySection | null;
 }
@@ -386,13 +405,17 @@ export interface KeyDeclaration extends ASTNode {
 /**
  * FIELDGROUPS section
  */
-export interface FieldGroupSection extends ASTNode {
+export interface FieldGroupSection {
   type: 'FieldGroupSection';
+  startToken: Token;
+  endToken: Token;
   fieldGroups: FieldGroup[];
 }
 
-export interface FieldGroup extends ASTNode {
+export interface FieldGroup {
   type: 'FieldGroup';
+  startToken: Token;
+  endToken: Token;
   id: number;
   name: string;
   fields: string[];
@@ -421,8 +444,10 @@ export type XMLportSourceType = 'Text' | 'Table' | 'Field';
 /**
  * ACTIONS section containing UI action definitions
  */
-export interface ActionSection extends ASTNode {
+export interface ActionSection {
   type: 'ActionSection';
+  startToken: Token;
+  endToken: Token;
   actions: ActionDeclaration[];
 }
 
@@ -430,8 +455,10 @@ export interface ActionSection extends ASTNode {
  * Individual action declaration within ACTIONS section
  * Format: { ID;IndentLevel;Type; Properties [Triggers] }
  */
-export interface ActionDeclaration extends ASTNode {
+export interface ActionDeclaration {
   type: 'ActionDeclaration';
+  startToken: Token;
+  endToken: Token;
   id: number;
   indentLevel: number;
   actionType: ActionType;
@@ -444,8 +471,10 @@ export interface ActionDeclaration extends ASTNode {
 /**
  * ELEMENTS section containing XMLport element definitions
  */
-export interface ElementsSection extends ASTNode {
+export interface ElementsSection {
   type: 'ElementsSection';
+  startToken: Token;
+  endToken: Token;
   elements: XMLportElement[];  // Top-level elements (indentLevel 0 or first level)
 }
 
@@ -453,8 +482,10 @@ export interface ElementsSection extends ASTNode {
  * Individual XMLport element declaration within ELEMENTS section
  * Format: { [{GUID}];IndentLevel;ElementName;NodeType;SourceType; Properties [Triggers] }
  */
-export interface XMLportElement extends ASTNode {
+export interface XMLportElement {
   type: 'XMLportElement';
+  startToken: Token;
+  endToken: Token;
   guid: string;
   indentLevel: number;
   name: string;
@@ -468,8 +499,10 @@ export interface XMLportElement extends ASTNode {
 /**
  * CONTROLS section containing UI control definitions
  */
-export interface ControlSection extends ASTNode {
+export interface ControlSection {
   type: 'ControlSection';
+  startToken: Token;
+  endToken: Token;
   controls: ControlDeclaration[];
 }
 
@@ -477,8 +510,10 @@ export interface ControlSection extends ASTNode {
  * Individual control declaration within CONTROLS section
  * Format: { ID;IndentLevel;Type; Properties [Triggers] }
  */
-export interface ControlDeclaration extends ASTNode {
+export interface ControlDeclaration {
   type: 'ControlDeclaration';
+  startToken: Token;
+  endToken: Token;
   id: number;
   indentLevel: number;
   controlType: ControlType;
@@ -491,8 +526,10 @@ export interface ControlDeclaration extends ASTNode {
 /**
  * CODE section
  */
-export interface CodeSection extends ASTNode {
+export interface CodeSection {
   type: 'CodeSection';
+  startToken: Token;
+  endToken: Token;
   variables: VariableDeclaration[];
   procedures: ProcedureDeclaration[];
   triggers: TriggerDeclaration[];
@@ -520,8 +557,10 @@ export interface VariableModifiers {
 /**
  * Variable declaration
  */
-export interface VariableDeclaration extends ASTNode, VariableModifiers {
+export interface VariableDeclaration extends VariableModifiers {
   type: 'VariableDeclaration';
+  startToken: Token;
+  endToken: Token;
   name: string;
   dataType: DataType;
 }
@@ -529,8 +568,10 @@ export interface VariableDeclaration extends ASTNode, VariableModifiers {
 /**
  * Procedure attribute (e.g., [External], [Scope('OnPrem')], [EventSubscriber(...)])
  */
-export interface ProcedureAttribute extends ASTNode {
+export interface ProcedureAttribute {
   type: 'ProcedureAttribute';
+  startToken: Token;
+  endToken: Token;
   /** Attribute name (e.g., "External", "Scope", "EventSubscriber") */
   name: string;
   /**
@@ -547,8 +588,10 @@ export interface ProcedureAttribute extends ASTNode {
 /**
  * Procedure/Function declaration
  */
-export interface ProcedureDeclaration extends ASTNode {
+export interface ProcedureDeclaration {
   type: 'ProcedureDeclaration';
+  startToken: Token;
+  endToken: Token;
   name: string;
   /** Token pointing to the procedure name identifier (for symbol resolution) */
   nameToken?: Token;
@@ -576,8 +619,10 @@ export interface ParameterModifiers {
   securityFiltering?: string;
 }
 
-export interface ParameterDeclaration extends ASTNode, ParameterModifiers {
+export interface ParameterDeclaration extends ParameterModifiers {
   type: 'ParameterDeclaration';
+  startToken: Token;
+  endToken: Token;
   name: string;
   dataType: DataType;
   isVar: boolean;  // VAR parameter (pass by reference)
@@ -586,8 +631,10 @@ export interface ParameterDeclaration extends ASTNode, ParameterModifiers {
 /**
  * Trigger declaration (e.g., OnInsert, OnValidate)
  */
-export interface TriggerDeclaration extends ASTNode {
+export interface TriggerDeclaration {
   type: 'TriggerDeclaration';
+  startToken: Token;
+  endToken: Token;
   name: string;
   variables: VariableDeclaration[];
   body: Statement[];
@@ -597,8 +644,10 @@ export interface TriggerDeclaration extends ASTNode {
  * Event declaration for DotNet control add-in event handlers
  * Syntax: EVENT SubscriberName@Number::EventName@Number(parameters);
  */
-export interface EventDeclaration extends ASTNode {
+export interface EventDeclaration {
   type: 'EventDeclaration';
+  startToken: Token;
+  endToken: Token;
   subscriberName: string;  // e.g., "CameraProvider@1001"
   eventName: string;       // e.g., "PictureAvailable@10"
   parameters: ParameterDeclaration[];
@@ -609,36 +658,42 @@ export interface EventDeclaration extends ASTNode {
 /**
  * Statements
  */
-export interface Statement extends ASTNode {
-  type: string;
-}
-
-export interface BlockStatement extends Statement {
+export interface BlockStatement {
   type: 'BlockStatement';
+  startToken: Token;
+  endToken: Token;
   statements: Statement[];
 }
 
-export interface IfStatement extends Statement {
+export interface IfStatement {
   type: 'IfStatement';
+  startToken: Token;
+  endToken: Token;
   condition: Expression;
   thenBranch: Statement;
   elseBranch: Statement | null;
 }
 
-export interface WhileStatement extends Statement {
+export interface WhileStatement {
   type: 'WhileStatement';
+  startToken: Token;
+  endToken: Token;
   condition: Expression;
   body: Statement;
 }
 
-export interface RepeatStatement extends Statement {
+export interface RepeatStatement {
   type: 'RepeatStatement';
+  startToken: Token;
+  endToken: Token;
   body: Statement[];
   condition: Expression;
 }
 
-export interface ForStatement extends Statement {
+export interface ForStatement {
   type: 'ForStatement';
+  startToken: Token;
+  endToken: Token;
   /**
    * The loop control variable.
    * Can be a simple identifier (e.g., FOR i := 1 TO 10)
@@ -651,32 +706,42 @@ export interface ForStatement extends Statement {
   body: Statement;
 }
 
-export interface CaseStatement extends Statement {
+export interface CaseStatement {
   type: 'CaseStatement';
+  startToken: Token;
+  endToken: Token;
   expression: Expression;
   branches: CaseBranch[];
   elseBranch: Statement[] | null;
 }
 
-export interface CaseBranch extends ASTNode {
+export interface CaseBranch {
   type: 'CaseBranch';
+  startToken: Token;
+  endToken: Token;
   values: Expression[];
   statements: Statement[];
 }
 
-export interface AssignmentStatement extends Statement {
+export interface AssignmentStatement {
   type: 'AssignmentStatement';
+  startToken: Token;
+  endToken: Token;
   target: Expression;
   value: Expression;
 }
 
-export interface CallStatement extends Statement {
+export interface CallStatement {
   type: 'CallStatement';
+  startToken: Token;
+  endToken: Token;
   expression: Expression;
 }
 
-export interface ExitStatement extends Statement {
+export interface ExitStatement {
   type: 'ExitStatement';
+  startToken: Token;
+  endToken: Token;
   value: Expression | null;
 }
 
@@ -687,8 +752,10 @@ export interface ExitStatement extends Statement {
  * Note: Parser accepts BREAK syntactically but does not validate loop context.
  * Semantic validation (ensuring BREAK appears within a loop) is deferred.
  */
-export interface BreakStatement extends Statement {
+export interface BreakStatement {
   type: 'BreakStatement';
+  startToken: Token;
+  endToken: Token;
   // NO value field - BREAK takes no arguments (critical difference from ExitStatement)
 }
 
@@ -697,8 +764,10 @@ export interface BreakStatement extends Statement {
  * Valid in C/AL after THEN, DO, ELSE keywords: IF cond THEN; or WHILE cond DO;
  * Used when the statement body is intentionally empty (e.g., IF Rec.FINDLAST THEN;)
  */
-export interface EmptyStatement extends Statement {
+export interface EmptyStatement {
   type: 'EmptyStatement';
+  startToken: Token;
+  endToken: Token;
 }
 
 /**
@@ -713,8 +782,10 @@ export interface EmptyStatement extends Statement {
  *
  * Available: NAV 2009+
  */
-export interface WithStatement extends Statement {
+export interface WithStatement {
   type: 'WithStatement';
+  startToken: Token;
+  endToken: Token;
   record: Expression;  // Single record variable or expression
   body: Statement;     // Block or single statement
 }
@@ -722,43 +793,51 @@ export interface WithStatement extends Statement {
 /**
  * Expressions
  */
-export interface Expression extends ASTNode {
-  type: string;
-}
-
-export interface Identifier extends Expression {
+export interface Identifier {
   type: 'Identifier';
+  startToken: Token;
+  endToken: Token;
   name: string;
   isQuoted: boolean;
 }
 
-export interface Literal extends Expression {
+export interface Literal {
   type: 'Literal';
+  startToken: Token;
+  endToken: Token;
   value: string | number | boolean;
   literalType: 'string' | 'integer' | 'decimal' | 'boolean' | 'date' | 'time' | 'datetime';
 }
 
-export interface BinaryExpression extends Expression {
+export interface BinaryExpression {
   type: 'BinaryExpression';
+  startToken: Token;
+  endToken: Token;
   operator: string;
   left: Expression;
   right: Expression;
 }
 
-export interface UnaryExpression extends Expression {
+export interface UnaryExpression {
   type: 'UnaryExpression';
+  startToken: Token;
+  endToken: Token;
   operator: string;
   operand: Expression;
 }
 
-export interface MemberExpression extends Expression {
+export interface MemberExpression {
   type: 'MemberExpression';
+  startToken: Token;
+  endToken: Token;
   object: Expression;
   property: Identifier;
 }
 
-export interface CallExpression extends Expression {
+export interface CallExpression {
   type: 'CallExpression';
+  startToken: Token;
+  endToken: Token;
   callee: Expression;
   arguments: Expression[];
 }
@@ -776,8 +855,10 @@ export interface CallExpression extends Expression {
  * // Complex expressions: arr[i + 1, Type::Member]
  * { array: Identifier('arr'), indices: [BinaryExpression, MemberExpression] }
  */
-export interface ArrayAccessExpression extends Expression {
+export interface ArrayAccessExpression {
   type: 'ArrayAccessExpression';
+  startToken: Token;
+  endToken: Token;
   /** The array being accessed */
   array: Expression;
   /**
@@ -788,14 +869,33 @@ export interface ArrayAccessExpression extends Expression {
   indices: Expression[];
 }
 
-export interface SetLiteral extends Expression {
+export interface SetLiteral {
   type: 'SetLiteral';
+  startToken: Token;
+  endToken: Token;
   elements: (Expression | RangeExpression)[];
 }
 
-export interface RangeExpression extends Expression {
+export interface RangeExpression {
   type: 'RangeExpression';
+  startToken: Token;
+  endToken: Token;
   start: Expression | null;
   end: Expression | null;
   operatorToken?: Token;
 }
+
+/**
+ * Union type for all Statement nodes
+ */
+export type Statement = BlockStatement | IfStatement | WhileStatement | RepeatStatement | ForStatement | CaseStatement | AssignmentStatement | CallStatement | ExitStatement | BreakStatement | EmptyStatement | WithStatement;
+
+/**
+ * Union type for all Expression nodes
+ */
+export type Expression = Identifier | Literal | BinaryExpression | UnaryExpression | MemberExpression | CallExpression | ArrayAccessExpression | SetLiteral | RangeExpression;
+
+/**
+ * Union type for all AST nodes
+ */
+export type ASTNode = CALDocument | ObjectDeclaration | PropertySection | FieldSection | KeySection | FieldGroupSection | ActionSection | ControlSection | ElementsSection | CodeSection | Property | FieldDeclaration | KeyDeclaration | FieldGroup | ActionDeclaration | ControlDeclaration | XMLportElement | VariableDeclaration | ProcedureDeclaration | ProcedureAttribute | ParameterDeclaration | TriggerDeclaration | EventDeclaration | DataType | CaseBranch | CalcFormulaNode | TableRelationNode | ConditionalTableRelation | WhereClauseNode | WhereConditionNode | Statement | Expression;
