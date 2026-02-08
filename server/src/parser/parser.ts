@@ -4027,11 +4027,31 @@ export class Parser {
     const branchStart = this.peek();
     const values: Expression[] = [];
 
-    // Parse value(s), including range expressions (e.g., 1..10)
-    values.push(this.parseCaseValue());
-    while (this.check(TokenType.Comma)) {
-      this.advance();
+    // Save position so we can restore if expression parsing fails deep inside
+    // (e.g., malformed function call consuming tokens past the actual case value)
+    const savedPosition = this.current;
+    try {
+      // Parse value(s), including range expressions (e.g., 1..10)
       values.push(this.parseCaseValue());
+      while (this.check(TokenType.Comma)) {
+        this.advance();
+        values.push(this.parseCaseValue());
+      }
+    } catch (error) {
+      if (values.length > 0 && error instanceof ParseError) {
+        // Successfully parsed some values before failure.
+        // DON'T restore to savedPosition -- that causes infinite loop for multi-value branches.
+        // Instead, convert to CaseBranchParseError so parseCaseStatement creates a partial branch.
+        throw new CaseBranchParseError(
+          'Expected : after case branch value',
+          error.token,
+          values,
+          branchStart
+        );
+      }
+      // No values parsed or non-ParseError -- restore position and re-throw
+      this.current = savedPosition;
+      throw error;
     }
 
     // Manual colon check to preserve parsed values in case of error
