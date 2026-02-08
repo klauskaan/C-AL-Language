@@ -3920,15 +3920,12 @@ export class Parser {
         if (error instanceof ParseError) {
           this.errors.push(error);
 
-          // If this is a CaseBranchParseError, create a partial branch with the parsed values
+          // Capture partial branch data before recovery
+          let partialValues: Expression[] | null = null;
+          let partialStartToken: Token | null = null;
           if (error instanceof CaseBranchParseError) {
-            branches.push({
-              type: 'CaseBranch',
-              values: error.values,
-              statements: [],
-              startToken: error.branchStartToken,
-              endToken: this.previous()
-            });
+            partialValues = error.values;
+            partialStartToken = error.branchStartToken;
           }
 
           // Recover within the CASE statement - skip to next case value or ELSE/END
@@ -3972,6 +3969,17 @@ export class Parser {
               }
             }
             this.advance();
+          }
+
+          // Create partial branch AFTER recovery so endToken reflects actual extent
+          if (partialValues && partialStartToken) {
+            branches.push({
+              type: 'CaseBranch',
+              values: partialValues,
+              statements: [],
+              startToken: partialStartToken,
+              endToken: this.previous()
+            });
           }
         } else {
           throw error;
