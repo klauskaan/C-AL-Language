@@ -13,7 +13,6 @@
  * even when the opening brace is missing, report appropriate errors about missing braces,
  * but still preserve the CODE section in the AST.
  *
- * Test Strategy: These tests MUST fail before implementation (proving bug exists).
  * Each test creates malformed C/AL with specific missing braces and verifies:
  * 1. CODE section is detected in AST (ast.object?.code exists)
  * 2. Errors are reported about missing braces
@@ -58,7 +57,6 @@ describe('Section Boundary Detection - Missing Braces (Issue #289)', () => {
       const errors = parser.getErrors();
 
       // CRITICAL: CODE section MUST be detected despite missing braces
-      // This test SHOULD FAIL before fix (proving bug exists)
       expect(ast.object?.code).toBeDefined();
       expect(ast.object?.code?.type).toBe('CodeSection');
 
@@ -155,7 +153,6 @@ describe('Section Boundary Detection - Missing Braces (Issue #289)', () => {
       const errors = parser.getErrors();
 
       // CRITICAL: CODE section MUST be detected despite missing braces
-      // This test SHOULD FAIL before fix (proving bug exists)
       expect(ast.object?.code).toBeDefined();
       expect(ast.object?.code?.type).toBe('CodeSection');
 

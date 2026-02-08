@@ -4,8 +4,6 @@
  * Tests comprehensive support for .NET Framework type references in C/AL.
  * DotNet types use assembly-qualified naming with single-quoted assembly references.
  *
- * This is a REGRESSION TEST suite - tests will FAIL until DotNet parsing is implemented.
- *
  * Syntax patterns discovered in real NAV code:
  *
  * 1. Full assembly qualification:
@@ -49,7 +47,6 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
       const parser = new Parser(lexer.tokenize());
       const ast = parser.parse();
 
-      // Test will FAIL until DotNet parsing implemented
       expect(parser.getErrors()).toHaveLength(0);
       expect(ast.object).toBeDefined();
       expect(ast.object?.code).toBeDefined();

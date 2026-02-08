@@ -671,7 +671,6 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
       const parser = new Parser(lexer.tokenize());
       const ast = parser.parse();
 
-      // This test SHOULD FAIL initially - "Actions" on line 2 of property value corrupts context
       expect(parser.getErrors()).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
@@ -705,7 +704,6 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
       const parser = new Parser(lexer.tokenize());
       const ast = parser.parse();
 
-      // This test SHOULD FAIL initially - "Begin" and "End" on continuation line corrupt context
       expect(parser.getErrors()).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
@@ -748,7 +746,6 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
       const parser = new Parser(lexer.tokenize());
       const ast = parser.parse();
 
-      // This test SHOULD FAIL initially
       expect(parser.getErrors()).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
@@ -775,7 +772,6 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
       const parser = new Parser(lexer.tokenize());
       const ast = parser.parse();
 
-      // This test SHOULD FAIL initially
       expect(parser.getErrors()).toHaveLength(0);
       expect(ast.object).toBeDefined();
 

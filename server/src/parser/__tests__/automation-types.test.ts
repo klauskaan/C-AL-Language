@@ -4,8 +4,6 @@
  * Tests comprehensive support for COM Automation type references in C/AL (NAV 2009+).
  * Automation types use GUID-based type library references for COM interop.
  *
- * This is a REGRESSION TEST suite - tests will FAIL until Automation parsing is implemented.
- *
  * Syntax pattern (from real NAV exports):
  * Automation "{TypeLibGUID} Version:{ClassGUID}:'TypeLibName'.ClassName"
  *
@@ -44,7 +42,6 @@ describe('Parser - Automation Type Declarations', () => {
       const parser = new Parser(lexer.tokenize());
       const ast = parser.parse();
 
-      // Test will FAIL until Automation parsing implemented
       expect(parser.getErrors()).toHaveLength(0);
       expect(ast.object).toBeDefined();
       expect(ast.object?.code).toBeDefined();
