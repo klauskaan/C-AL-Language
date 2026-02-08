@@ -1,8 +1,7 @@
 /**
- * Tests for Rename Provider (TDD - Tests MUST fail initially)
+ * Tests for Rename Provider
  *
- * These tests validate the rename functionality following TDD principles.
- * All tests are expected to FAIL initially because RenameProvider does not exist yet.
+ * These tests validate the rename functionality.
  */
 
 import { Lexer } from '../../lexer/lexer';
@@ -11,7 +10,6 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Position } from 'vscode-languageserver';
 import { SymbolTable } from '../../symbols/symbolTable';
 
-// This import will FAIL - RenameProvider doesn't exist yet
 import { RenameProvider } from '../renameProvider';
 
 /**

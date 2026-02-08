@@ -363,7 +363,6 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
     });
 
     it('should report errors for malformed properties (Issue #177)', () => {
-      // EXPECTED TO FAIL: Parser currently does NOT add error diagnostics for malformed properties
       const code = `OBJECT Page 50000 Test {
         PROPERTIES {
           ActionList=}
@@ -449,7 +448,6 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
     });
 
     it('should report error for malformed nested structure with redundant semicolon (Issue #177)', () => {
-      // EXPECTED TO FAIL: Malformed with closing brace after identifier
       const code = `OBJECT Page 50000 Test {
         PROPERTIES {
           ActionList=};

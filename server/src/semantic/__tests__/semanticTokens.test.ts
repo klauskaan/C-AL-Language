@@ -4223,7 +4223,6 @@ END;`;
           const leftSemantic = builder.getTokenAt(leftBracket.line - 1, leftBracket.column - 1);
           const rightSemantic = builder.getTokenAt(rightBracket.line - 1, rightBracket.column - 1);
 
-          // EXPECTED TO FAIL: SetBracket semantic type doesn't exist yet
           // After Task 5 implementation, these should have SetBracket type
           expect(leftSemantic).toBeDefined();
           expect(rightSemantic).toBeDefined();
@@ -4257,7 +4256,6 @@ END;`;
           const leftSemantic = builder.getTokenAt(leftBracket.line - 1, leftBracket.column - 1);
           const rightSemantic = builder.getTokenAt(rightBracket.line - 1, rightBracket.column - 1);
 
-          // EXPECTED TO FAIL until SetBracket type is implemented
           expect(leftSemantic).toBeDefined();
           expect(rightSemantic).toBeDefined();
         }
@@ -4287,7 +4285,6 @@ END;`;
           const leftSemantic = builder.getTokenAt(leftBracket.line - 1, leftBracket.column - 1);
           const rightSemantic = builder.getTokenAt(rightBracket.line - 1, rightBracket.column - 1);
 
-          // EXPECTED TO FAIL until SetBracket type is implemented
           expect(leftSemantic).toBeDefined();
           expect(rightSemantic).toBeDefined();
         }
@@ -4484,7 +4481,6 @@ END;`;
         // Set brackets SHOULD have SetBracket semantic type (after implementation)
         setBrackets.forEach(bracket => {
           const semantic = builder.getTokenAt(bracket.line - 1, bracket.column - 1);
-          // EXPECTED TO FAIL until SetBracket type is implemented
           expect(semantic).toBeDefined();
         });
       });
@@ -4597,7 +4593,6 @@ END;`;
           const leftSemantic = builder.getTokenAt(leftBracket.line - 1, leftBracket.column - 1);
           const rightSemantic = builder.getTokenAt(rightBracket.line - 1, rightBracket.column - 1);
 
-          // EXPECTED TO FAIL until SetBracket type is implemented
           expect(leftSemantic).toBeDefined();
           expect(rightSemantic).toBeDefined();
         }
@@ -4664,7 +4659,6 @@ END;`;
           const leftSemantic = builder.getTokenAt(leftBracket.line - 1, leftBracket.column - 1);
           const rightSemantic = builder.getTokenAt(rightBracket.line - 1, rightBracket.column - 1);
 
-          // EXPECTED TO FAIL until SetBracket type is implemented
           expect(leftSemantic).toBeDefined();
           expect(rightSemantic).toBeDefined();
         }
@@ -4698,7 +4692,6 @@ END;`;
           const leftSemantic = builder.getTokenAt(leftBracket.line - 1, leftBracket.column - 1);
           const rightSemantic = builder.getTokenAt(rightBracket.line - 1, rightBracket.column - 1);
 
-          // EXPECTED TO FAIL until SetBracket type is implemented
           expect(leftSemantic).toBeDefined();
           expect(rightSemantic).toBeDefined();
         }

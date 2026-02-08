@@ -1,15 +1,8 @@
 /**
- * TDD TESTS: Property Value Token Capture
+ * Property Value Token Capture Tests
  *
  * These tests verify that parseProperty() captures the original tokens
  * during property value parsing, preserving token types and positions.
- *
- * EXPECTED INITIAL STATE: ALL TESTS SHOULD FAIL
- * - Property interface does not yet have valueTokens field
- * - parseProperty() does not yet store tokens during accumulation
- *
- * This is the TDD validation step - tests fail first, then we implement
- * the feature to make them pass.
  *
  * Context: Issue #9 - Parse CalcFormula and TableRelation with mini-parser
  * Step 1: Capture tokens during property value parsing
@@ -35,7 +28,7 @@ import { Parser } from '../parser';
 import { Property, FieldDeclaration, FieldSection } from '../ast';
 import { TokenType } from '../../lexer/tokens';
 
-describe('Parser - Property Value Token Capture (TDD)', () => {
+describe('Parser - Property Value Token Capture', () => {
   describe('Basic token capture', () => {
     it('should capture tokens for simple property value', () => {
       const code = `OBJECT Table 1 Test {
@@ -50,7 +43,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
       expect(parser.getErrors()).toHaveLength(0);
       const property = ast.object?.properties?.properties[0];
 
-      // EXPECTED TO FAIL: Property interface doesn't have valueTokens yet
       expect(property?.valueTokens).toBeDefined();
       expect(property?.valueTokens?.length).toBeGreaterThan(0);
     });
@@ -67,7 +59,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
 
       const property = ast.object?.properties?.properties[0];
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       expect(property?.valueTokens).toBeDefined();
       expect(property?.valueTokens?.length).toBe(1);
       expect(property?.valueTokens?.[0].type).toBe(TokenType.Identifier);
@@ -109,7 +100,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
 
       const property = ast.object?.properties?.properties[0];
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       expect(property?.valueTokens).toBeDefined();
       expect(property?.valueTokens?.length).toBe(1);
 
@@ -135,7 +125,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
         (p: Property) => p.name === 'CalcFormula'
       );
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       expect(calcFormula?.valueTokens).toBeDefined();
 
       // Should have: Sum, (, "Sales Line", ., Amount, )
@@ -166,7 +155,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
         (p: Property) => p.name === 'CalcFormula'
       );
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       const quotedTokens = calcFormula?.valueTokens?.filter(
         t => t.type === TokenType.QuotedIdentifier
       );
@@ -189,7 +177,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
 
       const property = ast.object?.properties?.properties[0];
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       expect(property?.valueTokens).toBeDefined();
 
       // First token should be "ENU" - verify its position
@@ -213,7 +200,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
 
       const property = ast.object?.properties?.properties[0];
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       const token = property?.valueTokens?.[0];
 
       // Should be able to extract exact source text using offsets
@@ -234,7 +220,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
 
       const property = ast.object?.properties?.properties[0];
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       expect(property?.valueTokens).toBeDefined();
 
       // Tokens should span multiple lines
@@ -261,7 +246,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
         (p: Property) => p.name === 'CalcFormula'
       );
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       const tokens = calcFormula?.valueTokens || [];
 
       // Expected tokens: Sum, (, "Sales Line", ., Amount, )
@@ -293,7 +277,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
         (p: Property) => p.name === 'TableRelation'
       );
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       const tokens = tableRelation?.valueTokens || [];
 
       // Should include: "Customer", WHERE, (, Blocked, =, CONST, (, No, ), )
@@ -325,7 +308,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
         (p: Property) => p.name === 'CalcFormula'
       );
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       const tokens = calcFormula?.valueTokens || [];
 
       // Should have multiple levels of nesting: Sum(...WHERE(...)
@@ -352,7 +334,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
 
       const property = ast.object?.properties?.properties[0];
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       // Empty property should have empty array or undefined
       expect(property?.valueTokens === undefined || property?.valueTokens?.length === 0).toBe(true);
     });
@@ -369,7 +350,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
 
       const property = ast.object?.properties?.properties[0];
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       // Whitespace is not tokenized, so should be empty
       expect(property?.valueTokens === undefined || property?.valueTokens?.length === 0).toBe(true);
     });
@@ -442,7 +422,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
 
       const property = ast.object?.properties?.properties[0];
 
-      // EXPECTED TO FAIL initially, but should remain this way after implementation
       expect(property?.triggerBody).toBeDefined();
       expect(property?.valueTokens).toBeUndefined();
     });
@@ -466,7 +445,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
         (p: Property) => p.name === 'CalcFormula'
       );
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       const tokens = calcFormula?.valueTokens || [];
 
       // Should have LeftParen and RightParen tokens
@@ -494,7 +472,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
         (p: Property) => p.name === 'CalcFormula'
       );
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       const tokens = calcFormula?.valueTokens || [];
 
       // Should have Dot token between "Sales Line" and Amount
@@ -519,7 +496,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
         (p: Property) => p.name === 'OptionOrdinalValues'
       );
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       const tokens = optionOrdinals?.valueTokens || [];
 
       // Should have LeftBracket and RightBracket tokens
@@ -542,7 +518,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
 
       const property = ast.object?.properties?.properties[0];
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       const tokens = property?.valueTokens || [];
 
       // Should include brackets, equals, semicolons
@@ -571,7 +546,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
         (p: Property) => p.name === 'TableRelation'
       );
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       const tokens = tableRelation?.valueTokens || [];
 
       // Should have IF, CONST, and Item tokens
@@ -604,7 +578,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
         (p: Property) => p.name === 'CalcFormula'
       );
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       const tokens = calcFormula?.valueTokens || [];
 
       // Multi-line, complex expression should have many tokens
@@ -636,7 +609,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
         (p: Property) => p.name === 'TableRelation'
       );
 
-      // EXPECTED TO FAIL: valueTokens doesn't exist
       const tokens = tableRelation?.valueTokens || [];
 
       // Should include IF, ELSE, and both table names
@@ -666,7 +638,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
       // value field should still exist and work as before
       expect(property?.value).toBe('ENU=Customer');
 
-      // EXPECTED TO FAIL: but this is the new feature being added
       expect(property?.valueTokens).toBeDefined();
     });
 
@@ -691,7 +662,6 @@ describe('Parser - Property Value Token Capture (TDD)', () => {
       expect(calcFormula?.value).toContain('Sum');
       expect(calcFormula?.value).toContain('Sales Line');
 
-      // EXPECTED TO FAIL: tokens should be present too
       expect(calcFormula?.valueTokens).toBeDefined();
 
       // The tokens, when reconstructed, should roughly match the value

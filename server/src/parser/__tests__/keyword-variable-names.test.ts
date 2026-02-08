@@ -1685,7 +1685,7 @@ describe('Parser - Keywords as Variable Names', () => {
   });
 
   /**
-   * AL-Only Keywords as Variable Names (TDD - EXPECTED TO FAIL)
+   * AL-Only Keywords as Variable Names
    *
    * Tests support for using AL-only keywords (ENUM, INTERFACE, EXTENDS, IMPLEMENTS)
    * as variable names in VAR sections. These are AL-only language keywords, not
@@ -1701,12 +1701,8 @@ describe('Parser - Keywords as Variable Names', () => {
    * - Interface@1 : Text (variable to store interface name)
    * - Extends@1 : Boolean (variable indicating extension status)
    * - Implements@1 : Record 18 (variable holding implementation data)
-   *
-   * IMPORTANT: These tests are EXPECTED TO FAIL initially (TDD workflow).
-   * They demonstrate the bug where AL-only keywords are rejected even in
-   * identifier contexts where they should be allowed.
    */
-  describe('AL-Only Keywords as Variable Names (TDD - EXPECTED TO FAIL)', () => {
+  describe('AL-Only Keywords as Variable Names', () => {
     describe('ENUM as variable name', () => {
       it('should parse ENUM variable in procedure VAR', () => {
         const code = `OBJECT Codeunit 50000 Test
