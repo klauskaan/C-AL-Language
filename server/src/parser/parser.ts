@@ -201,6 +201,23 @@ export const PROCEDURE_BOUNDARY_TOKENS = new Set<TokenType>([
 ]);
 
 /**
+ * Statement-starting keywords that signal a missing CASE END
+ *
+ * When encountered during CASE branch parsing, these keywords indicate the CASE
+ * statement is missing its END. They never appear within a case branch statement,
+ * so their presence means we've left the CASE structure.
+ *
+ * Issue #314: CASE missing END detection when followed by control flow statements
+ */
+export const CASE_EXIT_STATEMENT_KEYWORDS = new Set<TokenType>([
+  TokenType.If,
+  TokenType.While,
+  TokenType.For,
+  TokenType.Repeat,
+  TokenType.With,
+]);
+
+/**
  * Tokens that should NEVER be consumed in parsePrimary() fallback - throw error.
  * These are structural/boundary tokens that indicate missing expression.
  *
@@ -3908,7 +3925,8 @@ export class Parser {
     let elseBranch: Statement[] | null = null;
 
     while (!this.check(TokenType.End) && !this.isAtEnd() &&
-           !PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
+           !PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type) &&
+           !CASE_EXIT_STATEMENT_KEYWORDS.has(this.peek().type)) {
       if (this.check(TokenType.Else)) {
         elseBranch = this.parseCaseElseBranch();
         break;
@@ -3940,6 +3958,10 @@ export class Parser {
             }
             // Stop at procedure boundaries - don't consume into next procedure
             if (PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
+              break;
+            }
+            // Stop at statement-starting keywords - CASE is missing END
+            if (CASE_EXIT_STATEMENT_KEYWORDS.has(this.peek().type)) {
               break;
             }
             // Stop at semicolon - likely ends the branch statement
@@ -3985,6 +4007,22 @@ export class Parser {
           throw error;
         }
       }
+    }
+
+    // Check if loop exited due to statement-starting keyword
+    if (CASE_EXIT_STATEMENT_KEYWORDS.has(this.peek().type)) {
+      // Statement keyword found - CASE is missing END
+      this.recordError('Expected END to close CASE statement', this.peek());
+      // Return partial node without consuming the statement keyword
+      // Let outer parser handle the statement
+      return {
+        type: 'CaseStatement',
+        expression,
+        branches,
+        elseBranch,
+        startToken,
+        endToken: this.previous()  // Last token before statement keyword (partial node marker)
+      };
     }
 
     // Before consuming END, check if it likely belongs to outer structure
