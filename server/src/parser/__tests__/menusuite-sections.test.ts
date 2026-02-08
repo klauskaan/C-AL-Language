@@ -1,7 +1,6 @@
 /**
  * Tests for MENUNODES section keyword in MenuSuite objects
  *
- * These tests follow TDD methodology: they MUST fail first to demonstrate the bug.
  * Issue #266: MenuNodes missing from parser's isSectionKeyword()
  *
  * Bug: When a MenuSuite object has a MENUNODES section, any sections appearing

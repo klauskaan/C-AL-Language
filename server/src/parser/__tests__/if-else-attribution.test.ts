@@ -10,9 +10,6 @@
  * - `IF cond THEN stmt ELSE` - NO semicolon before ELSE (ELSE belongs to this IF)
  * - `IF cond THEN stmt; ELSE` - semicolon terminates IF (ELSE belongs to outer construct)
  *
- * TDD EXPECTATION: These tests SHOULD FAIL initially because the parser incorrectly
- * assigns ELSE branches to IF statements even when a semicolon has terminated the IF.
- *
  * EXAMPLE:
  * ```
  * CASE State OF

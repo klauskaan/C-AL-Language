@@ -4,8 +4,6 @@
  * Tests for the escapeMarkdown utility that safely escapes markdown special characters
  * in diagnostic messages and hover information displayed to users.
  *
- * Developed using TDD: tests were written first and verified to fail before implementation.
- *
  * Purpose:
  * - Escape markdown special characters to prevent formatting issues in LSP messages
  * - Convert all newline types (LF, CRLF, CR) to visible \n for clarity

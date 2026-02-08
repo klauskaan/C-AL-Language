@@ -18,9 +18,6 @@
  * Track bracket depth `[]` and only reset inPropertyValue when:
  *   - A semicolon is encountered AND
  *   - bracketDepth === 0
- *
- * These tests MUST FAIL initially to validate TDD approach.
- * If they pass immediately, the bug was misdiagnosed.
  */
 
 import { Lexer } from '../lexer';

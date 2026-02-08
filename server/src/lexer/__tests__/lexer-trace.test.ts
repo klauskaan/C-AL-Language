@@ -6,7 +6,6 @@
  * of lexer issues by recording every tokenization decision.
  *
  * This test suite validates the trace infrastructure implementation.
- * Tests use TDD approach - written before implementation to define specification.
  */
 
 import { Lexer, TraceCallback, TraceEvent } from '../lexer';

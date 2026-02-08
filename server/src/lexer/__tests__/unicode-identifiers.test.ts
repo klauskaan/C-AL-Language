@@ -4,10 +4,7 @@
  * Tests support for extended Latin characters in unquoted identifiers,
  * as commonly used in NAV installations in Nordic and European countries.
  *
- * IMPORTANT: These tests MUST FAIL initially because the current lexer
- * only supports ASCII a-z, A-Z in isIdentifierStart().
- *
- * Supported character ranges (after implementation):
+ * Supported character ranges:
  * - Latin-1 Supplement (U+00C0-U+00FF): À-ÿ
  * - Latin Extended-A (U+0100-U+017F): Ā-ſ
  *

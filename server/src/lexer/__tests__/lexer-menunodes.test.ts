@@ -9,11 +9,6 @@
  * 4. Clean exit with balanced braces
  * 5. Columnar structure parsing (MenuItem type, GUID, properties)
  *
- * TDD Phase: These tests SHOULD FAIL initially because:
- * - MENUNODES keyword is not recognized (treated as Identifier)
- * - No SECTION_LEVEL context is pushed for MENUNODES sections
- * - Apostrophes trigger STRING tokenization instead of identifier continuation
- *
  * Bug Reference: MenuSuite objects fail to parse MENUNODES section correctly,
  * specifically apostrophes in property values like "Create HR's from Employees"
  * cause tokenization errors.

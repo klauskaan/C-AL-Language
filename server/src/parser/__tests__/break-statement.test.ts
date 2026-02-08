@@ -1,19 +1,12 @@
 /**
  * Parser Tests - BREAK Statement
  *
- * Tests for BREAK statement parsing. These tests MUST FAIL initially because
- * BreakStatement AST node type hasn't been implemented yet.
+ * Tests for BREAK statement parsing.
  *
  * BREAK is a simple control flow statement that exits loops:
  * - Syntax: BREAK; (no arguments, unlike EXIT which can take a return value)
  * - Valid in: FOR, WHILE, REPEAT-UNTIL, FOREACH loops
  * - Different from CurrReport.BREAK (which is a method call)
- *
- * TDD EXPECTATION:
- * - All tests SHOULD FAIL initially
- * - Tests will pass after BreakStatement is implemented in ast.ts and parser.ts
- * - If tests pass immediately, it indicates a problem with test design or
- *   that BREAK support already exists (unlikely based on investigation)
  */
 
 import { Lexer } from '../../lexer/lexer';

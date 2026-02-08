@@ -1,8 +1,7 @@
 /**
  * Tests for DATASET, REQUESTPAGE, and LABELS section keywords in Report objects
  *
- * These tests follow TDD methodology: they MUST fail first because the keywords
- * are not yet recognized by the lexer. Once implemented, the lexer should tokenize:
+ * The lexer should tokenize:
  * - DATASET → TokenType.Dataset (not IDENTIFIER)
  * - REQUESTPAGE → TokenType.RequestPage (not IDENTIFIER)
  * - LABELS → TokenType.Labels (not IDENTIFIER)

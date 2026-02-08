@@ -3,11 +3,7 @@
  *
  * Tests for graceful handling of async trace callbacks (issue #116).
  *
- * CRITICAL TDD Rule: These tests MUST fail initially because there's currently
- * NO async handling in trace callbacks. The lexer calls callbacks synchronously
- * and does NOT handle Promise returns or async rejections.
- *
- * Expected behavior after implementation:
+ * Expected behavior:
  * - Async callback rejections caught via Promise.resolve().catch()
  * - Callback disabled after first rejection (fail-once)
  * - Session ID prevents stale rejections from affecting new tokenizations

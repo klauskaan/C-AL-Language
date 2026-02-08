@@ -29,8 +29,6 @@
  * And:
  *   } Properties { ... }
  *     ^^^^^^^^^^ Top-level section keyword
- *
- * These tests MUST FAIL initially to validate the bug exists.
  */
 
 import { Lexer } from '../lexer';
