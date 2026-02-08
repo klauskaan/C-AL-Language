@@ -32,6 +32,7 @@ import {
   WhileStatement,
   ForStatement,
   WithStatement,
+  RepeatStatement,
   BlockStatement
 } from '../ast';
 
@@ -1050,6 +1051,85 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
       expect(caseStmt.elseBranch).not.toBeNull();
     });
 
+    it('should handle REPEAT-UNTIL inside CASE branch', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      State : Integer;
+      i : Integer;
+    BEGIN
+      CASE State OF
+        1: REPEAT
+             i := i + 1;
+           UNTIL i > 10;
+        ELSE
+          DefaultAction;
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      expect(errors.length).toBe(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const body = procedures[0]?.body || [];
+      const caseStmt = body[0] as CaseStatement;
+
+      const repeatStmt = caseStmt.branches[0]?.statements[0] as RepeatStatement;
+      expect(repeatStmt.type).toBe('RepeatStatement');
+
+      expect(caseStmt.elseBranch).not.toBeNull();
+    });
+
+    it('should handle WITH statement inside CASE branch', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      State : Integer;
+      Customer : Record 18;
+    BEGIN
+      CASE State OF
+        1: WITH Customer DO BEGIN
+             Name := 'Test';
+             MODIFY;
+           END;
+        ELSE
+          DefaultAction;
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      expect(errors.length).toBe(0);
+
+      const procedures = ast.object?.code?.procedures || [];
+      const body = procedures[0]?.body || [];
+      const caseStmt = body[0] as CaseStatement;
+
+      const withStmt = caseStmt.branches[0]?.statements[0] as WithStatement;
+      expect(withStmt.type).toBe('WithStatement');
+
+      expect(caseStmt.elseBranch).not.toBeNull();
+    });
+
     it('should handle deeply nested IF-CASE-WHILE-FOR', () => {
       const code = `OBJECT Codeunit 50000 Test
 {
@@ -1175,7 +1255,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
       const tokens = lexer.tokenize();
       const parser = new Parser(tokens);
 
-      const ast = parser.parse();
+      parser.parse();
       const errors = parser.getErrors();
 
       // ELSE is orphaned - should be rejected by INVALID_EXPRESSION_STARTERS guard
