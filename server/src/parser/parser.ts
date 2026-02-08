@@ -5280,14 +5280,14 @@ export class Parser {
       return false;
     }
 
-    // Look at what follows: END ; ???
-    // peekAhead(1) = ; or next token
-    // peekAhead(2) = token after ;
-    const afterEnd = this.peekAhead(1);
-    let checkToken = afterEnd;
-
-    if (afterEnd?.type === TokenType.Semicolon) {
-      checkToken = this.peekAhead(2);
+    // Look at what follows END, skipping any consecutive semicolons.
+    // e.g., END; ???  or  END;; ???  or  END;;;; ???
+    let offset = 1;
+    let checkToken = this.peekAhead(offset);
+    // Skip consecutive semicolons (bounded to prevent runaway on pathological input)
+    while (checkToken?.type === TokenType.Semicolon && offset < 10) {
+      offset++;
+      checkToken = this.peekAhead(offset);
     }
 
     if (!checkToken) {

@@ -1851,6 +1851,135 @@ describe('Parser - Error Messages with Context', () => {
         expect(caseErrors.length).toBeGreaterThan(0);
       });
 
+      it('should detect CASE missing END with double semicolon before closing brace (END;;)', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        // Missing END to close CASE
+    END;;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        const caseError = errors.find(e =>
+          e.message.includes('Expected END to close CASE statement')
+        );
+        expect(caseError).toBeDefined();
+
+        // Should NOT confuse with BEGIN block error
+        const beginError = errors.find(e =>
+          e.message.includes('Expected END to close BEGIN block')
+        );
+        expect(beginError).toBeUndefined();
+      });
+
+      it('should detect CASE missing END with double semicolon before PROCEDURE', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE FirstProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        // Missing END to close CASE
+    END;;
+
+    PROCEDURE NextProc();
+    BEGIN
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        const caseError = errors.find(e =>
+          e.message.includes('Expected END to close CASE statement')
+        );
+        expect(caseError).toBeDefined();
+
+        // Should NOT confuse with BEGIN block error
+        const beginError = errors.find(e =>
+          e.message.includes('Expected END to close BEGIN block')
+        );
+        expect(beginError).toBeUndefined();
+      });
+
+      it('should detect CASE missing END with triple semicolons before closing brace (END;;;)', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        // Missing END to close CASE
+    END;;;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        // The heuristic should work with triple semicolons before closing brace
+        const caseError = errors.find(e =>
+          e.message.includes('Expected END to close CASE statement')
+        );
+        expect(caseError).toBeDefined();
+      });
+
+      it('should still detect CASE missing END with single semicolon (regression)', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        // Missing END to close CASE
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        const caseError = errors.find(e =>
+          e.message.includes('Expected END to close CASE statement')
+        );
+        expect(caseError).toBeDefined();
+      });
+
       it('should correctly parse CASE followed by more statements', () => {
         const code = `OBJECT Codeunit 50000 Test
 {
