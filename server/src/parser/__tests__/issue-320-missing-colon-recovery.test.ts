@@ -14,7 +14,7 @@
 
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../parser';
-import { CaseStatement, CaseBranch, Identifier, Literal } from '../ast';
+import { CaseStatement, Identifier, Literal } from '../ast';
 
 describe('Issue #320 - Missing colon recovery', () => {
   describe('Recovery at identifier with colon', () => {
@@ -239,6 +239,114 @@ describe('Issue #320 - Missing colon recovery', () => {
       const colonError = errors.find(e => e.message.includes('Expected : after case branch value'));
       expect(colonError).toBeDefined();
       expect(colonError?.message).toMatch(/Expected : after case branch value/);
+    });
+  });
+
+  describe('Multi-value branches (#380)', () => {
+    it('should preserve all comma-separated values when colon is missing', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestCase@1();
+    VAR
+      x@1000 : Integer;
+    BEGIN
+      CASE x OF
+        1,2,3 MESSAGE('Error');
+        4: MESSAGE('Four');
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should detect missing colon error
+      const colonError = errors.find(e => e.message.includes('Expected : after case branch value'));
+      expect(colonError).toBeDefined();
+
+      // Should have 2 branches: partial with all 3 values, recovered branch with value 4
+      const procedures = ast.object?.code?.procedures || [];
+      const statements = procedures[0]?.body || [];
+      const caseStmt = statements[0] as CaseStatement;
+
+      expect(caseStmt.type).toBe('CaseStatement');
+      expect(caseStmt.branches.length).toBe(2);
+
+      // First branch: partial with all three values (1, 2, 3)
+      const firstBranch = caseStmt.branches[0];
+      expect(firstBranch.values.length).toBe(3);
+      expect(firstBranch.values[0].type).toBe('Literal');
+      expect((firstBranch.values[0] as Literal).value).toBe(1);
+      expect(firstBranch.values[1].type).toBe('Literal');
+      expect((firstBranch.values[1] as Literal).value).toBe(2);
+      expect(firstBranch.values[2].type).toBe('Literal');
+      expect((firstBranch.values[2] as Literal).value).toBe(3);
+      expect(firstBranch.statements.length).toBe(0);
+
+      // Second branch: recovered (value 4)
+      const secondBranch = caseStmt.branches[1];
+      expect(secondBranch.values.length).toBe(1);
+      expect((secondBranch.values[0] as Literal).value).toBe(4);
+      expect(secondBranch.statements.length).toBeGreaterThan(0);
+    });
+
+    it('should handle multi-value branch with string literals missing colon', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestCase@1();
+    VAR
+      x@1000 : Code[10];
+    BEGIN
+      CASE x OF
+        'A','B','C' MESSAGE('Error');
+        'D': MESSAGE('D found');
+      END;
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+
+      const ast = parser.parse();
+      const errors = parser.getErrors();
+
+      // Should detect missing colon error
+      const colonError = errors.find(e => e.message.includes('Expected : after case branch value'));
+      expect(colonError).toBeDefined();
+
+      // Should have 2 branches: partial with all 3 string values, recovered branch
+      const procedures = ast.object?.code?.procedures || [];
+      const statements = procedures[0]?.body || [];
+      const caseStmt = statements[0] as CaseStatement;
+
+      expect(caseStmt.type).toBe('CaseStatement');
+      expect(caseStmt.branches.length).toBe(2);
+
+      // First branch: partial with all three string values ('A', 'B', 'C')
+      const firstBranch = caseStmt.branches[0];
+      expect(firstBranch.values.length).toBe(3);
+      expect(firstBranch.values[0].type).toBe('Literal');
+      expect((firstBranch.values[0] as Literal).value).toBe('A');
+      expect(firstBranch.values[1].type).toBe('Literal');
+      expect((firstBranch.values[1] as Literal).value).toBe('B');
+      expect(firstBranch.values[2].type).toBe('Literal');
+      expect((firstBranch.values[2] as Literal).value).toBe('C');
+      expect(firstBranch.statements.length).toBe(0);
+
+      // Second branch: recovered (value 'D')
+      const secondBranch = caseStmt.branches[1];
+      expect(secondBranch.values.length).toBe(1);
+      expect((secondBranch.values[0] as Literal).value).toBe('D');
+      expect(secondBranch.statements.length).toBeGreaterThan(0);
     });
   });
 
