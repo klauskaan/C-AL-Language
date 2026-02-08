@@ -814,9 +814,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
       expect(caseStmt.branches[0]?.values?.[0]?.type).toBe('Identifier');
     });
 
-    it.skip('should recover to multiple identifier case values after malformed function', () => {
-      // Deferred to Issue #319: CASE branch values appear as null in AST
-      // EXPECTED TO FAIL: Multiple branches after error all consumed
+    it('should recover to multiple identifier case values after malformed function', () => {
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -852,14 +850,12 @@ describe('Parser - Nested CASE Error Recovery', () => {
       const caseStmt = statements[0] as CaseStatement;
 
       expect(caseStmt.type).toBe('CaseStatement');
-      // BUG: Currently only 1 branch (the '1:'), rest consumed as function args
-      // Expected: 3 branches
       expect(caseStmt.branches.length).toBe(3);
 
       // Verify branch names
       const branchValues = caseStmt.branches.map(b => {
         const val = b.values[0];
-        if (val.type === 'NumberLiteral') return (val as any).value;
+        if (val.type === 'Literal') return (val as any).value;
         if (val.type === 'Identifier') return (val as any).name;
         return null;
       });
