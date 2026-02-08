@@ -1787,7 +1787,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(caseErrors).toHaveLength(0);
       });
 
-      it('should detect CASE missing END followed by IF statement (current limitation)', () => {
+      it('should detect CASE missing END followed by IF statement', () => {
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -1808,16 +1808,316 @@ describe('Parser - Error Messages with Context', () => {
         const tokens = lexer.tokenize();
         const parser = new Parser(tokens);
 
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Should detect CASE missing END
+        const caseError = errors.find(e =>
+          e.message.includes('Expected END to close CASE statement')
+        );
+        expect(caseError).toBeDefined();
+
+        // Should NOT confuse with BEGIN block error
+        const beginError = errors.find(e =>
+          e.message.includes('Expected END to close BEGIN block')
+        );
+        expect(beginError).toBeUndefined();
+
+        // Verify IF statement appears in the outer block's AST (not consumed by CASE)
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(1);
+        const body = procedures[0]?.body || [];
+
+        // Body should contain both CASE and IF statements
+        const caseStmt = body.find(stmt => stmt.type === 'CaseStatement');
+        const ifStmt = body.find(stmt => stmt.type === 'IfStatement');
+
+        expect(caseStmt).toBeDefined();
+        expect(ifStmt).toBeDefined();
+      });
+
+      it('should detect CASE missing END followed by WHILE statement', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      i : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+      // Missing END to close CASE
+      WHILE i < 10 DO
+        i := i + 1;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Should detect CASE missing END
+        const caseError = errors.find(e =>
+          e.message.includes('Expected END to close CASE statement')
+        );
+        expect(caseError).toBeDefined();
+
+        // Should NOT confuse with BEGIN block error
+        const beginError = errors.find(e =>
+          e.message.includes('Expected END to close BEGIN block')
+        );
+        expect(beginError).toBeUndefined();
+
+        // Verify WHILE statement appears in the outer block's AST (not consumed by CASE)
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(1);
+        const body = procedures[0]?.body || [];
+
+        // Body should contain both CASE and WHILE statements
+        const caseStmt = body.find(stmt => stmt.type === 'CaseStatement');
+        const whileStmt = body.find(stmt => stmt.type === 'WhileStatement');
+
+        expect(caseStmt).toBeDefined();
+        expect(whileStmt).toBeDefined();
+      });
+
+      it('should detect CASE missing END followed by FOR statement', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      i : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+      // Missing END to close CASE
+      FOR i := 1 TO 10 DO
+        MESSAGE('Loop');
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Should detect CASE missing END
+        const caseError = errors.find(e =>
+          e.message.includes('Expected END to close CASE statement')
+        );
+        expect(caseError).toBeDefined();
+
+        // Should NOT confuse with BEGIN block error
+        const beginError = errors.find(e =>
+          e.message.includes('Expected END to close BEGIN block')
+        );
+        expect(beginError).toBeUndefined();
+
+        // Verify FOR statement appears in the outer block's AST (not consumed by CASE)
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(1);
+        const body = procedures[0]?.body || [];
+
+        // Body should contain both CASE and FOR statements
+        const caseStmt = body.find(stmt => stmt.type === 'CaseStatement');
+        const forStmt = body.find(stmt => stmt.type === 'ForStatement');
+
+        expect(caseStmt).toBeDefined();
+        expect(forStmt).toBeDefined();
+      });
+
+      it('should detect CASE missing END followed by REPEAT statement', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      i : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+      // Missing END to close CASE
+      REPEAT
+        i := i + 1;
+      UNTIL i > 10;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Should detect CASE missing END
+        const caseError = errors.find(e =>
+          e.message.includes('Expected END to close CASE statement')
+        );
+        expect(caseError).toBeDefined();
+
+        // Should NOT confuse with BEGIN block error
+        const beginError = errors.find(e =>
+          e.message.includes('Expected END to close BEGIN block')
+        );
+        expect(beginError).toBeUndefined();
+
+        // Verify REPEAT statement appears in the outer block's AST (not consumed by CASE)
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(1);
+        const body = procedures[0]?.body || [];
+
+        // Body should contain both CASE and REPEAT statements
+        const caseStmt = body.find(stmt => stmt.type === 'CaseStatement');
+        const repeatStmt = body.find(stmt => stmt.type === 'RepeatStatement');
+
+        expect(caseStmt).toBeDefined();
+        expect(repeatStmt).toBeDefined();
+      });
+
+      it('should detect CASE missing END followed by WITH statement', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      Customer : Record 18;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+      // Missing END to close CASE
+      WITH Customer DO
+        VALIDATE(Name, 'Test');
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        const ast = parser.parse();
+        const errors = parser.getErrors();
+
+        // Should detect CASE missing END
+        const caseError = errors.find(e =>
+          e.message.includes('Expected END to close CASE statement')
+        );
+        expect(caseError).toBeDefined();
+
+        // Should NOT confuse with BEGIN block error
+        const beginError = errors.find(e =>
+          e.message.includes('Expected END to close BEGIN block')
+        );
+        expect(beginError).toBeUndefined();
+
+        // Verify WITH statement appears in the outer block's AST (not consumed by CASE)
+        const procedures = ast.object?.code?.procedures || [];
+        expect(procedures.length).toBe(1);
+        const body = procedures[0]?.body || [];
+
+        // Body should contain both CASE and WITH statements
+        const caseStmt = body.find(stmt => stmt.type === 'CaseStatement');
+        const withStmt = body.find(stmt => stmt.type === 'WithStatement');
+
+        expect(caseStmt).toBeDefined();
+        expect(withStmt).toBeDefined();
+      });
+
+      it('should correctly parse CASE branch with IF in body', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: IF TRUE THEN MESSAGE('Hi');
+      END;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
         parser.parse();
         const errors = parser.getErrors();
 
-        // NOTE: This test documents current behavior - the heuristic does NOT
-        // trigger when END is followed by IF/WHILE/FOR (intentional conservatism).
-        // The CASE error may not be detected in this scenario.
-        // Tracked in issue #314
+        // Should have zero CASE-related errors
+        const caseErrors = errors.filter(e =>
+          e.message.includes('CASE') || e.message.includes('Expected END to close CASE')
+        );
+        expect(caseErrors).toHaveLength(0);
+      });
 
-        expect(errors.length).toBeGreaterThan(0);
-        // Just verify we get SOME error - exact error type varies
+      it('should correctly parse CASE branch with WHILE in body', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      i : Integer;
+    BEGIN
+      CASE x OF
+        1: WHILE i < 10 DO i := i + 1;
+      END;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        // Should have zero errors
+        expect(errors).toHaveLength(0);
+      });
+
+      it('should correctly parse CASE branch with FOR in body', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      i : Integer;
+    BEGIN
+      CASE x OF
+        1: FOR i := 1 TO 10 DO DoSomething;
+      END;
+    END;
+  }
+}`;
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+
+        parser.parse();
+        const errors = parser.getErrors();
+
+        // Should have zero errors
+        expect(errors).toHaveLength(0);
       });
 
       it('should detect CASE missing END when branch contains BEGIN block', () => {
