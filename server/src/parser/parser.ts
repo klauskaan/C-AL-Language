@@ -3786,6 +3786,10 @@ export class Parser {
           this.errors.push(error);
           // Mirror parseBlock()'s recovery: skip to semicolon with depth awareness
           this.recoverToTokensDepthAware([TokenType.Semicolon], true);
+          // If recovery stopped at a procedure boundary, exit to let outer parser handle it
+          if (PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
+            break;
+          }
 
           // Recovery skips to the next semicolon (or END/procedure boundary).
           // If recovery consumed past UNTIL, the missing-UNTIL path below will
