@@ -26,6 +26,10 @@ Implementation work happens in a git worktree (`../worktree-issue-{number}`) to 
 
 **Skip steps that aren't needed.** Trivial changes don't need an architect. Use judgment — but lean toward investigating. A detailed issue description tells you WHAT is happening, not WHY. Skip the detective only after glancing at the relevant code to confirm the root cause is genuinely obvious (single file, clear cause, no ambiguity about where to fix) — don't trust the issue description alone. For bugs and non-trivial features, default to investigating.
 
+**Show your reasoning when skipping.** When skipping INVESTIGATE or PLAN, state your reasoning to the user before proceeding. Reference what you checked, not just your conclusion. This makes judgment visible and gives the user a chance to course-correct before work starts.
+- Good: "Skipping investigation: checked `parser.ts` lines 40-55, the fix is a missing case in the switch — single file, clear cause, no ambiguity."
+- Not: "Skipping investigation — this looks straightforward."
+
 **Read the full issue.** Before starting work, fetch issue comments (`gh issue view N -c`), not just the description. Comments often contain clarifications, revised scope, or review feedback from prior work.
 
 **Staleness of workflow-spawned issues.** Issues created during work on another issue ("Discovered during #N", "Deferred from #N") may go stale if the referenced code changes after filing. When picking up such an issue, check how many commits have touched the relevant files since it was created — count commits, not calendar days. High churn means investigate even if the description looks obvious; no churn means the original observation still holds.
@@ -162,7 +166,7 @@ Things we've learned:
 3. **Verify edits** — re-read files after editing; silent tool failures happen
 4. **Explicit issue closure** — use `Fixes #X` in commit messages, not just `#X`
 5. **Agent resume can fail** — if an agent returns nothing on resume, start it fresh with full context
-6. **Verify before skipping** — glance at the code before skipping code-detective; issue descriptions can be wrong, outdated, or incomplete
+6. **Show reasoning when skipping** — state what you checked and why it's safe to skip, not just "this is straightforward"; issue descriptions can be wrong, outdated, or incomplete
 
 ---
 

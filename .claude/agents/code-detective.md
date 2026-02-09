@@ -1,6 +1,6 @@
 ---
 name: code-detective
-description: "Root cause investigator and design advisor. Use BEFORE implementing to understand the problem space — WHY bugs exist, WHERE new features should integrate, and WHAT constraints apply.\n\n<example>\nuser: \"The parser silently drops variables when reserved keywords are used\"\nassistant: \"Let me investigate the root cause before we fix anything.\"\n<uses Task tool with code-detective agent>\n</example>\n\n<example>\nuser: \"Add hover support for record variables\"\nassistant: \"Let me investigate how the symbol table tracks records and what the hover provider needs.\"\n<uses Task tool with code-detective agent>\n</example>"
+description: "Root cause investigator and design advisor. Use BEFORE implementing to understand the problem space — WHY bugs exist, WHERE new features should integrate, and WHAT constraints apply. Skipping investigation? State what you checked and why it's safe to skip — see CLAUDE.md \"Show your reasoning when skipping.\"\n\n<example>\nuser: \"The parser silently drops variables when reserved keywords are used\"\nassistant: \"Let me investigate the root cause before we fix anything.\"\n<uses Task tool with code-detective agent>\n</example>\n\n<example>\nuser: \"Add hover support for record variables\"\nassistant: \"Let me investigate how the symbol table tracks records and what the hover provider needs.\"\n<uses Task tool with code-detective agent>\n</example>"
 model: opus
 color: blue
 ---
