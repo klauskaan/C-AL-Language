@@ -24,8 +24,7 @@
  * 4. Variable names: Any user-defined names that could reveal business logic
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser, ParseError } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 /**
  * Helper: Parse code and collect all error messages
@@ -34,13 +33,7 @@ import { Parser, ParseError } from '../parser';
  * @returns Array of error message strings from parser.getErrors()
  */
 function parseAndCollectErrors(code: string): string[] {
-  const lexer = new Lexer(code);
-  const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
-
-  parser.parse();
-  const errors: ParseError[] = parser.getErrors();
-
+  const { errors } = parseCode(code);
   return errors.map(e => e.message);
 }
 

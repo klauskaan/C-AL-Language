@@ -9,8 +9,7 @@
  * - WITH-DO with record variables and field access
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 import { WithStatement, BlockStatement } from '../ast';
 
 describe('Parser - WITH Statement', () => {
@@ -29,10 +28,7 @@ describe('Parser - WITH Statement', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -62,10 +58,7 @@ describe('Parser - WITH Statement', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -90,10 +83,7 @@ describe('Parser - WITH Statement', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -122,10 +112,7 @@ describe('Parser - WITH Statement', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -156,10 +143,7 @@ describe('Parser - WITH Statement', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -187,10 +171,7 @@ describe('Parser - WITH Statement', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -220,10 +201,7 @@ describe('Parser - WITH Statement', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -260,10 +238,7 @@ describe('Parser - WITH Statement', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -289,10 +264,7 @@ describe('Parser - WITH Statement', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -318,10 +290,7 @@ describe('Parser - WITH Statement', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -344,10 +313,7 @@ describe('Parser - WITH Statement', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -381,10 +347,7 @@ describe('Parser - WITH Statement', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -406,10 +369,7 @@ describe('Parser - WITH Statement', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -432,10 +392,7 @@ describe('Parser - WITH Statement', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Multi-variable WITH creates parse error (comma creates ambiguity)
       expect(errors.length).toBeGreaterThan(0);

@@ -25,8 +25,7 @@
  * - Consistently triggers parse error and invokes synchronize()
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Parser - synchronize() error recovery at section boundaries', () => {
   describe('Regression test - Issue #268', () => {
@@ -57,13 +56,10 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
       // Error should occur in PROPERTIES (missing =)
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
 
       // Before fix: CODE section would be lost/malformed
       // After fix: CODE section is parsed correctly
@@ -98,13 +94,10 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
       // Should have errors (the PROPERTIES syntax error - missing =)
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
 
       // CODE section should still be parsed (synchronize stopped at MENUNODES, not CODE)
       expect(ast.object?.code).not.toBeNull();
@@ -139,13 +132,10 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
       // Should have errors (the PROPERTIES syntax error - missing =)
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
 
       // CODE section should still be parsed (synchronize stopped at ACTIONS, not CODE)
       expect(ast.object?.code).not.toBeNull();
@@ -179,13 +169,10 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
       // Should have errors (the PROPERTIES syntax error - missing =)
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
 
       // CODE section should still be parsed (synchronize stopped at DATASET, not CODE)
       expect(ast.object?.code).not.toBeNull();
@@ -222,13 +209,10 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
       // Should have errors (the PROPERTIES syntax error - missing =)
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
 
       // CODE section should still be parsed (synchronize stopped at REQUESTPAGE, not CODE)
       expect(ast.object?.code).not.toBeNull();
@@ -263,13 +247,10 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
       // Should have errors (the PROPERTIES syntax error - missing =)
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
 
       // CODE section should still be parsed (synchronize stopped at LABELS, not CODE)
       expect(ast.object?.code).not.toBeNull();
@@ -303,13 +284,10 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
       // Should have errors (the PROPERTIES syntax error - missing =)
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
 
       // CODE section should still be parsed (synchronize stopped at ELEMENTS, not CODE)
       expect(ast.object?.code).not.toBeNull();
@@ -347,13 +325,10 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
       // Should have errors (the PROPERTIES syntax error - missing =)
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
 
       // CODE section should still be parsed (synchronize stopped at REQUESTFORM, not CODE)
       expect(ast.object?.code).not.toBeNull();
@@ -394,12 +369,9 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
       expect(ast.object?.code).not.toBeNull();
       expect(ast.object?.code?.procedures).toHaveLength(1);
     });
@@ -435,12 +407,9 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
       expect(ast.object?.code).not.toBeNull();
       expect(ast.object?.code?.variables).toHaveLength(1);
       expect(ast.object?.code?.procedures).toHaveLength(1);
@@ -476,10 +445,7 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast } = parseCode(source);
 
       // Should skip DATASET section (even if malformed) and parse CODE
       expect(ast.object?.code).not.toBeNull();
@@ -515,10 +481,7 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast } = parseCode(source);
 
       // Should skip REQUESTPAGE section (even if malformed) and parse CODE
       expect(ast.object?.code).not.toBeNull();
@@ -581,13 +544,10 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
       // Should have error about the malformed property (missing =)
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
 
       // Should still parse CODE section successfully
       expect(ast.object?.code).not.toBeNull();
@@ -631,12 +591,9 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
       expect(ast.object?.code).not.toBeNull();
       expect(ast.object?.code?.variables).toHaveLength(1);
       expect(ast.object?.code?.procedures).toHaveLength(1);
@@ -671,12 +628,9 @@ describe('Parser - synchronize() error recovery at section boundaries', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
       expect(ast.object?.code).not.toBeNull();
       expect(ast.object?.code?.procedures).toHaveLength(1);
       expect(ast.object?.code?.procedures[0].name).toBe('GetMenuState');

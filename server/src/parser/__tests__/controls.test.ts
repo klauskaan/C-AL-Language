@@ -27,19 +27,16 @@
  * - Recover from malformed entries
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 import { ObjectDeclaration } from '../ast';
 
 // Helper to parse and extract controls section
 function parseControls(code: string) {
-  const lexer = new Lexer(code);
-  const parser = new Parser(lexer.tokenize());
-  const ast = parser.parse();
+  const { ast, errors } = parseCode(code);
 
   return {
     ast,
-    errors: parser.getErrors(),
+    errors,
     controls: (ast.object as ObjectDeclaration)?.controls
   };
 }

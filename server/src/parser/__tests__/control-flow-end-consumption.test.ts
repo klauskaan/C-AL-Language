@@ -21,8 +21,7 @@
  * cannot consume END tokens that belong to enclosing BEGIN-END blocks.
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Parser - Control Flow END Token Consumption Bug', () => {
   describe('IF statement with empty body consuming enclosing END', () => {
@@ -44,12 +43,7 @@ describe('Parser - Control Flow END Token Consumption Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // EXPECTED BEHAVIOR (after fix):
       // - No parse errors
@@ -94,12 +88,7 @@ describe('Parser - Control Flow END Token Consumption Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();
@@ -134,12 +123,7 @@ describe('Parser - Control Flow END Token Consumption Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();
@@ -175,12 +159,7 @@ describe('Parser - Control Flow END Token Consumption Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();
@@ -210,12 +189,7 @@ describe('Parser - Control Flow END Token Consumption Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();
@@ -248,12 +222,7 @@ describe('Parser - Control Flow END Token Consumption Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();
@@ -283,12 +252,7 @@ describe('Parser - Control Flow END Token Consumption Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();
@@ -321,12 +285,7 @@ describe('Parser - Control Flow END Token Consumption Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();
@@ -356,12 +315,7 @@ describe('Parser - Control Flow END Token Consumption Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();
@@ -394,12 +348,7 @@ describe('Parser - Control Flow END Token Consumption Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();
@@ -430,12 +379,7 @@ describe('Parser - Control Flow END Token Consumption Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();
@@ -477,12 +421,7 @@ describe('Parser - Control Flow END Token Consumption Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();
@@ -528,12 +467,7 @@ describe('Parser - Control Flow END Token Consumption Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // This is the critical test - the pattern that actually fails in production
       expect(errors.length).toBe(0);
@@ -579,12 +513,7 @@ describe('Parser - Control Flow END Token Consumption Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();
@@ -609,12 +538,7 @@ describe('Parser - Control Flow END Token Consumption Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();

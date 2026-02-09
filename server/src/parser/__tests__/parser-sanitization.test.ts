@@ -10,8 +10,7 @@
  * - Ensures raw token values are NOT present in error messages
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Parser error message sanitization', () => {
   /**
@@ -37,12 +36,7 @@ describe('Parser error message sanitization', () => {
   describe('Location 1: parseInteger() - Invalid integer value (line 114)', () => {
     it('should sanitize invalid object ID in error message', () => {
       const code = 'OBJECT Table SensitiveValue123 Customer';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('Expected object ID'));
@@ -59,12 +53,7 @@ describe('Parser error message sanitization', () => {
     { SecretFieldNum ; ; No. ; Code20 }
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('Expected field number'));
@@ -82,12 +71,7 @@ describe('Parser error message sanitization', () => {
       MyArray : ARRAY[PrivateSize999] OF Integer;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('Expected array size'));
@@ -114,12 +98,7 @@ describe('Parser error message sanitization', () => {
       // For this test, we need to trigger the reserved keyword path
       // Let's use an actual reserved keyword with sensitive context
       const codeWithKeyword = code.replace('ConfidentialKeyword123', 'BEGIN');
-      const lexer = new Lexer(codeWithKeyword);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(codeWithKeyword);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.toLowerCase().includes('reserved keyword'));
@@ -141,12 +120,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.toLowerCase().includes('while') ||
@@ -168,12 +142,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('parameter list'));
@@ -192,12 +161,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('parameter list'));
@@ -220,12 +184,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // May have multiple errors, find the one about event name
       const error = errors.find(e => e.message.toLowerCase().includes('event name') ||
@@ -253,12 +212,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('AL-only') &&
@@ -279,12 +233,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('AL-only') &&
@@ -307,12 +256,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('AL-only') &&
@@ -333,12 +277,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('AL-only') &&
@@ -361,12 +300,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('AL-only') &&
@@ -387,12 +321,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('AL-only') &&
@@ -417,12 +346,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('AL-only') &&
@@ -447,12 +371,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Parser may or may not generate error for this specific case
       if (errors.length > 0) {
@@ -479,12 +398,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Parser may or may not generate error for this specific case
       if (errors.length > 0) {
@@ -503,12 +417,7 @@ describe('Parser error message sanitization', () => {
   describe('Location 10: consume() - CRITICAL general unexpected token (line 3286)', () => {
     it('should sanitize unexpected token in consume() - wrong object type', () => {
       const code = 'OBJECT SecretObjectType 18 Customer';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Any error should have sanitized content - just check the first one
@@ -524,12 +433,7 @@ describe('Parser error message sanitization', () => {
   {
     { 1 ; ; No. ; Code20 }
   ConfidentialNextToken`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Should have error about expected closing brace or sanitized content
@@ -548,12 +452,7 @@ describe('Parser error message sanitization', () => {
       const longIdentifier = 'VeryLongConfidentialIdentifierThatContainsSensitiveDataAndShouldBeTruncatedInErrorMessages' +
                              'WithEvenMoreCharactersToMakeItReallyLong';
       const code = `OBJECT ${longIdentifier} 18 Customer`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors[0];
@@ -584,12 +483,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('AL-only keyword'));
@@ -610,12 +504,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('AL-only access modifier'));
@@ -637,12 +526,7 @@ describe('Parser error message sanitization', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('AL-only') &&
@@ -663,12 +547,7 @@ describe('Parser error message sanitization', () => {
     {  ; ; No. ; Code20 }
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Any errors should still have sanitized format even for empty values
@@ -683,12 +562,7 @@ describe('Parser error message sanitization', () => {
     it('should handle very short token values (<=3 chars)', () => {
       // Short values may be shown in full for usability, but still follow format
       const code = 'OBJECT X 18 Customer';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Short tokens (<=3 chars) - parser may report token type instead of value
@@ -701,12 +575,7 @@ describe('Parser error message sanitization', () => {
 
     it('should handle tokens with special characters', () => {
       const code = 'OBJECT Table 18 Customer { FIELDS { { Special@#$%Value ; ; Name ; Text } } }';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Should sanitize special characters too
@@ -718,12 +587,7 @@ describe('Parser error message sanitization', () => {
 
     it('should handle tokens with quotes in them', () => {
       const code = `OBJECT Table 18 Customer { FIELDS { { "Quoted'Field" ; ; Name ; Text } } }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Should properly escape quotes in sanitized output
@@ -736,12 +600,7 @@ describe('Parser error message sanitization', () => {
 
     it('should handle Unicode tokens', () => {
       const code = 'OBJECT Table 18 Customer { FIELDS { { Feld№⁴² ; ; Name ; Text } } }';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('Expected field number'));
@@ -755,12 +614,7 @@ describe('Parser error message sanitization', () => {
     it('sanitized messages should match expected format pattern', () => {
       // Test that format is: [content sanitized, X chars] or [content sanitized, X chars at offset Y]
       const code = 'OBJECT InvalidType 18 Customer';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const error = errors.find(e => e.message.includes('[content sanitized'));
@@ -775,12 +629,7 @@ describe('Parser error message sanitization', () => {
     it('should not double-sanitize already sanitized content', () => {
       // If somehow sanitization is called twice, shouldn't nest sanitization markers
       const code = 'OBJECT InvalidType 18 Customer';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       errors.forEach(error => {
         // Should not have nested [content sanitized, ... [content sanitized, ...]]

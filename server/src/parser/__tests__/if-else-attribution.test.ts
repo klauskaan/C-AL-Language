@@ -24,9 +24,8 @@
  * before parsing ELSE, preventing misattribution.
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
-import {
+import { parseCode } from './parserTestHelpers';
+import type {
   IfStatement,
   CaseStatement,
   WhileStatement,
@@ -35,6 +34,8 @@ import {
   RepeatStatement,
   BlockStatement
 } from '../ast';
+import { Lexer } from '../../lexer/lexer';
+import { Parser } from '../parser';
 
 describe('Parser - IF/ELSE Misattribution Bug', () => {
   describe('CASE...OF with IF statements', () => {
@@ -56,12 +57,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
       expect(errors.length).toBe(0);
@@ -108,12 +104,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();
@@ -151,12 +142,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -196,12 +182,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
       expect(errors.length).toBe(0);
@@ -255,12 +236,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
       expect(errors.length).toBe(0);
@@ -310,12 +286,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -347,12 +318,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -384,12 +350,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -424,12 +385,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -462,12 +418,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -498,12 +449,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -538,12 +484,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -574,12 +515,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -611,12 +547,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -646,12 +577,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -687,12 +613,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -724,12 +645,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -759,12 +675,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -799,12 +710,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -834,12 +740,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -869,12 +770,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -909,12 +805,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -949,12 +840,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -991,12 +877,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -1031,12 +912,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -1151,12 +1027,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -1200,12 +1071,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -1251,12 +1117,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // ELSE is orphaned - should be rejected by INVALID_EXPRESSION_STARTERS guard
       expect(errors.length).toBeGreaterThan(0);
@@ -1283,12 +1144,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 
@@ -1320,12 +1176,7 @@ describe('Parser - IF/ELSE Misattribution Bug', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
 

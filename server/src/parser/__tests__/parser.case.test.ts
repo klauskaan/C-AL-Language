@@ -12,9 +12,10 @@
  * - #299: Add coverage for nested CASE error recovery
  */
 
+import { parseCode } from './parserTestHelpers';
+import { CaseStatement } from '../ast';
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../parser';
-import { CaseStatement } from '../ast';
 
 describe('Parser - Nested CASE Error Recovery', () => {
   describe('Issue #299 exact example', () => {
@@ -40,12 +41,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report error for malformed statement in inner CASE
       expect(errors.length).toBeGreaterThan(0);
@@ -95,12 +91,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report error for missing colon after "2"
       expect(errors.length).toBeGreaterThan(0);
@@ -137,12 +128,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report missing colon error
       expect(errors.length).toBeGreaterThan(0);
@@ -179,12 +165,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report the error
       expect(errors.length).toBeGreaterThan(0);
@@ -218,12 +199,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report errors for both missing colons
       expect(errors.length).toBeGreaterThanOrEqual(2);
@@ -264,12 +240,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report unclosed set literal error
       expect(errors.length).toBeGreaterThan(0);
@@ -310,12 +281,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
       expect(errors.length).toBe(0);
@@ -357,12 +323,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report missing colon in deepest CASE
       expect(errors.length).toBeGreaterThan(0);
@@ -398,12 +359,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report missing colon in middle CASE
       expect(errors.length).toBeGreaterThan(0);
@@ -449,12 +405,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report multiple errors
       expect(errors.length).toBeGreaterThanOrEqual(3);
@@ -491,12 +442,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report error for malformed range expression
       expect(errors.length).toBeGreaterThan(0);
@@ -531,12 +477,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report error for malformed range expression
       const rangeError = errors.find(e => e.message.includes('Expected expression after \'..\' in range'));
@@ -565,12 +506,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report error for malformed range expression
       const rangeError = errors.find(e => e.message.includes('Expected expression after \'..\' in range'));
@@ -599,12 +535,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report error for malformed range expression
       const rangeError = errors.find(e => e.message.includes('Expected expression after \'..\' in range'));
@@ -631,12 +562,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Valid range should parse without errors
       expect(errors.length).toBe(0);
@@ -659,12 +585,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report error for malformed range (starts with ..)
       // This is a different error than incomplete range - it's an invalid expression start
@@ -705,12 +626,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report missing colon after "2" in outer CASE
       expect(errors.length).toBeGreaterThan(0);
@@ -740,12 +656,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report error for malformed function call (missing closing paren)
       expect(errors.length).toBeGreaterThan(0);
@@ -790,12 +701,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report error for malformed function call
       expect(errors.length).toBeGreaterThan(0);
@@ -830,12 +736,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report error for malformed function call
       expect(errors.length).toBeGreaterThan(0);
@@ -883,11 +784,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Should preserve both procedures - recovery must not consume beyond END;
       const procedures = ast.object?.code?.procedures || [];
@@ -918,12 +815,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse successfully (empty branches are valid in C/AL)
       expect(errors.length).toBe(0);
@@ -959,12 +851,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse successfully - no false positives from function args
       expect(errors.length).toBe(0);
@@ -1005,12 +892,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report error for missing colon after '1'
       expect(errors.length).toBeGreaterThan(0);
@@ -1056,12 +938,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report error for malformed CASE
       expect(errors.length).toBeGreaterThan(0);
@@ -1100,11 +977,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report error for malformed CASE
       expect(errors.length).toBeGreaterThan(0);
@@ -1136,11 +1009,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report error for malformed CASE
       expect(errors.length).toBeGreaterThan(0);
@@ -1174,11 +1043,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report error for malformed CASE
       expect(errors.length).toBeGreaterThan(0);
@@ -1208,12 +1073,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     BEGIN
       CASE x OF
         1..`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report error for incomplete range
       expect(errors.length).toBeGreaterThan(0);
@@ -1236,11 +1096,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     BEGIN
       CASE x OF
         1..`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Parser should not crash
       expect(ast).toBeDefined();
@@ -1279,12 +1135,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
 }
 `;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const hasError = errors.some(e =>
@@ -1323,12 +1174,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
 }
 `;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Main branch implementation uses: "Unexpected keyword '...' in expression. Missing statement or operator before '...'."

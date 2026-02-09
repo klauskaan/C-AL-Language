@@ -56,9 +56,9 @@
  * - #150: Sanitize token types in error messages (related security)
  */
 
-import { Lexer } from '../../lexer/lexer';
 import { TokenType } from '../../lexer/tokens';
-import { Parser, ParseError } from '../parser';
+import { ParseError } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 /**
  * Helper: Parse code and return errors with full context
@@ -67,12 +67,8 @@ import { Parser, ParseError } from '../parser';
  * @returns Array of ParseError objects from parser.getErrors()
  */
 function parseAndGetErrors(code: string): ParseError[] {
-  const lexer = new Lexer(code);
-  const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
-
-  parser.parse();
-  return parser.getErrors();
+  const { errors } = parseCode(code);
+  return errors;
 }
 
 /**

@@ -13,8 +13,7 @@
  * Actual: Reports "Expected =" at multiple positions
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode, tokenize } from './parserTestHelpers';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -29,11 +28,8 @@ describe('Regression - Option InitValue Parsing', () => {
       }
     }`;
 
-    const lexer = new Lexer(code);
-    const tokens = lexer.tokenize();
-    const parser = new Parser(tokens);
-    const _ast = parser.parse();
-    const errors = parser.getErrors();
+    const tokens = tokenize(code);
+    const { ast: _ast, errors } = parseCode(code);
 
     console.log('\n=== MINIMAL TEST CASE ===');
     console.log('Code:', code);
@@ -52,11 +48,8 @@ describe('Regression - Option InitValue Parsing', () => {
     }
 
     const code = fs.readFileSync(fixtureFile, 'utf-8');
-    const lexer = new Lexer(code);
-    const tokens = lexer.tokenize();
-    const parser = new Parser(tokens);
-    const _ast = parser.parse();
-    const errors = parser.getErrors();
+    const tokens = tokenize(code);
+    const { ast: _ast, errors } = parseCode(code);
 
     console.log('\n=== FIXTURE FILE TEST ===');
     console.log('File:', fixtureFile);
@@ -115,8 +108,7 @@ describe('Regression - Option InitValue Parsing', () => {
 
   it('should tokenize InitValue=DefaultValue correctly', () => {
     const code = 'InitValue=DefaultValue';
-    const lexer = new Lexer(code);
-    const tokens = lexer.tokenize();
+    const tokens = tokenize(code);
 
     console.log('\n=== TOKENIZING "InitValue=DefaultValue" ===');
     tokens.forEach((t, idx) => {
@@ -141,11 +133,8 @@ describe('Regression - Option InitValue Parsing', () => {
       }
     }`;
 
-    const lexer = new Lexer(code);
-    const tokens = lexer.tokenize();
-    const parser = new Parser(tokens);
-    const _ast = parser.parse();
-    const errors = parser.getErrors();
+    const tokens = tokenize(code);
+    const { ast: _ast, errors } = parseCode(code);
 
     console.log('\n=== SIMPLE PROPERTY TEST ===');
     console.log('Tokens:', tokens.map(t => `${t.type}:"${t.value}"`).join(' '));
@@ -161,8 +150,7 @@ describe('Regression - Option InitValue Parsing', () => {
       }
     }`;
 
-    const lexer = new Lexer(code);
-    const tokens = lexer.tokenize();
+    const tokens = tokenize(code);
 
     console.log('\n=== APOSTROPHE IN DESCRIPTION TEST ===');
     console.log('Code:', code);
@@ -181,9 +169,7 @@ describe('Regression - Option InitValue Parsing', () => {
       console.log(`  "${t.value}" at line ${t.line}:${t.column}`);
     });
 
-    const parser = new Parser(tokens);
-    const _ast = parser.parse();
-    const errors = parser.getErrors();
+    const { ast: _ast, errors } = parseCode(code);
 
     console.log('\nParser errors:', errors.length);
     errors.slice(0, 5).forEach((err, idx) => {
@@ -205,8 +191,7 @@ describe('Regression - Option InitValue Parsing', () => {
       }
     }`;
 
-    const lexer = new Lexer(code);
-    const tokens = lexer.tokenize();
+    const tokens = tokenize(code);
 
     console.log('\n=== TAB5342 LINE 41 REPRODUCTION ===');
 
@@ -221,9 +206,7 @@ describe('Regression - Option InitValue Parsing', () => {
       }
     }
 
-    const parser = new Parser(tokens);
-    const _ast = parser.parse();
-    const errors = parser.getErrors();
+    const { ast: _ast, errors } = parseCode(code);
 
     console.log('\nParser errors:', errors.length);
     errors.forEach((err, idx) => {

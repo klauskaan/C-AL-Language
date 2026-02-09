@@ -25,9 +25,7 @@
  * All categories now PASS after Issue #361 fix
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
-import { parseCode } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('parsePrimary() Fallback Behavior', () => {
   describe('Category 1: Data type keywords as identifiers (valid C/AL)', () => {

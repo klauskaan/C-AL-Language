@@ -16,8 +16,7 @@
  * - This applies to both TABLE FIELDS and PAGE CONTROLS sections
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 import { ObjectKind, ObjectDeclaration, FieldDeclaration, ControlDeclaration } from '../ast';
 
 describe('Parser - Empty/Malformed Property Values in parseFieldProperties()', () => {
@@ -43,13 +42,10 @@ describe('Parser - Empty/Malformed Property Values in parseFieldProperties()', (
   {
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // BEFORE fix: This assertion will FAIL due to error being reported
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       // Verify AST structure is correct
       expect(ast.object).toBeDefined();
@@ -85,13 +81,9 @@ describe('Parser - Empty/Malformed Property Values in parseFieldProperties()', (
   {
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
+      const { errors } = parseCode(code);
 
       // Should have error for malformed property
-      const errors = parser.getErrors();
       expect(errors.length).toBeGreaterThan(0);
 
       // Error message should mention empty or malformed value
@@ -127,13 +119,10 @@ describe('Parser - Empty/Malformed Property Values in parseFieldProperties()', (
   {
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should have no errors after fix
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const table = ast.object as ObjectDeclaration;
       expect(table.fields?.fields).toHaveLength(3);
@@ -166,12 +155,9 @@ describe('Parser - Empty/Malformed Property Values in parseFieldProperties()', (
   {
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const table = ast.object as ObjectDeclaration;
       const field = table.fields?.fields[0] as FieldDeclaration;
@@ -202,13 +188,10 @@ describe('Parser - Empty/Malformed Property Values in parseFieldProperties()', (
                 InstructionalTextML= }
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // BEFORE fix: This assertion will FAIL due to error being reported
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       // Verify AST structure
       expect(ast.object).toBeDefined();
@@ -240,12 +223,9 @@ describe('Parser - Empty/Malformed Property Values in parseFieldProperties()', (
                 CaptionML= }
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const page = ast.object as ObjectDeclaration;
       const control = page.controls?.controls[0] as ControlDeclaration;
@@ -274,13 +254,9 @@ describe('Parser - Empty/Malformed Property Values in parseFieldProperties()', (
                 ActionList=}
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
+      const { errors } = parseCode(code);
 
       // Should have error for malformed property
-      const errors = parser.getErrors();
       expect(errors.length).toBeGreaterThan(0);
 
       // Error should be about empty or malformed value
@@ -307,13 +283,9 @@ describe('Parser - Empty/Malformed Property Values in parseFieldProperties()', (
                 ActionList=}
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
+      const { errors } = parseCode(code);
 
       // Should have error for ActionList but not InstructionalTextML
-      const errors = parser.getErrors();
       expect(errors.length).toBeGreaterThan(0);
 
       // Error should mention ActionList or be about malformed value
@@ -346,13 +318,10 @@ describe('Parser - Empty/Malformed Property Values in parseFieldProperties()', (
   {
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
+      const { errors } = parseCode(code);
 
       // Tab is whitespace, so this should be valid
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse property with multiple spaces before closing brace', () => {
@@ -375,13 +344,10 @@ describe('Parser - Empty/Malformed Property Values in parseFieldProperties()', (
   {
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
+      const { errors } = parseCode(code);
 
       // Multiple spaces are valid whitespace
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -416,13 +382,10 @@ describe('Parser - Empty/Malformed Property Values in parseFieldProperties()', (
     {    ;No.                                      ;Clustered=Yes }
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const table = ast.object as ObjectDeclaration;
       expect(table.fields?.fields).toHaveLength(3);
@@ -461,12 +424,9 @@ describe('Parser - Empty/Malformed Property Values in parseFieldProperties()', (
   {
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const table = ast.object as ObjectDeclaration;
       const field = table.fields?.fields[0] as FieldDeclaration;

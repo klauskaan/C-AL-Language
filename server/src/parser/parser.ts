@@ -6086,6 +6086,8 @@ export interface SkippedRegion {
 /**
  * Helper function to parse C/AL code
  * Used in tests to easily parse code snippets and get AST + errors
+ *
+ * @deprecated Use parserTestHelpers.parseCode() for tests
  */
 export function parseCode(code: string): { ast: CALDocument | null; errors: ParseError[] } {
   const lexer = new Lexer(code);

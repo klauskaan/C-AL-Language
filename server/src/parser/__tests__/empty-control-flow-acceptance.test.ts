@@ -12,8 +12,7 @@
  * END/ELSE/UNTIL keywords, treating them as implicit EmptyStatement nodes.
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Parser - Empty Control Flow Body Acceptance', () => {
   describe('IF statement with empty bodies (valid C/AL patterns)', () => {
@@ -29,12 +28,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // This is VALID C/AL - should NOT produce any errors
       expect(errors.length).toBe(0);
@@ -61,12 +55,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Empty THEN branch before ELSE is VALID C/AL
       expect(errors.length).toBe(0);
@@ -94,12 +83,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Empty ELSE branch before END is VALID C/AL
       expect(errors.length).toBe(0);
@@ -126,12 +110,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Nested IF with empty body is valid
       expect(errors.length).toBe(0);
@@ -155,12 +134,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Empty WHILE body is VALID C/AL
       expect(errors.length).toBe(0);
@@ -187,12 +161,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Empty REPEAT body is VALID C/AL
       expect(errors.length).toBe(0);
@@ -220,12 +189,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Empty FOR body is VALID C/AL
       expect(errors.length).toBe(0);
@@ -252,12 +216,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Empty FOR DOWNTO body is VALID C/AL
       expect(errors.length).toBe(0);
@@ -286,12 +245,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Empty WITH body is VALID C/AL
       expect(errors.length).toBe(0);
@@ -323,12 +277,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Empty CASE branch before ELSE is VALID C/AL
       expect(errors.length).toBe(0);
@@ -352,12 +301,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Empty CASE branch before next case value is VALID C/AL
       expect(errors.length).toBe(0);
@@ -379,12 +323,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Empty CASE branch before END is VALID C/AL
       expect(errors.length).toBe(0);
@@ -407,12 +346,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Common production pattern - should be accepted
       expect(errors.length).toBe(0);
@@ -439,12 +373,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Multiple empty bodies pattern with explicit ENDs
       // Note: This pattern has 4 END tokens - 3 closing control flow statements, 1 closing BEGIN block
@@ -473,12 +402,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Complex nesting with empty bodies should be accepted
       expect(errors.length).toBe(0);
@@ -498,12 +422,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Explicit semicolon is also valid
       expect(errors.length).toBe(0);
@@ -523,12 +442,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Explicit semicolon is also valid
       expect(errors.length).toBe(0);
@@ -549,12 +463,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();
@@ -575,12 +484,7 @@ describe('Parser - Empty Control Flow Body Acceptance', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors.length).toBe(0);
       expect(ast).not.toBeNull();

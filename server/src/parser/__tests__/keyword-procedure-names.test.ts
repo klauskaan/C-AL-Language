@@ -15,9 +15,8 @@
  * 3. Maintain unquoted keyword behavior (e.g., Break = BREAK statement)
  */
 
-import { Lexer } from '../../lexer/lexer';
+import { parseCode, tokenize } from './parserTestHelpers';
 import { TokenType } from '../../lexer/tokens';
-import { Parser } from '../parser';
 import {
   BreakStatement,
   CallStatement,
@@ -42,12 +41,9 @@ describe('Parser - Keywords as Procedure Names', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).not.toBeNull();
 
       const procedures = ast.object?.code?.procedures || [];
@@ -77,12 +73,9 @@ describe('Parser - Keywords as Procedure Names', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).not.toBeNull();
 
       const procedures = ast.object?.code?.procedures || [];
@@ -125,13 +118,10 @@ describe('Parser - Keywords as Procedure Names', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // SHOULD PASS: Existing BREAK statement parsing
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).not.toBeNull();
 
       const procedures = ast.object?.code?.procedures || [];
@@ -165,11 +155,7 @@ describe('Parser - Keywords as Procedure Names', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // SHOULD PASS: IF remains reserved
       expect(errors.length).toBeGreaterThan(0);
@@ -190,11 +176,7 @@ describe('Parser - Keywords as Procedure Names', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // SHOULD PASS: WHILE remains reserved
       expect(errors.length).toBeGreaterThan(0);
@@ -219,12 +201,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       expect(procedures[0].name).toBe('MenuSuite');
@@ -240,12 +219,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       expect(procedures[0].name).toBe('Properties');
@@ -261,12 +237,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       expect(procedures[0].name).toBe('FieldGroups');
@@ -282,12 +255,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       expect(procedures[0].name).toBe('Actions');
@@ -303,12 +273,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       expect(procedures[0].name).toBe('DataItems');
@@ -324,12 +291,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       expect(procedures[0].name).toBe('Elements');
@@ -352,12 +316,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       const variables = procedures[0].variables || [];
@@ -377,12 +338,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       const variables = procedures[0].variables || [];
@@ -402,12 +360,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       const variables = procedures[0].variables || [];
@@ -427,12 +382,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       const variables = procedures[0].variables || [];
@@ -452,12 +404,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       const variables = procedures[0].variables || [];
@@ -477,12 +426,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       const variables = procedures[0].variables || [];
@@ -507,13 +453,10 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should pass immediately due to lexer downgrade
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       const variables = procedures[0].variables || [];
@@ -533,13 +476,10 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should pass immediately due to lexer downgrade
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       const variables = procedures[0].variables || [];
@@ -557,13 +497,10 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should pass immediately due to lexer downgrade
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       expect(procedures[0].name).toBe('Labels');
@@ -579,13 +516,10 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should pass immediately due to lexer downgrade
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object?.code?.procedures || [];
       expect(procedures).toHaveLength(1);
       expect(procedures[0].name).toBe('Dataset');
@@ -611,8 +545,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       // Find the PROPERTIES section keyword (should be after opening brace)
       const sectionPropertiesToken = tokens.find((t, i) =>
@@ -656,8 +589,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       // Find the ACTIONS section keyword
       const sectionActionsToken = tokens.find((t, i) =>
@@ -689,8 +621,7 @@ describe('Parser - Keywords as Procedure Names', () => {
       Labels@1000 : Integer;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       // Find the Labels token (should be downgraded to Identifier when followed by @)
       const labelsTokenIndex = tokens.findIndex(t => t.value === 'Labels');
@@ -710,8 +641,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       // Find the Dataset token (after PROCEDURE, downgraded to Identifier when followed by @)
       const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
@@ -752,12 +682,9 @@ describe('Parser - Keywords as Procedure Names', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).not.toBeNull();
 
       // Verify ACTIONS section exists
@@ -795,12 +722,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-        parser.parse();
-
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
         expect(errors.length).toBeGreaterThan(0);
       });
     });
@@ -819,12 +741,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-        parser.parse();
-
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
         expect(errors.length).toBeGreaterThan(0);
       });
     });
@@ -864,12 +781,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-        const ast = parser.parse();
+        const { ast, errors } = parseCode(code);
 
-        expect(parser.getErrors()).toHaveLength(0);
+        expect(errors).toHaveLength(0);
         const procedures = ast.object?.code?.procedures || [];
         expect(procedures).toHaveLength(1);
         expect(procedures[0].name).toBe('RequestForm');
@@ -887,12 +801,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-        const ast = parser.parse();
+        const { ast, errors } = parseCode(code);
 
-        expect(parser.getErrors()).toHaveLength(0);
+        expect(errors).toHaveLength(0);
         const procedures = ast.object?.code?.procedures || [];
         expect(procedures).toHaveLength(1);
         const variables = procedures[0].variables || [];
@@ -910,12 +821,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-        const ast = parser.parse();
+        const { ast, errors } = parseCode(code);
 
-        expect(parser.getErrors()).toHaveLength(0);
+        expect(errors).toHaveLength(0);
         const procedures = ast.object?.code?.procedures || [];
         expect(procedures).toHaveLength(1);
         const parameters = procedures[0].parameters || [];
@@ -935,12 +843,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-        const ast = parser.parse();
+        const { ast, errors } = parseCode(code);
 
-        expect(parser.getErrors()).toHaveLength(0);
+        expect(errors).toHaveLength(0);
         const procedures = ast.object?.code?.procedures || [];
         expect(procedures).toHaveLength(1);
         expect(procedures[0].name).toBe('RequestPage');
@@ -958,12 +863,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-        const ast = parser.parse();
+        const { ast, errors } = parseCode(code);
 
-        expect(parser.getErrors()).toHaveLength(0);
+        expect(errors).toHaveLength(0);
         const procedures = ast.object?.code?.procedures || [];
         expect(procedures).toHaveLength(1);
         const variables = procedures[0].variables || [];
@@ -981,12 +883,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-        const ast = parser.parse();
+        const { ast, errors } = parseCode(code);
 
-        expect(parser.getErrors()).toHaveLength(0);
+        expect(errors).toHaveLength(0);
         const procedures = ast.object?.code?.procedures || [];
         expect(procedures).toHaveLength(1);
         const parameters = procedures[0].parameters || [];
@@ -1006,12 +905,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-        const ast = parser.parse();
+        const { ast, errors } = parseCode(code);
 
-        expect(parser.getErrors()).toHaveLength(0);
+        expect(errors).toHaveLength(0);
         const procedures = ast.object?.code?.procedures || [];
         expect(procedures).toHaveLength(1);
         expect(procedures[0].name).toBe('MenuNodes');
@@ -1029,12 +925,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-        const ast = parser.parse();
+        const { ast, errors } = parseCode(code);
 
-        expect(parser.getErrors()).toHaveLength(0);
+        expect(errors).toHaveLength(0);
         const procedures = ast.object?.code?.procedures || [];
         expect(procedures).toHaveLength(1);
         const variables = procedures[0].variables || [];
@@ -1052,12 +945,9 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-        const ast = parser.parse();
+        const { ast, errors } = parseCode(code);
 
-        expect(parser.getErrors()).toHaveLength(0);
+        expect(errors).toHaveLength(0);
         const procedures = ast.object?.code?.procedures || [];
         expect(procedures).toHaveLength(1);
         const parameters = procedures[0].parameters || [];
@@ -1097,8 +987,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1117,8 +1006,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1137,8 +1025,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1157,8 +1044,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1177,8 +1063,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1197,8 +1082,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1217,8 +1101,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1237,8 +1120,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1257,8 +1139,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1277,8 +1158,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1299,8 +1179,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1319,8 +1198,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1339,8 +1217,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1359,8 +1236,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1379,8 +1255,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1399,8 +1274,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1419,8 +1293,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1439,8 +1312,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1463,8 +1335,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1483,8 +1354,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1503,8 +1373,7 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
+        const tokens = tokenize(code);
 
         const procIndex = tokens.findIndex(t => t.type === TokenType.Procedure);
         expect(procIndex).toBeGreaterThan(-1);
@@ -1538,13 +1407,10 @@ describe('Parser - Keywords as Procedure Names', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-        const ast = parser.parse();
+        const { ast, errors } = parseCode(code);
 
         // Parse should succeed without errors
-        expect(parser.getErrors()).toHaveLength(0);
+        expect(errors).toHaveLength(0);
         expect(ast.object).not.toBeNull();
 
         // Verify PROPERTIES section was parsed

@@ -16,6 +16,7 @@
  * These tests validate issue #40: Add more context to parser error messages
  */
 
+import { parseCode } from './parserTestHelpers';
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../parser';
 
@@ -23,12 +24,7 @@ describe('Parser - Error Messages with Context', () => {
   describe('Integer parsing errors', () => {
     it('should provide context for invalid object ID', () => {
       const code = 'OBJECT Table abc Customer';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Parser reports the type mismatch during token consumption
@@ -46,12 +42,7 @@ describe('Parser - Error Messages with Context', () => {
     { abc ; ; No. ; Code20 }
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const fieldError = errors.find(e => e.message.includes('Expected field number'));
@@ -70,12 +61,7 @@ describe('Parser - Error Messages with Context', () => {
       MyArray : ARRAY[abc] OF Integer;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const arrayError = errors.find(e => e.message.includes('Expected array size'));
@@ -93,12 +79,7 @@ describe('Parser - Error Messages with Context', () => {
     { 1 ; ; No. ; Code[abc] }
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const lengthError = errors.find(e => e.message.includes('Expected length'));
@@ -112,12 +93,7 @@ describe('Parser - Error Messages with Context', () => {
   describe('Token consumption errors', () => {
     it('should show what was found vs what was expected', () => {
       const code = 'OBJECT Table Name Customer'; // Invalid syntax - Table should be followed by number
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Should include token type information showing what was found
@@ -135,12 +111,7 @@ describe('Parser - Error Messages with Context', () => {
     { 1  ; No. ; Code20 }
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Issue #3: Should provide contextual error message
@@ -159,12 +130,7 @@ describe('Parser - Error Messages with Context', () => {
     { 1 ; ; ; Code20 }
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const nameError = errors.find(e => e.message.includes('Field name cannot be empty'));
@@ -184,12 +150,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const paramError = errors.find(e => e.message.includes('parameter list'));
@@ -212,12 +173,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const memberError = errors.find(e => e.message.includes('Expected identifier after :: operator'));
@@ -238,12 +194,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Token types are now sanitized to prevent keyword leakage
@@ -274,12 +225,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report an error, not silently drop the variable
       expect(errors.length).toBeGreaterThan(0);
@@ -306,12 +252,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report errors for both invalid declarations
       expect(errors.length).toBeGreaterThan(0);
@@ -342,12 +283,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report error for invalid variable
       expect(errors.length).toBeGreaterThan(0);
@@ -380,12 +316,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
 
@@ -411,11 +342,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should detect WHILE@1000 as invalid variable declaration attempt
       expect(errors.length).toBeGreaterThan(0);
@@ -442,11 +369,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should report error for WHILE used as variable name
       expect(errors.length).toBeGreaterThan(0);
@@ -481,12 +404,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // EXIT(x) without semicolon before END is valid in C/AL
       // This test verifies that valid code parses without errors
@@ -506,12 +424,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Should provide context about missing semicolon in variable declaration
@@ -526,12 +439,7 @@ describe('Parser - Error Messages with Context', () => {
     OnRun=BEGIN END
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Should provide context about missing semicolon after trigger body
@@ -552,12 +460,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Should provide context about missing colon in variable declaration
@@ -580,12 +483,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Should provide context about missing closing bracket
@@ -608,12 +506,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       // Should provide context about missing closing parenthesis
@@ -642,12 +535,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report at least one error for missing semicolon after variable declaration
       expect(errors.length).toBeGreaterThanOrEqual(1);
@@ -674,12 +562,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         // Should report an error about invalid procedure name
         expect(errors.length).toBeGreaterThan(0);
@@ -697,12 +580,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const nameError = errors.find(e => e.message.includes('Expected procedure name'));
@@ -719,12 +597,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const nameError = errors.find(e => e.message.includes('Expected procedure name'));
@@ -741,12 +614,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const nameError = errors.find(e => e.message.includes('Expected procedure name'));
@@ -763,12 +631,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const nameError = errors.find(e => e.message.includes('Expected procedure name'));
@@ -787,12 +650,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const nameError = errors.find(e => e.message.includes('Expected procedure name'));
@@ -809,12 +667,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const nameError = errors.find(e => e.message.includes('Expected procedure name'));
@@ -828,11 +681,7 @@ describe('Parser - Error Messages with Context', () => {
   {
     PROCEDURE`;
 
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors.some(e => e.message.includes('Expected procedure name'))).toBe(true);
@@ -851,12 +700,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Should report error for first invalid procedure
         expect(errors.length).toBeGreaterThan(0);
@@ -883,12 +727,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Should report error for first invalid procedure
         expect(errors.length).toBeGreaterThan(0);
@@ -914,12 +753,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Should report error for invalid procedure
         expect(errors.length).toBeGreaterThan(0);
@@ -949,12 +783,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         expect(errors.length).toBe(0);
         const procedures = ast.object?.code?.procedures || [];
@@ -972,12 +801,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         expect(errors.length).toBe(0);
         const procedures = ast.object?.code?.procedures || [];
@@ -995,12 +819,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         expect(errors.length).toBe(0);
         const procedures = ast.object?.code?.procedures || [];
@@ -1018,12 +837,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         expect(errors.length).toBe(0);
         const procedures = ast.object?.code?.procedures || [];
@@ -1041,12 +855,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         expect(errors.length).toBe(0);
         const procedures = ast.object?.code?.procedures || [];
@@ -1075,12 +884,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected : after case branch value');
@@ -1105,12 +909,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected : after case branch value');
@@ -1135,12 +934,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected : after case branch value');
@@ -1168,12 +962,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Should report error for unclosed set literal in ELSE clause
         expect(errors.length).toBeGreaterThan(0);
@@ -1205,12 +994,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected ] after set literal');
@@ -1231,12 +1015,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected ] after set literal');
@@ -1255,12 +1034,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         // After fix for issue #328, control-flow keywords in set literals
@@ -1285,12 +1059,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected ) after EXIT value');
@@ -1311,12 +1080,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected ) after EXIT value');
@@ -1347,12 +1111,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Should report the error
         expect(errors.length).toBeGreaterThan(0);
@@ -1384,12 +1143,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Should report the error
         expect(errors.length).toBeGreaterThan(0);
@@ -1421,12 +1175,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Should report the error
         expect(errors.length).toBeGreaterThan(0);
@@ -1459,12 +1208,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected DO after WHILE condition');
@@ -1488,12 +1232,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected DO after FOR range');
@@ -1517,12 +1256,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected DO after FOR range');
@@ -1546,12 +1280,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected DO after WITH record');
@@ -1569,12 +1298,7 @@ describe('Parser - Error Messages with Context', () => {
     OnRun BEGIN END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const equalError = errors.find(e => e.message.includes('Expected = after property name'));
@@ -1589,12 +1313,7 @@ describe('Parser - Error Messages with Context', () => {
     { 1 ; ; No. ; Code20 ; Enabled True }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const equalError = errors.find(e => e.message.includes('Expected = after field property name'));
@@ -1613,12 +1332,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const doubleColonError = errors.find(e => e.message.includes('Expected :: between subscriber and event name'));
@@ -1641,12 +1355,7 @@ describe('Parser - Error Messages with Context', () => {
       END
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const endError = errors.find(e => e.message.includes('Expected END to close BEGIN block'));
@@ -1671,12 +1380,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const endError = errors.find(e => e.message.includes('Expected END to close CASE statement'));
@@ -1698,12 +1402,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         // Should report CASE error, not BEGIN error
         const caseErrors = errors.filter(e =>
@@ -1736,12 +1435,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         const caseErrors = errors.filter(e =>
           e.message.includes('Expected END to close CASE statement')
@@ -1773,12 +1467,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         const caseErrors = errors.filter(e =>
           e.message.includes('CASE')
@@ -1804,12 +1493,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Should detect CASE missing END
         const caseError = errors.find(e =>
@@ -1854,12 +1538,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Should detect CASE missing END
         const caseError = errors.find(e =>
@@ -1904,12 +1583,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Should detect CASE missing END
         const caseError = errors.find(e =>
@@ -1955,12 +1629,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Should detect CASE missing END
         const caseError = errors.find(e =>
@@ -2005,12 +1674,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Should detect CASE missing END
         const caseError = errors.find(e =>
@@ -2052,12 +1716,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         // Should have zero CASE-related errors
         const caseErrors = errors.filter(e =>
@@ -2137,12 +1796,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         const caseErrors = errors.filter(e =>
           e.message.includes('Expected END to close CASE statement')
@@ -2166,12 +1820,7 @@ describe('Parser - Error Messages with Context', () => {
     END;;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         const caseError = errors.find(e =>
           e.message.includes('Expected END to close CASE statement')
@@ -2204,12 +1853,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         const caseError = errors.find(e =>
           e.message.includes('Expected END to close CASE statement')
@@ -2238,12 +1882,7 @@ describe('Parser - Error Messages with Context', () => {
     END;;;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         // The heuristic should work with triple semicolons before closing brace
         const caseError = errors.find(e =>
@@ -2267,12 +1906,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         const caseError = errors.find(e =>
           e.message.includes('Expected END to close CASE statement')
@@ -2297,12 +1931,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors).toHaveLength(0);
       });
@@ -2318,12 +1947,7 @@ describe('Parser - Error Messages with Context', () => {
     OnRun=BEGIN END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected { to open PROPERTIES section');
@@ -2341,12 +1965,7 @@ describe('Parser - Error Messages with Context', () => {
   {
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const closeError = errors.find(e => e.message.includes('Expected } to close PROPERTIES section'));
@@ -2362,12 +1981,7 @@ describe('Parser - Error Messages with Context', () => {
     { 1 ; ; No. ; Code20 }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         expect(errors[0].message).toContain('Expected { to open FIELDS section');
@@ -2384,12 +1998,7 @@ describe('Parser - Error Messages with Context', () => {
   {
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const closeError = errors.find(e => e.message.includes('Expected } to close FIELDS section'));
@@ -2404,12 +2013,7 @@ describe('Parser - Error Messages with Context', () => {
     1 ; ; No. ; Code20 }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const openError = errors.find(e => e.message.includes('Expected { to open field definition'));
@@ -2425,12 +2029,7 @@ describe('Parser - Error Messages with Context', () => {
     { 2 ; ; Name ; Code50 }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const closeError = errors.find(e => e.message.includes('Expected } to close field definition'));
@@ -2456,12 +2055,7 @@ describe('Parser - Error Messages with Context', () => {
     { ; No. ; Clustered=Yes }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const openError = errors.find(e => e.message.includes('Expected { to open KEYS section'));
@@ -2484,12 +2078,7 @@ describe('Parser - Error Messages with Context', () => {
   {
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const closeError = errors.find(e => e.message.includes('Expected } to close KEYS section'));
@@ -2508,12 +2097,7 @@ describe('Parser - Error Messages with Context', () => {
     ; No. ; Clustered=Yes }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const openError = errors.find(e => e.message.includes('Expected { to open key definition'));
@@ -2533,12 +2117,7 @@ describe('Parser - Error Messages with Context', () => {
     { ; Name ; Clustered=No }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const closeError = errors.find(e => e.message.includes('Expected } to close key definition'));
@@ -2564,12 +2143,7 @@ describe('Parser - Error Messages with Context', () => {
     { 1 ; DropDown ; No. }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const openError = errors.find(e => e.message.includes('Expected { to open FIELDGROUPS section'));
@@ -2591,12 +2165,7 @@ describe('Parser - Error Messages with Context', () => {
   {
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const closeError = errors.find(e => e.message.includes('Expected } to close FIELDGROUPS section'));
@@ -2615,12 +2184,7 @@ describe('Parser - Error Messages with Context', () => {
     1 ; DropDown ; No. }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const openError = errors.find(e => e.message.includes('Expected { to open field group definition'));
@@ -2641,12 +2205,7 @@ describe('Parser - Error Messages with Context', () => {
     { 2 ; Brick ; No. }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const closeError = errors.find(e => e.message.includes('Expected } to close field group definition'));
@@ -2668,12 +2227,7 @@ describe('Parser - Error Messages with Context', () => {
     { 1 ; 0 ; ActionContainer ; ActionContainerType=ActionItems }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const openError = errors.find(e => e.message.includes('Expected { to open ACTIONS section'));
@@ -2692,12 +2246,7 @@ describe('Parser - Error Messages with Context', () => {
   {
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const closeError = errors.find(e => e.message.includes('Expected } to close ACTIONS section'));
@@ -2716,12 +2265,7 @@ describe('Parser - Error Messages with Context', () => {
   {
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Verify error is reported (existing behavior)
         const closeError = errors.find(e => e.message.includes('Expected } to close ACTIONS section'));
@@ -2743,12 +2287,7 @@ describe('Parser - Error Messages with Context', () => {
     1 ; ActionContainer ; Processing ; ActionContainerType=ActionItems }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const openError = errors.find(e => e.message.includes('Expected { to open action definition'));
@@ -2764,12 +2303,7 @@ describe('Parser - Error Messages with Context', () => {
     { 2 ; 0 ; Action ; Enabled=Yes }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const closeError = errors.find(e => e.message.includes('Expected } to close action definition'));
@@ -2791,12 +2325,7 @@ describe('Parser - Error Messages with Context', () => {
     { 1 ; 0 ; Container ; ContainerType=ContentArea }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const openError = errors.find(e => e.message.includes('Expected { to open CONTROLS section'));
@@ -2815,12 +2344,7 @@ describe('Parser - Error Messages with Context', () => {
   {
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const closeError = errors.find(e => e.message.includes('Expected } to close CONTROLS section'));
@@ -2835,12 +2359,7 @@ describe('Parser - Error Messages with Context', () => {
     1 ; 0 ; Container ; ContainerType=ContentArea }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const openError = errors.find(e => e.message.includes('Expected { to open control definition'));
@@ -2856,12 +2375,7 @@ describe('Parser - Error Messages with Context', () => {
     { 2 ; 0 ; Group ; GroupType=Group }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const closeError = errors.find(e => e.message.includes('Expected } to close control definition'));
@@ -2883,12 +2397,7 @@ describe('Parser - Error Messages with Context', () => {
     [{12345678-1234-1234-1234-123456789012}] ; ; Element ; Element ; Text }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const openError = errors.find(e => e.message.includes('Expected { to open ELEMENTS section'));
@@ -2907,12 +2416,7 @@ describe('Parser - Error Messages with Context', () => {
   {
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const closeError = errors.find(e => e.message.includes('Expected } to close ELEMENTS section'));
@@ -2930,12 +2434,7 @@ describe('Parser - Error Messages with Context', () => {
   {
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const closeError = errors.find(e => e.message.includes('Expected } to close ELEMENTS section'));
@@ -2950,12 +2449,7 @@ describe('Parser - Error Messages with Context', () => {
     [{12345678-1234-1234-1234-123456789012}] ; ; Element ; Element ; Text }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const openError = errors.find(e => e.message.includes('Expected { to open element definition'));
@@ -2971,12 +2465,7 @@ describe('Parser - Error Messages with Context', () => {
     { [{87654321-4321-4321-4321-210987654321}] ; 0 ; Item ; Element ; Table }
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const closeError = errors.find(e => e.message.includes('Expected } to close element definition'));
@@ -3006,12 +2495,7 @@ describe('Parser - Error Messages with Context', () => {
     END;
   }
 }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-
-        parser.parse();
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
 
         expect(errors.length).toBeGreaterThan(0);
         const openError = errors.find(e => e.message.includes('Expected [ to open set literal'));

@@ -25,8 +25,7 @@
  * - Automation types commonly use WITHEVENTS modifier for COM events
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Parser - Automation Type Declarations', () => {
   describe('Basic Automation variable declarations', () => {
@@ -38,11 +37,9 @@ describe('Parser - Automation Type Declarations', () => {
             FileSystemObject@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Windows Script Host Object Model'.FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
       expect(ast.object?.code).toBeDefined();
 
@@ -64,11 +61,9 @@ describe('Parser - Automation Type Declarations', () => {
             XMLDoc@1 : Automation "{F5078F18-C551-11D3-89B9-0000F81FE221} 3.0:{2933BF80-7B36-11D2-B20E-00C04F983E60}:'Microsoft XML, v3.0'.IXMLDOMNode";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.name).toBe('XMLDoc');
       expect(variable.dataType.typeName).toBe('Automation');
@@ -87,11 +82,9 @@ describe('Parser - Automation Type Declarations', () => {
             FSO@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Windows Script Host Object Model'.FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.automationTypeLibName).toBe('Windows Script Host Object Model');
     });
@@ -104,11 +97,9 @@ describe('Parser - Automation Type Declarations', () => {
             XMLNode@1 : Automation "{F5078F18-C551-11D3-89B9-0000F81FE221} 3.0:{2933BF80-7B36-11D2-B20E-00C04F983E60}:'Microsoft XML, v3.0'.IXMLDOMNode";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.automationTypeLibName).toBe('Microsoft XML, v3.0');
     });
@@ -121,11 +112,9 @@ describe('Parser - Automation Type Declarations', () => {
             XMLDoc@2 : Automation "{F5078F18-C551-11D3-89B9-0000F81FE221} 3.0:{2933BF80-7B36-11D2-B20E-00C04F983E60}:'Microsoft XML, v3.0'.IXMLDOMNode";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables).toHaveLength(2);
       expect(ast.object!.code!.variables[0].dataType.typeName).toBe('Automation');
       expect(ast.object!.code!.variables[1].dataType.typeName).toBe('Automation');
@@ -141,11 +130,9 @@ describe('Parser - Automation Type Declarations', () => {
             XMLDoc@1 : Automation "{F5078F18-C551-11D3-89B9-0000F81FE221} 3.0:{2933BF80-7B36-11D2-B20E-00C04F983E60}:'Microsoft XML, v3.0'.IXMLDOMNode" WITHEVENTS;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.typeName).toBe('Automation');
       expect(variable.withEvents).toBe(true);
@@ -159,11 +146,9 @@ describe('Parser - Automation Type Declarations', () => {
             FSO@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Windows Script Host Object Model'.FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.withEvents).toBeUndefined();
     });
@@ -176,11 +161,9 @@ describe('Parser - Automation Type Declarations', () => {
             XMLDoc@2 : Automation "{F5078F18-C551-11D3-89B9-0000F81FE221} 3.0:{2933BF80-7B36-11D2-B20E-00C04F983E60}:'Microsoft XML, v3.0'.IXMLDOMNode" WITHEVENTS;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables[0].withEvents).toBeUndefined();
       expect(ast.object!.code!.variables[1].withEvents).toBe(true);
     });
@@ -195,11 +178,9 @@ describe('Parser - Automation Type Declarations', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedure = ast.object!.code!.procedures[0];
       expect(procedure.name).toBe('ProcessXML');
       expect(procedure.parameters).toHaveLength(1);
@@ -218,11 +199,9 @@ describe('Parser - Automation Type Declarations', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedure = ast.object!.code!.procedures[0];
       expect(procedure.variables).toHaveLength(1);
       expect(procedure.variables[0].dataType.typeName).toBe('Automation');
@@ -237,11 +216,9 @@ describe('Parser - Automation Type Declarations', () => {
             XMLDoc@2 : Automation "{F5078F18-C551-11D3-89B9-0000F81FE221} 3.0:{2933BF80-7B36-11D2-B20E-00C04F983E60}:'Microsoft XML, v3.0'.IXMLDOMNode";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables).toHaveLength(2);
       expect(ast.object!.code!.variables[0].dataType.typeName).toBe('Automation');
       expect(ast.object!.code!.variables[1].dataType.typeName).toBe('Automation');
@@ -255,11 +232,9 @@ describe('Parser - Automation Type Declarations', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedure = ast.object!.code!.procedures[0];
       expect(procedure.parameters[0].dataType.typeName).toBe('Automation');
       expect(procedure.parameters[0].withEvents).toBe(true);
@@ -273,11 +248,9 @@ describe('Parser - Automation Type Declarations', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedure = ast.object!.code!.procedures[0];
       expect(procedure.parameters).toHaveLength(2);
       expect(procedure.parameters[0].dataType.automationClassName).toBe('FileSystemObject');
@@ -295,11 +268,9 @@ describe('Parser - Automation Type Declarations', () => {
             FSO@2 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Windows Script Host Object Model'.FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables).toHaveLength(2);
 
       // First is DotNet
@@ -322,11 +293,9 @@ describe('Parser - Automation Type Declarations', () => {
             DotNetString@1 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.String";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.typeName).toBe('DotNet');
       expect(variable.dataType.assemblyReference).toBe('mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089');
@@ -343,11 +312,9 @@ describe('Parser - Automation Type Declarations', () => {
             MyText@4 : Text[100];
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables).toHaveLength(4);
       expect(ast.object!.code!.variables[0].dataType.typeName).toBe('Integer');
       expect(ast.object!.code!.variables[1].dataType.typeName).toBe('DotNet');
@@ -364,13 +331,11 @@ describe('Parser - Automation Type Declarations', () => {
             Broken@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Windows Script Host Object Model'.FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should report error but not crash
       expect(ast.object).toBeDefined();
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
     });
 
     it('should recover from Automation missing class GUID', () => {
@@ -380,13 +345,11 @@ describe('Parser - Automation Type Declarations', () => {
             Incomplete@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:'Windows Script Host Object Model'.FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should report error but not crash
       expect(ast.object).toBeDefined();
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
     });
 
     it('should recover from Automation missing version', () => {
@@ -396,13 +359,11 @@ describe('Parser - Automation Type Declarations', () => {
             NoVer@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B}:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Windows Script Host Object Model'.FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should report error but not crash
       expect(ast.object).toBeDefined();
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
     });
 
     it('should handle Automation with invalid GUID format', () => {
@@ -412,9 +373,7 @@ describe('Parser - Automation Type Declarations', () => {
             BadGuid@1 : Automation "{INVALID-GUID} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Windows Script Host Object Model'.FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Parser should handle gracefully (may report error or accept lenient format)
       expect(ast.object).toBeDefined();
@@ -427,13 +386,11 @@ describe('Parser - Automation Type Declarations', () => {
             NoName@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:''.FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should handle gracefully but may report error for empty TypeLibName
       expect(ast.object).toBeDefined();
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
     });
 
     it('should handle extra whitespace in Automation declaration', () => {
@@ -443,9 +400,7 @@ describe('Parser - Automation Type Declarations', () => {
             Spaced@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B}  1.0  :  {0D43FE01-F093-11CF-8940-00A0C9054228}  :  'Windows Script Host Object Model'  .  FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Parser may or may not tolerate extra whitespace - but should not crash
       expect(ast.object).toBeDefined();
@@ -459,11 +414,9 @@ describe('Parser - Automation Type Declarations', () => {
             MyAuto@2 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Windows Script Host Object Model'.FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables).toHaveLength(2);
       expect(ast.object!.code!.variables[0].name).toBe('automation');
       expect(ast.object!.code!.variables[0].dataType.typeName).toBe('Integer');
@@ -479,9 +432,7 @@ describe('Parser - Automation Type Declarations', () => {
             FSO@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Windows Script Host Object Model'.FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       const dataType = ast.object!.code!.variables[0].dataType;
 
@@ -513,9 +464,7 @@ describe('Parser - Automation Type Declarations', () => {
             FSO@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Windows Script Host Object Model'.FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       const variable = ast.object!.code!.variables[0];
 
@@ -539,11 +488,9 @@ describe('Parser - Automation Type Declarations', () => {
             Component@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'O''Reilly''s Library'.FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.typeName).toBe('Automation');
       // IMPORTANT: Verify unescaped value (single quote, not doubled)
@@ -559,11 +506,9 @@ describe('Parser - Automation Type Declarations', () => {
             Component@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'It''s O''Reilly''s Library'.FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.typeName).toBe('Automation');
       // All '' sequences should be unescaped to single '
@@ -578,11 +523,9 @@ describe('Parser - Automation Type Declarations', () => {
             Component@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:''''.FileSystemObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.typeName).toBe('Automation');
       expect(variable.dataType.automationTypeLibName).toBe("'");
@@ -597,9 +540,7 @@ describe('Parser - Automation Type Declarations', () => {
             Component@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Library'.File''System''Object";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Parser may or may not accept this, but should not crash
       expect(ast.object).toBeDefined();
@@ -622,11 +563,9 @@ describe('Parser - Automation Type Declarations', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object?.objectKind).toBe('Codeunit');
       expect(ast.object!.code!.variables[0].dataType.automationClassName).toBe('FileSystemObject');
       expect(ast.object!.code!.procedures).toHaveLength(1);
@@ -644,11 +583,9 @@ describe('Parser - Automation Type Declarations', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables[0].dataType.automationClassName).toBe('IXMLDOMNode');
       expect(ast.object!.code!.variables[0].withEvents).toBe(true);
     });
@@ -666,11 +603,9 @@ describe('Parser - Automation Type Declarations', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables).toHaveLength(3);
       expect(ast.object!.code!.variables[0].dataType.typeName).toBe('Automation');
       expect(ast.object!.code!.variables[1].dataType.typeName).toBe('Automation');

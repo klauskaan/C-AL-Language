@@ -19,16 +19,14 @@
  * ```
  */
 
-import { Lexer } from '../../lexer/lexer';
 import { TokenType } from '../../lexer/tokens';
-import { parseCode } from '../../parser';
+import { parseCode, tokenize } from './parserTestHelpers';
 
 describe('Lexer - Report section keywords', () => {
   describe('DATASET keyword tokenization', () => {
     it('should tokenize DATASET as TokenType.Dataset, not IDENTIFIER', () => {
       const code = 'DATASET';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       // This test MUST fail first - DATASET is not yet recognized as a keyword
       expect(tokens[0].type).toBe(TokenType.Dataset);
@@ -37,8 +35,7 @@ describe('Lexer - Report section keywords', () => {
 
     it('should tokenize dataset in lowercase', () => {
       const code = 'dataset';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       // C/AL keywords are case-insensitive
       expect(tokens[0].type).toBe(TokenType.Dataset);
@@ -47,8 +44,7 @@ describe('Lexer - Report section keywords', () => {
 
     it('should tokenize Dataset in mixed case', () => {
       const code = 'DataSet';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       expect(tokens[0].type).toBe(TokenType.Dataset);
       expect(tokens[0].value).toBe('DataSet');
@@ -58,8 +54,7 @@ describe('Lexer - Report section keywords', () => {
   describe('REQUESTPAGE keyword tokenization', () => {
     it('should tokenize REQUESTPAGE as TokenType.RequestPage, not IDENTIFIER', () => {
       const code = 'REQUESTPAGE';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       // This test MUST fail first - REQUESTPAGE is not yet recognized as a keyword
       expect(tokens[0].type).toBe(TokenType.RequestPage);
@@ -68,8 +63,7 @@ describe('Lexer - Report section keywords', () => {
 
     it('should tokenize requestpage in lowercase', () => {
       const code = 'requestpage';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       expect(tokens[0].type).toBe(TokenType.RequestPage);
       expect(tokens[0].value).toBe('requestpage');
@@ -77,8 +71,7 @@ describe('Lexer - Report section keywords', () => {
 
     it('should tokenize RequestPage in mixed case', () => {
       const code = 'RequestPage';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       expect(tokens[0].type).toBe(TokenType.RequestPage);
       expect(tokens[0].value).toBe('RequestPage');
@@ -88,8 +81,7 @@ describe('Lexer - Report section keywords', () => {
   describe('LABELS keyword tokenization', () => {
     it('should tokenize LABELS as TokenType.Labels, not IDENTIFIER', () => {
       const code = 'LABELS';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       // This test MUST fail first - LABELS is not yet recognized as a keyword
       expect(tokens[0].type).toBe(TokenType.Labels);
@@ -98,8 +90,7 @@ describe('Lexer - Report section keywords', () => {
 
     it('should tokenize labels in lowercase', () => {
       const code = 'labels';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       expect(tokens[0].type).toBe(TokenType.Labels);
       expect(tokens[0].value).toBe('labels');
@@ -107,8 +98,7 @@ describe('Lexer - Report section keywords', () => {
 
     it('should tokenize Labels in mixed case', () => {
       const code = 'Labels';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       expect(tokens[0].type).toBe(TokenType.Labels);
       expect(tokens[0].value).toBe('Labels');
@@ -118,8 +108,7 @@ describe('Lexer - Report section keywords', () => {
   describe('Distinguish keywords from identifiers', () => {
     it('should distinguish DATASET from similar identifiers', () => {
       const code = 'DATASET MyDataset DatasetName';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       expect(tokens[0].type).toBe(TokenType.Dataset);
       expect(tokens[0].value).toBe('DATASET');
@@ -131,8 +120,7 @@ describe('Lexer - Report section keywords', () => {
 
     it('should distinguish REQUESTPAGE from similar identifiers', () => {
       const code = 'REQUESTPAGE MyRequestPage';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       expect(tokens[0].type).toBe(TokenType.RequestPage);
       expect(tokens[1].type).toBe(TokenType.Identifier);
@@ -141,8 +129,7 @@ describe('Lexer - Report section keywords', () => {
 
     it('should distinguish LABELS from similar identifiers', () => {
       const code = 'LABELS MyLabel LabelText';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       expect(tokens[0].type).toBe(TokenType.Labels);
       expect(tokens[1].type).toBe(TokenType.Identifier);
@@ -564,8 +551,7 @@ describe('Lexer - Context guards for keywords', () => {
           Dataset := 10;
         END;
       `;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       // Find 'Dataset' tokens - should be IDENTIFIER in CODE context
       const datasetTokens = tokens.filter(t => t.value.toUpperCase() === 'DATASET');
@@ -585,8 +571,7 @@ describe('Lexer - Context guards for keywords', () => {
             MESSAGE('Test');
         END;
       `;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       // Find 'RequestPage' tokens - should be IDENTIFIER in CODE context
       const requestPageTokens = tokens.filter(t => t.value.toUpperCase() === 'REQUESTPAGE');
@@ -605,8 +590,7 @@ describe('Lexer - Context guards for keywords', () => {
           Labels := 'Test';
         END;
       `;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       // Find 'Labels' tokens - should be IDENTIFIER in CODE context
       const labelsTokens = tokens.filter(t => t.value.toUpperCase() === 'LABELS');
@@ -629,8 +613,7 @@ describe('Lexer - Context guards for keywords', () => {
             Labels := 'Active';
         END;
       `;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       // All three should be IDENTIFIER in CODE context
       const datasetTokens = tokens.filter(t => t.value.toUpperCase() === 'DATASET');

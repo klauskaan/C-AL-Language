@@ -9,8 +9,7 @@
  * - Different from CurrReport.BREAK (which is a method call)
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Parser - BREAK Statement', () => {
   describe('Basic BREAK statement parsing', () => {
@@ -30,11 +29,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
       expect(errors).toHaveLength(0);
@@ -75,11 +70,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -111,11 +102,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -148,11 +135,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -191,11 +174,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -231,11 +210,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -269,11 +244,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -307,11 +278,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -343,11 +310,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // ELSE is orphaned - should be rejected by INVALID_EXPRESSION_STARTERS guard
       expect(errors.length).toBeGreaterThan(0);
@@ -379,11 +342,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -420,11 +379,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -459,11 +414,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -493,11 +444,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -536,11 +483,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -573,11 +516,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -610,11 +549,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -653,11 +588,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -691,11 +622,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -748,11 +675,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -790,11 +713,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -828,11 +747,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
 
@@ -860,10 +775,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const procedure = ast.object!.code!.procedures[0];
       const whileStmt = procedure.body[0] as any;
@@ -888,10 +800,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const procedure = ast.object!.code!.procedures[0];
       const forStmt = procedure.body[0] as any;
@@ -915,10 +824,7 @@ describe('Parser - BREAK Statement', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const procedure = ast.object!.code!.procedures[0];
       const whileStmt = procedure.body[0] as any;

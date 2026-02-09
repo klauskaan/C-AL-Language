@@ -8,8 +8,7 @@
  * treating them as no-op separators that don't constitute variable declarations.
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Empty VAR block semicolon handling', () => {
   describe('should skip stray semicolons', () => {
@@ -25,12 +24,7 @@ describe('Empty VAR block semicolon handling', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Empty VAR block with semicolon is valid C/AL
       expect(errors.length).toBe(0);
@@ -57,12 +51,7 @@ describe('Empty VAR block semicolon handling', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Multiple semicolons should be skipped
       expect(errors.length).toBe(0);
@@ -87,12 +76,7 @@ describe('Empty VAR block semicolon handling', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Leading semicolon should be skipped, valid variable parsed
       expect(errors.length).toBe(0);
@@ -118,12 +102,7 @@ describe('Empty VAR block semicolon handling', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Semicolon before PROCEDURE should exit VAR block cleanly
       expect(errors.length).toBe(0);
@@ -151,12 +130,7 @@ describe('Empty VAR block semicolon handling', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Multiple leading semicolons should be skipped
       expect(errors.length).toBe(0);
@@ -185,12 +159,7 @@ describe('Empty VAR block semicolon handling', () => {
                                                                  }
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Empty VAR in field trigger is valid
       expect(errors.length).toBe(0);
@@ -225,12 +194,7 @@ describe('Empty VAR block semicolon handling', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Line comment before semicolon should be handled
       expect(errors.length).toBe(0);
@@ -260,12 +224,7 @@ describe('Empty VAR block semicolon handling', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Partial declaration without type should produce an error
       expect(errors.length).toBeGreaterThan(0);
@@ -306,12 +265,7 @@ describe('Empty VAR block semicolon handling', () => {
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Real-world pattern should parse without errors
       expect(errors.length).toBe(0);
@@ -346,12 +300,7 @@ describe('Empty VAR block semicolon handling', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Interspersed semicolons should be skipped
       expect(errors.length).toBe(0);
@@ -378,12 +327,7 @@ describe('Empty VAR block semicolon handling', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Semicolon before TEMPORARY should be handled
       expect(errors.length).toBe(0);
@@ -413,12 +357,7 @@ describe('Empty VAR block semicolon handling', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Leading semicolons in global VAR should be skipped
       expect(errors.length).toBe(0);
@@ -442,12 +381,7 @@ describe('Empty VAR block semicolon handling', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Empty global VAR with semicolons should be valid
       expect(errors.length).toBe(0);

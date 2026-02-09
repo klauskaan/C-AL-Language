@@ -23,8 +23,7 @@
  * - Continue parsing subsequent sections like CODE
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Parser - MenuSuite MENUNODES section', () => {
   describe('CODE section after MENUNODES (PRIMARY BUG)', () => {
@@ -54,12 +53,10 @@ describe('Parser - MenuSuite MENUNODES section', () => {
       `;
 
       // Parse
-      const lexer = new Lexer(source);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
       // Should have zero errors
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       // CODE section should be parsed (NOT null)
       // BUG: Currently ast.object?.code will be null because parser breaks
@@ -99,11 +96,9 @@ describe('Parser - MenuSuite MENUNODES section', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).not.toBeNull();
       expect(ast.object?.properties).not.toBeNull();
       expect(ast.object?.code).not.toBeNull();
@@ -135,11 +130,9 @@ describe('Parser - MenuSuite MENUNODES section', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object?.code).not.toBeNull();
       expect(ast.object?.code?.procedures).toHaveLength(1);
     });
@@ -162,11 +155,9 @@ describe('Parser - MenuSuite MENUNODES section', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object?.code?.procedures).toHaveLength(1);
       expect(ast.object?.code?.procedures[0].name).toBe('MenuNodes');
     });
@@ -213,12 +204,10 @@ describe('Parser - MenuSuite MENUNODES section', () => {
         }
       `;
 
-      const lexer = new Lexer(source);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(source);
 
       // Should parse without errors
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object?.code).not.toBeNull();
       expect(ast.object?.code?.variables).toHaveLength(1);
       expect(ast.object?.code?.variables?.[0].name).toBe('LastUsedMenu');

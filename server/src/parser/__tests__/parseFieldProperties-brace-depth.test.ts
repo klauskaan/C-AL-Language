@@ -17,8 +17,7 @@
  * - No "Expected =" errors when ActionList contains properly nested structure
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 import { ObjectKind, ObjectDeclaration, ControlDeclaration, Property } from '../ast';
 
 describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
@@ -34,13 +33,10 @@ describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
           { 1 ;0 ;Group; GroupType=CueGroup; ActionList=ACTIONS { { 1; ;Action } } }
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // BEFORE fix: This assertion will FAIL due to "Expected =" errors
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       // Verify AST structure is correct
       expect(ast.object).toBeDefined();
@@ -70,13 +66,10 @@ describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
           } }
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should have no errors after fix
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const page = ast.object as ObjectDeclaration;
       const control = page.controls?.controls[0] as ControlDeclaration;
@@ -102,12 +95,9 @@ describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
                   CaptionML=ENU=My Group }
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const page = ast.object as ObjectDeclaration;
       const control = page.controls?.controls[0] as ControlDeclaration;
@@ -133,12 +123,9 @@ describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
                   ActionList=ACTIONS { { 1; ;Action } } }
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const page = ast.object as ObjectDeclaration;
       const control = page.controls?.controls[0] as ControlDeclaration;
@@ -160,12 +147,9 @@ describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
           } }
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const page = ast.object as ObjectDeclaration;
       const control = page.controls?.controls[0] as ControlDeclaration;
@@ -187,12 +171,9 @@ describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
           { 1 ;0 ;Group; GroupType=CueGroup; ActionList=ACTIONS { } }
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const page = ast.object as ObjectDeclaration;
       const control = page.controls?.controls[0] as ControlDeclaration;
@@ -217,12 +198,9 @@ describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
           { 1; ;ActionContainer }
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const page = ast.object as ObjectDeclaration;
 
@@ -249,17 +227,13 @@ describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
           { 1 ;0 ;Group; GroupType=CueGroup; ActionList=} }
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Parser should not crash
       expect(ast.object).toBeDefined();
       expect(ast.object?.objectKind).toBe(ObjectKind.Page);
 
       // Should have some error about malformed property
-      const errors = parser.getErrors();
       expect(errors.length).toBeGreaterThan(0);
 
       // Should NOT cause section boundary errors (like unexpected EOF)
@@ -285,13 +259,10 @@ describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
           { 1 ;0 ;Container }
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // This should pass even before the fix
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const page = ast.object as ObjectDeclaration;
       const actionListProp = page.properties?.properties?.find((p: Property) => p.name === 'ActionList');
@@ -316,12 +287,9 @@ describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
           } }
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const page = ast.object as ObjectDeclaration;
 
@@ -366,13 +334,10 @@ describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
                   DrillDownPageID=Page9305 }
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const page = ast.object as ObjectDeclaration;
       expect(page.controls).toBeDefined();
@@ -411,12 +376,9 @@ describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
                   } }
         }
       }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const page = ast.object as ObjectDeclaration;
       const control = page.controls?.controls[0] as ControlDeclaration;

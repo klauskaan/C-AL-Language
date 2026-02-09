@@ -23,8 +23,7 @@
  * 8. Structural tokens - parentheses, brackets, dots captured
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 import { Property, FieldDeclaration, FieldSection } from '../ast';
 import { TokenType } from '../../lexer/tokens';
 
@@ -36,11 +35,9 @@ describe('Parser - Property Value Token Capture', () => {
           CaptionML=ENU=Customer;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const property = ast.object?.properties?.properties[0];
 
       expect(property?.valueTokens).toBeDefined();
@@ -53,9 +50,7 @@ describe('Parser - Property Value Token Capture', () => {
           DataPerCompany=Yes;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const property = ast.object?.properties?.properties[0];
 
@@ -71,9 +66,7 @@ describe('Parser - Property Value Token Capture', () => {
           { 1 ; ; Name ; Text[50] }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -94,9 +87,7 @@ describe('Parser - Property Value Token Capture', () => {
           TableRelation="Customer Ledger Entry";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const property = ast.object?.properties?.properties[0];
 
@@ -115,9 +106,7 @@ describe('Parser - Property Value Token Capture', () => {
             CalcFormula=Sum("Sales Line".Amount) }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -145,9 +134,7 @@ describe('Parser - Property Value Token Capture', () => {
             CalcFormula=Sum("Customer Ledger Entry"."Amount (LCY)" WHERE ("Customer No."=FIELD("No."))) }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -171,9 +158,7 @@ describe('Parser - Property Value Token Capture', () => {
           CaptionML=ENU=Customer;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const property = ast.object?.properties?.properties[0];
 
@@ -194,9 +179,7 @@ describe('Parser - Property Value Token Capture', () => {
           TableRelation="Customer";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const property = ast.object?.properties?.properties[0];
 
@@ -214,9 +197,7 @@ describe('Parser - Property Value Token Capture', () => {
                      DAN=Kunde];
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const property = ast.object?.properties?.properties[0];
 
@@ -236,9 +217,7 @@ describe('Parser - Property Value Token Capture', () => {
             CalcFormula=Sum("Sales Line".Amount) }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -267,9 +246,7 @@ describe('Parser - Property Value Token Capture', () => {
             TableRelation="Customer" WHERE (Blocked=CONST(No)) }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -298,9 +275,7 @@ describe('Parser - Property Value Token Capture', () => {
             CalcFormula=Sum("G/L Entry".Amount WHERE ("G/L Account No."=FIELD("No."))) }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -328,9 +303,7 @@ describe('Parser - Property Value Token Capture', () => {
           Description=;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const property = ast.object?.properties?.properties[0];
 
@@ -344,9 +317,7 @@ describe('Parser - Property Value Token Capture', () => {
           Description=   ;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const property = ast.object?.properties?.properties[0];
 
@@ -365,9 +336,7 @@ describe('Parser - Property Value Token Capture', () => {
             END }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -392,9 +361,7 @@ describe('Parser - Property Value Token Capture', () => {
             END }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -416,9 +383,7 @@ describe('Parser - Property Value Token Capture', () => {
         CODE {
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const property = ast.object?.properties?.properties[0];
 
@@ -435,9 +400,7 @@ describe('Parser - Property Value Token Capture', () => {
             CalcFormula=Sum("Sales Line".Amount) }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -462,9 +425,7 @@ describe('Parser - Property Value Token Capture', () => {
             CalcFormula=Sum("Sales Line".Amount) }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -486,9 +447,7 @@ describe('Parser - Property Value Token Capture', () => {
             OptionOrdinalValues=[-1;0;1] }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -512,9 +471,7 @@ describe('Parser - Property Value Token Capture', () => {
           CaptionML=[ENU=Customer;DAN=Kunde];
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const property = ast.object?.properties?.properties[0];
 
@@ -536,9 +493,7 @@ describe('Parser - Property Value Token Capture', () => {
             TableRelation=IF (Type=CONST(Item)) Item }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -568,9 +523,7 @@ describe('Parser - Property Value Token Capture', () => {
                                                                          "Posting Date"=FIELD("Date Filter"))) }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -599,9 +552,7 @@ describe('Parser - Property Value Token Capture', () => {
             TableRelation=IF (Type=CONST(Item)) Item ELSE Resource }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -629,9 +580,7 @@ describe('Parser - Property Value Token Capture', () => {
           CaptionML=ENU=Customer;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const property = ast.object?.properties?.properties[0];
 
@@ -648,9 +597,7 @@ describe('Parser - Property Value Token Capture', () => {
             CalcFormula=Sum("Sales Line".Amount) }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;

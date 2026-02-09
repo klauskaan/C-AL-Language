@@ -18,8 +18,7 @@
  * 2. Errors are reported about missing braces
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Section Boundary Detection - Missing Braces (Issue #289)', () => {
   describe('CONTROLS section missing } and CODE section missing {', () => {
@@ -50,11 +49,7 @@ describe('Section Boundary Detection - Missing Braces (Issue #289)', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // CRITICAL: CODE section MUST be detected despite missing braces
       expect(ast.object?.code).toBeDefined();
@@ -99,11 +94,7 @@ describe('Section Boundary Detection - Missing Braces (Issue #289)', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // CODE section MUST be detected
       expect(ast.object?.code).toBeDefined();
@@ -146,11 +137,7 @@ describe('Section Boundary Detection - Missing Braces (Issue #289)', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // CRITICAL: CODE section MUST be detected despite missing braces
       expect(ast.object?.code).toBeDefined();
@@ -196,11 +183,7 @@ describe('Section Boundary Detection - Missing Braces (Issue #289)', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // CODE section MUST be detected
       expect(ast.object?.code).toBeDefined();
@@ -241,11 +224,7 @@ describe('Section Boundary Detection - Missing Braces (Issue #289)', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse cleanly
       expect(errors).toHaveLength(0);
@@ -282,11 +261,7 @@ describe('Section Boundary Detection - Missing Braces (Issue #289)', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse cleanly
       expect(errors).toHaveLength(0);
@@ -317,11 +292,7 @@ describe('Section Boundary Detection - Missing Braces (Issue #289)', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse cleanly
       expect(errors).toHaveLength(0);
@@ -344,11 +315,7 @@ describe('Section Boundary Detection - Missing Braces (Issue #289)', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // CODE section should still be detected
       expect(ast.object?.code).toBeDefined();
@@ -379,11 +346,7 @@ describe('Section Boundary Detection - Missing Braces (Issue #289)', () => {
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Despite multiple errors, CODE section should be detected
       expect(ast.object?.code).toBeDefined();

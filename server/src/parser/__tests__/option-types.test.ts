@@ -11,16 +11,14 @@
  * Issue: Parser doesn't handle :: as a valid operator in expressions
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode, tokenize } from './parserTestHelpers';
 import { TokenType } from '../../lexer/tokens';
 
 describe('Parser - Option Type Scope Operator (::)', () => {
   describe('Lexer tokenization of ::', () => {
     it('should tokenize :: as DoubleColon token', () => {
       const code = 'Status::Open';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       expect(tokens).toHaveLength(4); // Status, ::, Open, EOF
       expect(tokens[0].type).toBe(TokenType.Identifier);
@@ -33,8 +31,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
 
     it('should tokenize :: with quoted identifiers', () => {
       const code = '"Job Task Type"::"End-Total"';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       expect(tokens).toHaveLength(4); // "Job Task Type", ::, "End-Total", EOF
       expect(tokens[0].type).toBe(TokenType.QuotedIdentifier);
@@ -47,8 +44,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
 
     it('should distinguish :: from : and :=', () => {
       const code = 'x : y := Status::Open';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       expect(tokens[1].type).toBe(TokenType.Colon);       // :
       expect(tokens[3].type).toBe(TokenType.Assign);      // :=
@@ -67,13 +63,11 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
       // This test currently FAILS with: "Expected THEN at line 5, column 38"
       // Parser doesn't recognize :: as valid operator in expressions
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(_ast.object).toBeDefined();
       expect(_ast.object?.code).toBeDefined();
     });
@@ -90,12 +84,10 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
       // This test currently FAILS with: "Expected THEN at line 5, column 49"
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(_ast.object).toBeDefined();
     });
 
@@ -110,11 +102,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(_ast.object).toBeDefined();
     });
 
@@ -128,11 +118,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -146,11 +134,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(_ast.object).toBeDefined();
     });
 
@@ -163,11 +149,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse assignment with member access and ::', () => {
@@ -179,11 +163,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -202,11 +184,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(_ast.object).toBeDefined();
     });
 
@@ -226,11 +206,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse CASE with multiple :: values in same branch', () => {
@@ -247,11 +225,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -266,11 +242,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse :: in boolean OR expression', () => {
@@ -283,11 +257,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse :: in IN expression with set literal', () => {
@@ -301,11 +273,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse :: with multiple member accesses', () => {
@@ -318,11 +288,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse :: in function call arguments', () => {
@@ -335,11 +303,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -354,11 +320,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse :: with numeric option value', () => {
@@ -371,11 +335,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse :: with DATABASE constant', () => {
@@ -387,11 +349,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse :: with CODEUNIT constant', () => {
@@ -404,11 +364,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse :: with REPORT/PAGE constants', () => {
@@ -421,11 +379,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -439,14 +395,12 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
       // Should record error but not crash
       expect(_ast.object).toBeDefined();
       // Parser should generate an error for incomplete expression
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
     });
 
     it('should handle multiple :: in a row', () => {
@@ -458,9 +412,7 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast } = parseCode(code);
 
       // Should record error but not crash
       expect(_ast.object).toBeDefined();
@@ -478,11 +430,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(_ast.object).toBeDefined();
       expect(_ast.object?.objectKind).toBe('Codeunit');
     });
@@ -505,11 +455,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(_ast.object).toBeDefined();
     });
 
@@ -525,11 +473,9 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(_ast.object).toBeDefined();
     });
 
@@ -547,10 +493,8 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-      expect(parser.getErrors()).toHaveLength(0);
+      const { ast: _ast, errors } = parseCode(code);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse CASE with quoted identifier value after ::', () => {
@@ -569,10 +513,8 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-      expect(parser.getErrors()).toHaveLength(0);
+      const { ast: _ast, errors } = parseCode(code);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse CASE with multiple qualified enum branches', () => {
@@ -599,10 +541,8 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-      expect(parser.getErrors()).toHaveLength(0);
+      const { ast: _ast, errors } = parseCode(code);
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -622,10 +562,8 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-      expect(parser.getErrors()).toHaveLength(0);
+      const { ast: _ast, errors } = parseCode(code);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse SECURITYFILTER::Ignored enum access', () => {
@@ -639,10 +577,8 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-      expect(parser.getErrors()).toHaveLength(0);
+      const { ast: _ast, errors } = parseCode(code);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse RecRef."SECURITYFILTERING" property assignment', () => {
@@ -657,10 +593,8 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-      expect(parser.getErrors()).toHaveLength(0);
+      const { ast: _ast, errors } = parseCode(code);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse Record."SECURITYFILTERING" method call', () => {
@@ -675,10 +609,8 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-      expect(parser.getErrors()).toHaveLength(0);
+      const { ast: _ast, errors } = parseCode(code);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse xRecRef."SECURITYFILTERING" pattern', () => {
@@ -693,10 +625,8 @@ describe('Parser - Option Type Scope Operator (::)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-      expect(parser.getErrors()).toHaveLength(0);
+      const { ast: _ast, errors } = parseCode(code);
+      expect(errors).toHaveLength(0);
     });
   });
 });

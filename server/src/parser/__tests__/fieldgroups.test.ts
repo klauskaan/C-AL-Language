@@ -20,8 +20,7 @@
  * - Recover from malformed entries
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 import { FieldGroupSection, ObjectDeclaration } from '../ast';
 
 describe('Parser - FIELDGROUPS Section', () => {
@@ -35,11 +34,9 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       const obj = ast.object as ObjectDeclaration;
@@ -65,11 +62,9 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const fieldGroups = obj.fieldGroups as FieldGroupSection;
@@ -91,11 +86,9 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const fieldGroups = obj.fieldGroups as FieldGroupSection;
@@ -118,11 +111,9 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const fieldGroups = obj.fieldGroups as FieldGroupSection;
@@ -142,11 +133,9 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const fieldGroups = obj.fieldGroups as FieldGroupSection;
@@ -173,11 +162,9 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const fieldGroups = obj.fieldGroups as FieldGroupSection;
@@ -199,11 +186,9 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const fieldGroups = obj.fieldGroups as FieldGroupSection;
@@ -227,11 +212,9 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const fieldGroups = obj.fieldGroups as FieldGroupSection;
@@ -254,11 +237,9 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const fieldGroups = obj.fieldGroups as FieldGroupSection;
@@ -279,11 +260,9 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const fieldGroups = obj.fieldGroups as FieldGroupSection;
@@ -302,11 +281,9 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const fieldGroups = obj.fieldGroups as FieldGroupSection;
@@ -327,9 +304,7 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Expect some errors but parser should recover
       const obj = ast.object as ObjectDeclaration;
@@ -350,9 +325,7 @@ describe('Parser - FIELDGROUPS Section', () => {
           { 1   ;DropDown            ;No.,Name,City
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Should have errors but not crash
       expect(ast.object).toBeDefined();
@@ -382,11 +355,9 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       const obj = ast.object as ObjectDeclaration;
@@ -424,11 +395,9 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const fieldGroups = obj.fieldGroups as FieldGroupSection;
@@ -448,11 +417,9 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const fieldGroups = obj.fieldGroups as FieldGroupSection;
@@ -474,9 +441,7 @@ describe('Parser - FIELDGROUPS Section', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const obj = ast.object as ObjectDeclaration;
       const fieldGroups = obj.fieldGroups as FieldGroupSection;

@@ -71,8 +71,8 @@
  * - #147: ParseError token isolation (similar security boundary)
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser, SkippedRegion } from '../parser';
+import { SkippedRegion } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 /**
  * Helper: Parse code and return skipped regions with full context
@@ -88,12 +88,8 @@ import { Parser, SkippedRegion } from '../parser';
  * NOT WORKING: Field definition errors (use recordError(), not throw)
  */
 function parseAndGetSkippedRegions(code: string): SkippedRegion[] {
-  const lexer = new Lexer(code);
-  const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
-
-  parser.parse();
-  return parser.getSkippedRegions();
+  const { skippedRegions } = parseCode(code);
+  return skippedRegions;
 }
 
 /**
@@ -106,15 +102,8 @@ function parseAndGetSkippedRegions(code: string): SkippedRegion[] {
  * @returns Object with skippedRegions and errors
  */
 function parseAndGetBoth(code: string): { skippedRegions: SkippedRegion[]; errors: any[] } {
-  const lexer = new Lexer(code);
-  const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
-
-  parser.parse();
-  return {
-    skippedRegions: parser.getSkippedRegions(),
-    errors: parser.getErrors()
-  };
+  const { skippedRegions, errors } = parseCode(code);
+  return { skippedRegions, errors };
 }
 
 describe('SkippedRegion Token Isolation (Issue #158)', () => {
@@ -545,20 +534,10 @@ describe('SkippedRegion Token Isolation (Issue #158)', () => {
         }
       `;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-
-      // Parser has getSkippedRegions() method
-      expect(typeof parser.getSkippedRegions).toBe('function');
-
-      // But it's internal-only, not used by LSP
-      const regions = parser.getSkippedRegions();
+      const { skippedRegions } = parseCode(code);
 
       // Regions exist (parser recorded them)
-      expect(Array.isArray(regions)).toBe(true);
+      expect(Array.isArray(skippedRegions)).toBe(true);
 
       // But they're never sent to LSP clients
       // (No code path calls getSkippedRegions() except this test)
@@ -722,14 +701,7 @@ describe('SkippedRegion Token Isolation (Issue #158)', () => {
         }
       `;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-
-      // This call is SAFE in tests (for documentation)
-      const regions = parser.getSkippedRegions();
+      const { skippedRegions } = parseCode(code);
 
       // But this pattern should NEVER appear in:
       // - src/completion/*.ts
@@ -741,7 +713,7 @@ describe('SkippedRegion Token Isolation (Issue #158)', () => {
       // Use grep to verify: grep -r "getSkippedRegions" src/
       // Should only appear in parser.ts (definition) and tests
 
-      expect(regions).toBeDefined();
+      expect(skippedRegions).toBeDefined();
     });
 
     it('should document the safe pattern for future error recovery features', () => {

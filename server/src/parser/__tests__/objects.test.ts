@@ -10,17 +10,13 @@
  * See PARSER_TEST_FINDINGS.md for detailed explanation of current limitations.
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
 import { ObjectKind } from '../ast';
+import { parseCode, expectParseNoThrow } from './parserTestHelpers';
 
 describe('Parser - Table Objects', () => {
   it('should parse minimal table object', () => {
     const code = `OBJECT Table 18 Customer`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object).not.toBeNull();
     expect(ast.object?.type).toBe('ObjectDeclaration');
@@ -31,30 +27,21 @@ describe('Parser - Table Objects', () => {
 
   it('should parse table with quoted name', () => {
     const code = `OBJECT Table 50000 "Customer Extended"`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object?.objectName).toBe('Customer Extended');
   });
 
   it('should parse table with large ID', () => {
     const code = `OBJECT Table 99999 Customer`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object?.objectId).toBe(99999);
   });
 
   it('should handle table with hyphenated name', () => {
     const code = `OBJECT Table 18 Customer-Extended`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object).not.toBeNull();
     // Hyphen preserved without added spaces - matches NAV export format
@@ -63,10 +50,7 @@ describe('Parser - Table Objects', () => {
 
   it('should parse table and validate AST structure', () => {
     const code = `OBJECT Table 18 Customer`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.type).toBe('CALDocument');
     expect(ast.object?.type).toBe('ObjectDeclaration');
@@ -80,10 +64,7 @@ describe('Parser - Table Objects', () => {
 describe('Parser - Page Objects', () => {
   it('should parse minimal page object', () => {
     const code = `OBJECT Page 21 Customer`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object).not.toBeNull();
     expect(ast.object?.objectKind).toBe(ObjectKind.Page);
@@ -93,10 +74,7 @@ describe('Parser - Page Objects', () => {
 
   it('should parse page with quoted name', () => {
     const code = `OBJECT Page 21 "Customer Card"`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object?.objectKind).toBe(ObjectKind.Page);
     expect(ast.object?.objectName).toBe('Customer Card');
@@ -104,10 +82,7 @@ describe('Parser - Page Objects', () => {
 
   it('should validate AST structure for page object', () => {
     const code = `OBJECT Page 21 Customer`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.type).toBe('CALDocument');
     expect(ast.object?.type).toBe('ObjectDeclaration');
@@ -120,10 +95,7 @@ describe('Parser - Page Objects', () => {
 describe('Parser - Codeunit Objects', () => {
   it('should parse minimal codeunit object', () => {
     const code = `OBJECT Codeunit 80 "Sales-Post"`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object).not.toBeNull();
     expect(ast.object?.objectKind).toBe(ObjectKind.Codeunit);
@@ -133,20 +105,14 @@ describe('Parser - Codeunit Objects', () => {
 
   it('should parse codeunit with simple name', () => {
     const code = `OBJECT Codeunit 50000 Test`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object?.objectName).toBe('Test');
   });
 
   it('should validate AST structure for codeunit object', () => {
     const code = `OBJECT Codeunit 80 Test`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.type).toBe('CALDocument');
     expect(ast.object?.type).toBe('ObjectDeclaration');
@@ -159,10 +125,7 @@ describe('Parser - Codeunit Objects', () => {
 describe('Parser - Other Object Types', () => {
   it('should parse Report object', () => {
     const code = `OBJECT Report 111 "Customer List"`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object?.objectKind).toBe(ObjectKind.Report);
     expect(ast.object?.objectId).toBe(111);
@@ -171,10 +134,7 @@ describe('Parser - Other Object Types', () => {
 
   it('should parse Query object', () => {
     const code = `OBJECT Query 100 "Customer Sales"`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object?.objectKind).toBe(ObjectKind.Query);
     expect(ast.object?.objectId).toBe(100);
@@ -182,10 +142,7 @@ describe('Parser - Other Object Types', () => {
 
   it('should parse XMLport object', () => {
     const code = `OBJECT XMLport 50000 "Customer Export"`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object?.objectKind).toBe(ObjectKind.XMLport);
     expect(ast.object?.objectId).toBe(50000);
@@ -193,10 +150,7 @@ describe('Parser - Other Object Types', () => {
 
   it('should parse MenuSuite object', () => {
     const code = `OBJECT MenuSuite 1 Navigation`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object?.objectKind).toBe(ObjectKind.MenuSuite);
     expect(ast.object?.objectId).toBe(1);
@@ -206,10 +160,7 @@ describe('Parser - Other Object Types', () => {
 describe('Parser - Objects with Comments', () => {
   it('should parse object with trailing comment block', () => {
     const code = `OBJECT Table 18 Customer { comment block }`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     // Comment should be stripped by lexer, object should parse normally
     expect(ast.object).not.toBeNull();
@@ -219,10 +170,7 @@ describe('Parser - Objects with Comments', () => {
 
   it('should parse object with line comment', () => {
     const code = `OBJECT Table 18 Customer // This is a comment`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object).not.toBeNull();
     expect(ast.object?.objectName).toBe('Customer');
@@ -230,10 +178,7 @@ describe('Parser - Objects with Comments', () => {
 
   it('should handle multiple comment blocks', () => {
     const code = `OBJECT Table 18 { comment } Customer { another comment }`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     // Even with comments interspersed, should identify what it can
     expect(ast.object).not.toBeNull();
@@ -243,40 +188,29 @@ describe('Parser - Objects with Comments', () => {
 describe('Parser - Edge Cases', () => {
   it('should handle object with only ID (missing name)', () => {
     const code = `OBJECT Table 18`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
 
     // Should not crash even with incomplete input
-    expect(() => parser.parse()).not.toThrow();
+    expectParseNoThrow(code);
   });
 
   it('should handle very long object names', () => {
     const longName = 'A'.repeat(250);
     const code = `OBJECT Table 18 "${longName}"`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object?.objectName).toBe(longName);
   });
 
   it('should handle object ID at boundary values', () => {
     const code = `OBJECT Table 0 Test`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object?.objectId).toBe(0);
   });
 
   it('should parse objects with whitespace variations', () => {
     const code = `OBJECT    Table    18    Customer`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object?.objectKind).toBe(ObjectKind.Table);
     expect(ast.object?.objectId).toBe(18);
@@ -288,10 +222,7 @@ describe('Parser - Edge Cases', () => {
     Table
     18
     Customer`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object?.objectKind).toBe(ObjectKind.Table);
     expect(ast.object?.objectId).toBe(18);
@@ -301,27 +232,17 @@ describe('Parser - Edge Cases', () => {
 describe('Parser - Error Conditions', () => {
   it('should not crash on wrong token order', () => {
     const code = `Table OBJECT 18 Customer`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    expect(() => parser.parse()).not.toThrow();
+    expectParseNoThrow(code);
   });
 
   it('should not crash on non-numeric ID', () => {
     const code = `OBJECT Table ABC Customer`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    expect(() => parser.parse()).not.toThrow();
+    expectParseNoThrow(code);
   });
 
   it('should collect errors for invalid object', () => {
     const code = `OBJECT Table InvalidID Customer`;
-    const lexer = new Lexer(code);
-    const parser = new Parser(lexer.tokenize());
-
-    parser.parse();
-    const errors = parser.getErrors();
+    const { errors } = parseCode(code);
 
     // May or may not have errors depending on parser implementation
     // The important thing is it didn't crash
@@ -335,10 +256,7 @@ describe('Parser - Regression Tests', () => {
       const code = `OBJECT Codeunit 416 Release Service Document
 {
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object).not.toBeNull();
       expect(ast.object?.objectKind).toBe(ObjectKind.Codeunit);
@@ -350,10 +268,7 @@ describe('Parser - Regression Tests', () => {
       const code = `OBJECT Codeunit 1003 Job Task-Indent
 {
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Hyphen preserved without added spaces - matches NAV export format
       expect(ast.object?.objectName).toBe('Job Task-Indent');
@@ -363,10 +278,7 @@ describe('Parser - Regression Tests', () => {
       const code = `OBJECT Page 50000 Sales Order - Test/Debug
 {
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Operators preserved with original spacing - matches NAV export format
       expect(ast.object?.objectName).toBe('Sales Order - Test/Debug');
@@ -388,10 +300,7 @@ describe('Parser - Regression Tests', () => {
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object?.code).not.toBeNull();
       expect(ast.object?.code?.procedures).toHaveLength(1);
@@ -412,10 +321,7 @@ describe('Parser - Regression Tests', () => {
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object?.code?.procedures).toHaveLength(1);
       expect(ast.object?.code?.procedures[0].name).toBe('IntegrationProc');
@@ -435,10 +341,7 @@ describe('Parser - Regression Tests', () => {
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object?.code?.procedures).toHaveLength(1);
       expect(ast.object?.code?.procedures[0].name).toBe('ScopedProc');
@@ -459,10 +362,7 @@ describe('Parser - Regression Tests', () => {
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object?.code?.procedures).toHaveLength(1);
       expect(ast.object?.code?.procedures[0].name).toBe('MultiAttrProc');
@@ -486,10 +386,7 @@ describe('Parser - Regression Tests', () => {
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object?.code).not.toBeNull();
       expect(ast.object?.code?.variables).toHaveLength(1);
@@ -519,10 +416,7 @@ describe('Parser - Regression Tests', () => {
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object?.code?.procedures).toHaveLength(1);
       expect(ast.object?.code?.procedures[0].name).toBe('DoWork');
@@ -548,10 +442,7 @@ describe('Parser - Regression Tests', () => {
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object?.code?.procedures).toHaveLength(2);
       expect(ast.object?.code?.procedures[0].name).toBe('FirstProc');
@@ -581,10 +472,7 @@ describe('Parser - Regression Tests', () => {
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Verify PROPERTIES section exists
       expect(ast.object?.properties).toBeDefined();
@@ -631,10 +519,7 @@ describe('Parser - Regression Tests', () => {
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Verify PROPERTIES section exists
       expect(ast.object?.properties).toBeDefined();
@@ -678,10 +563,7 @@ describe('Parser - Regression Tests', () => {
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Verify both property triggers exist
       expect(ast.object?.properties?.properties).toHaveLength(2);
@@ -726,10 +608,7 @@ describe('Parser - Regression Tests', () => {
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const onRun = ast.object?.properties?.properties.find(p => p.name === 'OnRun');
       expect(onRun?.triggerBody).toBeDefined();
@@ -763,10 +642,7 @@ describe('Parser - Regression Tests', () => {
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object?.properties?.properties).toHaveLength(3);
 
@@ -805,10 +681,7 @@ describe('Parser - Regression Tests', () => {
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Verify PROPERTIES section exists
       expect(ast.object?.properties).toBeDefined();

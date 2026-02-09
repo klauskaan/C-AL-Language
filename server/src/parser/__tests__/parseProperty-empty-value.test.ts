@@ -21,8 +21,7 @@
  * method extraction doesn't introduce regressions.
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 import { ObjectKind } from '../ast';
 
 describe('Parser - Empty/Malformed Property Values in parseProperty()', () => {
@@ -44,13 +43,10 @@ describe('Parser - Empty/Malformed Property Values in parseProperty()', () => {
   {
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
     });
 
@@ -71,13 +67,9 @@ describe('Parser - Empty/Malformed Property Values in parseProperty()', () => {
   {
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
+      const { errors } = parseCode(code);
 
       // Should have error for malformed property
-      const errors = parser.getErrors();
       expect(errors.length).toBeGreaterThan(0);
 
       const relevantError = errors.find(e =>
@@ -105,13 +97,10 @@ describe('Parser - Empty/Malformed Property Values in parseProperty()', () => {
   {
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       // Both properties should exist
       const properties = ast.object?.properties?.properties || [];
@@ -137,13 +126,10 @@ describe('Parser - Empty/Malformed Property Values in parseProperty()', () => {
     { 1   ;0   ;Container }
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       expect(ast.object).toBeDefined();
       expect(ast.object?.objectKind).toBe(ObjectKind.Page);
@@ -166,13 +152,10 @@ describe('Parser - Empty/Malformed Property Values in parseProperty()', () => {
   {
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       expect(ast.object).toBeDefined();
       expect(ast.object?.objectKind).toBe(ObjectKind.Codeunit);
@@ -193,13 +176,10 @@ describe('Parser - Empty/Malformed Property Values in parseProperty()', () => {
     { 1   ;0   ;Container }
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object?.objectKind).toBe(ObjectKind.Page);
 
       const properties = ast.object?.properties?.properties || [];
@@ -220,13 +200,9 @@ describe('Parser - Empty/Malformed Property Values in parseProperty()', () => {
     { 1   ;0   ;Container }
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
+      const { errors } = parseCode(code);
 
       // Should have error for malformed property
-      const errors = parser.getErrors();
       expect(errors.length).toBeGreaterThan(0);
 
       const relevantError = errors.find(e =>
@@ -250,13 +226,10 @@ describe('Parser - Empty/Malformed Property Values in parseProperty()', () => {
   {
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object?.objectKind).toBe(ObjectKind.Report);
     });
   });
@@ -284,13 +257,10 @@ describe('Parser - Empty/Malformed Property Values in parseProperty()', () => {
     {    ;No.                                      ;Clustered=Yes }
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const table = ast.object;
       expect(table).toBeDefined();
@@ -327,12 +297,9 @@ describe('Parser - Empty/Malformed Property Values in parseProperty()', () => {
   {
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       // Snapshot the properties to verify structure
       expect(ast.object?.properties).toMatchSnapshot();

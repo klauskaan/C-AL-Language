@@ -7,8 +7,7 @@
  * The parser needs to accept these tokens as identifiers in parameter context.
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Parser - Keywords as Parameter Names', () => {
   it('should parse parameter named "Table" with DotNet type', () => {
@@ -24,12 +23,9 @@ describe('Parser - Keywords as Parameter Names', () => {
       }
     `;
 
-    const lexer = new Lexer(code);
-    const tokens = lexer.tokenize();
-    const parser = new Parser(tokens);
-    const ast = parser.parse();
+    const { ast, errors } = parseCode(code);
 
-    expect(parser.getErrors()).toHaveLength(0);
+    expect(errors).toHaveLength(0);
     expect(ast.object).not.toBeNull();
     expect(ast.object?.code).not.toBeNull();
 
@@ -61,12 +57,9 @@ describe('Parser - Keywords as Parameter Names', () => {
       }
     `;
 
-    const lexer = new Lexer(code);
-    const tokens = lexer.tokenize();
-    const parser = new Parser(tokens);
-    const ast = parser.parse();
+    const { ast, errors } = parseCode(code);
 
-    expect(parser.getErrors()).toHaveLength(0);
+    expect(errors).toHaveLength(0);
 
     const procedures = ast.object?.code?.procedures || [];
     expect(procedures).toHaveLength(1);
@@ -90,12 +83,9 @@ describe('Parser - Keywords as Parameter Names', () => {
       }
     `;
 
-    const lexer = new Lexer(code);
-    const tokens = lexer.tokenize();
-    const parser = new Parser(tokens);
-    const ast = parser.parse();
+    const { ast, errors } = parseCode(code);
 
-    expect(parser.getErrors()).toHaveLength(0);
+    expect(errors).toHaveLength(0);
 
     const procedures = ast.object?.code?.procedures || [];
     const proc = procedures[0];
@@ -121,12 +111,9 @@ describe('Parser - Keywords as Parameter Names', () => {
       }
     `;
 
-    const lexer = new Lexer(code);
-    const tokens = lexer.tokenize();
-    const parser = new Parser(tokens);
-    const ast = parser.parse();
+    const { ast, errors } = parseCode(code);
 
-    expect(parser.getErrors()).toHaveLength(0);
+    expect(errors).toHaveLength(0);
 
     const procedures = ast.object?.code?.procedures || [];
     expect(procedures).toHaveLength(1);

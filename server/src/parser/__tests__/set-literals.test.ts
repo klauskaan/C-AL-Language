@@ -13,8 +13,7 @@
  * - IF Code IN ['A'..'Z'] THEN
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 import { ObjectDeclaration } from '../ast';
 import { TokenType } from '../../lexer/tokens';
 
@@ -30,11 +29,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(_ast.object).toBeDefined();
     });
 
@@ -48,11 +45,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set with string discrete values', () => {
@@ -65,11 +60,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set with option value discrete values', () => {
@@ -82,11 +75,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set with quoted identifier option values', () => {
@@ -99,11 +90,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -118,11 +107,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set with closed character range', () => {
@@ -135,11 +122,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set with closed date range', () => {
@@ -152,11 +137,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set with multiple closed ranges', () => {
@@ -169,11 +152,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -188,11 +169,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set with open-ended lower range', () => {
@@ -205,11 +184,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set with multiple open-ended ranges', () => {
@@ -222,11 +199,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -241,11 +216,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set mixing discrete values and open-ended ranges', () => {
@@ -258,11 +231,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set with all range types and discrete values', () => {
@@ -275,11 +246,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set with option values and ranges', () => {
@@ -292,11 +261,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -311,11 +278,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(_ast.object).toBeDefined();
       expect(_ast.object?.objectKind).toBe('Codeunit');
     });
@@ -332,11 +297,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse NAV pattern: date range filtering', () => {
@@ -350,11 +313,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -369,11 +330,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set with negation', () => {
@@ -386,11 +345,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set in complex boolean expression', () => {
@@ -404,11 +361,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set with member access expressions', () => {
@@ -424,11 +379,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse nested sets in CASE statement', () => {
@@ -445,11 +398,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set literal in function call', () => {
@@ -462,11 +413,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should parse set with trailing comma (relaxed syntax)', () => {
@@ -479,9 +428,7 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast } = parseCode(code);
 
       // Should either succeed or have minimal errors (trailing comma handling)
       expect(_ast.object).toBeDefined();
@@ -499,12 +446,10 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
       // Should parse successfully - open-ended ranges are valid
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should recover from malformed range (missing start)', () => {
@@ -517,12 +462,10 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
       // Should parse successfully - open-ended ranges are valid
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should handle unclosed set literal gracefully', () => {
@@ -535,13 +478,11 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
       // Should record error but not crash
       expect(_ast.object).toBeDefined();
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
     });
 
     it('should handle invalid range operator', () => {
@@ -554,9 +495,7 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast } = parseCode(code);
 
       // Should handle error gracefully
       expect(_ast.object).toBeDefined();
@@ -571,11 +510,7 @@ describe('Set Literals and Range Expressions', () => {
           PROCEDURE Test();
           BEGIN
             IF Value IN [1..`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-
-      const errors = parser.getErrors();
+      const { ast: _ast, errors } = parseCode(code);
 
       // Should report error for incomplete range
       expect(errors.length).toBeGreaterThan(0);
@@ -602,11 +537,7 @@ describe('Set Literals and Range Expressions', () => {
           PROCEDURE Test();
           BEGIN
             IF Value IN [..`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-
-      const errors = parser.getErrors();
+      const { ast: _ast, errors } = parseCode(code);
 
       // Should report error for incomplete range
       expect(errors.length).toBeGreaterThan(0);
@@ -637,11 +568,7 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-
-      const errors = parser.getErrors();
+      const { ast: _ast, errors } = parseCode(code);
       expect(errors.length).toBeGreaterThanOrEqual(1);
       const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
@@ -660,11 +587,7 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-
-      const errors = parser.getErrors();
+      const { ast: _ast, errors } = parseCode(code);
       expect(errors.length).toBeGreaterThanOrEqual(1);
       const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
@@ -683,11 +606,7 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-
-      const errors = parser.getErrors();
+      const { ast: _ast, errors } = parseCode(code);
       expect(errors.length).toBeGreaterThanOrEqual(1);
       const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
@@ -707,11 +626,7 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-
-      const errors = parser.getErrors();
+      const { ast: _ast, errors } = parseCode(code);
       expect(errors.length).toBeGreaterThanOrEqual(1);
       const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
@@ -730,11 +645,7 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-
-      const errors = parser.getErrors();
+      const { ast: _ast, errors } = parseCode(code);
       expect(errors.length).toBeGreaterThanOrEqual(1);
       const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
@@ -753,11 +664,7 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-
-      const errors = parser.getErrors();
+      const { ast: _ast, errors } = parseCode(code);
       expect(errors.length).toBe(1);
       expect(errors[0].message).toMatch(/expected expression after '\.\.'/i);
       expect(errors[0].token.value).toBe(']');
@@ -788,11 +695,7 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
-
-      const errors = parser.getErrors();
+      const { ast: _ast, errors } = parseCode(code);
       expect(errors.length).toBeGreaterThanOrEqual(1);
       const rangeError = errors.find(e => e.message.match(/expected expression after '\.\.'/i));
       expect(rangeError).toBeDefined();
@@ -812,11 +715,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(_ast.object).toBeDefined();
     });
 
@@ -831,11 +732,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(_ast.object).toBeDefined();
     });
 
@@ -850,11 +749,9 @@ describe('Set Literals and Range Expressions', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const _ast = parser.parse();
+      const { ast: _ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(_ast.object).toBeDefined();
     });
   });

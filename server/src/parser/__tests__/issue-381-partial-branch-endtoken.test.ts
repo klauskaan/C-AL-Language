@@ -12,8 +12,7 @@
  * parsed/skipped during recovery.
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 import { CaseStatement, CaseBranch, Literal } from '../ast';
 
 describe('Issue #381 - Partial CaseBranch endToken reflects recovery stop point', () => {
@@ -36,12 +35,7 @@ describe('Issue #381 - Partial CaseBranch endToken reflects recovery stop point'
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should detect missing colon error
       const colonError = errors.find(e => e.message.includes('Expected : after case branch value'));
@@ -87,11 +81,7 @@ describe('Issue #381 - Partial CaseBranch endToken reflects recovery stop point'
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
       const procedures = ast.object?.code?.procedures || [];
       const statements = procedures[0]?.body || [];
       const caseStmt = statements[0] as CaseStatement;
@@ -134,12 +124,7 @@ describe('Issue #381 - Partial CaseBranch endToken reflects recovery stop point'
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should detect missing colon error
       const colonError = errors.find(e => e.message.includes('Expected : after case branch value'));
@@ -190,11 +175,7 @@ describe('Issue #381 - Partial CaseBranch endToken reflects recovery stop point'
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
       const procedures = ast.object?.code?.procedures || [];
       const statements = procedures[0]?.body || [];
       const caseStmt = statements[0] as CaseStatement;
@@ -235,11 +216,7 @@ describe('Issue #381 - Partial CaseBranch endToken reflects recovery stop point'
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
       const procedures = ast.object?.code?.procedures || [];
       const statements = procedures[0]?.body || [];
       const caseStmt = statements[0] as CaseStatement;
@@ -279,11 +256,7 @@ describe('Issue #381 - Partial CaseBranch endToken reflects recovery stop point'
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
       const procedures = ast.object?.code?.procedures || [];
       const statements = procedures[0]?.body || [];
       const caseStmt = statements[0] as CaseStatement;

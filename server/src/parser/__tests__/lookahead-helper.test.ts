@@ -13,8 +13,7 @@
  * more direct tests if needed.
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('isFollowedByLeftBrace() helper', () => {
   describe('Basic functionality', () => {
@@ -29,12 +28,10 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should parse successfully - CODE { recognized as section
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
     });
 
@@ -53,12 +50,10 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should parse successfully - Code[20] recognized as data type, not section
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
     });
 
@@ -81,12 +76,10 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should parse successfully - "Code" in caption not treated as section
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
     });
   });
@@ -98,13 +91,9 @@ describe('isFollowedByLeftBrace() helper', () => {
       {
         CODE`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      // Parser handles EOF gracefully, but reports missing opening brace
-      const errors = parser.getErrors();
-      expect(errors).toHaveLength(1);
+      // Parser handles EOF gracefully, but reports missing opening brace      expect(errors).toHaveLength(1);
       expect(errors[0].message).toContain('Expected { to open CODE section');
       // Parser should not crash
       expect(ast).toBeDefined();
@@ -119,13 +108,9 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
         CODE`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      // Parser handles EOF gracefully, but reports missing opening brace
-      const errors = parser.getErrors();
-      expect(errors).toHaveLength(1);
+      // Parser handles EOF gracefully, but reports missing opening brace      expect(errors).toHaveLength(1);
       expect(errors[0].message).toContain('Expected { to open CODE section');
       expect(ast).toBeDefined();
     });
@@ -134,12 +119,10 @@ describe('isFollowedByLeftBrace() helper', () => {
       // Pathological case: malformed file starting with CODE
       const code = `CODE { BEGIN END. }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Parser should handle gracefully (with errors)
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
       expect(ast).toBeDefined();
     });
   });
@@ -162,12 +145,10 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should parse successfully - CONTROLS { recognized as section
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
     });
 
@@ -186,12 +167,10 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should parse successfully - "Controls" recognized as parameter name
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
     });
   });
@@ -220,11 +199,9 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
     });
 
@@ -248,11 +225,9 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
     });
 
@@ -282,12 +257,10 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // All three sections should be recognized correctly
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
     });
   });
@@ -307,12 +280,10 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Extra whitespace should not affect section recognition
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
     });
 
@@ -327,12 +298,10 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Comment should not affect section recognition
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
     });
   });
@@ -351,11 +320,9 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object?.code).toBeDefined();
     });
 
@@ -373,11 +340,9 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       // Field should be parsed with Code[20] data type
       expect(ast.object?.fields?.fields).toHaveLength(1);
     });
@@ -396,11 +361,9 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object?.controls).toBeDefined();
     });
 
@@ -418,11 +381,9 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       // Variable "Controls" should be parsed as identifier
       expect(ast.object?.code?.variables).toHaveLength(1);
     });
@@ -440,13 +401,9 @@ describe('isFollowedByLeftBrace() helper', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      // Parser recovers gracefully from "CODE INVALID TOKEN", but reports missing opening brace
-      const errors = parser.getErrors();
-      expect(errors.length).toBeGreaterThanOrEqual(1);
+      // Parser recovers gracefully from "CODE INVALID TOKEN", but reports missing opening brace      expect(errors.length).toBeGreaterThanOrEqual(1);
       expect(errors.some(e => e.message.includes('Expected { to open CODE section'))).toBe(true);
       expect(ast).toBeDefined();
     });
@@ -463,13 +420,9 @@ describe('isFollowedByLeftBrace() helper', () => {
         END.
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      // Parser recovers gracefully from missing brace, but reports error
-      const errors = parser.getErrors();
-      expect(errors).toHaveLength(1);
+      // Parser recovers gracefully from missing brace, but reports error      expect(errors).toHaveLength(1);
       expect(errors[0].message).toContain('Expected { to open CODE section');
       expect(ast).toBeDefined();
     });
@@ -512,14 +465,12 @@ describe('isFollowedByLeftBrace() helper', () => {
       }`;
 
       const start = Date.now();
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
       const duration = Date.now() - start;
 
       // Should parse quickly (under 100ms for this size)
       expect(duration).toBeLessThan(100);
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
     });
   });

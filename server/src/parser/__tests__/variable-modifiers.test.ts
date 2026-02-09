@@ -20,8 +20,7 @@
  * - Page objects: INDATASET modifier for data-bound variables
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode, tokenize } from './parserTestHelpers';
 
 describe('Parser - Variable Modifiers', () => {
   describe('RUNONCLIENT modifier', () => {
@@ -33,11 +32,9 @@ describe('Parser - Variable Modifiers', () => {
             SystemDiagnosticsProcess@1 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Diagnostics.Process" RUNONCLIENT;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       const variable = ast.object!.code!.variables[0];
@@ -56,11 +53,9 @@ describe('Parser - Variable Modifiers', () => {
             MailHelpers@1002 : DotNet "'Microsoft.Dynamics.Nav.SMTP'.Microsoft.Dynamics.Nav.SMTP.MailHelpers" RUNONCLIENT;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables).toHaveLength(2);
       expect(ast.object!.code!.variables[0].runOnClient).toBe(true);
       expect(ast.object!.code!.variables[1].runOnClient).toBe(true);
@@ -73,11 +68,9 @@ describe('Parser - Variable Modifiers', () => {
             JObject@1 : DotNet "'Newtonsoft.Json'.Newtonsoft.Json.Linq.JObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.typeName).toBe('DotNet');
       expect(variable.runOnClient).toBeUndefined();
@@ -91,11 +84,9 @@ describe('Parser - Variable Modifiers', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       const proc = ast.object!.code!.procedures[0];
@@ -114,11 +105,9 @@ describe('Parser - Variable Modifiers', () => {
             FSO@1 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Windows Script Host Object Model'.FileSystemObject" WITHEVENTS;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       const variable = ast.object!.code!.variables[0];
@@ -136,11 +125,9 @@ describe('Parser - Variable Modifiers', () => {
             XMLDoc@1 : Automation "{F5078F18-C551-11D3-89B9-0000F81FE221} 3.0:{2933BF80-7B36-11D2-B20E-00C04F983E60}:'Microsoft XML, v3.0'.IXMLDOMNode";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.typeName).toBe('Automation');
       expect(variable.withEvents).toBeUndefined();
@@ -154,11 +141,9 @@ describe('Parser - Variable Modifiers', () => {
             MyVar@1 : Text WITHEVENTS;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.withEvents).toBe(true);
     });
@@ -173,11 +158,9 @@ describe('Parser - Variable Modifiers', () => {
             Quantity@2 : Integer INDATASET;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables).toHaveLength(2);
       expect(ast.object!.code!.variables[0].isInDataSet).toBe(true);
       expect(ast.object!.code!.variables[1].isInDataSet).toBe(true);
@@ -190,11 +173,9 @@ describe('Parser - Variable Modifiers', () => {
             TempAmount@1 : Decimal;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.isInDataSet).toBeUndefined();
     });
@@ -209,11 +190,9 @@ describe('Parser - Variable Modifiers', () => {
             User@1003 : Record 2000000120 SECURITYFILTERING(Filtered);
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       const variable = ast.object!.code!.variables[0];
@@ -230,11 +209,9 @@ describe('Parser - Variable Modifiers', () => {
             InteractionLogEntry@1000 : Record 5065 SECURITYFILTERING(Ignored);
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.securityFiltering).toBe('Ignored');
     });
@@ -247,11 +224,9 @@ describe('Parser - Variable Modifiers', () => {
             CustLedgEntryRemainAmtQuery@1000 : Query 21 SECURITYFILTERING(Filtered);
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.typeName).toBe('Query 21');
       expect(variable.securityFiltering).toBe('Filtered');
@@ -267,11 +242,9 @@ describe('Parser - Variable Modifiers', () => {
             SalesShptHeader@1025 : Record 110 SECURITYFILTERING(Filtered);
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables).toHaveLength(3);
       expect(ast.object!.code!.variables[0].securityFiltering).toBe('Filtered');
       expect(ast.object!.code!.variables[1].securityFiltering).toBe('Filtered');
@@ -285,11 +258,9 @@ describe('Parser - Variable Modifiers', () => {
             Customer@1 : Record 18;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.securityFiltering).toBeUndefined();
     });
@@ -301,11 +272,9 @@ describe('Parser - Variable Modifiers', () => {
             TempCust@1 : TEMPORARY Record 18 SECURITYFILTERING(Filtered);
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.isTemporary).toBe(true);
       expect(variable.securityFiltering).toBe('Filtered');
@@ -318,11 +287,9 @@ describe('Parser - Variable Modifiers', () => {
             User@1 : Record 18 SecurityFiltering(Filtered);
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.securityFiltering).toBe('Filtered');
     });
@@ -335,12 +302,10 @@ describe('Parser - Variable Modifiers', () => {
             Customer@1 : Record 18 SECURITYFILTERING(InvalidValue);
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Parser should not reject invalid values - that's C/SIDE's job
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.securityFiltering).toBe('InvalidValue');
     });
@@ -352,11 +317,8 @@ describe('Parser - Variable Modifiers', () => {
             Customer@1 : Record 18 SECURITYFILTERING;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      parser.parse();
+      const { errors } = parseCode(code);
 
-      const errors = parser.getErrors();
       expect(errors.length).toBeGreaterThan(0);
       expect(errors[0].message).toContain('Expected ( after SECURITYFILTERING');
     });
@@ -368,11 +330,8 @@ describe('Parser - Variable Modifiers', () => {
             Customer@1 : Record 18 SECURITYFILTERING(Filtered;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      parser.parse();
+      const { errors } = parseCode(code);
 
-      const errors = parser.getErrors();
       expect(errors.length).toBeGreaterThan(0);
     });
   });
@@ -385,11 +344,9 @@ describe('Parser - Variable Modifiers', () => {
             TempProcess@1 : TEMPORARY DotNet "'System'.System.Diagnostics.Process" RUNONCLIENT;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.isTemporary).toBe(true);
       expect(variable.runOnClient).toBe(true);
@@ -407,11 +364,9 @@ describe('Parser - Variable Modifiers', () => {
             TextWithEvents@5 : Text WITHEVENTS;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables).toHaveLength(5);
 
       expect(ast.object!.code!.variables[0].runOnClient).toBe(true);
@@ -431,9 +386,7 @@ describe('Parser - Variable Modifiers', () => {
             MyInt@1 : Integer RUNONCLIENT;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Should parse but may be semantically invalid
       // Parser doesn't validate type compatibility
@@ -449,9 +402,7 @@ describe('Parser - Variable Modifiers', () => {
             MyText@1 : Text WITHEVENTS;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Should parse but may be semantically invalid
       expect(ast.object).toBeDefined();
@@ -474,11 +425,9 @@ describe('Parser - Variable Modifiers', () => {
                        END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object?.objectKind).toBe('Report');
 
       // Find the OnPostReport trigger
@@ -503,11 +452,9 @@ describe('Parser - Variable Modifiers', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables[0].runOnClient).toBe(true);
       expect(ast.object!.code!.procedures).toHaveLength(1);
     });
@@ -516,8 +463,7 @@ describe('Parser - Variable Modifiers', () => {
   describe('Lexer token recognition', () => {
     it('should recognize RUNONCLIENT as keyword token', () => {
       const code = 'RUNONCLIENT';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       expect(tokens).toHaveLength(2); // RUNONCLIENT + EOF
       expect(tokens[0].type).toBe('RUNONCLIENT');
@@ -526,8 +472,7 @@ describe('Parser - Variable Modifiers', () => {
 
     it('should recognize WITHEVENTS as keyword token', () => {
       const code = 'WITHEVENTS';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       expect(tokens).toHaveLength(2); // WITHEVENTS + EOF
       expect(tokens[0].type).toBe('WITHEVENTS');
@@ -536,8 +481,7 @@ describe('Parser - Variable Modifiers', () => {
 
     it('should recognize SECURITYFILTERING as keyword token', () => {
       const code = 'SECURITYFILTERING';
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
+      const tokens = tokenize(code);
 
       expect(tokens).toHaveLength(2); // SECURITYFILTERING + EOF
       expect(tokens[0].type).toBe('SECURITYFILTERING');
@@ -549,13 +493,9 @@ describe('Parser - Variable Modifiers', () => {
       const code2 = 'RunOnClient';
       const code3 = 'RUNONCLIENT';
 
-      const lexer1 = new Lexer(code1);
-      const lexer2 = new Lexer(code2);
-      const lexer3 = new Lexer(code3);
-
-      expect(lexer1.tokenize()[0].type).toBe('RUNONCLIENT');
-      expect(lexer2.tokenize()[0].type).toBe('RUNONCLIENT');
-      expect(lexer3.tokenize()[0].type).toBe('RUNONCLIENT');
+      expect(tokenize(code1)[0].type).toBe('RUNONCLIENT');
+      expect(tokenize(code2)[0].type).toBe('RUNONCLIENT');
+      expect(tokenize(code3)[0].type).toBe('RUNONCLIENT');
     });
   });
 
@@ -567,9 +507,7 @@ describe('Parser - Variable Modifiers', () => {
             Process@1 : DotNet "'System'.System.Diagnostics.Process" RUNONCLIENT;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const variable = ast.object!.code!.variables[0];
 
@@ -591,9 +529,7 @@ describe('Parser - Variable Modifiers', () => {
             TempProcess@1 : TEMPORARY DotNet "'System'.System.Diagnostics.Process" RUNONCLIENT;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const variable = ast.object!.code!.variables[0];
       expect(variable.isTemporary).toBe(true);
@@ -613,11 +549,9 @@ describe('Parser - Variable Modifiers', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0];
       expect(proc.parameters[0].isVar).toBe(true);
       expect(proc.parameters[0].runOnClient).toBe(true);
@@ -632,11 +566,9 @@ describe('Parser - Variable Modifiers', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0];
       expect(proc.parameters[0].isVar).toBe(false);
       expect(proc.parameters[0].runOnClient).toBe(true);
@@ -650,11 +582,9 @@ describe('Parser - Variable Modifiers', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0];
       expect(proc.parameters[0].withEvents).toBe(true);
       expect(proc.parameters[0].runOnClient).toBe(true);
@@ -668,11 +598,9 @@ describe('Parser - Variable Modifiers', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0];
       expect(proc.parameters).toHaveLength(3);
       expect(proc.parameters[0].runOnClient).toBe(true);
@@ -689,11 +617,9 @@ describe('Parser - Variable Modifiers', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0];
       expect(proc.parameters[0].securityFiltering).toBe('Filtered');
     });
@@ -706,11 +632,9 @@ describe('Parser - Variable Modifiers', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0];
       expect(proc.parameters[0].runOnClient).toBeUndefined();
       expect(proc.parameters[0].withEvents).toBeUndefined();
@@ -726,11 +650,9 @@ describe('Parser - Variable Modifiers', () => {
             UserTours@1019 : DotNet "'Microsoft.Dynamics.Nav.ClientExtensions'.UserTours" WITHEVENTS RUNONCLIENT;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.withEvents).toBe(true);
       expect(variable.runOnClient).toBe(true);
@@ -744,11 +666,9 @@ describe('Parser - Variable Modifiers', () => {
             CameraProvider@1007 : DotNet "'Microsoft.Dynamics.Nav.ClientExtensions, Version=14.0.0.0'.CameraProvider" WITHEVENTS RUNONCLIENT;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.name).toBe('CameraProvider');
       expect(variable.withEvents).toBe(true);
@@ -765,12 +685,10 @@ describe('Parser - Variable Modifiers', () => {
             MyVar@1 : DotNet "'Test'.TestClass" RUNONCLIENT WITHEVENTS;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Parser accepts both modifiers regardless of order
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.runOnClient).toBe(true);
       expect(variable.withEvents).toBe(true);
@@ -784,11 +702,9 @@ describe('Parser - Variable Modifiers', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0];
       expect(proc.parameters[0].runOnClient).toBe(true);
       expect(proc.parameters[0].withEvents).toBe(true);

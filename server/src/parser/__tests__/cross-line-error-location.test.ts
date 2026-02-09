@@ -12,8 +12,7 @@
  * is specifically about error line/column accuracy.
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Parser - Cross-Line Error Location (Issue #364)', () => {
   describe('Missing semicolon after variable declaration', () => {
@@ -31,12 +30,7 @@ describe('Parser - Cross-Line Error Location (Issue #364)', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const semicolonError = errors.find(e => e.message.includes('Expected ; after'));
@@ -66,12 +60,7 @@ describe('Parser - Cross-Line Error Location (Issue #364)', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const thenError = errors.find(e => e.message.includes('Expected THEN'));
@@ -101,12 +90,7 @@ describe('Parser - Cross-Line Error Location (Issue #364)', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const thenError = errors.find(e => e.message.includes('Expected THEN'));
@@ -136,12 +120,7 @@ describe('Parser - Cross-Line Error Location (Issue #364)', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const doError = errors.find(e => e.message.includes('Expected DO after WHILE'));
@@ -171,12 +150,7 @@ describe('Parser - Cross-Line Error Location (Issue #364)', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const doError = errors.find(e => e.message.includes('Expected DO after FOR'));
@@ -204,12 +178,7 @@ describe('Parser - Cross-Line Error Location (Issue #364)', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const doError = errors.find(e => e.message.includes('Expected DO after FOR'));
@@ -239,12 +208,7 @@ describe('Parser - Cross-Line Error Location (Issue #364)', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const doError = errors.find(e => e.message.includes('Expected DO after WITH'));
@@ -275,12 +239,7 @@ describe('Parser - Cross-Line Error Location (Issue #364)', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const ofError = errors.find(e => e.message.includes('Expected OF after CASE'));
@@ -312,12 +271,7 @@ describe('Parser - Cross-Line Error Location (Issue #364)', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const endError = errors.find(e => e.message.includes('Expected END to close BEGIN'));
@@ -347,12 +301,7 @@ describe('Parser - Cross-Line Error Location (Issue #364)', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const parenError = errors.find(e => e.message.includes('Expected ) after EXIT'));
@@ -384,12 +333,7 @@ describe('Parser - Cross-Line Error Location (Issue #364)', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const colonError = errors.find(e => e.message.includes('Expected : after case branch'));
@@ -411,12 +355,7 @@ describe('Parser - Cross-Line Error Location (Issue #364)', () => {
     OnRun=BEGIN END
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       expect(errors.length).toBeGreaterThan(0);
       const semicolonError = errors.find(e => e.message.includes('Expected ; after trigger'));

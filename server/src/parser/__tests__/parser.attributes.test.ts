@@ -15,8 +15,7 @@
  * Expected behavior: Capture attributes in AST with rawTokens for complex arguments
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode, tokenize } from './parserTestHelpers';
 import { ProcedureDeclaration } from '../ast';
 
 describe('Parser - Procedure Attributes', () => {
@@ -31,11 +30,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
@@ -59,11 +56,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
       expect(proc.attributes).toHaveLength(1);
       expect(proc.attributes![0].name).toBe('TryFunction');
@@ -79,11 +74,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
       expect(proc.attributes).toBeDefined();
       expect(proc.attributes![0].name).toBe('external');
@@ -105,11 +98,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
       expect(proc.attributes![0].name).toBe('Integration');
       expect(proc.attributes![0].hasArguments).toBe(true);
@@ -127,11 +118,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
       expect(proc.attributes).toHaveLength(1);
 
@@ -156,11 +145,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
       expect(proc.attributes![0].name).toBe('EventSubscriber');
       expect(proc.attributes![0].hasArguments).toBe(true);
@@ -183,11 +170,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
       expect(proc.attributes![0].name).toBe('EventSubscriber');
 
@@ -211,11 +196,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
       expect(proc.attributes).toHaveLength(2);
 
@@ -235,11 +218,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
       expect(proc.attributes).toHaveLength(3);
 
@@ -258,11 +239,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
 
       // Attributes should be undefined or empty array
@@ -277,11 +256,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
       expect(proc.attributes === undefined || proc.attributes.length === 0).toBe(true);
     });
@@ -297,9 +274,7 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const attr = ast.object!.code!.procedures[0].attributes![0];
       expect(attr.startToken).toBeDefined();
@@ -323,9 +298,7 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const attr = ast.object!.code!.procedures[0].attributes![0];
       expect(attr.startToken.value).toBe('[');
@@ -343,12 +316,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Parser should report error but continue
-      const errors = parser.getErrors();
       expect(errors.length).toBeGreaterThan(0);
 
       // Should still find the procedure
@@ -364,12 +334,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Parser should report error but continue
-      const errors = parser.getErrors();
       expect(errors.length).toBeGreaterThan(0);
 
       // Should still find the procedure
@@ -385,11 +352,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
       expect(proc.isLocal).toBe(true);
       expect(proc.attributes).toHaveLength(1);
@@ -405,11 +370,7 @@ describe('Parser - Procedure Attributes', () => {
             PROCEDURE BEGIN;
           }
         }`;
-        const lexer = new Lexer(code);
-        const parser = new Parser(lexer.tokenize());
-        parser.parse();
-
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
         // Expect 2 errors: parse error + attribute discard warning
         expect(errors.length).toBe(2);
 
@@ -426,11 +387,7 @@ describe('Parser - Procedure Attributes', () => {
             PROCEDURE BEGIN;
           }
         }`;
-        const lexer = new Lexer(code);
-        const parser = new Parser(lexer.tokenize());
-        parser.parse();
-
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
         // Expect 2 errors: parse error + attribute discard warning
         expect(errors.length).toBe(2);
 
@@ -446,11 +403,7 @@ describe('Parser - Procedure Attributes', () => {
             PROCEDURE BEGIN;
           }
         }`;
-        const lexer = new Lexer(code);
-        const parser = new Parser(lexer.tokenize());
-        parser.parse();
-
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
         // Expect only 1 error: parse error, NO attribute warning
         expect(errors.length).toBe(1);
 
@@ -466,12 +419,8 @@ describe('Parser - Procedure Attributes', () => {
             PROCEDURE BEGIN;
           }
         }`;
-        const lexer = new Lexer(code);
-        const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
-        parser.parse();
-
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
+        const tokens = tokenize(code);
         const attrWarning = errors.find(e => e.message.includes('attribute discarded'));
         expect(attrWarning).toBeDefined();
 
@@ -480,7 +429,7 @@ describe('Parser - Procedure Attributes', () => {
         expect(leftBracket).toBeDefined();
 
         // Warning should point to the '[' token
-        expect(attrWarning!.token).toBe(leftBracket);
+        expect(attrWarning!.token).toEqual(leftBracket);
       });
 
       it('should NOT warn when malformed attribute recovery allows procedure to parse', () => {
@@ -489,11 +438,7 @@ describe('Parser - Procedure Attributes', () => {
             [Malformed PROCEDURE BEGIN;
           }
         }`;
-        const lexer = new Lexer(code);
-        const parser = new Parser(lexer.tokenize());
-        parser.parse();
-
-        const errors = parser.getErrors();
+        const { errors } = parseCode(code);
         // Malformed attribute produces one error during attribute parsing
         // The attribute recovery stops at PROCEDURE, which is then parsed normally
         // (BEGIN becomes the procedure name, which is weird but syntactically valid)
@@ -513,12 +458,9 @@ describe('Parser - Procedure Attributes', () => {
             END;
           }
         }`;
-        const lexer = new Lexer(code);
-        const parser = new Parser(lexer.tokenize());
-        const ast = parser.parse();
+        const { ast, errors } = parseCode(code);
 
         // Expect exactly 1 warning
-        const errors = parser.getErrors();
         expect(errors).toHaveLength(1);
         expect(errors[0].message).toContain('1 attribute ignored');
         expect(errors[0].message).toContain('attributes are only supported on PROCEDURE declarations in C/AL');
@@ -539,10 +481,7 @@ describe('Parser - Procedure Attributes', () => {
             END;
           }
         }`;
-        const lexer = new Lexer(code);
-        const parser = new Parser(lexer.tokenize());
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Expect exactly 1 warning with correct count
         expect(errors).toHaveLength(1);
@@ -564,10 +503,7 @@ describe('Parser - Procedure Attributes', () => {
             END;
           }
         }`;
-        const lexer = new Lexer(code);
-        const parser = new Parser(lexer.tokenize());
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Expect exactly 1 warning
         expect(errors).toHaveLength(1);
@@ -590,10 +526,7 @@ describe('Parser - Procedure Attributes', () => {
             END;
           }
         }`;
-        const lexer = new Lexer(code);
-        const parser = new Parser(lexer.tokenize());
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Expect exactly 1 warning with correct count
         expect(errors).toHaveLength(1);
@@ -618,10 +551,7 @@ describe('Parser - Procedure Attributes', () => {
             END;
           }
         }`;
-        const lexer = new Lexer(code);
-        const parser = new Parser(lexer.tokenize());
-        const ast = parser.parse();
-        const errors = parser.getErrors();
+        const { ast, errors } = parseCode(code);
 
         // Should have at least 2 errors:
         // 1. Error from malformed procedure ("Expected procedure name")
@@ -667,11 +597,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object!.code!.procedures;
       expect(procedures).toHaveLength(3);
 
@@ -709,11 +637,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object!.code!.procedures;
       expect(procedures).toHaveLength(3);
 
@@ -738,11 +664,9 @@ describe('Parser - Procedure Attributes', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedures = ast.object!.code!.procedures;
       expect(procedures).toHaveLength(2);
 

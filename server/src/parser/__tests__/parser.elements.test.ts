@@ -37,19 +37,16 @@
  * - Only activate for XMLport objects, not Query objects
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 import { ObjectDeclaration, ObjectKind } from '../ast';
 
 // Helper to parse and extract elements section
 function parseElements(code: string) {
-  const lexer = new Lexer(code);
-  const parser = new Parser(lexer.tokenize());
-  const ast = parser.parse();
+  const { ast, errors } = parseCode(code);
 
   return {
     ast,
-    errors: parser.getErrors(),
+    errors,
     elements: (ast.object as ObjectDeclaration)?.elements,
     objectKind: (ast.object as ObjectDeclaration)?.objectKind
   };

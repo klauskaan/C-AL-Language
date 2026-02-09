@@ -30,8 +30,7 @@
  * - PAG6711.TXT: Generic collections (List, KeyValuePair)
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Parser - DotNet Assembly-Qualified Types', () => {
   describe('DotNet with full assembly qualification', () => {
@@ -43,11 +42,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             DotNetString@1 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.String";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
       expect(ast.object?.code).toBeDefined();
 
@@ -66,11 +63,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             TaxonomyNode@1001 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.typeName).toBe('DotNet');
       expect(variable.dataType.assemblyReference).toBe('System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089');
@@ -85,11 +80,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             MessageHandler@1 : DotNet "'System.Net.Http, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'.System.Net.Http.HttpMessageHandler";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.typeName).toBe('DotNet');
       expect(variable.dataType.assemblyReference).toBe('System.Net.Http, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a');
@@ -104,11 +97,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             CultureInfo@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Globalization.CultureInfo";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.typeName).toBe('DotNet');
       expect(variable.dataType.dotNetTypeName).toBe('System.Globalization.CultureInfo');
@@ -122,11 +113,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             MemoryStream@1002 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.IO.MemoryStream";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.name).toBe('MemoryStream');
       expect(variable.dataType.dotNetTypeName).toBe('System.IO.MemoryStream');
@@ -142,11 +131,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             LabelDict@1 : DotNet "'mscorlib'.System.Collections.Generic.Dictionary\`2";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.typeName).toBe('DotNet');
       expect(variable.dataType.assemblyReference).toBe('mscorlib');
@@ -161,11 +148,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             JObject@1028 : DotNet "'Newtonsoft.Json'.Newtonsoft.Json.Linq.JObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.name).toBe('JObject');
       expect(variable.dataType.typeName).toBe('DotNet');
@@ -181,11 +166,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             PrinterSettings@1 : DotNet "'System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'.System.Drawing.Printing.PrinterSettings";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.dotNetTypeName).toBe('System.Drawing.Printing.PrinterSettings');
     });
@@ -200,11 +183,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             MyDict@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.Dictionary\`2";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.typeName).toBe('DotNet');
       expect(variable.dataType.dotNetTypeName).toBe('System.Collections.Generic.Dictionary`2');
@@ -218,11 +199,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             Current@1002 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.KeyValuePair\`2";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.dotNetTypeName).toBe('System.Collections.Generic.KeyValuePair`2');
     });
@@ -235,11 +214,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             ColumnList@1017 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.List\`1";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.dotNetTypeName).toBe('System.Collections.Generic.List`1');
     });
@@ -252,11 +229,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             FileList@1006 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.IReadOnlyList\`1";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.dotNetTypeName).toBe('System.Collections.Generic.IReadOnlyList`1');
     });
@@ -269,11 +244,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             HttpHeaderValueCollection@1006 : DotNet "'System.Net.Http, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'.System.Net.Http.Headers.HttpHeaderValueCollection\`1";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.dotNetTypeName).toBe('System.Net.Http.Headers.HttpHeaderValueCollection`1');
     });
@@ -288,11 +261,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             ResponseCode@1003 : DotNet "'Microsoft.Dynamics.Nav.Ncl, Culture=neutral, PublicKeyToken=31bf3856ad364e35'.Microsoft.Dynamics.Nav.Runtime.WebServiceActionContext+StatusCode";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.name).toBe('ResponseCode');
       expect(variable.dataType.typeName).toBe('DotNet');
@@ -308,11 +279,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             transactionTable@1002 : DotNet "'Microsoft.Dynamics.Framework.UI.WinForms.DataVisualization.Timeline, Version=14.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35'.Microsoft.Dynamics.Framework.UI.WinForms.DataVisualization.TimelineVisualization.DataModel+TransactionDataTable";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.dotNetTypeName).toBe('Microsoft.Dynamics.Framework.UI.WinForms.DataVisualization.TimelineVisualization.DataModel+TransactionDataTable');
     });
@@ -325,11 +294,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             PrinterSettingsCollection@1003 : DotNet "'System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'.System.Drawing.Printing.PrinterSettings+StringCollection";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.dotNetTypeName).toBe('System.Drawing.Printing.PrinterSettings+StringCollection');
     });
@@ -344,11 +311,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             JArray@2 : DotNet "'Newtonsoft.Json'.Newtonsoft.Json.Linq.JArray";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables).toHaveLength(2);
       expect(ast.object!.code!.variables[0].dataType.typeName).toBe('DotNet');
       expect(ast.object!.code!.variables[1].dataType.typeName).toBe('DotNet');
@@ -363,11 +328,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedure = ast.object!.code!.procedures[0];
       expect(procedure.name).toBe('SetMessageHandler');
       expect(procedure.parameters).toHaveLength(1);
@@ -384,11 +347,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedure = ast.object!.code!.procedures[0];
       expect(procedure.parameters).toHaveLength(2);
       expect(procedure.parameters[0].isVar).toBe(true);
@@ -408,11 +369,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedure = ast.object!.code!.procedures[0];
       expect(procedure.parameters[0].dataType.typeName).toBe('DotNet');
       expect(procedure.variables).toHaveLength(2);
@@ -429,11 +388,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.events).toHaveLength(1);
       const event = ast.object!.code!.events[0];
       expect(event.subscriberName).toBe('Chart@-1160030001');
@@ -458,11 +415,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.events).toHaveLength(1);
       const event = ast.object!.code!.events[0];
       expect(event.subscriberName).toBe('CameraProvider@1001');
@@ -484,11 +439,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.events).toHaveLength(1);
       const event = ast.object!.code!.events[0];
       expect(event.subscriberName).toBe('WebPageViewer@-2');
@@ -515,11 +468,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.events).toHaveLength(3);
       expect(ast.object!.code!.events[0].eventName).toBe('ControlAddInReady@8');
       expect(ast.object!.code!.events[1].eventName).toBe('DocumentReady@9');
@@ -535,13 +486,11 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      parser.parse();
+      const { errors } = parseCode(code);
 
       // Should report error for missing identifier
-      expect(parser.getErrors().length).toBeGreaterThan(0);
-      expect(parser.getErrors()[0].message).toContain('identifier');
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].message).toContain('identifier');
     });
 
     it('should handle EVENT without @ suffix', () => {
@@ -553,12 +502,10 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors - @number is optional
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.events).toHaveLength(1);
       expect(ast.object!.code!.events[0].subscriberName).toBe('CameraProvider');
       expect(ast.object!.code!.events[0].eventName).toBe('PictureAvailable');
@@ -572,13 +519,11 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      parser.parse();
+      const { errors } = parseCode(code);
 
       // Should report error for missing ::
-      expect(parser.getErrors().length).toBeGreaterThan(0);
-      expect(parser.getErrors()[0].message).toContain('::');
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].message).toContain('::');
     });
 
     it('should parse multiple DotNet variables with mixed patterns', () => {
@@ -592,11 +537,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             JArray@1007 : DotNet "'Newtonsoft.Json'.Newtonsoft.Json.Linq.JArray";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables).toHaveLength(4);
       expect(ast.object!.code!.variables[0].dataType.dotNetTypeName).toBe('System.Collections.Generic.KeyValuePair`2');
       expect(ast.object!.code!.variables[1].dataType.dotNetTypeName).toBe('Newtonsoft.Json.Linq.JObject');
@@ -614,11 +557,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             PeriodType@1001 : 'Day,Week,Month,Quarter,Year,Accounting Period';
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.name).toBe('PeriodType');
       // This is an inline option string, not a DotNet type
@@ -635,11 +576,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedure = ast.object!.code!.procedures[0];
       expect(procedure.parameters[0].dataType.optionString).toBe('Initial,Previous,Same,Next,PreviousColumn,NextColumn');
     });
@@ -653,11 +592,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             JObject@2 : DotNet "'Newtonsoft.Json'.Newtonsoft.Json.Linq.JObject";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables).toHaveLength(2);
 
       // First is inline option string (no dot separator)
@@ -677,13 +614,11 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             Broken@1 : DotNet "'mscorlib.System.String;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should report error but not crash
       expect(ast.object).toBeDefined();
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
     });
 
     it('should recover from DotNet without type name', () => {
@@ -693,13 +628,11 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             Empty@1 : DotNet "'mscorlib'";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should report error but not crash
       expect(ast.object).toBeDefined();
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
     });
 
     it('should handle DotNet with extra whitespace', () => {
@@ -709,9 +642,7 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             Spaced@1 : DotNet "'mscorlib'  .  System.String";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Parser may or may not tolerate whitespace - depends on implementation
       // But should not crash either way
@@ -725,9 +656,7 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             NoAsm@1 : DotNet "''.System.String";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should handle gracefully (may report error)
       expect(ast.object).toBeDefined();
@@ -741,11 +670,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             MyType@2 : DotNet "'mscorlib'.System.String";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables).toHaveLength(2);
       expect(ast.object!.code!.variables[0].name).toBe('dotnet');
       expect(ast.object!.code!.variables[0].dataType.typeName).toBe('Integer');
@@ -771,11 +698,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
       expect(ast.object?.objectKind).toBe('Codeunit');
       expect(ast.object!.code!.variables).toHaveLength(3);
@@ -797,11 +722,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.procedures).toHaveLength(2);
       expect(ast.object!.code!.procedures[0].parameters[0].dataType.typeName).toBe('DotNet');
       expect(ast.object!.code!.procedures[1].parameters[0].dataType.typeName).toBe('DotNet');
@@ -821,11 +744,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables[0].dataType.dotNetTypeName).toBe('System.Collections.Generic.Dictionary`2');
       expect(ast.object!.code!.procedures[0].parameters[0].dataType.dotNetTypeName).toBe('Microsoft.Dynamics.Nav.Runtime.WebServiceActionContext');
       expect(ast.object!.code!.procedures[0].variables[0].dataType.dotNetTypeName).toBe('Microsoft.Dynamics.Nav.Runtime.WebServiceActionContext+StatusCode');
@@ -843,11 +764,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.variables).toHaveLength(2);
       expect(ast.object!.code!.variables[0].dataType.optionString).toBe('Day,Week,Month,Quarter,Year');
       expect(ast.object!.code!.variables[1].dataType.typeName).toBe('DotNet');
@@ -863,9 +782,7 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             MyType@1 : DotNet "'mscorlib'.System.String";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       const dataType = ast.object!.code!.variables[0].dataType;
 
@@ -892,9 +809,7 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             MyType@1 : DotNet "'mscorlib'.System.String";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       const variable = ast.object!.code!.variables[0];
 
@@ -918,11 +833,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             Publisher@1 : DotNet "'O''Reilly.Json'.O''Reilly.Json.Parser";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.typeName).toBe('DotNet');
       // IMPORTANT: Verify unescaped value (single quote, not doubled)
@@ -937,11 +850,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             Weird@1 : DotNet "'It''s.A.Test''s.Assembly'.Some.Type";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       // Verify unescaped: It's.A.Test's.Assembly
       expect(variable.dataType.assemblyReference).toBe("It's.A.Test's.Assembly");
@@ -956,11 +867,9 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             Parser@1 : DotNet "'mscorlib'.System.O''Brien.Parser";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object!.code!.variables[0];
       expect(variable.dataType.typeName).toBe('DotNet');
       // Assembly name should remain as-is (no escaping)
@@ -977,13 +886,11 @@ describe('Parser - DotNet Assembly-Qualified Types', () => {
             NoType@1 : DotNet "'mscorlib'.";
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should report specific error about missing type name
-      expect(parser.getErrors().length).toBeGreaterThan(0);
-      expect(parser.getErrors()[0].message).toMatch(/Expected type name after/i);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].message).toMatch(/Expected type name after/i);
       // Should still recover and create partial DataType
       expect(ast.object).toBeDefined();
     });

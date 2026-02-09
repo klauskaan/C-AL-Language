@@ -13,8 +13,7 @@
  * the error location is the subject of issue #369.
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Parser - REPEAT/UNTIL Error Location', () => {
   describe('Missing UNTIL - error location tests', () => {
@@ -35,12 +34,7 @@ describe('Parser - REPEAT/UNTIL Error Location', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report "Expected UNTIL" error
       const untilError = errors.find(e => e.message.includes('Expected UNTIL'));
@@ -72,12 +66,7 @@ describe('Parser - REPEAT/UNTIL Error Location', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       const untilError = errors.find(e => e.message.includes('Expected UNTIL'));
       expect(untilError).toBeDefined();
@@ -111,12 +100,7 @@ describe('Parser - REPEAT/UNTIL Error Location', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       const untilError = errors.find(e => e.message.includes('Expected UNTIL'));
       expect(untilError).toBeDefined();
@@ -153,12 +137,7 @@ describe('Parser - REPEAT/UNTIL Error Location', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       const untilError = errors.find(e => e.message.includes('Expected UNTIL'));
       expect(untilError).toBeDefined();
@@ -186,12 +165,7 @@ describe('Parser - REPEAT/UNTIL Error Location', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Both REPEATs should produce errors
       const untilErrors = errors.filter(e => e.message.includes('Expected UNTIL'));
@@ -229,12 +203,7 @@ describe('Parser - REPEAT/UNTIL Error Location', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Only outer REPEAT should produce error
       const untilErrors = errors.filter(e => e.message.includes('Expected UNTIL'));
@@ -265,12 +234,7 @@ describe('Parser - REPEAT/UNTIL Error Location', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       const untilError = errors.find(e => e.message.includes('Expected UNTIL'));
       expect(untilError).toBeDefined();
@@ -301,12 +265,7 @@ describe('Parser - REPEAT/UNTIL Error Location', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       const untilError = errors.find(e => e.message.includes('Expected UNTIL'));
       expect(untilError).toBeDefined();
@@ -327,12 +286,7 @@ describe('Parser - REPEAT/UNTIL Error Location', () => {
     BEGIN
       REPEAT
         x := 1;`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       const untilError = errors.find(e => e.message.includes('Expected UNTIL'));
       expect(untilError).toBeDefined();
@@ -360,12 +314,7 @@ describe('Parser - REPEAT/UNTIL Error Location', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // No errors expected
       expect(errors.length).toBe(0);

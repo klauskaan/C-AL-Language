@@ -15,8 +15,7 @@
  * - Array variables with @numbers showing incorrect CodeLens
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Parser - Auto-Numbering (@number) Handling', () => {
   describe('Procedure declarations with @numbers', () => {
@@ -32,9 +31,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object).not.toBeNull();
       expect(ast.object?.code).not.toBeNull();
@@ -57,9 +54,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Before fix: ast.errors will contain "Unexpected token in parameter list"
       // After fix: should parse cleanly
@@ -90,9 +85,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object).not.toBeNull();
 
@@ -117,9 +110,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object).not.toBeNull();
 
@@ -144,9 +135,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object).not.toBeNull();
 
@@ -175,9 +164,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object).not.toBeNull();
 
@@ -204,9 +191,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object).not.toBeNull();
 
@@ -235,9 +220,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object).not.toBeNull();
 
@@ -265,9 +248,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object).not.toBeNull();
 
@@ -303,9 +284,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object).not.toBeNull();
       expect(ast.object?.code).not.toBeNull();
@@ -334,9 +313,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // AST should be well-formed
       expect(ast.type).toBe('CALDocument');
@@ -366,9 +343,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const procedures = ast.object?.code?.procedures || [];
       const procedure = procedures[0];
@@ -398,9 +373,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Parser should not crash, but may collect errors
       expect(ast).toBeDefined();
@@ -419,9 +392,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Should not crash
       expect(ast).toBeDefined();
@@ -444,9 +415,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Should still parse the valid procedure
       const procedures = ast.object?.code?.procedures || [];
@@ -472,9 +441,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object).not.toBeNull();
 
@@ -505,9 +472,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object).not.toBeNull();
 
@@ -537,9 +502,7 @@ describe('Parser - Auto-Numbering (@number) Handling', () => {
           }
         }
       `;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       expect(ast.object).not.toBeNull();
 

@@ -21,9 +21,7 @@
  * - END closes blocks and is valid in multiple contexts
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
-import { parseCode } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Orphaned Control-Flow Keywords Detection', () => {
   describe('Basic orphaned keyword detection', () => {
@@ -517,10 +515,7 @@ OBJECT Codeunit 50000 "Test"
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error - BEGIN is valid as statement starter
       expect(errors).toHaveLength(0);
@@ -545,10 +540,7 @@ OBJECT Codeunit 50000 "Test"
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error - END is valid as block terminator
       expect(errors).toHaveLength(0);
@@ -574,10 +566,7 @@ OBJECT Codeunit 50000 "Test"
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -602,10 +591,7 @@ OBJECT Codeunit 50000 "Test"
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -632,10 +618,7 @@ OBJECT Codeunit 50000 "Test"
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -658,10 +641,7 @@ OBJECT Codeunit 50000 "Test"
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -686,10 +666,7 @@ OBJECT Codeunit 50000 "Test"
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -714,10 +691,7 @@ OBJECT Codeunit 50000 "Test"
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -743,10 +717,7 @@ OBJECT Codeunit 50000 "Test"
     END.
   }
 }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);

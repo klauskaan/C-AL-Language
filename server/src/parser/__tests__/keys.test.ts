@@ -17,8 +17,7 @@
  * - Handles periods, parentheses, and multi-word names
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 import { KeySection, ObjectDeclaration } from '../ast';
 
 describe('Parser - KEYS Section Multi-Token Field Names', () => {
@@ -32,11 +31,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       const obj = ast.object as ObjectDeclaration;
@@ -61,11 +58,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -86,11 +81,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -112,11 +105,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -136,11 +127,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -160,11 +149,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -186,11 +173,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -214,11 +199,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -244,11 +227,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -270,11 +251,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -298,11 +277,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -326,11 +303,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -352,11 +327,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -379,11 +352,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -404,11 +375,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -430,11 +399,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -454,11 +421,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
       const keys = obj.keys as KeySection;
@@ -487,11 +452,9 @@ describe('Parser - KEYS Section Multi-Token Field Names', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const obj = ast.object as ObjectDeclaration;
 

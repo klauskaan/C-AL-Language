@@ -17,9 +17,7 @@
  * Issue #331: Fixed test assertions to use e.token?.value for sanitized error messages
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
-import { parseCode } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Control-Flow Keywords in Expression Position', () => {
   describe('Exact bug scenario from issue #301', () => {
@@ -130,10 +128,7 @@ OBJECT Codeunit 50000 "Test"
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -162,10 +157,7 @@ OBJECT Codeunit 50000 "Test"
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -190,10 +182,7 @@ OBJECT Codeunit 50000 "Test"
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -216,10 +205,7 @@ OBJECT Codeunit 50000 "Test"
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -247,10 +233,7 @@ OBJECT Codeunit 50000 "Test"
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -278,10 +261,7 @@ OBJECT Codeunit 50000 "Test"
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -307,10 +287,7 @@ OBJECT Codeunit 50000 "Test"
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -338,10 +315,7 @@ OBJECT Codeunit 50000 "Test"
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -367,10 +341,7 @@ OBJECT Codeunit 50000 "Test"
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -396,10 +367,7 @@ OBJECT Codeunit 50000 "Test"
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -426,10 +394,7 @@ OBJECT Codeunit 50000 "Test"
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);
@@ -454,10 +419,7 @@ OBJECT Codeunit 50000 "Test"
   }
 }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without error
       expect(errors).toHaveLength(0);

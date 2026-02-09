@@ -29,8 +29,7 @@
  * - Edge cases: Empty input, whitespace, incomplete expressions
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 import { Property, FieldDeclaration, FieldSection } from '../ast';
 import { PropertyValueParser } from '../propertyValueParser';
 import { Token, TokenType } from '../../lexer/tokens';
@@ -40,9 +39,7 @@ import { Token, TokenType } from '../../lexer/tokens';
  * Reduces boilerplate in tests.
  */
 function getPropertyValueTokens(code: string, propertyName: string): Token[] {
-  const lexer = new Lexer(code);
-  const parser = new Parser(lexer.tokenize());
-  const ast = parser.parse();
+  const { ast } = parseCode(code);
 
   const fieldSection = ast.object?.fields as FieldSection | undefined;
   if (!fieldSection) {
@@ -1385,11 +1382,7 @@ describe('PropertyValueParser - Diagnostic Reporting', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      parser.parse();
-
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should have at least one error related to CalcFormula parsing
       const calcFormulaError = errors.find(e =>
@@ -1409,11 +1402,7 @@ describe('PropertyValueParser - Diagnostic Reporting', () => {
         }
       }`;
 
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      parser.parse();
-
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should have at least one error related to TableRelation parsing
       const tableRelationError = errors.find(e =>

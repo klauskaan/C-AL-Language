@@ -23,8 +23,7 @@
  * 8. Nested structures
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 import { Property, FieldDeclaration, FieldSection } from '../ast';
 
 describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
@@ -38,11 +37,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             CaptionML=ENU=Test }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       // Navigate to field properties
@@ -71,11 +68,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             CaptionML=ENU=Test }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -94,11 +89,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             CaptionML=ENU=Test }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -117,11 +110,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             CaptionML=ENU=Test }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -142,11 +133,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             CaptionML=ENU=Test }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -168,11 +157,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             CaptionML=ENU=Test }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -205,11 +192,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             Description=This is a test }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -236,11 +221,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             CaptionML=ENU=Second }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const fieldSection = ast.object?.fields as FieldSection;
       expect(fieldSection.fields).toHaveLength(2);
@@ -268,12 +251,10 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             RegexTok@1000 : TextConst 'ENU=Pattern:(\{[0-9]{8}\})';
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Parser should handle the mixed braces and brackets
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
     });
 
@@ -288,11 +269,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
           { 1 ; ; No ; Code20 }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       if (ast.object?.properties) {
@@ -317,11 +296,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             CaptionML=ENU=Test }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -341,11 +318,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             CaptionML=ENU=Test }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -365,9 +340,7 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             CaptionML=ENU=Test }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Parser should attempt to recover from missing closing bracket
       expect(ast.object).toBeDefined();
@@ -394,11 +367,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             Description=Status of the Post Configuration }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       const fieldSection = ast.object?.fields as FieldSection;
@@ -433,11 +404,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             Description=Select the customer account }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -463,11 +432,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             CaptionML=ENU=Status 3 }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const fieldSection = ast.object?.fields as FieldSection;
       expect(fieldSection.fields).toHaveLength(3);
@@ -496,9 +463,7 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             CaptionML=ENU=Test }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Parser should handle the extra closing bracket
       expect(ast.object).toBeDefined();
@@ -513,11 +478,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             Description=Field with brackets in name }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       const fieldSection = ast.object?.fields as FieldSection;
@@ -537,11 +500,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             CaptionML=ENU=Test }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -563,11 +524,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             CaptionML=ENU=Test }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const fieldSection = ast.object?.fields as FieldSection;
       const field = fieldSection.fields[0] as FieldDeclaration;
@@ -589,11 +548,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
         ELEMENTS {
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object?.properties?.properties).toHaveLength(2);
 
       const formatEval = ast.object?.properties?.properties.find(
@@ -611,11 +568,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
         ELEMENTS {
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const formatEval = ast.object?.properties?.properties.find(
         (p: Property) => p.name === 'Format/Evaluate'
@@ -635,11 +590,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
           { 1 ; ; No ; Code20 }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       const dataProp = ast.object?.properties?.properties.find(
         (p: Property) => p.name === 'DataPerCompany'
@@ -667,11 +620,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
           { 1 ;0 ;Container }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       const promotedActions = ast.object?.properties?.properties.find(
@@ -700,11 +651,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             NotBlank=Yes }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       const fieldSection = ast.object?.fields as FieldSection;
@@ -742,11 +691,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
           { 1 ;0 ;Container }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       const promotedActions = ast.object?.properties?.properties.find(
@@ -768,11 +715,9 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             OptionString=Begin,Code,End }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       const fieldSection = ast.object?.fields as FieldSection;
@@ -801,12 +746,10 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
           { 1 ;0 ;Container }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Critical test: parser must not error on "Actions" in continuation line
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
       expect(ast.object?.properties).toBeDefined();
 
@@ -838,12 +781,10 @@ describe('Parser - Property Value Parsing with Bracket Depth Tracking', () => {
             NotBlank=Yes }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Critical test: parser must not error on "Begin" and "End" in continuation line
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
 
       const fieldSection = ast.object?.fields as FieldSection;

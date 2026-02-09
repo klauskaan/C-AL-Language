@@ -11,8 +11,7 @@
  * - Error recovery validates parser stability
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 import { ForStatement, MemberExpression, Identifier } from '../ast';
 
 describe('Parser - FOR Loop with MemberExpression Variables', () => {
@@ -32,11 +31,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
       expect(errors).toHaveLength(0);
@@ -80,11 +75,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -119,11 +110,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -162,11 +149,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -208,11 +191,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -255,11 +234,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -300,11 +275,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors (existing functionality)
       expect(errors).toHaveLength(0);
@@ -339,11 +310,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report error - CallExpression is not a valid lvalue
       expect(errors.length).toBeGreaterThan(0);
@@ -371,11 +338,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report error - array indexing is not a valid lvalue in FOR
       expect(errors.length).toBeGreaterThan(0);
@@ -401,11 +364,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report error - literal is not a valid lvalue
       expect(errors.length).toBeGreaterThan(0);
@@ -439,11 +398,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should have errors for invalid FOR
       expect(errors.length).toBeGreaterThan(0);
@@ -479,11 +434,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -515,11 +466,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -557,11 +504,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
@@ -597,10 +540,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       const procedure = ast.object!.code!.procedures[0];
       const forStmt = procedure.body[0] as ForStatement;
@@ -644,11 +584,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
       expect(errors).toHaveLength(0);
@@ -694,11 +630,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse without errors
       expect(errors).toHaveLength(0);
@@ -758,11 +690,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       const forError = errors.find(e =>
         e.message.includes('Invalid FOR loop variable')
@@ -785,11 +713,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       const forError = errors.find(e =>
         e.message.includes('Invalid FOR loop variable')
@@ -812,11 +736,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       const forError = errors.find(e =>
         e.message.includes('Invalid FOR loop variable')
@@ -841,11 +761,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       const forError = errors.find(e =>
         e.message.includes('Invalid FOR loop variable')
@@ -868,11 +784,7 @@ describe('Parser - FOR Loop with MemberExpression Variables', () => {
     END;
   }
 }`;
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       const forError = errors.find(e =>
         e.message.includes('Invalid FOR loop variable')

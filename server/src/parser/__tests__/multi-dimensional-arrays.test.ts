@@ -17,8 +17,7 @@
  * - TEMPORARY flag is properly set for ARRAY OF TEMPORARY patterns
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 import { ArrayAccessExpression, AssignmentStatement } from '../ast';
 
 describe('Parser - Multi-Dimensional Arrays', () => {
@@ -34,11 +33,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.name).toBe('MyArray');
       expect(variable?.dataType.typeName).toBe('ARRAY[10] OF Integer');
@@ -57,11 +54,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.typeName).toBe('ARRAY[20] OF Text50');
       expect(variable?.dataType.length).toBe(20);
@@ -79,11 +74,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.typeName).toBe('ARRAY[100] OF Record 18');
       expect(variable?.dataType.length).toBe(100);
@@ -103,11 +96,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.name).toBe('Matrix');
       expect(variable?.dataType.typeName).toBe('ARRAY[9,2] OF Decimal');
@@ -128,11 +119,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.typeName).toBe('ARRAY[5,5] OF Integer');
       expect(variable?.dataType.length).toBe(5);
@@ -150,11 +139,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.typeName).toBe('ARRAY[2,12] OF Text50');
       expect(variable?.dataType.length).toBe(2);
@@ -172,11 +159,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.typeName).toBe('ARRAY[3,4] OF Record 18');
       expect(variable?.dataType.length).toBe(3);
@@ -196,11 +181,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.name).toBe('Tensor');
       expect(variable?.dataType.typeName).toBe('ARRAY[10,4,4] OF Decimal');
@@ -221,11 +204,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.typeName).toBe('ARRAY[2,3,4] OF Integer');
       expect(variable?.dataType.length).toBe(2);
@@ -243,11 +224,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.typeName).toBe('ARRAY[5,5,5] OF Code20');
       expect(variable?.dataType.length).toBe(5);
@@ -267,11 +246,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.name).toBe('TempRecordMatrix');
       expect(variable?.dataType.typeName).toBe('ARRAY[5,5] OF Record 18');
@@ -291,11 +268,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.typeName).toBe('ARRAY[3,3,3] OF Record 48');
       expect(variable?.dataType.isTemporary).toBe(true);
@@ -311,11 +286,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedure = ast.object?.code?.procedures[0];
       expect(procedure?.parameters).toHaveLength(1);
       const param = procedure?.parameters[0];
@@ -335,11 +308,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedure = ast.object?.code?.procedures[0];
       const param = procedure?.parameters[0];
       expect(param?.name).toBe('Matrix');
@@ -355,11 +326,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedure = ast.object?.code?.procedures[0];
       const param = procedure?.parameters[0];
       expect(param?.name).toBe('Tensor');
@@ -376,11 +345,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedure = ast.object?.code?.procedures[0];
       expect(procedure?.parameters).toHaveLength(2);
 
@@ -401,11 +368,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           { 1 ; ; Matrix ; ARRAY [5,5] OF Decimal }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const field = ast.object?.fields?.fields[0];
       expect(field?.fieldName).toBe('Matrix');
       expect(field?.dataType.typeName).toBe('ARRAY[5,5] OF Decimal');
@@ -418,11 +383,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           { 1 ; ; Cube ; ARRAY [4,4,4] OF Code20 }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const field = ast.object?.fields?.fields[0];
       expect(field?.fieldName).toBe('Cube');
       expect(field?.dataType.typeName).toBe('ARRAY[4,4,4] OF Code20');
@@ -442,11 +405,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.dimensions).toEqual([100, 50, 25]);
       expect(variable?.dataType.length).toBe(100);
@@ -463,11 +424,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.dimensions).toEqual([2, 3, 4, 5, 6]);
       expect(variable?.dataType.length).toBe(2);
@@ -484,11 +443,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.dimensions).toEqual([1, 20, 333, 4444]);
       expect(variable?.dataType.typeName).toBe('ARRAY[1,20,333,4444] OF Text100');
@@ -507,9 +464,7 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.length).toBe(42);
@@ -527,9 +482,7 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.length).toBe(9);
@@ -551,11 +504,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object?.code?.variables).toHaveLength(3);
 
       const var1 = ast.object?.code?.variables[0];
@@ -581,11 +532,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       expect(ast.object?.code?.variables).toHaveLength(3);
 
       const var1 = ast.object?.code?.variables[0];
@@ -609,11 +558,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const procedure = ast.object?.code?.procedures[0];
       expect(procedure?.parameters).toHaveLength(3);
 
@@ -643,11 +590,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.typeName).toBe('ARRAY[5,4] OF Text[30]');
       expect(variable?.dataType.dimensions).toEqual([5, 4]);
@@ -664,11 +609,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.typeName).toBe('ARRAY[3,3,3] OF Code[20]');
       expect(variable?.dataType.dimensions).toEqual([3, 3, 3]);
@@ -682,11 +625,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const param = ast.object?.code?.procedures[0]?.parameters[0];
       expect(param?.dataType.typeName).toBe('ARRAY[2,12] OF Text[50]');
       expect(param?.dataType.dimensions).toEqual([2, 12]);
@@ -705,12 +646,10 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      parser.parse();
+      const { errors } = parseCode(code);
 
       // Should record an error but not crash
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
     });
 
     it('should handle non-integer dimension gracefully', () => {
@@ -724,12 +663,10 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      parser.parse();
+      const { errors } = parseCode(code);
 
       // Should record an error but not crash
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
     });
 
     it('should handle missing closing bracket gracefully', () => {
@@ -743,12 +680,10 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      parser.parse();
+      const { errors } = parseCode(code);
 
       // Should record an error but not crash
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
     });
 
     it('should handle missing first dimension gracefully', () => {
@@ -762,12 +697,10 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      parser.parse();
+      const { errors } = parseCode(code);
 
       // Should record an error but not crash
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
     });
 
     it('should handle empty brackets gracefully', () => {
@@ -781,12 +714,10 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      parser.parse();
+      const { errors } = parseCode(code);
 
       // Should record an error but not crash
-      expect(parser.getErrors().length).toBeGreaterThan(0);
+      expect(errors.length).toBeGreaterThan(0);
     });
 
     it('should report error when array has more than 10 dimensions', () => {
@@ -800,12 +731,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      parser.parse();
+      const { errors } = parseCode(code);
 
       // Should record an error about too many dimensions
-      const errors = parser.getErrors();
       expect(errors.length).toBeGreaterThan(0);
       expect(errors.some(e => e.message.includes('more than 10 dimensions'))).toBe(true);
     });
@@ -821,12 +749,10 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Should not report any dimension-related errors
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const variable = ast.object?.code?.variables[0];
       expect(variable?.dataType.dimensions).toHaveLength(10);
     });
@@ -845,11 +771,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object?.code?.procedures[0];
       expect(proc).toBeDefined();
       const stmt = proc?.body?.[0];
@@ -873,11 +797,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object?.code?.procedures[0];
       expect(proc).toBeDefined();
       const stmt = proc?.body?.[0];
@@ -901,11 +823,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object?.code?.procedures[0];
       expect(proc).toBeDefined();
       const stmt = proc?.body?.[0];
@@ -931,11 +851,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object?.code?.procedures[0];
       expect(proc).toBeDefined();
       const stmt = proc?.body?.[0];
@@ -961,11 +879,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object?.code?.procedures[0];
       expect(proc).toBeDefined();
       const stmt = proc?.body?.[0];
@@ -992,11 +908,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
       const proc = ast.object?.code?.procedures[0];
       expect(proc).toBeDefined();
       const stmt = proc?.body?.[0];
@@ -1024,11 +938,9 @@ describe('Parser - Multi-Dimensional Arrays', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      parser.parse();
+      const { ast, errors } = parseCode(code);
 
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 });

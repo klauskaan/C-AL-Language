@@ -20,8 +20,7 @@
  * when sections are unclosed at EOF, but exact error location is not critical.
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode, expectParseNoThrow } from './parserTestHelpers';
 import { ObjectKind } from '../ast';
 
 describe('Parser - Section EOF Edge Cases', () => {
@@ -38,12 +37,7 @@ describe('Parser - Section EOF Edge Cases', () => {
     { 1   ;   ;No.                 ;Code20        }
     { 2   ;   ;Name                ;Text50        }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Parser should not throw
       expect(ast).toBeDefined();
@@ -67,12 +61,7 @@ describe('Parser - Section EOF Edge Cases', () => {
   FIELDS
   {`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(ast).toBeDefined();
       expect(errors.length).toBeGreaterThan(0);
@@ -88,12 +77,7 @@ describe('Parser - Section EOF Edge Cases', () => {
     { 1   ;   ;No.                 ;Code20        }
     { 2   ;   ;Name`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(ast).toBeDefined();
       // Should have errors for both the incomplete field and the unclosed section
@@ -111,12 +95,7 @@ describe('Parser - Section EOF Edge Cases', () => {
     DataCaptionFields=No.,Name;
     LookupPageID=Page22;`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Parser should not throw
       expect(ast).toBeDefined();
@@ -136,12 +115,7 @@ describe('Parser - Section EOF Edge Cases', () => {
   PROPERTIES
   {`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(ast).toBeDefined();
       expect(errors.length).toBeGreaterThan(0);
@@ -166,12 +140,7 @@ describe('Parser - Section EOF Edge Cases', () => {
                 Name=Edit;
                 CaptionML=ENU=Edit }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -193,12 +162,7 @@ describe('Parser - Section EOF Edge Cases', () => {
   ACTIONS
   {`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(ast).toBeDefined();
       expect(errors.length).toBeGreaterThan(0);
@@ -216,12 +180,7 @@ describe('Parser - Section EOF Edge Cases', () => {
     { 2   ;1   ;Action    ;
                 Name=Edit`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(ast).toBeDefined();
       expect(errors.length).toBeGreaterThan(0);
@@ -246,12 +205,7 @@ describe('Parser - Section EOF Edge Cases', () => {
     {    ;No.                      ;Clustered=Yes }
     {    ;Name                                    }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -273,12 +227,7 @@ describe('Parser - Section EOF Edge Cases', () => {
   KEYS
   {`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(ast).toBeDefined();
       expect(errors.length).toBeGreaterThan(0);
@@ -305,12 +254,7 @@ describe('Parser - Section EOF Edge Cases', () => {
     { 1   ;DropDown  ;No.,Name                     }
     { 2   ;Brick     ;No.,Name                     }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -332,12 +276,7 @@ describe('Parser - Section EOF Edge Cases', () => {
   FIELDGROUPS
   {`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(ast).toBeDefined();
       expect(errors.length).toBeGreaterThan(0);
@@ -362,12 +301,7 @@ describe('Parser - Section EOF Edge Cases', () => {
                 Name=General;
                 CaptionML=ENU=General }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -389,12 +323,7 @@ describe('Parser - Section EOF Edge Cases', () => {
   CONTROLS
   {`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(ast).toBeDefined();
       expect(errors.length).toBeGreaterThan(0);
@@ -416,12 +345,7 @@ describe('Parser - Section EOF Edge Cases', () => {
     { [{GUID-1}];0   ;Root            ;Element ;Text }
     { [{GUID-2}];1   ;Customer        ;Element ;Text }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
@@ -443,12 +367,7 @@ describe('Parser - Section EOF Edge Cases', () => {
   ELEMENTS
   {`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       expect(ast).toBeDefined();
       expect(errors.length).toBeGreaterThan(0);
@@ -469,12 +388,7 @@ describe('Parser - Section EOF Edge Cases', () => {
     ];
 
     it.each(sections)('should use consistent error message format for $section section', ({ code, section }) => {
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      parser.parse();
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       const closeError = errors.find(e => e.message.includes(`Expected } to close ${section} section`));
       expect(closeError).toBeDefined();
@@ -497,11 +411,7 @@ describe('Parser - Section EOF Edge Cases', () => {
     { 1   ;   ;No.                 ;Code20        }
     { 2   ;   ;Name                ;Text50        }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
+      const { ast } = parseCode(code);
 
       // Should still produce a valid AST
       expect(ast).toBeDefined();
@@ -523,11 +433,7 @@ describe('Parser - Section EOF Edge Cases', () => {
   {
     { 1   ;   ;No.                 ;Code20        }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      expect(() => parser.parse()).not.toThrow();
+      expectParseNoThrow(code);
     });
 
     it('should handle multiple sections where last is unclosed at EOF', () => {
@@ -545,12 +451,7 @@ describe('Parser - Section EOF Edge Cases', () => {
   {
     {    ;No.                      ;Clustered=Yes }`;
 
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
-
-      const ast = parser.parse();
-      const errors = parser.getErrors();
+      const { ast, errors } = parseCode(code);
 
       // Should parse both sections
       expect(ast).toBeDefined();
@@ -577,14 +478,10 @@ describe('Parser - Section EOF Edge Cases', () => {
   }
 }`;
 
-      const lexer1 = new Lexer(codeWithNextSection);
-      const tokens1 = lexer1.tokenize();
-      const parser1 = new Parser(tokens1);
-      parser1.parse();
-      const errors1 = parser1.getErrors();
+      const { errors: errors1 } = parseCode(codeWithNextSection);
 
       // Should report missing closing brace for FIELDS
-      const fieldsError = errors1.find(e => e.message.includes('FIELDS'));
+      const fieldsError = errors1.find((e: any) => e.message.includes('FIELDS'));
       expect(fieldsError).toBeDefined();
 
       // Now test EOF case - should also report missing brace
@@ -594,14 +491,10 @@ describe('Parser - Section EOF Edge Cases', () => {
   {
     { 1   ;   ;No.                 ;Code20        }`;
 
-      const lexer2 = new Lexer(codeWithEOF);
-      const tokens2 = lexer2.tokenize();
-      const parser2 = new Parser(tokens2);
-      parser2.parse();
-      const errors2 = parser2.getErrors();
+      const { errors: errors2 } = parseCode(codeWithEOF);
 
       // Should report missing closing brace for FIELDS
-      const fieldsEofError = errors2.find(e => e.message.includes('FIELDS'));
+      const fieldsEofError = errors2.find((e: any) => e.message.includes('FIELDS'));
       expect(fieldsEofError).toBeDefined();
 
       // Both cases should report similar errors

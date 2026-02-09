@@ -3,8 +3,7 @@
  * Reproduces validation report errors: "Unexpected token in parameter list"
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
+import { parseCode } from './parserTestHelpers';
 
 describe('Parser - Parameter @ Syntax', () => {
   it('should parse parameter with @number suffix', () => {
@@ -20,10 +19,7 @@ describe('Parser - Parameter @ Syntax', () => {
       }
     `;
 
-    const lexer = new Lexer(code);
-    const tokens = lexer.tokenize();
-    const parser = new Parser(tokens);
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object).not.toBeNull();
     expect(ast.object?.code).not.toBeNull();
@@ -51,10 +47,7 @@ describe('Parser - Parameter @ Syntax', () => {
       }
     `;
 
-    const lexer = new Lexer(code);
-    const tokens = lexer.tokenize();
-    const parser = new Parser(tokens);
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object).not.toBeNull();
     expect(ast.object?.code).not.toBeNull();
@@ -87,10 +80,7 @@ describe('Parser - Parameter @ Syntax', () => {
       }
     `;
 
-    const lexer = new Lexer(code);
-    const tokens = lexer.tokenize();
-    const parser = new Parser(tokens);
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object).not.toBeNull();
     expect(ast.object?.code).not.toBeNull();
@@ -121,10 +111,7 @@ describe('Parser - Parameter @ Syntax', () => {
       }
     `;
 
-    const lexer = new Lexer(code);
-    const tokens = lexer.tokenize();
-    const parser = new Parser(tokens);
-    const ast = parser.parse();
+    const { ast } = parseCode(code);
 
     expect(ast.object).not.toBeNull();
     expect(ast.object?.code).not.toBeNull();

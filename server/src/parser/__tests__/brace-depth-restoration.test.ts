@@ -20,9 +20,8 @@
  * causing the comparison to never match and the parser to skip until EOF.
  */
 
-import { Lexer } from '../../lexer/lexer';
-import { Parser } from '../parser';
 import { ObjectKind } from '../ast';
+import { parseCode, expectParseNoThrow } from './parserTestHelpers';
 
 describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
   describe('PRIMARY: braceDepth corruption symptom', () => {
@@ -38,9 +37,7 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           { 1 ;0 ;Container }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // After malformed property, parser should still recognize CONTROLS section
       // Bug symptom: skipUnsupportedSection() fails due to corrupted braceDepth
@@ -50,7 +47,7 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
 
       // The parser should have errors about the malformed property
       // but should NOT have errors about "unexpected EOF" in CONTROLS
-      const errors = parser.getErrors();
+
       const unexpectedEOFErrors = errors.filter(e =>
         e.message.toLowerCase().includes('unexpected') &&
         e.message.toLowerCase().includes('end')
@@ -72,15 +69,13 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           { 1 ;0 ;Action }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       expect(ast.object).toBeDefined();
       expect(ast.object?.objectKind).toBe(ObjectKind.Page);
 
       // Should not have unexpected EOF errors in ACTIONS section
-      const errors = parser.getErrors();
+
       const unexpectedEOFErrors = errors.filter(e =>
         e.message.toLowerCase().includes('unexpected') &&
         e.message.toLowerCase().includes('end')
@@ -103,14 +98,11 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           { 1 ;0 ;Container }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       // Even with 3 malformed properties, parser should recover
       expect(ast.object).toBeDefined();
 
-      const errors = parser.getErrors();
       const unexpectedEOFErrors = errors.filter(e =>
         e.message.toLowerCase().includes('unexpected') &&
         e.message.toLowerCase().includes('end')
@@ -134,12 +126,10 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           { 1 ;0 ;Container }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       expect(ast.object).toBeDefined();
-      expect(parser.getErrors()).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('should handle ACTIONS property with complex nested structure', () => {
@@ -152,9 +142,7 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           { 1 ;0 ;Container }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       expect(ast.object).toBeDefined();
     });
@@ -178,15 +166,13 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       expect(ast.object).toBeDefined();
       expect(ast.object?.objectKind).toBe(ObjectKind.Table);
 
       // Should recognize CODE section properly
-      const errors = parser.getErrors();
+
       const unexpectedEOFErrors = errors.filter(e =>
         e.message.toLowerCase().includes('unexpected') &&
         e.message.toLowerCase().includes('end')
@@ -220,16 +206,14 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       expect(ast.object).toBeDefined();
       expect(ast.object?.objectKind).toBe(ObjectKind.Page);
 
       // Should parse CONTROLS and CODE sections
       // Bug would cause everything after the malformed property to be skipped
-      const errors = parser.getErrors();
+
 
       // Note: Error reporting for malformed properties is a separate bug (deferred).
       // This test only verifies that braceDepth corruption doesn't cause section skipping.
@@ -259,14 +243,11 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       expect(ast.object).toBeDefined();
       expect(ast.object?.objectKind).toBe(ObjectKind.Report);
 
-      const errors = parser.getErrors();
       const unexpectedEOFErrors = errors.filter(e =>
         e.message.toLowerCase().includes('unexpected') &&
         e.message.toLowerCase().includes('end')
@@ -286,14 +267,11 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           { 1 ;Element ; }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       expect(ast.object).toBeDefined();
       expect(ast.object?.objectKind).toBe(ObjectKind.XMLport);
 
-      const errors = parser.getErrors();
       const unexpectedEOFErrors = errors.filter(e =>
         e.message.toLowerCase().includes('unexpected') &&
         e.message.toLowerCase().includes('end')
@@ -320,14 +298,12 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           END;
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       expect(ast.object).toBeDefined();
 
       // Should parse both fields and CODE section
-      const errors = parser.getErrors();
+
       const unexpectedEOFErrors = errors.filter(e =>
         e.message.toLowerCase().includes('unexpected') &&
         e.message.toLowerCase().includes('end')
@@ -346,12 +322,9 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           { 1 ;0 ;Container }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-
       // Parser should not throw exceptions
       let ast: any;
-      expect(() => { ast = parser.parse(); }).not.toThrow();
+      expect(() => { const result = parseCode(code); ast = result.ast; }).not.toThrow();
 
       // AST should be valid even with errors
       expect(ast).toBeDefined();
@@ -368,11 +341,7 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           { 1 ; }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      parser.parse();
-
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should have at least one error about the malformed property
       expect(errors.length).toBeGreaterThan(0);
@@ -391,14 +360,12 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           { 1 ;0 ;Container }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       expect(ast.object).toBeDefined();
 
       // Space is a valid value - should NOT error
-      const errors = parser.getErrors();
+
       expect(errors).toHaveLength(0);
     });
 
@@ -412,14 +379,12 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           { 1 ;0 ;Container }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       expect(ast.object).toBeDefined();
 
       // Semicolon is a valid value - should NOT error
-      const errors = parser.getErrors();
+
       expect(errors).toHaveLength(0);
     });
 
@@ -433,14 +398,12 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           { 1 ;0 ;Container }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       expect(ast.object).toBeDefined();
 
       // Valid syntax - should NOT error
-      const errors = parser.getErrors();
+
       expect(errors).toHaveLength(0);
     });
 
@@ -453,11 +416,7 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
           { 1 ;0 ;Container }
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      parser.parse();
-
-      const errors = parser.getErrors();
+      const { errors } = parseCode(code);
 
       // Should report error for malformed property (property name is sanitized)
       expect(errors.length).toBeGreaterThan(0);
@@ -476,13 +435,10 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
         CONTROLS {
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       expect(ast.object).toBeDefined();
 
-      const errors = parser.getErrors();
       const unexpectedEOFErrors = errors.filter(e =>
         e.message.toLowerCase().includes('unexpected') &&
         e.message.toLowerCase().includes('end')
@@ -499,13 +455,10 @@ describe('Parser - Brace Depth Restoration After Backup (Issue #75)', () => {
         CONTROLS {
         }
       }`;
-      const lexer = new Lexer(code);
-      const parser = new Parser(lexer.tokenize());
-      const ast = parser.parse();
+      const { ast, errors } = parseCode(code);
 
       expect(ast.object).toBeDefined();
 
-      const errors = parser.getErrors();
       const unexpectedEOFErrors = errors.filter(e =>
         e.message.toLowerCase().includes('unexpected') &&
         e.message.toLowerCase().includes('end')
