@@ -5,7 +5,7 @@
 import { HoverProvider } from '../hoverProvider';
 import { SymbolTable } from '../../symbols/symbolTable';
 import { Position, MarkupKind } from 'vscode-languageserver';
-import { createMockToken, createDocument } from '../../__tests__/testUtils';
+import { createMockToken, createDocument, parseAndBuildSymbols } from '../../__tests__/testUtils';
 import { Token, TokenType } from '../../lexer/tokens';
 import { BuiltinRegistry } from '../../builtins';
 
@@ -562,6 +562,176 @@ describe('HoverProvider', () => {
       expect(docIndex).toBeGreaterThan(-1);
       expect(deprecatedIndex).toBeGreaterThan(-1);
       expect(docIndex).toBeLessThan(deprecatedIndex);
+    });
+  });
+
+  describe('Procedure Attribute Hover', () => {
+    it('should show full [External] attribute syntax in hover', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [External]
+    PROCEDURE TestProcedure@1();
+    BEGIN
+    END;
+  }
+}`;
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+
+      // Hover over the procedure name
+      const hover = provider.getHover(doc, Position.create(5, 15), ast, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('`[External]`');
+    });
+
+    it('should show full [EventSubscriber(Page,6302,OnOAuthAccessDenied)] syntax in hover', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [EventSubscriber(Page,6302,OnOAuthAccessDenied)]
+    PROCEDURE TestProcedure@1();
+    BEGIN
+    END;
+  }
+}`;
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+
+      // Hover over the procedure name
+      const hover = provider.getHover(doc, Position.create(5, 15), ast, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('`[EventSubscriber(Page,6302,OnOAuthAccessDenied)]`');
+    });
+
+    it('should show full [Scope(\'OnPrem\')] syntax with single-quoted string in hover', () => {
+      // Note: [Scope('OnPrem')] is an AL-only attribute, used here to exercise
+      // the string-token re-wrapping path. The parser handles it generically.
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [Scope('OnPrem')]
+    PROCEDURE TestProcedure@1();
+    BEGIN
+    END;
+  }
+}`;
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+
+      // Hover over the procedure name
+      const hover = provider.getHover(doc, Position.create(5, 15), ast, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('`[Scope(\'OnPrem\')]`');
+    });
+
+    it('should show full [EventSubscriber(Codeunit,5330,OnAfterCRMIntegrationEnabled,"",Skip,Skip)] with empty string in hover', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [EventSubscriber(Codeunit,5330,OnAfterCRMIntegrationEnabled,"",Skip,Skip)]
+    PROCEDURE TestProcedure@1();
+    BEGIN
+    END;
+  }
+}`;
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+
+      // Hover over the procedure name
+      const hover = provider.getHover(doc, Position.create(5, 15), ast, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('`[EventSubscriber(Codeunit,5330,OnAfterCRMIntegrationEnabled,"",Skip,Skip)]`');
+    });
+
+    it('should show full [Integration(TRUE)] syntax with boolean argument in hover', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [Integration(TRUE)]
+    PROCEDURE TestProcedure@1();
+    BEGIN
+    END;
+  }
+}`;
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+
+      // Hover over the procedure name
+      const hover = provider.getHover(doc, Position.create(5, 15), ast, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('`[Integration(TRUE)]`');
+    });
+
+    it('should show both attributes when multiple attributes are present', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [External]
+    [TryFunction]
+    PROCEDURE TestProcedure@1();
+    BEGIN
+    END;
+  }
+}`;
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+
+      // Hover over the procedure name
+      const hover = provider.getHover(doc, Position.create(6, 15), ast, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('`[External]`');
+      expect(content).toContain('`[TryFunction]`');
+
+      // Verify they appear on separate lines
+      const lines = content.split('\n');
+      const externalLine = lines.find(l => l.includes('`[External]`'));
+      const tryFunctionLine = lines.find(l => l.includes('`[TryFunction]`'));
+      expect(externalLine).toBeDefined();
+      expect(tryFunctionLine).toBeDefined();
+      expect(externalLine).not.toBe(tryFunctionLine);
+    });
+
+    it('should not show attributes for procedures without attributes', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProcedure@1();
+    BEGIN
+    END;
+  }
+}`;
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+
+      // Hover over the procedure name
+      const hover = provider.getHover(doc, Position.create(4, 15), ast, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      // Should not contain attribute syntax
+      expect(content).not.toContain('[External]');
+      expect(content).not.toContain('[TryFunction]');
+      expect(content).not.toContain('[EventSubscriber');
     });
   });
 
