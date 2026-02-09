@@ -3242,6 +3242,12 @@ export class Parser {
         if (stmt) {
           statements.push(stmt);
         }
+        // Check if we've hit a procedure boundary after successfully parsing a statement
+        // This handles cases where a statement parser (e.g., parseCaseStatement) detected
+        // an error and returned a partial node but didn't throw
+        if (PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
+          break;
+        }
       } catch (error) {
         if (error instanceof ParseError) {
           this.errors.push(error);
@@ -3260,7 +3266,20 @@ export class Parser {
       }
     }
 
-    const endToken = this.consumeExpected(TokenType.End, 'Expected END to close BEGIN block');
+    // Check if loop exited due to procedure boundary
+    let endToken: Token;
+    if (PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
+      // Block is missing END - report error and return partial block
+      // Use previous token for error location (last valid token before procedure boundary)
+      this.recordError(
+        `Expected END to close BEGIN block`,
+        this.previous()
+      );
+      // Use previous token as endToken (last token before procedure boundary)
+      endToken = this.previous();
+    } else {
+      endToken = this.consumeExpected(TokenType.End, 'Expected END to close BEGIN block');
+    }
 
     return {
       type: 'BlockStatement',
@@ -4009,7 +4028,21 @@ export class Parser {
       }
     }
 
-    // Check if loop exited due to statement-starting keyword
+    // Check if loop exited due to procedure boundary or statement-starting keyword
+    if (PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
+      // Procedure boundary found - CASE is missing END
+      this.recordError('Expected END to close CASE statement', this.peek());
+      // Return partial node without consuming the procedure boundary
+      // Let outer parser handle the next procedure
+      return {
+        type: 'CaseStatement',
+        expression,
+        branches,
+        elseBranch,
+        startToken,
+        endToken: this.previous()  // Last token before procedure boundary (partial node marker)
+      };
+    }
     if (CASE_EXIT_STATEMENT_KEYWORDS.has(this.peek().type)) {
       // Statement keyword found - CASE is missing END
       this.recordError('Expected END to close CASE statement', this.peek());
@@ -4200,7 +4233,11 @@ export class Parser {
   private parseCaseElseBranch(): Statement[] {
     this.advance(); // consume ELSE token
     const statements: Statement[] = [];
-    while (!this.check(TokenType.End) && !this.isAtEnd()) {
+    // Stop at procedure boundaries (PROCEDURE/FUNCTION/TRIGGER/EVENT).
+    // Note: CASE_EXIT_STATEMENT_KEYWORDS (IF/WHILE/FOR/REPEAT/WITH) are NOT added here
+    // because they are valid statement starters inside ELSE bodies and are handled by parseStatement().
+    while (!this.check(TokenType.End) && !this.isAtEnd() &&
+           !PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
       const stmt = this.parseStatement();
       if (stmt) {
         statements.push(stmt);

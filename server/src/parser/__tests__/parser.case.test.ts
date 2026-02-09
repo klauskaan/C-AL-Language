@@ -1513,4 +1513,55 @@ describe('Parser - Nested CASE Error Recovery', () => {
       });
     });
   });
+
+  describe('Issue #387 - parseCaseElseBranch missing PROCEDURE_BOUNDARY_TOKENS guard', () => {
+    it('should detect missing CASE END when ELSE branch is followed by PROCEDURE', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+      ELSE
+        MESSAGE('Default');
+
+    PROCEDURE Bar();
+    BEGIN
+      MESSAGE('Bar');
+    END;
+  }
+}`;
+      const { ast, errors } = parseCode(code);
+
+      // Should report error for missing CASE END
+      expect(errors.length).toBeGreaterThan(0);
+      const caseError = errors.find(e =>
+        e.message.includes('CASE') ||
+        e.message.includes('END') ||
+        e.message.includes('Expected')
+      );
+      expect(caseError).toBeDefined();
+
+      // Both procedures should be preserved (not consumed by error recovery)
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures.length).toBe(2);
+      expect(procedures[0].name).toBe('Foo');
+      expect(procedures[1].name).toBe('Bar');
+
+      // CASE statement should be preserved in first procedure's body
+      const statements = procedures[0].body;
+      expect(statements.length).toBeGreaterThan(0);
+      const caseStmt = statements.find(stmt => stmt.type === 'CaseStatement') as CaseStatement;
+      expect(caseStmt).toBeDefined();
+      expect(caseStmt.type).toBe('CaseStatement');
+
+      // ELSE branch statements should be preserved
+      expect(caseStmt.elseBranch).not.toBeNull();
+      expect(caseStmt.elseBranch!.length).toBeGreaterThanOrEqual(1);
+    });
+  });
 });
