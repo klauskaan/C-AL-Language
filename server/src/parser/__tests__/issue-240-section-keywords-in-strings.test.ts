@@ -26,11 +26,11 @@ describe('Issue #240: Section keywords in string literals', () => {
           }
           ACTIONS
           {
-            { 1   ;ActionContainer;
-                  ActionContainerType=ActionItems }
-            { 2   ;Action  ;
-                  CaptionML=ENU=Run;
-                  Promoted=Yes }
+            { 1   ;0   ;ActionContainer;
+                        ActionContainerType=ActionItems }
+            { 2   ;1   ;Action  ;
+                        CaptionML=ENU=Run;
+                        Promoted=Yes }
           }
         }
       `;
@@ -42,7 +42,9 @@ describe('Issue #240: Section keywords in string literals', () => {
       expect(result.ast?.object?.properties?.properties).toHaveLength(1);
       expect(result.ast?.object?.properties?.properties[0].name).toBe('CaptionML');
       expect(result.ast?.object?.actions).toBeDefined();
-      expect(result.ast?.object?.actions?.actions).toHaveLength(2);
+      expect(result.ast?.object?.actions?.actions).toHaveLength(1);
+      const actionContainer = result.ast?.object?.actions?.actions[0];
+      expect(actionContainer?.children).toHaveLength(1);
     });
 
     it('should handle multiple instances of "Actions" in CaptionML across languages', () => {
@@ -57,8 +59,8 @@ describe('Issue #240: Section keywords in string literals', () => {
           }
           ACTIONS
           {
-            { 1   ;Action  ;
-                  CaptionML=ENU=Test }
+            { 1   ;0   ;Action  ;
+                        CaptionML=ENU=Test }
           }
         }
       `;
@@ -80,8 +82,8 @@ describe('Issue #240: Section keywords in string literals', () => {
           }
           ACTIONS
           {
-            { 1   ;Action  ;
-                  CaptionML=ENU=Process }
+            { 1   ;0   ;Action  ;
+                        CaptionML=ENU=Process }
           }
         }
       `;
@@ -106,10 +108,10 @@ describe('Issue #240: Section keywords in string literals', () => {
           }
           CONTROLS
           {
-            { 1   ;Container ;
-                  ContainerType=ContentArea }
-            { 2   ;Field     ;
-                  SourceExpr="No." }
+            { 1   ;0   ;Container ;
+                        ContainerType=ContentArea }
+            { 2   ;1   ;Field     ;
+                        SourceExpr="No." }
           }
         }
       `;
@@ -119,7 +121,9 @@ describe('Issue #240: Section keywords in string literals', () => {
       expect(result.errors).toHaveLength(0);
       expect(result.ast?.object?.properties).toBeDefined();
       expect(result.ast?.object?.controls).toBeDefined();
-      expect(result.ast?.object?.controls?.controls).toHaveLength(2);
+      expect(result.ast?.object?.controls?.controls).toHaveLength(1);
+      const container = result.ast?.object?.controls?.controls[0];
+      expect(container?.children).toHaveLength(1);
     });
 
     it('should handle "Controls" in multi-language properties', () => {
@@ -133,8 +137,8 @@ describe('Issue #240: Section keywords in string literals', () => {
           }
           CONTROLS
           {
-            { 1   ;Field     ;
-                  SourceExpr=Name }
+            { 1   ;0   ;Field     ;
+                        SourceExpr=Name }
           }
         }
       `;
@@ -157,8 +161,10 @@ describe('Issue #240: Section keywords in string literals', () => {
           }
           ELEMENTS
           {
-            { Customer              ;Element ;Customer }
-            { No                    ;Element ;No }
+            { [{5CDBAF06-C7E1-4222-9633-B90B6840C9FC}];  ;Customer            ;Element ;Table   ;
+                                                          SourceTable=Table18 }
+            { [{DAE9B066-1422-4AE9-945C-77B8CC451316}];1 ;No                  ;Element ;Field   ;
+                                                          SourceField=Customer::No. }
           }
         }
       `;
@@ -168,7 +174,9 @@ describe('Issue #240: Section keywords in string literals', () => {
       expect(result.errors).toHaveLength(0);
       expect(result.ast?.object?.properties).toBeDefined();
       expect(result.ast?.object?.elements).toBeDefined();
-      expect(result.ast?.object?.elements?.elements).toHaveLength(2);
+      expect(result.ast?.object?.elements?.elements).toHaveLength(1);
+      const customer = result.ast?.object?.elements?.elements[0];
+      expect(customer?.children).toHaveLength(1);
     });
 
     it('should handle "Elements" in ToolTipML', () => {
@@ -182,7 +190,7 @@ describe('Issue #240: Section keywords in string literals', () => {
           }
           ELEMENTS
           {
-            { Data                  ;Element ;Data }
+            { [{7CF8DF04-94D5-4C34-B4A3-D7EC243A1385}];  ;Data                ;Element ;Text     }
           }
         }
       `;
@@ -290,8 +298,8 @@ describe('Issue #240: Section keywords in string literals', () => {
           }
           ACTIONS
           {
-            { 1   ;Action  ;
-                  CaptionML=ENU=Test }
+            { 1   ;0   ;Action  ;
+                        CaptionML=ENU=Test }
           }
         }
       `;
@@ -315,8 +323,8 @@ describe('Issue #240: Section keywords in string literals', () => {
           }
           CONTROLS
           {
-            { 1   ;Field     ;
-                  SourceExpr=Name }
+            { 1   ;0   ;Field     ;
+                        SourceExpr=Name }
           }
         }
       `;
@@ -412,19 +420,19 @@ describe('Issue #240: Section keywords in string literals', () => {
           }
           CONTROLS
           {
-            { 1   ;Container ;
-                  ContainerType=ContentArea }
-            { 2   ;Field     ;
-                  CaptionML=ENU='Fields and Keys';
-                  SourceExpr="No." }
+            { 1   ;0   ;Container ;
+                        ContainerType=ContentArea }
+            { 2   ;1   ;Field     ;
+                        CaptionML=ENU='Fields and Keys';
+                        SourceExpr="No." }
           }
           ACTIONS
           {
-            { 1   ;ActionContainer;
-                  ActionContainerType=ActionItems }
-            { 2   ;Action  ;
-                  CaptionML=ENU='Run Code';
-                  Promoted=Yes }
+            { 1   ;0   ;ActionContainer;
+                        ActionContainerType=ActionItems }
+            { 2   ;1   ;Action  ;
+                        CaptionML=ENU='Run Code';
+                        Promoted=Yes }
           }
           CODE
           {
@@ -457,9 +465,11 @@ describe('Issue #240: Section keywords in string literals', () => {
           }
           ELEMENTS
           {
-            { Root                  ;Element ;Root }
-            { Customer              ;Element ;Customer }
-            { Code                  ;Element ;Code }
+            { [{0538A0EB-2372-43D4-B37C-BFDEA0F605CE}];  ;Root                ;Element ;Text     }
+            { [{A75DC6DE-02B6-4719-B43E-3C90D19B3BE5}];1 ;Customer            ;Element ;Table   ;
+                                                          SourceTable=Table18 }
+            { [{DAE9B066-1422-4AE9-945C-77B8CC451316}];2 ;Code                ;Attribute;Field  ;
+                                                          SourceField=Customer::Code }
           }
         }
       `;
@@ -469,7 +479,11 @@ describe('Issue #240: Section keywords in string literals', () => {
       expect(result.errors).toHaveLength(0);
       expect(result.ast?.object?.properties).toBeDefined();
       expect(result.ast?.object?.elements).toBeDefined();
-      expect(result.ast?.object?.elements?.elements).toHaveLength(3);
+      expect(result.ast?.object?.elements?.elements).toHaveLength(1);
+      const root = result.ast?.object?.elements?.elements[0];
+      expect(root?.children).toHaveLength(1);
+      const customer = root?.children?.[0];
+      expect(customer?.children).toHaveLength(1);
     });
   });
 
@@ -485,8 +499,8 @@ describe('Issue #240: Section keywords in string literals', () => {
           }
           ACTIONS
           {
-            { 1   ;ActionGroup;
-                  CaptionML=ENU=Actions }
+            { 1   ;0   ;ActionGroup;
+                        CaptionML=ENU=Actions }
           }
         }
       `;
@@ -536,8 +550,8 @@ describe('Issue #240: Section keywords in string literals', () => {
           }
           ACTIONS
           {
-            { 1   ;Action  ;
-                  CaptionML=ENU=Test }
+            { 1   ;0   ;Action  ;
+                        CaptionML=ENU=Test }
           }
         }
       `;
@@ -559,8 +573,8 @@ describe('Issue #240: Section keywords in string literals', () => {
           }
           ACTIONS
           {
-            { 1   ;Action  ;
-                  CaptionML=ENU=Test }
+            { 1   ;0   ;Action  ;
+                        CaptionML=ENU=Test }
           }
         }
       `;
@@ -583,8 +597,8 @@ describe('Issue #240: Section keywords in string literals', () => {
           }
           CONTROLS
           {
-            { 1   ;Field     ;
-                  SourceExpr=Name }
+            { 1   ;0   ;Field     ;
+                        SourceExpr=Name }
           }
         }
       `;
