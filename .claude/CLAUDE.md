@@ -38,6 +38,8 @@ Implementation work happens in a git worktree (`../worktree-issue-{number}`) to 
 
 **Review is mandatory.** adversarial-reviewer runs before every commit. It catches scope creep and drift that compound if unchecked.
 
+**Complete information before advancing.** Before moving to IMPLEMENT, REVIEW, or COMMIT, ensure all pending validations (test runs, compilations) have completed and their actual output has been read. Agent summaries are not sufficient -- read the real output, or re-run the task. A redundant test run costs seconds; a phase built on wrong information can waste an entire cycle.
+
 **When things go wrong:**
 - Tests fail after implementation? Small fix → just fix it. Design flaw → re-plan. Wrong root cause → re-investigate.
 - Senior-developer returns REJECTED? Back to PLAN with the rejection feedback.
@@ -167,6 +169,7 @@ Things we've learned:
 4. **Explicit issue closure** — use `Fixes #X` in commit messages, not just `#X`
 5. **Agent resume can fail** — if an agent returns nothing on resume, start it fresh with full context
 6. **Show reasoning when skipping** — state what you checked and why it's safe to skip, not just "this is straightforward"; issue descriptions can be wrong, outdated, or incomplete
+7. **Verify before advancing** -- don't proceed on agent summaries alone; read actual output at phase boundaries (#394)
 
 ---
 
