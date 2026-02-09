@@ -634,6 +634,30 @@ describe('HoverProvider', () => {
       expect(content).toContain('`[Scope(\'OnPrem\')]`');
     });
 
+    it('should re-escape single quotes in attribute string parameters (#396)', () => {
+      // In C/AL, single quotes within strings are escaped by doubling: 'O''Brien'
+      // The hover should preserve this escape sequence, not show 'O'Brien'
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [Scope('O''Brien')]
+    PROCEDURE TestProcedure@1();
+    BEGIN
+    END;
+  }
+}`;
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+
+      // Hover over the procedure name
+      const hover = provider.getHover(doc, Position.create(5, 15), ast, symbolTable);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('`[Scope(\'O\'\'Brien\')]`');
+    });
+
     it('should show full [EventSubscriber(Codeunit,5330,OnAfterCRMIntegrationEnabled,"",Skip,Skip)] with empty string in hover', () => {
       const code = `OBJECT Codeunit 50000 Test
 {

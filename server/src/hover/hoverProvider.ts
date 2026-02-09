@@ -211,7 +211,7 @@ export class HoverProvider extends ProviderBase {
   private formatAttributeTokenValue(token: Token): string {
     switch (token.type) {
       case TokenType.String:
-        return `'${token.value}'`;
+        return `'${token.value.replace(/'/g, "''")}'`;
       case TokenType.QuotedIdentifier:
         return `"${token.value}"`;
       default:
