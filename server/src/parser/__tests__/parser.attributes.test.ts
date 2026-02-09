@@ -249,8 +249,8 @@ describe('Parser - Procedure Attributes', () => {
       expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
 
-      // Attributes should be undefined or empty array
-      expect(proc.attributes === undefined || proc.attributes.length === 0).toBe(true);
+      // Attributes should be undefined when not present
+      expect(proc.attributes).toBeUndefined();
     });
 
     it('should handle LOCAL procedure without attributes', () => {
@@ -265,7 +265,7 @@ describe('Parser - Procedure Attributes', () => {
 
       expect(errors).toHaveLength(0);
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
-      expect(proc.attributes === undefined || proc.attributes.length === 0).toBe(true);
+      expect(proc.attributes).toBeUndefined();
     });
   });
 
@@ -613,7 +613,7 @@ describe('Parser - Procedure Attributes', () => {
       expect(procedures[0].attributes![0].name).toBe('External');
 
       // Proc2 has no attributes
-      expect(procedures[1].attributes === undefined || procedures[1].attributes.length === 0).toBe(true);
+      expect(procedures[1].attributes).toBeUndefined();
 
       // Proc3 has [TryFunction]
       expect(procedures[2].attributes).toHaveLength(1);
