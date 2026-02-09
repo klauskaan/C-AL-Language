@@ -206,6 +206,20 @@ export class HoverProvider extends ProviderBase {
   }
 
   /**
+   * Format a token value with appropriate quoting for hover display
+   */
+  private formatAttributeTokenValue(token: Token): string {
+    switch (token.type) {
+      case TokenType.String:
+        return `'${token.value}'`;
+      case TokenType.QuotedIdentifier:
+        return `"${token.value}"`;
+      default:
+        return token.value;
+    }
+  }
+
+  /**
    * Build hover content for a procedure declaration with attributes
    */
   private buildProcedureHover(proc: ProcedureDeclaration): string {
@@ -214,7 +228,8 @@ export class HoverProvider extends ProviderBase {
     // Add attributes on separate lines before the signature
     if (proc.attributes && proc.attributes.length > 0) {
       for (const attr of proc.attributes) {
-        content += `\`[${attr.name}]\`\n`;
+        const args = attr.rawTokens.map(t => this.formatAttributeTokenValue(t)).join('');
+        content += `\`[${attr.name}${args}]\`\n`;
       }
     }
 
