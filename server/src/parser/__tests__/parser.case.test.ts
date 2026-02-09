@@ -1548,4 +1548,281 @@ describe('Parser - Nested CASE Error Recovery', () => {
       expect(caseStmt.elseBranch!.length).toBeGreaterThanOrEqual(1);
     });
   });
+
+  describe('Issue #391 - parseCaseElseBranch error recovery', () => {
+    it('should recover from malformed expression in ELSE branch and preserve CASE AST', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      y : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        ELSE
+          y := ;
+      END;
+    END;
+  }
+}`;
+      const { ast, errors } = parseCode(code);
+
+      // Should report error for malformed expression (missing value after :=)
+      expect(errors.length).toBeGreaterThan(0);
+      const exprError = errors.find(e =>
+        e.message.includes('Unexpected') && e.message.includes('expected expression')
+      );
+      expect(exprError).toBeDefined();
+
+      // CASE statement should exist
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures.length).toBe(1);
+      const statements = procedures[0].body;
+      expect(statements.length).toBeGreaterThan(0);
+      const caseStmt = statements.find(stmt => stmt.type === 'CaseStatement') as CaseStatement;
+      expect(caseStmt).toBeDefined();
+      expect(caseStmt.type).toBe('CaseStatement');
+
+      // ELSE branch should not be null (even with error)
+      expect(caseStmt.elseBranch).not.toBeNull();
+
+      // Branches before ELSE should be preserved
+      expect(caseStmt.branches.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should recover from unclosed set literal in ELSE branch and preserve CASE AST', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      Value : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        2: MESSAGE('Two');
+        ELSE
+          IF Value IN [1,2,3 THEN;
+      END;
+    END;
+  }
+}`;
+      const { ast, errors } = parseCode(code);
+
+      // Should report error for unclosed set literal
+      expect(errors.length).toBeGreaterThan(0);
+      const setError = errors.find(e =>
+        e.message.includes('Expected ] after set literal')
+      );
+      expect(setError).toBeDefined();
+
+      // CASE statement should exist with complete structure
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures.length).toBe(1);
+      const statements = procedures[0].body;
+      expect(statements.length).toBeGreaterThan(0);
+      const caseStmt = statements.find(stmt => stmt.type === 'CaseStatement') as CaseStatement;
+      expect(caseStmt).toBeDefined();
+      expect(caseStmt.type).toBe('CaseStatement');
+
+      // Should preserve branches before ELSE
+      expect(caseStmt.branches.length).toBe(2);
+
+      // ELSE branch should not be null
+      expect(caseStmt.elseBranch).not.toBeNull();
+    });
+
+    it('should recover from error in second statement of ELSE branch', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      y : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        ELSE BEGIN
+          MESSAGE('First');
+          y := !!!;
+        END;
+      END;
+    END;
+  }
+}`;
+      const { ast, errors } = parseCode(code);
+
+      // Should report error for malformed expression
+      expect(errors.length).toBeGreaterThan(0);
+      const exprError = errors.find(e =>
+        e.message.includes('Unexpected') && e.message.includes('expected expression')
+      );
+      expect(exprError).toBeDefined();
+
+      // CASE statement should exist
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures.length).toBe(1);
+      const statements = procedures[0].body;
+      const caseStmt = statements.find(stmt => stmt.type === 'CaseStatement') as CaseStatement;
+      expect(caseStmt).toBeDefined();
+
+      // First statement in ELSE should be preserved
+      expect(caseStmt.elseBranch).not.toBeNull();
+      expect(caseStmt.elseBranch!.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should not consume next PROCEDURE during ELSE branch error recovery', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE FirstProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        ELSE
+          y := ;
+      END;
+    END;
+
+    PROCEDURE SecondProc();
+    BEGIN
+      MESSAGE('Second');
+    END;
+  }
+}`;
+      const { ast, errors } = parseCode(code);
+
+      // Should report error in ELSE branch
+      expect(errors.length).toBeGreaterThan(0);
+      const exprError = errors.find(e =>
+        e.message.includes('Unexpected') && e.message.includes('expected expression')
+      );
+      expect(exprError).toBeDefined();
+
+      // Both procedures should be preserved (boundary protection)
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures.length).toBe(2);
+      expect(procedures[0].name).toBe('FirstProc');
+      expect(procedures[1].name).toBe('SecondProc');
+    });
+
+    it('should recover from malformed expression inside nested BEGIN in ELSE branch', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      y : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        ELSE BEGIN
+          x := !!!;
+        END;
+      END;
+    END;
+  }
+}`;
+      const { ast, errors } = parseCode(code);
+
+      // Should report error for malformed expression
+      expect(errors.length).toBeGreaterThan(0);
+      const exprError = errors.find(e =>
+        e.message.includes('Unexpected') && e.message.includes('expected expression')
+      );
+      expect(exprError).toBeDefined();
+
+      // CASE statement should be preserved with complete structure
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures.length).toBe(1);
+      const statements = procedures[0].body;
+      const caseStmt = statements.find(stmt => stmt.type === 'CaseStatement') as CaseStatement;
+      expect(caseStmt).toBeDefined();
+      expect(caseStmt.type).toBe('CaseStatement');
+
+      // ELSE branch should exist
+      expect(caseStmt.elseBranch).not.toBeNull();
+    });
+
+    it('should recover when error immediately precedes CASE END token', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+      y : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        ELSE y := !!! END;
+    END;
+  }
+}`;
+      const { ast, errors } = parseCode(code);
+
+      // Should report error for malformed expression
+      expect(errors.length).toBeGreaterThan(0);
+      const exprError = errors.find(e =>
+        e.message.includes('Unexpected') && e.message.includes('expected expression')
+      );
+      expect(exprError).toBeDefined();
+
+      // CASE statement should still get its END token and produce complete AST
+      const procedures = ast.object?.code?.procedures || [];
+      expect(procedures.length).toBe(1);
+      const statements = procedures[0].body;
+      const caseStmt = statements.find(stmt => stmt.type === 'CaseStatement') as CaseStatement;
+      expect(caseStmt).toBeDefined();
+      expect(caseStmt.type).toBe('CaseStatement');
+
+      // CASE should have complete structure
+      expect(caseStmt.branches.length).toBeGreaterThanOrEqual(1);
+      expect(caseStmt.elseBranch).not.toBeNull();
+    });
+
+    it('should parse valid ELSE branch without errors (regression guard)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1: MESSAGE('One');
+        ELSE
+          MESSAGE('Default');
+      END;
+    END;
+  }
+}`;
+      const { ast, errors } = parseCode(code);
+
+      // Should parse without errors
+      expect(errors.length).toBe(0);
+
+      // CASE statement should exist with ELSE branch
+      const procedures = ast.object?.code?.procedures || [];
+      const statements = procedures[0].body;
+      const caseStmt = statements.find(stmt => stmt.type === 'CaseStatement') as CaseStatement;
+      expect(caseStmt).toBeDefined();
+      expect(caseStmt.elseBranch).not.toBeNull();
+      expect(caseStmt.elseBranch!.length).toBe(1);
+    });
+  });
 });
