@@ -591,11 +591,10 @@ describe('Parser - Nested CASE Error Recovery', () => {
       // This is a different error than incomplete range - it's an invalid expression start
       expect(errors.length).toBeGreaterThan(0);
 
-      // The error might be about unexpected token or invalid expression
+      // Should report specific error for unexpected '..' token
       const hasError = errors.some(e =>
-        e.message.includes('Expected') ||
-        e.message.includes('Unexpected') ||
-        e.message.includes('expression')
+        e.message.includes('Unexpected token') &&
+        e.message.includes('expected expression')
       );
       expect(hasError).toBe(true);
 
@@ -661,10 +660,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
       // Should report error for malformed function call (missing closing paren)
       expect(errors.length).toBeGreaterThan(0);
       const hasError = errors.some(e =>
-        e.message.includes('function') ||
-        e.message.includes('Expected') ||
-        e.message.includes('arguments') ||
-        e.message.includes(')')
+        e.message.includes("Expected ',' or ')' in function arguments")
       );
       expect(hasError).toBe(true);
 
@@ -1223,9 +1219,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
         // Should report error for CASE ELSE missing END
         expect(errors.length).toBeGreaterThan(0);
         const caseError = errors.find(e =>
-          e.message.includes('CASE') ||
-          e.message.includes('END') ||
-          e.message.includes('Expected')
+          e.message.includes('Expected END to close CASE statement')
         );
         expect(caseError).toBeDefined();
 
@@ -1267,9 +1261,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
         // Should report error for CASE ELSE missing END
         expect(errors.length).toBeGreaterThan(0);
         const caseError = errors.find(e =>
-          e.message.includes('CASE') ||
-          e.message.includes('END') ||
-          e.message.includes('Expected')
+          e.message.includes('Expected END to close CASE statement')
         );
         expect(caseError).toBeDefined();
 
@@ -1308,9 +1300,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
         // Should report error - outer END is for procedure BEGIN, not CASE
         expect(errors.length).toBeGreaterThan(0);
         const caseError = errors.find(e =>
-          e.message.includes('CASE') ||
-          e.message.includes('END') ||
-          e.message.includes('Expected')
+          e.message.includes('Expected END to close CASE statement')
         );
         expect(caseError).toBeDefined();
       });
@@ -1469,9 +1459,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
         // Should report error (IF gets absorbed into ELSE, error when reaching outer END)
         expect(errors.length).toBeGreaterThan(0);
         const hasError = errors.some(e =>
-          e.message.includes('CASE') ||
-          e.message.includes('END') ||
-          e.message.includes('Expected')
+          e.message.includes('Expected END to close CASE statement')
         );
         expect(hasError).toBe(true);
       });
@@ -1505,9 +1493,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
         // Should report error (WHILE gets absorbed into ELSE, error when reaching outer END)
         expect(errors.length).toBeGreaterThan(0);
         const hasError = errors.some(e =>
-          e.message.includes('CASE') ||
-          e.message.includes('END') ||
-          e.message.includes('Expected')
+          e.message.includes('Expected END to close CASE statement')
         );
         expect(hasError).toBe(true);
       });
@@ -1540,9 +1526,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
       // Should report error for missing CASE END
       expect(errors.length).toBeGreaterThan(0);
       const caseError = errors.find(e =>
-        e.message.includes('CASE') ||
-        e.message.includes('END') ||
-        e.message.includes('Expected')
+        e.message.includes('Expected END to close CASE statement')
       );
       expect(caseError).toBeDefined();
 
