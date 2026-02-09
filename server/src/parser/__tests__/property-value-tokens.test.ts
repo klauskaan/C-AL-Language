@@ -307,8 +307,8 @@ describe('Parser - Property Value Token Capture', () => {
 
       const property = ast.object?.properties?.properties[0];
 
-      // Empty property should have empty array or undefined
-      expect(property?.valueTokens === undefined || property?.valueTokens?.length === 0).toBe(true);
+      // Empty property value produces no tokens, so valueTokens is undefined
+      expect(property?.valueTokens).toBeUndefined();
     });
 
     it('should handle property with whitespace-only value', () => {
@@ -321,8 +321,8 @@ describe('Parser - Property Value Token Capture', () => {
 
       const property = ast.object?.properties?.properties[0];
 
-      // Whitespace is not tokenized, so should be empty
-      expect(property?.valueTokens === undefined || property?.valueTokens?.length === 0).toBe(true);
+      // Whitespace-only value produces no tokens, so valueTokens is undefined
+      expect(property?.valueTokens).toBeUndefined();
     });
   });
 
