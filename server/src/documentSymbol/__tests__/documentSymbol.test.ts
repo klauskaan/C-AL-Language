@@ -420,6 +420,176 @@ describe('DocumentSymbolProvider', () => {
     });
   });
 
+  describe('Procedure Attributes', () => {
+    it('should display simple [External] attribute in procedure name', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [External]
+    PROCEDURE TestProc@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const proceduresGroup = symbols[0].children?.find(c => c.name === 'PROCEDURES');
+      const proc = proceduresGroup?.children?.[0];
+
+      expect(proc?.name).toBe('[External] TestProc()');
+    });
+
+    it('should display parameterized attribute with full syntax', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [EventSubscriber(Page,6302,OnOAuthAccessDenied)]
+    PROCEDURE TestProc@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const proceduresGroup = symbols[0].children?.find(c => c.name === 'PROCEDURES');
+      const proc = proceduresGroup?.children?.[0];
+
+      expect(proc?.name).toBe('[EventSubscriber(Page,6302,OnOAuthAccessDenied)] TestProc()');
+    });
+
+    it('should display attribute with string parameter preserving quotes', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [Scope('OnPrem')]
+    PROCEDURE TestProc@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const proceduresGroup = symbols[0].children?.find(c => c.name === 'PROCEDURES');
+      const proc = proceduresGroup?.children?.[0];
+
+      expect(proc?.name).toBe('[Scope(\'OnPrem\')] TestProc()');
+    });
+
+    it('should display attribute with empty string parameter as ""', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [EventSubscriber(Codeunit,5330,OnAfterCRMIntegrationEnabled,"",Skip,Skip)]
+    PROCEDURE TestProc@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const proceduresGroup = symbols[0].children?.find(c => c.name === 'PROCEDURES');
+      const proc = proceduresGroup?.children?.[0];
+
+      expect(proc?.name).toBe('[EventSubscriber(Codeunit,5330,OnAfterCRMIntegrationEnabled,"",Skip,Skip)] TestProc()');
+    });
+
+    it('should display attribute with boolean argument', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [Integration(TRUE)]
+    PROCEDURE TestProc@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const proceduresGroup = symbols[0].children?.find(c => c.name === 'PROCEDURES');
+      const proc = proceduresGroup?.children?.[0];
+
+      expect(proc?.name).toBe('[Integration(TRUE)] TestProc()');
+    });
+
+    it('should display multiple attributes on same procedure', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [External]
+    [TryFunction]
+    PROCEDURE TestProc@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const proceduresGroup = symbols[0].children?.find(c => c.name === 'PROCEDURES');
+      const proc = proceduresGroup?.children?.[0];
+
+      expect(proc?.name).toBe('[External] [TryFunction] TestProc()');
+    });
+
+    it('should not display attributes for procedures without attributes (regression)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const proceduresGroup = symbols[0].children?.find(c => c.name === 'PROCEDURES');
+      const proc = proceduresGroup?.children?.[0];
+
+      expect(proc?.name).toBe('TestProc()');
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle object with no sections', () => {
       const code = `OBJECT Codeunit 50000 Empty
