@@ -164,6 +164,78 @@ END;
 - `VAR` - Pass by reference
 - `@` numbers - Unique identifiers
 
+## Procedure Attributes
+
+C/AL supports attributes on procedures using `[AttributeName]` or `[AttributeName(args)]` syntax.
+
+### Common Attributes
+
+**[External]** - Marks procedure as public API:
+```cal
+[External]
+PROCEDURE PublicMethod@1();
+```
+
+**[TryFunction]** - Marks procedure as error-handling (returns success/failure):
+```cal
+[TryFunction]
+LOCAL PROCEDURE TryOperation@1() : Boolean;
+```
+
+**[Integration(TRUE/FALSE)]** - Marks integration event publisher:
+```cal
+[Integration(TRUE)]
+PROCEDURE OnAfterPost@1();
+```
+
+**[EventSubscriber]** - Registers procedure as event subscriber:
+
+```cal
+[EventSubscriber(ObjectType,ObjectID,EventName,ElementName,SkipOnMissingLicense,SkipOnMissingPermission)]
+LOCAL PROCEDURE OnEventHandler@1();
+```
+
+**C/AL EventSubscriber Pattern** (NAV 2013-BC14):
+```cal
+// Plain keyword syntax (NOT ObjectType:: enum)
+[EventSubscriber(Codeunit,5330,OnAfterCRMIntegrationEnabled,"",Skip,Skip)]
+LOCAL PROCEDURE HandleEvent@1();
+
+[EventSubscriber(Table,5330,OnAfterInsertEvent)]
+LOCAL PROCEDURE OnAfterInsert@2(VAR Rec@1000 : Record 5330);
+
+[EventSubscriber(Page,6302,OnOAuthAccessDenied)]
+LOCAL PROCEDURE OnOAuthDenied@3(description@1000 : Text);
+```
+
+**CRITICAL**: C/AL uses plain object type keywords (`Codeunit`, `Table`, `Page`) **without** the `ObjectType::` enum prefix. The `ObjectType::Codeunit` syntax is AL-only (BC15+) and will cause compilation errors in NAV.
+
+Parameters:
+1. **ObjectType**: Plain keyword - `Codeunit`, `Table`, `Page`, `Report`, `XMLport`, `Query`
+2. **ObjectID**: Numeric object ID
+3. **EventName**: Event name identifier or string
+4. **ElementName**: Element name (usually `""` for empty)
+5. **SkipOnMissingLicense**: `Skip` or identifier
+6. **SkipOnMissingPermission**: `Skip` or identifier
+
+### Event Declaration
+
+**INTERNALEVENT** - Integration event (single keyword):
+```cal
+PROCEDURE OnBeforePost@1();
+INTERNALEVENT
+BEGIN
+END;
+```
+
+**BUSINESSEVENT** - Business event (single keyword):
+```cal
+PROCEDURE OnCustomerCreated@1(CustomerNo@1000 : Code[20]);
+BUSINESSEVENT
+BEGIN
+END;
+```
+
 ## TextConst (Multi-Language Strings)
 
 ```cal
@@ -282,11 +354,15 @@ Adding AL-only features to this C/AL extension would mislead developers, create 
 | `#region` / `#endregion` | As preprocessor directives | BC 15+ |
 | `#if`, `#else`, `#endif` | Conditional compilation | BC 15+ |
 | `#define`, `#pragma` | Preprocessor directives | BC 15+ |
-| `[IntegrationEvent]` | Modern attribute syntax | BC 15+ |
-| `[BusinessEvent]` | Modern attribute syntax | BC 15+ |
-| `[EventSubscriber]` | Modern attribute syntax | BC 15+ |
+| `[IntegrationEvent]` | As standalone attribute (C/AL uses `INTERNALEVENT` keyword) | BC 15+ |
+| `[BusinessEvent]` | As standalone attribute (C/AL uses `BUSINESSEVENT` keyword) | BC 15+ |
+| `ObjectType::` enum syntax | In EventSubscriber: `ObjectType::Codeunit` (C/AL uses plain `Codeunit`) | BC 15+ |
 
 **Note**: This extension supports `#region`/`#endregion` as comment-based folding markers for user convenience, but they are not true preprocessor directives in C/AL.
+
+**EventSubscriber Syntax Differences:**
+- **C/AL** (NAV 2013-BC14): `[EventSubscriber(Codeunit,5330,OnEvent,"",Skip,Skip)]` - Plain keywords
+- **AL** (BC15+): `[EventSubscriber(ObjectType::Codeunit, Codeunit::"Name", 'OnEvent', '', true)]` - Enum syntax
 
 ### AL-Only Data Types
 

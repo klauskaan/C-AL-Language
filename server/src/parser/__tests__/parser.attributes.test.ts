@@ -160,12 +160,14 @@ describe('Parser - Procedure Attributes', () => {
       expect(tokenValues).toContain('Skip');
     });
 
-    it('should parse [EventSubscriber(ObjectType::Codeunit, Codeunit::"CU Name", \'OnEvent\', \'\', true)]', () => {
-      // Complex case with qualified names, quoted identifiers, and literals
+    it('should parse [EventSubscriber(Codeunit,80,OnBeforePost,"",Skip,Skip)] with quoted identifier', () => {
+      // Real C/AL pattern uses plain keywords (Codeunit, not ObjectType::Codeunit)
+      // Complex case with Codeunit::"Name" pattern, quoted strings, Skip identifiers
+      // Pattern based on COD5333.TXT line 159 and similar
       const code = `OBJECT Codeunit 1 Test {
         CODE {
-          [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforePost', '', true)]
-          LOCAL PROCEDURE OnBeforeSalesPost@1();
+          [EventSubscriber(Codeunit,80,OnBeforePost,"",Skip,Skip)]
+          LOCAL PROCEDURE OnBeforeSalesPost@1(VAR Rec@1000 : Record 80);
           BEGIN
           END;
         }
@@ -176,12 +178,15 @@ describe('Parser - Procedure Attributes', () => {
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
       expect(proc.attributes![0].name).toBe('EventSubscriber');
 
-      // Verify complex tokens captured
+      // Verify complex tokens captured (plain Codeunit keyword, not ObjectType::)
       const attr = proc.attributes![0];
       const tokenValues = attr.rawTokens.map(t => t.value);
-      expect(tokenValues).toContain('ObjectType');
-      expect(tokenValues).toContain('::');
       expect(tokenValues).toContain('Codeunit');
+      expect(tokenValues).toContain('80');
+      expect(tokenValues).toContain('Skip');
+      // Should NOT contain ObjectType or :: (AL-only syntax)
+      expect(tokenValues).not.toContain('ObjectType');
+      expect(tokenValues).not.toContain('::');
     });
   });
 
