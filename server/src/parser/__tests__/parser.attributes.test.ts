@@ -1,7 +1,7 @@
 /**
- * FAILING TESTS: Procedure Attributes (Issue #10, Task 3)
+ * Parser Tests: Procedure Attributes
  *
- * Tests AST capture for procedure attributes like:
+ * Tests AST capture for procedure attributes:
  * - [External] - External visibility modifier
  * - [EventSubscriber(...)] - Event subscriber registration
  * - [TryFunction] - Error-handling procedure marker
@@ -10,9 +10,6 @@
  * - PAG47.TXT: [External] PROCEDURE ApproveCalcInvDisc@1();
  * - COD6400.TXT: [EventSubscriber(Page,6302,OnOAuthAccessDenied)]
  * - COD5333.TXT: [EventSubscriber(Codeunit,5330,OnAfterCRMIntegrationEnabled,"",Skip,Skip)]
- *
- * Current behavior: Parser skips attributes without errors but doesn't capture them
- * Expected behavior: Capture attributes in AST with rawTokens for complex arguments
  */
 
 import { parseCode, tokenize } from './parserTestHelpers';
