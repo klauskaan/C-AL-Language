@@ -1124,4 +1124,151 @@ describe('LexerStateManager', () => {
       expect(manager.getCurrentContext()).toBe(LexerContext.SECTION_LEVEL);
     });
   });
+
+  describe('Accessor methods (issue #239 optimization)', () => {
+    describe('getBracketDepth()', () => {
+      it('should return same value as getState().bracketDepth', () => {
+        const manager = new LexerStateManager();
+
+        expect(manager.getBracketDepth()).toBe(manager.getState().bracketDepth);
+
+        manager.onOpenBracket();
+        expect(manager.getBracketDepth()).toBe(manager.getState().bracketDepth);
+        expect(manager.getBracketDepth()).toBe(1);
+
+        manager.onOpenBracket();
+        expect(manager.getBracketDepth()).toBe(manager.getState().bracketDepth);
+        expect(manager.getBracketDepth()).toBe(2);
+
+        manager.onCloseBracket();
+        expect(manager.getBracketDepth()).toBe(manager.getState().bracketDepth);
+        expect(manager.getBracketDepth()).toBe(1);
+      });
+    });
+
+    describe('getBraceDepth()', () => {
+      it('should return same value as getState().braceDepth', () => {
+        const manager = new LexerStateManager();
+
+        expect(manager.getBraceDepth()).toBe(manager.getState().braceDepth);
+
+        manager.onOpenBrace();
+        expect(manager.getBraceDepth()).toBe(manager.getState().braceDepth);
+        expect(manager.getBraceDepth()).toBe(1);
+
+        manager.onOpenBrace();
+        expect(manager.getBraceDepth()).toBe(manager.getState().braceDepth);
+        expect(manager.getBraceDepth()).toBe(2);
+
+        manager.onCloseBrace();
+        expect(manager.getBraceDepth()).toBe(manager.getState().braceDepth);
+        expect(manager.getBraceDepth()).toBe(1);
+      });
+    });
+
+    describe('getInPropertyValue()', () => {
+      it('should return same value as getState().inPropertyValue', () => {
+        const manager = new LexerStateManager();
+
+        expect(manager.getInPropertyValue()).toBe(manager.getState().inPropertyValue);
+        expect(manager.getInPropertyValue()).toBe(false);
+
+        manager.onIdentifier('Editable', LexerContext.SECTION_LEVEL);
+        manager.onEquals();
+        expect(manager.getInPropertyValue()).toBe(manager.getState().inPropertyValue);
+        expect(manager.getInPropertyValue()).toBe(true);
+
+        manager.onSemicolon();
+        expect(manager.getInPropertyValue()).toBe(manager.getState().inPropertyValue);
+        expect(manager.getInPropertyValue()).toBe(false);
+      });
+    });
+
+    describe('getFieldDefColumn()', () => {
+      it('should return same value as getState().fieldDefColumn', () => {
+        const manager = new LexerStateManager();
+
+        expect(manager.getFieldDefColumn()).toBe(manager.getState().fieldDefColumn);
+        expect(manager.getFieldDefColumn()).toBe(FieldDefColumn.NONE);
+
+        manager.onSectionKeyword('FIELDS');
+        manager.onOpenBrace();
+        manager.onOpenBrace(); // Start field definition
+        expect(manager.getFieldDefColumn()).toBe(manager.getState().fieldDefColumn);
+        expect(manager.getFieldDefColumn()).toBe(FieldDefColumn.COL_1);
+
+        manager.onSemicolon();
+        expect(manager.getFieldDefColumn()).toBe(manager.getState().fieldDefColumn);
+        expect(manager.getFieldDefColumn()).toBe(FieldDefColumn.COL_2);
+      });
+    });
+
+    describe('getCurrentSectionType()', () => {
+      it('should return same value as getState().currentSectionType', () => {
+        const manager = new LexerStateManager();
+
+        expect(manager.getCurrentSectionType()).toBe(manager.getState().currentSectionType);
+        expect(manager.getCurrentSectionType()).toBe(null);
+
+        manager.onSectionKeyword('FIELDS');
+        expect(manager.getCurrentSectionType()).toBe(manager.getState().currentSectionType);
+        expect(manager.getCurrentSectionType()).toBe('FIELDS');
+
+        manager.onOpenBrace();
+        manager.onOpenBrace();
+        manager.onCloseBrace();
+        manager.onCloseBrace(); // Exit section
+        expect(manager.getCurrentSectionType()).toBe(manager.getState().currentSectionType);
+        expect(manager.getCurrentSectionType()).toBe(null);
+      });
+    });
+
+    describe('getLastPropertyName()', () => {
+      it('should return same value as getState().lastPropertyName', () => {
+        const manager = new LexerStateManager();
+
+        expect(manager.getLastPropertyName()).toBe(manager.getState().lastPropertyName);
+        expect(manager.getLastPropertyName()).toBe('');
+
+        manager.onIdentifier('Editable', LexerContext.SECTION_LEVEL);
+        expect(manager.getLastPropertyName()).toBe(manager.getState().lastPropertyName);
+        expect(manager.getLastPropertyName()).toBe('Editable');
+
+        manager.onEquals();
+        manager.onSemicolon();
+        expect(manager.getLastPropertyName()).toBe(manager.getState().lastPropertyName);
+        expect(manager.getLastPropertyName()).toBe('');
+      });
+    });
+
+    describe('getLastWasSectionKeyword()', () => {
+      it('should return same value as getState().lastWasSectionKeyword', () => {
+        const manager = new LexerStateManager();
+
+        expect(manager.getLastWasSectionKeyword()).toBe(manager.getState().lastWasSectionKeyword);
+        expect(manager.getLastWasSectionKeyword()).toBe(false);
+
+        manager.onSectionKeyword('FIELDS');
+        expect(manager.getLastWasSectionKeyword()).toBe(manager.getState().lastWasSectionKeyword);
+        expect(manager.getLastWasSectionKeyword()).toBe(true);
+
+        manager.onOpenBrace();
+        expect(manager.getLastWasSectionKeyword()).toBe(manager.getState().lastWasSectionKeyword);
+        expect(manager.getLastWasSectionKeyword()).toBe(false);
+      });
+    });
+
+    describe('getObjectTokenIndex()', () => {
+      it('should return same value as getState().objectTokenIndex', () => {
+        const manager = new LexerStateManager();
+
+        expect(manager.getObjectTokenIndex()).toBe(manager.getState().objectTokenIndex);
+        expect(manager.getObjectTokenIndex()).toBe(-1);
+
+        manager.onObjectKeyword(5);
+        expect(manager.getObjectTokenIndex()).toBe(manager.getState().objectTokenIndex);
+        expect(manager.getObjectTokenIndex()).toBe(5);
+      });
+    });
+  });
 });

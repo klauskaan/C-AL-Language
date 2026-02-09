@@ -189,6 +189,62 @@ export class LexerStateManager {
   }
 
   /**
+   * Get current bracket depth
+   */
+  public getBracketDepth(): number {
+    return this.bracketDepth;
+  }
+
+  /**
+   * Get current brace depth
+   */
+  public getBraceDepth(): number {
+    return this.braceDepth;
+  }
+
+  /**
+   * Get inPropertyValue flag
+   */
+  public getInPropertyValue(): boolean {
+    return this.inPropertyValue;
+  }
+
+  /**
+   * Get current field definition column
+   */
+  public getFieldDefColumn(): FieldDefColumn {
+    return this.fieldDefColumn;
+  }
+
+  /**
+   * Get current section type
+   */
+  public getCurrentSectionType(): SectionType | null {
+    return this.currentSectionType;
+  }
+
+  /**
+   * Get last property name
+   */
+  public getLastPropertyName(): string {
+    return this.lastPropertyName;
+  }
+
+  /**
+   * Get lastWasSectionKeyword flag
+   */
+  public getLastWasSectionKeyword(): boolean {
+    return this.lastWasSectionKeyword;
+  }
+
+  /**
+   * Get object token index
+   */
+  public getObjectTokenIndex(): number {
+    return this.objectTokenIndex;
+  }
+
+  /**
    * Push a new context onto the stack
    */
   private pushContext(context: LexerContext): ContextTransition {

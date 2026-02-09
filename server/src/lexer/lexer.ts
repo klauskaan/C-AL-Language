@@ -658,9 +658,8 @@ export class Lexer {
     }
     // Otherwise, they are structural delimiters
     this.advance();
-    const stateBefore = this.state.getState();
-    const oldBraceDepth = stateBefore.braceDepth;
-    const oldFieldDefColumn = stateBefore.fieldDefColumn;
+    const oldBraceDepth = this.state.getBraceDepth();
+    const oldFieldDefColumn = this.state.getFieldDefColumn();
 
     // Update state via operation method and capture transition
     const transition = this.state.onOpenBrace();
@@ -670,20 +669,21 @@ export class Lexer {
       offset: startPos
     });
 
-    const stateAfter = this.state.getState();
-    this.invokeTraceCallback(() => ({
-      type: 'flag-change',
-      position: { line: startLine, column: startColumn, offset: startPos },
-      data: { flag: 'braceDepth', from: oldBraceDepth, to: stateAfter.braceDepth }
-    }));
-    this.addToken(TokenType.LeftBrace, '{', startPos, this.position, startLine, startColumn);
-
-    // Trace field def column changes (if any)
-    if (oldFieldDefColumn !== stateAfter.fieldDefColumn) {
+    if (oldBraceDepth !== this.state.getBraceDepth()) {
       this.invokeTraceCallback(() => ({
         type: 'flag-change',
         position: { line: startLine, column: startColumn, offset: startPos },
-        data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: this.fieldDefColumnToString(stateAfter.fieldDefColumn) }
+        data: { flag: 'braceDepth', from: oldBraceDepth, to: this.state.getBraceDepth() }
+      }));
+    }
+    this.addToken(TokenType.LeftBrace, '{', startPos, this.position, startLine, startColumn);
+
+    // Trace field def column changes (if any)
+    if (oldFieldDefColumn !== this.state.getFieldDefColumn()) {
+      this.invokeTraceCallback(() => ({
+        type: 'flag-change',
+        position: { line: startLine, column: startColumn, offset: startPos },
+        data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: this.fieldDefColumnToString(this.state.getFieldDefColumn()) }
       }));
     }
   }
@@ -700,18 +700,17 @@ export class Lexer {
       this.advance();
 
       // Prevent negative braceDepth from unmatched closing braces
-      const stateBefore = this.state.getState();
-      if (stateBefore.braceDepth <= 0) {
+      if (this.state.getBraceDepth() <= 0) {
         this.addToken(TokenType.Unknown, '}', startPos, this.position, startLine, startColumn);
         return true;
       }
 
-      const oldBraceDepth = stateBefore.braceDepth;
-      const oldInPropertyValue = stateBefore.inPropertyValue;
-      const oldLastPropertyName = stateBefore.lastPropertyName;
-      const oldBracketDepth = stateBefore.bracketDepth;
-      const oldFieldDefColumn = stateBefore.fieldDefColumn;
-      const oldSectionType = stateBefore.currentSectionType;
+      const oldBraceDepth = this.state.getBraceDepth();
+      const oldInPropertyValue = this.state.getInPropertyValue();
+      const oldLastPropertyName = this.state.getLastPropertyName();
+      const oldBracketDepth = this.state.getBracketDepth();
+      const oldFieldDefColumn = this.state.getFieldDefColumn();
+      const oldSectionType = this.state.getCurrentSectionType();
 
       // Update state via operation method (handles all resets atomically) and capture transition
       const transition = this.state.onCloseBrace();
@@ -721,53 +720,53 @@ export class Lexer {
         offset: startPos
       });
 
-      const stateAfter = this.state.getState();
-
-      this.invokeTraceCallback(() => ({
-        type: 'flag-change',
-        position: { line: startLine, column: startColumn, offset: startPos },
-        data: { flag: 'braceDepth', from: oldBraceDepth, to: stateAfter.braceDepth }
-      }));
-      this.addToken(TokenType.RightBrace, '}', startPos, this.position, startLine, startColumn);
-
-      // Trace section type changes (if any)
-      if (oldSectionType !== stateAfter.currentSectionType) {
+      if (oldBraceDepth !== this.state.getBraceDepth()) {
         this.invokeTraceCallback(() => ({
           type: 'flag-change',
           position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'currentSectionType', from: oldSectionType, to: stateAfter.currentSectionType }
+          data: { flag: 'braceDepth', from: oldBraceDepth, to: this.state.getBraceDepth() }
+        }));
+      }
+      this.addToken(TokenType.RightBrace, '}', startPos, this.position, startLine, startColumn);
+
+      // Trace section type changes (if any)
+      if (oldSectionType !== this.state.getCurrentSectionType()) {
+        this.invokeTraceCallback(() => ({
+          type: 'flag-change',
+          position: { line: startLine, column: startColumn, offset: startPos },
+          data: { flag: 'currentSectionType', from: oldSectionType, to: this.state.getCurrentSectionType() }
         }));
       }
 
       // Trace property tracking changes
-      if (oldInPropertyValue !== stateAfter.inPropertyValue) {
+      if (oldInPropertyValue !== this.state.getInPropertyValue()) {
         this.invokeTraceCallback(() => ({
           type: 'flag-change',
           position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: stateAfter.inPropertyValue }
+          data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.state.getInPropertyValue() }
         }));
       }
-      if (oldLastPropertyName !== stateAfter.lastPropertyName) {
+      if (oldLastPropertyName !== this.state.getLastPropertyName()) {
         this.invokeTraceCallback(() => ({
           type: 'flag-change',
           position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: stateAfter.lastPropertyName }
+          data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: this.state.getLastPropertyName() }
         }));
       }
-      if (oldBracketDepth !== stateAfter.bracketDepth) {
+      if (oldBracketDepth !== this.state.getBracketDepth()) {
         this.invokeTraceCallback(() => ({
           type: 'flag-change',
           position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'bracketDepth', from: oldBracketDepth, to: stateAfter.bracketDepth }
+          data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.state.getBracketDepth() }
         }));
       }
 
       // Trace column tracking changes
-      if (oldFieldDefColumn !== stateAfter.fieldDefColumn) {
+      if (oldFieldDefColumn !== this.state.getFieldDefColumn()) {
         this.invokeTraceCallback(() => ({
           type: 'flag-change',
           position: { line: startLine, column: startColumn, offset: startPos },
-          data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: this.fieldDefColumnToString(stateAfter.fieldDefColumn) }
+          data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: this.fieldDefColumnToString(this.state.getFieldDefColumn()) }
         }));
       }
 
@@ -796,10 +795,9 @@ export class Lexer {
 
     // Comments - but NOT inside brackets where :// (URLs) and /* (text) are common
     if (ch === '/' && this.peek() === '/') {
-      const state = this.state.getState();
       // Skip line comment scanning when inside brackets (both inPropertyValue and general bracket contexts)
       // URLs like https://... are common in InstructionalTextML, CaptionML, etc.
-      if (state.bracketDepth === 0) {
+      if (this.state.getBracketDepth() === 0) {
         this.scanLineComment();
         return;
       }
@@ -807,9 +805,8 @@ export class Lexer {
 
     // C-style comments - but NOT inside brackets where /* can appear in text
     if (ch === '/' && this.peek() === '*') {
-      const state = this.state.getState();
       // Skip C-style comment scanning when inside brackets
-      if (state.bracketDepth === 0) {
+      if (this.state.getBracketDepth() === 0) {
         this.scanCStyleComment();
         return;
       }
@@ -1076,13 +1073,12 @@ export class Lexer {
         // 1. After colon: "Param : Code[20]" or "VAR x : Code;" (but NOT "CASE label : identifier")
         // 2. After OF keyword: "ARRAY[10] OF Code[20]" (but NOT "CASE x OF")
         // 3. In FIELDS section at COL_4: "{ 1 ; ; FieldName ; Code[10] }"
-        const state = this.state.getState();
         const isAfterColon = prevToken && prevToken.type === TokenType.Colon &&
                              this.getCurrentContext() !== LexerContext.CASE_BLOCK;
         // In CASE blocks, OF introduces case labels (identifiers), not data types
         const isAfterOf = prevToken && prevToken.type === TokenType.Of &&
                          this.getCurrentContext() !== LexerContext.CASE_BLOCK;
-        const isFieldDataType = state.currentSectionType === 'FIELDS' && state.fieldDefColumn === FieldDefColumn.COL_4;
+        const isFieldDataType = this.state.getCurrentSectionType() === 'FIELDS' && this.state.getFieldDefColumn() === FieldDefColumn.COL_4;
         const isInDataTypeContext = isAfterColon || isAfterOf || isFieldDataType;
 
         if (isInDataTypeContext) {
@@ -1123,10 +1119,9 @@ export class Lexer {
 
     // Downgrade section keywords to identifiers when in protected columns, inside brackets, or in CODE_BLOCK
     // Prevents section keywords in field/key/control names, ML property values, or code blocks from corrupting context
-    const stateForSectionKeywords = this.state.getState();
     if (SECTION_KEYWORDS.has(tokenType) &&
         (this.shouldProtectFromSectionKeyword() ||
-         stateForSectionKeywords.bracketDepth > 0 ||
+         this.state.getBracketDepth() > 0 ||
          this.isInCodeContext())) {
       tokenType = TokenType.Identifier;
     }
@@ -1136,10 +1131,9 @@ export class Lexer {
     // BUT: Keep BEGIN/END as keywords for:
     // - Trigger properties (OnInsert, OnModify, etc.) where they delimit code blocks
     // - CODE_BLOCK context (actual code, not property values)
-    const stateForBeginEnd = this.state.getState();
     if ((tokenType === TokenType.Begin || tokenType === TokenType.End) &&
-        ((stateForBeginEnd.bracketDepth > 0 && !this.isInCodeContext()) ||
-         (stateForBeginEnd.inPropertyValue &&
+        ((this.state.getBracketDepth() > 0 && !this.isInCodeContext()) ||
+         (this.state.getInPropertyValue() &&
           !this.isTriggerProperty() &&
           this.getCurrentContext() !== LexerContext.CODE_BLOCK))) {
       tokenType = TokenType.Identifier;
@@ -1149,16 +1143,15 @@ export class Lexer {
 
     // Track identifier as potential property name via state manager
     // The state manager's onIdentifier() handles all the context checking internally
-    const stateBeforeIdentifier = this.state.getState();
+    const oldLastPropertyName = this.state.getLastPropertyName();
     this.state.onIdentifier(value, this.getCurrentContext());
-    const stateAfterIdentifier = this.state.getState();
 
     // Trace lastPropertyName changes (if any)
-    if (stateBeforeIdentifier.lastPropertyName !== stateAfterIdentifier.lastPropertyName) {
+    if (oldLastPropertyName !== this.state.getLastPropertyName()) {
       this.invokeTraceCallback(() => ({
         type: 'flag-change',
         position: { line: startLine, column: startColumn, offset: startPos },
-        data: { flag: 'lastPropertyName', from: stateBeforeIdentifier.lastPropertyName, to: stateAfterIdentifier.lastPropertyName }
+        data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: this.state.getLastPropertyName() }
       }));
     }
 
@@ -1175,7 +1168,7 @@ export class Lexer {
         // Only set objectTokenIndex when in NORMAL context (at document start)
         // The state manager's onObjectKeyword() handles context pushing
         if (this.getCurrentContext() === LexerContext.NORMAL) {
-          const stateBeforeObject = this.state.getState();
+          const oldObjectTokenIndex = this.state.getObjectTokenIndex();
           const lastToken = this.tokens[this.tokens.length - 1];
           const transition = this.state.onObjectKeyword(this.tokens.length - 1);
           this.emitContextTransition(transition, {
@@ -1183,13 +1176,12 @@ export class Lexer {
             column: lastToken.column,
             offset: lastToken.startOffset
           });
-          const stateAfterObject = this.state.getState();
 
-          if (stateBeforeObject.objectTokenIndex !== stateAfterObject.objectTokenIndex) {
+          if (oldObjectTokenIndex !== this.state.getObjectTokenIndex()) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: lastToken.line, column: lastToken.column, offset: lastToken.startOffset },
-              data: { flag: 'objectTokenIndex', from: stateBeforeObject.objectTokenIndex, to: stateAfterObject.objectTokenIndex }
+              data: { flag: 'objectTokenIndex', from: oldObjectTokenIndex, to: this.state.getObjectTokenIndex() }
             }));
           }
         }
@@ -1201,31 +1193,31 @@ export class Lexer {
           break;
         }
         {
-          const stateBeforeFields = this.state.getState();
-          if (stateBeforeFields.inPropertyValue) {
+          if (this.state.getInPropertyValue()) {
             break;
           }
           // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
           if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              stateBeforeFields.currentSectionType === 'CODE') {
+              this.state.getCurrentSectionType() === 'CODE') {
             break;
           }
 
+          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
+          const oldCurrentSectionType = this.state.getCurrentSectionType();
           this.state.onSectionKeyword('FIELDS');
-          const stateAfterFields = this.state.getState();
 
-          if (stateBeforeFields.lastWasSectionKeyword !== stateAfterFields.lastWasSectionKeyword) {
+          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'lastWasSectionKeyword', from: stateBeforeFields.lastWasSectionKeyword, to: stateAfterFields.lastWasSectionKeyword }
+              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() }
             }));
           }
-          if (stateBeforeFields.currentSectionType !== stateAfterFields.currentSectionType) {
+          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'currentSectionType', from: stateBeforeFields.currentSectionType, to: stateAfterFields.currentSectionType }
+              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() }
             }));
           }
         }
@@ -1234,20 +1226,20 @@ export class Lexer {
       case TokenType.Keys:
         if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const stateBefore_Keys = this.state.getState();
-          if (stateBefore_Keys.inPropertyValue) { break; }
+          if (this.state.getInPropertyValue()) { break; }
           // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
           if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              stateBefore_Keys.currentSectionType === 'CODE') {
+              this.state.getCurrentSectionType() === 'CODE') {
             break;
           }
+          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
+          const oldCurrentSectionType = this.state.getCurrentSectionType();
           this.state.onSectionKeyword('KEYS');
-          const stateAfter_Keys = this.state.getState();
-          if (stateBefore_Keys.lastWasSectionKeyword !== stateAfter_Keys.lastWasSectionKeyword) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_Keys.lastWasSectionKeyword, to: stateAfter_Keys.lastWasSectionKeyword } }));
+          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
           }
-          if (stateBefore_Keys.currentSectionType !== stateAfter_Keys.currentSectionType) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_Keys.currentSectionType, to: stateAfter_Keys.currentSectionType } }));
+          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
           }
         }
         break;
@@ -1255,20 +1247,20 @@ export class Lexer {
       case TokenType.Controls:
         if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const stateBefore_Controls = this.state.getState();
-          if (stateBefore_Controls.inPropertyValue) { break; }
+          if (this.state.getInPropertyValue()) { break; }
           // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
           if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              stateBefore_Controls.currentSectionType === 'CODE') {
+              this.state.getCurrentSectionType() === 'CODE') {
             break;
           }
+          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
+          const oldCurrentSectionType = this.state.getCurrentSectionType();
           this.state.onSectionKeyword('CONTROLS');
-          const stateAfter_Controls = this.state.getState();
-          if (stateBefore_Controls.lastWasSectionKeyword !== stateAfter_Controls.lastWasSectionKeyword) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_Controls.lastWasSectionKeyword, to: stateAfter_Controls.lastWasSectionKeyword } }));
+          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
           }
-          if (stateBefore_Controls.currentSectionType !== stateAfter_Controls.currentSectionType) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_Controls.currentSectionType, to: stateAfter_Controls.currentSectionType } }));
+          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
           }
         }
         break;
@@ -1276,20 +1268,20 @@ export class Lexer {
       case TokenType.Elements:
         if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const stateBefore_Elements = this.state.getState();
-          if (stateBefore_Elements.inPropertyValue) { break; }
+          if (this.state.getInPropertyValue()) { break; }
           // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
           if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              stateBefore_Elements.currentSectionType === 'CODE') {
+              this.state.getCurrentSectionType() === 'CODE') {
             break;
           }
+          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
+          const oldCurrentSectionType = this.state.getCurrentSectionType();
           this.state.onSectionKeyword('ELEMENTS');
-          const stateAfter_Elements = this.state.getState();
-          if (stateBefore_Elements.lastWasSectionKeyword !== stateAfter_Elements.lastWasSectionKeyword) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_Elements.lastWasSectionKeyword, to: stateAfter_Elements.lastWasSectionKeyword } }));
+          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
           }
-          if (stateBefore_Elements.currentSectionType !== stateAfter_Elements.currentSectionType) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_Elements.currentSectionType, to: stateAfter_Elements.currentSectionType } }));
+          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
           }
         }
         break;
@@ -1297,20 +1289,20 @@ export class Lexer {
       case TokenType.Actions:
         if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const stateBefore_Actions = this.state.getState();
-          if (stateBefore_Actions.inPropertyValue) { break; }
+          if (this.state.getInPropertyValue()) { break; }
           // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
           if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              stateBefore_Actions.currentSectionType === 'CODE') {
+              this.state.getCurrentSectionType() === 'CODE') {
             break;
           }
+          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
+          const oldCurrentSectionType = this.state.getCurrentSectionType();
           this.state.onSectionKeyword('ACTIONS');
-          const stateAfter_Actions = this.state.getState();
-          if (stateBefore_Actions.lastWasSectionKeyword !== stateAfter_Actions.lastWasSectionKeyword) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_Actions.lastWasSectionKeyword, to: stateAfter_Actions.lastWasSectionKeyword } }));
+          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
           }
-          if (stateBefore_Actions.currentSectionType !== stateAfter_Actions.currentSectionType) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_Actions.currentSectionType, to: stateAfter_Actions.currentSectionType } }));
+          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
           }
         }
         break;
@@ -1318,20 +1310,20 @@ export class Lexer {
       case TokenType.Dataset:
         if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const stateBefore_Dataset = this.state.getState();
-          if (stateBefore_Dataset.inPropertyValue) { break; }
+          if (this.state.getInPropertyValue()) { break; }
           // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
           if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              stateBefore_Dataset.currentSectionType === 'CODE') {
+              this.state.getCurrentSectionType() === 'CODE') {
             break;
           }
+          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
+          const oldCurrentSectionType = this.state.getCurrentSectionType();
           this.state.onSectionKeyword('DATASET');
-          const stateAfter_Dataset = this.state.getState();
-          if (stateBefore_Dataset.lastWasSectionKeyword !== stateAfter_Dataset.lastWasSectionKeyword) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_Dataset.lastWasSectionKeyword, to: stateAfter_Dataset.lastWasSectionKeyword } }));
+          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
           }
-          if (stateBefore_Dataset.currentSectionType !== stateAfter_Dataset.currentSectionType) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_Dataset.currentSectionType, to: stateAfter_Dataset.currentSectionType } }));
+          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
           }
         }
         break;
@@ -1339,20 +1331,20 @@ export class Lexer {
       case TokenType.RequestPage:
         if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const stateBefore_RequestPage = this.state.getState();
-          if (stateBefore_RequestPage.inPropertyValue) { break; }
+          if (this.state.getInPropertyValue()) { break; }
           // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
           if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              stateBefore_RequestPage.currentSectionType === 'CODE') {
+              this.state.getCurrentSectionType() === 'CODE') {
             break;
           }
+          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
+          const oldCurrentSectionType = this.state.getCurrentSectionType();
           this.state.onSectionKeyword('REQUESTPAGE');
-          const stateAfter_RequestPage = this.state.getState();
-          if (stateBefore_RequestPage.lastWasSectionKeyword !== stateAfter_RequestPage.lastWasSectionKeyword) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_RequestPage.lastWasSectionKeyword, to: stateAfter_RequestPage.lastWasSectionKeyword } }));
+          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
           }
-          if (stateBefore_RequestPage.currentSectionType !== stateAfter_RequestPage.currentSectionType) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_RequestPage.currentSectionType, to: stateAfter_RequestPage.currentSectionType } }));
+          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
           }
         }
         break;
@@ -1360,20 +1352,20 @@ export class Lexer {
       case TokenType.Labels:
         if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const stateBefore_Labels = this.state.getState();
-          if (stateBefore_Labels.inPropertyValue) { break; }
+          if (this.state.getInPropertyValue()) { break; }
           // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
           if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              stateBefore_Labels.currentSectionType === 'CODE') {
+              this.state.getCurrentSectionType() === 'CODE') {
             break;
           }
+          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
+          const oldCurrentSectionType = this.state.getCurrentSectionType();
           this.state.onSectionKeyword('LABELS');
-          const stateAfter_Labels = this.state.getState();
-          if (stateBefore_Labels.lastWasSectionKeyword !== stateAfter_Labels.lastWasSectionKeyword) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_Labels.lastWasSectionKeyword, to: stateAfter_Labels.lastWasSectionKeyword } }));
+          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
           }
-          if (stateBefore_Labels.currentSectionType !== stateAfter_Labels.currentSectionType) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_Labels.currentSectionType, to: stateAfter_Labels.currentSectionType } }));
+          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
           }
         }
         break;
@@ -1381,20 +1373,20 @@ export class Lexer {
       case TokenType.MenuNodes:
         if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
         {
-          const stateBefore_MenuNodes = this.state.getState();
-          if (stateBefore_MenuNodes.inPropertyValue) { break; }
+          if (this.state.getInPropertyValue()) { break; }
           // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
           if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              stateBefore_MenuNodes.currentSectionType === 'CODE') {
+              this.state.getCurrentSectionType() === 'CODE') {
             break;
           }
+          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
+          const oldCurrentSectionType = this.state.getCurrentSectionType();
           this.state.onSectionKeyword('MENUNODES');
-          const stateAfter_MenuNodes = this.state.getState();
-          if (stateBefore_MenuNodes.lastWasSectionKeyword !== stateAfter_MenuNodes.lastWasSectionKeyword) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: stateBefore_MenuNodes.lastWasSectionKeyword, to: stateAfter_MenuNodes.lastWasSectionKeyword } }));
+          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
           }
-          if (stateBefore_MenuNodes.currentSectionType !== stateAfter_MenuNodes.currentSectionType) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: stateBefore_MenuNodes.currentSectionType, to: stateAfter_MenuNodes.currentSectionType } }));
+          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
+            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
           }
         }
         break;
@@ -1410,39 +1402,40 @@ export class Lexer {
         }
         // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
         {
-          const stateBeforeX = this.state.getState();
-          if (stateBeforeX.inPropertyValue) {
+          if (this.state.getInPropertyValue()) {
             break;
           }
           if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              stateBeforeX.currentSectionType === 'CODE') {
+              this.state.getCurrentSectionType() === 'CODE') {
             break;
           }
+
+          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
+          const oldCurrentSectionType = this.state.getCurrentSectionType();
 
           // Use onSectionKeyword to track the CODE section type
           this.state.onSectionKeyword('CODE');
 
           // Emit trace events for flag changes
-          const stateAfterX = this.state.getState();
-          if (stateBeforeX.lastWasSectionKeyword !== stateAfterX.lastWasSectionKeyword) {
+          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: this.line, column: this.column, offset: this.position },
               data: {
                 flag: 'lastWasSectionKeyword',
-                from: stateBeforeX.lastWasSectionKeyword,
-                to: stateAfterX.lastWasSectionKeyword
+                from: oldLastWasSectionKeyword,
+                to: this.state.getLastWasSectionKeyword()
               }
             }));
           }
-          if (stateBeforeX.currentSectionType !== stateAfterX.currentSectionType) {
+          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: this.line, column: this.column, offset: this.position },
               data: {
                 flag: 'currentSectionType',
-                from: stateBeforeX.currentSectionType,
-                to: stateAfterX.currentSectionType
+                from: oldCurrentSectionType,
+                to: this.state.getCurrentSectionType()
               }
             }));
           }
@@ -1462,28 +1455,28 @@ export class Lexer {
         }
         // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
         {
-          const stateBeforeNonColumnarSection = this.state.getState();
-          if (stateBeforeNonColumnarSection.inPropertyValue) {
+          if (this.state.getInPropertyValue()) {
             break;
           }
           if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              stateBeforeNonColumnarSection.currentSectionType === 'CODE') {
+              this.state.getCurrentSectionType() === 'CODE') {
             break;
           }
+
+          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
 
           // Mark that we saw a section keyword (for SECTION_LEVEL push on next brace)
           this.state.markSectionKeyword();
 
           // Emit trace event for the flag change
-          const stateAfterNonColumnarSection = this.state.getState();
-          if (stateBeforeNonColumnarSection.lastWasSectionKeyword !== stateAfterNonColumnarSection.lastWasSectionKeyword) {
+          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: this.line, column: this.column, offset: this.position },
               data: {
                 flag: 'lastWasSectionKeyword',
-                from: stateBeforeNonColumnarSection.lastWasSectionKeyword,
-                to: stateAfterNonColumnarSection.lastWasSectionKeyword
+                from: oldLastWasSectionKeyword,
+                to: this.state.getLastWasSectionKeyword()
               }
             }));
           }
@@ -1572,15 +1565,14 @@ export class Lexer {
         this.addToken(TokenType.Equal, ch, startPos, this.position, startLine, startColumn);
         // Delegate to state manager's onEquals
         {
-          const stateBeforeEquals = this.state.getState();
+          const oldInPropertyValue = this.state.getInPropertyValue();
           this.state.onEquals();
-          const stateAfterEquals = this.state.getState();
 
-          if (stateBeforeEquals.inPropertyValue !== stateAfterEquals.inPropertyValue) {
+          if (oldInPropertyValue !== this.state.getInPropertyValue()) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'inPropertyValue', from: stateBeforeEquals.inPropertyValue, to: stateAfterEquals.inPropertyValue }
+              data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.state.getInPropertyValue() }
             }));
           }
         }
@@ -1627,29 +1619,30 @@ export class Lexer {
         this.addToken(TokenType.Semicolon, ch, startPos, this.position, startLine, startColumn);
         // Delegate to state manager's onSemicolon
         {
-          const stateBeforeSemicolon = this.state.getState();
+          const oldInPropertyValue = this.state.getInPropertyValue();
+          const oldLastPropertyName = this.state.getLastPropertyName();
+          const oldFieldDefColumn = this.state.getFieldDefColumn();
           this.state.onSemicolon();
-          const stateAfterSemicolon = this.state.getState();
 
-          if (stateBeforeSemicolon.inPropertyValue !== stateAfterSemicolon.inPropertyValue) {
+          if (oldInPropertyValue !== this.state.getInPropertyValue()) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'inPropertyValue', from: stateBeforeSemicolon.inPropertyValue, to: stateAfterSemicolon.inPropertyValue }
+              data: { flag: 'inPropertyValue', from: oldInPropertyValue, to: this.state.getInPropertyValue() }
             }));
           }
-          if (stateBeforeSemicolon.lastPropertyName !== stateAfterSemicolon.lastPropertyName) {
+          if (oldLastPropertyName !== this.state.getLastPropertyName()) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'lastPropertyName', from: stateBeforeSemicolon.lastPropertyName, to: stateAfterSemicolon.lastPropertyName }
+              data: { flag: 'lastPropertyName', from: oldLastPropertyName, to: this.state.getLastPropertyName() }
             }));
           }
-          if (stateBeforeSemicolon.fieldDefColumn !== stateAfterSemicolon.fieldDefColumn) {
+          if (oldFieldDefColumn !== this.state.getFieldDefColumn()) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(stateBeforeSemicolon.fieldDefColumn), to: this.fieldDefColumnToString(stateAfterSemicolon.fieldDefColumn) }
+              data: { flag: 'fieldDefColumn', from: this.fieldDefColumnToString(oldFieldDefColumn), to: this.fieldDefColumnToString(this.state.getFieldDefColumn()) }
             }));
           }
         }
@@ -1667,15 +1660,14 @@ export class Lexer {
         this.addToken(TokenType.LeftBracket, ch, startPos, this.position, startLine, startColumn);
         // Delegate to state manager's onOpenBracket
         {
-          const stateBeforeBracket = this.state.getState();
+          const oldBracketDepth = this.state.getBracketDepth();
           this.state.onOpenBracket();
-          const stateAfterBracket = this.state.getState();
 
-          if (stateBeforeBracket.bracketDepth !== stateAfterBracket.bracketDepth) {
+          if (oldBracketDepth !== this.state.getBracketDepth()) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'bracketDepth', from: stateBeforeBracket.bracketDepth, to: stateAfterBracket.bracketDepth }
+              data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.state.getBracketDepth() }
             }));
           }
         }
@@ -1684,15 +1676,14 @@ export class Lexer {
         this.addToken(TokenType.RightBracket, ch, startPos, this.position, startLine, startColumn);
         // Delegate to state manager's onCloseBracket
         {
-          const stateBeforeCloseBracket = this.state.getState();
+          const oldBracketDepth = this.state.getBracketDepth();
           this.state.onCloseBracket();
-          const stateAfterCloseBracket = this.state.getState();
 
-          if (stateBeforeCloseBracket.bracketDepth !== stateAfterCloseBracket.bracketDepth) {
+          if (oldBracketDepth !== this.state.getBracketDepth()) {
             this.invokeTraceCallback(() => ({
               type: 'flag-change',
               position: { line: startLine, column: startColumn, offset: startPos },
-              data: { flag: 'bracketDepth', from: stateBeforeCloseBracket.bracketDepth, to: stateAfterCloseBracket.bracketDepth }
+              data: { flag: 'bracketDepth', from: oldBracketDepth, to: this.state.getBracketDepth() }
             }));
           }
         }
@@ -2036,11 +2027,11 @@ export class Lexer {
    * @returns Uppercase object type string or null if not determinable
    */
   private resolveObjectType(): 'TABLE' | 'CODEUNIT' | 'PAGE' | 'REPORT' | 'QUERY' | 'XMLPORT' | 'MENUSUITE' | null {
-    const state = this.state.getState();
-    if (state.objectTokenIndex < 0) {
+    const objectTokenIndex = this.state.getObjectTokenIndex();
+    if (objectTokenIndex < 0) {
       return null;
     }
-    const typeTokenIndex = state.objectTokenIndex + 1;
+    const typeTokenIndex = objectTokenIndex + 1;
     if (typeTokenIndex >= this.tokens.length) {
       return null;
     }
