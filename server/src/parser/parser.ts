@@ -4238,9 +4238,28 @@ export class Parser {
     // because they are valid statement starters inside ELSE bodies and are handled by parseStatement().
     while (!this.check(TokenType.End) && !this.isAtEnd() &&
            !PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
-      const stmt = this.parseStatement();
-      if (stmt) {
-        statements.push(stmt);
+      try {
+        const stmt = this.parseStatement();
+        if (stmt) {
+          statements.push(stmt);
+        }
+        // Check if we've hit a procedure boundary after successfully parsing a statement
+        // (handles partial-node-returning paths like parseCaseStatement)
+        if (PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
+          break;
+        }
+      } catch (error) {
+        if (error instanceof ParseError) {
+          this.errors.push(error);
+          // Mirror parseBlock()'s recovery: skip to semicolon with depth awareness
+          this.recoverToTokensDepthAware([TokenType.Semicolon], true);
+          // If recovery stopped at a procedure boundary, exit to let outer parser handle it
+          if (PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
+            break;
+          }
+        } else {
+          throw error;
+        }
       }
     }
     return statements;
