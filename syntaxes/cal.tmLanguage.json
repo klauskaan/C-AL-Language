@@ -522,9 +522,38 @@
           }
         },
         {
-          "comment": "Procedure attributes",
-          "name": "storage.modifier.attribute.cal",
-          "match": "\\[(?i)(External|TryFunction|Integration|EventSubscriber)(?:\\([^)]*\\))?\\]"
+          "comment": "Procedure attributes with granular parameter scoping",
+          "name": "meta.attribute.cal",
+          "begin": "(?i)(\\[)(External|TryFunction|Integration|EventSubscriber)",
+          "beginCaptures": {
+            "1": { "name": "punctuation.section.attribute.begin.cal" },
+            "2": { "name": "storage.modifier.attribute.cal" }
+          },
+          "end": "\\]",
+          "endCaptures": {
+            "0": { "name": "punctuation.section.attribute.end.cal" }
+          },
+          "patterns": [
+            {
+              "name": "meta.attribute.arguments.cal",
+              "begin": "\\(",
+              "beginCaptures": {
+                "0": { "name": "punctuation.definition.arguments.begin.cal" }
+              },
+              "end": "\\)",
+              "endCaptures": {
+                "0": { "name": "punctuation.definition.arguments.end.cal" }
+              },
+              "patterns": [
+                { "include": "#constants" },
+                { "include": "#strings" },
+                { "include": "#numbers" },
+                { "include": "#identifiers" },
+                { "include": "#operators" },
+                { "include": "#punctuation" }
+              ]
+            }
+          ]
         },
         {
           "comment": "CalcFormula and Query property keywords - negative lookahead prevents matching in hyphenated identifiers",
