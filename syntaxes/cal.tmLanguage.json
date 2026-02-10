@@ -549,7 +549,6 @@
                 { "include": "#strings" },
                 { "include": "#numbers" },
                 { "include": "#identifiers" },
-                { "include": "#operators" },
                 { "include": "#punctuation" }
               ]
             }
