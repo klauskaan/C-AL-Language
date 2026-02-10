@@ -968,7 +968,8 @@ describe('DeprecatedFunctionValidator - Configuration (warnDeprecated setting)',
       documentUri: 'file:///test.cal',
       settings: warnDeprecated !== undefined ? {
         diagnostics: {
-          warnDeprecated
+          warnDeprecated,
+          warnUnknownAttributes: true
         }
       } : undefined
     };

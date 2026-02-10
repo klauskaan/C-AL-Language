@@ -612,7 +612,8 @@ describe('SemanticAnalyzer - Settings Integration', () => {
     // Build proper settings structure
     const settings = options ? {
       diagnostics: {
-        warnDeprecated: options.warnDeprecated ?? true
+        warnDeprecated: options.warnDeprecated ?? true,
+        warnUnknownAttributes: true
       }
     } : undefined;
 
