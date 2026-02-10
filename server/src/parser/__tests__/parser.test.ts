@@ -3013,8 +3013,8 @@ describe('Parser - RangeExpression operatorToken field', () => {
 
       // Assert operatorToken exists and is correct
       expect(rangeExpr.operatorToken).toBeDefined();
-      expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
-      expect(rangeExpr.operatorToken!.value).toBe('..');
+      expect(rangeExpr.operatorToken.type).toBe(TokenType.DotDot);
+      expect(rangeExpr.operatorToken.value).toBe('..');
     });
 
     it('should capture operatorToken for open-start range [..10]', () => {
@@ -3045,8 +3045,8 @@ describe('Parser - RangeExpression operatorToken field', () => {
 
       // Assert operatorToken exists and is correct
       expect(rangeExpr.operatorToken).toBeDefined();
-      expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
-      expect(rangeExpr.operatorToken!.value).toBe('..');
+      expect(rangeExpr.operatorToken.type).toBe(TokenType.DotDot);
+      expect(rangeExpr.operatorToken.value).toBe('..');
     });
 
     it('should capture operatorToken for open-end range [1..]', () => {
@@ -3077,8 +3077,8 @@ describe('Parser - RangeExpression operatorToken field', () => {
 
       // Assert operatorToken exists and is correct
       expect(rangeExpr.operatorToken).toBeDefined();
-      expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
-      expect(rangeExpr.operatorToken!.value).toBe('..');
+      expect(rangeExpr.operatorToken.type).toBe(TokenType.DotDot);
+      expect(rangeExpr.operatorToken.value).toBe('..');
     });
 
     it('should capture operatorToken for closed range with whitespace [1 .. 10]', () => {
@@ -3108,8 +3108,8 @@ describe('Parser - RangeExpression operatorToken field', () => {
 
       // Assert operatorToken exists and is correct regardless of whitespace
       expect(rangeExpr.operatorToken).toBeDefined();
-      expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
-      expect(rangeExpr.operatorToken!.value).toBe('..');
+      expect(rangeExpr.operatorToken.type).toBe(TokenType.DotDot);
+      expect(rangeExpr.operatorToken.value).toBe('..');
     });
 
     it('should capture operatorToken for complex expression range [(1+2)..(3*4)]', () => {
@@ -3141,8 +3141,8 @@ describe('Parser - RangeExpression operatorToken field', () => {
 
       // Assert operatorToken exists and points to the .. between expressions
       expect(rangeExpr.operatorToken).toBeDefined();
-      expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
-      expect(rangeExpr.operatorToken!.value).toBe('..');
+      expect(rangeExpr.operatorToken.type).toBe(TokenType.DotDot);
+      expect(rangeExpr.operatorToken.value).toBe('..');
     });
 
     it('should capture operatorToken in CASE statement ranges', () => {
@@ -3173,8 +3173,8 @@ describe('Parser - RangeExpression operatorToken field', () => {
 
       // Assert operatorToken exists for CASE ranges too
       expect(rangeExpr.operatorToken).toBeDefined();
-      expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
-      expect(rangeExpr.operatorToken!.value).toBe('..');
+      expect(rangeExpr.operatorToken.type).toBe(TokenType.DotDot);
+      expect(rangeExpr.operatorToken.value).toBe('..');
     });
 
     it('should capture operatorToken for character range in CASE', () => {
@@ -3205,8 +3205,8 @@ describe('Parser - RangeExpression operatorToken field', () => {
 
       // Assert operatorToken exists
       expect(rangeExpr.operatorToken).toBeDefined();
-      expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
-      expect(rangeExpr.operatorToken!.value).toBe('..');
+      expect(rangeExpr.operatorToken.type).toBe(TokenType.DotDot);
+      expect(rangeExpr.operatorToken.value).toBe('..');
     });
 
     it('should capture operatorToken for multiple ranges in set literal', () => {
@@ -3239,8 +3239,8 @@ describe('Parser - RangeExpression operatorToken field', () => {
         const rangeExpr = setLiteral.elements[i] as RangeExpression;
         expect(rangeExpr.type).toBe('RangeExpression');
         expect(rangeExpr.operatorToken).toBeDefined();
-        expect(rangeExpr.operatorToken!.type).toBe(TokenType.DotDot);
-        expect(rangeExpr.operatorToken!.value).toBe('..');
+        expect(rangeExpr.operatorToken.type).toBe(TokenType.DotDot);
+        expect(rangeExpr.operatorToken.value).toBe('..');
       }
     });
   });

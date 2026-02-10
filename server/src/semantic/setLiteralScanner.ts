@@ -56,9 +56,7 @@ class SetLiteralVisitor implements Partial<ASTVisitor> {
     // This ensures RangeExpression nodes are only marked when inside this SetLiteral
     const rangeVisitor: Partial<ASTVisitor> = {
       visitRangeExpression: (rangeNode: RangeExpression) => {
-        if (rangeNode.operatorToken) {
-          this.contextMap.set(rangeNode.operatorToken.startOffset, TokenContextType.RangeOperator);
-        }
+        this.contextMap.set(rangeNode.operatorToken.startOffset, TokenContextType.RangeOperator);
         // Continue traversal
       }
     };
