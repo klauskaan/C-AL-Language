@@ -2041,4 +2041,578 @@ describe('RenameProvider', () => {
       expect(edits!.changes![uri]).toBeDefined();
     });
   });
+
+  describe('Token reuse optimization', () => {
+    describe('Regular identifiers (non-field path)', () => {
+      it('should produce identical prepareRename results with and without tokens for local variable', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo();
+    VAR
+      Counter : Integer;
+    BEGIN
+      Counter := 1;
+      Counter := Counter + 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const text = doc.getText();
+        const lexer = new Lexer(text);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const pos = findPosition(code, 'Counter', 1);
+
+        // Test without tokens (current behavior)
+        const resultWithout = provider.prepareRename(doc, pos, ast, symbolTable);
+
+        // Test with tokens (optimized behavior)
+        const resultWith = provider.prepareRename(doc, pos, ast, symbolTable, tokens);
+
+        // Results should be identical
+        expect(resultWith).toEqual(resultWithout);
+        expect(resultWith).not.toBeNull();
+        expect(resultWith?.placeholder).toBe('Counter');
+      });
+
+      it('should produce identical prepareRename results with and without tokens for global variable', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  CODE
+  {
+    VAR
+      GlobalVar : Integer;
+
+    PROCEDURE Foo();
+    BEGIN
+      GlobalVar := 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const text = doc.getText();
+        const lexer = new Lexer(text);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const pos = findPosition(code, 'GlobalVar', 1);
+
+        const resultWithout = provider.prepareRename(doc, pos, ast, symbolTable);
+        const resultWith = provider.prepareRename(doc, pos, ast, symbolTable, tokens);
+
+        expect(resultWith).toEqual(resultWithout);
+        expect(resultWith).not.toBeNull();
+        expect(resultWith?.placeholder).toBe('GlobalVar');
+      });
+
+      it('should produce identical prepareRename results with and without tokens for procedure', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Calculate();
+    BEGIN
+    END;
+
+    PROCEDURE Run();
+    BEGIN
+      Calculate;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const text = doc.getText();
+        const lexer = new Lexer(text);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const pos = findPosition(code, 'Calculate', 1);
+
+        const resultWithout = provider.prepareRename(doc, pos, ast, symbolTable);
+        const resultWith = provider.prepareRename(doc, pos, ast, symbolTable, tokens);
+
+        expect(resultWith).toEqual(resultWithout);
+        expect(resultWith).not.toBeNull();
+        expect(resultWith?.placeholder).toBe('Calculate');
+      });
+
+      it('should produce identical getRenameEdits results with and without tokens for local variable', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo();
+    VAR
+      Counter : Integer;
+    BEGIN
+      Counter := 1;
+      Counter := Counter + 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const text = doc.getText();
+        const lexer = new Lexer(text);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const pos = findPosition(code, 'Counter', 1);
+
+        // Test without tokens (current behavior)
+        const editsWithout = provider.getRenameEdits(doc, pos, 'LocalCount', ast, symbolTable);
+
+        // Test with tokens (optimized behavior)
+        const editsWith = provider.getRenameEdits(doc, pos, 'LocalCount', ast, symbolTable, tokens);
+
+        // Results should be identical
+        expect(editsWith).toEqual(editsWithout);
+        expect(editsWith).toBeDefined();
+        expect(editsWith?.changes).toBeDefined();
+
+        const changes = editsWith!.changes![doc.uri];
+        expect(changes.length).toBe(4); // declaration + 3 usages
+      });
+
+      it('should produce identical getRenameEdits results with and without tokens for procedure', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Calculate();
+    BEGIN
+    END;
+
+    PROCEDURE Run();
+    BEGIN
+      Calculate;
+      Calculate;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const text = doc.getText();
+        const lexer = new Lexer(text);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const pos = findPosition(code, 'Calculate', 1);
+
+        const editsWithout = provider.getRenameEdits(doc, pos, 'Compute', ast, symbolTable);
+        const editsWith = provider.getRenameEdits(doc, pos, 'Compute', ast, symbolTable, tokens);
+
+        expect(editsWith).toEqual(editsWithout);
+        expect(editsWith).toBeDefined();
+        expect(editsWith?.changes).toBeDefined();
+
+        const changes = editsWith!.changes![doc.uri];
+        expect(changes.length).toBe(3); // definition + 2 calls
+      });
+
+      it('should produce identical getRenameEdits results with and without tokens for quoted identifier', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; "No." ; Code20 }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    BEGIN
+      "No." := '12345';
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const text = doc.getText();
+        const lexer = new Lexer(text);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const pos = findPosition(code, '"No."', 1);
+
+        const editsWithout = provider.getRenameEdits(doc, pos, 'Number', ast, symbolTable);
+        const editsWith = provider.getRenameEdits(doc, pos, 'Number', ast, symbolTable, tokens);
+
+        expect(editsWith).toEqual(editsWithout);
+        expect(editsWith).toBeDefined();
+
+        const changes = editsWith!.changes![doc.uri];
+        expect(changes.length).toBe(2); // definition + usage
+      });
+    });
+
+    describe('Multi-token fields (field path)', () => {
+      it('should produce identical prepareRename results with and without tokens for multi-token field', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Update Count ; Integer }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    BEGIN
+      Update Count := 0;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const text = doc.getText();
+        const lexer = new Lexer(text);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const pos = findPosition(code, 'Update Count', 1);
+
+        const resultWithout = provider.prepareRename(doc, pos, ast, symbolTable);
+        const resultWith = provider.prepareRename(doc, pos, ast, symbolTable, tokens);
+
+        expect(resultWith).toEqual(resultWithout);
+        expect(resultWith).not.toBeNull();
+        expect(resultWith?.placeholder).toBe('Update Count');
+
+        // Verify range covers both tokens
+        const rangeText = doc.getText(resultWith!.range);
+        expect(rangeText.replace(/\s+/g, ' ').trim().toLowerCase()).toBe('update count');
+      });
+
+      it('should produce identical prepareRename results with and without tokens when cursor on second token', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Update Count ; Integer }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const text = doc.getText();
+        const lexer = new Lexer(text);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        // Position on "Count" token (second part of the field name)
+        const lines = code.split('\n');
+        const lineIndex = lines.findIndex(l => l.includes('Update Count ; Integer'));
+        const colIndex = lines[lineIndex].indexOf('Count');
+        const pos = { line: lineIndex, character: colIndex + 2 };
+
+        const resultWithout = provider.prepareRename(doc, pos, ast, symbolTable);
+        const resultWith = provider.prepareRename(doc, pos, ast, symbolTable, tokens);
+
+        expect(resultWith).toEqual(resultWithout);
+        expect(resultWith).not.toBeNull();
+        expect(resultWith?.placeholder).toBe('Update Count');
+      });
+
+      it('should produce identical getRenameEdits results with and without tokens for multi-token field', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Update Count ; Integer }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    BEGIN
+      Update Count := 0;
+      Update Count := Update Count + 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const text = doc.getText();
+        const lexer = new Lexer(text);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const pos = findPosition(code, 'Update Count', 1);
+
+        const editsWithout = provider.getRenameEdits(doc, pos, 'RefreshCount', ast, symbolTable);
+        const editsWith = provider.getRenameEdits(doc, pos, 'RefreshCount', ast, symbolTable, tokens);
+
+        expect(editsWith).toEqual(editsWithout);
+        expect(editsWith).toBeDefined();
+
+        const changes = editsWith!.changes![doc.uri];
+        expect(changes.length).toBe(4); // definition + 3 usages
+      });
+
+      it('should produce identical getRenameEdits results with and without tokens for multi-token field with qualified access', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Update Count ; Integer }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    VAR
+      Rec : Record 50000;
+    BEGIN
+      Rec."Update Count" := 0;
+      Update Count := Rec."Update Count" + 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const text = doc.getText();
+        const lexer = new Lexer(text);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const pos = findPosition(code, 'Update Count', 1);
+
+        const editsWithout = provider.getRenameEdits(doc, pos, 'RefreshCount', ast, symbolTable);
+        const editsWith = provider.getRenameEdits(doc, pos, 'RefreshCount', ast, symbolTable, tokens);
+
+        expect(editsWith).toEqual(editsWithout);
+        expect(editsWith).toBeDefined();
+
+        const changes = editsWith!.changes![doc.uri];
+        expect(changes.length).toBe(4); // definition + 3 usages (1 unquoted, 2 qualified)
+      });
+
+      it('should produce identical getRenameEdits results with and without tokens for multi-token field with reserved word', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Begin Date ; Date }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    BEGIN
+      "Begin Date" := TODAY;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const text = doc.getText();
+        const lexer = new Lexer(text);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const pos = findPosition(code, 'Begin Date', 1);
+
+        const editsWithout = provider.getRenameEdits(doc, pos, 'StartDate', ast, symbolTable);
+        const editsWith = provider.getRenameEdits(doc, pos, 'StartDate', ast, symbolTable, tokens);
+
+        expect(editsWith).toEqual(editsWithout);
+        expect(editsWith).toBeDefined();
+
+        const changes = editsWith!.changes![doc.uri];
+        expect(changes.length).toBe(2); // definition + usage
+      });
+
+      it('should produce identical getRenameEdits results with and without tokens for field with special characters', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Phone No. ; Code20 }
+  }
+  CODE
+  {
+    PROCEDURE Foo();
+    BEGIN
+      "Phone No." := '123';
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const text = doc.getText();
+        const lexer = new Lexer(text);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const lines = code.split('\n');
+        const lineIndex = lines.findIndex(l => l.includes('Phone No. ; Code20'));
+        const colIndex = lines[lineIndex].indexOf('Phone No.');
+        const pos = { line: lineIndex, character: colIndex + 3 };
+
+        const editsWithout = provider.getRenameEdits(doc, pos, 'PhoneNumber', ast, symbolTable);
+        const editsWith = provider.getRenameEdits(doc, pos, 'PhoneNumber', ast, symbolTable, tokens);
+
+        expect(editsWith).toEqual(editsWithout);
+        expect(editsWith).toBeDefined();
+
+        const changes = editsWith!.changes![doc.uri];
+        expect(changes.length).toBe(2); // definition + usage
+      });
+    });
+
+    describe('Edge cases', () => {
+      it('should return null with and without tokens when cursor on keyword', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const text = doc.getText();
+        const lexer = new Lexer(text);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const pos = findPosition(code, 'BEGIN', 1);
+
+        const resultWithout = provider.prepareRename(doc, pos, ast, symbolTable);
+        const resultWith = provider.prepareRename(doc, pos, ast, symbolTable, tokens);
+
+        expect(resultWith).toEqual(resultWithout);
+        expect(resultWith).toBeNull();
+      });
+
+      it('should handle empty document with and without tokens', () => {
+        const code = '';
+        const doc = createDocument(code);
+        const text = doc.getText();
+        const lexer = new Lexer(text);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const pos = Position.create(0, 0);
+
+        const resultWithout = provider.prepareRename(doc, pos, ast, symbolTable);
+        const resultWith = provider.prepareRename(doc, pos, ast, symbolTable, tokens);
+
+        expect(resultWith).toEqual(resultWithout);
+        expect(resultWith).toBeNull();
+      });
+
+      it('should handle case-insensitive variable references with and without tokens', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  CODE
+  {
+    VAR
+      MyVariable : Integer;
+
+    PROCEDURE Foo();
+    BEGIN
+      myvariable := 1;
+      MYVARIABLE := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const text = doc.getText();
+        const lexer = new Lexer(text);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const symbolTable = new SymbolTable();
+        symbolTable.buildFromAST(ast);
+
+        const pos = findPosition(code, 'MyVariable', 1);
+
+        const editsWithout = provider.getRenameEdits(doc, pos, 'NewName', ast, symbolTable);
+        const editsWith = provider.getRenameEdits(doc, pos, 'NewName', ast, symbolTable, tokens);
+
+        expect(editsWith).toEqual(editsWithout);
+        expect(editsWith).toBeDefined();
+
+        const changes = editsWith!.changes![doc.uri];
+        expect(changes.length).toBe(3); // declaration + 2 usages
+      });
+    });
+  });
 });
