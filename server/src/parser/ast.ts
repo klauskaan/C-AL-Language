@@ -566,7 +566,7 @@ export interface VariableDeclaration extends VariableModifiers {
 }
 
 /**
- * Procedure attribute (e.g., [External], [Scope('OnPrem')], [EventSubscriber(...)])
+ * Procedure attribute (e.g., [External], [Integration(TRUE)], [EventSubscriber(...)])
  */
 export interface ProcedureAttribute {
   type: 'ProcedureAttribute';
@@ -602,7 +602,7 @@ export interface ProcedureDeclaration {
   isLocal: boolean;
   variables: VariableDeclaration[];
   body: Statement[];
-  /** Optional array of captured attributes (e.g., [External], [Scope('OnPrem')]) */
+  /** Optional array of captured attributes (e.g., [External], [Integration(TRUE)]) */
   attributes?: ProcedureAttribute[];
 }
 

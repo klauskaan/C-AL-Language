@@ -170,7 +170,7 @@ export interface ASTVisitor {
   visitProcedureDeclaration?(node: ProcedureDeclaration): void | false;
 
   /**
-   * Visit a ProcedureAttribute node (e.g., [External], [Scope('OnPrem')])
+   * Visit a ProcedureAttribute node (e.g., [External], [Integration(TRUE)])
    */
   visitProcedureAttribute?(node: ProcedureAttribute): void | false;
 

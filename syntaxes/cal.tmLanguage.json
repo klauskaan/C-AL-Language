@@ -524,7 +524,7 @@
         {
           "comment": "Procedure attributes",
           "name": "storage.modifier.attribute.cal",
-          "match": "\\[(External|Internal|Integration|IntegrationEvent|BusinessEvent)\\]"
+          "match": "\\[(External|TryFunction|Integration|EventSubscriber)\\]"
         },
         {
           "comment": "CalcFormula and Query property keywords - negative lookahead prevents matching in hyphenated identifiers",
