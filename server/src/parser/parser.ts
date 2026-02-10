@@ -2645,6 +2645,7 @@ export class Parser {
     return {
       type: 'ProcedureAttribute',
       name,
+      nameToken,
       rawTokens,
       hasArguments,
       startToken,

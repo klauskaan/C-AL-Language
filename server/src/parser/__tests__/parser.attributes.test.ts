@@ -306,6 +306,40 @@ describe('Parser - Procedure Attributes', () => {
       expect(attr.startToken.value).toBe('[');
       expect(attr.endToken.value).toBe(']');
     });
+
+    it('should track nameToken for attribute name', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          [External]
+          PROCEDURE TestProc@1();
+          BEGIN
+          END;
+        }
+      }`;
+      const { ast } = parseCode(code);
+
+      const attr = ast.object!.code!.procedures[0].attributes![0];
+      expect(attr.nameToken).toBeDefined();
+      expect(attr.nameToken!.value).toBe('External');
+      expect(attr.nameToken!.type).toBe('IDENTIFIER');
+    });
+
+    it('should track nameToken for attribute with arguments', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          [EventSubscriber(Page,6302,OnEvent)]
+          PROCEDURE TestProc@1();
+          BEGIN
+          END;
+        }
+      }`;
+      const { ast } = parseCode(code);
+
+      const attr = ast.object!.code!.procedures[0].attributes![0];
+      expect(attr.nameToken).toBeDefined();
+      expect(attr.nameToken!.value).toBe('EventSubscriber');
+      expect(attr.nameToken!.type).toBe('IDENTIFIER');
+    });
   });
 
   describe('Error recovery', () => {
