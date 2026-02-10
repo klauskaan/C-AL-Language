@@ -652,6 +652,121 @@ describe('Parser - Procedure Attributes', () => {
     });
   });
 
+  describe('Edge cases', () => {
+    it('should parse attribute with empty parentheses', () => {
+      // Edge case: [External()] - attribute name with empty argument list
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          [External()]
+          PROCEDURE TestProc@1();
+          BEGIN
+          END;
+        }
+      }`;
+      const { ast, errors } = parseCode(code);
+
+      expect(errors).toHaveLength(0);
+      const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
+      expect(proc.attributes).toHaveLength(1);
+
+      const attr = proc.attributes![0];
+      expect(attr.name).toBe('External');
+      expect(attr.hasArguments).toBe(true);
+      // rawTokens includes delimiters: ['(', ')']
+      expect(attr.rawTokens).toHaveLength(2);
+      const tokenValues = attr.rawTokens.map(t => t.value);
+      expect(tokenValues).toEqual(['(', ')']);
+    });
+
+    it('should parse attribute with nested parentheses', () => {
+      // Edge case: [Attr((nested))] - parentheses within argument list
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          [Attr((nested))]
+          PROCEDURE TestProc@1();
+          BEGIN
+          END;
+        }
+      }`;
+      const { ast, errors } = parseCode(code);
+
+      expect(errors).toHaveLength(0);
+      const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
+      expect(proc.attributes).toHaveLength(1);
+
+      const attr = proc.attributes![0];
+      expect(attr.name).toBe('Attr');
+      expect(attr.hasArguments).toBe(true);
+      // Verify nested parentheses are captured
+      const tokenValues = attr.rawTokens.map(t => t.value);
+      expect(tokenValues.filter(v => v === '(')).toHaveLength(2); // Two opening parens
+      expect(tokenValues.filter(v => v === ')')).toHaveLength(2); // Two closing parens
+      expect(tokenValues).toContain('nested');
+    });
+
+    it('should parse attribute with escaped quotes in string', () => {
+      // Edge case: [Attr('string with ''quotes''')]
+      // C/AL convention: single quotes escaped with double single quotes
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          [Attr('string with ''quotes''')]
+          PROCEDURE TestProc@1();
+          BEGIN
+          END;
+        }
+      }`;
+      const { ast, errors } = parseCode(code);
+
+      expect(errors).toHaveLength(0);
+      const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
+      expect(proc.attributes).toHaveLength(1);
+
+      const attr = proc.attributes![0];
+      expect(attr.name).toBe('Attr');
+      expect(attr.hasArguments).toBe(true);
+      // Verify string with escaped quotes is captured
+      const tokenValues = attr.rawTokens.map(t => t.value);
+      expect(tokenValues.some(v => v.includes("'"))).toBe(true);
+    });
+
+    it('should handle EOF during attribute parsing', () => {
+      // Edge case: attribute not closed before file ends
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          [External`;
+      const { ast, errors } = parseCode(code);
+
+      // Should report error about unclosed attribute
+      expect(errors.length).toBeGreaterThan(0);
+      const unclosedError = errors.find(e =>
+        e.message.includes('Expected ] to close attribute') ||
+        e.message.includes('Unexpected end of file')
+      );
+      expect(unclosedError).toBeDefined();
+
+      // AST should still be created (error recovery)
+      expect(ast.object).toBeDefined();
+    });
+
+    it('should handle EOF during attribute arguments', () => {
+      // Edge case: attribute arguments not closed before EOF
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          [EventSubscriber(Page,6302`;
+      const { ast, errors } = parseCode(code);
+
+      // Should report error about unclosed arguments
+      expect(errors.length).toBeGreaterThan(0);
+      const unclosedError = errors.find(e =>
+        e.message.includes('Unclosed parenthesis in attribute')
+      );
+      expect(unclosedError).toBeDefined();
+
+      // AST should still be created (error recovery)
+      expect(ast.object).toBeDefined();
+    });
+  });
+
   describe('Real-world NAV patterns', () => {
     it('should parse PAG47 pattern with [External] procedures', () => {
       // Simplified from PAG47.TXT
