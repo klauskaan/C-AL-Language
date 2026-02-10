@@ -96,7 +96,7 @@ This is a major release delivering 5 new LSP providers, comprehensive parser imp
 
 **Procedure Modifiers**
 - `LOCAL` - Private procedure visibility
-- Procedure attributes: `[External]`, `[IntegrationEvent]`, `[BusinessEvent]`
+- Procedure attributes: `[External]`, `[TryFunction]`, `[Integration]`, `[EventSubscriber]`
 - Attribute validation and error reporting
 
 **FOR Loop Enhancements**
@@ -1656,7 +1656,7 @@ All improvements were derived from analyzing Microsoft's official AL extension T
   - Prioritizes field definitions over comments
 - **TextConst Language Codes**: Highlights multi-language codes (ENU, FRA, DEU, ESP, ITA, NLD, DAN, SVE, NOR, FIN, etc.)
 - **Additional Section Keywords**: OBJECT-PROPERTIES, FIELDGROUPS, LABELS, DATASET, REQUESTPAGE
-- **Procedure Attributes**: Highlights `[External]`, `[Internal]`, `[IntegrationEvent]`, `[BusinessEvent]`
+- **Procedure Attributes**: Highlights `[External]`, `[TryFunction]`, `[Integration]`, `[EventSubscriber]`
 - **Field Classes**: Highlights FlowField, FlowFilter types
 - **TextConst Type**: Specific highlighting for TextConst variable declarations
 - **Improved Data Type Patterns**: Better support for both `Code20` and `Code[20]` formats

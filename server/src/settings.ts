@@ -7,11 +7,13 @@
 export interface CALSettings {
   diagnostics: {
     warnDeprecated: boolean;
+    warnUnknownAttributes: boolean;
   };
 }
 
 export const defaultSettings: CALSettings = {
   diagnostics: {
-    warnDeprecated: true
+    warnDeprecated: true,
+    warnUnknownAttributes: true
   }
 };

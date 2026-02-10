@@ -181,21 +181,27 @@ async function updateSettings(): Promise<void> {
 
     // Defensive null checking
     if (config !== null && typeof config === 'object') {
-      const diagnosticsConfig = config as { warnDeprecated?: unknown };
+      const diagnosticsConfig = config as { warnDeprecated?: unknown; warnUnknownAttributes?: unknown };
 
       // Extract warnDeprecated with type safety
       const warnDeprecated = typeof diagnosticsConfig.warnDeprecated === 'boolean'
         ? diagnosticsConfig.warnDeprecated
         : defaultSettings.diagnostics.warnDeprecated;
 
+      // Extract warnUnknownAttributes with type safety
+      const warnUnknownAttributes = typeof diagnosticsConfig.warnUnknownAttributes === 'boolean'
+        ? diagnosticsConfig.warnUnknownAttributes
+        : defaultSettings.diagnostics.warnUnknownAttributes;
+
       // Update settings
       currentSettings = {
         diagnostics: {
-          warnDeprecated
+          warnDeprecated,
+          warnUnknownAttributes
         }
       };
 
-      connection.console.log(`Settings updated: warnDeprecated=${warnDeprecated}`);
+      connection.console.log(`Settings updated: warnDeprecated=${warnDeprecated}, warnUnknownAttributes=${warnUnknownAttributes}`);
     } else {
       // Config query returned null/undefined - use defaults
       currentSettings = defaultSettings;

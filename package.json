@@ -120,6 +120,12 @@
           "default": true,
           "description": "Show warnings for deprecated functions (e.g., GETRECORDID, RECORDLEVELLOCKING, CONSISTENT). When disabled, deprecated function diagnostics are suppressed.",
           "scope": "resource"
+        },
+        "cal.diagnostics.warnUnknownAttributes": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show warnings for unknown procedure attributes (e.g., [Extrnal] instead of [External]). Helps catch typos in attribute names.",
+          "scope": "resource"
         }
       }
     }
