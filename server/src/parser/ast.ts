@@ -303,7 +303,15 @@ export interface FieldDeclaration {
   fieldNo: number;
   fieldClass: string;  // Reserved column - always empty in NAV exports
   fieldName: string;
-  nameToken?: Token;  // First token of field name (QuotedIdentifier or first token of unquoted name)
+  /**
+   * Token pointing to the first token of the field name (QuotedIdentifier or first token of unquoted name).
+   *
+   * Optional because the parser's error recovery path can create a FieldDeclaration with an empty
+   * field name ('<missing>'), leaving nameToken undefined. See parser.ts line 880.
+   *
+   * Consumers must guard against undefined before accessing this field.
+   */
+  nameToken?: Token;
   dataType: DataType;
   properties: PropertySection | null;
   triggers: TriggerDeclaration[] | null;  // Field-level triggers (OnValidate, OnLookup, etc.)
@@ -575,7 +583,7 @@ export interface ProcedureAttribute {
   /** Attribute name (e.g., "External", "Scope", "EventSubscriber") */
   name: string;
   /** Token for the attribute name identifier (for precise positioning) */
-  nameToken?: Token;
+  nameToken: Token;
   /**
    * Tokens captured after the attribute name (empty for simple attributes).
    * For parameterized attributes, includes opening '(', all argument tokens, and closing ')'.
@@ -596,7 +604,7 @@ export interface ProcedureDeclaration {
   endToken: Token;
   name: string;
   /** Token pointing to the procedure name identifier (for symbol resolution) */
-  nameToken?: Token;
+  nameToken: Token;
   parameters: ParameterDeclaration[];
   returnType: DataType | null;
   isLocal: boolean;
@@ -884,7 +892,7 @@ export interface RangeExpression {
   endToken: Token;
   start: Expression | null;
   end: Expression | null;
-  operatorToken?: Token;
+  operatorToken: Token;
 }
 
 /**

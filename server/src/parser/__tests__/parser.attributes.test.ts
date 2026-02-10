@@ -320,8 +320,8 @@ describe('Parser - Procedure Attributes', () => {
 
       const attr = ast.object!.code!.procedures[0].attributes![0];
       expect(attr.nameToken).toBeDefined();
-      expect(attr.nameToken!.value).toBe('External');
-      expect(attr.nameToken!.type).toBe('IDENTIFIER');
+      expect(attr.nameToken.value).toBe('External');
+      expect(attr.nameToken.type).toBe('IDENTIFIER');
     });
 
     it('should track nameToken for attribute with arguments', () => {
@@ -337,8 +337,8 @@ describe('Parser - Procedure Attributes', () => {
 
       const attr = ast.object!.code!.procedures[0].attributes![0];
       expect(attr.nameToken).toBeDefined();
-      expect(attr.nameToken!.value).toBe('EventSubscriber');
-      expect(attr.nameToken!.type).toBe('IDENTIFIER');
+      expect(attr.nameToken.value).toBe('EventSubscriber');
+      expect(attr.nameToken.type).toBe('IDENTIFIER');
     });
   });
 
