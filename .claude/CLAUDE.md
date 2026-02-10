@@ -26,9 +26,44 @@ Implementation work happens in a git worktree (`../worktree-issue-{number}`) to 
 
 **Skip steps that aren't needed.** Trivial changes don't need an architect. Use judgment — but lean toward investigating. A detailed issue description tells you WHAT is happening, not WHY. Skip the detective only after glancing at the relevant code to confirm the root cause is genuinely obvious (single file, clear cause, no ambiguity about where to fix) — don't trust the issue description alone. For bugs and non-trivial features, default to investigating.
 
-**Show your reasoning when skipping.** When skipping INVESTIGATE or PLAN, state your reasoning to the user before proceeding. Reference what you checked, not just your conclusion. This makes judgment visible and gives the user a chance to course-correct before work starts.
-- Good: "Skipping investigation: checked `parser.ts` lines 40-55, the fix is a missing case in the switch — single file, clear cause, no ambiguity."
-- Not: "Skipping investigation — this looks straightforward."
+**Show your reasoning when skipping.** When skipping INVESTIGATE or PLAN, use a structured format that makes your decision chain explicit. This makes judgment visible and gives the user a chance to course-correct before work starts.
+
+Structure your reasoning as:
+```
+What I looked at:
+- [specific files, line ranges, or artifacts you examined]
+
+What I found:
+- [concrete observations from each source]
+
+What this means:
+- [interpretation connecting observations to the decision]
+
+Decision:
+- Skip investigation: [why root cause is directly visible]
+- Skip planning: [why implementation approach is obvious]
+```
+
+Example:
+```
+What I looked at:
+- parseBlock line 3260
+- parseCaseElseBranch (from #391)
+- parseRepeatStatement line 3788
+
+What I found:
+- parseBlock: has PROCEDURE_BOUNDARY_TOKENS check after recovery
+- parseCaseElseBranch: has PROCEDURE_BOUNDARY_TOKENS check after recovery
+- parseRepeatStatement: does NOT have this check
+
+What this means:
+- Pattern exists in 2 out of 3 places
+- This is an inconsistency, not a mystery
+
+Decision:
+- Skip investigation: the inconsistency is directly visible in the code
+- Skip planning: the fix is copying the 3-line pattern from the other two methods
+```
 
 **Read the full issue.** Before starting work, fetch issue comments (`gh issue view N -c`), not just the description. Comments often contain clarifications, revised scope, or review feedback from prior work.
 
@@ -168,7 +203,7 @@ Things we've learned:
 3. **Verify edits** — re-read files after editing; silent tool failures happen
 4. **Explicit issue closure** — use `Fixes #X` in commit messages, not just `#X`
 5. **Agent resume can fail** — if an agent returns nothing on resume, start it fresh with full context
-6. **Show reasoning when skipping** — state what you checked and why it's safe to skip, not just "this is straightforward"; issue descriptions can be wrong, outdated, or incomplete
+6. **Show reasoning when skipping** — use the What/Found/Means/Decision chain (see "Show your reasoning when skipping" in Workflow); issue descriptions can be wrong, outdated, or incomplete
 7. **Verify before advancing** -- don't proceed on agent summaries alone; read actual output at phase boundaries (#394)
 
 ---
