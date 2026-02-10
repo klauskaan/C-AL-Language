@@ -2490,8 +2490,10 @@ export class Parser {
         // Check for AL-only tokens before procedure/trigger declarations
         this.skipALOnlyTokens();
 
-        // Parse attributes like [External], [Integration], etc.
-        // These are attributes in square brackets before procedure declarations
+        // Parse attributes like [External], [Integration], [TryFunction], [EventSubscriber], etc.
+        // C/AL LIMITATION: Attributes are only supported on PROCEDURE declarations.
+        // If attributes appear before TRIGGER or EVENT declarations, they are warned and ignored.
+        // See warnIgnoredAttributes() for the warning logic.
         while (this.check(TokenType.LeftBracket)) {
           if (firstLeftBracket === null) {
             firstLeftBracket = this.peek();
