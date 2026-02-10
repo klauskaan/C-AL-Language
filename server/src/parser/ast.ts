@@ -574,6 +574,8 @@ export interface ProcedureAttribute {
   endToken: Token;
   /** Attribute name (e.g., "External", "Scope", "EventSubscriber") */
   name: string;
+  /** Token for the attribute name identifier (for precise positioning) */
+  nameToken?: Token;
   /**
    * Tokens captured after the attribute name (empty for simple attributes).
    * For parameterized attributes, includes opening '(', all argument tokens, and closing ')'.
