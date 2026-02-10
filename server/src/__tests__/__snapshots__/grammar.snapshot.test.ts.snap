@@ -1,0 +1,632 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`TextMate Grammar Scopes Code blocks - context-dependent curly braces should tokenize BEGIN/END with statements 1`] = `
+">BEGIN
+ "BEGIN"                   keyword.control.cal
+>  Amount := 100;
+ "  Amount "               source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "100"                     constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal
+>  MESSAGE('Done');
+ "  "                      source.cal
+ "MESSAGE"                 support.function.cal
+ "("                       source.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "Done"                    string.quoted.single.cal
+ "'"                       punctuation.definition.string.end.cal
+ ")"                       source.cal
+ ";"                       punctuation.terminator.cal
+>END
+ "END"                     keyword.control.cal"
+`;
+
+exports[`TextMate Grammar Scopes Code blocks - context-dependent curly braces should tokenize nested BEGIN/END blocks 1`] = `
+">BEGIN
+ "BEGIN"                   keyword.control.cal
+>  IF Amount > 0 THEN BEGIN
+ "  "                      source.cal
+ "IF"                      keyword.control.cal
+ " Amount "                source.cal
+ ">"                       keyword.operator.comparison.cal
+ " "                       source.cal
+ "0"                       constant.numeric.integer.cal
+ " "                       source.cal
+ "THEN"                    keyword.control.cal
+ " "                       source.cal
+ "BEGIN"                   keyword.control.cal
+>    Total := Total + Amount;
+ "    Total "              source.cal
+ ":="                      keyword.operator.assignment.cal
+ " Total "                 source.cal
+ "+"                       keyword.operator.arithmetic.cal
+ " Amount"                 source.cal
+ ";"                       punctuation.terminator.cal
+>  END;
+ "  "                      source.cal
+ "END"                     keyword.control.cal
+ ";"                       punctuation.terminator.cal
+>END
+ "END"                     keyword.control.cal"
+`;
+
+exports[`TextMate Grammar Scopes Code blocks - context-dependent curly braces should treat curly braces as comments inside BEGIN/END 1`] = `
+">BEGIN
+ "BEGIN"                   keyword.control.cal
+>  { This is a comment }
+ "  { This is a comment }" source.cal
+>  MESSAGE('Hello');
+ "  "                      source.cal
+ "MESSAGE"                 support.function.cal
+ "("                       source.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "Hello"                   string.quoted.single.cal
+ "'"                       punctuation.definition.string.end.cal
+ ")"                       source.cal
+ ";"                       punctuation.terminator.cal
+>END
+ "END"                     keyword.control.cal"
+`;
+
+exports[`TextMate Grammar Scopes Code blocks - context-dependent curly braces should treat curly braces as structural in field definitions 1`] = `
+">FIELDS
+ "FIELDS"                  storage.modifier.cal
+>{
+ "{"                       punctuation.section.block.begin.cal
+>  { 1   ;   ;No.                 ;Code20        }
+ "  "                      punctuation.section.block.begin.cal
+ "{ 1   ;"                 punctuation.definition.field.begin.cal
+ "   "                     meta.field-definition.cal
+ ";"                       punctuation.separator.field.cal
+ "No.                 "    meta.field-definition.cal
+ ";"                       punctuation.separator.field.cal
+ "Code20"                  storage.type.cal
+ "        "                meta.field-definition.cal
+ "}"                       punctuation.definition.field.end.cal
+>}
+ "}"                       punctuation.section.block.end.cal"
+`;
+
+exports[`TextMate Grammar Scopes Comments - all three types should tokenize C-style block comment 1`] = `
+">/* This is a
+ "/*"                      punctuation.definition.comment.begin.cal
+ " This is a"              comment.block.c-style.cal
+>   multi-line comment */
+ "   multi-line comment "  comment.block.c-style.cal
+ "*/"                      punctuation.definition.comment.end.cal
+>Amount := 100;
+ "Amount "                 source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "100"                     constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Comments - all three types should tokenize curly brace comment in code block 1`] = `
+">BEGIN
+ "BEGIN"                   keyword.control.cal
+>  { Traditional NAV comment }
+ "  { Traditional NAV comment }" source.cal
+>  Amount := 100;
+ "  Amount "               source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "100"                     constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal
+>END
+ "END"                     keyword.control.cal"
+`;
+
+exports[`TextMate Grammar Scopes Comments - all three types should tokenize line comment 1`] = `
+">// This is a line comment
+ "//"                      punctuation.definition.comment.cal
+ " This is a line comment" comment.line.double-slash.cal
+>Amount := 100;
+ "Amount "                 source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "100"                     constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Control flow keywords should tokenize CASE/OF 1`] = `
+">CASE Status OF
+ "CASE"                    keyword.control.cal
+ " Status "                source.cal
+ "OF"                      keyword.control.cal
+>  Status::Open: Amount := 100;
+ "  "                      source.cal
+ "Status::Open"            constant.other.option-value.cal
+ ":"                       punctuation.separator.type.cal
+ " Amount "                source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "100"                     constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal
+>  Status::Closed: Amount := 0;
+ "  "                      source.cal
+ "Status::Closed"          constant.other.option-value.cal
+ ":"                       punctuation.separator.type.cal
+ " Amount "                source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "0"                       constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal
+>END;
+ "END"                     keyword.control.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Control flow keywords should tokenize FOR/TO/DO 1`] = `
+">FOR I := 1 TO 10 DO
+ "FOR"                     keyword.control.cal
+ " I "                     source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "1"                       constant.numeric.integer.cal
+ " "                       source.cal
+ "TO"                      keyword.control.cal
+ " "                       source.cal
+ "10"                      constant.numeric.integer.cal
+ " "                       source.cal
+ "DO"                      keyword.control.cal
+>  Total := Total + I;
+ "  Total "                source.cal
+ ":="                      keyword.operator.assignment.cal
+ " Total "                 source.cal
+ "+"                       keyword.operator.arithmetic.cal
+ " I"                      source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Control flow keywords should tokenize IF/THEN/ELSE 1`] = `
+">IF Amount > 0 THEN
+ "IF"                      keyword.control.cal
+ " Amount "                source.cal
+ ">"                       keyword.operator.comparison.cal
+ " "                       source.cal
+ "0"                       constant.numeric.integer.cal
+ " "                       source.cal
+ "THEN"                    keyword.control.cal
+>  Total := Total + Amount
+ "  Total "                source.cal
+ ":="                      keyword.operator.assignment.cal
+ " Total "                 source.cal
+ "+"                       keyword.operator.arithmetic.cal
+ " Amount"                 source.cal
+>ELSE
+ "ELSE"                    keyword.control.cal
+>  Total := 0;
+ "  Total "                source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "0"                       constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Control flow keywords should tokenize REPEAT/UNTIL 1`] = `
+">REPEAT
+ "REPEAT"                  keyword.control.cal
+>  Count := Count + 1;
+ "  Count "                source.cal
+ ":="                      keyword.operator.assignment.cal
+ " Count "                 source.cal
+ "+"                       keyword.operator.arithmetic.cal
+ " "                       source.cal
+ "1"                       constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal
+>UNTIL Count > 10;
+ "UNTIL"                   keyword.control.cal
+ " Count "                 source.cal
+ ">"                       keyword.operator.comparison.cal
+ " "                       source.cal
+ "10"                      constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Expressions and operators should tokenize assignment operator 1`] = `
+">Amount := 100;
+ "Amount "                 source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "100"                     constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Expressions and operators should tokenize comparison operators 1`] = `
+">IF (A = B) AND (C <> D) AND (E > F) THEN
+ "IF"                      keyword.control.cal
+ " ("                      source.cal
+ "A"                       variable.parameter.property-name.cal
+ " "                       source.cal
+ "="                       keyword.operator.assignment.cal
+ " B) "                    source.cal
+ "AND"                     keyword.operator.logical.cal
+ " (C "                    source.cal
+ "<>"                      keyword.operator.comparison.cal
+ " "                       source.cal
+ "D"                       constant.numeric.date.cal
+ ") "                      source.cal
+ "AND"                     keyword.operator.logical.cal
+ " (E "                    source.cal
+ ">"                       keyword.operator.comparison.cal
+ " F) "                    source.cal
+ "THEN"                    keyword.control.cal"
+`;
+
+exports[`TextMate Grammar Scopes Expressions and operators should tokenize logical operators 1`] = `
+">Result := (A AND B) OR (NOT C);
+ "Result "                 source.cal
+ ":="                      keyword.operator.assignment.cal
+ " (A "                    source.cal
+ "AND"                     keyword.operator.logical.cal
+ " B) "                    source.cal
+ "OR"                      keyword.operator.logical.cal
+ " ("                      source.cal
+ "NOT"                     keyword.operator.logical.cal
+ " C)"                     source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Expressions and operators should tokenize range operator 1`] = `
+">Customer.SETRANGE("No.", '10000'..'20000');
+ "Customer"                source.cal
+ "."                       source.cal
+ "SETRANGE"                entity.name.function.cal
+ "("                       source.cal
+ "\\""                      punctuation.definition.identifier.begin.cal
+ "No."                     identifier.quoted.double.cal
+ "\\""                      punctuation.definition.identifier.end.cal
+ ","                       punctuation.separator.cal
+ " "                       source.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "10000"                   string.quoted.single.cal
+ "'"                       punctuation.definition.string.end.cal
+ ".."                      keyword.operator.range.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "20000"                   string.quoted.single.cal
+ "'"                       punctuation.definition.string.end.cal
+ ")"                       source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Expressions and operators should tokenize scope operator 1`] = `
+">Status := Status::Open;
+ "Status "                 source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "Status::Open"            constant.other.option-value.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Field definitions should tokenize field with trigger 1`] = `
+">{ 1   ;   ;No.                 ;Code20
+ "{ 1   ;"                 punctuation.definition.field.begin.cal
+ "   "                     meta.field-definition.cal
+ ";"                       punctuation.separator.field.cal
+ "No.                 "    meta.field-definition.cal
+ ";"                       punctuation.separator.field.cal
+ "Code20"                  storage.type.cal
+>                                         OnValidate=BEGIN
+ "                                         OnValidate=" meta.field-definition.cal
+ "BEGIN"                   keyword.control.cal
+>                                           TESTFIELD(Name);
+ "                                           " meta.block.begin-end.cal
+ "TESTFIELD"               support.function.cal
+ "(Name)"                  meta.block.begin-end.cal
+ ";"                       punctuation.terminator.cal
+>                                         END;
+ "                                         " meta.block.begin-end.cal
+ "END"                     keyword.control.cal
+ ";"                       punctuation.separator.field.cal
+>                                          }
+ "                                          " meta.field-definition.cal
+ "}"                       punctuation.definition.field.end.cal"
+`;
+
+exports[`TextMate Grammar Scopes Field definitions should tokenize standard field 1`] = `
+">{ 1   ;   ;No.                 ;Code20        }
+ "{ 1   ;"                 punctuation.definition.field.begin.cal
+ "   "                     meta.field-definition.cal
+ ";"                       punctuation.separator.field.cal
+ "No.                 "    meta.field-definition.cal
+ ";"                       punctuation.separator.field.cal
+ "Code20"                  storage.type.cal
+ "        "                meta.field-definition.cal
+ "}"                       punctuation.definition.field.end.cal"
+`;
+
+exports[`TextMate Grammar Scopes Object declarations should tokenize different object types 1`] = `
+">OBJECT Codeunit 50000 MyCodeunit
+ "OBJECT"                  keyword.other.object.cal
+ " "                       meta.object.cal
+ "Codeunit"                storage.type.object-type.cal
+ " "                       meta.object.cal
+ "50000"                   constant.numeric.object-id.cal
+ " "                       meta.object.cal
+ "MyCodeunit"              entity.name.type.object.string.unquoted.cal
+>{
+ "{"                       punctuation.section.object.begin.cal
+>}
+ "}"                       punctuation.section.object.end.cal"
+`;
+
+exports[`TextMate Grammar Scopes Object declarations should tokenize minimal object declaration 1`] = `
+">OBJECT Table 18 Customer
+ "OBJECT"                  keyword.other.object.cal
+ " "                       meta.object.cal
+ "Table"                   storage.type.object-type.cal
+ " "                       meta.object.cal
+ "18"                      constant.numeric.object-id.cal
+ " "                       meta.object.cal
+ "Customer"                entity.name.type.object.string.unquoted.cal
+>{
+ "{"                       punctuation.section.object.begin.cal
+>}
+ "}"                       punctuation.section.object.end.cal"
+`;
+
+exports[`TextMate Grammar Scopes Object declarations should tokenize page object 1`] = `
+">OBJECT Page 21 Customer Card
+ "OBJECT"                  keyword.other.object.cal
+ " "                       meta.object.cal
+ "Page"                    storage.type.object-type.cal
+ " "                       meta.object.cal
+ "21"                      constant.numeric.object-id.cal
+ " "                       meta.object.cal
+ "Customer Card"           entity.name.type.object.string.unquoted.cal
+>{
+ "{"                       punctuation.section.object.begin.cal
+>}
+ "}"                       punctuation.section.object.end.cal"
+`;
+
+exports[`TextMate Grammar Scopes Object declarations should tokenize report object 1`] = `
+">OBJECT Report 101 Sales Invoice
+ "OBJECT"                  keyword.other.object.cal
+ " "                       meta.object.cal
+ "Report"                  storage.type.object-type.cal
+ " "                       meta.object.cal
+ "101"                     constant.numeric.object-id.cal
+ " "                       meta.object.cal
+ "Sales Invoice"           entity.name.type.object.string.unquoted.cal
+>{
+ "{"                       punctuation.section.object.begin.cal
+>}
+ "}"                       punctuation.section.object.end.cal"
+`;
+
+exports[`TextMate Grammar Scopes Procedure declarations should tokenize procedure with EventSubscriber attribute 1`] = `
+">[EventSubscriber(Table,18,OnAfterInsert,'',false,false)]
+ "["                       punctuation.section.attribute.begin.cal
+ "EventSubscriber"         storage.modifier.attribute.cal
+ "("                       punctuation.definition.arguments.begin.cal
+ "Table"                   meta.attribute.arguments.cal
+ ","                       punctuation.separator.cal
+ "18"                      constant.numeric.integer.cal
+ ","                       punctuation.separator.cal
+ "OnAfterInsert"           meta.attribute.arguments.cal
+ ","                       punctuation.separator.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "'"                       punctuation.definition.string.end.cal
+ ","                       punctuation.separator.cal
+ "false"                   meta.attribute.arguments.cal
+ ","                       punctuation.separator.cal
+ "false"                   meta.attribute.arguments.cal
+ ")"                       punctuation.definition.arguments.end.cal
+ "]"                       punctuation.section.attribute.end.cal
+>LOCAL PROCEDURE OnCustomerInsert@1();
+ "LOCAL"                   keyword.other.cal
+ " "                       source.cal
+ "PROCEDURE"               keyword.other.cal
+ " "                       source.cal
+ "OnCustomerInsert"        entity.name.function.cal
+ "@1"                      constant.numeric.at-number.cal
+ "()"                      source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Procedure declarations should tokenize procedure with External attribute 1`] = `
+">[External]
+ "["                       punctuation.section.attribute.begin.cal
+ "External"                storage.modifier.attribute.cal
+ "]"                       punctuation.section.attribute.end.cal
+>PROCEDURE PublicMethod@1();
+ "PROCEDURE"               keyword.other.cal
+ " "                       source.cal
+ "PublicMethod"            entity.name.function.cal
+ "@1"                      constant.numeric.at-number.cal
+ "()"                      source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Procedure declarations should tokenize procedure with TryFunction attribute 1`] = `
+">[TryFunction]
+ "["                       punctuation.section.attribute.begin.cal
+ "TryFunction"             storage.modifier.attribute.cal
+ "]"                       punctuation.section.attribute.end.cal
+>LOCAL PROCEDURE TryOperation@1() : Boolean;
+ "LOCAL"                   keyword.other.cal
+ " "                       source.cal
+ "PROCEDURE"               keyword.other.cal
+ " "                       source.cal
+ "TryOperation"            entity.name.function.cal
+ "@1"                      constant.numeric.at-number.cal
+ "() "                     source.cal
+ ":"                       punctuation.separator.type.cal
+ " "                       source.cal
+ "Boolean"                 storage.type.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Procedure declarations should tokenize procedure with parameters 1`] = `
+">PROCEDURE Process@1(VAR Amount@1000 : Decimal; Count@1001 : Integer);
+ "PROCEDURE"               keyword.other.cal
+ " "                       source.cal
+ "Process"                 entity.name.function.cal
+ "@1"                      constant.numeric.at-number.cal
+ "("                       source.cal
+ "VAR"                     keyword.other.cal
+ " "                       source.cal
+ "Amount"                  variable.other.declaration.cal
+ "@1000"                   constant.numeric.at-number.cal
+ " "                       source.cal
+ ":"                       punctuation.separator.type.cal
+ " "                       source.cal
+ "Decimal"                 storage.type.cal
+ ";"                       punctuation.terminator.cal
+ " "                       source.cal
+ "Count"                   variable.other.declaration.cal
+ "@1001"                   constant.numeric.at-number.cal
+ " "                       source.cal
+ ":"                       punctuation.separator.type.cal
+ " "                       source.cal
+ "Integer"                 storage.type.cal
+ ")"                       source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Procedure declarations should tokenize simple procedure with at-number 1`] = `
+">PROCEDURE Calculate@1();
+ "PROCEDURE"               keyword.other.cal
+ " "                       source.cal
+ "Calculate"               entity.name.function.cal
+ "@1"                      constant.numeric.at-number.cal
+ "()"                      source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Section keywords should tokenize CODE section 1`] = `
+">CODE
+ "CODE"                    storage.modifier.cal
+>{
+ "{"                       punctuation.section.block.begin.cal
+>}
+ "}"                       punctuation.section.block.end.cal"
+`;
+
+exports[`TextMate Grammar Scopes Section keywords should tokenize FIELDS section 1`] = `
+">FIELDS
+ "FIELDS"                  storage.modifier.cal
+>{
+ "{"                       punctuation.section.block.begin.cal
+>}
+ "}"                       punctuation.section.block.end.cal"
+`;
+
+exports[`TextMate Grammar Scopes Section keywords should tokenize KEYS section 1`] = `
+">KEYS
+ "KEYS"                    storage.modifier.cal
+>{
+ "{"                       punctuation.section.block.begin.cal
+>}
+ "}"                       punctuation.section.block.end.cal"
+`;
+
+exports[`TextMate Grammar Scopes Section keywords should tokenize OBJECT-PROPERTIES compound keyword 1`] = `
+">OBJECT-PROPERTIES
+ "OBJECT"                  storage.modifier.cal
+ "-"                       storage.modifier.cal
+ "PROPERTIES"              storage.modifier.cal
+>{
+ "{"                       punctuation.section.block.begin.cal
+>  Date=01/06/20;
+ "  "                      punctuation.section.block.begin.cal
+ "Date"                    variable.parameter.property-name.cal
+ "="                       keyword.operator.assignment.cal
+ "01/06/20"                string.unquoted.property-value.cal
+ ";"                       punctuation.terminator.cal
+>}
+ "}"                       punctuation.section.block.end.cal"
+`;
+
+exports[`TextMate Grammar Scopes Strings and literals should tokenize date literal 1`] = `
+">MyDate := 060120D;
+ "MyDate "                 source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "060120D"                 constant.numeric.date.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Strings and literals should tokenize numeric literals 1`] = `
+">Amount := 123.45;
+ "Amount "                 source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "123.45"                  constant.numeric.decimal.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Strings and literals should tokenize single-quoted string 1`] = `
+">MESSAGE('Hello, World!');
+ "MESSAGE"                 support.function.cal
+ "("                       source.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "Hello, World!"           string.quoted.single.cal
+ "'"                       punctuation.definition.string.end.cal
+ ")"                       source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Strings and literals should tokenize string with escaped quotes 1`] = `
+">MESSAGE('It''s escaped');
+ "MESSAGE"                 support.function.cal
+ "("                       source.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "It"                      string.quoted.single.cal
+ "''"                      constant.character.escape.apostrophe.cal
+ "s escaped"               string.quoted.single.cal
+ "'"                       punctuation.definition.string.end.cal
+ ")"                       source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Strings and literals should tokenize time literal 1`] = `
+">MyTime := 120000T;
+ "MyTime "                 source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "120000T"                 constant.numeric.time.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Variable declarations should tokenize TEMPORARY variable 1`] = `
+">TempCustomer@1000 : TEMPORARY Record 18;
+ "TempCustomer"            variable.other.declaration.cal
+ "@1000"                   constant.numeric.at-number.cal
+ " "                       source.cal
+ ":"                       punctuation.separator.type.cal
+ " "                       source.cal
+ "TEMPORARY"               keyword.other.cal
+ " "                       source.cal
+ "Record"                  storage.type.cal
+ " "                       source.cal
+ "18"                      constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Variable declarations should tokenize record variable 1`] = `
+">Customer@1000 : Record 18;
+ "Customer"                variable.other.declaration.cal
+ "@1000"                   constant.numeric.at-number.cal
+ " "                       source.cal
+ ":"                       punctuation.separator.type.cal
+ " "                       source.cal
+ "Record"                  storage.type.cal
+ " "                       source.cal
+ "18"                      constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Variable declarations should tokenize simple variable 1`] = `
+">MyVar@1001 : Integer;
+ "MyVar"                   variable.other.declaration.cal
+ "@1001"                   constant.numeric.at-number.cal
+ " "                       source.cal
+ ":"                       punctuation.separator.type.cal
+ " "                       source.cal
+ "Integer"                 storage.type.cal
+ ";"                       punctuation.terminator.cal"
+`;

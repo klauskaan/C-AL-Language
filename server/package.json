@@ -45,6 +45,8 @@
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.0.0",
-    "v8-profiler-next": "^1.10.0"
+    "v8-profiler-next": "^1.10.0",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^7.0.4"
   }
 }
