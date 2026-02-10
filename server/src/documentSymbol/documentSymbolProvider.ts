@@ -21,6 +21,7 @@ import { ProviderBase } from '../providers/providerBase';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { ASTWalker } from '../visitor/astWalker';
 import { Token, TokenType } from '../lexer/tokens';
+import { formatAttributeTokenValue } from '../shared/attributeFormat';
 
 /**
  * Visitor that collects document symbols in a hierarchical structure
@@ -175,7 +176,7 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
     let attributePrefix = '';
     if (node.attributes && node.attributes.length > 0) {
       attributePrefix = node.attributes.map(a => {
-        const args = a.rawTokens.map(t => this.formatAttributeTokenValue(t)).join('');
+        const args = a.rawTokens.map(t => formatAttributeTokenValue(t)).join('');
         return `[${a.name}${args}]`;
       }).join(' ') + ' ';
     }
@@ -259,20 +260,6 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
       return `${typeName}[${length}]`;
     }
     return typeName;
-  }
-
-  /**
-   * Format a token value with appropriate quoting for attribute display
-   */
-  private formatAttributeTokenValue(token: Token): string {
-    switch (token.type) {
-      case TokenType.String:
-        return `'${token.value}'`;
-      case TokenType.QuotedIdentifier:
-        return `"${token.value}"`;
-      default:
-        return token.value;
-    }
   }
 
   /**
