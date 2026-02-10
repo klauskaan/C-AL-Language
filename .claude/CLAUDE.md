@@ -65,6 +65,8 @@ Decision:
 - Skip planning: the fix is copying the 3-line pattern from the other two methods
 ```
 
+Do not use narrative summaries like "Skipping investigation -- this looks straightforward."
+
 **Read the full issue.** Before starting work, fetch issue comments (`gh issue view N -c`), not just the description. Comments often contain clarifications, revised scope, or review feedback from prior work.
 
 **Staleness of workflow-spawned issues.** Issues created during work on another issue ("Discovered during #N", "Deferred from #N") may go stale if the referenced code changes after filing. When picking up such an issue, check how many commits have touched the relevant files since it was created — count commits, not calendar days. High churn means investigate even if the description looks obvious; no churn means the original observation still holds.
