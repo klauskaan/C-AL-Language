@@ -27,13 +27,15 @@ export class RenameProvider extends ProviderBase {
    * @param position - The cursor position
    * @param ast - The parsed AST (optional)
    * @param symbolTable - The symbol table (optional)
+   * @param tokens - Pre-tokenized tokens (optional, for reuse)
    * @returns Object with range and placeholder, or null if rename not possible
    */
   public prepareRename(
     document: TextDocument,
     position: Position,
     ast: CALDocument | undefined,
-    symbolTable: SymbolTable | undefined
+    symbolTable: SymbolTable | undefined,
+    tokens?: Token[]
   ): { range: Range; placeholder: string } | null {
     const offset = document.offsetAt(position);
 
@@ -48,8 +50,8 @@ export class RenameProvider extends ProviderBase {
 
     // Not a multi-token field, get token at position for regular identifier
     const text = document.getText();
-    const tokens = new Lexer(text).tokenize();
-    const token = findTokenAtOffset(tokens, offset);
+    const resolvedTokens = tokens ?? new Lexer(text).tokenize();
+    const token = findTokenAtOffset(resolvedTokens, offset);
     if (!token) {
       return null;
     }
@@ -86,6 +88,7 @@ export class RenameProvider extends ProviderBase {
    * @param newName - The new name for the symbol
    * @param ast - The parsed AST (optional)
    * @param symbolTable - The symbol table (optional)
+   * @param tokens - Pre-tokenized tokens (optional, for reuse)
    * @returns WorkspaceEdit with text changes, or null if operation fails
    */
   public getRenameEdits(
@@ -93,7 +96,8 @@ export class RenameProvider extends ProviderBase {
     position: Position,
     newName: string,
     ast: CALDocument | undefined,
-    symbolTable: SymbolTable | undefined
+    symbolTable: SymbolTable | undefined,
+    tokens?: Token[]
   ): WorkspaceEdit | null {
     // Get all references using ReferenceProvider
     if (!ast) {
@@ -110,12 +114,12 @@ export class RenameProvider extends ProviderBase {
     if (field) {
       // Multi-token field: collect references manually using field name
       // No scope filtering needed - fields are global to the table
-      filteredReferences = this.collectFieldReferences(document, ast, field);
+      filteredReferences = this.collectFieldReferences(document, ast, field, tokens);
       symbolType = 'field';
     } else {
       // Not a multi-token field, get token at position for regular rename
-      const tokens = new Lexer(document.getText()).tokenize();
-      const token = findTokenAtOffset(tokens, offset);
+      const resolvedTokens = tokens ?? new Lexer(document.getText()).tokenize();
+      const token = findTokenAtOffset(resolvedTokens, offset);
       if (!token || !this.isRenameableToken(token)) {
         return null;
       }
@@ -138,7 +142,8 @@ export class RenameProvider extends ProviderBase {
         offset,
         symbolTable,
         ast,
-        document
+        document,
+        resolvedTokens
       );
     }
 
@@ -318,6 +323,7 @@ export class RenameProvider extends ProviderBase {
    * @param symbolTable - The symbol table
    * @param ast - The parsed AST (optional)
    * @param document - The text document
+   * @param tokens - Pre-tokenized tokens (optional, for reuse)
    * @returns Filtered array of references
    */
   private filterReferencesByScope(
@@ -326,7 +332,8 @@ export class RenameProvider extends ProviderBase {
     originOffset: number,
     symbolTable: SymbolTable | undefined,
     ast: CALDocument | undefined,
-    document: TextDocument
+    document: TextDocument,
+    tokens?: Token[]
   ): { uri: string; range: Range }[] {
     if (!symbolTable) {
       // Without symbol table, return all references (no scope filtering)
@@ -351,10 +358,10 @@ export class RenameProvider extends ProviderBase {
     }
 
     // Filter references to only those that resolve to the same symbol definition
-    const tokens = new Lexer(document.getText()).tokenize();
+    const resolvedTokens = tokens ?? new Lexer(document.getText()).tokenize();
     return references.filter(ref => {
       const refOffset = document.offsetAt(ref.range.start);
-      const refToken = findTokenAtOffset(tokens, refOffset);
+      const refToken = findTokenAtOffset(resolvedTokens, refOffset);
       if (!refToken) {
         return false;
       }
@@ -455,12 +462,14 @@ export class RenameProvider extends ProviderBase {
    * @param document - The text document
    * @param ast - The parsed AST
    * @param field - The field declaration to find references for
+   * @param tokens - Pre-tokenized tokens (optional, for reuse)
    * @returns Array of locations where the field is referenced
    */
   private collectFieldReferences(
     document: TextDocument,
     ast: CALDocument,
-    field: FieldDeclaration
+    field: FieldDeclaration,
+    tokens?: Token[]
   ): { uri: string; range: Range }[] {
     const references: { uri: string; range: Range }[] = [];
     const fieldName = field.fieldName.toLowerCase();
@@ -473,11 +482,10 @@ export class RenameProvider extends ProviderBase {
     // Now search for all usages (including definition) in the code
     // We'll use the lexer to find all tokens and match them against the field name
     const text = document.getText();
-    const lexer = new Lexer(text);
-    const tokens = lexer.tokenize();
+    const resolvedTokens = tokens ?? new Lexer(text).tokenize();
 
-    for (let i = 0; i < tokens.length; i++) {
-      const token = tokens[i];
+    for (let i = 0; i < resolvedTokens.length; i++) {
+      const token = resolvedTokens[i];
 
       // For quoted identifiers, check if the token value matches the field name
       if (token.type === TokenType.QuotedIdentifier) {
