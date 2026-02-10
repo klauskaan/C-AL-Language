@@ -414,12 +414,13 @@ connection.onPrepareRename((params: PrepareRenameParams) => {
   }
 
   try {
-    const { ast, symbolTable } = parseDocument(document);
+    const { ast, symbolTable, lexer } = parseDocument(document);
     return renameProvider.prepareRename(
       document,
       params.position,
       ast,
-      symbolTable
+      symbolTable,
+      lexer.getTokens()
     );
   } catch (error) {
     connection.console.error(`Error preparing rename: ${formatError(error)}`);
@@ -435,13 +436,14 @@ connection.onRenameRequest((params: RenameParams): WorkspaceEdit | null => {
   }
 
   try {
-    const { ast, symbolTable } = parseDocument(document);
+    const { ast, symbolTable, lexer } = parseDocument(document);
     return renameProvider.getRenameEdits(
       document,
       params.position,
       params.newName,
       ast,
-      symbolTable
+      symbolTable,
+      lexer.getTokens()
     );
   } catch (error) {
     connection.console.error(`Error performing rename: ${formatError(error)}`);

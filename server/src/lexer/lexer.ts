@@ -2087,7 +2087,9 @@ export class Lexer {
   }
 
   /**
-   * Get all tokens (for debugging)
+   * Get all tokens.
+   * Returns the internal token array by reference for token reuse optimization.
+   * Callers must not mutate the returned array.
    */
   public getTokens(): Token[] {
     return this.tokens;
