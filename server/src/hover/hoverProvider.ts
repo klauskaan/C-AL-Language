@@ -63,7 +63,7 @@ export class HoverProvider extends ProviderBase {
     position: Position,
     ast?: CALDocument,
     symbolTable?: SymbolTable,
-    tokens?: Token[]
+    tokens?: readonly Token[]
   ): Hover | null {
     const wordInfo = this.getWordAtPosition(document, position);
     if (!wordInfo) {

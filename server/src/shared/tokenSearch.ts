@@ -14,7 +14,7 @@ import { Token } from '../lexer/tokens';
  * - Tokens may have gaps between them (returns undefined for gaps)
  * - O(log n) time complexity
  */
-export function findTokenAtOffset(tokens: Token[], offset: number): Token | undefined {
+export function findTokenAtOffset(tokens: readonly Token[], offset: number): Token | undefined {
   if (tokens.length === 0) {
     return undefined;
   }

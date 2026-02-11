@@ -2089,10 +2089,10 @@ export class Lexer {
   /**
    * Get all tokens.
    * Returns the internal token array by reference for token reuse optimization.
-   * Callers must not mutate the returned array.
+   * The returned array is frozen to prevent mutation.
    */
-  public getTokens(): Token[] {
-    return this.tokens;
+  public getTokens(): readonly Token[] {
+    return Object.freeze(this.tokens);
   }
 
   /**

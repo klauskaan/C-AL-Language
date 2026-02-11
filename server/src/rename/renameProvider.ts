@@ -35,7 +35,7 @@ export class RenameProvider extends ProviderBase {
     position: Position,
     ast: CALDocument | undefined,
     symbolTable: SymbolTable | undefined,
-    tokens?: Token[]
+    tokens?: readonly Token[]
   ): { range: Range; placeholder: string } | null {
     const offset = document.offsetAt(position);
 
@@ -97,7 +97,7 @@ export class RenameProvider extends ProviderBase {
     newName: string,
     ast: CALDocument | undefined,
     symbolTable: SymbolTable | undefined,
-    tokens?: Token[]
+    tokens?: readonly Token[]
   ): WorkspaceEdit | null {
     // Get all references using ReferenceProvider
     if (!ast) {
@@ -333,7 +333,7 @@ export class RenameProvider extends ProviderBase {
     symbolTable: SymbolTable | undefined,
     ast: CALDocument | undefined,
     document: TextDocument,
-    tokens?: Token[]
+    tokens?: readonly Token[]
   ): { uri: string; range: Range }[] {
     if (!symbolTable) {
       // Without symbol table, return all references (no scope filtering)
@@ -469,7 +469,7 @@ export class RenameProvider extends ProviderBase {
     document: TextDocument,
     ast: CALDocument,
     field: FieldDeclaration,
-    tokens?: Token[]
+    tokens?: readonly Token[]
   ): { uri: string; range: Range }[] {
     const references: { uri: string; range: Range }[] = [];
     const fieldName = field.fieldName.toLowerCase();

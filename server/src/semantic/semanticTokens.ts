@@ -76,7 +76,7 @@ export class SemanticTokensProvider {
   /**
    * Build semantic tokens from tokens and AST
    */
-  public buildSemanticTokens(tokens: Token[], ast: CALDocument, builder: SemanticTokensBuilder): void {
+  public buildSemanticTokens(tokens: readonly Token[], ast: CALDocument, builder: SemanticTokensBuilder): void {
     // Reset state for each document
     this.inObjectProperties = false;
     this.inProperties = false;
