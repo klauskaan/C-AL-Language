@@ -62,7 +62,7 @@ export async function tokenizeLines(
     throw new Error('Failed to load C/AL grammar');
   }
 
-  const lines = code.split('\n');
+  const lines = code.split(/\r?\n/);
   const results: Array<Array<{ text: string; scopes: string[] }>> = [];
 
   let ruleStack = vsctm.INITIAL;
@@ -98,7 +98,7 @@ export async function tokenizeLines(
  */
 export async function toGrammarSnapshot(code: string): Promise<string> {
   const tokenizedLines = await tokenizeLines(code);
-  const lines = code.split('\n');
+  const lines = code.split(/\r?\n/);
   const output: string[] = [];
 
   for (let i = 0; i < lines.length; i++) {
