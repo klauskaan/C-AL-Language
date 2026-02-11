@@ -458,4 +458,48 @@ UNTIL Count > 10;`;
       expect(result).toMatchSnapshot();
     });
   });
+
+  describe('Built-in variables', () => {
+    it('should tokenize Rec variable', async () => {
+      const code = `Rec.MODIFY;`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should tokenize xRec variable', async () => {
+      const code = `IF xRec.Status <> Rec.Status THEN`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should tokenize CurrPage variable', async () => {
+      const code = `CurrPage.UPDATE(FALSE);`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should tokenize CurrReport variable', async () => {
+      const code = `CurrReport.SKIP;`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should tokenize CurrFieldNo variable', async () => {
+      const code = `MESSAGE(FORMAT(CurrFieldNo));`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should tokenize RequestOptionsPage variable', async () => {
+      const code = `RequestOptionsPage.EDITABLE := FALSE;`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should not tokenize regular identifiers as built-in variables', async () => {
+      const code = `MyRec.MODIFY;`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+  });
 });

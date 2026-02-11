@@ -1,5 +1,74 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
+exports[`TextMate Grammar Scopes Built-in variables should not tokenize regular identifiers as built-in variables 1`] = `
+">MyRec.MODIFY;
+ "MyRec."                  source.cal
+ "MODIFY"                  support.function.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Built-in variables should tokenize CurrFieldNo variable 1`] = `
+">MESSAGE(FORMAT(CurrFieldNo));
+ "MESSAGE"                 support.function.cal
+ "("                       source.cal
+ "FORMAT"                  support.function.cal
+ "("                       source.cal
+ "CurrFieldNo"             variable.language.cal
+ "))"                      source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Built-in variables should tokenize CurrPage variable 1`] = `
+">CurrPage.UPDATE(FALSE);
+ "CurrPage"                variable.language.cal
+ "."                       source.cal
+ "UPDATE"                  entity.name.function.cal
+ "("                       source.cal
+ "FALSE"                   constant.language.cal
+ ")"                       source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Built-in variables should tokenize CurrReport variable 1`] = `
+">CurrReport.SKIP;
+ "CurrReport"              variable.language.cal
+ ".SKIP"                   source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Built-in variables should tokenize Rec variable 1`] = `
+">Rec.MODIFY;
+ "Rec"                     variable.language.cal
+ "."                       source.cal
+ "MODIFY"                  support.function.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Built-in variables should tokenize RequestOptionsPage variable 1`] = `
+">RequestOptionsPage.EDITABLE := FALSE;
+ "RequestOptionsPage"      variable.language.cal
+ "."                       source.cal
+ "EDITABLE"                support.function.cal
+ " "                       source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "FALSE"                   constant.language.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Built-in variables should tokenize xRec variable 1`] = `
+">IF xRec.Status <> Rec.Status THEN
+ "IF"                      keyword.control.cal
+ " "                       source.cal
+ "xRec"                    variable.language.cal
+ ".Status "                source.cal
+ "<>"                      keyword.operator.comparison.cal
+ " "                       source.cal
+ "Rec"                     variable.language.cal
+ ".Status "                source.cal
+ "THEN"                    keyword.control.cal"
+`;
+
 exports[`TextMate Grammar Scopes Code blocks - context-dependent curly braces should tokenize BEGIN/END with statements 1`] = `
 ">BEGIN
  "BEGIN"                   keyword.control.cal
