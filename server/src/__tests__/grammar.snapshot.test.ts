@@ -106,6 +106,13 @@ LOCAL PROCEDURE OnCustomerInsert@1();`;
       expect(result).toMatchSnapshot();
     });
 
+    it('should tokenize procedure with Integration attribute', async () => {
+      const code = `[Integration]
+LOCAL PROCEDURE WebServiceMethod@1();`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
     describe('Attributes - case insensitivity', () => {
       it('should tokenize lowercase External attribute', async () => {
         const code = `[external]
@@ -145,6 +152,20 @@ LOCAL PROCEDURE OnCustomerInsert@1();`;
       it('should tokenize mixed-case EventSubscriber attribute', async () => {
         const code = `[eVeNtSuBsCrIbEr(Table,18,OnAfterInsert,'',false,false)]
 LOCAL PROCEDURE OnCustomerInsert@1();`;
+        const result = await toGrammarSnapshot(code);
+        expect(result).toMatchSnapshot();
+      });
+
+      it('should tokenize lowercase Integration attribute', async () => {
+        const code = `[integration]
+LOCAL PROCEDURE WebServiceMethod@1();`;
+        const result = await toGrammarSnapshot(code);
+        expect(result).toMatchSnapshot();
+      });
+
+      it('should tokenize mixed-case Integration attribute', async () => {
+        const code = `[InTeGrAtIoN]
+LOCAL PROCEDURE WebServiceMethod@1();`;
         const result = await toGrammarSnapshot(code);
         expect(result).toMatchSnapshot();
       });
