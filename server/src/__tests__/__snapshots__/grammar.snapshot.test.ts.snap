@@ -465,6 +465,132 @@ exports[`TextMate Grammar Scopes Object declarations should tokenize report obje
  "}"                       punctuation.section.object.end.cal"
 `;
 
+exports[`TextMate Grammar Scopes Procedure declarations Attributes - case insensitivity should tokenize lowercase EventSubscriber attribute 1`] = `
+">[eventsubscriber(Table,18,OnAfterInsert,'',false,false)]
+ "["                       punctuation.section.attribute.begin.cal
+ "eventsubscriber"         storage.modifier.attribute.cal
+ "("                       punctuation.definition.arguments.begin.cal
+ "Table"                   meta.attribute.arguments.cal
+ ","                       punctuation.separator.cal
+ "18"                      constant.numeric.integer.cal
+ ","                       punctuation.separator.cal
+ "OnAfterInsert"           meta.attribute.arguments.cal
+ ","                       punctuation.separator.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "'"                       punctuation.definition.string.end.cal
+ ","                       punctuation.separator.cal
+ "false"                   meta.attribute.arguments.cal
+ ","                       punctuation.separator.cal
+ "false"                   meta.attribute.arguments.cal
+ ")"                       punctuation.definition.arguments.end.cal
+ "]"                       punctuation.section.attribute.end.cal
+>LOCAL PROCEDURE OnCustomerInsert@1();
+ "LOCAL"                   keyword.other.cal
+ " "                       source.cal
+ "PROCEDURE"               keyword.other.cal
+ " "                       source.cal
+ "OnCustomerInsert"        entity.name.function.cal
+ "@1"                      constant.numeric.at-number.cal
+ "()"                      source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Procedure declarations Attributes - case insensitivity should tokenize lowercase External attribute 1`] = `
+">[external]
+ "["                       punctuation.section.attribute.begin.cal
+ "external"                storage.modifier.attribute.cal
+ "]"                       punctuation.section.attribute.end.cal
+>PROCEDURE PublicMethod@1();
+ "PROCEDURE"               keyword.other.cal
+ " "                       source.cal
+ "PublicMethod"            entity.name.function.cal
+ "@1"                      constant.numeric.at-number.cal
+ "()"                      source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Procedure declarations Attributes - case insensitivity should tokenize lowercase TryFunction attribute 1`] = `
+">[tryfunction]
+ "["                       punctuation.section.attribute.begin.cal
+ "tryfunction"             storage.modifier.attribute.cal
+ "]"                       punctuation.section.attribute.end.cal
+>LOCAL PROCEDURE TryOperation@1() : Boolean;
+ "LOCAL"                   keyword.other.cal
+ " "                       source.cal
+ "PROCEDURE"               keyword.other.cal
+ " "                       source.cal
+ "TryOperation"            entity.name.function.cal
+ "@1"                      constant.numeric.at-number.cal
+ "() "                     source.cal
+ ":"                       punctuation.separator.type.cal
+ " "                       source.cal
+ "Boolean"                 storage.type.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Procedure declarations Attributes - case insensitivity should tokenize mixed-case EventSubscriber attribute 1`] = `
+">[eVeNtSuBsCrIbEr(Table,18,OnAfterInsert,'',false,false)]
+ "["                       punctuation.section.attribute.begin.cal
+ "eVeNtSuBsCrIbEr"         storage.modifier.attribute.cal
+ "("                       punctuation.definition.arguments.begin.cal
+ "Table"                   meta.attribute.arguments.cal
+ ","                       punctuation.separator.cal
+ "18"                      constant.numeric.integer.cal
+ ","                       punctuation.separator.cal
+ "OnAfterInsert"           meta.attribute.arguments.cal
+ ","                       punctuation.separator.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "'"                       punctuation.definition.string.end.cal
+ ","                       punctuation.separator.cal
+ "false"                   meta.attribute.arguments.cal
+ ","                       punctuation.separator.cal
+ "false"                   meta.attribute.arguments.cal
+ ")"                       punctuation.definition.arguments.end.cal
+ "]"                       punctuation.section.attribute.end.cal
+>LOCAL PROCEDURE OnCustomerInsert@1();
+ "LOCAL"                   keyword.other.cal
+ " "                       source.cal
+ "PROCEDURE"               keyword.other.cal
+ " "                       source.cal
+ "OnCustomerInsert"        entity.name.function.cal
+ "@1"                      constant.numeric.at-number.cal
+ "()"                      source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Procedure declarations Attributes - case insensitivity should tokenize mixed-case External attribute 1`] = `
+">[ExTerNal]
+ "["                       punctuation.section.attribute.begin.cal
+ "ExTerNal"                storage.modifier.attribute.cal
+ "]"                       punctuation.section.attribute.end.cal
+>PROCEDURE PublicMethod@1();
+ "PROCEDURE"               keyword.other.cal
+ " "                       source.cal
+ "PublicMethod"            entity.name.function.cal
+ "@1"                      constant.numeric.at-number.cal
+ "()"                      source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Procedure declarations Attributes - case insensitivity should tokenize mixed-case TryFunction attribute 1`] = `
+">[TrYfUnCtIoN]
+ "["                       punctuation.section.attribute.begin.cal
+ "TrYfUnCtIoN"             storage.modifier.attribute.cal
+ "]"                       punctuation.section.attribute.end.cal
+>LOCAL PROCEDURE TryOperation@1() : Boolean;
+ "LOCAL"                   keyword.other.cal
+ " "                       source.cal
+ "PROCEDURE"               keyword.other.cal
+ " "                       source.cal
+ "TryOperation"            entity.name.function.cal
+ "@1"                      constant.numeric.at-number.cal
+ "() "                     source.cal
+ ":"                       punctuation.separator.type.cal
+ " "                       source.cal
+ "Boolean"                 storage.type.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
 exports[`TextMate Grammar Scopes Procedure declarations should tokenize procedure with EventSubscriber attribute 1`] = `
 ">[EventSubscriber(Table,18,OnAfterInsert,'',false,false)]
  "["                       punctuation.section.attribute.begin.cal
