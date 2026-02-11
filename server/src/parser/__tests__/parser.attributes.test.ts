@@ -129,7 +129,7 @@ describe('Parser - Procedure Attributes', () => {
       const tokenValues = attr.rawTokens.map(t => t.value);
       expect(tokenValues).toContain('Page');
       expect(tokenValues).toContain('6302');
-      expect(tokenValues.some(v => v.includes('OnOAuthAccessDenied'))).toBe(true);
+      expect(tokenValues).toContain('OnOAuthAccessDenied');
     });
 
     it('should parse [EventSubscriber(Codeunit,5330,OnAfterCRMIntegrationEnabled,"",Skip,Skip)]', () => {
@@ -395,6 +395,39 @@ describe('Parser - Procedure Attributes', () => {
       expect(proc.isLocal).toBe(true);
       expect(proc.attributes).toHaveLength(1);
       expect(proc.attributes![0].name).toBe('TryFunction');
+    });
+
+    it('should recover from multiple malformed attributes in sequence', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          [Malformed [Also Malformed] PROCEDURE TestProc@1();
+          BEGIN
+          END;
+        }
+      }`;
+      const { ast, errors } = parseCode(code);
+
+      // Parser should report error for the malformed attribute sequence
+      expect(errors.length).toBeGreaterThan(0);
+
+      // Should find error about unclosed/malformed attribute
+      const malformedError = errors.find(e =>
+        e.message.includes('Expected ] to close attribute')
+      );
+      expect(malformedError).toBeDefined();
+
+      // Parser should still find and parse the procedure despite malformed attributes
+      expect(ast.object?.code?.procedures).toBeDefined();
+      expect(ast.object!.code!.procedures).toHaveLength(1);
+
+      const proc = ast.object!.code!.procedures[0];
+      expect(proc.name).toBe('TestProc');
+
+      // Malformed attributes should not be attached to the procedure
+      // (either undefined or empty array, depending on implementation)
+      if (proc.attributes !== undefined) {
+        expect(proc.attributes).toHaveLength(0);
+      }
     });
 
     // Issue #252: Warn when attributes are discarded during error recovery
@@ -726,7 +759,7 @@ describe('Parser - Procedure Attributes', () => {
       expect(attr.hasArguments).toBe(true);
       // Verify string with escaped quotes is captured
       const tokenValues = attr.rawTokens.map(t => t.value);
-      expect(tokenValues.some(v => v.includes("'"))).toBe(true);
+      expect(tokenValues).toContain("string with 'quotes'");
     });
 
     it('should handle EOF during attribute parsing', () => {
