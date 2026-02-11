@@ -256,6 +256,33 @@ END`;
     });
   });
 
+  describe('Constants', () => {
+    it('should tokenize boolean constants', async () => {
+      const code = `IF TRUE THEN
+  Result := FALSE
+ELSE
+  Result := NULL;`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should tokenize single option value reference', async () => {
+      const code = `Status := Status::Open;`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should tokenize multiple option value references', async () => {
+      const code = `CASE Status OF
+  Status::Open: Amount := 100;
+  Status::Pending: Amount := 50;
+  Status::Closed: Amount := 0;
+END;`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+  });
+
   describe('Control flow keywords', () => {
     it('should tokenize IF/THEN/ELSE', async () => {
       const code = `IF Amount > 0 THEN
@@ -339,6 +366,50 @@ UNTIL Count > 10;`;
       const code = `CODE
 {
 }`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+  });
+
+  describe('TextConst language codes', () => {
+    it('should tokenize TextConst with single language code', async () => {
+      const code = `Text001@1000 : TextConst 'ENU=Hello, World!';`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should tokenize TextConst with multiple language codes', async () => {
+      const code = `Text001@1000 : TextConst 'ENU=Customer has been created;FRA=Le client a été créé;DEU=Kunde wurde erstellt';`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should tokenize TextConst with various language codes', async () => {
+      const code = `Text002@1001 : TextConst 'ENU=English;ESP=Español;ITA=Italiano;NLD=Nederlands;DAN=Dansk;SVE=Svenska';`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should tokenize TextConst with Asian language codes', async () => {
+      const code = `Text003@1002 : TextConst 'ENU=English;CHN=中文;JPN=日本語;KOR=한국어';`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should tokenize TextConst with Eastern European language codes', async () => {
+      const code = `Text004@1003 : TextConst 'RUS=Русский;POL=Polski;CZE=Čeština;HUN=Magyar';`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should tokenize TextConst with comment annotation', async () => {
+      const code = `Text005@1004 : TextConst '@@@=Example: There is nothing to release for Order 12345.;ENU=There is nothing to release for %1 %2.';`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should tokenize TextConst with placeholders', async () => {
+      const code = `Text006@1005 : TextConst 'ENU=Credit limit exceeded for customer %1. Balance: %2, Limit: %3';`;
       const result = await toGrammarSnapshot(code);
       expect(result).toMatchSnapshot();
     });
