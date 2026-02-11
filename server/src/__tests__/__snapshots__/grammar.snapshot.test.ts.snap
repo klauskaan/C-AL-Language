@@ -610,6 +610,22 @@ exports[`TextMate Grammar Scopes Procedure declarations Attributes - case insens
  ";"                       punctuation.terminator.cal"
 `;
 
+exports[`TextMate Grammar Scopes Procedure declarations Attributes - case insensitivity should tokenize lowercase Integration attribute 1`] = `
+">[integration]
+ "["                       punctuation.section.attribute.begin.cal
+ "integration"             storage.modifier.attribute.cal
+ "]"                       punctuation.section.attribute.end.cal
+>LOCAL PROCEDURE WebServiceMethod@1();
+ "LOCAL"                   keyword.other.cal
+ " "                       source.cal
+ "PROCEDURE"               keyword.other.cal
+ " "                       source.cal
+ "WebServiceMethod"        entity.name.function.cal
+ "@1"                      constant.numeric.at-number.cal
+ "()"                      source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
 exports[`TextMate Grammar Scopes Procedure declarations Attributes - case insensitivity should tokenize lowercase TryFunction attribute 1`] = `
 ">[tryfunction]
  "["                       punctuation.section.attribute.begin.cal
@@ -673,6 +689,22 @@ exports[`TextMate Grammar Scopes Procedure declarations Attributes - case insens
  ";"                       punctuation.terminator.cal"
 `;
 
+exports[`TextMate Grammar Scopes Procedure declarations Attributes - case insensitivity should tokenize mixed-case Integration attribute 1`] = `
+">[InTeGrAtIoN]
+ "["                       punctuation.section.attribute.begin.cal
+ "InTeGrAtIoN"             storage.modifier.attribute.cal
+ "]"                       punctuation.section.attribute.end.cal
+>LOCAL PROCEDURE WebServiceMethod@1();
+ "LOCAL"                   keyword.other.cal
+ " "                       source.cal
+ "PROCEDURE"               keyword.other.cal
+ " "                       source.cal
+ "WebServiceMethod"        entity.name.function.cal
+ "@1"                      constant.numeric.at-number.cal
+ "()"                      source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
 exports[`TextMate Grammar Scopes Procedure declarations Attributes - case insensitivity should tokenize mixed-case TryFunction attribute 1`] = `
 ">[TrYfUnCtIoN]
  "["                       punctuation.section.attribute.begin.cal
@@ -731,6 +763,22 @@ exports[`TextMate Grammar Scopes Procedure declarations should tokenize procedur
  "PROCEDURE"               keyword.other.cal
  " "                       source.cal
  "PublicMethod"            entity.name.function.cal
+ "@1"                      constant.numeric.at-number.cal
+ "()"                      source.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Procedure declarations should tokenize procedure with Integration attribute 1`] = `
+">[Integration]
+ "["                       punctuation.section.attribute.begin.cal
+ "Integration"             storage.modifier.attribute.cal
+ "]"                       punctuation.section.attribute.end.cal
+>LOCAL PROCEDURE WebServiceMethod@1();
+ "LOCAL"                   keyword.other.cal
+ " "                       source.cal
+ "PROCEDURE"               keyword.other.cal
+ " "                       source.cal
+ "WebServiceMethod"        entity.name.function.cal
  "@1"                      constant.numeric.at-number.cal
  "()"                      source.cal
  ";"                       punctuation.terminator.cal"
