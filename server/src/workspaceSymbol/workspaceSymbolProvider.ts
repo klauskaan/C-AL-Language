@@ -12,6 +12,8 @@ import { Connection } from 'vscode-languageserver';
 import { DocumentSymbolProvider } from '../documentSymbol/documentSymbolProvider';
 import { CALDocument } from '../parser/ast';
 
+export const DEFAULT_MAX_SYMBOLS = 500;
+
 /**
  * WorkspaceSymbol provider class
  * Provides Ctrl+T (Go to Symbol in Workspace) functionality
@@ -20,10 +22,12 @@ export class WorkspaceSymbolProvider {
   /**
    * @param documentSymbolProvider - Provider for extracting symbols from documents
    * @param connection - Optional LSP connection for logging
+   * @param maxResults - Maximum number of symbols to return (default: DEFAULT_MAX_SYMBOLS)
    */
   constructor(
     private documentSymbolProvider: DocumentSymbolProvider,
-    private connection?: Connection
+    private connection?: Connection,
+    private maxResults: number = DEFAULT_MAX_SYMBOLS
   ) {}
 
   /**
@@ -62,14 +66,14 @@ export class WorkspaceSymbolProvider {
     }
 
     // Filter by query (case-insensitive substring match)
-    // Empty query returns all symbols (LSP spec requirement)
+    // Empty query returns all symbols (LSP spec requirement), limited to maxResults
     if (query === '') {
-      return results;
+      return results.slice(0, this.maxResults);
     }
 
-    return results.filter(symbol =>
-      symbol.name.toLowerCase().includes(normalizedQuery)
-    );
+    return results
+      .filter(symbol => symbol.name.toLowerCase().includes(normalizedQuery))
+      .slice(0, this.maxResults);
   }
 
   /**

@@ -6,7 +6,7 @@
  * Future enhancement: Integrate workspace-wide indexing.
  */
 
-import { WorkspaceSymbolProvider } from '../workspaceSymbolProvider';
+import { WorkspaceSymbolProvider, DEFAULT_MAX_SYMBOLS } from '../workspaceSymbolProvider';
 import { DocumentSymbolProvider } from '../../documentSymbol/documentSymbolProvider';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SymbolKind, SymbolInformation } from 'vscode-languageserver';
@@ -703,6 +703,139 @@ describe('WorkspaceSymbolProvider', () => {
       expect(kinds).toContain(SymbolKind.Variable);
       expect(kinds).toContain(SymbolKind.Method);
       expect(kinds).toContain(SymbolKind.Event);
+    });
+  });
+
+  describe('Result Limiting', () => {
+    it('should respect custom maxResults for empty query', () => {
+      // Create provider with maxResults=3
+      const limitedProvider = new WorkspaceSymbolProvider(
+        documentSymbolProvider,
+        mockConnection as any,
+        3 // maxResults
+      );
+
+      const code = `OBJECT Table 50000 TestTable
+{
+  FIELDS
+  {
+    { 1   ;   ;Field1          ;Integer       }
+    { 2   ;   ;Field2          ;Integer       }
+    { 3   ;   ;Field3          ;Integer       }
+    { 4   ;   ;Field4          ;Integer       }
+  }
+}`;
+      const doc = createDocument(code, 'file:///test.cal');
+      parsedDocs.add(doc);
+
+      const result = limitedProvider.search('', parsedDocs.all());
+
+      // Should return only 3 results, not all 4 fields
+      expect(result.length).toBe(3);
+    });
+
+    it('should respect custom maxResults for filtered query', () => {
+      // Create provider with maxResults=1
+      const limitedProvider = new WorkspaceSymbolProvider(
+        documentSymbolProvider,
+        mockConnection as any,
+        1 // maxResults
+      );
+
+      const code = `OBJECT Codeunit 50000 TestCode
+{
+  CODE
+  {
+    PROCEDURE TestProc1@1();
+    BEGIN
+    END;
+
+    PROCEDURE TestProc2@2();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code, 'file:///test.cal');
+      parsedDocs.add(doc);
+
+      const result = limitedProvider.search('Test', parsedDocs.all());
+
+      // Both procedures match 'Test', but only 1 should be returned
+      expect(result.length).toBe(1);
+      expect(result[0].name).toMatch(/TestProc/);
+    });
+
+    it('should use DEFAULT_MAX_SYMBOLS as default limit', () => {
+      // Verify the constant exists and equals 500
+      expect(DEFAULT_MAX_SYMBOLS).toBe(500);
+
+      // Provider without explicit maxResults should use this default
+      // (This is verified by the constant's existence, not runtime behavior)
+    });
+
+    it('should not apply limit when results are under limit', () => {
+      // Create provider with maxResults=100
+      const limitedProvider = new WorkspaceSymbolProvider(
+        documentSymbolProvider,
+        mockConnection as any,
+        100 // maxResults - much higher than actual symbol count
+      );
+
+      const code = `OBJECT Table 50000 SmallTable
+{
+  FIELDS
+  {
+    { 1   ;   ;Field1          ;Integer       }
+    { 2   ;   ;Field2          ;Integer       }
+  }
+}`;
+      const doc = createDocument(code, 'file:///test.cal');
+      parsedDocs.add(doc);
+
+      const result = limitedProvider.search('', parsedDocs.all());
+
+      // Should return both symbols (under the limit of 100)
+      expect(result.length).toBe(2);
+    });
+
+    it('should apply limit to empty query with multiple documents', () => {
+      // Create provider with maxResults=5
+      const limitedProvider = new WorkspaceSymbolProvider(
+        documentSymbolProvider,
+        mockConnection as any,
+        5 // maxResults
+      );
+
+      const code1 = `OBJECT Table 50001 Table1
+{
+  FIELDS
+  {
+    { 1   ;   ;Field1          ;Integer       }
+    { 2   ;   ;Field2          ;Integer       }
+    { 3   ;   ;Field3          ;Integer       }
+  }
+}`;
+      const code2 = `OBJECT Table 50002 Table2
+{
+  FIELDS
+  {
+    { 1   ;   ;Field4          ;Integer       }
+    { 2   ;   ;Field5          ;Integer       }
+    { 3   ;   ;Field6          ;Integer       }
+  }
+}`;
+      const doc1 = createDocument(code1, 'file:///table1.cal');
+      const doc2 = createDocument(code2, 'file:///table2.cal');
+      parsedDocs.add(doc1);
+      parsedDocs.add(doc2);
+
+      const result = limitedProvider.search('', parsedDocs.all());
+
+      // Total of 6 fields across both documents, but limit is 5
+      expect(result.length).toBe(5);
     });
   });
 });

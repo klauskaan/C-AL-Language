@@ -1,1 +1,1 @@
-export { WorkspaceSymbolProvider } from './workspaceSymbolProvider';
+export { WorkspaceSymbolProvider, DEFAULT_MAX_SYMBOLS } from './workspaceSymbolProvider';
