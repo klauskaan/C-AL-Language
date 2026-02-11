@@ -107,7 +107,7 @@ describe('Rename Provider tokenization performance', () => {
 
       // Generate local variables
       for (let v = 0; v < numVarsPerProc; v++) {
-        lines.push(`      LocalVar${v}@${1000 + v} : Integer;`);
+        lines.push(`      LocalVar${v}@${2000 + v} : Integer;`);
       }
 
       lines.push('    BEGIN');
