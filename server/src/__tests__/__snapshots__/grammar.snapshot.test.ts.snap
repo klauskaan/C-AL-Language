@@ -130,6 +130,74 @@ exports[`TextMate Grammar Scopes Comments - all three types should tokenize line
  ";"                       punctuation.terminator.cal"
 `;
 
+exports[`TextMate Grammar Scopes Constants should tokenize boolean constants 1`] = `
+">IF TRUE THEN
+ "IF"                      keyword.control.cal
+ " "                       source.cal
+ "TRUE"                    constant.language.cal
+ " "                       source.cal
+ "THEN"                    keyword.control.cal
+>  Result := FALSE
+ "  Result "               source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "FALSE"                   constant.language.cal
+>ELSE
+ "ELSE"                    keyword.control.cal
+>  Result := NULL;
+ "  Result "               source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "NULL"                    constant.language.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Constants should tokenize multiple option value references 1`] = `
+">CASE Status OF
+ "CASE"                    keyword.control.cal
+ " Status "                source.cal
+ "OF"                      keyword.control.cal
+>  Status::Open: Amount := 100;
+ "  "                      source.cal
+ "Status::Open"            constant.other.option-value.cal
+ ":"                       punctuation.separator.type.cal
+ " Amount "                source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "100"                     constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal
+>  Status::Pending: Amount := 50;
+ "  "                      source.cal
+ "Status::Pending"         constant.other.option-value.cal
+ ":"                       punctuation.separator.type.cal
+ " Amount "                source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "50"                      constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal
+>  Status::Closed: Amount := 0;
+ "  "                      source.cal
+ "Status::Closed"          constant.other.option-value.cal
+ ":"                       punctuation.separator.type.cal
+ " Amount "                source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "0"                       constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal
+>END;
+ "END"                     keyword.control.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes Constants should tokenize single option value reference 1`] = `
+">Status := Status::Open;
+ "Status "                 source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "Status::Open"            constant.other.option-value.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
 exports[`TextMate Grammar Scopes Control flow keywords should tokenize CASE/OF 1`] = `
 ">CASE Status OF
  "CASE"                    keyword.control.cal
@@ -589,6 +657,145 @@ exports[`TextMate Grammar Scopes Strings and literals should tokenize time liter
  ":="                      keyword.operator.assignment.cal
  " "                       source.cal
  "120000T"                 constant.numeric.time.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes TextConst language codes should tokenize TextConst with Asian language codes 1`] = `
+">Text003@1002 : TextConst 'ENU=English;CHN=中文;JPN=日本語;KOR=한국어';
+ "Text003"                 variable.other.declaration.cal
+ "@1002"                   constant.numeric.at-number.cal
+ " "                       source.cal
+ ":"                       punctuation.separator.type.cal
+ " "                       source.cal
+ "TextConst"               storage.type.textconst.cal
+ " "                       source.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "ENU"                     entity.name.tag.language-code.cal
+ "=English;"               string.quoted.single.cal
+ "CHN"                     entity.name.tag.language-code.cal
+ "=中文;"                    string.quoted.single.cal
+ "JPN"                     entity.name.tag.language-code.cal
+ "=日本語;"                   string.quoted.single.cal
+ "KOR"                     entity.name.tag.language-code.cal
+ "=한국어"                    string.quoted.single.cal
+ "'"                       punctuation.definition.string.end.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes TextConst language codes should tokenize TextConst with Eastern European language codes 1`] = `
+">Text004@1003 : TextConst 'RUS=Русский;POL=Polski;CZE=Čeština;HUN=Magyar';
+ "Text004"                 variable.other.declaration.cal
+ "@1003"                   constant.numeric.at-number.cal
+ " "                       source.cal
+ ":"                       punctuation.separator.type.cal
+ " "                       source.cal
+ "TextConst"               storage.type.textconst.cal
+ " "                       source.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "RUS"                     entity.name.tag.language-code.cal
+ "=Русский;"               string.quoted.single.cal
+ "POL"                     entity.name.tag.language-code.cal
+ "=Polski;"                string.quoted.single.cal
+ "CZE"                     entity.name.tag.language-code.cal
+ "=Čeština;"               string.quoted.single.cal
+ "HUN"                     entity.name.tag.language-code.cal
+ "=Magyar"                 string.quoted.single.cal
+ "'"                       punctuation.definition.string.end.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes TextConst language codes should tokenize TextConst with comment annotation 1`] = `
+">Text005@1004 : TextConst '@@@=Example: There is nothing to release for Order 12345.;ENU=There is nothing to release for %1 %2.';
+ "Text005"                 variable.other.declaration.cal
+ "@1004"                   constant.numeric.at-number.cal
+ " "                       source.cal
+ ":"                       punctuation.separator.type.cal
+ " "                       source.cal
+ "TextConst"               storage.type.textconst.cal
+ " "                       source.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "@@@=Example: There is nothing to release for Order 12345.;" string.quoted.single.cal
+ "ENU"                     entity.name.tag.language-code.cal
+ "=There is nothing to release for %1 %2." string.quoted.single.cal
+ "'"                       punctuation.definition.string.end.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes TextConst language codes should tokenize TextConst with multiple language codes 1`] = `
+">Text001@1000 : TextConst 'ENU=Customer has been created;FRA=Le client a été créé;DEU=Kunde wurde erstellt';
+ "Text001"                 variable.other.declaration.cal
+ "@1000"                   constant.numeric.at-number.cal
+ " "                       source.cal
+ ":"                       punctuation.separator.type.cal
+ " "                       source.cal
+ "TextConst"               storage.type.textconst.cal
+ " "                       source.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "ENU"                     entity.name.tag.language-code.cal
+ "=Customer has been created;" string.quoted.single.cal
+ "FRA"                     entity.name.tag.language-code.cal
+ "=Le client a été créé;"  string.quoted.single.cal
+ "DEU"                     entity.name.tag.language-code.cal
+ "=Kunde wurde erstellt"   string.quoted.single.cal
+ "'"                       punctuation.definition.string.end.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes TextConst language codes should tokenize TextConst with placeholders 1`] = `
+">Text006@1005 : TextConst 'ENU=Credit limit exceeded for customer %1. Balance: %2, Limit: %3';
+ "Text006"                 variable.other.declaration.cal
+ "@1005"                   constant.numeric.at-number.cal
+ " "                       source.cal
+ ":"                       punctuation.separator.type.cal
+ " "                       source.cal
+ "TextConst"               storage.type.textconst.cal
+ " "                       source.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "ENU"                     entity.name.tag.language-code.cal
+ "=Credit limit exceeded for customer %1. Balance: %2, Limit: %3" string.quoted.single.cal
+ "'"                       punctuation.definition.string.end.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes TextConst language codes should tokenize TextConst with single language code 1`] = `
+">Text001@1000 : TextConst 'ENU=Hello, World!';
+ "Text001"                 variable.other.declaration.cal
+ "@1000"                   constant.numeric.at-number.cal
+ " "                       source.cal
+ ":"                       punctuation.separator.type.cal
+ " "                       source.cal
+ "TextConst"               storage.type.textconst.cal
+ " "                       source.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "ENU"                     entity.name.tag.language-code.cal
+ "=Hello, World!"          string.quoted.single.cal
+ "'"                       punctuation.definition.string.end.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes TextConst language codes should tokenize TextConst with various language codes 1`] = `
+">Text002@1001 : TextConst 'ENU=English;ESP=Español;ITA=Italiano;NLD=Nederlands;DAN=Dansk;SVE=Svenska';
+ "Text002"                 variable.other.declaration.cal
+ "@1001"                   constant.numeric.at-number.cal
+ " "                       source.cal
+ ":"                       punctuation.separator.type.cal
+ " "                       source.cal
+ "TextConst"               storage.type.textconst.cal
+ " "                       source.cal
+ "'"                       punctuation.definition.string.begin.cal
+ "ENU"                     entity.name.tag.language-code.cal
+ "=English;"               string.quoted.single.cal
+ "ESP"                     entity.name.tag.language-code.cal
+ "=Español;"               string.quoted.single.cal
+ "ITA"                     entity.name.tag.language-code.cal
+ "=Italiano;"              string.quoted.single.cal
+ "NLD"                     entity.name.tag.language-code.cal
+ "=Nederlands;"            string.quoted.single.cal
+ "DAN"                     entity.name.tag.language-code.cal
+ "=Dansk;"                 string.quoted.single.cal
+ "SVE"                     entity.name.tag.language-code.cal
+ "=Svenska"                string.quoted.single.cal
+ "'"                       punctuation.definition.string.end.cal
  ";"                       punctuation.terminator.cal"
 `;
 
