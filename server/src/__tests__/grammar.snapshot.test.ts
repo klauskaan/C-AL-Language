@@ -502,4 +502,13 @@ UNTIL Count > 10;`;
       expect(result).toMatchSnapshot();
     });
   });
+
+  describe('Line ending handling', () => {
+    it('should handle Windows-style CRLF line endings', async () => {
+      // Construct string with explicit \r\n line endings
+      const code = 'OBJECT Table 18 Customer\r\n{\r\n  FIELDS\r\n  {\r\n    { 1   ;   ;No.                 ;Code20        }\r\n  }\r\n}';
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+  });
 });

@@ -474,6 +474,38 @@ exports[`TextMate Grammar Scopes Field definitions should tokenize standard fiel
  "}"                       punctuation.definition.field.end.cal"
 `;
 
+exports[`TextMate Grammar Scopes Line ending handling should handle Windows-style CRLF line endings 1`] = `
+">OBJECT Table 18 Customer
+ "OBJECT"                  keyword.other.object.cal
+ " "                       meta.object.cal
+ "Table"                   storage.type.object-type.cal
+ " "                       meta.object.cal
+ "18"                      constant.numeric.object-id.cal
+ " "                       meta.object.cal
+ "Customer"                entity.name.type.object.string.unquoted.cal
+>{
+ "{"                       punctuation.section.object.begin.cal
+>  FIELDS
+ "  "                      meta.section.generic.cal
+ "FIELDS"                  storage.modifier.cal
+>  {
+ "  {"                     punctuation.section.block.begin.cal
+>    { 1   ;   ;No.                 ;Code20        }
+ "    "                    punctuation.section.block.begin.cal
+ "{ 1   ;"                 punctuation.definition.field.begin.cal
+ "   "                     meta.field-definition.cal
+ ";"                       punctuation.separator.field.cal
+ "No.                 "    meta.field-definition.cal
+ ";"                       punctuation.separator.field.cal
+ "Code20"                  storage.type.cal
+ "        "                meta.field-definition.cal
+ "}"                       punctuation.definition.field.end.cal
+>  }
+ "  }"                     punctuation.section.block.end.cal
+>}
+ "}"                       punctuation.section.object.end.cal"
+`;
+
 exports[`TextMate Grammar Scopes Object declarations should tokenize different object types 1`] = `
 ">OBJECT Codeunit 50000 MyCodeunit
  "OBJECT"                  keyword.other.object.cal
