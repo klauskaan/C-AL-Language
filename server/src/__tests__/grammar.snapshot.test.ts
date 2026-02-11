@@ -105,6 +105,50 @@ LOCAL PROCEDURE OnCustomerInsert@1();`;
       const result = await toGrammarSnapshot(code);
       expect(result).toMatchSnapshot();
     });
+
+    describe('Attributes - case insensitivity', () => {
+      it('should tokenize lowercase External attribute', async () => {
+        const code = `[external]
+PROCEDURE PublicMethod@1();`;
+        const result = await toGrammarSnapshot(code);
+        expect(result).toMatchSnapshot();
+      });
+
+      it('should tokenize mixed-case External attribute', async () => {
+        const code = `[ExTerNal]
+PROCEDURE PublicMethod@1();`;
+        const result = await toGrammarSnapshot(code);
+        expect(result).toMatchSnapshot();
+      });
+
+      it('should tokenize lowercase TryFunction attribute', async () => {
+        const code = `[tryfunction]
+LOCAL PROCEDURE TryOperation@1() : Boolean;`;
+        const result = await toGrammarSnapshot(code);
+        expect(result).toMatchSnapshot();
+      });
+
+      it('should tokenize mixed-case TryFunction attribute', async () => {
+        const code = `[TrYfUnCtIoN]
+LOCAL PROCEDURE TryOperation@1() : Boolean;`;
+        const result = await toGrammarSnapshot(code);
+        expect(result).toMatchSnapshot();
+      });
+
+      it('should tokenize lowercase EventSubscriber attribute', async () => {
+        const code = `[eventsubscriber(Table,18,OnAfterInsert,'',false,false)]
+LOCAL PROCEDURE OnCustomerInsert@1();`;
+        const result = await toGrammarSnapshot(code);
+        expect(result).toMatchSnapshot();
+      });
+
+      it('should tokenize mixed-case EventSubscriber attribute', async () => {
+        const code = `[eVeNtSuBsCrIbEr(Table,18,OnAfterInsert,'',false,false)]
+LOCAL PROCEDURE OnCustomerInsert@1();`;
+        const result = await toGrammarSnapshot(code);
+        expect(result).toMatchSnapshot();
+      });
+    });
   });
 
   describe('Code blocks - context-dependent curly braces', () => {
