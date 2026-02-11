@@ -19,6 +19,8 @@ export const DEFAULT_MAX_SYMBOLS = 500;
  * Provides Ctrl+T (Go to Symbol in Workspace) functionality
  */
 export class WorkspaceSymbolProvider {
+  private maxResults: number;
+
   /**
    * @param documentSymbolProvider - Provider for extracting symbols from documents
    * @param connection - Optional LSP connection for logging
@@ -27,8 +29,13 @@ export class WorkspaceSymbolProvider {
   constructor(
     private documentSymbolProvider: DocumentSymbolProvider,
     private connection?: Connection,
-    private maxResults: number = DEFAULT_MAX_SYMBOLS
-  ) {}
+    maxResults: number = DEFAULT_MAX_SYMBOLS
+  ) {
+    if (!Number.isInteger(maxResults) || maxResults < 1) {
+      throw new Error(`maxResults must be a positive integer, got ${maxResults}`);
+    }
+    this.maxResults = maxResults;
+  }
 
   /**
    * Search for symbols across parsed documents

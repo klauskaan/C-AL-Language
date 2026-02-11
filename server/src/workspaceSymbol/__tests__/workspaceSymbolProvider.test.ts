@@ -74,6 +74,108 @@ describe('WorkspaceSymbolProvider', () => {
     );
   });
 
+  describe('Constructor Validation', () => {
+    it('should throw error when maxResults is 0', () => {
+      expect(() => {
+        new WorkspaceSymbolProvider(
+          documentSymbolProvider,
+          mockConnection as any,
+          0
+        );
+      }).toThrow('maxResults must be a positive integer, got 0');
+    });
+
+    it('should throw error when maxResults is -1', () => {
+      expect(() => {
+        new WorkspaceSymbolProvider(
+          documentSymbolProvider,
+          mockConnection as any,
+          -1
+        );
+      }).toThrow('maxResults must be a positive integer, got -1');
+    });
+
+    it('should throw error when maxResults is -100', () => {
+      expect(() => {
+        new WorkspaceSymbolProvider(
+          documentSymbolProvider,
+          mockConnection as any,
+          -100
+        );
+      }).toThrow('maxResults must be a positive integer, got -100');
+    });
+
+    it('should throw error when maxResults is NaN', () => {
+      expect(() => {
+        new WorkspaceSymbolProvider(
+          documentSymbolProvider,
+          mockConnection as any,
+          NaN
+        );
+      }).toThrow('maxResults must be a positive integer, got NaN');
+    });
+
+    it('should throw error when maxResults is a fractional value', () => {
+      expect(() => {
+        new WorkspaceSymbolProvider(
+          documentSymbolProvider,
+          mockConnection as any,
+          1.5
+        );
+      }).toThrow('maxResults must be a positive integer, got 1.5');
+    });
+
+    it('should throw error when maxResults is Infinity', () => {
+      expect(() => {
+        new WorkspaceSymbolProvider(
+          documentSymbolProvider,
+          mockConnection as any,
+          Infinity
+        );
+      }).toThrow('maxResults must be a positive integer, got Infinity');
+    });
+
+    it('should throw error when maxResults is -Infinity', () => {
+      expect(() => {
+        new WorkspaceSymbolProvider(
+          documentSymbolProvider,
+          mockConnection as any,
+          -Infinity
+        );
+      }).toThrow('maxResults must be a positive integer, got -Infinity');
+    });
+
+    it('should accept maxResults of 1', () => {
+      expect(() => {
+        new WorkspaceSymbolProvider(
+          documentSymbolProvider,
+          mockConnection as any,
+          1
+        );
+      }).not.toThrow();
+    });
+
+    it('should accept maxResults of 100', () => {
+      expect(() => {
+        new WorkspaceSymbolProvider(
+          documentSymbolProvider,
+          mockConnection as any,
+          100
+        );
+      }).not.toThrow();
+    });
+
+    it('should accept maxResults of 500', () => {
+      expect(() => {
+        new WorkspaceSymbolProvider(
+          documentSymbolProvider,
+          mockConnection as any,
+          500
+        );
+      }).not.toThrow();
+    });
+  });
+
   describe('Empty Workspace', () => {
     it('should return empty array when no documents open', () => {
       const result = provider.search('TestProc', parsedDocs.all());
