@@ -3,22 +3,59 @@ import * as path from 'path';
 import * as vsctm from 'vscode-textmate';
 import * as oniguruma from 'vscode-oniguruma';
 
+/**
+ * Process-level tracking for WASM initialization.
+ *
+ * DEFENSE-IN-DEPTH: With current Jest config (resetModules: false, separate worker
+ * processes per file), the module-level `registry` guard is sufficient, and
+ * vscode-oniguruma v2.0.1 itself has idempotency. This globalThis flag adds a third
+ * layer of protection against future Jest configuration changes (e.g., resetModules: true)
+ * or library version changes that might not handle duplicate calls gracefully.
+ */
+declare global {
+  // eslint-disable-next-line no-var
+  var __ONIGURUMA_WASM_LOADED__: boolean | undefined;
+}
+
 let registry: vsctm.Registry | null = null;
 
 /**
  * Initialize the WASM-based oniguruma library and create the grammar registry.
  * Must be called before tokenizing any code.
+ *
+ * Safe to call from multiple test files - uses triple-layer guards:
+ * 1. Module-level `registry` check (sufficient with current Jest config)
+ * 2. Process-level globalThis flag (defense against future config changes)
+ * 3. vscode-oniguruma v2.0.1's internal idempotency guard
  */
 export async function initializeGrammar(): Promise<void> {
   if (registry) {
-    return; // Already initialized
+    return; // Already initialized in this module instance
   }
 
-  // Load the WASM binary
-  const wasmBin = fs.readFileSync(
-    require.resolve('vscode-oniguruma/release/onig.wasm')
-  ).buffer;
-  await oniguruma.loadWASM(wasmBin);
+  // Load WASM if not already loaded at the process level
+  if (!globalThis.__ONIGURUMA_WASM_LOADED__) {
+    const wasmBin = fs.readFileSync(
+      require.resolve('vscode-oniguruma/release/onig.wasm')
+    ).buffer;
+
+    try {
+      await oniguruma.loadWASM(wasmBin);
+      globalThis.__ONIGURUMA_WASM_LOADED__ = true;
+    } catch (error) {
+      // Defensive: guard against potential future library versions that might
+      // reject duplicate calls. Current version (v2.0.1) has idempotency and
+      // does not throw this error, but this provides forward compatibility.
+      if (
+        error instanceof Error &&
+        error.message.toLowerCase().includes('already')
+      ) {
+        globalThis.__ONIGURUMA_WASM_LOADED__ = true;
+      } else {
+        throw error;
+      }
+    }
+  }
 
   // Create the registry with our C/AL grammar
   const grammarPath = path.resolve(
