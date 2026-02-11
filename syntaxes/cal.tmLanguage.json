@@ -6,7 +6,6 @@
     { "include": "#object-declaration" },
     { "include": "#field-definitions" },
     { "include": "#section-blocks" },
-    { "include": "#object-properties" },
     { "include": "#variable-declarations" },
     { "include": "#procedure-declarations" },
     { "include": "#comments" },
@@ -451,7 +450,7 @@
         {
           "comment": "Date literals: MMDDYY[YY]D (e.g., 010125D, 01012025D, 0D)",
           "name": "constant.numeric.date.cal",
-          "match": "\\b\\d{0,8}D\\b"
+          "match": "\\b\\d{1,8}D\\b"
         },
         {
           "comment": "DateTime literals: MMDDYY[YY]DT",

@@ -532,4 +532,33 @@ UNTIL Count > 10;`;
       expect(result).toMatchSnapshot();
     });
   });
+
+  describe('False positive regressions (#415)', () => {
+    it('should not tokenize bare D as date literal', async () => {
+      const code = `IF Status = D THEN`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should tokenize 0D as date literal', async () => {
+      const code = `MyDate := 0D;`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should tokenize property assignment inside PROPERTIES section', async () => {
+      const code = `PROPERTIES
+{
+  TableNo=18;
+}`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+
+    it('should not tokenize equals sign in comparison as assignment operator', async () => {
+      const code = `IF Amount = 0 THEN`;
+      const result = await toGrammarSnapshot(code);
+      expect(result).toMatchSnapshot();
+    });
+  });
 });

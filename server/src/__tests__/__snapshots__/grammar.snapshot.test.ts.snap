@@ -374,17 +374,13 @@ exports[`TextMate Grammar Scopes Expressions and operators should tokenize assig
 exports[`TextMate Grammar Scopes Expressions and operators should tokenize comparison operators 1`] = `
 ">IF (A = B) AND (C <> D) AND (E > F) THEN
  "IF"                      keyword.control.cal
- " ("                      source.cal
- "A"                       variable.parameter.property-name.cal
- " "                       source.cal
- "="                       keyword.operator.assignment.cal
+ " (A "                    source.cal
+ "="                       keyword.operator.comparison.cal
  " B) "                    source.cal
  "AND"                     keyword.operator.logical.cal
  " (C "                    source.cal
  "<>"                      keyword.operator.comparison.cal
- " "                       source.cal
- "D"                       constant.numeric.date.cal
- ") "                      source.cal
+ " D) "                    source.cal
  "AND"                     keyword.operator.logical.cal
  " (E "                    source.cal
  ">"                       keyword.operator.comparison.cal
@@ -435,6 +431,50 @@ exports[`TextMate Grammar Scopes Expressions and operators should tokenize scope
  " "                       source.cal
  "Status::Open"            constant.other.option-value.cal
  ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes False positive regressions (#415) should not tokenize bare D as date literal 1`] = `
+">IF Status = D THEN
+ "IF"                      keyword.control.cal
+ " Status "                source.cal
+ "="                       keyword.operator.comparison.cal
+ " D "                     source.cal
+ "THEN"                    keyword.control.cal"
+`;
+
+exports[`TextMate Grammar Scopes False positive regressions (#415) should not tokenize equals sign in comparison as assignment operator 1`] = `
+">IF Amount = 0 THEN
+ "IF"                      keyword.control.cal
+ " Amount "                source.cal
+ "="                       keyword.operator.comparison.cal
+ " "                       source.cal
+ "0"                       constant.numeric.integer.cal
+ " "                       source.cal
+ "THEN"                    keyword.control.cal"
+`;
+
+exports[`TextMate Grammar Scopes False positive regressions (#415) should tokenize 0D as date literal 1`] = `
+">MyDate := 0D;
+ "MyDate "                 source.cal
+ ":="                      keyword.operator.assignment.cal
+ " "                       source.cal
+ "0D"                      constant.numeric.date.cal
+ ";"                       punctuation.terminator.cal"
+`;
+
+exports[`TextMate Grammar Scopes False positive regressions (#415) should tokenize property assignment inside PROPERTIES section 1`] = `
+">PROPERTIES
+ "PROPERTIES"              storage.modifier.cal
+>{
+ "{"                       punctuation.section.block.begin.cal
+>  TableNo=18;
+ "  "                      punctuation.section.block.begin.cal
+ "TableNo"                 variable.parameter.property-name.cal
+ "="                       keyword.operator.assignment.cal
+ "18"                      constant.numeric.integer.cal
+ ";"                       punctuation.terminator.cal
+>}
+ "}"                       punctuation.section.block.end.cal"
 `;
 
 exports[`TextMate Grammar Scopes Field definitions should tokenize field with trigger 1`] = `
