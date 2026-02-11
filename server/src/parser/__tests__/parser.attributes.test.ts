@@ -407,14 +407,9 @@ describe('Parser - Procedure Attributes', () => {
       }`;
       const { ast, errors } = parseCode(code);
 
-      // Parser should report error for the malformed attribute sequence
-      expect(errors.length).toBeGreaterThan(0);
-
-      // Should find error about unclosed/malformed attribute
-      const malformedError = errors.find(e =>
-        e.message.includes('Expected ] to close attribute')
-      );
-      expect(malformedError).toBeDefined();
+      // Parser should report exactly one error for the malformed attribute sequence
+      expect(errors).toHaveLength(1);
+      expect(errors[0].message).toContain('Expected ] to close attribute');
 
       // Parser should still find and parse the procedure despite malformed attributes
       expect(ast.object?.code?.procedures).toBeDefined();
@@ -424,10 +419,7 @@ describe('Parser - Procedure Attributes', () => {
       expect(proc.name).toBe('TestProc');
 
       // Malformed attributes should not be attached to the procedure
-      // (either undefined or empty array, depending on implementation)
-      if (proc.attributes !== undefined) {
-        expect(proc.attributes).toHaveLength(0);
-      }
+      expect(proc.attributes).toBeUndefined();
     });
 
     // Issue #252: Warn when attributes are discarded during error recovery
