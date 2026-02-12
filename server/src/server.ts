@@ -665,7 +665,8 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
         end: { line: error.token.line - 1, character: error.token.column + (error.token.endOffset - error.token.startOffset) - 1 }
       },
       message: error.message,
-      source: 'cal'
+      source: 'cal',
+      code: error.code
     }));
 
     // IMMEDIATE: Send parse diagnostics (preserve current responsive UX)

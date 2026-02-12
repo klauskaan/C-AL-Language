@@ -605,7 +605,7 @@ export class Parser {
       endToken = this.advance();
     } else {
       // Missing closing brace - record error but return the section
-      this.recordError('Expected } to close PROPERTIES section');
+      this.recordError('Expected } to close PROPERTIES section', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
 
@@ -759,13 +759,13 @@ export class Parser {
         const pvp = new PropertyValueParser(valueTokens);
         property.calcFormula = pvp.parseCalcFormula() ?? undefined;
         for (const diag of pvp.getDiagnostics()) {
-          this.recordError(diag.message, diag.token);
+          this.recordError(diag.message, diag.token, 'parse-property-value');
         }
       } else if (lowerName === 'tablerelation') {
         const pvp = new PropertyValueParser(valueTokens);
         property.tableRelation = pvp.parseTableRelation() ?? undefined;
         for (const diag of pvp.getDiagnostics()) {
-          this.recordError(diag.message, diag.token);
+          this.recordError(diag.message, diag.token, 'parse-property-value');
         }
       }
     }
@@ -808,7 +808,7 @@ export class Parser {
       endToken = this.advance();
     } else {
       // Missing closing brace - record error but return the section
-      this.recordError('Expected } to close FIELDS section');
+      this.recordError('Expected } to close FIELDS section', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
 
@@ -930,7 +930,7 @@ export class Parser {
     if (this.check(TokenType.RightBrace)) {
       endToken = this.advance();
     } else {
-      this.recordError('Expected } to close field definition');
+      this.recordError('Expected } to close field definition', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
 
@@ -1413,13 +1413,13 @@ export class Parser {
                 const pvp = new PropertyValueParser(valueTokens);
                 property.calcFormula = pvp.parseCalcFormula() ?? undefined;
                 for (const diag of pvp.getDiagnostics()) {
-                  this.recordError(diag.message, diag.token);
+                  this.recordError(diag.message, diag.token, 'parse-property-value');
                 }
               } else if (lowerName === 'tablerelation') {
                 const pvp = new PropertyValueParser(valueTokens);
                 property.tableRelation = pvp.parseTableRelation() ?? undefined;
                 for (const diag of pvp.getDiagnostics()) {
-                  this.recordError(diag.message, diag.token);
+                  this.recordError(diag.message, diag.token, 'parse-property-value');
                 }
               }
             }
@@ -1480,7 +1480,7 @@ export class Parser {
       endToken = this.advance();
     } else {
       // Missing closing brace - record error but return the section
-      this.recordError('Expected } to close KEYS section');
+      this.recordError('Expected } to close KEYS section', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
 
@@ -1548,7 +1548,7 @@ export class Parser {
     if (this.check(TokenType.RightBrace)) {
       endToken = this.advance();
     } else {
-      this.recordError('Expected } to close key definition');
+      this.recordError('Expected } to close key definition', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
 
@@ -1596,7 +1596,7 @@ export class Parser {
       endToken = this.advance();
     } else {
       // Missing closing brace - record error but return the section
-      this.recordError('Expected } to close FIELDGROUPS section');
+      this.recordError('Expected } to close FIELDGROUPS section', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
 
@@ -1667,7 +1667,7 @@ export class Parser {
     if (this.check(TokenType.RightBrace)) {
       endToken = this.advance();
     } else {
-      this.recordError('Expected } to close field group definition');
+      this.recordError('Expected } to close field group definition', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
 
@@ -1715,7 +1715,7 @@ export class Parser {
     if (this.check(TokenType.RightBrace)) {
       endToken = this.advance();
     } else {
-      this.recordError('Expected } to close ACTIONS section');
+      this.recordError('Expected } to close ACTIONS section', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
     const hierarchicalActions = this.buildActionHierarchy(flatActions);
@@ -1778,7 +1778,7 @@ export class Parser {
     if (this.check(TokenType.RightBrace)) {
       endToken = this.advance();
     } else {
-      this.recordError('Expected } to close action definition');
+      this.recordError('Expected } to close action definition', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
 
@@ -1893,7 +1893,7 @@ export class Parser {
       endToken = this.advance();
     } else {
       // Missing closing brace - record error but return the section
-      this.recordError('Expected } to close CONTROLS section');
+      this.recordError('Expected } to close CONTROLS section', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
 
@@ -1957,7 +1957,7 @@ export class Parser {
     if (this.check(TokenType.RightBrace)) {
       endToken = this.advance();
     } else {
-      this.recordError('Expected } to close control definition');
+      this.recordError('Expected } to close control definition', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
 
@@ -2217,7 +2217,7 @@ export class Parser {
       endToken = this.advance();
     } else {
       // Missing closing brace - record error but return the section
-      this.recordError('Expected } to close ELEMENTS section');
+      this.recordError('Expected } to close ELEMENTS section', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
 
@@ -2376,7 +2376,7 @@ export class Parser {
     if (this.check(TokenType.RightBrace)) {
       endToken = this.advance();
     } else {
-      this.recordError('Expected } to close element definition');
+      this.recordError('Expected } to close element definition', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
 
@@ -2468,7 +2468,7 @@ export class Parser {
       this.advance();
     } else {
       // Missing opening brace - record error but continue parsing
-      this.recordError('Expected { to open CODE section');
+      this.recordError('Expected { to open CODE section', undefined, 'parse-unclosed-block');
     }
 
     const variables: VariableDeclaration[] = [];
@@ -2622,7 +2622,7 @@ export class Parser {
           }
         } else if (token.type === TokenType.RightBracket && parenDepth === 0) {
           // Hit closing bracket before closing paren - malformed
-          this.recordError('Unclosed parenthesis in attribute');
+          this.recordError('Unclosed parenthesis in attribute', undefined, 'parse-unclosed-block');
           return this.recoverFromMalformedAttribute();
         } else {
           rawTokens.push(this.advance());
@@ -2631,14 +2631,14 @@ export class Parser {
 
       // Check if we exited due to EOF with unclosed parens
       if (parenDepth > 0) {
-        this.recordError('Unclosed parenthesis in attribute');
+        this.recordError('Unclosed parenthesis in attribute', undefined, 'parse-unclosed-block');
         return this.recoverFromMalformedAttribute();
       }
     }
 
     // Expect closing bracket
     if (!this.check(TokenType.RightBracket)) {
-      this.recordError('Expected ] to close attribute');
+      this.recordError('Expected ] to close attribute', undefined, 'parse-unclosed-block');
       return this.recoverFromMalformedAttribute();
     }
 
@@ -3276,7 +3276,8 @@ export class Parser {
       // Use previous token for error location (last valid token before procedure boundary)
       this.recordError(
         `Expected END to close BEGIN block`,
-        this.previous()
+        this.previous(),
+        'parse-unclosed-block'
       );
       // Use previous token as endToken (last token before procedure boundary)
       endToken = this.previous();
@@ -3407,7 +3408,8 @@ export class Parser {
         // It's not being used as an identifier - probably an access modifier
         this.recordError(
           `AL-only access modifier '${sanitizeContent(token.value)}' is not supported in C/AL. Use LOCAL instead.`,
-          token
+          token,
+          'parse-al-only-syntax'
         );
         this.advance();
         return null;
@@ -3416,7 +3418,8 @@ export class Parser {
     if (token.type === TokenType.TernaryOperator) {
       this.recordError(
         `AL-only ternary operator (? :) is not supported in C/AL. Use IF-THEN-ELSE instead.`,
-        token
+        token,
+        'parse-al-only-syntax'
       );
       this.advance();
       return null;
@@ -3424,7 +3427,8 @@ export class Parser {
     if (token.type === TokenType.PreprocessorDirective) {
       this.recordError(
         `AL-only preprocessor directive '${sanitizeContent(token.value)}' is not supported in C/AL`,
-        token
+        token,
+        'parse-al-only-syntax'
       );
       this.advance();
       return null;
@@ -3458,7 +3462,8 @@ export class Parser {
         // It's not an assignment, call, or semicolon - probably a construct declaration
         this.recordError(
           `AL-only keyword '${sanitizeContent(token.value)}' is not supported in C/AL`,
-          token
+          token,
+          'parse-al-only-syntax'
         );
         this.advance();
         return null;
@@ -3826,7 +3831,7 @@ export class Parser {
     }
 
     // Missing UNTIL - report error at the REPEAT keyword location
-    this.recordError('Expected UNTIL to close REPEAT statement', startToken);
+    this.recordError('Expected UNTIL to close REPEAT statement', startToken, 'parse-unclosed-block');
 
     // Return partial node with placeholder condition
     const placeholder: Identifier = {
@@ -4038,7 +4043,7 @@ export class Parser {
     // Check if loop exited due to procedure boundary or statement-starting keyword
     if (PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type)) {
       // Procedure boundary found - CASE is missing END
-      this.recordError('Expected END to close CASE statement', this.peek());
+      this.recordError('Expected END to close CASE statement', this.peek(), 'parse-unclosed-block');
       // Return partial node without consuming the procedure boundary
       // Let outer parser handle the next procedure
       return {
@@ -4052,7 +4057,7 @@ export class Parser {
     }
     if (CASE_EXIT_STATEMENT_KEYWORDS.has(this.peek().type)) {
       // Statement keyword found - CASE is missing END
-      this.recordError('Expected END to close CASE statement', this.peek());
+      this.recordError('Expected END to close CASE statement', this.peek(), 'parse-unclosed-block');
       // Return partial node without consuming the statement keyword
       // Let outer parser handle the statement
       return {
@@ -4069,7 +4074,7 @@ export class Parser {
     if (this.isEndForOuterStructure()) {
       // END followed by section close or procedure boundary
       // This END likely belongs to outer BEGIN block
-      this.recordError('Expected END to close CASE statement', this.peek());
+      this.recordError('Expected END to close CASE statement', this.peek(), 'parse-unclosed-block');
       // Return partial node without consuming END
       // Let outer parseBlock() consume it and succeed
       return {
@@ -4124,7 +4129,8 @@ export class Parser {
           'Expected : after case branch value',
           error.token,
           values,
-          branchStart
+          branchStart,
+          'parse-expected-token'
         );
       }
       // No values parsed or non-ParseError -- restore position and re-throw
@@ -4142,7 +4148,8 @@ export class Parser {
         stripPaths(message),
         errorLocation,
         values,
-        branchStart
+        branchStart,
+        'parse-expected-token'
       );
     }
     this.advance(); // consume the colon
@@ -4698,7 +4705,8 @@ export class Parser {
     if (currentToken.type === TokenType.TernaryOperator) {
       this.recordError(
         `AL-only ternary operator (? :) is not supported in C/AL. Use IF-THEN-ELSE instead.`,
-        currentToken
+        currentToken,
+        'parse-al-only-syntax'
       );
       this.advance();
       return {
@@ -4712,7 +4720,8 @@ export class Parser {
     if (currentToken.type === TokenType.PreprocessorDirective) {
       this.recordError(
         `AL-only preprocessor directive '${sanitizeContent(currentToken.value)}' is not supported in C/AL`,
-        currentToken
+        currentToken,
+        'parse-al-only-syntax'
       );
       this.advance();
       return {
@@ -5658,7 +5667,7 @@ export class Parser {
     const current = this.peek();
     const sanitizedType = sanitizeTokenType(current.type as string);
     const enhancedMessage = `${message}, but found '${sanitizeContent(current.value)}' (${sanitizedType})`;
-    throw this.createParseError(enhancedMessage, current);
+    throw this.createParseError(enhancedMessage, current, 'parse-expected-token');
   }
 
   /**
@@ -5683,7 +5692,7 @@ export class Parser {
     const errorContext = this.peek();
     const sanitizedType = sanitizeTokenType(errorContext.type as string);
     const enhancedMessage = `${message}, but found '${sanitizeContent(errorContext.value)}' (${sanitizedType})`;
-    throw this.createParseError(enhancedMessage, errorLocation);
+    throw this.createParseError(enhancedMessage, errorLocation, 'parse-expected-token');
   }
 
   /**
@@ -5760,20 +5769,20 @@ export class Parser {
    * @param token - Token associated with the error (defaults to current token)
    * @returns ParseError with sanitized message and location info
    */
-  private createParseError(message: string, token?: Token): ParseError {
+  private createParseError(message: string, token?: Token, code?: string): ParseError {
     const errorToken = token || this.peek();
     // Apply path sanitization as a safety layer to prevent test/REAL/ leakage
     // Note: stripPaths only removes file paths, not the entire message content
     // Token values should already be sanitized by callers using sanitizeContent()
     const sanitizedMessage = stripPaths(message);
-    return new ParseError(sanitizedMessage, errorToken);
+    return new ParseError(sanitizedMessage, errorToken, code);
   }
 
   /**
    * Record an error without throwing - used for error recovery
    */
-  private recordError(message: string, token?: Token): void {
-    const error = this.createParseError(message, token);
+  private recordError(message: string, token?: Token, code?: string): void {
+    const error = this.createParseError(message, token, code);
     this.errors.push(error);
   }
 
@@ -5790,7 +5799,7 @@ export class Parser {
 
     // Generate a diagnostic for the skipped region
     const tokenWord = tokenCount === 1 ? 'token' : 'tokens';
-    this.recordError(`Skipped ${tokenCount} ${tokenWord} during error recovery`, startToken);
+    this.recordError(`Skipped ${tokenCount} ${tokenWord} during error recovery`, startToken, 'parse-error-recovery');
   }
 
   /**
@@ -5934,7 +5943,8 @@ export class Parser {
       case TokenType.ALOnlyKeyword:
         this.recordError(
           `AL-only keyword '${sanitizeContent(token.value)}' is not supported in C/AL`,
-          token
+          token,
+          'parse-al-only-syntax'
         );
         this.advance(); // Consume the token to continue parsing
         return true;
@@ -5942,7 +5952,8 @@ export class Parser {
       case TokenType.ALOnlyAccessModifier:
         this.recordError(
           `AL-only access modifier '${sanitizeContent(token.value)}' is not supported in C/AL. Use LOCAL instead.`,
-          token
+          token,
+          'parse-al-only-syntax'
         );
         this.advance(); // Consume the token to continue parsing
         return true;
@@ -5950,7 +5961,8 @@ export class Parser {
       case TokenType.TernaryOperator:
         this.recordError(
           `AL-only ternary operator (? :) is not supported in C/AL. Use IF-THEN-ELSE instead.`,
-          token
+          token,
+          'parse-al-only-syntax'
         );
         this.advance(); // Consume the token to continue parsing
         return true;
@@ -5958,7 +5970,8 @@ export class Parser {
       case TokenType.PreprocessorDirective:
         this.recordError(
           `AL-only preprocessor directive '${sanitizeContent(token.value)}' is not supported in C/AL`,
-          token
+          token,
+          'parse-al-only-syntax'
         );
         this.advance(); // Consume the token to continue parsing
         return true;
@@ -6103,7 +6116,7 @@ export class Parser {
 }
 
 export class ParseError extends Error {
-  constructor(message: string, public token: Token) {
+  constructor(message: string, public token: Token, public code: string = 'parse-error') {
     super(`${message} at line ${token.line}, column ${token.column}`);
     this.name = 'ParseError';
   }
@@ -6119,9 +6132,10 @@ export class CaseBranchParseError extends ParseError {
     message: string,
     token: Token,
     public values: Expression[],
-    public branchStartToken: Token
+    public branchStartToken: Token,
+    code: string = 'parse-error'
   ) {
-    super(message, token);
+    super(message, token, code);
     this.name = 'CaseBranchParseError';
   }
 }

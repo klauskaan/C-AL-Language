@@ -561,7 +561,7 @@ describe('ParseError Token Isolation (Issue #147)', () => {
       const error = errors[0];
 
       // Document expected ParseError structure
-      const expectedFields = ['message', 'name', 'stack', 'token'];
+      const expectedFields = ['message', 'name', 'stack', 'token', 'code'];
 
       // Get actual fields (excluding inherited Error properties we don't control)
       const actualFields = Object.keys(error).filter(key =>
