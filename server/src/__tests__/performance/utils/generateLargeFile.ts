@@ -1,6 +1,24 @@
 /**
  * Programmatic generator for large CAL test files
  * This avoids token limits by generating code programmatically rather than via LLM
+ *
+ * ## Deterministic Generation
+ *
+ * The generator uses a seeded PRNG (Mulberry32) to ensure reproducible output:
+ * - Same seed + parameters = identical output (byte-for-byte)
+ * - Different seeds = different template selection and content
+ * - Default seed is 42 when not specified
+ *
+ * This makes performance benchmarks stable and reproducible across:
+ * - Different machines
+ * - Different runs
+ * - Different developers
+ *
+ * To regenerate fixtures deterministically:
+ * ```bash
+ * npx ts-node generateLargeFile.ts 5000 fixtures/huge.cal medium
+ * npx ts-node generateLargeFile.ts 10000 fixtures/enormous.cal complex
+ * ```
  */
 
 import * as fs from 'fs';
@@ -10,6 +28,20 @@ interface GeneratorOptions {
   targetLines: number;
   outputPath: string;
   complexity?: 'simple' | 'medium' | 'complex';
+  seed?: number;
+}
+
+/**
+ * Mulberry32 - Fast and simple seeded PRNG
+ * https://github.com/bryc/code/blob/master/jshash/PRNGs.md
+ */
+function mulberry32(seed: number): () => number {
+  return function() {
+    let t = seed += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
 }
 
 /**
@@ -268,7 +300,10 @@ page ${50000 + num} "Custom List ${num}"
  * Generate a large CAL file programmatically
  */
 export function generateLargeFile(options: GeneratorOptions): void {
-  const { targetLines, outputPath, complexity = 'medium' } = options;
+  const { targetLines, outputPath, complexity = 'medium', seed = 42 } = options;
+
+  // Initialize seeded PRNG
+  const random = mulberry32(seed);
 
   let content = '';
   let currentLines = 0;
@@ -277,7 +312,7 @@ export function generateLargeFile(options: GeneratorOptions): void {
   content += `// Auto-generated CAL file for performance testing\n`;
   content += `// Target: ${targetLines} lines\n`;
   content += `// Complexity: ${complexity}\n`;
-  content += `// Generated: ${new Date().toISOString()}\n\n`;
+  content += `// Seed: ${seed}\n\n`;
   currentLines += 5;
 
   content += `codeunit 50000 "Performance Test Large File"\n{\n`;
@@ -289,7 +324,7 @@ export function generateLargeFile(options: GeneratorOptions): void {
 
   // Generate content until we reach target lines
   while (currentLines < targetLines - 100) { // Leave room for closing
-    const choice = Math.random();
+    const choice = random();
 
     if (choice < 0.5) {
       // Generate main procedure
