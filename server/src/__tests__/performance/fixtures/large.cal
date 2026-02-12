@@ -38,12 +38,18 @@ PAGE 50003 "ACME Sales Dashboard"
                     ToolTip = 'Specifies the customer number from ACME customer database';
 
                     trigger OnValidate()
+                    var
+                        CustNo: Code[20];
                     begin
                         if "Customer No." <> '' then begin
                             ValidateCustomerExists();
                             CalculateCustomerCreditLimit();
                             UpdateCustomerStatistics();
                         end;
+
+                        CustNo := "Customer No.";
+                        if CustNo in ['CUST001', 'CUST002', 'CUST003'] then
+                            Message('VIP customer detected');
                     end;
                 }
 
@@ -97,9 +103,15 @@ PAGE 50003 "ACME Sales Dashboard"
                     ToolTip = 'Specifies the currency code';
 
                     trigger OnValidate()
+                    var
+                        CurrCode: Code[10];
                     begin
                         UpdateExchangeRates();
                         RecalculateAmounts();
+
+                        CurrCode := "Currency Code";
+                        if CurrCode in ['EUR', 'USD', 'GBP', 'JPY', 'CHF'] then
+                            Message('Major trading currency');
                     end;
                 }
 
@@ -225,9 +237,15 @@ PAGE 50003 "ACME Sales Dashboard"
                     ToolTip = 'Specifies the ship-to country';
 
                     trigger OnValidate()
+                    var
+                        CountryCode: Code[10];
                     begin
                         ValidateCountryCode();
                         UpdateTaxRules();
+
+                        CountryCode := "Ship-to Country";
+                        if CountryCode in ['US', 'CA', 'MX'] then
+                            Message('NAFTA region shipping');
                     end;
                 }
 
@@ -299,6 +317,9 @@ PAGE 50003 "ACME Sales Dashboard"
                             "Priority Level"::Low:
                                 UpdateLowPriorityQueue();
                         end;
+
+                        if "Priority Level" in ["Priority Level"::Critical, "Priority Level"::High] then
+                            Message('High priority requires immediate attention');
                     end;
                 }
 
@@ -1512,6 +1533,9 @@ PAGE 50003 "ACME Sales Dashboard"
 
         if not CanModifyDocument then
             Error('You do not have permission to modify documents.');
+
+        if not (Status in [Status::Draft, Status::Open, Status::Pending]) then
+            Error('Status does not allow modifications');
     end;
 
     local procedure LogDocumentModification()
@@ -1690,9 +1714,15 @@ PAGE 50003 "ACME Sales Dashboard"
     end;
 
     local procedure CheckApprovalRequired(): Boolean
+    var
+        DocStatus: Option;
     begin
         if "Total Amount" > SalesSetup."Approval Threshold" then
             exit("Approval Status" <> "Approval Status"::Approved);
+
+        DocStatus := Status;
+        if DocStatus in [Status::Draft, Status::Pending] then
+            Message('Document pending approval');
 
         exit(false);
     end;
@@ -1768,11 +1798,16 @@ PAGE 50003 "ACME Sales Dashboard"
     local procedure CalculateInvoiceDiscountAmount()
     var
         DiscountPct: Decimal;
+        AmtRange: Decimal;
     begin
         if Customer.Get("Customer No.") then begin
             DiscountPct := Customer."Invoice Disc. %";
             "Invoice Discount Amount" := "Total Amount" * DiscountPct / 100;
         end;
+
+        AmtRange := "Total Amount";
+        if AmtRange in [100..999, 1000..4999, 5000..9999] then
+            Message('Discount tier applicable');
     end;
 
     local procedure RecalculateAllAmounts()
@@ -1932,7 +1967,13 @@ PAGE 50003 "ACME Sales Dashboard"
     end;
 
     local procedure CalculateStatistics()
+    var
+        Month: Integer;
     begin
+        Month := Date2DMY("Posting Date", 2);
+        if Month in [6, 7, 8] then
+            Message('Summer period statistics');
+
         CalculateDashboardMetrics();
     end;
 

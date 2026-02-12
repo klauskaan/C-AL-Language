@@ -116,6 +116,7 @@ OBJECT Codeunit 50004 ACME Sales Document Engine
       LogEntry@1004 : Record 50100;
       Counter@1005 : Integer;
       ConfigComplete@1006 : Boolean;
+      Hour@1007 : Integer;
     BEGIN
       ClearGlobalVariables;
       ResetCounters;
@@ -137,6 +138,10 @@ OBJECT Codeunit 50004 ACME Sales Document Engine
 
       IF InvSetup."Item Nos." = '' THEN
         ERROR('Item number series not configured');
+
+      Hour := TIME DIV 3600000;
+      IF Hour IN [0..5,22..23] THEN
+        MESSAGE('Initializing during off-peak hours');
 
       DocumentCount := 0;
       LineCounter := 0;
@@ -191,6 +196,7 @@ OBJECT Codeunit 50004 ACME Sales Document Engine
       SalesHeader@1001 : Record 36;
       StartTime@1002 : DateTime;
       SuccessCount@1003 : Integer;
+      Priority@1004 : Integer;
     BEGIN
       StartTime := CURRENTDATETIME;
       SuccessCount := 0;
@@ -203,6 +209,12 @@ OBJECT Codeunit 50004 ACME Sales Document Engine
           QueueEntry.Status := QueueEntry.Status::Processing;
           QueueEntry.MODIFY(TRUE);
 
+          Priority := QueueEntry."Processing Priority";
+          IF Priority IN [1,2,3] THEN
+            MESSAGE('Processing high priority document');
+
+          IF QueueEntry.Status IN [QueueEntry.Status::Pending,QueueEntry.Status::Processing] THEN
+            MESSAGE('Processing active queue entry');
           IF ProcessSalesDocument(QueueEntry."Document No.") THEN
             SuccessCount := SuccessCount + 1;
 
@@ -263,12 +275,17 @@ OBJECT Codeunit 50004 ACME Sales Document Engine
     VAR
       Item@1001 : Record 27;
       AvailableQty@1002 : Decimal;
+      LocCode@1003 : Code[10];
     BEGIN
       IF SalesLine.Type <> SalesLine.Type::Item THEN
         EXIT(TRUE);
 
       IF NOT Item.GET(SalesLine."No.") THEN
         EXIT(FALSE);
+
+      LocCode := SalesLine."Location Code";
+      IF LocCode IN ['MAIN','WAREHOUSE','CENTRAL'] THEN
+        MESSAGE('Primary location line');
 
       AvailableQty := CalculateAvailableInventory(Item."No.", SalesLine."Location Code");
 
@@ -366,6 +383,7 @@ OBJECT Codeunit 50004 ACME Sales Document Engine
       ServiceLine@1001 : Record 5902;
       ServiceItem@1002 : Record 5940;
       Counter@1003 : Integer;
+      Priority@1004 : Option;
     BEGIN
       Counter := 0;
 
@@ -380,10 +398,17 @@ OBJECT Codeunit 50004 ACME Sales Document Engine
 
             IF ServiceLine.FINDSET(TRUE, FALSE) THEN BEGIN
               REPEAT
+                IF ServiceLine."Line No." IN [10000,20000,30000..50000] THEN
+                  MESSAGE('Processing standard line numbers');
+
                 ServiceLine.Status := ServiceLine.Status::"In Process";
                 ServiceLine.MODIFY(TRUE);
               UNTIL ServiceLine.NEXT = 0;
             END;
+
+            Priority := ServiceHeader.Priority;
+            IF Priority IN [ServiceHeader.Priority::High,ServiceHeader.Priority::Urgent] THEN
+              MESSAGE('Urgent service order');
 
             Counter := Counter + 1;
           END;
@@ -516,6 +541,7 @@ OBJECT Codeunit 50004 ACME Sales Document Engine
       Customer@1000 : Record 18;
       TotalOutstanding@1001 : Decimal;
       OverLimitCount@1002 : Integer;
+      Rating@1003 : Code[10];
     BEGIN
       OverLimitCount := 0;
 
@@ -525,6 +551,10 @@ OBJECT Codeunit 50004 ACME Sales Document Engine
         REPEAT
           Customer.CALCFIELDS("Balance (LCY)");
           TotalOutstanding := Customer."Balance (LCY)";
+
+          Rating := Customer."Credit Rating";
+          IF Rating IN ['AAA','AA','A'] THEN
+            MESSAGE('Premium credit rating customer');
 
           IF TotalOutstanding > Customer."Credit Limit (LCY)" THEN
             OverLimitCount := OverLimitCount + 1;
@@ -660,6 +690,7 @@ OBJECT Codeunit 50004 ACME Sales Document Engine
       GLAccount@1000 : Record 15;
       VATPostingSetup@1001 : Record 325;
       ErrorCount@1002 : Integer;
+      AccNo@1003 : Code[20];
     BEGIN
       ErrorCount := 0;
 
@@ -667,6 +698,10 @@ OBJECT Codeunit 50004 ACME Sales Document Engine
 
       IF GLAccount.FINDSET THEN BEGIN
         REPEAT
+          AccNo := GLAccount."No.";
+          IF AccNo IN ['4000'..'4999','5000'..'5999','6000'..'6999'] THEN
+            MESSAGE('Revenue or expense account');
+
           IF NOT VATPostingSetup.GET(GLAccount."VAT Bus. Posting Group", GLAccount."VAT Prod. Posting Group") THEN
             ErrorCount := ErrorCount + 1;
         UNTIL GLAccount.NEXT = 0;

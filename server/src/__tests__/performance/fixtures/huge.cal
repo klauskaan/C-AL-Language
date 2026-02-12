@@ -52,12 +52,17 @@ var
     Total: Decimal;
     Discount: Decimal;
     FinalAmount: Decimal;
+    DocStatus: Option;
 begin
     if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
         exit(false);
 
     if not Customer.Get(CustomerNo) then
         Error('Customer %1 not found', CustomerNo);
+
+    DocStatus := OrderHeader.Status;
+    if DocStatus in [OrderHeader.Status::Open, OrderHeader.Status::Released] then
+        Message('Order is processable');
 
     Total := 0;
     OrderLine.SetRange("Document Type", OrderHeader."Document Type");
@@ -80,9 +85,11 @@ procedure GetUnitPrice0(ItemCode: Code[20]): Decimal
 var
     Item: Record Item;
 begin
-    if Item.Get(ItemCode) then
-        exit(Item."Unit Price")
-    else
+    if Item.Get(ItemCode) then begin
+        if ItemCode in ['ITEM001', 'ITEM002', 'ITEM003'] then
+            Message('Premium item');
+        exit(Item."Unit Price");
+    end else
         exit(0);
 end;
 
@@ -408,6 +415,9 @@ begin
 
     if not Customer.Get(CustomerNo) then
         Error('Customer %1 not found', CustomerNo);
+
+    if CustomerNo in ['C10000'..'C19999', 'C20000'..'C29999'] then
+        Message('Customer in preferred range');
 
     Total := 0;
     OrderLine.SetRange("Document Type", OrderHeader."Document Type");
@@ -756,6 +766,7 @@ var
     Total: Decimal;
     Discount: Decimal;
     FinalAmount: Decimal;
+    DiscPct: Decimal;
 begin
     if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
         exit(false);
@@ -770,6 +781,10 @@ begin
         repeat
             Total += OrderLine.Amount;
         until OrderLine.Next() = 0;
+
+    DiscPct := Customer."Discount %";
+    if not (DiscPct in [0, 5, 10, 15, 20]) then
+        Message('Non-standard discount percentage');
 
     Discount := Total * Customer."Discount %" / 100;
     FinalAmount := Total - Discount;
@@ -1065,10 +1080,14 @@ end;
 procedure GetUnitPrice13(ItemCode: Code[20]): Decimal
 var
     Item: Record Item;
+    ItemType: Option;
 begin
-    if Item.Get(ItemCode) then
-        exit(Item."Unit Price")
-    else
+    if Item.Get(ItemCode) then begin
+        ItemType := Item.Type;
+        if ItemType in [Item.Type::Inventory, Item.Type::Service] then
+            Message('Standard item type');
+        exit(Item."Unit Price");
+    end else
         exit(0);
 end;
 
@@ -1697,10 +1716,14 @@ end;
 procedure GetUnitPrice22(ItemCode: Code[20]): Decimal
 var
     Item: Record Item;
+    Price: Decimal;
 begin
-    if Item.Get(ItemCode) then
-        exit(Item."Unit Price")
-    else
+    if Item.Get(ItemCode) then begin
+        Price := Item."Unit Price";
+        if Price in [10..99, 100..999, 1000..9999] then
+            Message('Standard price tier');
+        exit(Price);
+    end else
         exit(0);
 end;
 
@@ -2641,10 +2664,14 @@ end;
 procedure GetUnitPrice35(ItemCode: Code[20]): Decimal
 var
     Item: Record Item;
+    FirstChar: Text[1];
 begin
-    if Item.Get(ItemCode) then
-        exit(Item."Unit Price")
-    else
+    if Item.Get(ItemCode) then begin
+        FirstChar := CopyStr(ItemCode, 1, 1);
+        if FirstChar in ['A', 'B', 'C', 'D'] then
+            Message('Item code starts with A-D');
+        exit(Item."Unit Price");
+    end else
         exit(0);
 end;
 
@@ -4322,12 +4349,17 @@ var
     Total: Decimal;
     Discount: Decimal;
     FinalAmount: Decimal;
+    PaymentTerms: Code[10];
 begin
     if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
         exit(false);
 
     if not Customer.Get(CustomerNo) then
         Error('Customer %1 not found', CustomerNo);
+
+    PaymentTerms := Customer."Payment Terms Code";
+    if PaymentTerms in ['30D', '60D', '90D'] then
+        Message('Standard payment terms');
 
     Total := 0;
     OrderLine.SetRange("Document Type", OrderHeader."Document Type");

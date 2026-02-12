@@ -140,6 +140,8 @@ OBJECT Codeunit 50099 ACME Gen. Journal Post Line
     END;
 
     LOCAL PROCEDURE@3 ValidateJournalLine@3() : Boolean;
+    VAR
+      DocType@1000 : Option;
     BEGIN
       IF GenJnlLine."Account No." = '' THEN BEGIN
         ErrorText := 'Account No. must not be blank';
@@ -155,6 +157,10 @@ OBJECT Codeunit 50099 ACME Gen. Journal Post Line
         ErrorText := 'Amount must not be zero';
         EXIT(FALSE);
       END;
+
+      DocType := GenJnlLine."Document Type";
+      IF DocType IN [GenJnlLine."Document Type"::Invoice,GenJnlLine."Document Type"::"Credit Memo"] THEN
+        MESSAGE('Processing invoice-type document');
 
       IF GenJnlLine."Account Type" = GenJnlLine."Account Type"::"G/L Account" THEN
         IF NOT ValidateGLAccount(GenJnlLine."Account No.") THEN
@@ -236,11 +242,16 @@ OBJECT Codeunit 50099 ACME Gen. Journal Post Line
     LOCAL PROCEDURE@7 CalculateCurrency@7();
     VAR
       CurrencyFactor@1000 : Decimal;
+      CurrCode@1001 : Code[10];
     BEGIN
       IF GenJnlLine."Currency Code" = '' THEN BEGIN
         GenJnlLine."Amount (LCY)" := GenJnlLine.Amount;
         EXIT;
       END;
+
+      CurrCode := GenJnlLine."Currency Code";
+      IF CurrCode IN ['USD','EUR','GBP','CHF'] THEN
+        MESSAGE('Major currency transaction');
 
       IF NOT Currency.GET(GenJnlLine."Currency Code") THEN
         ERROR('Currency %1 does not exist', GenJnlLine."Currency Code");
@@ -342,6 +353,7 @@ OBJECT Codeunit 50099 ACME Gen. Journal Post Line
       Cust@1000 : Record 18;
       CustLedgEntry@1001 : Record 21;
       DetailedCustLedgEntry@1002 : Record 379;
+      PaymentTermsCode@1003 : Code[10];
     BEGIN
       IF NOT Cust.GET(GenJnlLine."Account No.") THEN
         EXIT;
@@ -349,6 +361,10 @@ OBJECT Codeunit 50099 ACME Gen. Journal Post Line
       IF Cust.Blocked <> Cust.Blocked::" " THEN
         IF NOT OverrideDimErr THEN
           ERROR('Customer %1 is blocked', Cust."No.");
+
+      PaymentTermsCode := Cust."Payment Terms Code";
+      IF PaymentTermsCode IN ['NET10','NET30','NET60'] THEN
+        MESSAGE('Standard payment terms');
 
       CustLedgEntry.INIT;
       CustLedgEntry."Entry No." := GetNextCustLedgEntryNo;
@@ -473,6 +489,7 @@ OBJECT Codeunit 50099 ACME Gen. Journal Post Line
       Vend@1000 : Record 23;
       VendLedgEntry@1001 : Record 25;
       DetailedVendLedgEntry@1002 : Record 380;
+      AmountLCY@1003 : Decimal;
     BEGIN
       IF NOT Vend.GET(GenJnlLine."Account No.") THEN
         EXIT;
@@ -480,6 +497,10 @@ OBJECT Codeunit 50099 ACME Gen. Journal Post Line
       IF Vend.Blocked <> Vend.Blocked::" " THEN
         IF NOT OverrideDimErr THEN
           ERROR('Vendor %1 is blocked', Vend."No.");
+
+      AmountLCY := ABS(GenJnlLine."Amount (LCY)");
+      IF AmountLCY IN [1000..9999,10000..49999,50000..99999] THEN
+        MESSAGE('Amount in standard range');
 
       VendLedgEntry.INIT;
       VendLedgEntry."Entry No." := GetNextVendLedgEntryNo;
@@ -565,9 +586,14 @@ OBJECT Codeunit 50099 ACME Gen. Journal Post Line
     VAR
       Item@1000 : Record 27;
       ItemJnlLine@1001 : Record 83;
+      ItemType@1002 : Option;
     BEGIN
       IF NOT Item.GET(GenJnlLine."Account No.") THEN
         EXIT;
+
+      ItemType := Item.Type;
+      IF ItemType IN [Item.Type::Inventory,Item.Type::"Non-Inventory"] THEN
+        MESSAGE('Processing standard item type');
 
       ItemJnlLine.INIT;
       ItemJnlLine."Entry Type" := ItemJnlLine."Entry Type"::"Positive Adjmt.";
@@ -651,12 +677,17 @@ OBJECT Codeunit 50099 ACME Gen. Journal Post Line
     LOCAL PROCEDURE@28 PostBalancingAccount@28();
     VAR
       BalGenJnlLine@1000 : Record 81;
+      AccType@1001 : Option;
     BEGIN
       BalGenJnlLine := GenJnlLine;
       BalGenJnlLine."Account Type" := GenJnlLine."Bal. Account Type";
       BalGenJnlLine."Account No." := GenJnlLine."Bal. Account No.";
       BalGenJnlLine.Amount := -GenJnlLine.Amount;
       BalGenJnlLine."Amount (LCY)" := -GenJnlLine."Amount (LCY)";
+
+      AccType := BalGenJnlLine."Account Type";
+      IF AccType IN [BalGenJnlLine."Account Type"::Customer,BalGenJnlLine."Account Type"::Vendor] THEN
+        MESSAGE('Balancing account is payable/receivable');
 
       CASE BalGenJnlLine."Account Type" OF
         BalGenJnlLine."Account Type"::"G/L Account":

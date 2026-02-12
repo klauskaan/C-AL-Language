@@ -183,16 +183,25 @@ OBJECT Table 50001 Sales Order
       CALCFIELDS(Amount);
       OrderAmount := Amount;
 
+      IF Priority IN [Priority::High,Priority::Urgent] THEN
+        MESSAGE('High priority order - expedite credit check');
+
       IF CustomerBalance + OrderAmount > Customer."Credit Limit" THEN
         ERROR(Text003,CustomerBalance + OrderAmount,"Customer No.");
     END;
 
     PROCEDURE ReleaseOrder@4();
+    VAR
+      Month@1000 : Integer;
     BEGIN
       IF Status <> Status::Open THEN
         ERROR(Text001,"No.",Status);
 
       ValidateOrder;
+
+      Month := DATE2DMY("Order Date",2);
+      IF Month IN [12,1,2] THEN
+        MESSAGE('Release during winter season');
 
       Status := Status::Released;
       MODIFY;
@@ -201,9 +210,16 @@ OBJECT Table 50001 Sales Order
     END;
 
     PROCEDURE ReopenOrder@5();
+    VAR
+      Qty@1000 : Decimal;
     BEGIN
       IF Status = Status::Open THEN
         EXIT;
+
+      CALCFIELDS("Outstanding Amount");
+      Qty := "Outstanding Amount";
+      IF Qty IN [1..99,100..499,500..999] THEN
+        MESSAGE('Outstanding amount in range');
 
       Status := Status::Open;
       MODIFY;
@@ -249,6 +265,12 @@ OBJECT Table 50001 Sales Order
         ELSE
           Priority := Priority::Low;
       END;
+
+      IF NOT ("Invoice Discount Calculation" IN ["Invoice Discount Calculation"::"%","Invoice Discount Calculation"::Amount]) THEN
+        "Invoice Discount Calculation" := "Invoice Discount Calculation"::None;
+
+      IF "Salesperson Code" IN ['SALES01','SALES02','SALES03'] THEN
+        MESSAGE('Order assigned to top performer');
 
       MODIFY;
     END;
