@@ -11,7 +11,7 @@ import { Parser } from '../../parser/parser';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { FoldingRange, FoldingRangeKind } from 'vscode-languageserver';
 
-import { FoldingRangeProvider, collectCommentFoldingRanges } from '../foldingRangeProvider';
+import { FoldingRangeProvider, collectCommentFoldingRanges, collectBraceCommentFoldingRanges } from '../foldingRangeProvider';
 
 /**
  * Helper to create a TextDocument from a string
@@ -1571,6 +1571,284 @@ z := 3;
 // Fix */ here`;
         const ranges = collectCommentFoldingRanges(code);
         expect(ranges).toEqual([]);
+      });
+    });
+
+    describe('Brace Comment Folding - { }', () => {
+      describe('Integration Tests - provide()', () => {
+        it('should fold multi-line { } comment inside procedure', () => {
+          const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    BEGIN
+      { This is a
+      multi-line
+      brace comment }
+      x := 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+          const doc = createDocument(code);
+          const ast = parseContent(code);
+
+          const ranges = provider.provide(doc, ast);
+
+          const braceCommentRange = ranges.find((r: FoldingRange) =>
+            r.kind === FoldingRangeKind.Comment &&
+            r.startLine === 6 &&
+            r.endLine === 8
+          );
+          expect(braceCommentRange).toBeDefined();
+        });
+
+        it('should fold { } comment with FoldingRangeKind.Comment', () => {
+          const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    BEGIN
+      { Comment
+      line 2
+      line 3 }
+      x := 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+          const doc = createDocument(code);
+          const ast = parseContent(code);
+
+          const ranges = provider.provide(doc, ast);
+
+          const braceCommentRange = ranges.find((r: FoldingRange) =>
+            r.kind === FoldingRangeKind.Comment &&
+            r.startLine >= 6 && r.endLine >= 8
+          );
+          expect(braceCommentRange).toBeDefined();
+          expect(braceCommentRange?.kind).toBe(FoldingRangeKind.Comment);
+        });
+
+        it('should fold both /* */ and { } comments', () => {
+          const code = `/* Header
+comment
+block */
+OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    BEGIN
+      { Brace
+      comment
+      here }
+      x := 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+          const doc = createDocument(code);
+          const ast = parseContent(code);
+
+          const ranges = provider.provide(doc, ast);
+
+          const commentRanges = ranges.filter((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
+          expect(commentRanges.length).toBeGreaterThanOrEqual(2);
+
+          // Check for /* */ comment
+          const slashStarComment = commentRanges.find(r => r.startLine === 0);
+          expect(slashStarComment).toBeDefined();
+
+          // Check for { } comment
+          const braceComment = commentRanges.find(r => r.startLine >= 9);
+          expect(braceComment).toBeDefined();
+        });
+
+        it('should not fold { } braces in FIELDS section', () => {
+          const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        }
+    { 2   ;   ;Name                ;Text50        }
+    { 3   ;   ;Address             ;Text100       }
+  }
+}`;
+          const doc = createDocument(code);
+          const ast = parseContent(code);
+
+          const ranges = provider.provide(doc, ast);
+
+          // Should have folding range for FIELDS section (kind: Region)
+          const fieldsRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Region);
+          expect(fieldsRange).toBeDefined();
+
+          // Should NOT have comment folding ranges for structural { } braces
+          const braceCommentRanges = ranges.filter((r: FoldingRange) =>
+            r.kind === FoldingRangeKind.Comment &&
+            r.startLine >= 3 && r.endLine <= 7
+          );
+          expect(braceCommentRanges).toEqual([]);
+        });
+      });
+
+      describe('Unit Tests - collectBraceCommentFoldingRanges()', () => {
+        it('should fold 3-line { } comment in code context', () => {
+          const code = `PROCEDURE Foo();
+BEGIN
+  { Line 1
+  Line 2
+  Line 3 }
+  x := 1;
+END;`;
+          const doc = createDocument(code);
+
+          const ranges = collectBraceCommentFoldingRanges(doc.getText());
+
+          expect(ranges.length).toBe(1);
+          expect(ranges[0].kind).toBe(FoldingRangeKind.Comment);
+          expect(ranges[0].startLine).toBe(2);
+          expect(ranges[0].endLine).toBe(4);
+        });
+
+        it('should fold 5-line { } comment', () => {
+          const code = `PROCEDURE Foo();
+BEGIN
+  { Long
+  comment
+  spanning
+  multiple
+  lines }
+  x := 1;
+END;`;
+          const doc = createDocument(code);
+
+          const ranges = collectBraceCommentFoldingRanges(doc.getText());
+
+          expect(ranges.length).toBe(1);
+          expect(ranges[0].kind).toBe(FoldingRangeKind.Comment);
+          expect(ranges[0].startLine).toBe(2);
+          expect(ranges[0].endLine).toBe(6);
+        });
+
+        it('should not fold 2-line { } comment (below threshold)', () => {
+          const code = `PROCEDURE Foo();
+BEGIN
+  { Two line
+  comment }
+  x := 1;
+END;`;
+          const doc = createDocument(code);
+
+          const ranges = collectBraceCommentFoldingRanges(doc.getText());
+
+          expect(ranges).toEqual([]);
+        });
+
+        it('should not fold single-line { } comment', () => {
+          const code = `PROCEDURE Foo();
+BEGIN
+  { Single line comment }
+  x := 1;
+END;`;
+          const doc = createDocument(code);
+
+          const ranges = collectBraceCommentFoldingRanges(doc.getText());
+
+          expect(ranges).toEqual([]);
+        });
+
+        it('should not fold structural { } in FIELDS section', () => {
+          const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        }
+    { 2   ;   ;Name                ;Text50        }
+    { 3   ;   ;Address             ;Text100       }
+  }
+}`;
+          const doc = createDocument(code);
+
+          const ranges = collectBraceCommentFoldingRanges(doc.getText());
+
+          // Should NOT detect structural braces as comments
+          expect(ranges).toEqual([]);
+        });
+
+        it('should not fold structural { } in KEYS section', () => {
+          const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        }
+  }
+  KEYS
+  {
+    {    ;No.                      ;Clustered=Yes }
+  }
+}`;
+          const doc = createDocument(code);
+
+          const ranges = collectBraceCommentFoldingRanges(doc.getText());
+
+          expect(ranges).toEqual([]);
+        });
+
+        it('should fold multiple { } comments separately', () => {
+          const code = `PROCEDURE Foo();
+BEGIN
+  { First
+  comment
+  block }
+  x := 1;
+  { Second
+  comment
+  block }
+  y := 2;
+END;`;
+          const doc = createDocument(code);
+
+          const ranges = collectBraceCommentFoldingRanges(doc.getText());
+
+          expect(ranges.length).toBe(2);
+          expect(ranges[0].startLine).toBe(2);
+          expect(ranges[0].endLine).toBe(4);
+          expect(ranges[1].startLine).toBe(6);
+          expect(ranges[1].endLine).toBe(8);
+        });
+
+        it('should not fold unclosed { at EOF', () => {
+          const code = `PROCEDURE Foo();
+BEGIN
+  { Unclosed
+  comment`;
+          const doc = createDocument(code);
+
+          const ranges = collectBraceCommentFoldingRanges(doc.getText());
+
+          expect(ranges).toEqual([]);
+        });
+
+        it('should handle \\r\\n line endings correctly', () => {
+          const code = `PROCEDURE Foo();\r\nBEGIN\r\n  { Line 1\r\n  Line 2\r\n  Line 3 }\r\nEND;`;
+          const doc = createDocument(code);
+
+          const ranges = collectBraceCommentFoldingRanges(doc.getText());
+
+          expect(ranges.length).toBe(1);
+          expect(ranges[0].startLine).toBe(2);
+          expect(ranges[0].endLine).toBe(4);
+        });
       });
     });
   });

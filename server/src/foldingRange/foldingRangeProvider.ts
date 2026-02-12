@@ -24,6 +24,7 @@ import {
 } from '../parser/ast';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { ASTWalker } from '../visitor/astWalker';
+import { Lexer, TraceEvent } from '../lexer/lexer';
 
 /**
  * Visitor that collects folding ranges from the AST
@@ -310,6 +311,54 @@ export function collectCommentFoldingRanges(text: string): FoldingRange[] {
 }
 
 /**
+ * Collect folding ranges for multi-line { } brace comment blocks
+ *
+ * Uses the Lexer's trace capability to detect brace comments in code contexts.
+ * Skips single-line and two-line comments to avoid clutter (only folds 3+ lines).
+ *
+ * @param text - The full source text to scan
+ * @returns Array of FoldingRange items with kind Comment for multi-line brace comments
+ */
+export function collectBraceCommentFoldingRanges(text: string): FoldingRange[] {
+  const ranges: FoldingRange[] = [];
+
+  // Create a Lexer instance with trace callback to capture brace comment events
+  const lexer = new Lexer(text, {
+    trace: (event: TraceEvent) => {
+      // Filter for skip events with block-comment reason
+      if (event.type === 'skip' && event.data.reason === 'block-comment') {
+        const offset = event.position.offset;
+        const length = event.data.length as number;
+
+        // Extract the comment text to count newlines
+        const commentText = text.substring(offset, offset + length);
+
+        // Count newlines (\n only - handles \r\n correctly)
+        const newlineCount = (commentText.match(/\n/g) || []).length;
+
+        // Convert start line from 1-based to 0-based
+        const startLine = event.position.line - 1;
+        const endLine = startLine + newlineCount;
+
+        // Apply threshold: only create FoldingRange if 3+ lines
+        if (endLine - startLine >= 2) {
+          ranges.push({
+            startLine,
+            endLine,
+            kind: FoldingRangeKind.Comment
+          });
+        }
+      }
+    }
+  });
+
+  // Trigger tokenization to generate trace events
+  lexer.tokenize();
+
+  return ranges;
+}
+
+/**
  * FoldingRangeProvider class
  * Provides folding ranges for C/AL documents
  */
@@ -325,19 +374,22 @@ export class FoldingRangeProvider {
    * @returns Array of FoldingRange items
    */
   public provide(document: TextDocument, ast: CALDocument): FoldingRange[] {
+    const text = document.getText();
+
     // Collect comment folding ranges from raw text (comments are not in the AST)
-    const commentRanges = collectCommentFoldingRanges(document.getText());
+    const cStyleCommentRanges = collectCommentFoldingRanges(text);
+    const braceCommentRanges = collectBraceCommentFoldingRanges(text);
 
     // Guard: return comment ranges only if no object in AST
     if (!ast.object) {
-      return commentRanges;
+      return cStyleCommentRanges.concat(braceCommentRanges);
     }
 
     // Collect code folding ranges using visitor pattern
     const visitor = new FoldingRangeCollectorVisitor();
     this.walker.walk(ast, visitor);
 
-    // Combine: comment ranges and code ranges don't overlap
-    return commentRanges.concat(visitor.ranges);
+    // Combine all three sources: /* */ comments, { } comments, and AST-based ranges
+    return cStyleCommentRanges.concat(braceCommentRanges).concat(visitor.ranges);
   }
 }
