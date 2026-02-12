@@ -5718,7 +5718,7 @@ export class Parser {
   ): Token {
     if (!this.check(TokenType.LeftBrace)) {
       // No brace at all - record error and return previous token
-      this.recordError(`Expected { to open ${sectionName} section`);
+      this.recordError(`Expected { to open ${sectionName} section`, undefined, 'parse-unclosed-block');
       return this.previous();
     }
 
@@ -5731,7 +5731,7 @@ export class Parser {
       // We would consume an item brace as section brace
       // Record section-level error but do NOT consume the brace
       // This allows item parsing to proceed normally
-      this.recordError(`Expected { to open ${sectionName} section`);
+      this.recordError(`Expected { to open ${sectionName} section`, undefined, 'parse-unclosed-block');
       return this.previous();
     }
 
