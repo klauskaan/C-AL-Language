@@ -622,8 +622,8 @@ connection.onFoldingRanges((params: FoldingRangeParams): FoldingRange[] => {
   }
 
   try {
-    const { ast } = parseDocument(document);
-    return foldingRangeProvider.provide(document, ast);
+    const { ast, lexer } = parseDocument(document);
+    return foldingRangeProvider.provide(document, ast, lexer);
   } catch (error) {
     connection.console.error(`Error providing folding ranges: ${formatError(error)}`);
     return [];

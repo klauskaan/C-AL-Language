@@ -396,6 +396,19 @@ export interface TraceEvent {
 }
 
 /**
+ * Metadata for a brace comment scanned by the lexer.
+ * Populated during tokenization for any { } comment in code context.
+ */
+export interface BraceCommentSpan {
+  /** Start offset in source text */
+  offset: number;
+  /** Length of comment including braces */
+  length: number;
+  /** 1-based start line */
+  line: number;
+}
+
+/**
  * Lexer for C/AL language
  */
 export class Lexer {
@@ -441,6 +454,9 @@ export class Lexer {
    */
   private isTokenizing: boolean = false;
 
+  /** Brace comment spans collected during tokenization (side-channel for folding) */
+  private readonly _braceComments: BraceCommentSpan[] = [];
+
   /**
    * Create a new Lexer instance.
    * @param input - The source code to tokenize
@@ -477,6 +493,7 @@ export class Lexer {
       this.line = 1;
       this.column = 1;
       this.state.reset();
+      this._braceComments.length = 0;
 
       while (this.position < this.input.length) {
         this.scanToken();
@@ -1739,6 +1756,11 @@ export class Lexer {
     if (!closed) {
       this.addToken(TokenType.Unknown, '{', startPos, this.position, startLine, startColumn);
     } else {
+      this._braceComments.push({
+        offset: startPos,
+        length: this.position - startPos,
+        line: startLine
+      });
       this.invokeTraceCallback(() => ({
         type: 'skip',
         position: { line: startLine, column: startColumn, offset: startPos },
@@ -2093,6 +2115,17 @@ export class Lexer {
    */
   public getTokens(): readonly Token[] {
     return Object.freeze(this.tokens);
+  }
+
+  /**
+   * Get brace comment spans collected during tokenization.
+   * Each entry represents a { } block comment found in code context.
+   *
+   * These spans are populated unconditionally during tokenization
+   * (no trace callback required) for use by the folding range provider.
+   */
+  public getBraceComments(): readonly BraceCommentSpan[] {
+    return Object.freeze(this._braceComments);
   }
 
   /**

@@ -24,7 +24,7 @@ import {
 } from '../parser/ast';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { ASTWalker } from '../visitor/astWalker';
-import { Lexer, TraceEvent } from '../lexer/lexer';
+import { Lexer, BraceCommentSpan } from '../lexer/lexer';
 
 /**
  * Visitor that collects folding ranges from the AST
@@ -311,51 +311,52 @@ export function collectCommentFoldingRanges(text: string): FoldingRange[] {
 }
 
 /**
+ * Convert brace comment spans to folding ranges.
+ * Applies the 3-line minimum threshold.
+ *
+ * @param text - Source text (for newline counting within spans)
+ * @param spans - Brace comment spans from lexer side-channel
+ * @returns Folding ranges for qualifying brace comments
+ */
+function braceCommentSpansToFoldingRanges(
+  text: string,
+  spans: readonly BraceCommentSpan[]
+): FoldingRange[] {
+  const ranges: FoldingRange[] = [];
+
+  for (const span of spans) {
+    const commentText = text.substring(span.offset, span.offset + span.length);
+    const newlineCount = (commentText.match(/\n/g) || []).length;
+    const startLine = span.line - 1; // Convert 1-based to 0-based
+    const endLine = startLine + newlineCount;
+
+    if (endLine - startLine >= 2) {
+      ranges.push({
+        startLine,
+        endLine,
+        kind: FoldingRangeKind.Comment
+      });
+    }
+  }
+
+  return ranges;
+}
+
+/**
  * Collect folding ranges for multi-line { } brace comment blocks
  *
- * Uses the Lexer's trace capability to detect brace comments in code contexts.
+ * Uses the Lexer's brace comment side-channel to detect brace comments in code contexts.
  * Skips single-line and two-line comments to avoid clutter (only folds 3+ lines).
  *
  * @param text - The full source text to scan
  * @returns Array of FoldingRange items with kind Comment for multi-line brace comments
  */
 export function collectBraceCommentFoldingRanges(text: string): FoldingRange[] {
-  const ranges: FoldingRange[] = [];
-
-  // Create a Lexer instance with trace callback to capture brace comment events
-  const lexer = new Lexer(text, {
-    trace: (event: TraceEvent) => {
-      // Filter for skip events with block-comment reason
-      if (event.type === 'skip' && event.data.reason === 'block-comment') {
-        const offset = event.position.offset;
-        const length = event.data.length as number;
-
-        // Extract the comment text to count newlines
-        const commentText = text.substring(offset, offset + length);
-
-        // Count newlines (\n only - handles \r\n correctly)
-        const newlineCount = (commentText.match(/\n/g) || []).length;
-
-        // Convert start line from 1-based to 0-based
-        const startLine = event.position.line - 1;
-        const endLine = startLine + newlineCount;
-
-        // Apply threshold: only create FoldingRange if 3+ lines
-        if (endLine - startLine >= 2) {
-          ranges.push({
-            startLine,
-            endLine,
-            kind: FoldingRangeKind.Comment
-          });
-        }
-      }
-    }
-  });
-
-  // Trigger tokenization to generate trace events
+  // Create a Lexer instance to tokenize and collect brace comment spans
+  const lexer = new Lexer(text);
   lexer.tokenize();
 
-  return ranges;
+  return braceCommentSpansToFoldingRanges(text, lexer.getBraceComments());
 }
 
 /**
@@ -371,14 +372,17 @@ export class FoldingRangeProvider {
    *
    * @param document - The text document
    * @param ast - The parsed AST
+   * @param lexer - Optional cached lexer instance from parsing
    * @returns Array of FoldingRange items
    */
-  public provide(document: TextDocument, ast: CALDocument): FoldingRange[] {
+  public provide(document: TextDocument, ast: CALDocument, lexer?: Lexer): FoldingRange[] {
     const text = document.getText();
 
     // Collect comment folding ranges from raw text (comments are not in the AST)
     const cStyleCommentRanges = collectCommentFoldingRanges(text);
-    const braceCommentRanges = collectBraceCommentFoldingRanges(text);
+    const braceCommentRanges = lexer
+      ? braceCommentSpansToFoldingRanges(text, lexer.getBraceComments())
+      : collectBraceCommentFoldingRanges(text);
 
     // Guard: return comment ranges only if no object in AST
     if (!ast.object) {
