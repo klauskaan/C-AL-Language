@@ -61,6 +61,9 @@ function validateUnknownAttributes(
       diagnostics: {
         warnDeprecated: true,
         warnUnknownAttributes
+      },
+      workspaceIndexing: {
+        includeTxtFiles: true
       }
     } : undefined
   };

@@ -126,6 +126,12 @@
           "default": true,
           "description": "Show warnings for unknown procedure attributes (e.g., [Extrnal] instead of [External]). Helps catch typos in attribute names.",
           "scope": "resource"
+        },
+        "cal.workspaceIndexing.includeTxtFiles": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include .txt files in workspace symbol indexing (Ctrl+T). NAV commonly exports C/AL objects as .txt files. Files are verified to contain C/AL content before indexing.",
+          "scope": "window"
         }
       }
     }

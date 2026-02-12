@@ -17,8 +17,9 @@ export async function activate(context: ExtensionContext): Promise<void> {
   const config = workspace.getConfiguration('cal');
   const lsEnabled = config.get<boolean>('languageServer.enabled', true);
   const semanticEnabled = config.get<boolean>('semanticHighlighting.enabled', true);
+  const includeTxtFiles = config.get<boolean>('workspaceIndexing.includeTxtFiles', true);
 
-  console.log(`C/AL Settings: languageServer.enabled=${lsEnabled}, semanticHighlighting.enabled=${semanticEnabled}`);
+  console.log(`C/AL Settings: languageServer.enabled=${lsEnabled}, semanticHighlighting.enabled=${semanticEnabled}, workspaceIndexing.includeTxtFiles=${includeTxtFiles}`);
 
   if (!lsEnabled) {
     console.log('C/AL Language Server is disabled by user settings');
@@ -57,13 +58,19 @@ export async function activate(context: ExtensionContext): Promise<void> {
   // Check if semantic highlighting is enabled
   const semanticHighlightingEnabled = config.get<boolean>('semanticHighlighting.enabled', true);
 
+  // Create file watchers based on settings
+  const watchers = [workspace.createFileSystemWatcher('**/*.cal')];
+  if (includeTxtFiles) {
+    watchers.push(workspace.createFileSystemWatcher('**/*.txt'));
+  }
+
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
     // Register the server for C/AL documents
     documentSelector: [{ scheme: 'file', language: 'cal' }],
     synchronize: {
-      // Notify the server about file changes to '.cal' files contained in the workspace
-      fileEvents: workspace.createFileSystemWatcher('**/*.cal'),
+      // Notify the server about file changes to '.cal' (and optionally '.txt') files
+      fileEvents: watchers,
       configurationSection: 'cal'
     },
     // Disable semantic tokens if user setting is false

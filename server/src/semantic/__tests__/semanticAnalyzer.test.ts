@@ -614,6 +614,9 @@ describe('SemanticAnalyzer - Settings Integration', () => {
       diagnostics: {
         warnDeprecated: options.warnDeprecated ?? true,
         warnUnknownAttributes: true
+      },
+      workspaceIndexing: {
+        includeTxtFiles: true
       }
     } : undefined;
 
