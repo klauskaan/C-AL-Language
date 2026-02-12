@@ -981,6 +981,149 @@ describe('FoldingRangeProvider', () => {
     });
   });
 
+  describe('Field-Level Triggers', () => {
+    it('should create folding range for field OnValidate trigger', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;Amount              ;Decimal       ;OnValidate=BEGIN
+                                                                IF Amount < 0 THEN
+                                                                  ERROR('Cannot be negative');
+                                                              END;
+                                                   }
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for OnValidate trigger
+      const validateRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 200 }
+        });
+        return startLineText.includes('OnValidate=BEGIN');
+      });
+
+      expect(validateRange).toBeDefined();
+      expect(validateRange?.kind).toBeUndefined(); // Field triggers use default folding, not Region
+    });
+
+    it('should create folding range for field OnLookup trigger', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;Customer No.        ;Code20        ;OnLookup=BEGIN
+                                                              IF Customer.GET("Customer No.") THEN
+                                                                MESSAGE('Found');
+                                                            END;
+                                                   }
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding range for OnLookup trigger
+      const lookupRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 200 }
+        });
+        return startLineText.includes('OnLookup=BEGIN');
+      });
+
+      expect(lookupRange).toBeDefined();
+      expect(lookupRange?.kind).toBeUndefined();
+    });
+
+    it('should create folding ranges for field with multiple triggers', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;Amount              ;Decimal       ;OnValidate=BEGIN
+                                                                IF Amount < 0 THEN
+                                                                  ERROR('Cannot be negative');
+                                                              END;
+                                                   OnLookup=BEGIN
+                                                              MESSAGE('Lookup triggered');
+                                                            END;
+                                                   }
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding ranges for both OnValidate and OnLookup
+      const validateRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 200 }
+        });
+        return startLineText.includes('OnValidate=BEGIN');
+      });
+
+      const lookupRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 200 }
+        });
+        return startLineText.includes('OnLookup=BEGIN');
+      });
+
+      expect(validateRange).toBeDefined();
+      expect(lookupRange).toBeDefined();
+    });
+
+    it('should create folding ranges for nested constructs in field trigger', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;Amount              ;Decimal       ;OnValidate=VAR
+                                                                TempAmount@1000 : Decimal;
+                                                              BEGIN
+                                                                TempAmount := Amount;
+                                                                IF TempAmount < 0 THEN BEGIN
+                                                                  ERROR('Cannot be negative');
+                                                                END;
+                                                              END;
+                                                   }
+  }
+}`;
+      const doc = createDocument(code);
+      const ast = parseContent(code);
+
+      const ranges = provider.provide(doc, ast);
+
+      // Should have folding ranges for:
+      // - FIELDS section
+      // - OnValidate trigger (entire VAR + BEGIN/END)
+      // - IF statement's BEGIN/END block
+      expect(ranges.length).toBeGreaterThanOrEqual(3);
+
+      // Verify OnValidate trigger is foldable
+      const validateRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 200 }
+        });
+        return startLineText.includes('OnValidate=VAR');
+      });
+
+      expect(validateRange).toBeDefined();
+      expect(validateRange?.kind).toBeUndefined();
+    });
+  });
+
   describe('Statement-Level Folding', () => {
     it('should create folding range for standalone BlockStatement', () => {
       const code = `OBJECT Codeunit 50000 Test
