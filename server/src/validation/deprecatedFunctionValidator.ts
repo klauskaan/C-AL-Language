@@ -86,7 +86,8 @@ class DeprecatedFunctionValidatorVisitor implements Partial<ASTVisitor> {
         }
       },
       source: 'cal',
-      tags: [DiagnosticTag.Deprecated]
+      tags: [DiagnosticTag.Deprecated],
+      code: 'deprecated-function'
     });
   }
 }

@@ -219,7 +219,8 @@ class TypeMismatchVisitor implements Partial<ASTVisitor> {
           character: endCharacter
         }
       },
-      source: 'cal'
+      source: 'cal',
+      code: 'type-mismatch'
     });
   }
 }

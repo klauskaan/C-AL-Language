@@ -65,6 +65,7 @@ describe('EmptySetValidator - Basic Empty Sets', () => {
       expect(diagnostics).toHaveLength(1);
       expect(diagnostics[0].message).toBe('Empty set in IN expression - condition will always be false');
       expect(diagnostics[0].severity).toBe(DiagnosticSeverity.Warning);
+      expect(diagnostics[0].code).toBe('empty-set');
       // Range should cover the empty brackets []
       expect(diagnostics[0].range).toBeDefined();
     });

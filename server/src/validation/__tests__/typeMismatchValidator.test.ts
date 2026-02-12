@@ -78,6 +78,7 @@ describe('TypeMismatchValidator - Incompatible Literal Assignments', () => {
       expect(mismatch!.message).toContain('Text');
       expect(mismatch!.message).toContain('Integer');
       expect(mismatch!.severity).toBe(DiagnosticSeverity.Warning);
+      expect(mismatch!.code).toBe('type-mismatch');
       expect(mismatch!.source).toBe('cal');
     });
 

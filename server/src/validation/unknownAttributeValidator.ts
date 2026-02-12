@@ -125,7 +125,8 @@ class UnknownAttributeValidatorVisitor implements Partial<ASTVisitor> {
           character: node.endToken.column + (node.endToken.endOffset - node.endToken.startOffset) - 1
         }
       },
-      source: 'cal'
+      source: 'cal',
+      code: 'unknown-attribute'
     });
   }
 }
