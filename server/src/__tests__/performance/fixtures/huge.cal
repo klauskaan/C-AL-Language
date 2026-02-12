@@ -1,10 +1,48 @@
 // Auto-generated CAL file for performance testing
 // Target: 5000 lines
 // Complexity: medium
-// Generated: 2025-12-27T14:58:10.150Z
+// Seed: 42
 
 codeunit 50000 "Performance Test Large File"
 {
+
+table 50000 "Custom Table 0"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
 
 procedure ProcessOrder0(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
@@ -82,6 +120,44 @@ page 50000 "Custom List 0"
     }
 }
 
+table 50001 "Custom Table 1"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
 procedure ProcessOrder1(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
     OrderHeader: Record "Sales Header";
@@ -123,6 +199,44 @@ begin
     else
         exit(0);
 end;
+
+table 50002 "Custom Table 2"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
 
 procedure ProcessOrder2(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
@@ -166,6 +280,44 @@ begin
         exit(0);
 end;
 
+table 50003 "Custom Table 3"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
 page 50001 "Custom List 1"
 {
     PageType = List;
@@ -196,82 +348,6 @@ page 50001 "Custom List 1"
                     ApplicationArea = All;
                 }
             }
-        }
-    }
-}
-
-table 50000 "Custom Table 0"
-{
-    DataClassification = CustomerContent;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
-
-table 50001 "Custom Table 1"
-{
-    DataClassification = CustomerContent;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
         }
     }
 }
@@ -318,40 +394,6 @@ begin
         exit(0);
 end;
 
-page 50002 "Custom List 2"
-{
-    PageType = List;
-    SourceTable = "Custom Table 2";
-    UsageCategory = Lists;
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
-        }
-    }
-}
-
 procedure ProcessOrder4(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
     OrderHeader: Record "Sales Header";
@@ -394,7 +436,41 @@ begin
         exit(0);
 end;
 
-table 50002 "Custom Table 2"
+page 50002 "Custom List 2"
+{
+    PageType = List;
+    SourceTable = "Custom Table 2";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+table 50004 "Custom Table 4"
 {
     DataClassification = CustomerContent;
 
@@ -474,74 +550,6 @@ begin
         exit(0);
 end;
 
-page 50003 "Custom List 3"
-{
-    PageType = List;
-    SourceTable = "Custom Table 3";
-    UsageCategory = Lists;
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
-        }
-    }
-}
-
-page 50004 "Custom List 4"
-{
-    PageType = List;
-    SourceTable = "Custom Table 4";
-    UsageCategory = Lists;
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
-        }
-    }
-}
-
 procedure ProcessOrder6(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
     OrderHeader: Record "Sales Header";
@@ -584,36 +592,116 @@ begin
         exit(0);
 end;
 
-page 50005 "Custom List 5"
+table 50005 "Custom Table 5"
 {
-    PageType = List;
-    SourceTable = "Custom Table 5";
-    UsageCategory = Lists;
-    ApplicationArea = All;
+    DataClassification = CustomerContent;
 
-    layout
+    fields
     {
-        area(Content)
+        field(1; "Entry No."; Integer)
         {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+table 50006 "Custom Table 6"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+table 50007 "Custom Table 7"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
         }
     }
 }
@@ -660,44 +748,6 @@ begin
         exit(0);
 end;
 
-table 50003 "Custom Table 3"
-{
-    DataClassification = CustomerContent;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
-
 procedure ProcessOrder8(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
     OrderHeader: Record "Sales Header";
@@ -740,78 +790,36 @@ begin
         exit(0);
 end;
 
-table 50004 "Custom Table 4"
+page 50003 "Custom List 3"
 {
-    DataClassification = CustomerContent;
+    PageType = List;
+    SourceTable = "Custom Table 3";
+    UsageCategory = Lists;
+    ApplicationArea = All;
 
-    fields
+    layout
     {
-        field(1; "Entry No."; Integer)
+        area(Content)
         {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
-
-table 50005 "Custom Table 5"
-{
-    DataClassification = CustomerContent;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
         }
     }
 }
@@ -858,36 +866,40 @@ begin
         exit(0);
 end;
 
-page 50006 "Custom List 6"
+table 50008 "Custom Table 8"
 {
-    PageType = List;
-    SourceTable = "Custom Table 6";
-    UsageCategory = Lists;
-    ApplicationArea = All;
+    DataClassification = CustomerContent;
 
-    layout
+    fields
     {
-        area(Content)
+        field(1; "Entry No."; Integer)
         {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
         }
     }
 }
@@ -976,40 +988,6 @@ begin
         exit(0);
 end;
 
-page 50007 "Custom List 7"
-{
-    PageType = List;
-    SourceTable = "Custom Table 7";
-    UsageCategory = Lists;
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
-        }
-    }
-}
-
 procedure ProcessOrder12(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
     OrderHeader: Record "Sales Header";
@@ -1093,6 +1071,78 @@ begin
     else
         exit(0);
 end;
+
+page 50004 "Custom List 4"
+{
+    PageType = List;
+    SourceTable = "Custom Table 4";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+table 50009 "Custom Table 9"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
 
 procedure ProcessOrder14(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
@@ -1178,6 +1228,40 @@ begin
         exit(0);
 end;
 
+page 50005 "Custom List 5"
+{
+    PageType = List;
+    SourceTable = "Custom Table 5";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
 procedure ProcessOrder16(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
     OrderHeader: Record "Sales Header";
@@ -1219,6 +1303,40 @@ begin
     else
         exit(0);
 end;
+
+page 50006 "Custom List 6"
+{
+    PageType = List;
+    SourceTable = "Custom Table 6";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
 
 procedure ProcessOrder17(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
@@ -1388,6 +1506,82 @@ begin
         exit(0);
 end;
 
+table 50010 "Custom Table 10"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+table 50011 "Custom Table 11"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
 procedure ProcessOrder21(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
     OrderHeader: Record "Sales Header";
@@ -1430,36 +1624,40 @@ begin
         exit(0);
 end;
 
-page 50008 "Custom List 8"
+table 50012 "Custom Table 12"
 {
-    PageType = List;
-    SourceTable = "Custom Table 8";
-    UsageCategory = Lists;
-    ApplicationArea = All;
+    DataClassification = CustomerContent;
 
-    layout
+    fields
     {
-        area(Content)
+        field(1; "Entry No."; Integer)
         {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
         }
     }
 }
@@ -1548,10 +1746,48 @@ begin
         exit(0);
 end;
 
-page 50009 "Custom List 9"
+table 50013 "Custom Table 13"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+page 50007 "Custom List 7"
 {
     PageType = List;
-    SourceTable = "Custom Table 9";
+    SourceTable = "Custom Table 7";
     UsageCategory = Lists;
     ApplicationArea = All;
 
@@ -1582,7 +1818,7 @@ page 50009 "Custom List 9"
     }
 }
 
-table 50006 "Custom Table 6"
+table 50014 "Custom Table 14"
 {
     DataClassification = CustomerContent;
 
@@ -1788,75 +2024,7 @@ begin
         exit(0);
 end;
 
-page 50010 "Custom List 10"
-{
-    PageType = List;
-    SourceTable = "Custom Table 10";
-    UsageCategory = Lists;
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
-        }
-    }
-}
-
-page 50011 "Custom List 11"
-{
-    PageType = List;
-    SourceTable = "Custom Table 11";
-    UsageCategory = Lists;
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
-        }
-    }
-}
-
-table 50007 "Custom Table 7"
+table 50015 "Custom Table 15"
 {
     DataClassification = CustomerContent;
 
@@ -1894,7 +2062,7 @@ table 50007 "Custom Table 7"
     }
 }
 
-table 50008 "Custom Table 8"
+table 50016 "Custom Table 16"
 {
     DataClassification = CustomerContent;
 
@@ -1928,6 +2096,78 @@ table 50008 "Custom Table 8"
         key(PK; "Entry No.")
         {
             Clustered = true;
+        }
+    }
+}
+
+table 50017 "Custom Table 17"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+page 50008 "Custom List 8"
+{
+    PageType = List;
+    SourceTable = "Custom Table 8";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
         }
     }
 }
@@ -1974,6 +2214,40 @@ begin
         exit(0);
 end;
 
+page 50009 "Custom List 9"
+{
+    PageType = List;
+    SourceTable = "Custom Table 9";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
 procedure ProcessOrder29(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
     OrderHeader: Record "Sales Header";
@@ -2015,6 +2289,40 @@ begin
     else
         exit(0);
 end;
+
+page 50010 "Custom List 10"
+{
+    PageType = List;
+    SourceTable = "Custom Table 10";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
 
 procedure ProcessOrder30(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
@@ -2226,6 +2534,78 @@ begin
         exit(0);
 end;
 
+table 50018 "Custom Table 18"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+page 50011 "Custom List 11"
+{
+    PageType = List;
+    SourceTable = "Custom Table 11";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
 procedure ProcessOrder35(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
     OrderHeader: Record "Sales Header";
@@ -2268,7 +2648,7 @@ begin
         exit(0);
 end;
 
-table 50009 "Custom Table 9"
+table 50019 "Custom Table 19"
 {
     DataClassification = CustomerContent;
 
@@ -2302,6 +2682,40 @@ table 50009 "Custom Table 9"
         key(PK; "Entry No.")
         {
             Clustered = true;
+        }
+    }
+}
+
+page 50012 "Custom List 12"
+{
+    PageType = List;
+    SourceTable = "Custom Table 12";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
         }
     }
 }
@@ -2348,6 +2762,44 @@ begin
         exit(0);
 end;
 
+table 50020 "Custom Table 20"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
 procedure ProcessOrder37(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
     OrderHeader: Record "Sales Header";
@@ -2389,6 +2841,78 @@ begin
     else
         exit(0);
 end;
+
+table 50021 "Custom Table 21"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+page 50013 "Custom List 13"
+{
+    PageType = List;
+    SourceTable = "Custom Table 13";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
 
 procedure ProcessOrder38(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
@@ -2432,6 +2956,112 @@ begin
         exit(0);
 end;
 
+page 50014 "Custom List 14"
+{
+    PageType = List;
+    SourceTable = "Custom Table 14";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+table 50022 "Custom Table 22"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+page 50015 "Custom List 15"
+{
+    PageType = List;
+    SourceTable = "Custom Table 15";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
 procedure ProcessOrder39(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
     OrderHeader: Record "Sales Header";
@@ -2474,36 +3104,40 @@ begin
         exit(0);
 end;
 
-page 50012 "Custom List 12"
+table 50023 "Custom Table 23"
 {
-    PageType = List;
-    SourceTable = "Custom Table 12";
-    UsageCategory = Lists;
-    ApplicationArea = All;
+    DataClassification = CustomerContent;
 
-    layout
+    fields
     {
-        area(Content)
+        field(1; "Entry No."; Integer)
         {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
         }
     }
 }
@@ -2550,6 +3184,44 @@ begin
         exit(0);
 end;
 
+table 50024 "Custom Table 24"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
 procedure ProcessOrder41(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
     OrderHeader: Record "Sales Header";
@@ -2591,6 +3263,44 @@ begin
     else
         exit(0);
 end;
+
+table 50025 "Custom Table 25"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
 
 procedure ProcessOrder42(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
@@ -2676,6 +3386,146 @@ begin
         exit(0);
 end;
 
+page 50016 "Custom List 16"
+{
+    PageType = List;
+    SourceTable = "Custom Table 16";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+table 50026 "Custom Table 26"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+page 50017 "Custom List 17"
+{
+    PageType = List;
+    SourceTable = "Custom Table 17";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
+page 50018 "Custom List 18"
+{
+    PageType = List;
+    SourceTable = "Custom Table 18";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
 procedure ProcessOrder44(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
     OrderHeader: Record "Sales Header";
@@ -2717,6 +3567,44 @@ begin
     else
         exit(0);
 end;
+
+table 50027 "Custom Table 27"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
 
 procedure ProcessOrder45(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
@@ -2802,45 +3690,7 @@ begin
         exit(0);
 end;
 
-table 50010 "Custom Table 10"
-{
-    DataClassification = CustomerContent;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
-
-table 50011 "Custom Table 11"
+table 50028 "Custom Table 28"
 {
     DataClassification = CustomerContent;
 
@@ -2920,40 +3770,70 @@ begin
         exit(0);
 end;
 
-table 50012 "Custom Table 12"
+page 50019 "Custom List 19"
 {
-    DataClassification = CustomerContent;
+    PageType = List;
+    SourceTable = "Custom Table 19";
+    UsageCategory = Lists;
+    ApplicationArea = All;
 
-    fields
+    layout
     {
-        field(1; "Entry No."; Integer)
+        area(Content)
         {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
         }
     }
+}
 
-    keys
+page 50020 "Custom List 20"
+{
+    PageType = List;
+    SourceTable = "Custom Table 20";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
     {
-        key(PK; "Entry No.")
+        area(Content)
         {
-            Clustered = true;
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
         }
     }
 }
@@ -3042,40 +3922,36 @@ begin
         exit(0);
 end;
 
-table 50013 "Custom Table 13"
+page 50021 "Custom List 21"
 {
-    DataClassification = CustomerContent;
+    PageType = List;
+    SourceTable = "Custom Table 21";
+    UsageCategory = Lists;
+    ApplicationArea = All;
 
-    fields
+    layout
     {
-        field(1; "Entry No."; Integer)
+        area(Content)
         {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
         }
     }
 }
@@ -3122,40 +3998,36 @@ begin
         exit(0);
 end;
 
-table 50014 "Custom Table 14"
+page 50022 "Custom List 22"
 {
-    DataClassification = CustomerContent;
+    PageType = List;
+    SourceTable = "Custom Table 22";
+    UsageCategory = Lists;
+    ApplicationArea = All;
 
-    fields
+    layout
     {
-        field(1; "Entry No."; Integer)
+        area(Content)
         {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
         }
     }
 }
@@ -3202,36 +4074,78 @@ begin
         exit(0);
 end;
 
-page 50013 "Custom List 13"
+table 50029 "Custom Table 29"
 {
-    PageType = List;
-    SourceTable = "Custom Table 13";
-    UsageCategory = Lists;
-    ApplicationArea = All;
+    DataClassification = CustomerContent;
 
-    layout
+    fields
     {
-        area(Content)
+        field(1; "Entry No."; Integer)
         {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+table 50030 "Custom Table 30"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
         }
     }
 }
@@ -3277,44 +4191,6 @@ begin
     else
         exit(0);
 end;
-
-table 50015 "Custom Table 15"
-{
-    DataClassification = CustomerContent;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
 
 procedure ProcessOrder53(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
@@ -3400,7 +4276,7 @@ begin
         exit(0);
 end;
 
-table 50016 "Custom Table 16"
+table 50031 "Custom Table 31"
 {
     DataClassification = CustomerContent;
 
@@ -3522,44 +4398,48 @@ begin
         exit(0);
 end;
 
-page 50014 "Custom List 14"
+table 50032 "Custom Table 32"
 {
-    PageType = List;
-    SourceTable = "Custom Table 14";
-    UsageCategory = Lists;
-    ApplicationArea = All;
+    DataClassification = CustomerContent;
 
-    layout
+    fields
     {
-        area(Content)
+        field(1; "Entry No."; Integer)
         {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
+            DataClassification = CustomerContent;
+            AutoIncrement = true;
+        }
+        field(2; "Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(3; "Description"; Text[100])
+        {
+            DataClassification = CustomerContent;
+        }
+        field(4; "Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+        }
+        field(5; "Date"; Date)
+        {
+            DataClassification = CustomerContent;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
         }
     }
 }
 
-page 50015 "Custom List 15"
+page 50023 "Custom List 23"
 {
     PageType = List;
-    SourceTable = "Custom Table 15";
+    SourceTable = "Custom Table 23";
     UsageCategory = Lists;
     ApplicationArea = All;
 
@@ -3631,6 +4511,40 @@ begin
     else
         exit(0);
 end;
+
+page 50024 "Custom List 24"
+{
+    PageType = List;
+    SourceTable = "Custom Table 24";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
 
 procedure ProcessOrder58(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
@@ -3716,6 +4630,40 @@ begin
         exit(0);
 end;
 
+page 50025 "Custom List 25"
+{
+    PageType = List;
+    SourceTable = "Custom Table 25";
+    UsageCategory = Lists;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field("Entry No."; "Entry No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("Code"; "Code")
+                {
+                    ApplicationArea = All;
+                }
+                field("Description"; "Description")
+                {
+                    ApplicationArea = All;
+                }
+                field("Amount"; "Amount")
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}
+
 procedure ProcessOrder60(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
     OrderHeader: Record "Sales Header";
@@ -3758,74 +4706,6 @@ begin
         exit(0);
 end;
 
-page 50016 "Custom List 16"
-{
-    PageType = List;
-    SourceTable = "Custom Table 16";
-    UsageCategory = Lists;
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
-        }
-    }
-}
-
-page 50017 "Custom List 17"
-{
-    PageType = List;
-    SourceTable = "Custom Table 17";
-    UsageCategory = Lists;
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
-        }
-    }
-}
-
 procedure ProcessOrder61(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
 var
     OrderHeader: Record "Sales Header";
@@ -3859,858 +4739,6 @@ begin
 end;
 
 procedure GetUnitPrice61(ItemCode: Code[20]): Decimal
-var
-    Item: Record Item;
-begin
-    if Item.Get(ItemCode) then
-        exit(Item."Unit Price")
-    else
-        exit(0);
-end;
-
-table 50017 "Custom Table 17"
-{
-    DataClassification = CustomerContent;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
-
-procedure ProcessOrder62(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
-var
-    OrderHeader: Record "Sales Header";
-    OrderLine: Record "Sales Line";
-    Customer: Record Customer;
-    Total: Decimal;
-    Discount: Decimal;
-    FinalAmount: Decimal;
-begin
-    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
-        exit(false);
-
-    if not Customer.Get(CustomerNo) then
-        Error('Customer %1 not found', CustomerNo);
-
-    Total := 0;
-    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
-    OrderLine.SetRange("Document No.", OrderNo);
-    if OrderLine.FindSet() then
-        repeat
-            Total += OrderLine.Amount;
-        until OrderLine.Next() = 0;
-
-    Discount := Total * Customer."Discount %" / 100;
-    FinalAmount := Total - Discount;
-
-    OrderHeader."Amount Including VAT" := FinalAmount;
-    OrderHeader.Modify();
-
-    exit(true);
-end;
-
-procedure GetUnitPrice62(ItemCode: Code[20]): Decimal
-var
-    Item: Record Item;
-begin
-    if Item.Get(ItemCode) then
-        exit(Item."Unit Price")
-    else
-        exit(0);
-end;
-
-page 50018 "Custom List 18"
-{
-    PageType = List;
-    SourceTable = "Custom Table 18";
-    UsageCategory = Lists;
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
-        }
-    }
-}
-
-page 50019 "Custom List 19"
-{
-    PageType = List;
-    SourceTable = "Custom Table 19";
-    UsageCategory = Lists;
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
-        }
-    }
-}
-
-table 50018 "Custom Table 18"
-{
-    DataClassification = CustomerContent;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
-
-procedure ProcessOrder63(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
-var
-    OrderHeader: Record "Sales Header";
-    OrderLine: Record "Sales Line";
-    Customer: Record Customer;
-    Total: Decimal;
-    Discount: Decimal;
-    FinalAmount: Decimal;
-begin
-    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
-        exit(false);
-
-    if not Customer.Get(CustomerNo) then
-        Error('Customer %1 not found', CustomerNo);
-
-    Total := 0;
-    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
-    OrderLine.SetRange("Document No.", OrderNo);
-    if OrderLine.FindSet() then
-        repeat
-            Total += OrderLine.Amount;
-        until OrderLine.Next() = 0;
-
-    Discount := Total * Customer."Discount %" / 100;
-    FinalAmount := Total - Discount;
-
-    OrderHeader."Amount Including VAT" := FinalAmount;
-    OrderHeader.Modify();
-
-    exit(true);
-end;
-
-procedure GetUnitPrice63(ItemCode: Code[20]): Decimal
-var
-    Item: Record Item;
-begin
-    if Item.Get(ItemCode) then
-        exit(Item."Unit Price")
-    else
-        exit(0);
-end;
-
-procedure ProcessOrder64(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
-var
-    OrderHeader: Record "Sales Header";
-    OrderLine: Record "Sales Line";
-    Customer: Record Customer;
-    Total: Decimal;
-    Discount: Decimal;
-    FinalAmount: Decimal;
-begin
-    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
-        exit(false);
-
-    if not Customer.Get(CustomerNo) then
-        Error('Customer %1 not found', CustomerNo);
-
-    Total := 0;
-    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
-    OrderLine.SetRange("Document No.", OrderNo);
-    if OrderLine.FindSet() then
-        repeat
-            Total += OrderLine.Amount;
-        until OrderLine.Next() = 0;
-
-    Discount := Total * Customer."Discount %" / 100;
-    FinalAmount := Total - Discount;
-
-    OrderHeader."Amount Including VAT" := FinalAmount;
-    OrderHeader.Modify();
-
-    exit(true);
-end;
-
-procedure GetUnitPrice64(ItemCode: Code[20]): Decimal
-var
-    Item: Record Item;
-begin
-    if Item.Get(ItemCode) then
-        exit(Item."Unit Price")
-    else
-        exit(0);
-end;
-
-procedure ProcessOrder65(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
-var
-    OrderHeader: Record "Sales Header";
-    OrderLine: Record "Sales Line";
-    Customer: Record Customer;
-    Total: Decimal;
-    Discount: Decimal;
-    FinalAmount: Decimal;
-begin
-    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
-        exit(false);
-
-    if not Customer.Get(CustomerNo) then
-        Error('Customer %1 not found', CustomerNo);
-
-    Total := 0;
-    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
-    OrderLine.SetRange("Document No.", OrderNo);
-    if OrderLine.FindSet() then
-        repeat
-            Total += OrderLine.Amount;
-        until OrderLine.Next() = 0;
-
-    Discount := Total * Customer."Discount %" / 100;
-    FinalAmount := Total - Discount;
-
-    OrderHeader."Amount Including VAT" := FinalAmount;
-    OrderHeader.Modify();
-
-    exit(true);
-end;
-
-procedure GetUnitPrice65(ItemCode: Code[20]): Decimal
-var
-    Item: Record Item;
-begin
-    if Item.Get(ItemCode) then
-        exit(Item."Unit Price")
-    else
-        exit(0);
-end;
-
-procedure ProcessOrder66(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
-var
-    OrderHeader: Record "Sales Header";
-    OrderLine: Record "Sales Line";
-    Customer: Record Customer;
-    Total: Decimal;
-    Discount: Decimal;
-    FinalAmount: Decimal;
-begin
-    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
-        exit(false);
-
-    if not Customer.Get(CustomerNo) then
-        Error('Customer %1 not found', CustomerNo);
-
-    Total := 0;
-    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
-    OrderLine.SetRange("Document No.", OrderNo);
-    if OrderLine.FindSet() then
-        repeat
-            Total += OrderLine.Amount;
-        until OrderLine.Next() = 0;
-
-    Discount := Total * Customer."Discount %" / 100;
-    FinalAmount := Total - Discount;
-
-    OrderHeader."Amount Including VAT" := FinalAmount;
-    OrderHeader.Modify();
-
-    exit(true);
-end;
-
-procedure GetUnitPrice66(ItemCode: Code[20]): Decimal
-var
-    Item: Record Item;
-begin
-    if Item.Get(ItemCode) then
-        exit(Item."Unit Price")
-    else
-        exit(0);
-end;
-
-procedure ProcessOrder67(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
-var
-    OrderHeader: Record "Sales Header";
-    OrderLine: Record "Sales Line";
-    Customer: Record Customer;
-    Total: Decimal;
-    Discount: Decimal;
-    FinalAmount: Decimal;
-begin
-    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
-        exit(false);
-
-    if not Customer.Get(CustomerNo) then
-        Error('Customer %1 not found', CustomerNo);
-
-    Total := 0;
-    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
-    OrderLine.SetRange("Document No.", OrderNo);
-    if OrderLine.FindSet() then
-        repeat
-            Total += OrderLine.Amount;
-        until OrderLine.Next() = 0;
-
-    Discount := Total * Customer."Discount %" / 100;
-    FinalAmount := Total - Discount;
-
-    OrderHeader."Amount Including VAT" := FinalAmount;
-    OrderHeader.Modify();
-
-    exit(true);
-end;
-
-procedure GetUnitPrice67(ItemCode: Code[20]): Decimal
-var
-    Item: Record Item;
-begin
-    if Item.Get(ItemCode) then
-        exit(Item."Unit Price")
-    else
-        exit(0);
-end;
-
-procedure ProcessOrder68(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
-var
-    OrderHeader: Record "Sales Header";
-    OrderLine: Record "Sales Line";
-    Customer: Record Customer;
-    Total: Decimal;
-    Discount: Decimal;
-    FinalAmount: Decimal;
-begin
-    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
-        exit(false);
-
-    if not Customer.Get(CustomerNo) then
-        Error('Customer %1 not found', CustomerNo);
-
-    Total := 0;
-    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
-    OrderLine.SetRange("Document No.", OrderNo);
-    if OrderLine.FindSet() then
-        repeat
-            Total += OrderLine.Amount;
-        until OrderLine.Next() = 0;
-
-    Discount := Total * Customer."Discount %" / 100;
-    FinalAmount := Total - Discount;
-
-    OrderHeader."Amount Including VAT" := FinalAmount;
-    OrderHeader.Modify();
-
-    exit(true);
-end;
-
-procedure GetUnitPrice68(ItemCode: Code[20]): Decimal
-var
-    Item: Record Item;
-begin
-    if Item.Get(ItemCode) then
-        exit(Item."Unit Price")
-    else
-        exit(0);
-end;
-
-page 50020 "Custom List 20"
-{
-    PageType = List;
-    SourceTable = "Custom Table 20";
-    UsageCategory = Lists;
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
-        }
-    }
-}
-
-table 50019 "Custom Table 19"
-{
-    DataClassification = CustomerContent;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
-
-table 50020 "Custom Table 20"
-{
-    DataClassification = CustomerContent;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
-
-table 50021 "Custom Table 21"
-{
-    DataClassification = CustomerContent;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
-
-table 50022 "Custom Table 22"
-{
-    DataClassification = CustomerContent;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
-
-page 50021 "Custom List 21"
-{
-    PageType = List;
-    SourceTable = "Custom Table 21";
-    UsageCategory = Lists;
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
-        }
-    }
-}
-
-table 50023 "Custom Table 23"
-{
-    DataClassification = CustomerContent;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
-
-procedure ProcessOrder69(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
-var
-    OrderHeader: Record "Sales Header";
-    OrderLine: Record "Sales Line";
-    Customer: Record Customer;
-    Total: Decimal;
-    Discount: Decimal;
-    FinalAmount: Decimal;
-begin
-    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
-        exit(false);
-
-    if not Customer.Get(CustomerNo) then
-        Error('Customer %1 not found', CustomerNo);
-
-    Total := 0;
-    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
-    OrderLine.SetRange("Document No.", OrderNo);
-    if OrderLine.FindSet() then
-        repeat
-            Total += OrderLine.Amount;
-        until OrderLine.Next() = 0;
-
-    Discount := Total * Customer."Discount %" / 100;
-    FinalAmount := Total - Discount;
-
-    OrderHeader."Amount Including VAT" := FinalAmount;
-    OrderHeader.Modify();
-
-    exit(true);
-end;
-
-procedure GetUnitPrice69(ItemCode: Code[20]): Decimal
-var
-    Item: Record Item;
-begin
-    if Item.Get(ItemCode) then
-        exit(Item."Unit Price")
-    else
-        exit(0);
-end;
-
-page 50022 "Custom List 22"
-{
-    PageType = List;
-    SourceTable = "Custom Table 22";
-    UsageCategory = Lists;
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            repeater(Group)
-            {
-                field("Entry No."; "Entry No.")
-                {
-                    ApplicationArea = All;
-                }
-                field("Code"; "Code")
-                {
-                    ApplicationArea = All;
-                }
-                field("Description"; "Description")
-                {
-                    ApplicationArea = All;
-                }
-                field("Amount"; "Amount")
-                {
-                    ApplicationArea = All;
-                }
-            }
-        }
-    }
-}
-
-table 50024 "Custom Table 24"
-{
-    DataClassification = CustomerContent;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            DataClassification = CustomerContent;
-            AutoIncrement = true;
-        }
-        field(2; "Code"; Code[20])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(3; "Description"; Text[100])
-        {
-            DataClassification = CustomerContent;
-        }
-        field(4; "Amount"; Decimal)
-        {
-            DataClassification = CustomerContent;
-        }
-        field(5; "Date"; Date)
-        {
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
-
-procedure ProcessOrder70(OrderNo: Code[20]; CustomerNo: Code[20]): Boolean
-var
-    OrderHeader: Record "Sales Header";
-    OrderLine: Record "Sales Line";
-    Customer: Record Customer;
-    Total: Decimal;
-    Discount: Decimal;
-    FinalAmount: Decimal;
-begin
-    if not OrderHeader.Get(OrderHeader."Document Type"::Order, OrderNo) then
-        exit(false);
-
-    if not Customer.Get(CustomerNo) then
-        Error('Customer %1 not found', CustomerNo);
-
-    Total := 0;
-    OrderLine.SetRange("Document Type", OrderHeader."Document Type");
-    OrderLine.SetRange("Document No.", OrderNo);
-    if OrderLine.FindSet() then
-        repeat
-            Total += OrderLine.Amount;
-        until OrderLine.Next() = 0;
-
-    Discount := Total * Customer."Discount %" / 100;
-    FinalAmount := Total - Discount;
-
-    OrderHeader."Amount Including VAT" := FinalAmount;
-    OrderHeader.Modify();
-
-    exit(true);
-end;
-
-procedure GetUnitPrice70(ItemCode: Code[20]): Decimal
 var
     Item: Record Item;
 begin
