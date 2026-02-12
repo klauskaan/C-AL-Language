@@ -11,6 +11,7 @@
  */
 
 import { readFileSync } from 'fs';
+import { readFile } from 'fs/promises';
 
 /**
  * Result of encoding detection
@@ -205,7 +206,7 @@ export function decodeCp850(buffer: Buffer): string {
 }
 
 /**
- * Read a file and detect its encoding (UTF-8 vs CP850)
+ * Detect encoding from a buffer and decode to string
  *
  * Detection algorithm:
  * 1. Check for UTF-8 BOM (0xEF 0xBB 0xBF)
@@ -228,21 +229,14 @@ export function decodeCp850(buffer: Buffer): string {
  * accidentally form valid UTF-8 sequences (e.g., CP850 0xC3 0xB8 = UTF-8 'ø' but
  * should decode as CP850 'Ã©').
  *
- * @param filePath - Path to the file to read
+ * @param buffer - Buffer containing file contents
  * @returns EncodingResult with content and detected encoding
- * @throws Error if file cannot be read
  *
  * @example
- * readFileWithEncoding("/path/to/file.txt")
+ * detectEncoding(Buffer.from("OBJECT Table 18..."))
  * // => { content: "OBJECT Table 18 Customer...", encoding: "cp850" }
- *
- * @example
- * readFileWithEncoding("/path/to/utf8-file.txt")
- * // => { content: "OBJECT Table 18 Customer...", encoding: "utf-8" }
  */
-export function readFileWithEncoding(filePath: string): EncodingResult {
-  // Read file as raw buffer
-  const buffer = readFileSync(filePath);
+export function detectEncoding(buffer: Buffer): EncodingResult {
 
   // Handle empty file
   if (buffer.length === 0) {
@@ -342,4 +336,46 @@ export function readFileWithEncoding(filePath: string): EncodingResult {
 
   // 9. Low high-byte density and all bytes in valid UTF-8 sequences → it's UTF-8
   return { content: utf8Content, encoding: 'utf-8' };
+}
+
+/**
+ * Read a file and detect its encoding (UTF-8 vs CP850) - Synchronous version
+ *
+ * @param filePath - Path to the file to read
+ * @returns EncodingResult with content and detected encoding
+ * @throws Error if file cannot be read
+ *
+ * @example
+ * readFileWithEncoding("/path/to/file.txt")
+ * // => { content: "OBJECT Table 18 Customer...", encoding: "cp850" }
+ *
+ * @example
+ * readFileWithEncoding("/path/to/utf8-file.txt")
+ * // => { content: "OBJECT Table 18 Customer...", encoding: "utf-8" }
+ */
+export function readFileWithEncoding(filePath: string): EncodingResult {
+  // Read file as raw buffer
+  const buffer = readFileSync(filePath);
+  return detectEncoding(buffer);
+}
+
+/**
+ * Read a file and detect its encoding (UTF-8 vs CP850) - Async version
+ *
+ * @param filePath - Path to the file to read
+ * @returns Promise resolving to EncodingResult with content and detected encoding
+ * @throws Error if file cannot be read
+ *
+ * @example
+ * await readFileWithEncodingAsync("/path/to/file.txt")
+ * // => { content: "OBJECT Table 18 Customer...", encoding: "cp850" }
+ *
+ * @example
+ * await readFileWithEncodingAsync("/path/to/utf8-file.txt")
+ * // => { content: "OBJECT Table 18 Customer...", encoding: "utf-8" }
+ */
+export async function readFileWithEncodingAsync(filePath: string): Promise<EncodingResult> {
+  // Read file as raw buffer
+  const buffer = await readFile(filePath);
+  return detectEncoding(buffer);
 }
