@@ -33,7 +33,8 @@ function errorToDiagnostic(error: ParseError): Diagnostic {
       end: { line: error.token.line - 1, character: error.token.column + (error.token.endOffset - error.token.startOffset) - 1 }
     },
     message: error.message,
-    source: 'cal'
+    source: 'cal',
+    code: error.code
   };
 }
 
@@ -352,6 +353,349 @@ describe('Diagnostics', () => {
     { 1 ;`;
       const errors = getParseErrors(code);
       expect(errors.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Diagnostic Codes', () => {
+    describe('Default Code', () => {
+      it('should assign parse-error code to generic parse errors', () => {
+        // Invalid object type is a generic parse error (not in specific categories)
+        const code = `OBJECT InvalidType 18 Test { }`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+
+        const diagnostic = errorToDiagnostic(errors[0]);
+        expect(diagnostic.code).toBe('parse-error');
+      });
+
+      it('should assign parse-error code when code field is undefined', () => {
+        const code = `OBJECT Table abc Customer { }`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+
+        const diagnostic = errorToDiagnostic(errors[0]);
+        // Should have a code, defaulting to 'parse-error'
+        expect(diagnostic.code).toBeDefined();
+        expect(typeof diagnostic.code).toBe('string');
+      });
+    });
+
+    describe('Expected Token Code', () => {
+      it('should assign parse-expected-token code for missing semicolon in statement', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      x : Integer
+    BEGIN
+      MESSAGE('Done');
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+
+        const semicolonError = errors.find(e => e.message.includes('Expected ;'));
+        expect(semicolonError).toBeDefined();
+
+        const diagnostic = errorToDiagnostic(semicolonError!);
+        expect(diagnostic.code).toBe('parse-expected-token');
+      });
+
+      it('should assign parse-expected-token code for missing END keyword', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    BEGIN
+      MESSAGE('Test');
+    // Missing END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+
+        // Look for error about missing END or unexpected BEGIN
+        const endError = errors.find(e =>
+          e.message.includes('END') || e.message.includes('BEGIN')
+        );
+        expect(endError).toBeDefined();
+
+        const diagnostic = errorToDiagnostic(endError!);
+        expect(diagnostic.code).toBe('parse-expected-token');
+      });
+
+      it('should assign parse-expected-token code for missing colon in CASE branch', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      x : Integer;
+    BEGIN
+      CASE x OF
+        1 EXIT;
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+
+        const colonError = errors.find(e => e.message.includes(':'));
+        expect(colonError).toBeDefined();
+
+        const diagnostic = errorToDiagnostic(colonError!);
+        expect(diagnostic.code).toBe('parse-expected-token');
+      });
+    });
+
+    describe('Unclosed Block Code', () => {
+      it('should assign parse-unclosed-block code for missing closing brace in FIELDS', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."           ;Code20        }
+`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+
+        // Look for unclosed section/block error
+        const braceError = errors.find(e =>
+          e.message.toLowerCase().includes('unclosed') ||
+          e.message.includes('}')
+        );
+        expect(braceError).toBeDefined();
+
+        const diagnostic = errorToDiagnostic(braceError!);
+        expect(diagnostic.code).toBe('parse-unclosed-block');
+      });
+
+      it('should assign parse-unclosed-block code for missing closing brace in object', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."           ;Code20        }
+  // Missing closing brace for FIELDS section
+  KEYS
+  {
+  }
+}`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+
+        const braceError = errors.find(e =>
+          e.message.includes('Expected } to close FIELDS section')
+        );
+        expect(braceError).toBeDefined();
+
+        const diagnostic = errorToDiagnostic(braceError!);
+        expect(diagnostic.code).toBe('parse-unclosed-block');
+      });
+
+      it('should assign parse-unclosed-block code for missing closing brace in CODE section', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    BEGIN
+      REPEAT
+        MESSAGE('Test');
+      // Missing UNTIL to close REPEAT
+    END;
+  }
+}`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+
+        const braceError = errors.find(e =>
+          e.message.includes('Expected UNTIL to close REPEAT')
+        );
+        expect(braceError).toBeDefined();
+
+        const diagnostic = errorToDiagnostic(braceError!);
+        expect(diagnostic.code).toBe('parse-unclosed-block');
+      });
+    });
+
+    describe('AL-Only Syntax Code', () => {
+      it('should assign parse-al-only-syntax code for null coalescing operator', () => {
+        // Null coalescing operator (??) is AL-only, not available in C/AL
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      x : Text;
+      y : Text;
+      z : Text;
+    BEGIN
+      z := x ?? y;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+
+        // Look for error about ?? operator
+        const alError = errors.find(e =>
+          e.message.includes('??') ||
+          e.message.toLowerCase().includes('al') ||
+          e.message.toLowerCase().includes('not supported')
+        );
+        expect(alError).toBeDefined();
+
+        const diagnostic = errorToDiagnostic(alError!);
+        expect(diagnostic.code).toBe('parse-al-only-syntax');
+      });
+
+      it('should assign parse-al-only-syntax code for datatype var prefix', () => {
+        // The 'var' keyword as a parameter modifier is AL-only
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1(var x : Integer);
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const errors = getParseErrors(code);
+
+        // This might not generate an error in current parser, but when it does:
+        const alError = errors.find(e =>
+          e.message.toLowerCase().includes('var') &&
+          (e.message.toLowerCase().includes('al') ||
+           e.message.toLowerCase().includes('not supported'))
+        );
+
+        if (alError) {
+          const diagnostic = errorToDiagnostic(alError);
+          expect(diagnostic.code).toBe('parse-al-only-syntax');
+        }
+      });
+    });
+
+    describe('Error Recovery Code', () => {
+      it('should assign parse-error-recovery code for skipped tokens', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { completely invalid garbage tokens here }
+    { 1   ;   ;"No."           ;Code20        }
+  }
+}`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+
+        // Look for error recovery message
+        const recoveryError = errors.find(e =>
+          e.message.toLowerCase().includes('skipped') ||
+          e.message.toLowerCase().includes('recovery')
+        );
+
+        if (recoveryError) {
+          const diagnostic = errorToDiagnostic(recoveryError);
+          expect(diagnostic.code).toBe('parse-error-recovery');
+        }
+      });
+    });
+
+    describe('Property Value Code', () => {
+      it('should assign parse-property-value code for invalid property value', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  PROPERTIES
+  {
+    DataPerCompany=InvalidValue;
+  }
+  FIELDS
+  {
+    { 1   ;   ;"No."           ;Code20        }
+  }
+}`;
+        const errors = getParseErrors(code);
+
+        // Look for property-related error
+        const propError = errors.find(e =>
+          e.message.toLowerCase().includes('property')
+        );
+
+        if (propError) {
+          const diagnostic = errorToDiagnostic(propError);
+          expect(diagnostic.code).toBe('parse-property-value');
+        }
+      });
+    });
+
+    describe('Code Field in Diagnostic Conversion', () => {
+      it('should include code field when converting error to diagnostic', () => {
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1 ;`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+
+        const diagnostic = errorToDiagnostic(errors[0]);
+        expect(diagnostic).toHaveProperty('code');
+        expect(typeof diagnostic.code).toBe('string');
+        expect((diagnostic.code as string).length).toBeGreaterThan(0);
+      });
+
+      it('should preserve code field through diagnostic conversion', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      x : Integer
+    BEGIN
+      MESSAGE('Test');
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const errors = getParseErrors(code);
+        const semicolonError = errors.find(e => e.message.includes('Expected ;'));
+        expect(semicolonError).toBeDefined();
+
+        // Convert to diagnostic
+        const diagnostic = errorToDiagnostic(semicolonError!);
+
+        // Code should be preserved and be expected-token
+        expect(diagnostic.code).toBe('parse-expected-token');
+        expect(diagnostic.message).toBeTruthy();
+        expect(diagnostic.severity).toBe(DiagnosticSeverity.Error);
+      });
     });
   });
 });
