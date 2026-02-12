@@ -532,6 +532,46 @@ describe('Diagnostics', () => {
         const diagnostic = errorToDiagnostic(braceError!);
         expect(diagnostic.code).toBe('parse-unclosed-block');
       });
+
+      it('should assign parse-unclosed-block code when no brace follows section keyword', () => {
+        // No brace at all after FIELDS - next token is KEYS
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  KEYS
+  {
+  }
+}`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+
+        const braceError = errors.find(e =>
+          e.message.includes('Expected { to open FIELDS section')
+        );
+        expect(braceError).toBeDefined();
+
+        const diagnostic = errorToDiagnostic(braceError!);
+        expect(diagnostic.code).toBe('parse-unclosed-block');
+      });
+
+      it('should assign parse-unclosed-block code when item brace is mistaken for section brace', () => {
+        // The { is the field item's brace, not the section brace
+        const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  { 1   ;   ;"No."           ;Code20        }
+}`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+
+        const braceError = errors.find(e =>
+          e.message.includes('Expected { to open FIELDS section')
+        );
+        expect(braceError).toBeDefined();
+
+        const diagnostic = errorToDiagnostic(braceError!);
+        expect(diagnostic.code).toBe('parse-unclosed-block');
+      });
     });
 
     describe('AL-Only Syntax Code', () => {
