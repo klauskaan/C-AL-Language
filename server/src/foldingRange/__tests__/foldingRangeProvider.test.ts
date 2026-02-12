@@ -27,7 +27,7 @@ function parseContent(content: string) {
   const lexer = new Lexer(content);
   const tokens = lexer.tokenize();
   const parser = new Parser(tokens);
-  return parser.parse();
+  return { ast: parser.parse(), lexer };
 }
 
 describe('FoldingRangeProvider', () => {
@@ -55,9 +55,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for MyProcedure (entire procedure declaration)
       const procRange = ranges.find((r: FoldingRange) => {
@@ -87,9 +87,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for OnInsert trigger
       const triggerRange = ranges.find((r: FoldingRange) => {
@@ -121,9 +121,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding ranges for both outer and inner BEGIN/END blocks
       expect(ranges.length).toBeGreaterThan(0);
@@ -150,9 +150,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for IF statement's BEGIN/END block
       const ifRange = ranges.find((r: FoldingRange) => {
@@ -190,9 +190,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for CASE statement
       const caseRange = ranges.find((r: FoldingRange) => {
@@ -225,9 +225,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for REPEAT...UNTIL
       const repeatRange = ranges.find((r: FoldingRange) => {
@@ -260,9 +260,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for FOR loop's BEGIN/END block
       const forRange = ranges.find((r: FoldingRange) => {
@@ -295,9 +295,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for WHILE loop's BEGIN/END block
       const whileRange = ranges.find((r: FoldingRange) => {
@@ -330,9 +330,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for WITH block
       const withRange = ranges.find((r: FoldingRange) => {
@@ -361,9 +361,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for PROPERTIES section
       const propsRange = ranges.find((r: FoldingRange) => {
@@ -389,9 +389,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for FIELDS section
       const fieldsRange = ranges.find((r: FoldingRange) => {
@@ -419,9 +419,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for KEYS section
       const keysRange = ranges.find((r: FoldingRange) => {
@@ -450,9 +450,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for CODE section
       const codeRange = ranges.find((r: FoldingRange) => {
@@ -484,9 +484,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for CONTROLS section
       const controlsRange = ranges.find((r: FoldingRange) => {
@@ -516,9 +516,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for FIELDGROUPS section
       const fieldGroupsRange = ranges.find((r: FoldingRange) => {
@@ -557,9 +557,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding ranges for outer procedure, outer IF block, and nested IF block
       expect(ranges.length).toBeGreaterThanOrEqual(3);
@@ -595,9 +595,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding ranges for:
       // - Procedure
@@ -631,9 +631,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding ranges for procedure, FOR block, WHILE block, IF block
       expect(ranges.length).toBeGreaterThanOrEqual(4);
@@ -654,9 +654,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should NOT include single-line procedure (startLine == endLine)
       const singleLineRange = ranges.find((r: FoldingRange) => {
@@ -684,9 +684,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should create folding range even for empty procedure if multi-line
       const emptyProcRange = ranges.find((r: FoldingRange) => {
@@ -713,18 +713,18 @@ describe('FoldingRangeProvider', () => {
       // Missing END - malformed
 `;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
       // Should not throw - parser handles errors gracefully
-      expect(() => provider.provide(doc, ast)).not.toThrow();
+      expect(() => provider.provide(doc, ast, lexer)).not.toThrow();
     });
 
     it('should return empty array for empty document', () => {
       const code = '';
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       expect(ranges).toEqual([]);
     });
@@ -734,9 +734,9 @@ describe('FoldingRangeProvider', () => {
 {
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // No sections, procedures, or control structures to fold
       expect(ranges).toEqual([]);
@@ -759,9 +759,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // All line numbers should be 0-based
       ranges.forEach((range: FoldingRange) => {
@@ -786,9 +786,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Find the procedure's BEGIN/END block
       const procRange = ranges.find((r: FoldingRange) => {
@@ -826,9 +826,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should create valid 0-based coordinates
       // There should be ranges for CODE section and procedure
@@ -881,9 +881,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding ranges for:
       // - PROPERTIES section
@@ -918,9 +918,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should create folding range for entire procedure (including VAR section)
       const procRange = ranges.find((r: FoldingRange) => {
@@ -959,9 +959,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding ranges for CODE section + 3 procedures
       expect(ranges.length).toBeGreaterThanOrEqual(4);
@@ -995,9 +995,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for OnValidate trigger
       const validateRange = ranges.find((r: FoldingRange) => {
@@ -1025,9 +1025,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for OnLookup trigger
       const lookupRange = ranges.find((r: FoldingRange) => {
@@ -1058,9 +1058,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding ranges for both OnValidate and OnLookup
       const validateRange = ranges.find((r: FoldingRange) => {
@@ -1100,9 +1100,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding ranges for:
       // - FIELDS section
@@ -1142,9 +1142,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding ranges for procedure and inner standalone block
       expect(ranges.length).toBeGreaterThanOrEqual(2);
@@ -1170,9 +1170,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for CASE statement and procedure
       // But NOT for individual single-line branches
@@ -1200,9 +1200,9 @@ describe('FoldingRangeProvider', () => {
   }
 }`;
       const doc = createDocument(code);
-      const ast = parseContent(code);
+      const { ast, lexer } = parseContent(code);
 
-      const ranges = provider.provide(doc, ast);
+      const ranges = provider.provide(doc, ast, lexer);
 
       // Should have folding range for procedure
       // But NOT for single-line IF branches without BEGIN/END
@@ -1220,9 +1220,9 @@ OBJECT Codeunit 50000 Test
 {
 }`;
         const doc = createDocument(code);
-        const ast = parseContent(code);
+        const { ast, lexer } = parseContent(code);
 
-        const ranges = provider.provide(doc, ast);
+        const ranges = provider.provide(doc, ast, lexer);
 
         const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
         expect(commentRange).toBeDefined();
@@ -1240,9 +1240,9 @@ OBJECT Codeunit 50000 Test
 {
 }`;
         const doc = createDocument(code);
-        const ast = parseContent(code);
+        const { ast, lexer } = parseContent(code);
 
-        const ranges = provider.provide(doc, ast);
+        const ranges = provider.provide(doc, ast, lexer);
 
         const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
         expect(commentRange).toBeDefined();
@@ -1257,9 +1257,9 @@ OBJECT Codeunit 50000 Test
 {
 }`;
         const doc = createDocument(code);
-        const ast = parseContent(code);
+        const { ast, lexer } = parseContent(code);
 
-        const ranges = provider.provide(doc, ast);
+        const ranges = provider.provide(doc, ast, lexer);
 
         const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
         expect(commentRange).toBeUndefined();
@@ -1271,9 +1271,9 @@ OBJECT Codeunit 50000 Test
 {
 }`;
         const doc = createDocument(code);
-        const ast = parseContent(code);
+        const { ast, lexer } = parseContent(code);
 
-        const ranges = provider.provide(doc, ast);
+        const ranges = provider.provide(doc, ast, lexer);
 
         const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
         expect(commentRange).toBeUndefined();
@@ -1293,9 +1293,9 @@ OBJECT Codeunit 50000 Test
   }
 }`;
         const doc = createDocument(code);
-        const ast = parseContent(code);
+        const { ast, lexer } = parseContent(code);
 
-        const ranges = provider.provide(doc, ast);
+        const ranges = provider.provide(doc, ast, lexer);
 
         const commentRanges = ranges.filter((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
         expect(commentRanges.length).toBe(2);
@@ -1313,9 +1313,9 @@ OBJECT Codeunit 50000 Test
 {
 }`;
         const doc = createDocument(code);
-        const ast = parseContent(code);
+        const { ast, lexer } = parseContent(code);
 
-        const ranges = provider.provide(doc, ast);
+        const ranges = provider.provide(doc, ast, lexer);
 
         const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
         expect(commentRange).toBeDefined();
@@ -1329,9 +1329,9 @@ OBJECT Codeunit 50000 Test
 /* Unclosed
 comment`;
         const doc = createDocument(code);
-        const ast = parseContent(code);
+        const { ast, lexer } = parseContent(code);
 
-        const ranges = provider.provide(doc, ast);
+        const ranges = provider.provide(doc, ast, lexer);
 
         const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
         expect(commentRange).toBeUndefined();
@@ -1345,9 +1345,9 @@ OBJECT Codeunit 50000 Test
 {
 }`;
         const doc = createDocument(code);
-        const ast = parseContent(code);
+        const { ast, lexer } = parseContent(code);
 
-        const ranges = provider.provide(doc, ast);
+        const ranges = provider.provide(doc, ast, lexer);
 
         const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
         expect(commentRange).toBeUndefined();
@@ -1361,9 +1361,9 @@ OBJECT Codeunit 50000 Test
 {
 }`;
         const doc = createDocument(code);
-        const ast = parseContent(code);
+        const { ast, lexer } = parseContent(code);
 
-        const ranges = provider.provide(doc, ast);
+        const ranges = provider.provide(doc, ast, lexer);
 
         const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
         expect(commentRange).toBeDefined();
@@ -1389,9 +1389,9 @@ inside */ string';
   }
 }`;
         const doc = createDocument(code);
-        const ast = parseContent(code);
+        const { ast, lexer } = parseContent(code);
 
-        const ranges = provider.provide(doc, ast);
+        const ranges = provider.provide(doc, ast, lexer);
 
         const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
         expect(commentRange).toBeUndefined();
@@ -1416,9 +1416,9 @@ comment */';
   }
 }`;
         const doc = createDocument(code);
-        const ast = parseContent(code);
+        const { ast, lexer } = parseContent(code);
 
-        const ranges = provider.provide(doc, ast);
+        const ranges = provider.provide(doc, ast, lexer);
 
         const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
         expect(commentRange).toBeUndefined();
@@ -1444,9 +1444,9 @@ still in string';
   }
 }`;
         const doc = createDocument(code);
-        const ast = parseContent(code);
+        const { ast, lexer } = parseContent(code);
 
-        const ranges = provider.provide(doc, ast);
+        const ranges = provider.provide(doc, ast, lexer);
 
         const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
         expect(commentRange).toBeUndefined();
@@ -1457,9 +1457,9 @@ still in string';
 comment
 block */`;
         const doc = createDocument(code);
-        const ast = parseContent(code);
+        const { ast, lexer } = parseContent(code);
 
-        const ranges = provider.provide(doc, ast);
+        const ranges = provider.provide(doc, ast, lexer);
 
         const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
         expect(commentRange).toBeDefined();
@@ -1594,9 +1594,9 @@ z := 3;
   }
 }`;
           const doc = createDocument(code);
-          const ast = parseContent(code);
+          const { ast, lexer } = parseContent(code);
 
-          const ranges = provider.provide(doc, ast);
+          const ranges = provider.provide(doc, ast, lexer);
 
           const braceCommentRange = ranges.find((r: FoldingRange) =>
             r.kind === FoldingRangeKind.Comment &&
@@ -1624,9 +1624,9 @@ z := 3;
   }
 }`;
           const doc = createDocument(code);
-          const ast = parseContent(code);
+          const { ast, lexer } = parseContent(code);
 
-          const ranges = provider.provide(doc, ast);
+          const ranges = provider.provide(doc, ast, lexer);
 
           const braceCommentRange = ranges.find((r: FoldingRange) =>
             r.kind === FoldingRangeKind.Comment &&
@@ -1657,9 +1657,9 @@ OBJECT Codeunit 50000 Test
   }
 }`;
           const doc = createDocument(code);
-          const ast = parseContent(code);
+          const { ast, lexer } = parseContent(code);
 
-          const ranges = provider.provide(doc, ast);
+          const ranges = provider.provide(doc, ast, lexer);
 
           const commentRanges = ranges.filter((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
           expect(commentRanges.length).toBeGreaterThanOrEqual(2);
@@ -1684,9 +1684,9 @@ OBJECT Codeunit 50000 Test
   }
 }`;
           const doc = createDocument(code);
-          const ast = parseContent(code);
+          const { ast, lexer } = parseContent(code);
 
-          const ranges = provider.provide(doc, ast);
+          const ranges = provider.provide(doc, ast, lexer);
 
           // Should have folding range for FIELDS section (kind: Region)
           const fieldsRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Region);
