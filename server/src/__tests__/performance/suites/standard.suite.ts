@@ -9,6 +9,7 @@ import { benchmarkLexer } from '../benchmarks/lexer.bench';
 import { benchmarkParser } from '../benchmarks/parser.bench';
 import { benchmarkSymbolTable } from '../benchmarks/symbolTable.bench';
 import { benchmarkIntegration } from '../benchmarks/integration.bench';
+import { benchmarkSemanticTokens } from '../benchmarks/semanticTokens.bench';
 import { runMemoryBenchmarks } from '../benchmarks/memory.bench';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
@@ -42,35 +43,42 @@ async function runStandardSuite(): Promise<void> {
     const allResults: any[] = [];
 
     console.log('\n' + '='.repeat(80));
-    console.log('Phase 1/5: Lexer Benchmarks');
+    console.log('Phase 1/6: Lexer Benchmarks');
     console.log('='.repeat(80));
     const lexerResults = await benchmarkLexer();
     allResults.push(...lexerResults);
     suites.push('lexer');
 
     console.log('\n' + '='.repeat(80));
-    console.log('Phase 2/5: Parser Benchmarks');
+    console.log('Phase 2/6: Parser Benchmarks');
     console.log('='.repeat(80));
     const parserResults = await benchmarkParser();
     allResults.push(...parserResults);
     suites.push('parser');
 
     console.log('\n' + '='.repeat(80));
-    console.log('Phase 3/5: Symbol Table Benchmarks');
+    console.log('Phase 3/6: Symbol Table Benchmarks');
     console.log('='.repeat(80));
     const symbolTableResults = await benchmarkSymbolTable();
     allResults.push(...symbolTableResults);
     suites.push('symbolTable');
 
     console.log('\n' + '='.repeat(80));
-    console.log('Phase 4/5: Integration Benchmarks');
+    console.log('Phase 4/6: Integration Benchmarks');
     console.log('='.repeat(80));
     const integrationResults = await benchmarkIntegration();
     allResults.push(...integrationResults);
     suites.push('integration');
 
     console.log('\n' + '='.repeat(80));
-    console.log('Phase 5/5: Memory Benchmarks');
+    console.log('Phase 5/6: Semantic Tokens Benchmarks');
+    console.log('='.repeat(80));
+    const semanticTokensResults = await benchmarkSemanticTokens();
+    allResults.push(...semanticTokensResults);
+    suites.push('semanticTokens');
+
+    console.log('\n' + '='.repeat(80));
+    console.log('Phase 6/6: Memory Benchmarks');
     console.log('='.repeat(80));
     await runMemoryBenchmarks();
     suites.push('memory');

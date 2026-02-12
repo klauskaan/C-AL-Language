@@ -9,6 +9,7 @@ import { benchmarkLexer } from '../benchmarks/lexer.bench';
 import { benchmarkParser } from '../benchmarks/parser.bench';
 import { benchmarkSymbolTable } from '../benchmarks/symbolTable.bench';
 import { benchmarkIntegration } from '../benchmarks/integration.bench';
+import { benchmarkSemanticTokens } from '../benchmarks/semanticTokens.bench';
 
 async function runQuickSuite(): Promise<void> {
   console.log('╔════════════════════════════════════════════════════════════════════╗');
@@ -26,24 +27,29 @@ async function runQuickSuite(): Promise<void> {
     // We're running the full suite but the benchmarks are already optimized
 
     console.log('\n' + '='.repeat(80));
-    console.log('Phase 1/4: Lexer Benchmarks');
+    console.log('Phase 1/5: Lexer Benchmarks');
     console.log('='.repeat(80));
     await benchmarkLexer();
 
     console.log('\n' + '='.repeat(80));
-    console.log('Phase 2/4: Parser Benchmarks');
+    console.log('Phase 2/5: Parser Benchmarks');
     console.log('='.repeat(80));
     await benchmarkParser();
 
     console.log('\n' + '='.repeat(80));
-    console.log('Phase 3/4: Symbol Table Benchmarks');
+    console.log('Phase 3/5: Symbol Table Benchmarks');
     console.log('='.repeat(80));
     await benchmarkSymbolTable();
 
     console.log('\n' + '='.repeat(80));
-    console.log('Phase 4/4: Integration Benchmarks');
+    console.log('Phase 4/5: Integration Benchmarks');
     console.log('='.repeat(80));
     await benchmarkIntegration();
+
+    console.log('\n' + '='.repeat(80));
+    console.log('Phase 5/5: Semantic Tokens Benchmarks');
+    console.log('='.repeat(80));
+    await benchmarkSemanticTokens();
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
 

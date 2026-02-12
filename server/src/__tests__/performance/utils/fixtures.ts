@@ -162,5 +162,6 @@ export const COMPLEXITY_FIXTURES = {
   EDGE_CASES: 'edge-cases.cal',
   BAD_PRACTICES: 'bad-practices.cal',
   MULTILINGUAL: 'multilingual.cal',
-  REAL_WORLD_BUSINESS_LOGIC: 'real-world-business-logic.cal'
+  REAL_WORLD_BUSINESS_LOGIC: 'real-world-business-logic.cal',
+  SET_LITERALS: 'set-literals.cal' // ~5K lines, 450 set expressions for semantic token benchmarking
 } as const;

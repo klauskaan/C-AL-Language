@@ -1,0 +1,5149 @@
+OBJECT Codeunit 50100 "Set Literal Performance Test"
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/02/26;
+    Time=12:00:00;
+    Modified=Yes;
+    Version List=PERF-TEST;
+  }
+  PROPERTIES
+  {
+    SingleInstance=No;
+  }
+  CODE
+  {
+
+procedure ValidateSetLiterals0(Input0: Integer): Boolean
+var
+    status0: Option;
+    priority0: Integer;
+    category0: Code[10];
+    result0: Boolean;
+    counter0: Integer;
+begin
+    result0 := false;
+    counter0 := 0;
+
+    if Input0 in [Status::Open, Status::Released] then begin
+        result0 := true;
+        counter0 += 1;
+    end;
+
+    case Input0 of
+        [Status::Open, Status::Released, Status::Pending]:
+            begin
+                counter0 += 10;
+                result0 := true;
+            end;
+    end;
+
+    while (counter0 < 100) and (Input0 in [Status::Open, Status::Released, Status::Pending, Status::Closed]) do begin
+        counter0 += 1;
+        if counter0 > 50 then
+            result0 := false;
+    end;
+
+
+    exit(result0);
+end;
+
+procedure ValidateSetLiterals1(Input1: Integer): Boolean
+var
+    status1: Option;
+    priority1: Integer;
+    category1: Code[10];
+    result1: Boolean;
+    counter1: Integer;
+begin
+    result1 := false;
+    counter1 := 0;
+
+    if Input1 in [Status::Open, Status::Released, Status::Pending] then begin
+        result1 := true;
+        counter1 += 1;
+    end;
+
+    case Input1 of
+        [Status::Open, Status::Released, Status::Pending, Status::Closed]:
+            begin
+                counter1 += 10;
+                result1 := true;
+            end;
+    end;
+
+    while (counter1 < 100) and (Input1 in [Status::Open, Status::Released]) do begin
+        counter1 += 1;
+        if counter1 > 50 then
+            result1 := false;
+    end;
+
+
+    exit(result1);
+end;
+
+procedure ValidateSetLiterals2(Input2: Integer): Boolean
+var
+    status2: Option;
+    priority2: Integer;
+    category2: Code[10];
+    result2: Boolean;
+    counter2: Integer;
+begin
+    result2 := false;
+    counter2 := 0;
+
+    if Input2 in [Status::Open, Status::Released, Status::Pending, Status::Closed] then begin
+        result2 := true;
+        counter2 += 1;
+    end;
+
+    case Input2 of
+        [Status::Open, Status::Released]:
+            begin
+                counter2 += 10;
+                result2 := true;
+            end;
+    end;
+
+    while (counter2 < 100) and (Input2 in [20..44]) do begin
+        counter2 += 1;
+        if counter2 > 50 then
+            result2 := false;
+    end;
+
+
+    exit(result2);
+end;
+
+procedure ValidateSetLiterals3(Input3: Integer): Boolean
+var
+    status3: Option;
+    priority3: Integer;
+    category3: Code[10];
+    result3: Boolean;
+    counter3: Integer;
+begin
+    result3 := false;
+    counter3 := 0;
+
+    if Input3 in [Status::Open, Status::Released] then begin
+        result3 := true;
+        counter3 += 1;
+    end;
+
+    case Input3 of
+        [30..47]:
+            begin
+                counter3 += 10;
+                result3 := true;
+            end;
+    end;
+
+    while (counter3 < 100) and (Input3 in [30..54]) do begin
+        counter3 += 1;
+        if counter3 > 50 then
+            result3 := false;
+    end;
+
+
+    exit(result3);
+end;
+
+procedure ValidateSetLiterals4(Input4: Integer): Boolean
+var
+    status4: Option;
+    priority4: Integer;
+    category4: Code[10];
+    result4: Boolean;
+    counter4: Integer;
+begin
+    result4 := false;
+    counter4 := 0;
+
+    if Input4 in [40..50] then begin
+        result4 := true;
+        counter4 += 1;
+    end;
+
+    case Input4 of
+        [40..57]:
+            begin
+                counter4 += 10;
+                result4 := true;
+            end;
+    end;
+
+    while (counter4 < 100) and (Input4 in [40..64]) do begin
+        counter4 += 1;
+        if counter4 > 50 then
+            result4 := false;
+    end;
+
+
+    exit(result4);
+end;
+
+procedure ValidateSetLiterals5(Input5: Integer): Boolean
+var
+    status5: Option;
+    priority5: Integer;
+    category5: Code[10];
+    result5: Boolean;
+    counter5: Integer;
+begin
+    result5 := false;
+    counter5 := 0;
+
+    if Input5 in [50..60] then begin
+        result5 := true;
+        counter5 += 1;
+    end;
+
+    case Input5 of
+        [50..67]:
+            begin
+                counter5 += 10;
+                result5 := true;
+            end;
+    end;
+
+    while (counter5 < 100) and (Input5 in [7, 25..35, 92]) do begin
+        counter5 += 1;
+        if counter5 > 50 then
+            result5 := false;
+    end;
+
+
+    exit(result5);
+end;
+
+procedure ValidateSetLiterals6(Input6: Integer): Boolean
+var
+    status6: Option;
+    priority6: Integer;
+    category6: Code[10];
+    result6: Boolean;
+    counter6: Integer;
+begin
+    result6 := false;
+    counter6 := 0;
+
+    if Input6 in [60..70] then begin
+        result6 := true;
+        counter6 += 1;
+    end;
+
+    case Input6 of
+        [7, 30..40, 91]:
+            begin
+                counter6 += 10;
+                result6 := true;
+            end;
+    end;
+
+    while (counter6 < 100) and (Input6 in [8, 30..40, 92]) do begin
+        counter6 += 1;
+        if counter6 > 50 then
+            result6 := false;
+    end;
+
+
+    exit(result6);
+end;
+
+procedure ValidateSetLiterals7(Input7: Integer): Boolean
+var
+    status7: Option;
+    priority7: Integer;
+    category7: Code[10];
+    result7: Boolean;
+    counter7: Integer;
+begin
+    result7 := false;
+    counter7 := 0;
+
+    if Input7 in [7, 35..45, 90] then begin
+        result7 := true;
+        counter7 += 1;
+    end;
+
+    case Input7 of
+        [8, 35..45, 91]:
+            begin
+                counter7 += 10;
+                result7 := true;
+            end;
+    end;
+
+    while (counter7 < 100) and (Input7 in ['A'..'F']) do begin
+        counter7 += 1;
+        if counter7 > 50 then
+            result7 := false;
+    end;
+
+
+    exit(result7);
+end;
+
+procedure ValidateSetLiterals8(Input8: Integer): Boolean
+var
+    status8: Option;
+    priority8: Integer;
+    category8: Code[10];
+    result8: Boolean;
+    counter8: Integer;
+begin
+    result8 := false;
+    counter8 := 0;
+
+    if Input8 in [8, 40..50, 90] then begin
+        result8 := true;
+        counter8 += 1;
+    end;
+
+    case Input8 of
+        ['A'..'Z']:
+            begin
+                counter8 += 10;
+                result8 := true;
+            end;
+    end;
+
+    while (counter8 < 100) and (Input8 in [Status::Open, Status::Released]) do begin
+        counter8 += 1;
+        if counter8 > 50 then
+            result8 := false;
+    end;
+
+
+    exit(result8);
+end;
+
+procedure ValidateSetLiterals9(Input9: Integer): Boolean
+var
+    status9: Option;
+    priority9: Integer;
+    category9: Code[10];
+    result9: Boolean;
+    counter9: Integer;
+begin
+    result9 := false;
+    counter9 := 0;
+
+    if Input9 in ['a'..'z'] then begin
+        result9 := true;
+        counter9 += 1;
+    end;
+
+    case Input9 of
+        [Status::Open, Status::Released]:
+            begin
+                counter9 += 10;
+                result9 := true;
+            end;
+    end;
+
+    while (counter9 < 100) and (Input9 in [Status::Open, Status::Released, Status::Pending]) do begin
+        counter9 += 1;
+        if counter9 > 50 then
+            result9 := false;
+    end;
+
+
+    exit(result9);
+end;
+
+procedure ValidateSetLiterals10(Input10: Integer): Boolean
+var
+    status10: Option;
+    priority10: Integer;
+    category10: Code[10];
+    result10: Boolean;
+    counter10: Integer;
+begin
+    result10 := false;
+    counter10 := 0;
+
+    if Input10 in [Status::Open, Status::Released] then begin
+        result10 := true;
+        counter10 += 1;
+    end;
+
+    case Input10 of
+        [Status::Open, Status::Released, Status::Pending]:
+            begin
+                counter10 += 10;
+                result10 := true;
+            end;
+    end;
+
+    while (counter10 < 100) and (Input10 in [Status::Open, Status::Released, Status::Pending, Status::Closed]) do begin
+        counter10 += 1;
+        if counter10 > 50 then
+            result10 := false;
+    end;
+
+
+    exit(result10);
+end;
+
+procedure ValidateSetLiterals11(Input11: Integer): Boolean
+var
+    status11: Option;
+    priority11: Integer;
+    category11: Code[10];
+    result11: Boolean;
+    counter11: Integer;
+begin
+    result11 := false;
+    counter11 := 0;
+
+    if Input11 in [Status::Open, Status::Released, Status::Pending] then begin
+        result11 := true;
+        counter11 += 1;
+    end;
+
+    case Input11 of
+        [Status::Open, Status::Released, Status::Pending, Status::Closed]:
+            begin
+                counter11 += 10;
+                result11 := true;
+            end;
+    end;
+
+    while (counter11 < 100) and (Input11 in [Status::Open, Status::Released]) do begin
+        counter11 += 1;
+        if counter11 > 50 then
+            result11 := false;
+    end;
+
+
+    exit(result11);
+end;
+
+procedure ValidateSetLiterals12(Input12: Integer): Boolean
+var
+    status12: Option;
+    priority12: Integer;
+    category12: Code[10];
+    result12: Boolean;
+    counter12: Integer;
+begin
+    result12 := false;
+    counter12 := 0;
+
+    if Input12 in [Status::Open, Status::Released, Status::Pending, Status::Closed] then begin
+        result12 := true;
+        counter12 += 1;
+    end;
+
+    case Input12 of
+        [Status::Open, Status::Released]:
+            begin
+                counter12 += 10;
+                result12 := true;
+            end;
+    end;
+
+    while (counter12 < 100) and (Input12 in [20..44]) do begin
+        counter12 += 1;
+        if counter12 > 50 then
+            result12 := false;
+    end;
+
+
+    exit(result12);
+end;
+
+procedure ValidateSetLiterals13(Input13: Integer): Boolean
+var
+    status13: Option;
+    priority13: Integer;
+    category13: Code[10];
+    result13: Boolean;
+    counter13: Integer;
+begin
+    result13 := false;
+    counter13 := 0;
+
+    if Input13 in [Status::Open, Status::Released] then begin
+        result13 := true;
+        counter13 += 1;
+    end;
+
+    case Input13 of
+        [30..47]:
+            begin
+                counter13 += 10;
+                result13 := true;
+            end;
+    end;
+
+    while (counter13 < 100) and (Input13 in [30..54]) do begin
+        counter13 += 1;
+        if counter13 > 50 then
+            result13 := false;
+    end;
+
+
+    exit(result13);
+end;
+
+procedure ValidateSetLiterals14(Input14: Integer): Boolean
+var
+    status14: Option;
+    priority14: Integer;
+    category14: Code[10];
+    result14: Boolean;
+    counter14: Integer;
+begin
+    result14 := false;
+    counter14 := 0;
+
+    if Input14 in [40..50] then begin
+        result14 := true;
+        counter14 += 1;
+    end;
+
+    case Input14 of
+        [40..57]:
+            begin
+                counter14 += 10;
+                result14 := true;
+            end;
+    end;
+
+    while (counter14 < 100) and (Input14 in [40..64]) do begin
+        counter14 += 1;
+        if counter14 > 50 then
+            result14 := false;
+    end;
+
+
+    exit(result14);
+end;
+
+procedure ValidateSetLiterals15(Input15: Integer): Boolean
+var
+    status15: Option;
+    priority15: Integer;
+    category15: Code[10];
+    result15: Boolean;
+    counter15: Integer;
+begin
+    result15 := false;
+    counter15 := 0;
+
+    if Input15 in [50..60] then begin
+        result15 := true;
+        counter15 += 1;
+    end;
+
+    case Input15 of
+        [50..67]:
+            begin
+                counter15 += 10;
+                result15 := true;
+            end;
+    end;
+
+    while (counter15 < 100) and (Input15 in [7, 25..35, 92]) do begin
+        counter15 += 1;
+        if counter15 > 50 then
+            result15 := false;
+    end;
+
+
+    exit(result15);
+end;
+
+procedure ValidateSetLiterals16(Input16: Integer): Boolean
+var
+    status16: Option;
+    priority16: Integer;
+    category16: Code[10];
+    result16: Boolean;
+    counter16: Integer;
+begin
+    result16 := false;
+    counter16 := 0;
+
+    if Input16 in [60..70] then begin
+        result16 := true;
+        counter16 += 1;
+    end;
+
+    case Input16 of
+        [7, 30..40, 91]:
+            begin
+                counter16 += 10;
+                result16 := true;
+            end;
+    end;
+
+    while (counter16 < 100) and (Input16 in [8, 30..40, 92]) do begin
+        counter16 += 1;
+        if counter16 > 50 then
+            result16 := false;
+    end;
+
+
+    exit(result16);
+end;
+
+procedure ValidateSetLiterals17(Input17: Integer): Boolean
+var
+    status17: Option;
+    priority17: Integer;
+    category17: Code[10];
+    result17: Boolean;
+    counter17: Integer;
+begin
+    result17 := false;
+    counter17 := 0;
+
+    if Input17 in [7, 35..45, 90] then begin
+        result17 := true;
+        counter17 += 1;
+    end;
+
+    case Input17 of
+        [8, 35..45, 91]:
+            begin
+                counter17 += 10;
+                result17 := true;
+            end;
+    end;
+
+    while (counter17 < 100) and (Input17 in ['a'..'z']) do begin
+        counter17 += 1;
+        if counter17 > 50 then
+            result17 := false;
+    end;
+
+
+    exit(result17);
+end;
+
+procedure ValidateSetLiterals18(Input18: Integer): Boolean
+var
+    status18: Option;
+    priority18: Integer;
+    category18: Code[10];
+    result18: Boolean;
+    counter18: Integer;
+begin
+    result18 := false;
+    counter18 := 0;
+
+    if Input18 in [8, 40..50, 90] then begin
+        result18 := true;
+        counter18 += 1;
+    end;
+
+    case Input18 of
+        ['0'..'9']:
+            begin
+                counter18 += 10;
+                result18 := true;
+            end;
+    end;
+
+    while (counter18 < 100) and (Input18 in [Status::Open, Status::Released]) do begin
+        counter18 += 1;
+        if counter18 > 50 then
+            result18 := false;
+    end;
+
+
+    exit(result18);
+end;
+
+procedure ValidateSetLiterals19(Input19: Integer): Boolean
+var
+    status19: Option;
+    priority19: Integer;
+    category19: Code[10];
+    result19: Boolean;
+    counter19: Integer;
+begin
+    result19 := false;
+    counter19 := 0;
+
+    if Input19 in ['A'..'F'] then begin
+        result19 := true;
+        counter19 += 1;
+    end;
+
+    case Input19 of
+        [Status::Open, Status::Released]:
+            begin
+                counter19 += 10;
+                result19 := true;
+            end;
+    end;
+
+    while (counter19 < 100) and (Input19 in [Status::Open, Status::Released, Status::Pending]) do begin
+        counter19 += 1;
+        if counter19 > 50 then
+            result19 := false;
+    end;
+
+
+    exit(result19);
+end;
+
+procedure ValidateSetLiterals20(Input20: Integer): Boolean
+var
+    status20: Option;
+    priority20: Integer;
+    category20: Code[10];
+    result20: Boolean;
+    counter20: Integer;
+begin
+    result20 := false;
+    counter20 := 0;
+
+    if Input20 in [Status::Open, Status::Released] then begin
+        result20 := true;
+        counter20 += 1;
+    end;
+
+    case Input20 of
+        [Status::Open, Status::Released, Status::Pending]:
+            begin
+                counter20 += 10;
+                result20 := true;
+            end;
+    end;
+
+    while (counter20 < 100) and (Input20 in [Status::Open, Status::Released, Status::Pending, Status::Closed]) do begin
+        counter20 += 1;
+        if counter20 > 50 then
+            result20 := false;
+    end;
+
+
+    exit(result20);
+end;
+
+procedure ValidateSetLiterals21(Input21: Integer): Boolean
+var
+    status21: Option;
+    priority21: Integer;
+    category21: Code[10];
+    result21: Boolean;
+    counter21: Integer;
+begin
+    result21 := false;
+    counter21 := 0;
+
+    if Input21 in [Status::Open, Status::Released, Status::Pending] then begin
+        result21 := true;
+        counter21 += 1;
+    end;
+
+    case Input21 of
+        [Status::Open, Status::Released, Status::Pending, Status::Closed]:
+            begin
+                counter21 += 10;
+                result21 := true;
+            end;
+    end;
+
+    while (counter21 < 100) and (Input21 in [Status::Open, Status::Released]) do begin
+        counter21 += 1;
+        if counter21 > 50 then
+            result21 := false;
+    end;
+
+
+    exit(result21);
+end;
+
+procedure ValidateSetLiterals22(Input22: Integer): Boolean
+var
+    status22: Option;
+    priority22: Integer;
+    category22: Code[10];
+    result22: Boolean;
+    counter22: Integer;
+begin
+    result22 := false;
+    counter22 := 0;
+
+    if Input22 in [Status::Open, Status::Released, Status::Pending, Status::Closed] then begin
+        result22 := true;
+        counter22 += 1;
+    end;
+
+    case Input22 of
+        [Status::Open, Status::Released]:
+            begin
+                counter22 += 10;
+                result22 := true;
+            end;
+    end;
+
+    while (counter22 < 100) and (Input22 in [20..44]) do begin
+        counter22 += 1;
+        if counter22 > 50 then
+            result22 := false;
+    end;
+
+
+    exit(result22);
+end;
+
+procedure ValidateSetLiterals23(Input23: Integer): Boolean
+var
+    status23: Option;
+    priority23: Integer;
+    category23: Code[10];
+    result23: Boolean;
+    counter23: Integer;
+begin
+    result23 := false;
+    counter23 := 0;
+
+    if Input23 in [Status::Open, Status::Released] then begin
+        result23 := true;
+        counter23 += 1;
+    end;
+
+    case Input23 of
+        [30..47]:
+            begin
+                counter23 += 10;
+                result23 := true;
+            end;
+    end;
+
+    while (counter23 < 100) and (Input23 in [30..54]) do begin
+        counter23 += 1;
+        if counter23 > 50 then
+            result23 := false;
+    end;
+
+
+    exit(result23);
+end;
+
+procedure ValidateSetLiterals24(Input24: Integer): Boolean
+var
+    status24: Option;
+    priority24: Integer;
+    category24: Code[10];
+    result24: Boolean;
+    counter24: Integer;
+begin
+    result24 := false;
+    counter24 := 0;
+
+    if Input24 in [40..50] then begin
+        result24 := true;
+        counter24 += 1;
+    end;
+
+    case Input24 of
+        [40..57]:
+            begin
+                counter24 += 10;
+                result24 := true;
+            end;
+    end;
+
+    while (counter24 < 100) and (Input24 in [40..64]) do begin
+        counter24 += 1;
+        if counter24 > 50 then
+            result24 := false;
+    end;
+
+
+    exit(result24);
+end;
+
+procedure ValidateSetLiterals25(Input25: Integer): Boolean
+var
+    status25: Option;
+    priority25: Integer;
+    category25: Code[10];
+    result25: Boolean;
+    counter25: Integer;
+begin
+    result25 := false;
+    counter25 := 0;
+
+    if Input25 in [50..60] then begin
+        result25 := true;
+        counter25 += 1;
+    end;
+
+    case Input25 of
+        [50..67]:
+            begin
+                counter25 += 10;
+                result25 := true;
+            end;
+    end;
+
+    while (counter25 < 100) and (Input25 in [7, 25..35, 92]) do begin
+        counter25 += 1;
+        if counter25 > 50 then
+            result25 := false;
+    end;
+
+
+    exit(result25);
+end;
+
+procedure ValidateSetLiterals26(Input26: Integer): Boolean
+var
+    status26: Option;
+    priority26: Integer;
+    category26: Code[10];
+    result26: Boolean;
+    counter26: Integer;
+begin
+    result26 := false;
+    counter26 := 0;
+
+    if Input26 in [60..70] then begin
+        result26 := true;
+        counter26 += 1;
+    end;
+
+    case Input26 of
+        [7, 30..40, 91]:
+            begin
+                counter26 += 10;
+                result26 := true;
+            end;
+    end;
+
+    while (counter26 < 100) and (Input26 in [8, 30..40, 92]) do begin
+        counter26 += 1;
+        if counter26 > 50 then
+            result26 := false;
+    end;
+
+
+    exit(result26);
+end;
+
+procedure ValidateSetLiterals27(Input27: Integer): Boolean
+var
+    status27: Option;
+    priority27: Integer;
+    category27: Code[10];
+    result27: Boolean;
+    counter27: Integer;
+begin
+    result27 := false;
+    counter27 := 0;
+
+    if Input27 in [7, 35..45, 90] then begin
+        result27 := true;
+        counter27 += 1;
+    end;
+
+    case Input27 of
+        [8, 35..45, 91]:
+            begin
+                counter27 += 10;
+                result27 := true;
+            end;
+    end;
+
+    while (counter27 < 100) and (Input27 in ['A'..'F']) do begin
+        counter27 += 1;
+        if counter27 > 50 then
+            result27 := false;
+    end;
+
+
+    exit(result27);
+end;
+
+procedure ValidateSetLiterals28(Input28: Integer): Boolean
+var
+    status28: Option;
+    priority28: Integer;
+    category28: Code[10];
+    result28: Boolean;
+    counter28: Integer;
+begin
+    result28 := false;
+    counter28 := 0;
+
+    if Input28 in [8, 40..50, 90] then begin
+        result28 := true;
+        counter28 += 1;
+    end;
+
+    case Input28 of
+        ['A'..'Z']:
+            begin
+                counter28 += 10;
+                result28 := true;
+            end;
+    end;
+
+    while (counter28 < 100) and (Input28 in [Status::Open, Status::Released]) do begin
+        counter28 += 1;
+        if counter28 > 50 then
+            result28 := false;
+    end;
+
+
+    exit(result28);
+end;
+
+procedure ValidateSetLiterals29(Input29: Integer): Boolean
+var
+    status29: Option;
+    priority29: Integer;
+    category29: Code[10];
+    result29: Boolean;
+    counter29: Integer;
+begin
+    result29 := false;
+    counter29 := 0;
+
+    if Input29 in ['a'..'z'] then begin
+        result29 := true;
+        counter29 += 1;
+    end;
+
+    case Input29 of
+        [Status::Open, Status::Released]:
+            begin
+                counter29 += 10;
+                result29 := true;
+            end;
+    end;
+
+    while (counter29 < 100) and (Input29 in [Status::Open, Status::Released, Status::Pending]) do begin
+        counter29 += 1;
+        if counter29 > 50 then
+            result29 := false;
+    end;
+
+
+    exit(result29);
+end;
+
+procedure ValidateSetLiterals30(Input30: Integer): Boolean
+var
+    status30: Option;
+    priority30: Integer;
+    category30: Code[10];
+    result30: Boolean;
+    counter30: Integer;
+begin
+    result30 := false;
+    counter30 := 0;
+
+    if Input30 in [Status::Open, Status::Released] then begin
+        result30 := true;
+        counter30 += 1;
+    end;
+
+    case Input30 of
+        [Status::Open, Status::Released, Status::Pending]:
+            begin
+                counter30 += 10;
+                result30 := true;
+            end;
+    end;
+
+    while (counter30 < 100) and (Input30 in [Status::Open, Status::Released, Status::Pending, Status::Closed]) do begin
+        counter30 += 1;
+        if counter30 > 50 then
+            result30 := false;
+    end;
+
+
+    exit(result30);
+end;
+
+procedure ValidateSetLiterals31(Input31: Integer): Boolean
+var
+    status31: Option;
+    priority31: Integer;
+    category31: Code[10];
+    result31: Boolean;
+    counter31: Integer;
+begin
+    result31 := false;
+    counter31 := 0;
+
+    if Input31 in [Status::Open, Status::Released, Status::Pending] then begin
+        result31 := true;
+        counter31 += 1;
+    end;
+
+    case Input31 of
+        [Status::Open, Status::Released, Status::Pending, Status::Closed]:
+            begin
+                counter31 += 10;
+                result31 := true;
+            end;
+    end;
+
+    while (counter31 < 100) and (Input31 in [Status::Open, Status::Released]) do begin
+        counter31 += 1;
+        if counter31 > 50 then
+            result31 := false;
+    end;
+
+
+    exit(result31);
+end;
+
+procedure ValidateSetLiterals32(Input32: Integer): Boolean
+var
+    status32: Option;
+    priority32: Integer;
+    category32: Code[10];
+    result32: Boolean;
+    counter32: Integer;
+begin
+    result32 := false;
+    counter32 := 0;
+
+    if Input32 in [Status::Open, Status::Released, Status::Pending, Status::Closed] then begin
+        result32 := true;
+        counter32 += 1;
+    end;
+
+    case Input32 of
+        [Status::Open, Status::Released]:
+            begin
+                counter32 += 10;
+                result32 := true;
+            end;
+    end;
+
+    while (counter32 < 100) and (Input32 in [20..44]) do begin
+        counter32 += 1;
+        if counter32 > 50 then
+            result32 := false;
+    end;
+
+
+    exit(result32);
+end;
+
+procedure ValidateSetLiterals33(Input33: Integer): Boolean
+var
+    status33: Option;
+    priority33: Integer;
+    category33: Code[10];
+    result33: Boolean;
+    counter33: Integer;
+begin
+    result33 := false;
+    counter33 := 0;
+
+    if Input33 in [Status::Open, Status::Released] then begin
+        result33 := true;
+        counter33 += 1;
+    end;
+
+    case Input33 of
+        [30..47]:
+            begin
+                counter33 += 10;
+                result33 := true;
+            end;
+    end;
+
+    while (counter33 < 100) and (Input33 in [30..54]) do begin
+        counter33 += 1;
+        if counter33 > 50 then
+            result33 := false;
+    end;
+
+
+    exit(result33);
+end;
+
+procedure ValidateSetLiterals34(Input34: Integer): Boolean
+var
+    status34: Option;
+    priority34: Integer;
+    category34: Code[10];
+    result34: Boolean;
+    counter34: Integer;
+begin
+    result34 := false;
+    counter34 := 0;
+
+    if Input34 in [40..50] then begin
+        result34 := true;
+        counter34 += 1;
+    end;
+
+    case Input34 of
+        [40..57]:
+            begin
+                counter34 += 10;
+                result34 := true;
+            end;
+    end;
+
+    while (counter34 < 100) and (Input34 in [40..64]) do begin
+        counter34 += 1;
+        if counter34 > 50 then
+            result34 := false;
+    end;
+
+
+    exit(result34);
+end;
+
+procedure ValidateSetLiterals35(Input35: Integer): Boolean
+var
+    status35: Option;
+    priority35: Integer;
+    category35: Code[10];
+    result35: Boolean;
+    counter35: Integer;
+begin
+    result35 := false;
+    counter35 := 0;
+
+    if Input35 in [50..60] then begin
+        result35 := true;
+        counter35 += 1;
+    end;
+
+    case Input35 of
+        [50..67]:
+            begin
+                counter35 += 10;
+                result35 := true;
+            end;
+    end;
+
+    while (counter35 < 100) and (Input35 in [7, 25..35, 92]) do begin
+        counter35 += 1;
+        if counter35 > 50 then
+            result35 := false;
+    end;
+
+
+    exit(result35);
+end;
+
+procedure ValidateSetLiterals36(Input36: Integer): Boolean
+var
+    status36: Option;
+    priority36: Integer;
+    category36: Code[10];
+    result36: Boolean;
+    counter36: Integer;
+begin
+    result36 := false;
+    counter36 := 0;
+
+    if Input36 in [60..70] then begin
+        result36 := true;
+        counter36 += 1;
+    end;
+
+    case Input36 of
+        [7, 30..40, 91]:
+            begin
+                counter36 += 10;
+                result36 := true;
+            end;
+    end;
+
+    while (counter36 < 100) and (Input36 in [8, 30..40, 92]) do begin
+        counter36 += 1;
+        if counter36 > 50 then
+            result36 := false;
+    end;
+
+
+    exit(result36);
+end;
+
+procedure ValidateSetLiterals37(Input37: Integer): Boolean
+var
+    status37: Option;
+    priority37: Integer;
+    category37: Code[10];
+    result37: Boolean;
+    counter37: Integer;
+begin
+    result37 := false;
+    counter37 := 0;
+
+    if Input37 in [7, 35..45, 90] then begin
+        result37 := true;
+        counter37 += 1;
+    end;
+
+    case Input37 of
+        [8, 35..45, 91]:
+            begin
+                counter37 += 10;
+                result37 := true;
+            end;
+    end;
+
+    while (counter37 < 100) and (Input37 in ['a'..'z']) do begin
+        counter37 += 1;
+        if counter37 > 50 then
+            result37 := false;
+    end;
+
+
+    exit(result37);
+end;
+
+procedure ValidateSetLiterals38(Input38: Integer): Boolean
+var
+    status38: Option;
+    priority38: Integer;
+    category38: Code[10];
+    result38: Boolean;
+    counter38: Integer;
+begin
+    result38 := false;
+    counter38 := 0;
+
+    if Input38 in [8, 40..50, 90] then begin
+        result38 := true;
+        counter38 += 1;
+    end;
+
+    case Input38 of
+        ['0'..'9']:
+            begin
+                counter38 += 10;
+                result38 := true;
+            end;
+    end;
+
+    while (counter38 < 100) and (Input38 in [Status::Open, Status::Released]) do begin
+        counter38 += 1;
+        if counter38 > 50 then
+            result38 := false;
+    end;
+
+
+    exit(result38);
+end;
+
+procedure ValidateSetLiterals39(Input39: Integer): Boolean
+var
+    status39: Option;
+    priority39: Integer;
+    category39: Code[10];
+    result39: Boolean;
+    counter39: Integer;
+begin
+    result39 := false;
+    counter39 := 0;
+
+    if Input39 in ['A'..'F'] then begin
+        result39 := true;
+        counter39 += 1;
+    end;
+
+    case Input39 of
+        [Status::Open, Status::Released]:
+            begin
+                counter39 += 10;
+                result39 := true;
+            end;
+    end;
+
+    while (counter39 < 100) and (Input39 in [Status::Open, Status::Released, Status::Pending]) do begin
+        counter39 += 1;
+        if counter39 > 50 then
+            result39 := false;
+    end;
+
+
+    exit(result39);
+end;
+
+procedure ValidateSetLiterals40(Input40: Integer): Boolean
+var
+    status40: Option;
+    priority40: Integer;
+    category40: Code[10];
+    result40: Boolean;
+    counter40: Integer;
+begin
+    result40 := false;
+    counter40 := 0;
+
+    if Input40 in [Status::Open, Status::Released] then begin
+        result40 := true;
+        counter40 += 1;
+    end;
+
+    case Input40 of
+        [Status::Open, Status::Released, Status::Pending]:
+            begin
+                counter40 += 10;
+                result40 := true;
+            end;
+    end;
+
+    while (counter40 < 100) and (Input40 in [Status::Open, Status::Released, Status::Pending, Status::Closed]) do begin
+        counter40 += 1;
+        if counter40 > 50 then
+            result40 := false;
+    end;
+
+
+    exit(result40);
+end;
+
+procedure ValidateSetLiterals41(Input41: Integer): Boolean
+var
+    status41: Option;
+    priority41: Integer;
+    category41: Code[10];
+    result41: Boolean;
+    counter41: Integer;
+begin
+    result41 := false;
+    counter41 := 0;
+
+    if Input41 in [Status::Open, Status::Released, Status::Pending] then begin
+        result41 := true;
+        counter41 += 1;
+    end;
+
+    case Input41 of
+        [Status::Open, Status::Released, Status::Pending, Status::Closed]:
+            begin
+                counter41 += 10;
+                result41 := true;
+            end;
+    end;
+
+    while (counter41 < 100) and (Input41 in [Status::Open, Status::Released]) do begin
+        counter41 += 1;
+        if counter41 > 50 then
+            result41 := false;
+    end;
+
+
+    exit(result41);
+end;
+
+procedure ValidateSetLiterals42(Input42: Integer): Boolean
+var
+    status42: Option;
+    priority42: Integer;
+    category42: Code[10];
+    result42: Boolean;
+    counter42: Integer;
+begin
+    result42 := false;
+    counter42 := 0;
+
+    if Input42 in [Status::Open, Status::Released, Status::Pending, Status::Closed] then begin
+        result42 := true;
+        counter42 += 1;
+    end;
+
+    case Input42 of
+        [Status::Open, Status::Released]:
+            begin
+                counter42 += 10;
+                result42 := true;
+            end;
+    end;
+
+    while (counter42 < 100) and (Input42 in [20..44]) do begin
+        counter42 += 1;
+        if counter42 > 50 then
+            result42 := false;
+    end;
+
+
+    exit(result42);
+end;
+
+procedure ValidateSetLiterals43(Input43: Integer): Boolean
+var
+    status43: Option;
+    priority43: Integer;
+    category43: Code[10];
+    result43: Boolean;
+    counter43: Integer;
+begin
+    result43 := false;
+    counter43 := 0;
+
+    if Input43 in [Status::Open, Status::Released] then begin
+        result43 := true;
+        counter43 += 1;
+    end;
+
+    case Input43 of
+        [30..47]:
+            begin
+                counter43 += 10;
+                result43 := true;
+            end;
+    end;
+
+    while (counter43 < 100) and (Input43 in [30..54]) do begin
+        counter43 += 1;
+        if counter43 > 50 then
+            result43 := false;
+    end;
+
+
+    exit(result43);
+end;
+
+procedure ValidateSetLiterals44(Input44: Integer): Boolean
+var
+    status44: Option;
+    priority44: Integer;
+    category44: Code[10];
+    result44: Boolean;
+    counter44: Integer;
+begin
+    result44 := false;
+    counter44 := 0;
+
+    if Input44 in [40..50] then begin
+        result44 := true;
+        counter44 += 1;
+    end;
+
+    case Input44 of
+        [40..57]:
+            begin
+                counter44 += 10;
+                result44 := true;
+            end;
+    end;
+
+    while (counter44 < 100) and (Input44 in [40..64]) do begin
+        counter44 += 1;
+        if counter44 > 50 then
+            result44 := false;
+    end;
+
+
+    exit(result44);
+end;
+
+procedure ValidateSetLiterals45(Input45: Integer): Boolean
+var
+    status45: Option;
+    priority45: Integer;
+    category45: Code[10];
+    result45: Boolean;
+    counter45: Integer;
+begin
+    result45 := false;
+    counter45 := 0;
+
+    if Input45 in [50..60] then begin
+        result45 := true;
+        counter45 += 1;
+    end;
+
+    case Input45 of
+        [50..67]:
+            begin
+                counter45 += 10;
+                result45 := true;
+            end;
+    end;
+
+    while (counter45 < 100) and (Input45 in [7, 25..35, 92]) do begin
+        counter45 += 1;
+        if counter45 > 50 then
+            result45 := false;
+    end;
+
+
+    exit(result45);
+end;
+
+procedure ValidateSetLiterals46(Input46: Integer): Boolean
+var
+    status46: Option;
+    priority46: Integer;
+    category46: Code[10];
+    result46: Boolean;
+    counter46: Integer;
+begin
+    result46 := false;
+    counter46 := 0;
+
+    if Input46 in [60..70] then begin
+        result46 := true;
+        counter46 += 1;
+    end;
+
+    case Input46 of
+        [7, 30..40, 91]:
+            begin
+                counter46 += 10;
+                result46 := true;
+            end;
+    end;
+
+    while (counter46 < 100) and (Input46 in [8, 30..40, 92]) do begin
+        counter46 += 1;
+        if counter46 > 50 then
+            result46 := false;
+    end;
+
+
+    exit(result46);
+end;
+
+procedure ValidateSetLiterals47(Input47: Integer): Boolean
+var
+    status47: Option;
+    priority47: Integer;
+    category47: Code[10];
+    result47: Boolean;
+    counter47: Integer;
+begin
+    result47 := false;
+    counter47 := 0;
+
+    if Input47 in [7, 35..45, 90] then begin
+        result47 := true;
+        counter47 += 1;
+    end;
+
+    case Input47 of
+        [8, 35..45, 91]:
+            begin
+                counter47 += 10;
+                result47 := true;
+            end;
+    end;
+
+    while (counter47 < 100) and (Input47 in ['A'..'F']) do begin
+        counter47 += 1;
+        if counter47 > 50 then
+            result47 := false;
+    end;
+
+
+    exit(result47);
+end;
+
+procedure ValidateSetLiterals48(Input48: Integer): Boolean
+var
+    status48: Option;
+    priority48: Integer;
+    category48: Code[10];
+    result48: Boolean;
+    counter48: Integer;
+begin
+    result48 := false;
+    counter48 := 0;
+
+    if Input48 in [8, 40..50, 90] then begin
+        result48 := true;
+        counter48 += 1;
+    end;
+
+    case Input48 of
+        ['A'..'Z']:
+            begin
+                counter48 += 10;
+                result48 := true;
+            end;
+    end;
+
+    while (counter48 < 100) and (Input48 in [Status::Open, Status::Released]) do begin
+        counter48 += 1;
+        if counter48 > 50 then
+            result48 := false;
+    end;
+
+
+    exit(result48);
+end;
+
+procedure ValidateSetLiterals49(Input49: Integer): Boolean
+var
+    status49: Option;
+    priority49: Integer;
+    category49: Code[10];
+    result49: Boolean;
+    counter49: Integer;
+begin
+    result49 := false;
+    counter49 := 0;
+
+    if Input49 in ['a'..'z'] then begin
+        result49 := true;
+        counter49 += 1;
+    end;
+
+    case Input49 of
+        [Status::Open, Status::Released]:
+            begin
+                counter49 += 10;
+                result49 := true;
+            end;
+    end;
+
+    while (counter49 < 100) and (Input49 in [Status::Open, Status::Released, Status::Pending]) do begin
+        counter49 += 1;
+        if counter49 > 50 then
+            result49 := false;
+    end;
+
+
+    exit(result49);
+end;
+
+procedure ValidateSetLiterals50(Input50: Integer): Boolean
+var
+    status50: Option;
+    priority50: Integer;
+    category50: Code[10];
+    result50: Boolean;
+    counter50: Integer;
+begin
+    result50 := false;
+    counter50 := 0;
+
+    if Input50 in [Status::Open, Status::Released] then begin
+        result50 := true;
+        counter50 += 1;
+    end;
+
+    case Input50 of
+        [Status::Open, Status::Released, Status::Pending]:
+            begin
+                counter50 += 10;
+                result50 := true;
+            end;
+    end;
+
+    while (counter50 < 100) and (Input50 in [Status::Open, Status::Released, Status::Pending, Status::Closed]) do begin
+        counter50 += 1;
+        if counter50 > 50 then
+            result50 := false;
+    end;
+
+
+    exit(result50);
+end;
+
+procedure ValidateSetLiterals51(Input51: Integer): Boolean
+var
+    status51: Option;
+    priority51: Integer;
+    category51: Code[10];
+    result51: Boolean;
+    counter51: Integer;
+begin
+    result51 := false;
+    counter51 := 0;
+
+    if Input51 in [Status::Open, Status::Released, Status::Pending] then begin
+        result51 := true;
+        counter51 += 1;
+    end;
+
+    case Input51 of
+        [Status::Open, Status::Released, Status::Pending, Status::Closed]:
+            begin
+                counter51 += 10;
+                result51 := true;
+            end;
+    end;
+
+    while (counter51 < 100) and (Input51 in [Status::Open, Status::Released]) do begin
+        counter51 += 1;
+        if counter51 > 50 then
+            result51 := false;
+    end;
+
+
+    exit(result51);
+end;
+
+procedure ValidateSetLiterals52(Input52: Integer): Boolean
+var
+    status52: Option;
+    priority52: Integer;
+    category52: Code[10];
+    result52: Boolean;
+    counter52: Integer;
+begin
+    result52 := false;
+    counter52 := 0;
+
+    if Input52 in [Status::Open, Status::Released, Status::Pending, Status::Closed] then begin
+        result52 := true;
+        counter52 += 1;
+    end;
+
+    case Input52 of
+        [Status::Open, Status::Released]:
+            begin
+                counter52 += 10;
+                result52 := true;
+            end;
+    end;
+
+    while (counter52 < 100) and (Input52 in [20..44]) do begin
+        counter52 += 1;
+        if counter52 > 50 then
+            result52 := false;
+    end;
+
+
+    exit(result52);
+end;
+
+procedure ValidateSetLiterals53(Input53: Integer): Boolean
+var
+    status53: Option;
+    priority53: Integer;
+    category53: Code[10];
+    result53: Boolean;
+    counter53: Integer;
+begin
+    result53 := false;
+    counter53 := 0;
+
+    if Input53 in [Status::Open, Status::Released] then begin
+        result53 := true;
+        counter53 += 1;
+    end;
+
+    case Input53 of
+        [30..47]:
+            begin
+                counter53 += 10;
+                result53 := true;
+            end;
+    end;
+
+    while (counter53 < 100) and (Input53 in [30..54]) do begin
+        counter53 += 1;
+        if counter53 > 50 then
+            result53 := false;
+    end;
+
+
+    exit(result53);
+end;
+
+procedure ValidateSetLiterals54(Input54: Integer): Boolean
+var
+    status54: Option;
+    priority54: Integer;
+    category54: Code[10];
+    result54: Boolean;
+    counter54: Integer;
+begin
+    result54 := false;
+    counter54 := 0;
+
+    if Input54 in [40..50] then begin
+        result54 := true;
+        counter54 += 1;
+    end;
+
+    case Input54 of
+        [40..57]:
+            begin
+                counter54 += 10;
+                result54 := true;
+            end;
+    end;
+
+    while (counter54 < 100) and (Input54 in [40..64]) do begin
+        counter54 += 1;
+        if counter54 > 50 then
+            result54 := false;
+    end;
+
+
+    exit(result54);
+end;
+
+procedure ValidateSetLiterals55(Input55: Integer): Boolean
+var
+    status55: Option;
+    priority55: Integer;
+    category55: Code[10];
+    result55: Boolean;
+    counter55: Integer;
+begin
+    result55 := false;
+    counter55 := 0;
+
+    if Input55 in [50..60] then begin
+        result55 := true;
+        counter55 += 1;
+    end;
+
+    case Input55 of
+        [50..67]:
+            begin
+                counter55 += 10;
+                result55 := true;
+            end;
+    end;
+
+    while (counter55 < 100) and (Input55 in [7, 25..35, 92]) do begin
+        counter55 += 1;
+        if counter55 > 50 then
+            result55 := false;
+    end;
+
+
+    exit(result55);
+end;
+
+procedure ValidateSetLiterals56(Input56: Integer): Boolean
+var
+    status56: Option;
+    priority56: Integer;
+    category56: Code[10];
+    result56: Boolean;
+    counter56: Integer;
+begin
+    result56 := false;
+    counter56 := 0;
+
+    if Input56 in [60..70] then begin
+        result56 := true;
+        counter56 += 1;
+    end;
+
+    case Input56 of
+        [7, 30..40, 91]:
+            begin
+                counter56 += 10;
+                result56 := true;
+            end;
+    end;
+
+    while (counter56 < 100) and (Input56 in [8, 30..40, 92]) do begin
+        counter56 += 1;
+        if counter56 > 50 then
+            result56 := false;
+    end;
+
+
+    exit(result56);
+end;
+
+procedure ValidateSetLiterals57(Input57: Integer): Boolean
+var
+    status57: Option;
+    priority57: Integer;
+    category57: Code[10];
+    result57: Boolean;
+    counter57: Integer;
+begin
+    result57 := false;
+    counter57 := 0;
+
+    if Input57 in [7, 35..45, 90] then begin
+        result57 := true;
+        counter57 += 1;
+    end;
+
+    case Input57 of
+        [8, 35..45, 91]:
+            begin
+                counter57 += 10;
+                result57 := true;
+            end;
+    end;
+
+    while (counter57 < 100) and (Input57 in ['a'..'z']) do begin
+        counter57 += 1;
+        if counter57 > 50 then
+            result57 := false;
+    end;
+
+
+    exit(result57);
+end;
+
+procedure ValidateSetLiterals58(Input58: Integer): Boolean
+var
+    status58: Option;
+    priority58: Integer;
+    category58: Code[10];
+    result58: Boolean;
+    counter58: Integer;
+begin
+    result58 := false;
+    counter58 := 0;
+
+    if Input58 in [8, 40..50, 90] then begin
+        result58 := true;
+        counter58 += 1;
+    end;
+
+    case Input58 of
+        ['0'..'9']:
+            begin
+                counter58 += 10;
+                result58 := true;
+            end;
+    end;
+
+    while (counter58 < 100) and (Input58 in [Status::Open, Status::Released]) do begin
+        counter58 += 1;
+        if counter58 > 50 then
+            result58 := false;
+    end;
+
+
+    exit(result58);
+end;
+
+procedure ValidateSetLiterals59(Input59: Integer): Boolean
+var
+    status59: Option;
+    priority59: Integer;
+    category59: Code[10];
+    result59: Boolean;
+    counter59: Integer;
+begin
+    result59 := false;
+    counter59 := 0;
+
+    if Input59 in ['A'..'F'] then begin
+        result59 := true;
+        counter59 += 1;
+    end;
+
+    case Input59 of
+        [Status::Open, Status::Released]:
+            begin
+                counter59 += 10;
+                result59 := true;
+            end;
+    end;
+
+    while (counter59 < 100) and (Input59 in [Status::Open, Status::Released, Status::Pending]) do begin
+        counter59 += 1;
+        if counter59 > 50 then
+            result59 := false;
+    end;
+
+
+    exit(result59);
+end;
+
+procedure ValidateSetLiterals60(Input60: Integer): Boolean
+var
+    status60: Option;
+    priority60: Integer;
+    category60: Code[10];
+    result60: Boolean;
+    counter60: Integer;
+begin
+    result60 := false;
+    counter60 := 0;
+
+    if Input60 in [Status::Open, Status::Released] then begin
+        result60 := true;
+        counter60 += 1;
+    end;
+
+    case Input60 of
+        [Status::Open, Status::Released, Status::Pending]:
+            begin
+                counter60 += 10;
+                result60 := true;
+            end;
+    end;
+
+    while (counter60 < 100) and (Input60 in [Status::Open, Status::Released, Status::Pending, Status::Closed]) do begin
+        counter60 += 1;
+        if counter60 > 50 then
+            result60 := false;
+    end;
+
+
+    exit(result60);
+end;
+
+procedure ValidateSetLiterals61(Input61: Integer): Boolean
+var
+    status61: Option;
+    priority61: Integer;
+    category61: Code[10];
+    result61: Boolean;
+    counter61: Integer;
+begin
+    result61 := false;
+    counter61 := 0;
+
+    if Input61 in [Status::Open, Status::Released, Status::Pending] then begin
+        result61 := true;
+        counter61 += 1;
+    end;
+
+    case Input61 of
+        [Status::Open, Status::Released, Status::Pending, Status::Closed]:
+            begin
+                counter61 += 10;
+                result61 := true;
+            end;
+    end;
+
+    while (counter61 < 100) and (Input61 in [Status::Open, Status::Released]) do begin
+        counter61 += 1;
+        if counter61 > 50 then
+            result61 := false;
+    end;
+
+
+    exit(result61);
+end;
+
+procedure ValidateSetLiterals62(Input62: Integer): Boolean
+var
+    status62: Option;
+    priority62: Integer;
+    category62: Code[10];
+    result62: Boolean;
+    counter62: Integer;
+begin
+    result62 := false;
+    counter62 := 0;
+
+    if Input62 in [Status::Open, Status::Released, Status::Pending, Status::Closed] then begin
+        result62 := true;
+        counter62 += 1;
+    end;
+
+    case Input62 of
+        [Status::Open, Status::Released]:
+            begin
+                counter62 += 10;
+                result62 := true;
+            end;
+    end;
+
+    while (counter62 < 100) and (Input62 in [20..44]) do begin
+        counter62 += 1;
+        if counter62 > 50 then
+            result62 := false;
+    end;
+
+
+    exit(result62);
+end;
+
+procedure ValidateSetLiterals63(Input63: Integer): Boolean
+var
+    status63: Option;
+    priority63: Integer;
+    category63: Code[10];
+    result63: Boolean;
+    counter63: Integer;
+begin
+    result63 := false;
+    counter63 := 0;
+
+    if Input63 in [Status::Open, Status::Released] then begin
+        result63 := true;
+        counter63 += 1;
+    end;
+
+    case Input63 of
+        [30..47]:
+            begin
+                counter63 += 10;
+                result63 := true;
+            end;
+    end;
+
+    while (counter63 < 100) and (Input63 in [30..54]) do begin
+        counter63 += 1;
+        if counter63 > 50 then
+            result63 := false;
+    end;
+
+
+    exit(result63);
+end;
+
+procedure ValidateSetLiterals64(Input64: Integer): Boolean
+var
+    status64: Option;
+    priority64: Integer;
+    category64: Code[10];
+    result64: Boolean;
+    counter64: Integer;
+begin
+    result64 := false;
+    counter64 := 0;
+
+    if Input64 in [40..50] then begin
+        result64 := true;
+        counter64 += 1;
+    end;
+
+    case Input64 of
+        [40..57]:
+            begin
+                counter64 += 10;
+                result64 := true;
+            end;
+    end;
+
+    while (counter64 < 100) and (Input64 in [40..64]) do begin
+        counter64 += 1;
+        if counter64 > 50 then
+            result64 := false;
+    end;
+
+
+    exit(result64);
+end;
+
+procedure ValidateSetLiterals65(Input65: Integer): Boolean
+var
+    status65: Option;
+    priority65: Integer;
+    category65: Code[10];
+    result65: Boolean;
+    counter65: Integer;
+begin
+    result65 := false;
+    counter65 := 0;
+
+    if Input65 in [50..60] then begin
+        result65 := true;
+        counter65 += 1;
+    end;
+
+    case Input65 of
+        [50..67]:
+            begin
+                counter65 += 10;
+                result65 := true;
+            end;
+    end;
+
+    while (counter65 < 100) and (Input65 in [7, 25..35, 92]) do begin
+        counter65 += 1;
+        if counter65 > 50 then
+            result65 := false;
+    end;
+
+
+    exit(result65);
+end;
+
+procedure ValidateSetLiterals66(Input66: Integer): Boolean
+var
+    status66: Option;
+    priority66: Integer;
+    category66: Code[10];
+    result66: Boolean;
+    counter66: Integer;
+begin
+    result66 := false;
+    counter66 := 0;
+
+    if Input66 in [60..70] then begin
+        result66 := true;
+        counter66 += 1;
+    end;
+
+    case Input66 of
+        [7, 30..40, 91]:
+            begin
+                counter66 += 10;
+                result66 := true;
+            end;
+    end;
+
+    while (counter66 < 100) and (Input66 in [8, 30..40, 92]) do begin
+        counter66 += 1;
+        if counter66 > 50 then
+            result66 := false;
+    end;
+
+
+    exit(result66);
+end;
+
+procedure ValidateSetLiterals67(Input67: Integer): Boolean
+var
+    status67: Option;
+    priority67: Integer;
+    category67: Code[10];
+    result67: Boolean;
+    counter67: Integer;
+begin
+    result67 := false;
+    counter67 := 0;
+
+    if Input67 in [7, 35..45, 90] then begin
+        result67 := true;
+        counter67 += 1;
+    end;
+
+    case Input67 of
+        [8, 35..45, 91]:
+            begin
+                counter67 += 10;
+                result67 := true;
+            end;
+    end;
+
+    while (counter67 < 100) and (Input67 in ['A'..'F']) do begin
+        counter67 += 1;
+        if counter67 > 50 then
+            result67 := false;
+    end;
+
+
+    exit(result67);
+end;
+
+procedure ValidateSetLiterals68(Input68: Integer): Boolean
+var
+    status68: Option;
+    priority68: Integer;
+    category68: Code[10];
+    result68: Boolean;
+    counter68: Integer;
+begin
+    result68 := false;
+    counter68 := 0;
+
+    if Input68 in [8, 40..50, 90] then begin
+        result68 := true;
+        counter68 += 1;
+    end;
+
+    case Input68 of
+        ['A'..'Z']:
+            begin
+                counter68 += 10;
+                result68 := true;
+            end;
+    end;
+
+    while (counter68 < 100) and (Input68 in [Status::Open, Status::Released]) do begin
+        counter68 += 1;
+        if counter68 > 50 then
+            result68 := false;
+    end;
+
+
+    exit(result68);
+end;
+
+procedure ValidateSetLiterals69(Input69: Integer): Boolean
+var
+    status69: Option;
+    priority69: Integer;
+    category69: Code[10];
+    result69: Boolean;
+    counter69: Integer;
+begin
+    result69 := false;
+    counter69 := 0;
+
+    if Input69 in ['a'..'z'] then begin
+        result69 := true;
+        counter69 += 1;
+    end;
+
+    case Input69 of
+        [Status::Open, Status::Released]:
+            begin
+                counter69 += 10;
+                result69 := true;
+            end;
+    end;
+
+    while (counter69 < 100) and (Input69 in [Status::Open, Status::Released, Status::Pending]) do begin
+        counter69 += 1;
+        if counter69 > 50 then
+            result69 := false;
+    end;
+
+
+    exit(result69);
+end;
+
+procedure ValidateSetLiterals70(Input70: Integer): Boolean
+var
+    status70: Option;
+    priority70: Integer;
+    category70: Code[10];
+    result70: Boolean;
+    counter70: Integer;
+begin
+    result70 := false;
+    counter70 := 0;
+
+    if Input70 in [Status::Open, Status::Released] then begin
+        result70 := true;
+        counter70 += 1;
+    end;
+
+    case Input70 of
+        [Status::Open, Status::Released, Status::Pending]:
+            begin
+                counter70 += 10;
+                result70 := true;
+            end;
+    end;
+
+    while (counter70 < 100) and (Input70 in [Status::Open, Status::Released, Status::Pending, Status::Closed]) do begin
+        counter70 += 1;
+        if counter70 > 50 then
+            result70 := false;
+    end;
+
+
+    exit(result70);
+end;
+
+procedure ValidateSetLiterals71(Input71: Integer): Boolean
+var
+    status71: Option;
+    priority71: Integer;
+    category71: Code[10];
+    result71: Boolean;
+    counter71: Integer;
+begin
+    result71 := false;
+    counter71 := 0;
+
+    if Input71 in [Status::Open, Status::Released, Status::Pending] then begin
+        result71 := true;
+        counter71 += 1;
+    end;
+
+    case Input71 of
+        [Status::Open, Status::Released, Status::Pending, Status::Closed]:
+            begin
+                counter71 += 10;
+                result71 := true;
+            end;
+    end;
+
+    while (counter71 < 100) and (Input71 in [Status::Open, Status::Released]) do begin
+        counter71 += 1;
+        if counter71 > 50 then
+            result71 := false;
+    end;
+
+
+    exit(result71);
+end;
+
+procedure ValidateSetLiterals72(Input72: Integer): Boolean
+var
+    status72: Option;
+    priority72: Integer;
+    category72: Code[10];
+    result72: Boolean;
+    counter72: Integer;
+begin
+    result72 := false;
+    counter72 := 0;
+
+    if Input72 in [Status::Open, Status::Released, Status::Pending, Status::Closed] then begin
+        result72 := true;
+        counter72 += 1;
+    end;
+
+    case Input72 of
+        [Status::Open, Status::Released]:
+            begin
+                counter72 += 10;
+                result72 := true;
+            end;
+    end;
+
+    while (counter72 < 100) and (Input72 in [20..44]) do begin
+        counter72 += 1;
+        if counter72 > 50 then
+            result72 := false;
+    end;
+
+
+    exit(result72);
+end;
+
+procedure ValidateSetLiterals73(Input73: Integer): Boolean
+var
+    status73: Option;
+    priority73: Integer;
+    category73: Code[10];
+    result73: Boolean;
+    counter73: Integer;
+begin
+    result73 := false;
+    counter73 := 0;
+
+    if Input73 in [Status::Open, Status::Released] then begin
+        result73 := true;
+        counter73 += 1;
+    end;
+
+    case Input73 of
+        [30..47]:
+            begin
+                counter73 += 10;
+                result73 := true;
+            end;
+    end;
+
+    while (counter73 < 100) and (Input73 in [30..54]) do begin
+        counter73 += 1;
+        if counter73 > 50 then
+            result73 := false;
+    end;
+
+
+    exit(result73);
+end;
+
+procedure ValidateSetLiterals74(Input74: Integer): Boolean
+var
+    status74: Option;
+    priority74: Integer;
+    category74: Code[10];
+    result74: Boolean;
+    counter74: Integer;
+begin
+    result74 := false;
+    counter74 := 0;
+
+    if Input74 in [40..50] then begin
+        result74 := true;
+        counter74 += 1;
+    end;
+
+    case Input74 of
+        [40..57]:
+            begin
+                counter74 += 10;
+                result74 := true;
+            end;
+    end;
+
+    while (counter74 < 100) and (Input74 in [40..64]) do begin
+        counter74 += 1;
+        if counter74 > 50 then
+            result74 := false;
+    end;
+
+
+    exit(result74);
+end;
+
+procedure ValidateSetLiterals75(Input75: Integer): Boolean
+var
+    status75: Option;
+    priority75: Integer;
+    category75: Code[10];
+    result75: Boolean;
+    counter75: Integer;
+begin
+    result75 := false;
+    counter75 := 0;
+
+    if Input75 in [50..60] then begin
+        result75 := true;
+        counter75 += 1;
+    end;
+
+    case Input75 of
+        [50..67]:
+            begin
+                counter75 += 10;
+                result75 := true;
+            end;
+    end;
+
+    while (counter75 < 100) and (Input75 in [7, 25..35, 92]) do begin
+        counter75 += 1;
+        if counter75 > 50 then
+            result75 := false;
+    end;
+
+
+    exit(result75);
+end;
+
+procedure ValidateSetLiterals76(Input76: Integer): Boolean
+var
+    status76: Option;
+    priority76: Integer;
+    category76: Code[10];
+    result76: Boolean;
+    counter76: Integer;
+begin
+    result76 := false;
+    counter76 := 0;
+
+    if Input76 in [60..70] then begin
+        result76 := true;
+        counter76 += 1;
+    end;
+
+    case Input76 of
+        [7, 30..40, 91]:
+            begin
+                counter76 += 10;
+                result76 := true;
+            end;
+    end;
+
+    while (counter76 < 100) and (Input76 in [8, 30..40, 92]) do begin
+        counter76 += 1;
+        if counter76 > 50 then
+            result76 := false;
+    end;
+
+
+    exit(result76);
+end;
+
+procedure ValidateSetLiterals77(Input77: Integer): Boolean
+var
+    status77: Option;
+    priority77: Integer;
+    category77: Code[10];
+    result77: Boolean;
+    counter77: Integer;
+begin
+    result77 := false;
+    counter77 := 0;
+
+    if Input77 in [7, 35..45, 90] then begin
+        result77 := true;
+        counter77 += 1;
+    end;
+
+    case Input77 of
+        [8, 35..45, 91]:
+            begin
+                counter77 += 10;
+                result77 := true;
+            end;
+    end;
+
+    while (counter77 < 100) and (Input77 in ['a'..'z']) do begin
+        counter77 += 1;
+        if counter77 > 50 then
+            result77 := false;
+    end;
+
+
+    exit(result77);
+end;
+
+procedure ValidateSetLiterals78(Input78: Integer): Boolean
+var
+    status78: Option;
+    priority78: Integer;
+    category78: Code[10];
+    result78: Boolean;
+    counter78: Integer;
+begin
+    result78 := false;
+    counter78 := 0;
+
+    if Input78 in [8, 40..50, 90] then begin
+        result78 := true;
+        counter78 += 1;
+    end;
+
+    case Input78 of
+        ['0'..'9']:
+            begin
+                counter78 += 10;
+                result78 := true;
+            end;
+    end;
+
+    while (counter78 < 100) and (Input78 in [Status::Open, Status::Released]) do begin
+        counter78 += 1;
+        if counter78 > 50 then
+            result78 := false;
+    end;
+
+
+    exit(result78);
+end;
+
+procedure ValidateSetLiterals79(Input79: Integer): Boolean
+var
+    status79: Option;
+    priority79: Integer;
+    category79: Code[10];
+    result79: Boolean;
+    counter79: Integer;
+begin
+    result79 := false;
+    counter79 := 0;
+
+    if Input79 in ['A'..'F'] then begin
+        result79 := true;
+        counter79 += 1;
+    end;
+
+    case Input79 of
+        [Status::Open, Status::Released]:
+            begin
+                counter79 += 10;
+                result79 := true;
+            end;
+    end;
+
+    while (counter79 < 100) and (Input79 in [Status::Open, Status::Released, Status::Pending]) do begin
+        counter79 += 1;
+        if counter79 > 50 then
+            result79 := false;
+    end;
+
+
+    exit(result79);
+end;
+
+procedure ValidateSetLiterals80(Input80: Integer): Boolean
+var
+    status80: Option;
+    priority80: Integer;
+    category80: Code[10];
+    result80: Boolean;
+    counter80: Integer;
+begin
+    result80 := false;
+    counter80 := 0;
+
+    if Input80 in [Status::Open, Status::Released] then begin
+        result80 := true;
+        counter80 += 1;
+    end;
+
+    case Input80 of
+        [Status::Open, Status::Released, Status::Pending]:
+            begin
+                counter80 += 10;
+                result80 := true;
+            end;
+    end;
+
+    while (counter80 < 100) and (Input80 in [Status::Open, Status::Released, Status::Pending, Status::Closed]) do begin
+        counter80 += 1;
+        if counter80 > 50 then
+            result80 := false;
+    end;
+
+
+    exit(result80);
+end;
+
+procedure ValidateSetLiterals81(Input81: Integer): Boolean
+var
+    status81: Option;
+    priority81: Integer;
+    category81: Code[10];
+    result81: Boolean;
+    counter81: Integer;
+begin
+    result81 := false;
+    counter81 := 0;
+
+    if Input81 in [Status::Open, Status::Released, Status::Pending] then begin
+        result81 := true;
+        counter81 += 1;
+    end;
+
+    case Input81 of
+        [Status::Open, Status::Released, Status::Pending, Status::Closed]:
+            begin
+                counter81 += 10;
+                result81 := true;
+            end;
+    end;
+
+    while (counter81 < 100) and (Input81 in [Status::Open, Status::Released]) do begin
+        counter81 += 1;
+        if counter81 > 50 then
+            result81 := false;
+    end;
+
+
+    exit(result81);
+end;
+
+procedure ValidateSetLiterals82(Input82: Integer): Boolean
+var
+    status82: Option;
+    priority82: Integer;
+    category82: Code[10];
+    result82: Boolean;
+    counter82: Integer;
+begin
+    result82 := false;
+    counter82 := 0;
+
+    if Input82 in [Status::Open, Status::Released, Status::Pending, Status::Closed] then begin
+        result82 := true;
+        counter82 += 1;
+    end;
+
+    case Input82 of
+        [Status::Open, Status::Released]:
+            begin
+                counter82 += 10;
+                result82 := true;
+            end;
+    end;
+
+    while (counter82 < 100) and (Input82 in [20..44]) do begin
+        counter82 += 1;
+        if counter82 > 50 then
+            result82 := false;
+    end;
+
+
+    exit(result82);
+end;
+
+procedure ValidateSetLiterals83(Input83: Integer): Boolean
+var
+    status83: Option;
+    priority83: Integer;
+    category83: Code[10];
+    result83: Boolean;
+    counter83: Integer;
+begin
+    result83 := false;
+    counter83 := 0;
+
+    if Input83 in [Status::Open, Status::Released] then begin
+        result83 := true;
+        counter83 += 1;
+    end;
+
+    case Input83 of
+        [30..47]:
+            begin
+                counter83 += 10;
+                result83 := true;
+            end;
+    end;
+
+    while (counter83 < 100) and (Input83 in [30..54]) do begin
+        counter83 += 1;
+        if counter83 > 50 then
+            result83 := false;
+    end;
+
+
+    exit(result83);
+end;
+
+procedure ValidateSetLiterals84(Input84: Integer): Boolean
+var
+    status84: Option;
+    priority84: Integer;
+    category84: Code[10];
+    result84: Boolean;
+    counter84: Integer;
+begin
+    result84 := false;
+    counter84 := 0;
+
+    if Input84 in [40..50] then begin
+        result84 := true;
+        counter84 += 1;
+    end;
+
+    case Input84 of
+        [40..57]:
+            begin
+                counter84 += 10;
+                result84 := true;
+            end;
+    end;
+
+    while (counter84 < 100) and (Input84 in [40..64]) do begin
+        counter84 += 1;
+        if counter84 > 50 then
+            result84 := false;
+    end;
+
+
+    exit(result84);
+end;
+
+procedure ValidateSetLiterals85(Input85: Integer): Boolean
+var
+    status85: Option;
+    priority85: Integer;
+    category85: Code[10];
+    result85: Boolean;
+    counter85: Integer;
+begin
+    result85 := false;
+    counter85 := 0;
+
+    if Input85 in [50..60] then begin
+        result85 := true;
+        counter85 += 1;
+    end;
+
+    case Input85 of
+        [50..67]:
+            begin
+                counter85 += 10;
+                result85 := true;
+            end;
+    end;
+
+    while (counter85 < 100) and (Input85 in [7, 25..35, 92]) do begin
+        counter85 += 1;
+        if counter85 > 50 then
+            result85 := false;
+    end;
+
+
+    exit(result85);
+end;
+
+procedure ValidateSetLiterals86(Input86: Integer): Boolean
+var
+    status86: Option;
+    priority86: Integer;
+    category86: Code[10];
+    result86: Boolean;
+    counter86: Integer;
+begin
+    result86 := false;
+    counter86 := 0;
+
+    if Input86 in [60..70] then begin
+        result86 := true;
+        counter86 += 1;
+    end;
+
+    case Input86 of
+        [7, 30..40, 91]:
+            begin
+                counter86 += 10;
+                result86 := true;
+            end;
+    end;
+
+    while (counter86 < 100) and (Input86 in [8, 30..40, 92]) do begin
+        counter86 += 1;
+        if counter86 > 50 then
+            result86 := false;
+    end;
+
+
+    exit(result86);
+end;
+
+procedure ValidateSetLiterals87(Input87: Integer): Boolean
+var
+    status87: Option;
+    priority87: Integer;
+    category87: Code[10];
+    result87: Boolean;
+    counter87: Integer;
+begin
+    result87 := false;
+    counter87 := 0;
+
+    if Input87 in [7, 35..45, 90] then begin
+        result87 := true;
+        counter87 += 1;
+    end;
+
+    case Input87 of
+        [8, 35..45, 91]:
+            begin
+                counter87 += 10;
+                result87 := true;
+            end;
+    end;
+
+    while (counter87 < 100) and (Input87 in ['A'..'F']) do begin
+        counter87 += 1;
+        if counter87 > 50 then
+            result87 := false;
+    end;
+
+
+    exit(result87);
+end;
+
+procedure ValidateSetLiterals88(Input88: Integer): Boolean
+var
+    status88: Option;
+    priority88: Integer;
+    category88: Code[10];
+    result88: Boolean;
+    counter88: Integer;
+begin
+    result88 := false;
+    counter88 := 0;
+
+    if Input88 in [8, 40..50, 90] then begin
+        result88 := true;
+        counter88 += 1;
+    end;
+
+    case Input88 of
+        ['A'..'Z']:
+            begin
+                counter88 += 10;
+                result88 := true;
+            end;
+    end;
+
+    while (counter88 < 100) and (Input88 in [Status::Open, Status::Released]) do begin
+        counter88 += 1;
+        if counter88 > 50 then
+            result88 := false;
+    end;
+
+
+    exit(result88);
+end;
+
+procedure ValidateSetLiterals89(Input89: Integer): Boolean
+var
+    status89: Option;
+    priority89: Integer;
+    category89: Code[10];
+    result89: Boolean;
+    counter89: Integer;
+begin
+    result89 := false;
+    counter89 := 0;
+
+    if Input89 in ['a'..'z'] then begin
+        result89 := true;
+        counter89 += 1;
+    end;
+
+    case Input89 of
+        [Status::Open, Status::Released]:
+            begin
+                counter89 += 10;
+                result89 := true;
+            end;
+    end;
+
+    while (counter89 < 100) and (Input89 in [Status::Open, Status::Released, Status::Pending]) do begin
+        counter89 += 1;
+        if counter89 > 50 then
+            result89 := false;
+    end;
+
+
+    exit(result89);
+end;
+
+procedure ValidateSetLiterals90(Input90: Integer): Boolean
+var
+    status90: Option;
+    priority90: Integer;
+    category90: Code[10];
+    result90: Boolean;
+    counter90: Integer;
+begin
+    result90 := false;
+    counter90 := 0;
+
+    if Input90 in [Status::Open, Status::Released] then begin
+        result90 := true;
+        counter90 += 1;
+    end;
+
+    case Input90 of
+        [Status::Open, Status::Released, Status::Pending]:
+            begin
+                counter90 += 10;
+                result90 := true;
+            end;
+    end;
+
+    while (counter90 < 100) and (Input90 in [Status::Open, Status::Released, Status::Pending, Status::Closed]) do begin
+        counter90 += 1;
+        if counter90 > 50 then
+            result90 := false;
+    end;
+
+
+    exit(result90);
+end;
+
+procedure ValidateSetLiterals91(Input91: Integer): Boolean
+var
+    status91: Option;
+    priority91: Integer;
+    category91: Code[10];
+    result91: Boolean;
+    counter91: Integer;
+begin
+    result91 := false;
+    counter91 := 0;
+
+    if Input91 in [Status::Open, Status::Released, Status::Pending] then begin
+        result91 := true;
+        counter91 += 1;
+    end;
+
+    case Input91 of
+        [Status::Open, Status::Released, Status::Pending, Status::Closed]:
+            begin
+                counter91 += 10;
+                result91 := true;
+            end;
+    end;
+
+    while (counter91 < 100) and (Input91 in [Status::Open, Status::Released]) do begin
+        counter91 += 1;
+        if counter91 > 50 then
+            result91 := false;
+    end;
+
+
+    exit(result91);
+end;
+
+procedure ValidateSetLiterals92(Input92: Integer): Boolean
+var
+    status92: Option;
+    priority92: Integer;
+    category92: Code[10];
+    result92: Boolean;
+    counter92: Integer;
+begin
+    result92 := false;
+    counter92 := 0;
+
+    if Input92 in [Status::Open, Status::Released, Status::Pending, Status::Closed] then begin
+        result92 := true;
+        counter92 += 1;
+    end;
+
+    case Input92 of
+        [Status::Open, Status::Released]:
+            begin
+                counter92 += 10;
+                result92 := true;
+            end;
+    end;
+
+    while (counter92 < 100) and (Input92 in [20..44]) do begin
+        counter92 += 1;
+        if counter92 > 50 then
+            result92 := false;
+    end;
+
+
+    exit(result92);
+end;
+
+procedure ValidateSetLiterals93(Input93: Integer): Boolean
+var
+    status93: Option;
+    priority93: Integer;
+    category93: Code[10];
+    result93: Boolean;
+    counter93: Integer;
+begin
+    result93 := false;
+    counter93 := 0;
+
+    if Input93 in [Status::Open, Status::Released] then begin
+        result93 := true;
+        counter93 += 1;
+    end;
+
+    case Input93 of
+        [30..47]:
+            begin
+                counter93 += 10;
+                result93 := true;
+            end;
+    end;
+
+    while (counter93 < 100) and (Input93 in [30..54]) do begin
+        counter93 += 1;
+        if counter93 > 50 then
+            result93 := false;
+    end;
+
+
+    exit(result93);
+end;
+
+procedure ValidateSetLiterals94(Input94: Integer): Boolean
+var
+    status94: Option;
+    priority94: Integer;
+    category94: Code[10];
+    result94: Boolean;
+    counter94: Integer;
+begin
+    result94 := false;
+    counter94 := 0;
+
+    if Input94 in [40..50] then begin
+        result94 := true;
+        counter94 += 1;
+    end;
+
+    case Input94 of
+        [40..57]:
+            begin
+                counter94 += 10;
+                result94 := true;
+            end;
+    end;
+
+    while (counter94 < 100) and (Input94 in [40..64]) do begin
+        counter94 += 1;
+        if counter94 > 50 then
+            result94 := false;
+    end;
+
+
+    exit(result94);
+end;
+
+procedure ValidateSetLiterals95(Input95: Integer): Boolean
+var
+    status95: Option;
+    priority95: Integer;
+    category95: Code[10];
+    result95: Boolean;
+    counter95: Integer;
+begin
+    result95 := false;
+    counter95 := 0;
+
+    if Input95 in [50..60] then begin
+        result95 := true;
+        counter95 += 1;
+    end;
+
+    case Input95 of
+        [50..67]:
+            begin
+                counter95 += 10;
+                result95 := true;
+            end;
+    end;
+
+    while (counter95 < 100) and (Input95 in [7, 25..35, 92]) do begin
+        counter95 += 1;
+        if counter95 > 50 then
+            result95 := false;
+    end;
+
+
+    exit(result95);
+end;
+
+procedure ValidateSetLiterals96(Input96: Integer): Boolean
+var
+    status96: Option;
+    priority96: Integer;
+    category96: Code[10];
+    result96: Boolean;
+    counter96: Integer;
+begin
+    result96 := false;
+    counter96 := 0;
+
+    if Input96 in [60..70] then begin
+        result96 := true;
+        counter96 += 1;
+    end;
+
+    case Input96 of
+        [7, 30..40, 91]:
+            begin
+                counter96 += 10;
+                result96 := true;
+            end;
+    end;
+
+    while (counter96 < 100) and (Input96 in [8, 30..40, 92]) do begin
+        counter96 += 1;
+        if counter96 > 50 then
+            result96 := false;
+    end;
+
+
+    exit(result96);
+end;
+
+procedure ValidateSetLiterals97(Input97: Integer): Boolean
+var
+    status97: Option;
+    priority97: Integer;
+    category97: Code[10];
+    result97: Boolean;
+    counter97: Integer;
+begin
+    result97 := false;
+    counter97 := 0;
+
+    if Input97 in [7, 35..45, 90] then begin
+        result97 := true;
+        counter97 += 1;
+    end;
+
+    case Input97 of
+        [8, 35..45, 91]:
+            begin
+                counter97 += 10;
+                result97 := true;
+            end;
+    end;
+
+    while (counter97 < 100) and (Input97 in ['a'..'z']) do begin
+        counter97 += 1;
+        if counter97 > 50 then
+            result97 := false;
+    end;
+
+
+    exit(result97);
+end;
+
+procedure ValidateSetLiterals98(Input98: Integer): Boolean
+var
+    status98: Option;
+    priority98: Integer;
+    category98: Code[10];
+    result98: Boolean;
+    counter98: Integer;
+begin
+    result98 := false;
+    counter98 := 0;
+
+    if Input98 in [8, 40..50, 90] then begin
+        result98 := true;
+        counter98 += 1;
+    end;
+
+    case Input98 of
+        ['0'..'9']:
+            begin
+                counter98 += 10;
+                result98 := true;
+            end;
+    end;
+
+    while (counter98 < 100) and (Input98 in [Status::Open, Status::Released]) do begin
+        counter98 += 1;
+        if counter98 > 50 then
+            result98 := false;
+    end;
+
+
+    exit(result98);
+end;
+
+procedure ValidateSetLiterals99(Input99: Integer): Boolean
+var
+    status99: Option;
+    priority99: Integer;
+    category99: Code[10];
+    result99: Boolean;
+    counter99: Integer;
+begin
+    result99 := false;
+    counter99 := 0;
+
+    if Input99 in ['A'..'F'] then begin
+        result99 := true;
+        counter99 += 1;
+    end;
+
+    case Input99 of
+        [Status::Open, Status::Released]:
+            begin
+                counter99 += 10;
+                result99 := true;
+            end;
+    end;
+
+    while (counter99 < 100) and (Input99 in [Status::Open, Status::Released, Status::Pending]) do begin
+        counter99 += 1;
+        if counter99 > 50 then
+            result99 := false;
+    end;
+
+
+    exit(result99);
+end;
+
+procedure ValidateSetLiterals100(Input100: Integer): Boolean
+var
+    status100: Option;
+    priority100: Integer;
+    category100: Code[10];
+    result100: Boolean;
+    counter100: Integer;
+begin
+    result100 := false;
+    counter100 := 0;
+
+    if Input100 in [Status::Open, Status::Released] then begin
+        result100 := true;
+        counter100 += 1;
+    end;
+
+    case Input100 of
+        [Status::Open, Status::Released, Status::Pending]:
+            begin
+                counter100 += 10;
+                result100 := true;
+            end;
+    end;
+
+    while (counter100 < 100) and (Input100 in [Status::Open, Status::Released, Status::Pending, Status::Closed]) do begin
+        counter100 += 1;
+        if counter100 > 50 then
+            result100 := false;
+    end;
+
+
+    exit(result100);
+end;
+
+procedure ValidateSetLiterals101(Input101: Integer): Boolean
+var
+    status101: Option;
+    priority101: Integer;
+    category101: Code[10];
+    result101: Boolean;
+    counter101: Integer;
+begin
+    result101 := false;
+    counter101 := 0;
+
+    if Input101 in [Status::Open, Status::Released, Status::Pending] then begin
+        result101 := true;
+        counter101 += 1;
+    end;
+
+    case Input101 of
+        [Status::Open, Status::Released, Status::Pending, Status::Closed]:
+            begin
+                counter101 += 10;
+                result101 := true;
+            end;
+    end;
+
+    while (counter101 < 100) and (Input101 in [Status::Open, Status::Released]) do begin
+        counter101 += 1;
+        if counter101 > 50 then
+            result101 := false;
+    end;
+
+
+    exit(result101);
+end;
+
+procedure ValidateSetLiterals102(Input102: Integer): Boolean
+var
+    status102: Option;
+    priority102: Integer;
+    category102: Code[10];
+    result102: Boolean;
+    counter102: Integer;
+begin
+    result102 := false;
+    counter102 := 0;
+
+    if Input102 in [Status::Open, Status::Released, Status::Pending, Status::Closed] then begin
+        result102 := true;
+        counter102 += 1;
+    end;
+
+    case Input102 of
+        [Status::Open, Status::Released]:
+            begin
+                counter102 += 10;
+                result102 := true;
+            end;
+    end;
+
+    while (counter102 < 100) and (Input102 in [20..44]) do begin
+        counter102 += 1;
+        if counter102 > 50 then
+            result102 := false;
+    end;
+
+
+    exit(result102);
+end;
+
+procedure ValidateSetLiterals103(Input103: Integer): Boolean
+var
+    status103: Option;
+    priority103: Integer;
+    category103: Code[10];
+    result103: Boolean;
+    counter103: Integer;
+begin
+    result103 := false;
+    counter103 := 0;
+
+    if Input103 in [Status::Open, Status::Released] then begin
+        result103 := true;
+        counter103 += 1;
+    end;
+
+    case Input103 of
+        [30..47]:
+            begin
+                counter103 += 10;
+                result103 := true;
+            end;
+    end;
+
+    while (counter103 < 100) and (Input103 in [30..54]) do begin
+        counter103 += 1;
+        if counter103 > 50 then
+            result103 := false;
+    end;
+
+
+    exit(result103);
+end;
+
+procedure ValidateSetLiterals104(Input104: Integer): Boolean
+var
+    status104: Option;
+    priority104: Integer;
+    category104: Code[10];
+    result104: Boolean;
+    counter104: Integer;
+begin
+    result104 := false;
+    counter104 := 0;
+
+    if Input104 in [40..50] then begin
+        result104 := true;
+        counter104 += 1;
+    end;
+
+    case Input104 of
+        [40..57]:
+            begin
+                counter104 += 10;
+                result104 := true;
+            end;
+    end;
+
+    while (counter104 < 100) and (Input104 in [40..64]) do begin
+        counter104 += 1;
+        if counter104 > 50 then
+            result104 := false;
+    end;
+
+
+    exit(result104);
+end;
+
+procedure ValidateSetLiterals105(Input105: Integer): Boolean
+var
+    status105: Option;
+    priority105: Integer;
+    category105: Code[10];
+    result105: Boolean;
+    counter105: Integer;
+begin
+    result105 := false;
+    counter105 := 0;
+
+    if Input105 in [50..60] then begin
+        result105 := true;
+        counter105 += 1;
+    end;
+
+    case Input105 of
+        [50..67]:
+            begin
+                counter105 += 10;
+                result105 := true;
+            end;
+    end;
+
+    while (counter105 < 100) and (Input105 in [7, 25..35, 92]) do begin
+        counter105 += 1;
+        if counter105 > 50 then
+            result105 := false;
+    end;
+
+
+    exit(result105);
+end;
+
+procedure ValidateSetLiterals106(Input106: Integer): Boolean
+var
+    status106: Option;
+    priority106: Integer;
+    category106: Code[10];
+    result106: Boolean;
+    counter106: Integer;
+begin
+    result106 := false;
+    counter106 := 0;
+
+    if Input106 in [60..70] then begin
+        result106 := true;
+        counter106 += 1;
+    end;
+
+    case Input106 of
+        [7, 30..40, 91]:
+            begin
+                counter106 += 10;
+                result106 := true;
+            end;
+    end;
+
+    while (counter106 < 100) and (Input106 in [8, 30..40, 92]) do begin
+        counter106 += 1;
+        if counter106 > 50 then
+            result106 := false;
+    end;
+
+
+    exit(result106);
+end;
+
+procedure ValidateSetLiterals107(Input107: Integer): Boolean
+var
+    status107: Option;
+    priority107: Integer;
+    category107: Code[10];
+    result107: Boolean;
+    counter107: Integer;
+begin
+    result107 := false;
+    counter107 := 0;
+
+    if Input107 in [7, 35..45, 90] then begin
+        result107 := true;
+        counter107 += 1;
+    end;
+
+    case Input107 of
+        [8, 35..45, 91]:
+            begin
+                counter107 += 10;
+                result107 := true;
+            end;
+    end;
+
+    while (counter107 < 100) and (Input107 in ['A'..'F']) do begin
+        counter107 += 1;
+        if counter107 > 50 then
+            result107 := false;
+    end;
+
+
+    exit(result107);
+end;
+
+procedure ValidateSetLiterals108(Input108: Integer): Boolean
+var
+    status108: Option;
+    priority108: Integer;
+    category108: Code[10];
+    result108: Boolean;
+    counter108: Integer;
+begin
+    result108 := false;
+    counter108 := 0;
+
+    if Input108 in [8, 40..50, 90] then begin
+        result108 := true;
+        counter108 += 1;
+    end;
+
+    case Input108 of
+        ['A'..'Z']:
+            begin
+                counter108 += 10;
+                result108 := true;
+            end;
+    end;
+
+    while (counter108 < 100) and (Input108 in [Status::Open, Status::Released]) do begin
+        counter108 += 1;
+        if counter108 > 50 then
+            result108 := false;
+    end;
+
+
+    exit(result108);
+end;
+
+procedure ValidateSetLiterals109(Input109: Integer): Boolean
+var
+    status109: Option;
+    priority109: Integer;
+    category109: Code[10];
+    result109: Boolean;
+    counter109: Integer;
+begin
+    result109 := false;
+    counter109 := 0;
+
+    if Input109 in ['a'..'z'] then begin
+        result109 := true;
+        counter109 += 1;
+    end;
+
+    case Input109 of
+        [Status::Open, Status::Released]:
+            begin
+                counter109 += 10;
+                result109 := true;
+            end;
+    end;
+
+    while (counter109 < 100) and (Input109 in [Status::Open, Status::Released, Status::Pending]) do begin
+        counter109 += 1;
+        if counter109 > 50 then
+            result109 := false;
+    end;
+
+
+    exit(result109);
+end;
+
+procedure ValidateSetLiterals110(Input110: Integer): Boolean
+var
+    status110: Option;
+    priority110: Integer;
+    category110: Code[10];
+    result110: Boolean;
+    counter110: Integer;
+begin
+    result110 := false;
+    counter110 := 0;
+
+    if Input110 in [Status::Open, Status::Released] then begin
+        result110 := true;
+        counter110 += 1;
+    end;
+
+    case Input110 of
+        [Status::Open, Status::Released, Status::Pending]:
+            begin
+                counter110 += 10;
+                result110 := true;
+            end;
+    end;
+
+    while (counter110 < 100) and (Input110 in [Status::Open, Status::Released, Status::Pending, Status::Closed]) do begin
+        counter110 += 1;
+        if counter110 > 50 then
+            result110 := false;
+    end;
+
+
+    exit(result110);
+end;
+
+procedure ValidateSetLiterals111(Input111: Integer): Boolean
+var
+    status111: Option;
+    priority111: Integer;
+    category111: Code[10];
+    result111: Boolean;
+    counter111: Integer;
+begin
+    result111 := false;
+    counter111 := 0;
+
+    if Input111 in [Status::Open, Status::Released, Status::Pending] then begin
+        result111 := true;
+        counter111 += 1;
+    end;
+
+    case Input111 of
+        [Status::Open, Status::Released, Status::Pending, Status::Closed]:
+            begin
+                counter111 += 10;
+                result111 := true;
+            end;
+    end;
+
+    while (counter111 < 100) and (Input111 in [Status::Open, Status::Released]) do begin
+        counter111 += 1;
+        if counter111 > 50 then
+            result111 := false;
+    end;
+
+
+    exit(result111);
+end;
+
+procedure ValidateSetLiterals112(Input112: Integer): Boolean
+var
+    status112: Option;
+    priority112: Integer;
+    category112: Code[10];
+    result112: Boolean;
+    counter112: Integer;
+begin
+    result112 := false;
+    counter112 := 0;
+
+    if Input112 in [Status::Open, Status::Released, Status::Pending, Status::Closed] then begin
+        result112 := true;
+        counter112 += 1;
+    end;
+
+    case Input112 of
+        [Status::Open, Status::Released]:
+            begin
+                counter112 += 10;
+                result112 := true;
+            end;
+    end;
+
+    while (counter112 < 100) and (Input112 in [20..44]) do begin
+        counter112 += 1;
+        if counter112 > 50 then
+            result112 := false;
+    end;
+
+
+    exit(result112);
+end;
+
+procedure ValidateSetLiterals113(Input113: Integer): Boolean
+var
+    status113: Option;
+    priority113: Integer;
+    category113: Code[10];
+    result113: Boolean;
+    counter113: Integer;
+begin
+    result113 := false;
+    counter113 := 0;
+
+    if Input113 in [Status::Open, Status::Released] then begin
+        result113 := true;
+        counter113 += 1;
+    end;
+
+    case Input113 of
+        [30..47]:
+            begin
+                counter113 += 10;
+                result113 := true;
+            end;
+    end;
+
+    while (counter113 < 100) and (Input113 in [30..54]) do begin
+        counter113 += 1;
+        if counter113 > 50 then
+            result113 := false;
+    end;
+
+
+    exit(result113);
+end;
+
+procedure ValidateSetLiterals114(Input114: Integer): Boolean
+var
+    status114: Option;
+    priority114: Integer;
+    category114: Code[10];
+    result114: Boolean;
+    counter114: Integer;
+begin
+    result114 := false;
+    counter114 := 0;
+
+    if Input114 in [40..50] then begin
+        result114 := true;
+        counter114 += 1;
+    end;
+
+    case Input114 of
+        [40..57]:
+            begin
+                counter114 += 10;
+                result114 := true;
+            end;
+    end;
+
+    while (counter114 < 100) and (Input114 in [40..64]) do begin
+        counter114 += 1;
+        if counter114 > 50 then
+            result114 := false;
+    end;
+
+
+    exit(result114);
+end;
+
+procedure ValidateSetLiterals115(Input115: Integer): Boolean
+var
+    status115: Option;
+    priority115: Integer;
+    category115: Code[10];
+    result115: Boolean;
+    counter115: Integer;
+begin
+    result115 := false;
+    counter115 := 0;
+
+    if Input115 in [50..60] then begin
+        result115 := true;
+        counter115 += 1;
+    end;
+
+    case Input115 of
+        [50..67]:
+            begin
+                counter115 += 10;
+                result115 := true;
+            end;
+    end;
+
+    while (counter115 < 100) and (Input115 in [7, 25..35, 92]) do begin
+        counter115 += 1;
+        if counter115 > 50 then
+            result115 := false;
+    end;
+
+
+    exit(result115);
+end;
+
+procedure ValidateSetLiterals116(Input116: Integer): Boolean
+var
+    status116: Option;
+    priority116: Integer;
+    category116: Code[10];
+    result116: Boolean;
+    counter116: Integer;
+begin
+    result116 := false;
+    counter116 := 0;
+
+    if Input116 in [60..70] then begin
+        result116 := true;
+        counter116 += 1;
+    end;
+
+    case Input116 of
+        [7, 30..40, 91]:
+            begin
+                counter116 += 10;
+                result116 := true;
+            end;
+    end;
+
+    while (counter116 < 100) and (Input116 in [8, 30..40, 92]) do begin
+        counter116 += 1;
+        if counter116 > 50 then
+            result116 := false;
+    end;
+
+
+    exit(result116);
+end;
+
+procedure ValidateSetLiterals117(Input117: Integer): Boolean
+var
+    status117: Option;
+    priority117: Integer;
+    category117: Code[10];
+    result117: Boolean;
+    counter117: Integer;
+begin
+    result117 := false;
+    counter117 := 0;
+
+    if Input117 in [7, 35..45, 90] then begin
+        result117 := true;
+        counter117 += 1;
+    end;
+
+    case Input117 of
+        [8, 35..45, 91]:
+            begin
+                counter117 += 10;
+                result117 := true;
+            end;
+    end;
+
+    while (counter117 < 100) and (Input117 in ['a'..'z']) do begin
+        counter117 += 1;
+        if counter117 > 50 then
+            result117 := false;
+    end;
+
+
+    exit(result117);
+end;
+
+procedure ValidateSetLiterals118(Input118: Integer): Boolean
+var
+    status118: Option;
+    priority118: Integer;
+    category118: Code[10];
+    result118: Boolean;
+    counter118: Integer;
+begin
+    result118 := false;
+    counter118 := 0;
+
+    if Input118 in [8, 40..50, 90] then begin
+        result118 := true;
+        counter118 += 1;
+    end;
+
+    case Input118 of
+        ['0'..'9']:
+            begin
+                counter118 += 10;
+                result118 := true;
+            end;
+    end;
+
+    while (counter118 < 100) and (Input118 in [Status::Open, Status::Released]) do begin
+        counter118 += 1;
+        if counter118 > 50 then
+            result118 := false;
+    end;
+
+
+    exit(result118);
+end;
+
+procedure ValidateSetLiterals119(Input119: Integer): Boolean
+var
+    status119: Option;
+    priority119: Integer;
+    category119: Code[10];
+    result119: Boolean;
+    counter119: Integer;
+begin
+    result119 := false;
+    counter119 := 0;
+
+    if Input119 in ['A'..'F'] then begin
+        result119 := true;
+        counter119 += 1;
+    end;
+
+    case Input119 of
+        [Status::Open, Status::Released]:
+            begin
+                counter119 += 10;
+                result119 := true;
+            end;
+    end;
+
+    while (counter119 < 100) and (Input119 in [Status::Open, Status::Released, Status::Pending]) do begin
+        counter119 += 1;
+        if counter119 > 50 then
+            result119 := false;
+    end;
+
+
+    exit(result119);
+end;
+
+procedure ValidateSetLiterals120(Input120: Integer): Boolean
+var
+    status120: Option;
+    priority120: Integer;
+    category120: Code[10];
+    result120: Boolean;
+    counter120: Integer;
+begin
+    result120 := false;
+    counter120 := 0;
+
+    if Input120 in [Status::Open, Status::Released] then begin
+        result120 := true;
+        counter120 += 1;
+    end;
+
+    case Input120 of
+        [Status::Open, Status::Released, Status::Pending]:
+            begin
+                counter120 += 10;
+                result120 := true;
+            end;
+    end;
+
+    while (counter120 < 100) and (Input120 in [Status::Open, Status::Released, Status::Pending, Status::Closed]) do begin
+        counter120 += 1;
+        if counter120 > 50 then
+            result120 := false;
+    end;
+
+
+    exit(result120);
+end;
+
+procedure ValidateSetLiterals121(Input121: Integer): Boolean
+var
+    status121: Option;
+    priority121: Integer;
+    category121: Code[10];
+    result121: Boolean;
+    counter121: Integer;
+begin
+    result121 := false;
+    counter121 := 0;
+
+    if Input121 in [Status::Open, Status::Released, Status::Pending] then begin
+        result121 := true;
+        counter121 += 1;
+    end;
+
+    case Input121 of
+        [Status::Open, Status::Released, Status::Pending, Status::Closed]:
+            begin
+                counter121 += 10;
+                result121 := true;
+            end;
+    end;
+
+    while (counter121 < 100) and (Input121 in [Status::Open, Status::Released]) do begin
+        counter121 += 1;
+        if counter121 > 50 then
+            result121 := false;
+    end;
+
+
+    exit(result121);
+end;
+
+procedure ValidateSetLiterals122(Input122: Integer): Boolean
+var
+    status122: Option;
+    priority122: Integer;
+    category122: Code[10];
+    result122: Boolean;
+    counter122: Integer;
+begin
+    result122 := false;
+    counter122 := 0;
+
+    if Input122 in [Status::Open, Status::Released, Status::Pending, Status::Closed] then begin
+        result122 := true;
+        counter122 += 1;
+    end;
+
+    case Input122 of
+        [Status::Open, Status::Released]:
+            begin
+                counter122 += 10;
+                result122 := true;
+            end;
+    end;
+
+    while (counter122 < 100) and (Input122 in [20..44]) do begin
+        counter122 += 1;
+        if counter122 > 50 then
+            result122 := false;
+    end;
+
+
+    exit(result122);
+end;
+
+procedure ValidateSetLiterals123(Input123: Integer): Boolean
+var
+    status123: Option;
+    priority123: Integer;
+    category123: Code[10];
+    result123: Boolean;
+    counter123: Integer;
+begin
+    result123 := false;
+    counter123 := 0;
+
+    if Input123 in [Status::Open, Status::Released] then begin
+        result123 := true;
+        counter123 += 1;
+    end;
+
+    case Input123 of
+        [30..47]:
+            begin
+                counter123 += 10;
+                result123 := true;
+            end;
+    end;
+
+    while (counter123 < 100) and (Input123 in [30..54]) do begin
+        counter123 += 1;
+        if counter123 > 50 then
+            result123 := false;
+    end;
+
+
+    exit(result123);
+end;
+
+procedure ValidateSetLiterals124(Input124: Integer): Boolean
+var
+    status124: Option;
+    priority124: Integer;
+    category124: Code[10];
+    result124: Boolean;
+    counter124: Integer;
+begin
+    result124 := false;
+    counter124 := 0;
+
+    if Input124 in [40..50] then begin
+        result124 := true;
+        counter124 += 1;
+    end;
+
+    case Input124 of
+        [40..57]:
+            begin
+                counter124 += 10;
+                result124 := true;
+            end;
+    end;
+
+    while (counter124 < 100) and (Input124 in [40..64]) do begin
+        counter124 += 1;
+        if counter124 > 50 then
+            result124 := false;
+    end;
+
+
+    exit(result124);
+end;
+
+procedure ValidateSetLiterals125(Input125: Integer): Boolean
+var
+    status125: Option;
+    priority125: Integer;
+    category125: Code[10];
+    result125: Boolean;
+    counter125: Integer;
+begin
+    result125 := false;
+    counter125 := 0;
+
+    if Input125 in [50..60] then begin
+        result125 := true;
+        counter125 += 1;
+    end;
+
+    case Input125 of
+        [50..67]:
+            begin
+                counter125 += 10;
+                result125 := true;
+            end;
+    end;
+
+    while (counter125 < 100) and (Input125 in [7, 25..35, 92]) do begin
+        counter125 += 1;
+        if counter125 > 50 then
+            result125 := false;
+    end;
+
+
+    exit(result125);
+end;
+
+procedure ValidateSetLiterals126(Input126: Integer): Boolean
+var
+    status126: Option;
+    priority126: Integer;
+    category126: Code[10];
+    result126: Boolean;
+    counter126: Integer;
+begin
+    result126 := false;
+    counter126 := 0;
+
+    if Input126 in [60..70] then begin
+        result126 := true;
+        counter126 += 1;
+    end;
+
+    case Input126 of
+        [7, 30..40, 91]:
+            begin
+                counter126 += 10;
+                result126 := true;
+            end;
+    end;
+
+    while (counter126 < 100) and (Input126 in [8, 30..40, 92]) do begin
+        counter126 += 1;
+        if counter126 > 50 then
+            result126 := false;
+    end;
+
+
+    exit(result126);
+end;
+
+procedure ValidateSetLiterals127(Input127: Integer): Boolean
+var
+    status127: Option;
+    priority127: Integer;
+    category127: Code[10];
+    result127: Boolean;
+    counter127: Integer;
+begin
+    result127 := false;
+    counter127 := 0;
+
+    if Input127 in [7, 35..45, 90] then begin
+        result127 := true;
+        counter127 += 1;
+    end;
+
+    case Input127 of
+        [8, 35..45, 91]:
+            begin
+                counter127 += 10;
+                result127 := true;
+            end;
+    end;
+
+    while (counter127 < 100) and (Input127 in ['A'..'F']) do begin
+        counter127 += 1;
+        if counter127 > 50 then
+            result127 := false;
+    end;
+
+
+    exit(result127);
+end;
+
+procedure ValidateSetLiterals128(Input128: Integer): Boolean
+var
+    status128: Option;
+    priority128: Integer;
+    category128: Code[10];
+    result128: Boolean;
+    counter128: Integer;
+begin
+    result128 := false;
+    counter128 := 0;
+
+    if Input128 in [8, 40..50, 90] then begin
+        result128 := true;
+        counter128 += 1;
+    end;
+
+    case Input128 of
+        ['A'..'Z']:
+            begin
+                counter128 += 10;
+                result128 := true;
+            end;
+    end;
+
+    while (counter128 < 100) and (Input128 in [Status::Open, Status::Released]) do begin
+        counter128 += 1;
+        if counter128 > 50 then
+            result128 := false;
+    end;
+
+
+    exit(result128);
+end;
+
+procedure ValidateSetLiterals129(Input129: Integer): Boolean
+var
+    status129: Option;
+    priority129: Integer;
+    category129: Code[10];
+    result129: Boolean;
+    counter129: Integer;
+begin
+    result129 := false;
+    counter129 := 0;
+
+    if Input129 in ['a'..'z'] then begin
+        result129 := true;
+        counter129 += 1;
+    end;
+
+    case Input129 of
+        [Status::Open, Status::Released]:
+            begin
+                counter129 += 10;
+                result129 := true;
+            end;
+    end;
+
+    while (counter129 < 100) and (Input129 in [Status::Open, Status::Released, Status::Pending]) do begin
+        counter129 += 1;
+        if counter129 > 50 then
+            result129 := false;
+    end;
+
+
+    exit(result129);
+end;
+
+procedure ValidateSetLiterals130(Input130: Integer): Boolean
+var
+    status130: Option;
+    priority130: Integer;
+    category130: Code[10];
+    result130: Boolean;
+    counter130: Integer;
+begin
+    result130 := false;
+    counter130 := 0;
+
+    if Input130 in [Status::Open, Status::Released] then begin
+        result130 := true;
+        counter130 += 1;
+    end;
+
+    case Input130 of
+        [Status::Open, Status::Released, Status::Pending]:
+            begin
+                counter130 += 10;
+                result130 := true;
+            end;
+    end;
+
+    while (counter130 < 100) and (Input130 in [Status::Open, Status::Released, Status::Pending, Status::Closed]) do begin
+        counter130 += 1;
+        if counter130 > 50 then
+            result130 := false;
+    end;
+
+
+    exit(result130);
+end;
+
+procedure ValidateSetLiterals131(Input131: Integer): Boolean
+var
+    status131: Option;
+    priority131: Integer;
+    category131: Code[10];
+    result131: Boolean;
+    counter131: Integer;
+begin
+    result131 := false;
+    counter131 := 0;
+
+    if Input131 in [Status::Open, Status::Released, Status::Pending] then begin
+        result131 := true;
+        counter131 += 1;
+    end;
+
+    case Input131 of
+        [Status::Open, Status::Released, Status::Pending, Status::Closed]:
+            begin
+                counter131 += 10;
+                result131 := true;
+            end;
+    end;
+
+    while (counter131 < 100) and (Input131 in [Status::Open, Status::Released]) do begin
+        counter131 += 1;
+        if counter131 > 50 then
+            result131 := false;
+    end;
+
+
+    exit(result131);
+end;
+
+procedure ValidateSetLiterals132(Input132: Integer): Boolean
+var
+    status132: Option;
+    priority132: Integer;
+    category132: Code[10];
+    result132: Boolean;
+    counter132: Integer;
+begin
+    result132 := false;
+    counter132 := 0;
+
+    if Input132 in [Status::Open, Status::Released, Status::Pending, Status::Closed] then begin
+        result132 := true;
+        counter132 += 1;
+    end;
+
+    case Input132 of
+        [Status::Open, Status::Released]:
+            begin
+                counter132 += 10;
+                result132 := true;
+            end;
+    end;
+
+    while (counter132 < 100) and (Input132 in [20..44]) do begin
+        counter132 += 1;
+        if counter132 > 50 then
+            result132 := false;
+    end;
+
+
+    exit(result132);
+end;
+
+procedure ValidateSetLiterals133(Input133: Integer): Boolean
+var
+    status133: Option;
+    priority133: Integer;
+    category133: Code[10];
+    result133: Boolean;
+    counter133: Integer;
+begin
+    result133 := false;
+    counter133 := 0;
+
+    if Input133 in [Status::Open, Status::Released] then begin
+        result133 := true;
+        counter133 += 1;
+    end;
+
+    case Input133 of
+        [30..47]:
+            begin
+                counter133 += 10;
+                result133 := true;
+            end;
+    end;
+
+    while (counter133 < 100) and (Input133 in [30..54]) do begin
+        counter133 += 1;
+        if counter133 > 50 then
+            result133 := false;
+    end;
+
+
+    exit(result133);
+end;
+
+procedure ValidateSetLiterals134(Input134: Integer): Boolean
+var
+    status134: Option;
+    priority134: Integer;
+    category134: Code[10];
+    result134: Boolean;
+    counter134: Integer;
+begin
+    result134 := false;
+    counter134 := 0;
+
+    if Input134 in [40..50] then begin
+        result134 := true;
+        counter134 += 1;
+    end;
+
+    case Input134 of
+        [40..57]:
+            begin
+                counter134 += 10;
+                result134 := true;
+            end;
+    end;
+
+    while (counter134 < 100) and (Input134 in [40..64]) do begin
+        counter134 += 1;
+        if counter134 > 50 then
+            result134 := false;
+    end;
+
+
+    exit(result134);
+end;
+
+procedure ValidateSetLiterals135(Input135: Integer): Boolean
+var
+    status135: Option;
+    priority135: Integer;
+    category135: Code[10];
+    result135: Boolean;
+    counter135: Integer;
+begin
+    result135 := false;
+    counter135 := 0;
+
+    if Input135 in [50..60] then begin
+        result135 := true;
+        counter135 += 1;
+    end;
+
+    case Input135 of
+        [50..67]:
+            begin
+                counter135 += 10;
+                result135 := true;
+            end;
+    end;
+
+    while (counter135 < 100) and (Input135 in [7, 25..35, 92]) do begin
+        counter135 += 1;
+        if counter135 > 50 then
+            result135 := false;
+    end;
+
+
+    exit(result135);
+end;
+
+procedure ValidateSetLiterals136(Input136: Integer): Boolean
+var
+    status136: Option;
+    priority136: Integer;
+    category136: Code[10];
+    result136: Boolean;
+    counter136: Integer;
+begin
+    result136 := false;
+    counter136 := 0;
+
+    if Input136 in [60..70] then begin
+        result136 := true;
+        counter136 += 1;
+    end;
+
+    case Input136 of
+        [7, 30..40, 91]:
+            begin
+                counter136 += 10;
+                result136 := true;
+            end;
+    end;
+
+    while (counter136 < 100) and (Input136 in [8, 30..40, 92]) do begin
+        counter136 += 1;
+        if counter136 > 50 then
+            result136 := false;
+    end;
+
+
+    exit(result136);
+end;
+
+procedure ValidateSetLiterals137(Input137: Integer): Boolean
+var
+    status137: Option;
+    priority137: Integer;
+    category137: Code[10];
+    result137: Boolean;
+    counter137: Integer;
+begin
+    result137 := false;
+    counter137 := 0;
+
+    if Input137 in [7, 35..45, 90] then begin
+        result137 := true;
+        counter137 += 1;
+    end;
+
+    case Input137 of
+        [8, 35..45, 91]:
+            begin
+                counter137 += 10;
+                result137 := true;
+            end;
+    end;
+
+    while (counter137 < 100) and (Input137 in ['a'..'z']) do begin
+        counter137 += 1;
+        if counter137 > 50 then
+            result137 := false;
+    end;
+
+
+    exit(result137);
+end;
+
+procedure ValidateSetLiterals138(Input138: Integer): Boolean
+var
+    status138: Option;
+    priority138: Integer;
+    category138: Code[10];
+    result138: Boolean;
+    counter138: Integer;
+begin
+    result138 := false;
+    counter138 := 0;
+
+    if Input138 in [8, 40..50, 90] then begin
+        result138 := true;
+        counter138 += 1;
+    end;
+
+    case Input138 of
+        ['0'..'9']:
+            begin
+                counter138 += 10;
+                result138 := true;
+            end;
+    end;
+
+    while (counter138 < 100) and (Input138 in [Status::Open, Status::Released]) do begin
+        counter138 += 1;
+        if counter138 > 50 then
+            result138 := false;
+    end;
+
+
+    exit(result138);
+end;
+
+procedure ValidateSetLiterals139(Input139: Integer): Boolean
+var
+    status139: Option;
+    priority139: Integer;
+    category139: Code[10];
+    result139: Boolean;
+    counter139: Integer;
+begin
+    result139 := false;
+    counter139 := 0;
+
+    if Input139 in ['A'..'F'] then begin
+        result139 := true;
+        counter139 += 1;
+    end;
+
+    case Input139 of
+        [Status::Open, Status::Released]:
+            begin
+                counter139 += 10;
+                result139 := true;
+            end;
+    end;
+
+    while (counter139 < 100) and (Input139 in [Status::Open, Status::Released, Status::Pending]) do begin
+        counter139 += 1;
+        if counter139 > 50 then
+            result139 := false;
+    end;
+
+
+    exit(result139);
+end;
+
+procedure ValidateSetLiterals140(Input140: Integer): Boolean
+var
+    status140: Option;
+    priority140: Integer;
+    category140: Code[10];
+    result140: Boolean;
+    counter140: Integer;
+begin
+    result140 := false;
+    counter140 := 0;
+
+    if Input140 in [Status::Open, Status::Released] then begin
+        result140 := true;
+        counter140 += 1;
+    end;
+
+    case Input140 of
+        [Status::Open, Status::Released, Status::Pending]:
+            begin
+                counter140 += 10;
+                result140 := true;
+            end;
+    end;
+
+    while (counter140 < 100) and (Input140 in [Status::Open, Status::Released, Status::Pending, Status::Closed]) do begin
+        counter140 += 1;
+        if counter140 > 50 then
+            result140 := false;
+    end;
+
+
+    exit(result140);
+end;
+
+procedure ValidateSetLiterals141(Input141: Integer): Boolean
+var
+    status141: Option;
+    priority141: Integer;
+    category141: Code[10];
+    result141: Boolean;
+    counter141: Integer;
+begin
+    result141 := false;
+    counter141 := 0;
+
+    if Input141 in [Status::Open, Status::Released, Status::Pending] then begin
+        result141 := true;
+        counter141 += 1;
+    end;
+
+    case Input141 of
+        [Status::Open, Status::Released, Status::Pending, Status::Closed]:
+            begin
+                counter141 += 10;
+                result141 := true;
+            end;
+    end;
+
+    while (counter141 < 100) and (Input141 in [Status::Open, Status::Released]) do begin
+        counter141 += 1;
+        if counter141 > 50 then
+            result141 := false;
+    end;
+
+
+    exit(result141);
+end;
+
+procedure ValidateSetLiterals142(Input142: Integer): Boolean
+var
+    status142: Option;
+    priority142: Integer;
+    category142: Code[10];
+    result142: Boolean;
+    counter142: Integer;
+begin
+    result142 := false;
+    counter142 := 0;
+
+    if Input142 in [Status::Open, Status::Released, Status::Pending, Status::Closed] then begin
+        result142 := true;
+        counter142 += 1;
+    end;
+
+    case Input142 of
+        [Status::Open, Status::Released]:
+            begin
+                counter142 += 10;
+                result142 := true;
+            end;
+    end;
+
+    while (counter142 < 100) and (Input142 in [20..44]) do begin
+        counter142 += 1;
+        if counter142 > 50 then
+            result142 := false;
+    end;
+
+
+    exit(result142);
+end;
+
+procedure ValidateSetLiterals143(Input143: Integer): Boolean
+var
+    status143: Option;
+    priority143: Integer;
+    category143: Code[10];
+    result143: Boolean;
+    counter143: Integer;
+begin
+    result143 := false;
+    counter143 := 0;
+
+    if Input143 in [Status::Open, Status::Released] then begin
+        result143 := true;
+        counter143 += 1;
+    end;
+
+    case Input143 of
+        [30..47]:
+            begin
+                counter143 += 10;
+                result143 := true;
+            end;
+    end;
+
+    while (counter143 < 100) and (Input143 in [30..54]) do begin
+        counter143 += 1;
+        if counter143 > 50 then
+            result143 := false;
+    end;
+
+
+    exit(result143);
+end;
+
+procedure ValidateSetLiterals144(Input144: Integer): Boolean
+var
+    status144: Option;
+    priority144: Integer;
+    category144: Code[10];
+    result144: Boolean;
+    counter144: Integer;
+begin
+    result144 := false;
+    counter144 := 0;
+
+    if Input144 in [40..50] then begin
+        result144 := true;
+        counter144 += 1;
+    end;
+
+    case Input144 of
+        [40..57]:
+            begin
+                counter144 += 10;
+                result144 := true;
+            end;
+    end;
+
+    while (counter144 < 100) and (Input144 in [40..64]) do begin
+        counter144 += 1;
+        if counter144 > 50 then
+            result144 := false;
+    end;
+
+
+    exit(result144);
+end;
+
+procedure ValidateSetLiterals145(Input145: Integer): Boolean
+var
+    status145: Option;
+    priority145: Integer;
+    category145: Code[10];
+    result145: Boolean;
+    counter145: Integer;
+begin
+    result145 := false;
+    counter145 := 0;
+
+    if Input145 in [50..60] then begin
+        result145 := true;
+        counter145 += 1;
+    end;
+
+    case Input145 of
+        [50..67]:
+            begin
+                counter145 += 10;
+                result145 := true;
+            end;
+    end;
+
+    while (counter145 < 100) and (Input145 in [7, 25..35, 92]) do begin
+        counter145 += 1;
+        if counter145 > 50 then
+            result145 := false;
+    end;
+
+
+    exit(result145);
+end;
+
+procedure ValidateSetLiterals146(Input146: Integer): Boolean
+var
+    status146: Option;
+    priority146: Integer;
+    category146: Code[10];
+    result146: Boolean;
+    counter146: Integer;
+begin
+    result146 := false;
+    counter146 := 0;
+
+    if Input146 in [60..70] then begin
+        result146 := true;
+        counter146 += 1;
+    end;
+
+    case Input146 of
+        [7, 30..40, 91]:
+            begin
+                counter146 += 10;
+                result146 := true;
+            end;
+    end;
+
+    while (counter146 < 100) and (Input146 in [8, 30..40, 92]) do begin
+        counter146 += 1;
+        if counter146 > 50 then
+            result146 := false;
+    end;
+
+
+    exit(result146);
+end;
+
+procedure ValidateSetLiterals147(Input147: Integer): Boolean
+var
+    status147: Option;
+    priority147: Integer;
+    category147: Code[10];
+    result147: Boolean;
+    counter147: Integer;
+begin
+    result147 := false;
+    counter147 := 0;
+
+    if Input147 in [7, 35..45, 90] then begin
+        result147 := true;
+        counter147 += 1;
+    end;
+
+    case Input147 of
+        [8, 35..45, 91]:
+            begin
+                counter147 += 10;
+                result147 := true;
+            end;
+    end;
+
+    while (counter147 < 100) and (Input147 in ['A'..'F']) do begin
+        counter147 += 1;
+        if counter147 > 50 then
+            result147 := false;
+    end;
+
+
+    exit(result147);
+end;
+
+procedure ValidateSetLiterals148(Input148: Integer): Boolean
+var
+    status148: Option;
+    priority148: Integer;
+    category148: Code[10];
+    result148: Boolean;
+    counter148: Integer;
+begin
+    result148 := false;
+    counter148 := 0;
+
+    if Input148 in [8, 40..50, 90] then begin
+        result148 := true;
+        counter148 += 1;
+    end;
+
+    case Input148 of
+        ['A'..'Z']:
+            begin
+                counter148 += 10;
+                result148 := true;
+            end;
+    end;
+
+    while (counter148 < 100) and (Input148 in [Status::Open, Status::Released]) do begin
+        counter148 += 1;
+        if counter148 > 50 then
+            result148 := false;
+    end;
+
+
+    exit(result148);
+end;
+
+procedure ValidateSetLiterals149(Input149: Integer): Boolean
+var
+    status149: Option;
+    priority149: Integer;
+    category149: Code[10];
+    result149: Boolean;
+    counter149: Integer;
+begin
+    result149 := false;
+    counter149 := 0;
+
+    if Input149 in ['a'..'z'] then begin
+        result149 := true;
+        counter149 += 1;
+    end;
+
+    case Input149 of
+        [Status::Open, Status::Released]:
+            begin
+                counter149 += 10;
+                result149 := true;
+            end;
+    end;
+
+    while (counter149 < 100) and (Input149 in [Status::Open, Status::Released, Status::Pending]) do begin
+        counter149 += 1;
+        if counter149 > 50 then
+            result149 := false;
+    end;
+
+
+    exit(result149);
+end;
+
+procedure RunAllValidators(): Integer
+var
+    i: Integer;
+    passed: Integer;
+begin
+    passed := 0;
+    for i := 1 to 100 do begin
+        if ValidateSetLiterals0(i) then
+            passed += 1;
+        if ValidateSetLiterals1(i) then
+            passed += 1;
+        if ValidateSetLiterals2(i) then
+            passed += 1;
+        if ValidateSetLiterals3(i) then
+            passed += 1;
+        if ValidateSetLiterals4(i) then
+            passed += 1;
+        if ValidateSetLiterals5(i) then
+            passed += 1;
+        if ValidateSetLiterals6(i) then
+            passed += 1;
+        if ValidateSetLiterals7(i) then
+            passed += 1;
+        if ValidateSetLiterals8(i) then
+            passed += 1;
+        if ValidateSetLiterals9(i) then
+            passed += 1;
+    end;
+    exit(passed);
+end;
+
+  }
+}
