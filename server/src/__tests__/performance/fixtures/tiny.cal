@@ -66,6 +66,9 @@ OBJECT Table 50000 Customer
       CALCFIELDS(Balance);
       IF Balance > "Credit Limit" THEN
         ERROR(Text002);
+
+      IF Status IN [Status::Blocked,Status::Inactive] THEN
+        ERROR('Customer status is blocked or inactive');
     END;
 
     PROCEDURE GetBalance@2() : Decimal;
@@ -75,21 +78,43 @@ OBJECT Table 50000 Customer
     END;
 
     PROCEDURE IsBlocked@3() : Boolean;
+    VAR
+      City@1000 : Text[50];
     BEGIN
+      City := City;
+      IF City IN ['New York','Los Angeles','Chicago'] THEN
+        MESSAGE('Major city customer');
+
       EXIT((Status = Status::Blocked) OR Blocked);
     END;
 
     PROCEDURE ValidateCustomer@4();
+    VAR
+      DayOfWeek@1000 : Integer;
     BEGIN
       IF "No." = '' THEN
         ERROR(Text001,"No.");
+
+      DayOfWeek := DATE2DWY("Last Date Modified",1);
+      IF NOT (DayOfWeek IN [1,2,3,4,5]) THEN
+        MESSAGE('Last modified on weekend');
+
+      IF "Post Code" IN ['1000'..'1999','2000'..'2999'] THEN
+        MESSAGE('Customer in central postal zone');
 
       CheckCreditLimit;
     END;
 
     PROCEDURE UpdateLastModified@5();
+    VAR
+      CurrCode@1000 : Code[10];
     BEGIN
       "Last Date Modified" := TODAY;
+
+      CurrCode := "Currency Code";
+      IF CurrCode IN ['USD','EUR','GBP','JPY'] THEN
+        MESSAGE('Major currency detected');
+
       MODIFY;
     END;
 

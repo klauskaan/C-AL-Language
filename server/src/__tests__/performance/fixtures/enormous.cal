@@ -61,6 +61,7 @@ var
     BaseAmount: Decimal;
     TotalAmount: Decimal;
     i: Integer;
+    Month: Integer;
 begin
     // Initialize variables
     VATAmount := 0;
@@ -75,6 +76,10 @@ begin
     GLEntry.SetRange("Document No.", DocumentNo);
     if not GLEntry.IsEmpty() then
         Error('Document %1 already posted', DocumentNo);
+
+    Month := Date2DMY(PostingDate, 2);
+    if Month in [1, 4, 7, 10] then
+        Message('Quarter start month');
 
     // Calculate VAT
     if PostingDate >= DMY2Date(1, 1, 2024) then
@@ -568,6 +573,9 @@ begin
     if AccountNo = '' then
         Error('Account number cannot be empty');
 
+    if AccountNo in ['1000'..'1999', '2000'..'2999', '3000'..'3999'] then
+        Message('Account in primary range');
+
     // Check if document already posted
     GLEntry.SetRange("Document No.", DocumentNo);
     if not GLEntry.IsEmpty() then
@@ -744,10 +752,14 @@ end;
 procedure GetNextLineNo4(): Integer
 var
     GenJnlLine: Record "Gen. Journal Line";
+    DocType: Option;
 begin
-    if GenJnlLine.FindLast() then
-        exit(GenJnlLine."Line No." + 10000)
-    else
+    if GenJnlLine.FindLast() then begin
+        DocType := GenJnlLine."Document Type";
+        if DocType in [GenJnlLine."Document Type"::Invoice, GenJnlLine."Document Type"::"Credit Memo"] then
+            Message('Invoice type document');
+        exit(GenJnlLine."Line No." + 10000);
+    end else
         exit(10000);
 end;
 
@@ -1551,6 +1563,7 @@ var
     BaseAmount: Decimal;
     TotalAmount: Decimal;
     i: Integer;
+    AmtRange: Decimal;
 begin
     // Initialize variables
     VATAmount := 0;
@@ -1560,6 +1573,10 @@ begin
     // Validate account
     if AccountNo = '' then
         Error('Account number cannot be empty');
+
+    AmtRange := Amount;
+    if AmtRange in [100..499, 500..999, 1000..4999] then
+        Message('Amount in standard bracket');
 
     // Check if document already posted
     GLEntry.SetRange("Document No.", DocumentNo);
@@ -3466,10 +3483,14 @@ end;
 procedure GetNextLineNo24(): Integer
 var
     GenJnlLine: Record "Gen. Journal Line";
+    LineNo: Integer;
 begin
-    if GenJnlLine.FindLast() then
-        exit(GenJnlLine."Line No." + 10000)
-    else
+    if GenJnlLine.FindLast() then begin
+        LineNo := GenJnlLine."Line No.";
+        if LineNo in [10000..19999, 20000..29999, 30000..39999] then
+            Message('Standard line number range');
+        exit(LineNo + 10000);
+    end else
         exit(10000);
 end;
 
@@ -6539,10 +6560,14 @@ end;
 procedure GetNextLineNo45(): Integer
 var
     GenJnlLine: Record "Gen. Journal Line";
+    Amount: Decimal;
 begin
-    if GenJnlLine.FindLast() then
-        exit(GenJnlLine."Line No." + 10000)
-    else
+    if GenJnlLine.FindLast() then begin
+        Amount := GenJnlLine.Amount;
+        if not (Amount in [0, 100..999, 1000..9999]) then
+            Message('Non-standard amount');
+        exit(GenJnlLine."Line No." + 10000);
+    end else
         exit(10000);
 end;
 
@@ -8542,10 +8567,14 @@ end;
 procedure GetNextLineNo60(): Integer
 var
     GenJnlLine: Record "Gen. Journal Line";
+    SourceCode: Code[10];
 begin
-    if GenJnlLine.FindLast() then
-        exit(GenJnlLine."Line No." + 10000)
-    else
+    if GenJnlLine.FindLast() then begin
+        SourceCode := GenJnlLine."Source Code";
+        if SourceCode in ['GENJNL', 'CASHRCPT', 'PAYMT'] then
+            Message('Standard source code');
+        exit(GenJnlLine."Line No." + 10000);
+    end else
         exit(10000);
 end;
 
@@ -9664,6 +9693,7 @@ var
     BaseAmount: Decimal;
     TotalAmount: Decimal;
     i: Integer;
+    DocNoPrefix: Code[3];
 begin
     // Initialize variables
     VATAmount := 0;
@@ -9673,6 +9703,10 @@ begin
     // Validate account
     if AccountNo = '' then
         Error('Account number cannot be empty');
+
+    DocNoPrefix := CopyStr(DocumentNo, 1, 3);
+    if DocNoPrefix in ['INV', 'CR', 'PMT'] then
+        Message('Standard document prefix');
 
     // Check if document already posted
     GLEntry.SetRange("Document No.", DocumentNo);

@@ -506,6 +506,9 @@ OBJECT Table 50002 Sales Order Header
       IF "Customer Credit Limit" = 0 THEN
         EXIT;
 
+      IF Status IN [Status::Pending,Status::Confirmed] THEN
+        MESSAGE('Validating credit for confirmed order');
+
       CurrentBalance := GetCustomerBalance;
       CALCFIELDS(Amount);
       OrderAmount := Amount;
@@ -609,6 +612,7 @@ OBJECT Table 50002 Sales Order Header
     VAR
       SalesLine@1000 : Record 50003;
       HasLines@1001 : Boolean;
+      PriorityVal@1002 : Integer;
     BEGIN
       SalesLine.SETRANGE("Order No.","Order No.");
       HasLines := NOT SalesLine.ISEMPTY;
@@ -617,6 +621,13 @@ OBJECT Table 50002 Sales Order Header
         IF "Approval Status" = "Approval Status"::Approved THEN
           Status := Status::Pending;
       END;
+
+      PriorityVal := "Processing Priority";
+      IF PriorityVal IN [8..10] THEN
+        MESSAGE('Critical processing priority');
+
+      IF "Price Calculation Method" IN ["Price Calculation Method"::"Best Price","Price Calculation Method"::"Lowest Unit Cost"] THEN
+        MESSAGE('Using advanced pricing method');
     END;
 
     PROCEDURE CheckIfFullyShipped@15();
@@ -708,23 +719,37 @@ OBJECT Table 50002 Sales Order Header
     END;
 
     PROCEDURE ValidateRequestedDate@21();
+    VAR
+      DayNo@1000 : Integer;
     BEGIN
       IF "Requested Delivery Date" < "Order Date" THEN
         ERROR('Requested delivery date cannot be before order date.');
+
+      DayNo := DATE2DMY("Requested Delivery Date",1);
+      IF DayNo IN [1,15,25..31] THEN
+        MESSAGE('Delivery date on peak day');
 
       IF "Requested Delivery Date" <> 0D THEN BEGIN
         IF "Promised Delivery Date" = 0D THEN
           "Promised Delivery Date" := "Requested Delivery Date";
       END;
+
+      IF "Shipping Advice" IN ["Shipping Advice"::Complete] THEN
+        MESSAGE('Complete shipment required');
     END;
 
     PROCEDURE RecalculateInvoiceDiscount@22();
     VAR
       TotalAmount@1000 : Decimal;
       DiscountAmount@1001 : Decimal;
+      Qty@1002 : Decimal;
     BEGIN
-      CALCFIELDS(Amount);
+      CALCFIELDS(Amount,"Total Quantity");
       TotalAmount := Amount;
+      Qty := "Total Quantity";
+
+      IF Qty IN [50..99,100..499,500..999] THEN
+        MESSAGE('Volume discount threshold reached');
 
       CASE "Invoice Discount Calculation" OF
         "Invoice Discount Calculation"::"%":
