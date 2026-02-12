@@ -194,6 +194,122 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
 }
 
 /**
+ * Collect folding ranges for multi-line C-style comment blocks
+ *
+ * Scans the source text for multi-line comments that span 3 or more lines.
+ * Skips single-quoted string literals to avoid false positives.
+ * Handles escaped quotes inside strings and line terminators.
+ *
+ * @param text - The full source text to scan
+ * @returns Array of FoldingRange items with kind Comment for multi-line comments
+ */
+export function collectCommentFoldingRanges(text: string): FoldingRange[] {
+  const ranges: FoldingRange[] = [];
+  let i = 0;
+  let line = 0;
+
+  while (i < text.length) {
+    const ch = text[i];
+
+    // String skipping (prevent false positives)
+    if (ch === "'") {
+      i++;
+      while (i < text.length) {
+        if (text[i] === "'") {
+          if (i + 1 < text.length && text[i + 1] === "'") {
+            i += 2; // skip escaped quote ''
+          } else {
+            i++; // advance past closing quote
+            break;
+          }
+        } else if (text[i] === "\r") {
+          if (i + 1 < text.length && text[i + 1] === "\n") {
+            i += 2; // \r\n as pair
+          } else {
+            i++;
+          }
+          line++;
+        } else if (text[i] === "\n") {
+          i++;
+          line++;
+        } else {
+          i++;
+        }
+      }
+      continue;
+    }
+
+    // Skip // line comments (prevent false positives from /* inside //)
+    if (ch === "/" && i + 1 < text.length && text[i + 1] === "/") {
+      i += 2;
+      while (i < text.length && text[i] !== "\n" && text[i] !== "\r") {
+        i++;
+      }
+      continue;
+    }
+
+    // Comment detection
+    if (ch === "/" && i + 1 < text.length && text[i + 1] === "*") {
+      const startLine = line;
+      i += 2; // advance past /*
+
+      while (i < text.length) {
+        if (text[i] === "*" && i + 1 < text.length && text[i + 1] === "/") {
+          const endLine = line;
+          i += 2; // advance past */
+
+          if (endLine - startLine >= 2) { // 3+ lines
+            ranges.push({
+              startLine,
+              endLine,
+              kind: FoldingRangeKind.Comment
+            });
+          }
+          break;
+        }
+
+        if (text[i] === "\r") {
+          if (i + 1 < text.length && text[i + 1] === "\n") {
+            i += 2;
+          } else {
+            i++;
+          }
+          line++;
+        } else if (text[i] === "\n") {
+          i++;
+          line++;
+        } else {
+          i++;
+        }
+      }
+      continue;
+    }
+
+    // Line counting
+    if (ch === "\r") {
+      if (i + 1 < text.length && text[i + 1] === "\n") {
+        i += 2;
+      } else {
+        i++;
+      }
+      line++;
+      continue;
+    }
+
+    if (ch === "\n") {
+      i++;
+      line++;
+      continue;
+    }
+
+    // Default: advance
+    i++;
+  }
+
+  return ranges;
+}
+
+/**
  * FoldingRangeProvider class
  * Provides folding ranges for C/AL documents
  */
@@ -204,20 +320,24 @@ export class FoldingRangeProvider {
   /**
    * Provide folding ranges for a C/AL document
    *
-   * @param document - The text document (kept for API consistency with other providers, currently unused)
+   * @param document - The text document
    * @param ast - The parsed AST
    * @returns Array of FoldingRange items
    */
   public provide(document: TextDocument, ast: CALDocument): FoldingRange[] {
-    // Guard: return empty array if no object in AST
+    // Collect comment folding ranges from raw text (comments are not in the AST)
+    const commentRanges = collectCommentFoldingRanges(document.getText());
+
+    // Guard: return comment ranges only if no object in AST
     if (!ast.object) {
-      return [];
+      return commentRanges;
     }
 
-    // Collect folding ranges using visitor pattern
+    // Collect code folding ranges using visitor pattern
     const visitor = new FoldingRangeCollectorVisitor();
     this.walker.walk(ast, visitor);
 
-    return visitor.ranges;
+    // Combine: comment ranges and code ranges don't overlap
+    return commentRanges.concat(visitor.ranges);
   }
 }

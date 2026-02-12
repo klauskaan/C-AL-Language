@@ -11,7 +11,7 @@ import { Parser } from '../../parser/parser';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { FoldingRange, FoldingRangeKind } from 'vscode-languageserver';
 
-import { FoldingRangeProvider } from '../foldingRangeProvider';
+import { FoldingRangeProvider, collectCommentFoldingRanges } from '../foldingRangeProvider';
 
 /**
  * Helper to create a TextDocument from a string
@@ -1207,6 +1207,371 @@ describe('FoldingRangeProvider', () => {
       // Should have folding range for procedure
       // But NOT for single-line IF branches without BEGIN/END
       expect(ranges.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('Comment Folding', () => {
+    describe('Integration Tests - provide()', () => {
+      it('should fold 3-line /* */ comment', () => {
+        const code = `/* This is a
+multi-line
+comment */
+OBJECT Codeunit 50000 Test
+{
+}`;
+        const doc = createDocument(code);
+        const ast = parseContent(code);
+
+        const ranges = provider.provide(doc, ast);
+
+        const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
+        expect(commentRange).toBeDefined();
+        expect(commentRange?.startLine).toBe(0);
+        expect(commentRange?.endLine).toBe(2);
+      });
+
+      it('should fold 5-line /* */ comment', () => {
+        const code = `/* Long
+comment
+spanning
+multiple
+lines */
+OBJECT Codeunit 50000 Test
+{
+}`;
+        const doc = createDocument(code);
+        const ast = parseContent(code);
+
+        const ranges = provider.provide(doc, ast);
+
+        const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
+        expect(commentRange).toBeDefined();
+        expect(commentRange?.startLine).toBe(0);
+        expect(commentRange?.endLine).toBe(4);
+      });
+
+      it('should not fold 2-line /* */ comment (below threshold)', () => {
+        const code = `/* Two line
+comment */
+OBJECT Codeunit 50000 Test
+{
+}`;
+        const doc = createDocument(code);
+        const ast = parseContent(code);
+
+        const ranges = provider.provide(doc, ast);
+
+        const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
+        expect(commentRange).toBeUndefined();
+      });
+
+      it('should not fold single-line /* */ comment', () => {
+        const code = `/* Single line comment */
+OBJECT Codeunit 50000 Test
+{
+}`;
+        const doc = createDocument(code);
+        const ast = parseContent(code);
+
+        const ranges = provider.provide(doc, ast);
+
+        const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
+        expect(commentRange).toBeUndefined();
+      });
+
+      it('should fold multiple /* */ comments separately', () => {
+        const code = `/* First
+comment
+block */
+OBJECT Codeunit 50000 Test
+{
+  /* Second
+  comment
+  block */
+  CODE
+  {
+  }
+}`;
+        const doc = createDocument(code);
+        const ast = parseContent(code);
+
+        const ranges = provider.provide(doc, ast);
+
+        const commentRanges = ranges.filter((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
+        expect(commentRanges.length).toBe(2);
+        expect(commentRanges[0].startLine).toBe(0);
+        expect(commentRanges[0].endLine).toBe(2);
+        expect(commentRanges[1].startLine).toBe(5);
+        expect(commentRanges[1].endLine).toBe(7);
+      });
+
+      it('should fold comment at file start (line 0)', () => {
+        const code = `/* Comment
+at file
+start */
+OBJECT Codeunit 50000 Test
+{
+}`;
+        const doc = createDocument(code);
+        const ast = parseContent(code);
+
+        const ranges = provider.provide(doc, ast);
+
+        const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
+        expect(commentRange).toBeDefined();
+        expect(commentRange?.startLine).toBe(0);
+      });
+
+      it('should not fold unclosed /* at EOF', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+}
+/* Unclosed
+comment`;
+        const doc = createDocument(code);
+        const ast = parseContent(code);
+
+        const ranges = provider.provide(doc, ast);
+
+        const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
+        expect(commentRange).toBeUndefined();
+      });
+
+      it('should not fold // single-line comments', () => {
+        const code = `// Line 1
+// Line 2
+// Line 3
+OBJECT Codeunit 50000 Test
+{
+}`;
+        const doc = createDocument(code);
+        const ast = parseContent(code);
+
+        const ranges = provider.provide(doc, ast);
+
+        const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
+        expect(commentRange).toBeUndefined();
+      });
+
+      it('should include closing */ line in fold range', () => {
+        const code = `/* Comment
+line 2
+line 3 */
+OBJECT Codeunit 50000 Test
+{
+}`;
+        const doc = createDocument(code);
+        const ast = parseContent(code);
+
+        const ranges = provider.provide(doc, ast);
+
+        const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
+        expect(commentRange).toBeDefined();
+        expect(commentRange?.endLine).toBe(2);
+      });
+
+      it('should not fold /* inside string literal', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    VAR
+      Str : Text;
+    BEGIN
+      Str := 'This /* is not
+a comment
+inside */ string';
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const ast = parseContent(code);
+
+        const ranges = provider.provide(doc, ast);
+
+        const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
+        expect(commentRange).toBeUndefined();
+      });
+
+      it("should not fold /* when '' escape does not end string", () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    VAR
+      Str : Text;
+    BEGIN
+      Str := 'It''s /* not a
+real
+comment */';
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const ast = parseContent(code);
+
+        const ranges = provider.provide(doc, ast);
+
+        const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
+        expect(commentRange).toBeUndefined();
+      });
+
+      it('should not fold /* in multi-line string literal', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo@1();
+    VAR
+      Str : Text;
+    BEGIN
+      Str := 'Line 1 /* open
+Line 2 middle
+Line 3 */ close
+still in string';
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const ast = parseContent(code);
+
+        const ranges = provider.provide(doc, ast);
+
+        const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
+        expect(commentRange).toBeUndefined();
+      });
+
+      it('should fold comment in document without object', () => {
+        const code = `/* File header
+comment
+block */`;
+        const doc = createDocument(code);
+        const ast = parseContent(code);
+
+        const ranges = provider.provide(doc, ast);
+
+        const commentRange = ranges.find((r: FoldingRange) => r.kind === FoldingRangeKind.Comment);
+        expect(commentRange).toBeDefined();
+        expect(commentRange?.startLine).toBe(0);
+        expect(commentRange?.endLine).toBe(2);
+      });
+    });
+
+    describe('Unit Tests - collectCommentFoldingRanges()', () => {
+      it('should return empty array for empty string', () => {
+        const code = '';
+        const doc = createDocument(code);
+
+        const ranges = collectCommentFoldingRanges(doc.getText());
+
+        expect(ranges).toEqual([]);
+      });
+
+      it('should return empty array for code with no comments', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+  }
+}`;
+        const doc = createDocument(code);
+
+        const ranges = collectCommentFoldingRanges(doc.getText());
+
+        expect(ranges).toEqual([]);
+      });
+
+      it('should fold comment exactly at 3-line threshold', () => {
+        const code = `/* Line 1
+Line 2
+Line 3 */`;
+        const doc = createDocument(code);
+
+        const ranges = collectCommentFoldingRanges(doc.getText());
+
+        expect(ranges.length).toBe(1);
+        expect(ranges[0].kind).toBe(FoldingRangeKind.Comment);
+        expect(ranges[0].startLine).toBe(0);
+        expect(ranges[0].endLine).toBe(2);
+      });
+
+      it('should return empty array for 2-line comment (below threshold)', () => {
+        const code = `/* Line 1
+Line 2 */`;
+        const doc = createDocument(code);
+
+        const ranges = collectCommentFoldingRanges(doc.getText());
+
+        expect(ranges).toEqual([]);
+      });
+
+      it('should handle \\r\\n line endings correctly', () => {
+        const code = `/* Line 1\r\nLine 2\r\nLine 3 */`;
+        const doc = createDocument(code);
+
+        const ranges = collectCommentFoldingRanges(doc.getText());
+
+        expect(ranges.length).toBe(1);
+        expect(ranges[0].startLine).toBe(0);
+        expect(ranges[0].endLine).toBe(2);
+      });
+
+      it('should handle mixed \\r\\n and \\n line endings correctly', () => {
+        const code = `/* Line 1\r\nLine 2\nLine 3 */`;
+        const doc = createDocument(code);
+
+        const ranges = collectCommentFoldingRanges(doc.getText());
+
+        expect(ranges.length).toBe(1);
+        expect(ranges[0].startLine).toBe(0);
+        expect(ranges[0].endLine).toBe(2);
+      });
+
+      it('should skip string literal then fold comment', () => {
+        const code = `Str := 'not /* comment';
+/* Real
+comment
+here */`;
+        const doc = createDocument(code);
+
+        const ranges = collectCommentFoldingRanges(doc.getText());
+
+        expect(ranges.length).toBe(1);
+        expect(ranges[0].startLine).toBe(1);
+        expect(ranges[0].endLine).toBe(3);
+      });
+
+      it('should return empty array when unclosed string before comment', () => {
+        const code = `Str := 'unclosed string
+/* This looks
+like a comment
+but scanner is stuck in string */`;
+        const doc = createDocument(code);
+
+        const ranges = collectCommentFoldingRanges(doc.getText());
+
+        expect(ranges).toEqual([]);
+      });
+
+      it('should not fold /* inside // line comment', () => {
+        const code = `// See /* Bug #123
+y := 2;
+z := 3;
+// Fix */ here`;
+        const ranges = collectCommentFoldingRanges(code);
+        expect(ranges).toEqual([]);
+      });
     });
   });
 });
