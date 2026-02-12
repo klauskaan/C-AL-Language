@@ -106,7 +106,8 @@ export class DepthLimitedWalker extends ASTWalker {
         end: { line, character: character + 1 }
       },
       message: `Nesting depth ${this.currentDepth} exceeds limit ${this.maxDepth} for ${elementType}. Deep nesting may indicate malformed input.`,
-      source: 'cal'
+      source: 'cal',
+      code: 'nesting-depth-exceeded'
     });
   }
 }

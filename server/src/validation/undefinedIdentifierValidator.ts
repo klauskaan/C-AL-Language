@@ -227,7 +227,8 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
           character: endCharacter
         }
       },
-      source: 'cal'
+      source: 'cal',
+      code: 'undefined-identifier'
     });
   }
 }

@@ -76,6 +76,7 @@ describe('UndefinedIdentifierValidator - Basic Detection', () => {
       expect(undefinedError).toBeDefined();
       expect(undefinedError!.message).toBe("Undefined identifier: 'UndefinedVar'");
       expect(undefinedError!.severity).toBe(DiagnosticSeverity.Warning);
+      expect(undefinedError!.code).toBe('undefined-identifier');
       expect(undefinedError!.source).toBe('cal');
     });
 

@@ -258,6 +258,7 @@ describe('UnknownAttributeValidator - Unknown Attributes with Suggestions', () =
     const diag = diagnostics[0];
     expect(diag.message).toBe("Unknown attribute '[Extrnal]'. Did you mean 'External'?");
     expect(diag.severity).toBe(DiagnosticSeverity.Warning);
+    expect(diag.code).toBe('unknown-attribute');
     expect(diag.source).toBe('cal');
   });
 

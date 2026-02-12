@@ -4,8 +4,6 @@
  * Tests for DepthLimitedWalker which prevents parser stack exhaustion by
  * limiting the maximum nesting depth of hierarchical C/AL structures
  * (Actions, Controls, XMLport Elements).
- *
- * Tests MUST fail initially since DepthLimitedWalker doesn't exist yet.
  */
 
 import { DepthLimitedWalker } from '../depthLimitedWalker';
@@ -362,6 +360,7 @@ describe('DepthLimitedWalker', () => {
       expect(diagnostics.length).toBeGreaterThan(0);
       // DiagnosticSeverity.Warning = 2
       expect(diagnostics[0].severity).toBe(2);
+      expect(diagnostics[0].code).toBe('nesting-depth-exceeded');
     });
   });
 

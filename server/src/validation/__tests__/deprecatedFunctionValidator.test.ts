@@ -69,6 +69,7 @@ describe('DeprecatedFunctionValidator - Deprecated Record Methods', () => {
       const diag = diagnostics[0];
       expect(diag.message).toBe('RECORDLEVELLOCKING is deprecated. Always returns TRUE in SQL Server-based versions. Can be safely removed.');
       expect(diag.severity).toBe(DiagnosticSeverity.Hint);
+      expect(diag.code).toBe('deprecated-function');
       expect(diag.tags).toEqual([DiagnosticTag.Deprecated]);
       expect(diag.source).toBe('cal');
     });
