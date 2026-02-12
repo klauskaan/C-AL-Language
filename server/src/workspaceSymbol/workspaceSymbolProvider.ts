@@ -6,11 +6,12 @@
  * Future: Integrate workspace-wide file indexing
  */
 
-import { SymbolInformation, Location, SymbolKind, DocumentSymbol } from 'vscode-languageserver';
+import { SymbolInformation } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Connection } from 'vscode-languageserver';
 import { DocumentSymbolProvider } from '../documentSymbol/documentSymbolProvider';
 import { CALDocument } from '../parser/ast';
+import { flattenDocumentSymbols } from './flattenSymbols';
 
 export const DEFAULT_MAX_SYMBOLS = 500;
 
@@ -59,7 +60,7 @@ export class WorkspaceSymbolProvider {
 
         // Flatten and filter symbols
         for (const docSymbol of documentSymbols) {
-          const flatSymbols = this.flattenDocumentSymbols(docSymbol, uri);
+          const flatSymbols = flattenDocumentSymbols(docSymbol, uri);
           results.push(...flatSymbols);
         }
       } catch (error) {
@@ -81,69 +82,5 @@ export class WorkspaceSymbolProvider {
     return results
       .filter(symbol => symbol.name.toLowerCase().includes(normalizedQuery))
       .slice(0, this.maxResults);
-  }
-
-  /**
-   * Flatten hierarchical DocumentSymbol tree into SymbolInformation array
-   * Excludes namespace containers (FIELDS, KEYS, TRIGGERS, etc.) and object declaration
-   *
-   * @param symbol - Root DocumentSymbol to flatten
-   * @param uri - Document URI
-   * @param containerName - Parent container name (propagated through recursion)
-   * @param isRoot - Whether this is the root object declaration (should be excluded)
-   * @returns Flattened array of SymbolInformation
-   */
-  private flattenDocumentSymbols(
-    symbol: DocumentSymbol,
-    uri: string,
-    containerName?: string,
-    isRoot = true
-  ): SymbolInformation[] {
-    const results: SymbolInformation[] = [];
-
-    // Check if this is a namespace container that should be filtered out
-    const isNamespaceContainer = symbol.kind === SymbolKind.Namespace;
-
-    // Check if this is the root object declaration (Class kind)
-    const isObjectDeclaration = isRoot && symbol.kind === SymbolKind.Class;
-
-    // Add current symbol to results (unless it's a namespace or object declaration)
-    if (!isNamespaceContainer && !isObjectDeclaration) {
-      const symbolInfo: SymbolInformation = {
-        name: symbol.name,
-        kind: symbol.kind,
-        location: Location.create(uri, symbol.selectionRange)
-      };
-
-      // Add container name if present
-      if (containerName) {
-        symbolInfo.containerName = containerName;
-      }
-
-      results.push(symbolInfo);
-    }
-
-    // Recursively process children
-    if (symbol.children) {
-      // Determine container name for children:
-      // - If current is namespace, use namespace name as container (FIELDS, KEYS, etc.)
-      // - If current is object declaration, don't set container (skip it)
-      // - Otherwise, use current symbol name as new containerName
-      let childContainer: string | undefined;
-      if (isNamespaceContainer) {
-        childContainer = symbol.name;
-      } else if (isObjectDeclaration) {
-        childContainer = undefined;
-      } else {
-        childContainer = symbol.name;
-      }
-
-      for (const child of symbol.children) {
-        const childResults = this.flattenDocumentSymbols(child, uri, childContainer, false);
-        results.push(...childResults);
-      }
-    }
-
-    return results;
   }
 }

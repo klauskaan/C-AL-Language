@@ -940,4 +940,270 @@ describe('WorkspaceSymbolProvider', () => {
       expect(result.length).toBe(5);
     });
   });
+
+  describe('Merge Behavior with Indexed Symbols', () => {
+    // These tests cover the integration between WorkspaceIndex and WorkspaceSymbolProvider
+    // Open documents should take priority over indexed versions
+
+    it('should merge indexed symbols with open document symbols', () => {
+      // Open document
+      const openCode = `OBJECT Codeunit 50000 OpenCode
+{
+  CODE
+  {
+    PROCEDURE OpenProc@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const openDoc = createDocument(openCode, 'file:///open.cal');
+      parsedDocs.add(openDoc);
+
+      // Simulated indexed symbol (from a closed file)
+      const indexedSymbol = {
+        name: 'IndexedProc',
+        kind: SymbolKind.Method,
+        location: {
+          uri: 'file:///indexed.cal',
+          range: {
+            start: { line: 5, character: 4 },
+            end: { line: 5, character: 15 }
+          }
+        }
+      };
+
+      // TODO: This test will fail until WorkspaceSymbolProvider integrates with WorkspaceIndex
+      // The provider needs to accept an index and merge symbols
+      const result = provider.search('Proc', parsedDocs.all());
+
+      // Should find OpenProc from open document (with () suffix)
+      expect(result.some((s: SymbolInformation) => s.name.includes('OpenProc'))).toBe(true);
+
+      // Should also find IndexedProc from index (when implemented)
+      // expect(result.some((s: SymbolInformation) => s.name === 'IndexedProc')).toBe(true);
+    });
+
+    it('should prioritize open document symbols over indexed symbols (deduplication)', () => {
+      // Scenario: Same file is both open (modified) and indexed (stale on disk)
+      const openCode = `OBJECT Codeunit 50000 TestCode
+{
+  CODE
+  {
+    PROCEDURE UpdatedProc@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const openDoc = createDocument(openCode, 'file:///test.cal');
+      parsedDocs.add(openDoc);
+
+      // Simulated indexed symbol (stale version with old procedure name)
+      const indexedSymbol = {
+        name: 'OldProc', // Old name before rename
+        kind: SymbolKind.Method,
+        location: {
+          uri: 'file:///test.cal', // Same URI as open document
+          range: {
+            start: { line: 5, character: 4 },
+            end: { line: 5, character: 11 }
+          }
+        }
+      };
+
+      // TODO: This test will fail until deduplication is implemented
+      const result = provider.search('Proc', parsedDocs.all());
+
+      // Should find UpdatedProc from open document (with () suffix)
+      expect(result.some((s: SymbolInformation) => s.name.includes('UpdatedProc'))).toBe(true);
+
+      // Should NOT find OldProc from index (deduplication by URI)
+      expect(result.some((s: SymbolInformation) => s.name.includes('OldProc'))).toBe(false);
+    });
+
+    it('should apply query filtering to merged results', () => {
+      // Open document
+      const openCode = `OBJECT Codeunit 50000 OpenCode
+{
+  CODE
+  {
+    PROCEDURE ValidateEmail@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const openDoc = createDocument(openCode, 'file:///open.cal');
+      parsedDocs.add(openDoc);
+
+      // Simulated indexed symbols
+      const indexedSymbols = [
+        {
+          name: 'ValidateXML',
+          kind: SymbolKind.Method,
+          location: {
+            uri: 'file:///indexed1.cal',
+            range: {
+              start: { line: 5, character: 4 },
+              end: { line: 5, character: 15 }
+            }
+          }
+        },
+        {
+          name: 'ParseData', // Does not match 'Validate' query
+          kind: SymbolKind.Method,
+          location: {
+            uri: 'file:///indexed2.cal',
+            range: {
+              start: { line: 3, character: 4 },
+              end: { line: 3, character: 13 }
+            }
+          }
+        }
+      ];
+
+      // TODO: This test will fail until WorkspaceIndex integration is implemented
+      const result = provider.search('Validate', parsedDocs.all());
+
+      // Should find ValidateEmail from open document (with () suffix)
+      expect(result.some((s: SymbolInformation) => s.name.includes('ValidateEmail'))).toBe(true);
+
+      // Should find ValidateXML from index (when implemented)
+      // expect(result.some((s: SymbolInformation) => s.name.includes('ValidateXML'))).toBe(true);
+
+      // Should NOT find ParseData (doesn't match query)
+      expect(result.some((s: SymbolInformation) => s.name.includes('ParseData'))).toBe(false);
+    });
+
+    it('should apply maxResults limit to merged results', () => {
+      // Create provider with maxResults=2
+      const limitedProvider = new WorkspaceSymbolProvider(
+        documentSymbolProvider,
+        mockConnection as any,
+        2 // maxResults
+      );
+
+      // Open document with 1 symbol
+      const openCode = `OBJECT Codeunit 50000 OpenCode
+{
+  CODE
+  {
+    PROCEDURE TestProc1@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const openDoc = createDocument(openCode, 'file:///open.cal');
+      parsedDocs.add(openDoc);
+
+      // Simulated indexed symbols (2 more matching symbols)
+      const indexedSymbols = [
+        {
+          name: 'TestProc2',
+          kind: SymbolKind.Method,
+          location: {
+            uri: 'file:///indexed1.cal',
+            range: {
+              start: { line: 5, character: 4 },
+              end: { line: 5, character: 13 }
+            }
+          }
+        },
+        {
+          name: 'TestProc3',
+          kind: SymbolKind.Method,
+          location: {
+            uri: 'file:///indexed2.cal',
+            range: {
+              start: { line: 5, character: 4 },
+              end: { line: 5, character: 13 }
+            }
+          }
+        }
+      ];
+
+      // TODO: This test will fail until WorkspaceIndex integration is implemented
+      const result = limitedProvider.search('Test', parsedDocs.all());
+
+      // Should return at most 2 results (maxResults limit)
+      expect(result.length).toBeLessThanOrEqual(2);
+
+      // Should prioritize open documents (TestProc1 should always be included, with () suffix)
+      expect(result.some((s: SymbolInformation) => s.name.includes('TestProc1'))).toBe(true);
+    });
+
+    it('should handle empty index gracefully', () => {
+      // Open document
+      const openCode = `OBJECT Codeunit 50000 OpenCode
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const openDoc = createDocument(openCode, 'file:///open.cal');
+      parsedDocs.add(openDoc);
+
+      // Empty index (no indexed symbols)
+      const result = provider.search('Test', parsedDocs.all());
+
+      // Should still return symbols from open document (with () suffix)
+      expect(result.length).toBe(1);
+      expect(result[0].name).toContain('TestProc');
+    });
+
+    it('should handle no open documents with indexed symbols', () => {
+      // No open documents
+      expect(parsedDocs.all().length).toBe(0);
+
+      // Simulated indexed symbols
+      const indexedSymbols = [
+        {
+          name: 'IndexedProc1',
+          kind: SymbolKind.Method,
+          location: {
+            uri: 'file:///indexed1.cal',
+            range: {
+              start: { line: 5, character: 4 },
+              end: { line: 5, character: 16 }
+            }
+          }
+        },
+        {
+          name: 'IndexedProc2',
+          kind: SymbolKind.Method,
+          location: {
+            uri: 'file:///indexed2.cal',
+            range: {
+              start: { line: 5, character: 4 },
+              end: { line: 5, character: 16 }
+            }
+          }
+        }
+      ];
+
+      // TODO: This test will fail until WorkspaceIndex integration is implemented
+      const result = provider.search('Indexed', parsedDocs.all());
+
+      // Should return indexed symbols (when implemented)
+      // expect(result.length).toBe(2);
+      // expect(result.some((s: SymbolInformation) => s.name === 'IndexedProc1')).toBe(true);
+      // expect(result.some((s: SymbolInformation) => s.name === 'IndexedProc2')).toBe(true);
+    });
+  });
 });

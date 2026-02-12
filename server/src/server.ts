@@ -46,7 +46,7 @@ import { ReferenceProvider } from './references';
 import { CodeLensProvider } from './codelens';
 import { DocumentSymbolProvider } from './documentSymbol';
 import { RenameProvider } from './rename';
-import { WorkspaceSymbolProvider } from './workspaceSymbol';
+import { WorkspaceSymbolProvider, DEFAULT_MAX_SYMBOLS } from './workspaceSymbol';
 import { FoldingRangeProvider } from './foldingRange/foldingRangeProvider';
 import { SymbolTable } from './symbols/symbolTable';
 import { formatError } from './utils/sanitize';
@@ -55,6 +55,9 @@ import { DepthLimitedWalker } from './visitor/depthLimitedWalker';
 import { DocumentDebouncer } from './utils/documentDebouncer';
 import { CALSettings, defaultSettings } from './settings';
 import { BuiltinRegistry } from './builtins';
+import { WorkspaceIndex } from './workspaceSymbol/workspaceIndex';
+import { fileURLToPath } from 'url';
+import { hasCalExtension } from './utils/fileExtensions';
 
 // Create a connection for the server
 const connection = createConnection(ProposedFeatures.all);
@@ -98,6 +101,9 @@ const workspaceSymbolProvider = new WorkspaceSymbolProvider(
   connection
 );
 
+// WorkspaceIndex (file-based symbol indexing)
+const workspaceIndex = new WorkspaceIndex();
+
 // FoldingRange provider (code folding)
 const foldingRangeProvider = new FoldingRangeProvider();
 
@@ -116,8 +122,27 @@ interface ParsedDocument {
 }
 const documentCache = new Map<string, ParsedDocument>();
 
+// Store workspace folders for indexing
+let workspaceFolders: string[] = [];
+
 connection.onInitialize((params: InitializeParams) => {
   connection.console.log('C/AL Language Server initializing...');
+
+  // Capture workspace folders
+  if (params.workspaceFolders) {
+    workspaceFolders = params.workspaceFolders
+      .map(folder => {
+        try {
+          return fileURLToPath(folder.uri);
+        } catch (error) {
+          connection.console.warn(`Failed to convert workspace folder URI: ${folder.uri}`);
+          return null;
+        }
+      })
+      .filter((path): path is string => path !== null);
+
+    connection.console.log(`Workspace folders: ${workspaceFolders.join(', ')}`);
+  }
 
   // Check if semantic highlighting is enabled via initialization options
   const initOptions = params.initializationOptions as { semanticHighlighting?: boolean } | undefined;
@@ -161,14 +186,73 @@ connection.onInitialize((params: InitializeParams) => {
   return result;
 });
 
+/**
+ * Index all .cal files in workspace folders
+ * Runs asynchronously after server initialization
+ */
+async function indexWorkspace(): Promise<void> {
+  if (workspaceFolders.length === 0) {
+    connection.console.log('No workspace folders to index');
+    return;
+  }
+
+  connection.console.log('Starting workspace indexing...');
+
+  for (const folder of workspaceFolders) {
+    try {
+      await workspaceIndex.indexDirectory(folder);
+      connection.console.log(`Indexed ${folder}: ${workspaceIndex.fileCount} files, ${workspaceIndex.symbolCount} symbols`);
+    } catch (error) {
+      connection.console.error(`Failed to index ${folder}: ${formatError(error)}`);
+    }
+  }
+
+  connection.console.log(`Workspace indexing complete: ${workspaceIndex.fileCount} files, ${workspaceIndex.symbolCount} symbols`);
+}
+
 connection.onInitialized(() => {
   connection.console.log('C/AL Language Server initialized');
   updateSettings();
+
+  // Start workspace indexing (non-blocking)
+  indexWorkspace().catch(error => {
+    connection.console.error(`Workspace indexing failed: ${formatError(error)}`);
+  });
 });
 
 // Handle configuration changes
 connection.onDidChangeConfiguration(() => {
   updateSettings();
+});
+
+// Handle file system changes (create, update, delete)
+connection.onDidChangeWatchedFiles(async (params) => {
+  for (const change of params.changes) {
+    try {
+      const filePath = fileURLToPath(change.uri);
+
+      // Only process .cal files
+      if (!hasCalExtension(filePath)) {
+        continue;
+      }
+
+      // FileChangeType: Created = 1, Changed = 2, Deleted = 3
+      if (change.type === 3) {
+        // File deleted
+        workspaceIndex.remove(filePath);
+        connection.console.log(`Removed from index: ${filePath}`);
+      } else {
+        // File created or changed
+        const timestamp = Date.now();
+        const wasUpdated = await workspaceIndex.updateIfNotFresher(filePath, timestamp);
+        if (wasUpdated) {
+          connection.console.log(`Updated in index: ${filePath}`);
+        }
+      }
+    } catch (error) {
+      connection.console.warn(`Failed to handle file change for ${change.uri}: ${formatError(error)}`);
+    }
+  }
 });
 
 /**
@@ -462,8 +546,26 @@ connection.onWorkspaceSymbol((params: WorkspaceSymbolParams): SymbolInformation[
       return { uri: doc.uri, textDocument: doc, ast };
     });
 
-    const results = workspaceSymbolProvider.search(params.query, parsedDocs);
-    connection.console.log(`[WorkspaceSymbol] Returning ${results.length} symbols`);
+    // Get symbols from open documents
+    const openDocSymbols = workspaceSymbolProvider.search(params.query, parsedDocs);
+
+    // Get symbols from workspace index
+    const indexedSymbols = workspaceIndex.getAllSymbols();
+
+    // Filter indexed symbols by query (case-insensitive substring match)
+    const normalizedQuery = params.query.toLowerCase();
+    const filteredIndexedSymbols = params.query === ''
+      ? indexedSymbols
+      : indexedSymbols.filter(symbol => symbol.name.toLowerCase().includes(normalizedQuery));
+
+    // Merge: open documents take priority (deduplicate by URI)
+    const openDocUris = new Set(parsedDocs.map(doc => doc.uri));
+    const uniqueIndexedSymbols = filteredIndexedSymbols.filter(
+      symbol => !openDocUris.has(symbol.location.uri)
+    );
+
+    const results = [...openDocSymbols, ...uniqueIndexedSymbols].slice(0, DEFAULT_MAX_SYMBOLS);
+    connection.console.log(`[WorkspaceSymbol] Returning ${results.length} symbols (${openDocSymbols.length} from open docs, ${uniqueIndexedSymbols.length} from index)`);
     return results;
   } catch (error) {
     connection.console.error(`Error getting workspace symbols: ${formatError(error)}`);
@@ -589,10 +691,28 @@ function parseDocument(document: TextDocument): ParsedDocument {
 }
 
 // Clear cache when document is closed
-documents.onDidClose(event => {
+documents.onDidClose(async (event) => {
   // Cancel pending semantic analysis for this document
   semanticDebouncer.cancel(event.document.uri);
   documentCache.delete(event.document.uri);
+
+  // Re-index the file from disk (if it's a .cal file)
+  try {
+    const filePath = fileURLToPath(event.document.uri);
+    if (hasCalExtension(filePath)) {
+      await workspaceIndex.add(filePath);
+      connection.console.log(`Re-indexed closed document: ${filePath}`);
+    }
+  } catch (error) {
+    // If file was deleted or can't be read, remove from index
+    try {
+      const filePath = fileURLToPath(event.document.uri);
+      workspaceIndex.remove(filePath);
+      connection.console.log(`Removed deleted document from index: ${filePath}`);
+    } catch (conversionError) {
+      // URI conversion failed, skip
+    }
+  }
 });
 
 // Make the text document manager listen on the connection
