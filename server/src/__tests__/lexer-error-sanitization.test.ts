@@ -28,6 +28,7 @@
 
 import { Lexer } from '../lexer/lexer';
 import { Parser } from '../parser/parser';
+import { TokenType } from '../lexer/tokens';
 
 describe('Lexer error sanitization (security validation)', () => {
   /**
@@ -66,7 +67,7 @@ describe('Lexer error sanitization (security validation)', () => {
       const tokens = lexer.tokenize();
 
       // Verify lexer creates Unknown token for unmatched brace
-      const unknownTokens = tokens.filter(t => t.type === 'UNKNOWN');
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
       expect(unknownTokens.length).toBeGreaterThan(0);
 
       const parser = new Parser(tokens);
@@ -224,7 +225,7 @@ $SECOND_LINE_CONFIDENTIAL$`;
       const tokens = lexer.tokenize();
 
       // Verify lexer creates Unknown token for invalid operator
-      const unknownTokens = tokens.filter(t => t.type === 'UNKNOWN');
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
       expect(unknownTokens.length).toBeGreaterThan(0);
 
       const parser = new Parser(tokens);
@@ -261,7 +262,7 @@ $SECOND_LINE_CONFIDENTIAL$`;
       const tokens = lexer.tokenize();
 
       // Verify lexer creates Unknown token for invalid operator
-      const unknownTokens = tokens.filter(t => t.type === 'UNKNOWN');
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
       expect(unknownTokens.length).toBeGreaterThan(0);
 
       const parser = new Parser(tokens);
@@ -300,7 +301,7 @@ $SECOND_LINE_CONFIDENTIAL$`;
       const tokens = lexer.tokenize();
 
       // Verify lexer creates Unknown token with ONLY the opening brace
-      const unknownTokens = tokens.filter(t => t.type === 'UNKNOWN');
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
       expect(unknownTokens.length).toBeGreaterThan(0);
       expect(unknownTokens[0].value).toBe('{'); // NOT the comment content
 
@@ -338,7 +339,7 @@ $SECOND_LINE_CONFIDENTIAL$`;
       const tokens = lexer.tokenize();
 
       // Verify lexer creates Unknown token(s) - may include the unclosed brace
-      const unknownTokens = tokens.filter(t => t.type === 'UNKNOWN');
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
       expect(unknownTokens.length).toBeGreaterThan(0);
 
       // Find the unclosed comment brace token (look for '{' specifically)
@@ -380,7 +381,7 @@ $SECOND_LINE_CONFIDENTIAL$`;
       const tokens = lexer.tokenize();
 
       // Verify lexer creates Unknown token with ONLY '/*'
-      const unknownTokens = tokens.filter(t => t.type === 'UNKNOWN');
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
       expect(unknownTokens.length).toBeGreaterThan(0);
       expect(unknownTokens[0].value).toBe('/*'); // NOT the comment content
 
@@ -418,7 +419,7 @@ $SECOND_LINE_CONFIDENTIAL$`;
       const tokens = lexer.tokenize();
 
       // Verify lexer behavior
-      const unknownTokens = tokens.filter(t => t.type === 'UNKNOWN');
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
       expect(unknownTokens.length).toBeGreaterThan(0);
       expect(unknownTokens[0].value).toBe('/*'); // ONLY the opening
 
@@ -504,7 +505,7 @@ $SECOND_LINE_CONFIDENTIAL$`;
       const tokens = lexer.tokenize();
 
       // Verify lexer creates Unknown token for empty unclosed identifier
-      const unknownTokens = tokens.filter(t => t.type === 'UNKNOWN');
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
       expect(unknownTokens.length).toBeGreaterThan(0);
 
       const parser = new Parser(tokens);
