@@ -57,7 +57,8 @@ import { CALSettings, defaultSettings } from './settings';
 import { BuiltinRegistry } from './builtins';
 import { WorkspaceIndex } from './workspaceSymbol/workspaceIndex';
 import { fileURLToPath } from 'url';
-import { hasCalExtension } from './utils/fileExtensions';
+import { hasCalExtension, hasTxtExtension } from './utils/fileExtensions';
+import { isCalContent } from './utils/calDetection';
 
 // Create a connection for the server
 const connection = createConnection(ProposedFeatures.all);
@@ -187,7 +188,7 @@ connection.onInitialize((params: InitializeParams) => {
 });
 
 /**
- * Index all .cal files in workspace folders
+ * Index all .cal files (and optionally .txt files) in workspace folders
  * Runs asynchronously after server initialization
  */
 async function indexWorkspace(): Promise<void> {
@@ -198,9 +199,11 @@ async function indexWorkspace(): Promise<void> {
 
   connection.console.log('Starting workspace indexing...');
 
+  const includeTxtFiles = currentSettings.workspaceIndexing.includeTxtFiles;
+
   for (const folder of workspaceFolders) {
     try {
-      await workspaceIndex.indexDirectory(folder);
+      await workspaceIndex.indexDirectory(folder, { includeTxtFiles });
       connection.console.log(`Indexed ${folder}: ${workspaceIndex.fileCount} files, ${workspaceIndex.symbolCount} symbols`);
     } catch (error) {
       connection.console.error(`Failed to index ${folder}: ${formatError(error)}`);
@@ -210,9 +213,9 @@ async function indexWorkspace(): Promise<void> {
   connection.console.log(`Workspace indexing complete: ${workspaceIndex.fileCount} files, ${workspaceIndex.symbolCount} symbols`);
 }
 
-connection.onInitialized(() => {
+connection.onInitialized(async () => {
   connection.console.log('C/AL Language Server initialized');
-  updateSettings();
+  await updateSettings();
 
   // Start workspace indexing (non-blocking)
   indexWorkspace().catch(error => {
@@ -231,8 +234,17 @@ connection.onDidChangeWatchedFiles(async (params) => {
     try {
       const filePath = fileURLToPath(change.uri);
 
-      // Only process .cal files
-      if (!hasCalExtension(filePath)) {
+      // Check if file is .cal or .txt
+      const isCalFile = hasCalExtension(filePath);
+      const isTxtFile = hasTxtExtension(filePath);
+
+      // Skip files that are neither .cal nor .txt
+      if (!isCalFile && !isTxtFile) {
+        continue;
+      }
+
+      // For .txt files, skip if includeTxtFiles setting is false
+      if (isTxtFile && !currentSettings.workspaceIndexing.includeTxtFiles) {
         continue;
       }
 
@@ -243,6 +255,15 @@ connection.onDidChangeWatchedFiles(async (params) => {
         connection.console.log(`Removed from index: ${filePath}`);
       } else {
         // File created or changed
+        // For .txt files, run heuristic check first
+        if (isTxtFile) {
+          const hasCalContent = await isCalContent(filePath);
+          if (!hasCalContent) {
+            // Not a C/AL file, skip indexing
+            continue;
+          }
+        }
+
         const timestamp = Date.now();
         const wasUpdated = await workspaceIndex.updateIfNotFresher(filePath, timestamp);
         if (wasUpdated) {
@@ -260,36 +281,56 @@ connection.onDidChangeWatchedFiles(async (params) => {
  */
 async function updateSettings(): Promise<void> {
   try {
-    // Query narrow section (cal.diagnostics)
-    const config = await connection.workspace.getConfiguration('cal.diagnostics');
+    // Query diagnostics section
+    const diagnosticsConfig = await connection.workspace.getConfiguration('cal.diagnostics');
+    // Query workspaceIndexing section
+    const workspaceIndexingConfig = await connection.workspace.getConfiguration('cal.workspaceIndexing');
 
-    // Defensive null checking
-    if (config !== null && typeof config === 'object') {
-      const diagnosticsConfig = config as { warnDeprecated?: unknown; warnUnknownAttributes?: unknown };
+    // Extract diagnostics settings with type safety
+    const warnDeprecated = diagnosticsConfig !== null && typeof diagnosticsConfig === 'object' &&
+                          typeof (diagnosticsConfig as { warnDeprecated?: unknown }).warnDeprecated === 'boolean'
+      ? (diagnosticsConfig as { warnDeprecated: boolean }).warnDeprecated
+      : defaultSettings.diagnostics.warnDeprecated;
 
-      // Extract warnDeprecated with type safety
-      const warnDeprecated = typeof diagnosticsConfig.warnDeprecated === 'boolean'
-        ? diagnosticsConfig.warnDeprecated
-        : defaultSettings.diagnostics.warnDeprecated;
+    const warnUnknownAttributes = diagnosticsConfig !== null && typeof diagnosticsConfig === 'object' &&
+                                  typeof (diagnosticsConfig as { warnUnknownAttributes?: unknown }).warnUnknownAttributes === 'boolean'
+      ? (diagnosticsConfig as { warnUnknownAttributes: boolean }).warnUnknownAttributes
+      : defaultSettings.diagnostics.warnUnknownAttributes;
 
-      // Extract warnUnknownAttributes with type safety
-      const warnUnknownAttributes = typeof diagnosticsConfig.warnUnknownAttributes === 'boolean'
-        ? diagnosticsConfig.warnUnknownAttributes
-        : defaultSettings.diagnostics.warnUnknownAttributes;
+    // Extract workspaceIndexing settings with type safety
+    const includeTxtFiles = workspaceIndexingConfig !== null && typeof workspaceIndexingConfig === 'object' &&
+                            typeof (workspaceIndexingConfig as { includeTxtFiles?: unknown }).includeTxtFiles === 'boolean'
+      ? (workspaceIndexingConfig as { includeTxtFiles: boolean }).includeTxtFiles
+      : defaultSettings.workspaceIndexing.includeTxtFiles;
 
-      // Update settings
-      currentSettings = {
-        diagnostics: {
-          warnDeprecated,
-          warnUnknownAttributes
-        }
-      };
+    // Detect setting changes that require re-indexing
+    const previousIncludeTxtFiles = currentSettings.workspaceIndexing.includeTxtFiles;
+    const settingChanged = previousIncludeTxtFiles !== includeTxtFiles;
 
-      connection.console.log(`Settings updated: warnDeprecated=${warnDeprecated}, warnUnknownAttributes=${warnUnknownAttributes}`);
-    } else {
-      // Config query returned null/undefined - use defaults
-      currentSettings = defaultSettings;
-      connection.console.log('Settings update: config query returned null, using defaults');
+    // Update settings
+    currentSettings = {
+      diagnostics: {
+        warnDeprecated,
+        warnUnknownAttributes
+      },
+      workspaceIndexing: {
+        includeTxtFiles
+      }
+    };
+
+    connection.console.log(`Settings updated: warnDeprecated=${warnDeprecated}, warnUnknownAttributes=${warnUnknownAttributes}, includeTxtFiles=${includeTxtFiles}`);
+
+    // Re-index workspace if includeTxtFiles setting changed
+    if (settingChanged) {
+      connection.console.log(`includeTxtFiles changed (${previousIncludeTxtFiles} -> ${includeTxtFiles}), re-indexing workspace...`);
+
+      // Clear existing index
+      workspaceIndex.clear();
+
+      // Re-index with new settings
+      indexWorkspace().catch(error => {
+        connection.console.error(`Workspace re-indexing failed: ${formatError(error)}`);
+      });
     }
 
     // Re-validate all open documents
@@ -696,12 +737,23 @@ documents.onDidClose(async (event) => {
   semanticDebouncer.cancel(event.document.uri);
   documentCache.delete(event.document.uri);
 
-  // Re-index the file from disk (if it's a .cal file)
+  // Re-index the file from disk (if it's a .cal or .txt file)
   try {
     const filePath = fileURLToPath(event.document.uri);
-    if (hasCalExtension(filePath)) {
+    const isCalFile = hasCalExtension(filePath);
+    const isTxtFile = hasTxtExtension(filePath);
+
+    if (isCalFile) {
+      // Always re-index .cal files
       await workspaceIndex.add(filePath);
       connection.console.log(`Re-indexed closed document: ${filePath}`);
+    } else if (isTxtFile && currentSettings.workspaceIndexing.includeTxtFiles) {
+      // For .txt files, check if it's C/AL content first
+      const hasCalContent = await isCalContent(filePath);
+      if (hasCalContent) {
+        await workspaceIndex.add(filePath);
+        connection.console.log(`Re-indexed closed document: ${filePath}`);
+      }
     }
   } catch (error) {
     // If file was deleted or can't be read, remove from index

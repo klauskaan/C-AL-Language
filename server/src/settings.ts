@@ -9,11 +9,17 @@ export interface CALSettings {
     warnDeprecated: boolean;
     warnUnknownAttributes: boolean;
   };
+  workspaceIndexing: {
+    includeTxtFiles: boolean;
+  };
 }
 
 export const defaultSettings: CALSettings = {
   diagnostics: {
     warnDeprecated: true,
     warnUnknownAttributes: true
+  },
+  workspaceIndexing: {
+    includeTxtFiles: true
   }
 };

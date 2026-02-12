@@ -13,7 +13,8 @@ import { Parser } from '../parser/parser';
 import { Lexer } from '../lexer/lexer';
 import { readFileWithEncodingAsync } from '../utils/encoding';
 import { discoverFiles } from '../utils/fileDiscovery';
-import { hasCalExtension } from '../utils/fileExtensions';
+import { hasCalExtension, hasTxtExtension } from '../utils/fileExtensions';
+import { isCalContent } from '../utils/calDetection';
 import { flattenDocumentSymbols } from './flattenSymbols';
 
 /**
@@ -86,6 +87,13 @@ export class WorkspaceIndex {
   }
 
   /**
+   * Clear all entries from the index
+   */
+  clear(): void {
+    this.index.clear();
+  }
+
+  /**
    * Check if a file is in the index
    *
    * @param filePath - Absolute file path to check
@@ -129,20 +137,41 @@ export class WorkspaceIndex {
   }
 
   /**
-   * Index all .cal files in a directory (recursively)
+   * Index all .cal files (and optionally .txt files) in a directory (recursively)
    *
    * @param directory - Root directory to index
+   * @param options - Indexing options
+   * @param options.includeTxtFiles - Whether to index .txt files (default: false)
    * @returns Promise that resolves when indexing is complete
    * @throws Error if directory cannot be read
    */
-  async indexDirectory(directory: string): Promise<void> {
-    // Discover all .cal files
+  async indexDirectory(directory: string, options?: { includeTxtFiles?: boolean }): Promise<void> {
+    const includeTxtFiles = options?.includeTxtFiles ?? false;
+
+    // Discover .cal files
     const calFiles = await discoverFiles(directory, hasCalExtension);
 
+    // Discover .txt files if enabled
+    const txtFiles = includeTxtFiles ? await discoverFiles(directory, hasTxtExtension) : [];
+
+    // Combine all files to index
+    const allFiles = [...calFiles, ...txtFiles];
+
     // Index each file with event loop yielding
-    for (let i = 0; i < calFiles.length; i++) {
+    for (let i = 0; i < allFiles.length; i++) {
+      const filePath = allFiles[i];
+
       try {
-        await this.add(calFiles[i]);
+        // For .txt files, run heuristic check first
+        if (hasTxtExtension(filePath)) {
+          const isCalFile = await isCalContent(filePath);
+          if (!isCalFile) {
+            // Not a C/AL file, skip indexing
+            continue;
+          }
+        }
+
+        await this.add(filePath);
 
         // Yield to event loop periodically (every 10 files)
         if (i % 10 === 0 && i > 0) {
