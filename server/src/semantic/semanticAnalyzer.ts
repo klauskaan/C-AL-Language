@@ -17,6 +17,7 @@ import { UnusedVariableValidator } from '../validation/unusedVariableValidator';
 import { TypeMismatchValidator } from '../validation/typeMismatchValidator';
 import { DeprecatedFunctionValidator } from '../validation/deprecatedFunctionValidator';
 import { UnknownAttributeValidator } from '../validation/unknownAttributeValidator';
+import { ActionNestingValidator } from '../validation/actionNestingValidator';
 import { CALSettings } from '../settings';
 
 export class SemanticAnalyzer {
@@ -58,6 +59,9 @@ export class SemanticAnalyzer {
 
     // Register UnknownAttributeValidator
     this.pipeline.registerValidator(new UnknownAttributeValidator());
+
+    // Register ActionNestingValidator
+    this.pipeline.registerValidator(new ActionNestingValidator());
 
     // Future validators will be registered here:
     // this.pipeline.registerValidator(new TypeCheckValidator());
