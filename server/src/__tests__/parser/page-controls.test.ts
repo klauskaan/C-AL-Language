@@ -510,6 +510,109 @@ describe('Page CONTROLS - Action control types', () => {
       expect(level4b?.indentLevel).toBe(4);
     });
 
+    it('should handle multi-level stack pop-back from depth 5+ (0 > 1 > 2 > 3 > 4 > 5 > 1)', () => {
+      const source = `
+        OBJECT Page 50000 Test
+        {
+          OBJECT-PROPERTIES
+          {
+            Date=01-01-24;
+            Time=12:00:00;
+          }
+          PROPERTIES
+          {
+          }
+          CONTROLS
+          {
+            { 1;0;Container }
+            { 2;1;Group;
+                    CaptionML=ENU=Level 1 }
+            { 3;2;Group;
+                    CaptionML=ENU=Level 2 }
+            { 4;3;Group;
+                    CaptionML=ENU=Level 3 }
+            { 5;4;Group;
+                    CaptionML=ENU=Level 4 }
+            { 6;5;Field;
+                    SourceExpr="DeepField" }
+            { 7;1;Group;
+                    CaptionML=ENU=Back to Level 1 }
+            { 8;2;Field;
+                    SourceExpr="Field2" }
+          }
+          CODE
+          {
+            BEGIN
+            END.
+          }
+        }
+      `;
+
+      const result = parseCode(source);
+      const errors = result.errors.filter((e: any) => e.code !== 'parse-placeholder-skipped');
+      expect(errors.length).toBe(0);
+
+      expect(result.ast).not.toBeNull();
+      const page = result.ast!.object;
+      expect(page).toBeDefined();
+      expect(page?.controls).toBeDefined();
+
+      const controls = page?.controls?.controls || [];
+      expect(controls.length).toBe(1);
+
+      // Verify root (Container at level 0)
+      const container = controls[0];
+      expect(container?.id).toBe(1);
+      expect(container?.controlType).toBe('Container');
+      expect(container?.indentLevel).toBe(0);
+      expect(container?.children.length).toBe(2); // Two level-1 Groups
+
+      // Verify first level-1 Group (deep nesting path)
+      const group1a = container?.children[0];
+      expect(group1a?.id).toBe(2);
+      expect(group1a?.controlType).toBe('Group');
+      expect(group1a?.indentLevel).toBe(1);
+
+      // Verify level 2
+      expect(group1a?.children.length).toBe(1);
+      const group2 = group1a?.children[0];
+      expect(group2?.id).toBe(3);
+      expect(group2?.indentLevel).toBe(2);
+
+      // Verify level 3
+      expect(group2?.children.length).toBe(1);
+      const group3 = group2?.children[0];
+      expect(group3?.id).toBe(4);
+      expect(group3?.indentLevel).toBe(3);
+
+      // Verify level 4
+      expect(group3?.children.length).toBe(1);
+      const group4 = group3?.children[0];
+      expect(group4?.id).toBe(5);
+      expect(group4?.indentLevel).toBe(4);
+
+      // Verify level 5 (deepest field)
+      expect(group4?.children.length).toBe(1);
+      const field5 = group4?.children[0];
+      expect(field5?.id).toBe(6);
+      expect(field5?.controlType).toBe('Field');
+      expect(field5?.indentLevel).toBe(5);
+      expect(field5?.children.length).toBe(0);
+
+      // Verify second level-1 Group (after multi-level pop from 5 to 1)
+      const group1b = container?.children[1];
+      expect(group1b?.id).toBe(7);
+      expect(group1b?.controlType).toBe('Group');
+      expect(group1b?.indentLevel).toBe(1);
+
+      // Verify level-2 Field under second Group
+      expect(group1b?.children.length).toBe(1);
+      const field2 = group1b?.children[0];
+      expect(field2?.id).toBe(8);
+      expect(field2?.controlType).toBe('Field');
+      expect(field2?.indentLevel).toBe(2);
+    });
+
     it('should parse mixed indent patterns with non-sequential indents (0 > 1 > 1 > 2 > 2)', () => {
       const source = `
         OBJECT Page 50000 Test
