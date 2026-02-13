@@ -48,6 +48,7 @@ async function benchmarkParser(): Promise<BenchmarkResult[]> {
   // Load complexity fixtures
   const deepNestingContent = loadFixture(COMPLEXITY_FIXTURES.DEEP_NESTING);
   const manyProceduresContent = loadFixture(COMPLEXITY_FIXTURES.MANY_PROCEDURES);
+  const largeControlsContent = loadFixture(COMPLEXITY_FIXTURES.LARGE_CONTROLS);
 
   // Benchmark: Parse tiny file
   bench.add('Parser: Parse tiny file (~100 lines)', () => {
@@ -94,6 +95,11 @@ async function benchmarkParser(): Promise<BenchmarkResult[]> {
     parseContent(manyProceduresContent);
   });
 
+  // Benchmark: Parse large CONTROLS section
+  bench.add('Parser: Large CONTROLS section (200+ controls)', () => {
+    parseContent(largeControlsContent);
+  });
+
   // Run benchmarks
   await bench.run();
 
@@ -119,6 +125,37 @@ async function benchmarkParser(): Promise<BenchmarkResult[]> {
   // Memory usage summary
   const memSnapshot = takeMemorySnapshot();
   console.log(`\n💾 Memory Usage: ${formatMemorySize(memSnapshot.heapUsedMB)}`);
+
+  // REGRESSION THRESHOLD CHECK for large CONTROLS section
+  const largeControlsResult = results.find(r => r.name.includes('Large CONTROLS section'));
+
+  if (largeControlsResult) {
+    const meanMs = largeControlsResult.meanMs;
+
+    /**
+     * Calibration: Run `npm run perf:quick` 3 times and record mean time.
+     * Set threshold to 3x that mean to catch significant regressions.
+     *
+     * Calibration results (2026-02-13, issue #222):
+     * - Run 1: 1.04 ms
+     * - Run 2: 2.31 ms
+     * - Run 3: 1.49 ms
+     * - Average: 1.61 ms
+     * - Threshold (3x): 4.83 ms (rounded to 5 ms)
+     *
+     * Note: Issue acceptance criterion was <100ms for 200 controls.
+     * Actual baseline ~1.6ms far exceeds requirement.
+     */
+    const REGRESSION_THRESHOLD_MS = 5; // 3x average of calibration runs
+
+    if (meanMs > REGRESSION_THRESHOLD_MS) {
+      const msg = `⚠️  REGRESSION DETECTED: Large CONTROLS section mean time ${meanMs.toFixed(2)}ms exceeds threshold ${REGRESSION_THRESHOLD_MS}ms`;
+      console.log('\n' + msg);
+      throw new Error(msg);
+    } else {
+      console.log(`\n✅ Large CONTROLS performance within threshold: ${meanMs.toFixed(2)}ms / ${REGRESSION_THRESHOLD_MS}ms`);
+    }
+  }
 
   return results;
 }
