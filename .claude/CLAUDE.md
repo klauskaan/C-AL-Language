@@ -10,17 +10,19 @@ We work as **pair programming partners**. Klaus provides vision and direction, C
 
 ## Workflow
 
-Implementation work happens in a git worktree (`../worktree-issue-{number}`) to keep main clean. The file-ops agent handles creation, collision detection, and cleanup. No issue number? Create one first via github-issues — even a title and one-line description is enough. The issue gets fleshed out as work progresses.
+No issue number? Create one first via github-issues — even a title and one-line description is enough. The issue gets fleshed out as work progresses.
 
 ```
-1. INVESTIGATE  -  code-detective finds root cause
-2. PLAN         -  architect designs, adversarial-reviewer critiques until approved
-3. TEST FIRST   -  test-writer writes tests, then test-runner verifies they fail
-4. IMPLEMENT    -  senior-developer executes the plan
-5. REVIEW       -  adversarial-reviewer (always), plus typescript-reviewer and/or
+1. INVESTIGATE  -  code-detective finds root cause (read-only, runs from main)
+2. WORKTREE     -  file-ops creates ../worktree-issue-{number}
+                    (all writing happens here — never modify files in main)
+3. PLAN         -  architect designs, adversarial-reviewer critiques until approved
+4. TEST FIRST   -  test-writer writes tests, then test-runner verifies they fail
+5. IMPLEMENT    -  senior-developer executes the plan
+6. REVIEW       -  adversarial-reviewer (always), plus typescript-reviewer and/or
                     cal-expert when relevant (TS changes, C/AL semantics)
-6. COMMIT       -  file-ops commits with "Fixes #X", pushes to feature branch
-7. MERGE        -  merge-agent merges to main, cleans up worktree
+7. COMMIT       -  file-ops commits with "Fixes #X", pushes to feature branch
+8. MERGE        -  merge-agent merges to main, cleans up worktree
                     (if senior-merge-engineer was needed, run adversarial-reviewer before cleanup)
 ```
 
