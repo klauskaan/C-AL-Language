@@ -218,6 +218,43 @@ class MyProvider extends BaseProvider {
 // Modifiers: declaration, readonly, static, deprecated
 ```
 
+### Canonical Type Definitions
+
+**Purpose:** Prevent interface duplication across test utilities and ensure single source of truth for shared types.
+
+**Pattern:** When a type definition is the authoritative source that should be imported rather than duplicated:
+
+```typescript
+/**
+ * [Brief description with period].
+ *
+ * CANONICAL DEFINITION: Import from '[relative-path]'.
+ * Do not duplicate this interface — import it instead.
+ */
+export interface MyType {
+  // fields...
+}
+```
+
+**Rationale:** Test utilities often define result types that are consumed by multiple reporters, validators, or analyzers. Without clear ownership, teams duplicate interfaces leading to drift and maintenance burden. The CANONICAL DEFINITION marker signals:
+- This is the authoritative definition
+- Other files should import this type
+- Duplication will cause maintenance issues
+
+**When to use:**
+- Type is shared across 3+ files
+- Type represents a contract between components (e.g., benchmark result format)
+- Duplication has already occurred or is likely
+
+**When NOT to use:**
+- Private types used in a single file
+- Types with only 1-2 consumers
+- Types that are intentionally different despite similar structure
+
+**Examples in codebase:**
+- `BenchmarkResult` in `server/src/__tests__/performance/utils/reporter.ts`
+- `MemoryBenchmarkResult` in `server/src/__tests__/performance/utils/memory.ts`
+
 ## Debugging
 
 1. Open project in VS Code
