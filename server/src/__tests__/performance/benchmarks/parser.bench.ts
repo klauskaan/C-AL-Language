@@ -96,7 +96,7 @@ async function benchmarkParser(): Promise<BenchmarkResult[]> {
   });
 
   // Benchmark: Parse large CONTROLS section
-  bench.add('Parser: Large CONTROLS section (200+ controls)', () => {
+  bench.add('Parser: Large CONTROLS section (200+ controls, mixed types)', () => {
     parseContent(largeControlsContent);
   });
 
@@ -143,10 +143,18 @@ async function benchmarkParser(): Promise<BenchmarkResult[]> {
      * - Average: 1.61 ms
      * - Threshold (3x): 4.83 ms (rounded to 5 ms)
      *
-     * Note: Issue acceptance criterion was <100ms for 200 controls.
-     * Actual baseline ~1.6ms far exceeds requirement.
+     * Recalibration (2026-02-13, issue #446):
+     * - Enhanced fixture with mixed control types, nested groups, inline triggers
+     * - Run 1: 2.23 ms
+     * - Run 2: 2.36 ms
+     * - Run 3: 2.21 ms
+     * - Average: 2.27 ms
+     * - Threshold (3x): 6.81 ms (rounded to 7 ms)
+     *
+     * Note: Issue #222 acceptance criterion was <100ms for 200 controls.
+     * Issue #446 enhanced fixture with structural diversity, slower but still <100ms.
      */
-    const REGRESSION_THRESHOLD_MS = 5; // 3x average of calibration runs
+    const REGRESSION_THRESHOLD_MS = 7; // 3x average of recalibration runs
 
     if (meanMs > REGRESSION_THRESHOLD_MS) {
       const msg = `⚠️  REGRESSION DETECTED: Large CONTROLS section mean time ${meanMs.toFixed(2)}ms exceeds threshold ${REGRESSION_THRESHOLD_MS}ms`;

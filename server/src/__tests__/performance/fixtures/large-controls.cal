@@ -1,4 +1,4 @@
-OBJECT Page 99999 Large Controls Test Page
+OBJECT Page 99999 Sales Order
 {
   OBJECT-PROPERTIES
   {
@@ -8,9 +8,11 @@ OBJECT Page 99999 Large Controls Test Page
   }
   PROPERTIES
   {
-    CaptionML=ENU=Large Controls Test Page;
-    SourceTable=Table18;
-    PageType=List;
+    CaptionML=ENU=Sales Order;
+    SourceTable=Table36;
+    PageType=Document;
+    UsageCategory=Documents;
+    ApplicationArea=#Basic,#Suite;
   }
   CONTROLS
   {
@@ -18,1012 +20,1323 @@ OBJECT Page 99999 Large Controls Test Page
                 ContainerType=ContentArea }
 
     { 2   ;1   ;Group     ;
-                Name=Group;
-                GroupType=Repeater }
+                Name=General;
+                CaptionML=ENU=General;
+                GroupType=Group }
 
     { 10  ;2   ;Field     ;
-                ToolTipML=ENU=Field 1;
+                ToolTipML=ENU=Specifies the number of the sales document.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field001" }
+                SourceExpr="No." }
 
     { 11  ;2   ;Field     ;
-                ToolTipML=ENU=Field 2;
+                ToolTipML=ENU=Specifies the name of the customer.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field002" }
+                SourceExpr="Sell-to Customer No.";
+                OnValidate=BEGIN
+                             SellToCustomerNoOnAfterValidate;
+                           END;
+                            }
 
     { 12  ;2   ;Field     ;
-                ToolTipML=ENU=Field 3;
+                ToolTipML=ENU=Specifies the customer name.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field003" }
+                SourceExpr="Sell-to Customer Name" }
 
     { 13  ;2   ;Field     ;
-                ToolTipML=ENU=Field 4;
+                ToolTipML=ENU=Specifies the address of the customer.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field004" }
+                SourceExpr="Sell-to Address" }
 
     { 14  ;2   ;Field     ;
-                ToolTipML=ENU=Field 5;
+                ToolTipML=ENU=Specifies additional address information.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field005" }
+                SourceExpr="Sell-to Address 2" }
 
     { 15  ;2   ;Field     ;
-                ToolTipML=ENU=Field 6;
+                ToolTipML=ENU=Specifies the city of the customer.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field006" }
+                SourceExpr="Sell-to City" }
 
     { 16  ;2   ;Field     ;
-                ToolTipML=ENU=Field 7;
+                ToolTipML=ENU=Specifies the postal code.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field007" }
+                SourceExpr="Sell-to Post Code" }
 
     { 17  ;2   ;Field     ;
-                ToolTipML=ENU=Field 8;
+                ToolTipML=ENU=Specifies the contact person.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field008" }
+                SourceExpr="Sell-to Contact" }
 
     { 18  ;2   ;Field     ;
-                ToolTipML=ENU=Field 9;
+                ToolTipML=ENU=Specifies the posting date.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field009" }
+                SourceExpr="Posting Date";
+                OnValidate=BEGIN
+                             IF "Posting Date" < WORKDATE THEN
+                               ERROR('Posting date cannot be in the past');
+                           END;
+                            }
 
     { 19  ;2   ;Field     ;
-                ToolTipML=ENU=Field 10;
+                ToolTipML=ENU=Specifies the document date.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field010" }
+                SourceExpr="Document Date" }
 
     { 20  ;2   ;Field     ;
-                ToolTipML=ENU=Field 11;
+                ToolTipML=ENU=Specifies the order date.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field011" }
+                SourceExpr="Order Date" }
 
     { 21  ;2   ;Field     ;
-                ToolTipML=ENU=Field 12;
+                ToolTipML=ENU=Specifies the external document number.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field012" }
+                SourceExpr="External Document No." }
 
     { 22  ;2   ;Field     ;
-                ToolTipML=ENU=Field 13;
+                ToolTipML=ENU=Specifies the salesperson code.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field013" }
+                SourceExpr="Salesperson Code" }
 
     { 23  ;2   ;Field     ;
-                ToolTipML=ENU=Field 14;
+                ToolTipML=ENU=Specifies the campaign number.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field014" }
+                SourceExpr="Campaign No." }
 
     { 24  ;2   ;Field     ;
-                ToolTipML=ENU=Field 15;
+                ToolTipML=ENU=Specifies the opportunity number.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field015" }
+                SourceExpr="Opportunity No." }
 
     { 25  ;2   ;Field     ;
-                ToolTipML=ENU=Field 16;
+                ToolTipML=ENU=Specifies the responsibility center.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field016" }
+                SourceExpr="Responsibility Center" }
 
     { 26  ;2   ;Field     ;
-                ToolTipML=ENU=Field 17;
+                ToolTipML=ENU=Specifies the status of the document.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field017" }
+                SourceExpr=Status }
 
     { 27  ;2   ;Field     ;
-                ToolTipML=ENU=Field 18;
+                ToolTipML=ENU=Specifies the requested delivery date.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field018" }
+                SourceExpr="Requested Delivery Date";
+                OnValidate=BEGIN
+                             ValidateRequestedDeliveryDate;
+                           END;
+                            }
 
     { 28  ;2   ;Field     ;
-                ToolTipML=ENU=Field 19;
+                ToolTipML=ENU=Specifies the promised delivery date.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field019" }
+                SourceExpr="Promised Delivery Date" }
 
     { 29  ;2   ;Field     ;
-                ToolTipML=ENU=Field 20;
+                ToolTipML=ENU=Specifies the quote number.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field020" }
+                SourceExpr="Quote No." }
 
-    { 30  ;2   ;Field     ;
-                ToolTipML=ENU=Field 21;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field021" }
-
-    { 31  ;2   ;Field     ;
-                ToolTipML=ENU=Field 22;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field022" }
-
-    { 32  ;2   ;Field     ;
-                ToolTipML=ENU=Field 23;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field023" }
-
-    { 33  ;2   ;Field     ;
-                ToolTipML=ENU=Field 24;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field024" }
-
-    { 34  ;2   ;Field     ;
-                ToolTipML=ENU=Field 25;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field025" }
-
-    { 35  ;2   ;Field     ;
-                ToolTipML=ENU=Field 26;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field026" }
-
-    { 36  ;2   ;Field     ;
-                ToolTipML=ENU=Field 27;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field027" }
-
-    { 37  ;2   ;Field     ;
-                ToolTipML=ENU=Field 28;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field028" }
-
-    { 38  ;2   ;Field     ;
-                ToolTipML=ENU=Field 29;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field029" }
-
-    { 39  ;2   ;Field     ;
-                ToolTipML=ENU=Field 30;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field030" }
-
-    { 40  ;2   ;Field     ;
-                ToolTipML=ENU=Field 31;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field031" }
-
-    { 41  ;2   ;Field     ;
-                ToolTipML=ENU=Field 32;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field032" }
-
-    { 42  ;2   ;Field     ;
-                ToolTipML=ENU=Field 33;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field033" }
-
-    { 43  ;2   ;Field     ;
-                ToolTipML=ENU=Field 34;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field034" }
-
-    { 44  ;2   ;Field     ;
-                ToolTipML=ENU=Field 35;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field035" }
-
-    { 45  ;2   ;Field     ;
-                ToolTipML=ENU=Field 36;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field036" }
-
-    { 46  ;2   ;Field     ;
-                ToolTipML=ENU=Field 37;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field037" }
-
-    { 47  ;2   ;Field     ;
-                ToolTipML=ENU=Field 38;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field038" }
-
-    { 48  ;2   ;Field     ;
-                ToolTipML=ENU=Field 39;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field039" }
-
-    { 49  ;2   ;Field     ;
-                ToolTipML=ENU=Field 40;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field040" }
-
-    { 50  ;2   ;Field     ;
-                ToolTipML=ENU=Field 41;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field041" }
-
-    { 51  ;2   ;Field     ;
-                ToolTipML=ENU=Field 42;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field042" }
-
-    { 52  ;2   ;Field     ;
-                ToolTipML=ENU=Field 43;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field043" }
-
-    { 53  ;2   ;Field     ;
-                ToolTipML=ENU=Field 44;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field044" }
-
-    { 54  ;2   ;Field     ;
-                ToolTipML=ENU=Field 45;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field045" }
-
-    { 55  ;2   ;Field     ;
-                ToolTipML=ENU=Field 46;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field046" }
-
-    { 56  ;2   ;Field     ;
-                ToolTipML=ENU=Field 47;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field047" }
-
-    { 57  ;2   ;Field     ;
-                ToolTipML=ENU=Field 48;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field048" }
-
-    { 58  ;2   ;Field     ;
-                ToolTipML=ENU=Field 49;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field049" }
-
-    { 59  ;2   ;Field     ;
-                ToolTipML=ENU=Field 50;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field050" }
-
-    { 60  ;2   ;Field     ;
-                ToolTipML=ENU=Field 51;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field051" }
-
-    { 61  ;2   ;Field     ;
-                ToolTipML=ENU=Field 52;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field052" }
-
-    { 62  ;2   ;Field     ;
-                ToolTipML=ENU=Field 53;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field053" }
-
-    { 63  ;2   ;Field     ;
-                ToolTipML=ENU=Field 54;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field054" }
-
-    { 64  ;2   ;Field     ;
-                ToolTipML=ENU=Field 55;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field055" }
-
-    { 65  ;2   ;Field     ;
-                ToolTipML=ENU=Field 56;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field056" }
-
-    { 66  ;2   ;Field     ;
-                ToolTipML=ENU=Field 57;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field057" }
-
-    { 67  ;2   ;Field     ;
-                ToolTipML=ENU=Field 58;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field058" }
-
-    { 68  ;2   ;Field     ;
-                ToolTipML=ENU=Field 59;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field059" }
-
-    { 69  ;2   ;Field     ;
-                ToolTipML=ENU=Field 60;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field060" }
-
-    { 70  ;2   ;Field     ;
-                ToolTipML=ENU=Field 61;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field061" }
-
-    { 71  ;2   ;Field     ;
-                ToolTipML=ENU=Field 62;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field062" }
-
-    { 72  ;2   ;Field     ;
-                ToolTipML=ENU=Field 63;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field063" }
-
-    { 73  ;2   ;Field     ;
-                ToolTipML=ENU=Field 64;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field064" }
-
-    { 74  ;2   ;Field     ;
-                ToolTipML=ENU=Field 65;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field065" }
-
-    { 75  ;2   ;Field     ;
-                ToolTipML=ENU=Field 66;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field066" }
-
-    { 76  ;2   ;Field     ;
-                ToolTipML=ENU=Field 67;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field067" }
-
-    { 77  ;2   ;Field     ;
-                ToolTipML=ENU=Field 68;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field068" }
-
-    { 78  ;2   ;Field     ;
-                ToolTipML=ENU=Field 69;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field069" }
-
-    { 79  ;2   ;Field     ;
-                ToolTipML=ENU=Field 70;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field070" }
-
-    { 80  ;2   ;Field     ;
-                ToolTipML=ENU=Field 71;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field071" }
-
-    { 81  ;2   ;Field     ;
-                ToolTipML=ENU=Field 72;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field072" }
-
-    { 82  ;2   ;Field     ;
-                ToolTipML=ENU=Field 73;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field073" }
-
-    { 83  ;2   ;Field     ;
-                ToolTipML=ENU=Field 74;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field074" }
-
-    { 84  ;2   ;Field     ;
-                ToolTipML=ENU=Field 75;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field075" }
-
-    { 85  ;2   ;Field     ;
-                ToolTipML=ENU=Field 76;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field076" }
-
-    { 86  ;2   ;Field     ;
-                ToolTipML=ENU=Field 77;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field077" }
-
-    { 87  ;2   ;Field     ;
-                ToolTipML=ENU=Field 78;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field078" }
-
-    { 88  ;2   ;Field     ;
-                ToolTipML=ENU=Field 79;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field079" }
-
-    { 89  ;2   ;Field     ;
-                ToolTipML=ENU=Field 80;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field080" }
-
-    { 90  ;2   ;Field     ;
-                ToolTipML=ENU=Field 81;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field081" }
-
-    { 91  ;2   ;Field     ;
-                ToolTipML=ENU=Field 82;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field082" }
-
-    { 92  ;2   ;Field     ;
-                ToolTipML=ENU=Field 83;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field083" }
-
-    { 93  ;2   ;Field     ;
-                ToolTipML=ENU=Field 84;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field084" }
-
-    { 94  ;2   ;Field     ;
-                ToolTipML=ENU=Field 85;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field085" }
-
-    { 95  ;2   ;Field     ;
-                ToolTipML=ENU=Field 86;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field086" }
-
-    { 96  ;2   ;Field     ;
-                ToolTipML=ENU=Field 87;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field087" }
-
-    { 97  ;2   ;Field     ;
-                ToolTipML=ENU=Field 88;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field088" }
-
-    { 98  ;2   ;Field     ;
-                ToolTipML=ENU=Field 89;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field089" }
-
-    { 99  ;2   ;Field     ;
-                ToolTipML=ENU=Field 90;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field090" }
+    { 3   ;1   ;Group     ;
+                Name=Lines;
+                CaptionML=ENU=Lines;
+                GroupType=Repeater }
 
     { 100 ;2   ;Field     ;
-                ToolTipML=ENU=Field 91;
+                ToolTipML=ENU=Specifies the type of the line.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field091" }
+                SourceExpr=Type }
 
     { 101 ;2   ;Field     ;
-                ToolTipML=ENU=Field 92;
+                ToolTipML=ENU=Specifies the item number.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field092" }
+                SourceExpr="No." }
 
     { 102 ;2   ;Field     ;
-                ToolTipML=ENU=Field 93;
+                ToolTipML=ENU=Specifies the description.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field093" }
+                SourceExpr=Description }
 
     { 103 ;2   ;Field     ;
-                ToolTipML=ENU=Field 94;
+                ToolTipML=ENU=Specifies the location code.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field094" }
+                SourceExpr="Location Code" }
 
     { 104 ;2   ;Field     ;
-                ToolTipML=ENU=Field 95;
+                ToolTipML=ENU=Specifies the quantity.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field095" }
+                SourceExpr=Quantity;
+                OnValidate=BEGIN
+                             IF Quantity < 0 THEN
+                               ERROR('Quantity must be positive');
+                           END;
+                            }
 
     { 105 ;2   ;Field     ;
-                ToolTipML=ENU=Field 96;
+                ToolTipML=ENU=Specifies the unit of measure.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field096" }
+                SourceExpr="Unit of Measure Code" }
 
     { 106 ;2   ;Field     ;
-                ToolTipML=ENU=Field 97;
+                ToolTipML=ENU=Specifies the unit price.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field097" }
+                SourceExpr="Unit Price" }
 
     { 107 ;2   ;Field     ;
-                ToolTipML=ENU=Field 98;
+                ToolTipML=ENU=Specifies the line discount percentage.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field098" }
+                SourceExpr="Line Discount %" }
 
     { 108 ;2   ;Field     ;
-                ToolTipML=ENU=Field 99;
+                ToolTipML=ENU=Specifies the line amount.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field099" }
+                SourceExpr="Line Amount";
+                OnValidate=BEGIN
+                             CalculateTotals;
+                           END;
+                            }
 
     { 109 ;2   ;Field     ;
-                ToolTipML=ENU=Field 100;
+                ToolTipML=ENU=Specifies the shipment date.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field100" }
+                SourceExpr="Shipment Date" }
 
     { 110 ;2   ;Field     ;
-                ToolTipML=ENU=Field 101;
+                ToolTipML=ENU=Specifies the outstanding quantity.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field101" }
+                SourceExpr="Outstanding Quantity" }
 
     { 111 ;2   ;Field     ;
-                ToolTipML=ENU=Field 102;
+                ToolTipML=ENU=Specifies the quantity to ship.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field102" }
+                SourceExpr="Qty. to Ship" }
 
     { 112 ;2   ;Field     ;
-                ToolTipML=ENU=Field 103;
+                ToolTipML=ENU=Specifies the quantity shipped.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field103" }
+                SourceExpr="Quantity Shipped" }
 
     { 113 ;2   ;Field     ;
-                ToolTipML=ENU=Field 104;
+                ToolTipML=ENU=Specifies the job number.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field104" }
+                SourceExpr="Job No.";
+                OnDrillDown=VAR
+                              Job@1000 : Record 167;
+                            BEGIN
+                              IF "Job No." <> '' THEN BEGIN
+                                Job.GET("Job No.");
+                                PAGE.RUN(PAGE::"Job Card",Job);
+                              END;
+                            END;
+                             }
 
     { 114 ;2   ;Field     ;
-                ToolTipML=ENU=Field 105;
+                ToolTipML=ENU=Specifies the job task number.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field105" }
+                SourceExpr="Job Task No." }
 
     { 115 ;2   ;Field     ;
-                ToolTipML=ENU=Field 106;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field106" }
-
-    { 116 ;2   ;Field     ;
-                ToolTipML=ENU=Field 107;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field107" }
-
-    { 117 ;2   ;Field     ;
-                ToolTipML=ENU=Field 108;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field108" }
-
-    { 118 ;2   ;Field     ;
-                ToolTipML=ENU=Field 109;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field109" }
-
-    { 119 ;2   ;Field     ;
-                ToolTipML=ENU=Field 110;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field110" }
-
-    { 120 ;2   ;Field     ;
-                ToolTipML=ENU=Field 111;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field111" }
-
-    { 121 ;2   ;Field     ;
-                ToolTipML=ENU=Field 112;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field112" }
-
-    { 122 ;2   ;Field     ;
-                ToolTipML=ENU=Field 113;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field113" }
-
-    { 123 ;2   ;Field     ;
-                ToolTipML=ENU=Field 114;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field114" }
-
-    { 124 ;2   ;Field     ;
-                ToolTipML=ENU=Field 115;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field115" }
-
-    { 125 ;2   ;Field     ;
-                ToolTipML=ENU=Field 116;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field116" }
-
-    { 126 ;2   ;Field     ;
-                ToolTipML=ENU=Field 117;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field117" }
-
-    { 127 ;2   ;Field     ;
-                ToolTipML=ENU=Field 118;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field118" }
-
-    { 128 ;2   ;Field     ;
-                ToolTipML=ENU=Field 119;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field119" }
-
-    { 129 ;2   ;Field     ;
-                ToolTipML=ENU=Field 120;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field120" }
-
-    { 130 ;2   ;Field     ;
-                ToolTipML=ENU=Field 121;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field121" }
-
-    { 131 ;2   ;Field     ;
-                ToolTipML=ENU=Field 122;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field122" }
-
-    { 132 ;2   ;Field     ;
-                ToolTipML=ENU=Field 123;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field123" }
-
-    { 133 ;2   ;Field     ;
-                ToolTipML=ENU=Field 124;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field124" }
-
-    { 134 ;2   ;Field     ;
-                ToolTipML=ENU=Field 125;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field125" }
-
-    { 135 ;2   ;Field     ;
-                ToolTipML=ENU=Field 126;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field126" }
-
-    { 136 ;2   ;Field     ;
-                ToolTipML=ENU=Field 127;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field127" }
-
-    { 137 ;2   ;Field     ;
-                ToolTipML=ENU=Field 128;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field128" }
-
-    { 138 ;2   ;Field     ;
-                ToolTipML=ENU=Field 129;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field129" }
-
-    { 139 ;2   ;Field     ;
-                ToolTipML=ENU=Field 130;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field130" }
-
-    { 140 ;2   ;Field     ;
-                ToolTipML=ENU=Field 131;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field131" }
-
-    { 141 ;2   ;Field     ;
-                ToolTipML=ENU=Field 132;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field132" }
-
-    { 142 ;2   ;Field     ;
-                ToolTipML=ENU=Field 133;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field133" }
-
-    { 143 ;2   ;Field     ;
-                ToolTipML=ENU=Field 134;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field134" }
-
-    { 144 ;2   ;Field     ;
-                ToolTipML=ENU=Field 135;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field135" }
-
-    { 145 ;2   ;Field     ;
-                ToolTipML=ENU=Field 136;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field136" }
-
-    { 146 ;2   ;Field     ;
-                ToolTipML=ENU=Field 137;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field137" }
-
-    { 147 ;2   ;Field     ;
-                ToolTipML=ENU=Field 138;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field138" }
-
-    { 148 ;2   ;Field     ;
-                ToolTipML=ENU=Field 139;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field139" }
-
-    { 149 ;2   ;Field     ;
-                ToolTipML=ENU=Field 140;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field140" }
-
-    { 150 ;2   ;Field     ;
-                ToolTipML=ENU=Field 141;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field141" }
-
-    { 151 ;2   ;Field     ;
-                ToolTipML=ENU=Field 142;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field142" }
-
-    { 152 ;2   ;Field     ;
-                ToolTipML=ENU=Field 143;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field143" }
-
-    { 153 ;2   ;Field     ;
-                ToolTipML=ENU=Field 144;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field144" }
-
-    { 154 ;2   ;Field     ;
-                ToolTipML=ENU=Field 145;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field145" }
-
-    { 155 ;2   ;Field     ;
-                ToolTipML=ENU=Field 146;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field146" }
-
-    { 156 ;2   ;Field     ;
-                ToolTipML=ENU=Field 147;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field147" }
-
-    { 157 ;2   ;Field     ;
-                ToolTipML=ENU=Field 148;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field148" }
-
-    { 158 ;2   ;Field     ;
-                ToolTipML=ENU=Field 149;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field149" }
-
-    { 159 ;2   ;Field     ;
-                ToolTipML=ENU=Field 150;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field150" }
-
-    { 160 ;2   ;Field     ;
-                ToolTipML=ENU=Field 151;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field151" }
-
-    { 161 ;2   ;Field     ;
-                ToolTipML=ENU=Field 152;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field152" }
-
-    { 162 ;2   ;Field     ;
-                ToolTipML=ENU=Field 153;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field153" }
-
-    { 163 ;2   ;Field     ;
-                ToolTipML=ENU=Field 154;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field154" }
-
-    { 164 ;2   ;Field     ;
-                ToolTipML=ENU=Field 155;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field155" }
-
-    { 165 ;2   ;Field     ;
-                ToolTipML=ENU=Field 156;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field156" }
-
-    { 166 ;2   ;Field     ;
-                ToolTipML=ENU=Field 157;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field157" }
-
-    { 167 ;2   ;Field     ;
-                ToolTipML=ENU=Field 158;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field158" }
-
-    { 168 ;2   ;Field     ;
-                ToolTipML=ENU=Field 159;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field159" }
-
-    { 169 ;2   ;Field     ;
-                ToolTipML=ENU=Field 160;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field160" }
-
-    { 170 ;2   ;Field     ;
-                ToolTipML=ENU=Field 161;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field161" }
-
-    { 171 ;2   ;Field     ;
-                ToolTipML=ENU=Field 162;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field162" }
-
-    { 172 ;2   ;Field     ;
-                ToolTipML=ENU=Field 163;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field163" }
-
-    { 173 ;2   ;Field     ;
-                ToolTipML=ENU=Field 164;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field164" }
-
-    { 174 ;2   ;Field     ;
-                ToolTipML=ENU=Field 165;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field165" }
-
-    { 175 ;2   ;Field     ;
-                ToolTipML=ENU=Field 166;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field166" }
-
-    { 176 ;2   ;Field     ;
-                ToolTipML=ENU=Field 167;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field167" }
-
-    { 177 ;2   ;Field     ;
-                ToolTipML=ENU=Field 168;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field168" }
-
-    { 178 ;2   ;Field     ;
-                ToolTipML=ENU=Field 169;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field169" }
-
-    { 179 ;2   ;Field     ;
-                ToolTipML=ENU=Field 170;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field170" }
-
-    { 180 ;2   ;Field     ;
-                ToolTipML=ENU=Field 171;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field171" }
-
-    { 181 ;2   ;Field     ;
-                ToolTipML=ENU=Field 172;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field172" }
-
-    { 182 ;2   ;Field     ;
-                ToolTipML=ENU=Field 173;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field173" }
-
-    { 183 ;2   ;Field     ;
-                ToolTipML=ENU=Field 174;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field174" }
-
-    { 184 ;2   ;Field     ;
-                ToolTipML=ENU=Field 175;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field175" }
-
-    { 185 ;2   ;Field     ;
-                ToolTipML=ENU=Field 176;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field176" }
-
-    { 186 ;2   ;Field     ;
-                ToolTipML=ENU=Field 177;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field177" }
-
-    { 187 ;2   ;Field     ;
-                ToolTipML=ENU=Field 178;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field178" }
-
-    { 188 ;2   ;Field     ;
-                ToolTipML=ENU=Field 179;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field179" }
-
-    { 189 ;2   ;Field     ;
-                ToolTipML=ENU=Field 180;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field180" }
-
-    { 190 ;2   ;Field     ;
-                ToolTipML=ENU=Field 181;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field181" }
-
-    { 191 ;2   ;Field     ;
-                ToolTipML=ENU=Field 182;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field182" }
-
-    { 192 ;2   ;Field     ;
-                ToolTipML=ENU=Field 183;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field183" }
-
-    { 193 ;2   ;Field     ;
-                ToolTipML=ENU=Field 184;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field184" }
-
-    { 194 ;2   ;Field     ;
-                ToolTipML=ENU=Field 185;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field185" }
-
-    { 195 ;2   ;Field     ;
-                ToolTipML=ENU=Field 186;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field186" }
-
-    { 196 ;2   ;Field     ;
-                ToolTipML=ENU=Field 187;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field187" }
-
-    { 197 ;2   ;Field     ;
-                ToolTipML=ENU=Field 188;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field188" }
-
-    { 198 ;2   ;Field     ;
-                ToolTipML=ENU=Field 189;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field189" }
-
-    { 199 ;2   ;Field     ;
-                ToolTipML=ENU=Field 190;
-                ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field190" }
+                ToolTipML=ENU=Specifies the variant code.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Variant Code";
+                OnAssistEdit=VAR
+                               ItemVariant@1000 : Record 5401;
+                             BEGIN
+                               ItemVariant.SETRANGE("Item No.","No.");
+                               IF PAGE.RUNMODAL(PAGE::"Item Variants",ItemVariant) = ACTION::LookupOK THEN BEGIN
+                                 VALIDATE("Variant Code",ItemVariant.Code);
+                               END;
+                             END;
+                              }
+
+    { 4   ;1   ;Group     ;
+                Name=Invoicing;
+                CaptionML=ENU=Invoicing;
+                GroupType=Group }
 
     { 200 ;2   ;Field     ;
-                ToolTipML=ENU=Field 191;
+                ToolTipML=ENU=Specifies the bill-to customer number.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field191" }
+                SourceExpr="Bill-to Customer No." }
 
     { 201 ;2   ;Field     ;
-                ToolTipML=ENU=Field 192;
+                ToolTipML=ENU=Specifies the bill-to name.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field192" }
+                SourceExpr="Bill-to Name" }
 
     { 202 ;2   ;Field     ;
-                ToolTipML=ENU=Field 193;
+                ToolTipML=ENU=Specifies the bill-to address.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field193" }
+                SourceExpr="Bill-to Address" }
 
     { 203 ;2   ;Field     ;
-                ToolTipML=ENU=Field 194;
+                ToolTipML=ENU=Specifies additional bill-to address information.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field194" }
+                SourceExpr="Bill-to Address 2" }
 
     { 204 ;2   ;Field     ;
-                ToolTipML=ENU=Field 195;
+                ToolTipML=ENU=Specifies the bill-to city.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field195" }
+                SourceExpr="Bill-to City" }
 
     { 205 ;2   ;Field     ;
-                ToolTipML=ENU=Field 196;
+                ToolTipML=ENU=Specifies the bill-to postal code.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field196" }
+                SourceExpr="Bill-to Post Code";
+                OnValidate=BEGIN
+                             IF "Bill-to Post Code" = '' THEN
+                               ERROR('Post code is required');
+                           END;
+                            }
 
     { 206 ;2   ;Field     ;
-                ToolTipML=ENU=Field 197;
+                ToolTipML=ENU=Specifies the bill-to contact.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field197" }
+                SourceExpr="Bill-to Contact" }
 
     { 207 ;2   ;Field     ;
-                ToolTipML=ENU=Field 198;
+                ToolTipML=ENU=Specifies the payment terms code.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field198" }
+                SourceExpr="Payment Terms Code" }
 
     { 208 ;2   ;Field     ;
-                ToolTipML=ENU=Field 199;
+                ToolTipML=ENU=Specifies the due date.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field199" }
+                SourceExpr="Due Date" }
 
     { 209 ;2   ;Field     ;
-                ToolTipML=ENU=Field 200;
+                ToolTipML=ENU=Specifies the payment discount percentage.;
                 ApplicationArea=#Basic,#Suite;
-                SourceExpr="Field200" }
+                SourceExpr="Payment Discount %" }
 
+    { 210 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the payment method code.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Payment Method Code";
+                OnValidate=BEGIN
+                             ValidatePaymentMethod;
+                           END;
+                            }
+
+    { 211 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the currency code.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Currency Code" }
+
+    { 5   ;1   ;Group     ;
+                Name=Shipping;
+                CaptionML=ENU=Shipping;
+                GroupType=Group }
+
+    { 300 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the ship-to code.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Ship-to Code" }
+
+    { 301 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the ship-to name.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Ship-to Name" }
+
+    { 302 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the ship-to address.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Ship-to Address" }
+
+    { 303 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies additional ship-to address information.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Ship-to Address 2" }
+
+    { 304 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the ship-to city.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Ship-to City" }
+
+    { 305 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the ship-to postal code.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Ship-to Post Code" }
+
+    { 306 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the ship-to contact.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Ship-to Contact" }
+
+    { 307 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the shipment method code.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Shipment Method Code" }
+
+    { 308 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the shipping agent code.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Shipping Agent Code" }
+
+    { 309 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the shipping agent service code.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Shipping Agent Service Code" }
+
+    { 310 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the package tracking number.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Package Tracking No." }
+
+    { 311 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the shipping time.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Shipping Time" }
+
+    { 312 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the late order shipping status.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Late Order Shipping";
+                OnValidate=BEGIN
+                             IF "Late Order Shipping" THEN
+                               MESSAGE('Order is marked as late shipping');
+                           END;
+                            }
+
+    { 6   ;1   ;Group     ;
+                Name=Details;
+                CaptionML=ENU=Details;
+                GroupType=Group }
+
+    { 7   ;2   ;Group     ;
+                Name=Dimensions;
+                CaptionML=ENU=Dimensions;
+                GroupType=Group }
+
+    { 400 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the shortcut dimension 1 code.;
+                ApplicationArea=#Dimensions;
+                SourceExpr="Shortcut Dimension 1 Code" }
+
+    { 401 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the shortcut dimension 2 code.;
+                ApplicationArea=#Dimensions;
+                SourceExpr="Shortcut Dimension 2 Code" }
+
+    { 402 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the shortcut dimension 3 code.;
+                ApplicationArea=#Dimensions;
+                SourceExpr="Shortcut Dimension 3 Code" }
+
+    { 403 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the shortcut dimension 4 code.;
+                ApplicationArea=#Dimensions;
+                SourceExpr="Shortcut Dimension 4 Code" }
+
+    { 404 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the shortcut dimension 5 code.;
+                ApplicationArea=#Dimensions;
+                SourceExpr="Shortcut Dimension 5 Code" }
+
+    { 405 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the shortcut dimension 6 code.;
+                ApplicationArea=#Dimensions;
+                SourceExpr="Shortcut Dimension 6 Code" }
+
+    { 406 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the shortcut dimension 7 code.;
+                ApplicationArea=#Dimensions;
+                SourceExpr="Shortcut Dimension 7 Code" }
+
+    { 407 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the shortcut dimension 8 code.;
+                ApplicationArea=#Dimensions;
+                SourceExpr="Shortcut Dimension 8 Code" }
+
+    { 408 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the dimension set ID.;
+                ApplicationArea=#Dimensions;
+                SourceExpr="Dimension Set ID";
+                OnDrillDown=BEGIN
+                              CASE Type OF
+                                Type::Item:
+                                  ShowDimensionSetEntries;
+                                Type::"G/L Account":
+                                  ShowGLDimensions;
+                                ELSE
+                                  MESSAGE('Dimensions not available for this type');
+                              END;
+                            END;
+                             }
+
+    { 8   ;2   ;Group     ;
+                Name=Tracking;
+                CaptionML=ENU=Item Tracking;
+                GroupType=Group }
+
+    { 500 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the serial number.;
+                ApplicationArea=#ItemTracking;
+                SourceExpr="Serial No." }
+
+    { 501 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the lot number.;
+                ApplicationArea=#ItemTracking;
+                SourceExpr="Lot No." }
+
+    { 502 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the expiration date.;
+                ApplicationArea=#ItemTracking;
+                SourceExpr="Expiration Date" }
+
+    { 503 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the warranty date.;
+                ApplicationArea=#ItemTracking;
+                SourceExpr="Warranty Date" }
+
+    { 504 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the package number.;
+                ApplicationArea=#ItemTracking;
+                SourceExpr="Package No." }
+
+    { 505 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the item tracking code.;
+                ApplicationArea=#ItemTracking;
+                SourceExpr="Item Tracking Code" }
+
+    { 9   ;1   ;Group     ;
+                Name=Statistics;
+                CaptionML=ENU=Statistics;
+                GroupType=FixedLayout }
+
+    { 50  ;2   ;Group     ;
+                Name=Column1;
+                CaptionML=ENU=Amounts;
+                GroupType=Group }
+
+    { 600 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the total amount excluding VAT.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Amount Excluding VAT" }
+
+    { 601 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the total VAT amount.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Total VAT Amount" }
+
+    { 602 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the total amount including VAT.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Amount Including VAT" }
+
+    { 603 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the invoice discount amount.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Invoice Discount Amount" }
+
+    { 604 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the total line discount.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Total Line Discount" }
+
+    { 605 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the total weight.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Total Weight" }
+
+    { 606 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the total volume.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Total Volume" }
+
+    { 607 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the total number of packages.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Total Packages" }
+
+    { 51  ;2   ;Group     ;
+                Name=Column2;
+                CaptionML=ENU=Quantities;
+                GroupType=Group }
+
+    { 700 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the total quantity.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Total Quantity" }
+
+    { 701 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the total outstanding quantity.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Total Outstanding Qty" }
+
+    { 702 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the total quantity to ship.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Total Qty to Ship" }
+
+    { 703 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the total quantity shipped.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Total Qty Shipped" }
+
+    { 704 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the total quantity to invoice.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Total Qty to Invoice" }
+
+    { 705 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the total quantity invoiced.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Total Qty Invoiced" }
+
+    { 706 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the number of lines.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="No. of Lines" }
+
+    { 707 ;3   ;Field     ;
+                ToolTipML=ENU=Specifies the average line discount percentage.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Avg Line Discount %" }
+
+    { 52  ;1   ;Group     ;
+                Name=History;
+                CaptionML=ENU=History;
+                GroupType=Group }
+
+    { 800 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies who created this document.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Created By" }
+
+    { 801 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies when the document was created.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Created Date Time" }
+
+    { 802 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies who last modified this document.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Last Modified By" }
+
+    { 803 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies when the document was last modified.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Last Modified Date Time" }
+
+    { 804 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the last posting date.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Last Posting Date" }
+
+    { 805 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the last posting number.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Last Posting No." }
+
+    { 806 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the last shipment date.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Last Shipment Date" }
+
+    { 807 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the last shipment number.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Last Shipment No." }
+
+    { 808 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the archived version number.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Version No." }
+
+    { 809 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the number of archived versions.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="No. of Archived Versions" }
+
+    { 810 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the workflow status.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Workflow Status" }
+
+    { 811 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the workflow step instance ID.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Workflow Step Instance ID" }
+
+    { 812 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the approval status.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Approval Status" }
+
+    { 813 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the number of approval entries.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="No. of Approval Entries" }
+
+    { 814 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the price calculation method.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Price Calculation Method" }
+
+    { 815 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the original order number.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Original Order No." }
+
+    { 816 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the source document type.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Source Document Type" }
+
+    { 817 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the source document number.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Source Document No." }
+
+    { 818 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the copy document type.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Copy Document Type" }
+
+    { 819 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the copy document number.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Copy Document No." }
+
+    { 820 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the copied from posted document flag.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Copied from Posted Doc." }
+
+    { 821 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the blanket order number.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Blanket Order No." }
+
+    { 822 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the prepayment percentage.;
+                ApplicationArea=#Prepayments;
+                SourceExpr="Prepayment %" }
+
+    { 823 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the prepayment amount.;
+                ApplicationArea=#Prepayments;
+                SourceExpr="Prepayment Amount" }
+
+    { 824 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies whether prepayment is required.;
+                ApplicationArea=#Prepayments;
+                SourceExpr="Prepayment Required" }
+
+    { 825 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the prepayment invoice number.;
+                ApplicationArea=#Prepayments;
+                SourceExpr="Prepmt. Invoice No." }
+
+    { 826 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the prepayment credit memo number.;
+                ApplicationArea=#Prepayments;
+                SourceExpr="Prepmt. Cr. Memo No." }
+
+    { 827 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the compress prepayment flag.;
+                ApplicationArea=#Prepayments;
+                SourceExpr="Compress Prepayment" }
+
+    { 828 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the tax area code.;
+                ApplicationArea=#SalesTax;
+                SourceExpr="Tax Area Code" }
+
+    { 829 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies whether tax is liable.;
+                ApplicationArea=#SalesTax;
+                SourceExpr="Tax Liable" }
+
+    { 830 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the VAT bus. posting group.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="VAT Bus. Posting Group" }
+
+    { 831 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the VAT registration number.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="VAT Registration No." }
+
+    { 832 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the VAT country/region code.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="VAT Country/Region Code" }
+
+    { 833 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the EU 3-party trade flag.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="EU 3-Party Trade" }
+
+    { 834 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the transaction type.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Transaction Type" }
+
+    { 835 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the transport method.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Transport Method" }
+
+    { 836 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the exit point.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Exit Point" }
+
+    { 837 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the area code.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr=Area }
+
+    { 838 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the transaction specification.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Transaction Specification" }
+
+    { 839 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the IC direction.;
+                ApplicationArea=#Intercompany;
+                SourceExpr="IC Direction" }
+
+    { 840 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the IC status.;
+                ApplicationArea=#Intercompany;
+                SourceExpr="IC Status" }
+
+    { 841 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the send IC document flag.;
+                ApplicationArea=#Intercompany;
+                SourceExpr="Send IC Document" }
+
+    { 842 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the IC reference document number.;
+                ApplicationArea=#Intercompany;
+                SourceExpr="IC Reference Document No." }
+
+    { 843 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the journal template name.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Journal Template Name" }
+
+    { 844 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the reason code.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Reason Code" }
+
+    { 845 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the posting number series.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Posting No. Series" }
+
+    { 846 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the shipping number series.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Shipping No. Series" }
+
+    { 847 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the shipping number.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Shipping No." }
+
+    { 848 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies whether to print posted documents.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Print Posted Documents" }
+
+    { 849 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the batch posting code.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Batch Posting Code" }
+
+    { 850 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the user ID.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="User ID" }
+
+    { 851 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the source code.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Source Code" }
+
+    { 852 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the tax identification type.;
+                ApplicationArea=#SalesTax;
+                SourceExpr="Tax Identification Type" }
+
+    { 853 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the allowed payment tolerance.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Allowed Payment Tolerance" }
+
+    { 854 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the last email sent time.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Last Email Sent Time" }
+
+    { 855 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the last email sent status.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Last Email Sent Status" }
+
+    { 856 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the work description.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Work Description" }
+
+    { 857 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the completely shipped flag.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Completely Shipped" }
+
+    { 858 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the posting from whse. ref.;
+                ApplicationArea=#Warehouse;
+                SourceExpr="Posting from Whse. Ref." }
+
+    { 859 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the location filter.;
+                ApplicationArea=#Location;
+                SourceExpr="Location Filter" }
+
+    { 860 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the variant filter.;
+                ApplicationArea=#Planning;
+                SourceExpr="Variant Filter" }
+
+    { 861 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the no. of lines filter.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="No. of Lines Filter" }
+
+    { 862 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the requested delivery date filter.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Requested Delivery Date Filter" }
+
+    { 863 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the promised delivery date filter.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Promised Delivery Date Filter" }
+
+    { 864 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the shipping advice.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Shipping Advice" }
+
+    { 865 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the outbound whse. handling time.;
+                ApplicationArea=#Warehouse;
+                SourceExpr="Outbound Whse. Handling Time" }
+
+    { 866 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the quote expiration date.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Quote Valid Until Date" }
+
+    { 867 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the quote sent to customer date.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Quote Sent to Customer" }
+
+    { 868 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the quote accepted flag.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Quote Accepted" }
+
+    { 869 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the quote accepted date.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Quote Accepted Date" }
+
+    { 870 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the combine shipments flag.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Combine Shipments" }
+
+    { 871 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the invoice copies.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Invoice Copies" }
+
+    { 872 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies whether the document is direct debit.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Direct Debit Mandate ID" }
+
+    { 873 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the recurring billing code.;
+                ApplicationArea=#Basic,#Suite;
+                SourceExpr="Recurring Billing Code" }
+
+    { 874 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the service order type.;
+                ApplicationArea=#Service;
+                SourceExpr="Service Order Type" }
+
+    { 875 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the link to service contract.;
+                ApplicationArea=#Service;
+                SourceExpr="Link to Service Contract" }
+
+    { 876 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the allocated until date.;
+                ApplicationArea=#Service;
+                SourceExpr="Allocated Until Date" }
+
+    { 877 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the reserved quantity.;
+                ApplicationArea=#Reservation;
+                SourceExpr="Reserved Quantity" }
+
+    { 878 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the reserved from stock quantity.;
+                ApplicationArea=#Reservation;
+                SourceExpr="Reserved from Stock" }
+
+    { 879 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the availability check result.;
+                ApplicationArea=#Planning;
+                SourceExpr="Availability Check" }
+
+    { 880 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the ATP date.;
+                ApplicationArea=#Planning;
+                SourceExpr="Available to Promise Date" }
+
+    { 881 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the capable to promise date.;
+                ApplicationArea=#Planning;
+                SourceExpr="Capable to Promise Date" }
+
+    { 882 ;2   ;Field     ;
+                ToolTipML=ENU=Specifies the bin code.;
+                ApplicationArea=#Warehouse;
+                SourceExpr="Bin Code" }
+
+    { 60  ;0   ;Container ;
+                ContainerType=FactBoxArea }
+
+    { 61  ;1   ;Part      ;
+                Name=SalesHistSelltoFactBox;
+                CaptionML=ENU=Customer Sales History;
+                ApplicationArea=#Basic,#Suite;
+                PagePartID=Page9080;
+                PartType=Page;
+                SubPageLink=No.=FIELD(Sell-to Customer No.);
+                ProviderID=1 }
+
+    { 62  ;1   ;Part      ;
+                Name=SalesHistBilltoFactBox;
+                CaptionML=ENU=Customer Sales History - Bill-to;
+                ApplicationArea=#Basic,#Suite;
+                PagePartID=Page9080;
+                PartType=Page;
+                SubPageLink=No.=FIELD(Bill-to Customer No.);
+                ProviderID=1 }
+
+    { 63  ;1   ;Part      ;
+                Name=CustomerStatisticsFactBox;
+                CaptionML=ENU=Customer Statistics;
+                ApplicationArea=#Basic,#Suite;
+                PagePartID=Page9081;
+                PartType=Page;
+                SubPageLink=No.=FIELD(Sell-to Customer No.);
+                ProviderID=1 }
+
+    { 64  ;1   ;Part      ;
+                Name=WorkflowStatus;
+                CaptionML=ENU=Workflow Status;
+                ApplicationArea=#All;
+                PagePartID=Page1528;
+                PartType=Page;
+                SubPageLink=Table ID=CONST(36),Document Type=FIELD(Document Type),Document No.=FIELD(No.);
+                ProviderID=1 }
+
+    { 65  ;1   ;Part      ;
+                Name=PendingApprovalFactBox;
+                CaptionML=ENU=Pending Approvals;
+                ApplicationArea=#All;
+                PagePartID=Page9103;
+                PartType=Page;
+                SubPageLink=Table ID=CONST(36),Document Type=FIELD(Document Type),Document No.=FIELD(No.);
+                ProviderID=1 }
+
+    { 66  ;1   ;Part      ;
+                Name=IncomingDocAttachFactBox;
+                CaptionML=ENU=Incoming Document Files;
+                ApplicationArea=#Basic,#Suite;
+                PagePartID=Page193;
+                PartType=Page;
+                ProviderID=1 }
+
+    { 67  ;1   ;Part      ;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 68  ;1   ;Part      ;
+                PartType=System;
+                SystemPartID=Notes }
+
+    { 1000;    ;ActionContainer;
+                ActionContainerType=NewDocumentItems }
+
+    { 1001;1   ;ActionGroup;
+                CaptionML=ENU=New;
+                Image=New }
+
+    { 1002;2   ;Action    ;
+                Name=NewSalesQuote;
+                CaptionML=ENU=Sales Quote;
+                ToolTipML=ENU=Create a new sales quote.;
+                ApplicationArea=#Basic,#Suite;
+                RunObject=Page 41;
+                RunPageMode=Create;
+                Promoted=Yes;
+                Image=Quote;
+                PromotedCategory=New;
+                OnAction=BEGIN
+                           MESSAGE('Creating new sales quote');
+                         END;
+                          }
+
+    { 1003;2   ;Action    ;
+                Name=NewSalesInvoice;
+                CaptionML=ENU=Sales Invoice;
+                ToolTipML=ENU=Create a new sales invoice.;
+                ApplicationArea=#Basic,#Suite;
+                RunObject=Page 43;
+                RunPageMode=Create;
+                Promoted=Yes;
+                Image=Invoice;
+                PromotedCategory=New;
+                OnAction=BEGIN
+                           MESSAGE('Creating new sales invoice');
+                         END;
+                          }
+
+    { 1004;2   ;Action    ;
+                Name=NewSalesCreditMemo;
+                CaptionML=ENU=Sales Credit Memo;
+                ToolTipML=ENU=Create a new sales credit memo.;
+                ApplicationArea=#Basic,#Suite;
+                RunObject=Page 44;
+                RunPageMode=Create;
+                Image=CreditMemo;
+                OnAction=BEGIN
+                           MESSAGE('Creating new sales credit memo');
+                         END;
+                          }
+
+    { 1005;    ;ActionContainer;
+                ActionContainerType=ActionItems }
+
+    { 1006;1   ;ActionGroup;
+                CaptionML=ENU=Release;
+                Image=ReleaseDoc }
+
+    { 1007;2   ;Action    ;
+                Name=Release;
+                ShortCutKey=Ctrl+F9;
+                CaptionML=ENU=Release;
+                ToolTipML=ENU=Release the document to the next stage of processing.;
+                ApplicationArea=#Basic,#Suite;
+                Promoted=Yes;
+                PromotedIsBig=Yes;
+                Image=ReleaseDoc;
+                PromotedCategory=Process;
+                OnAction=VAR
+                           ReleaseSalesDoc@1000 : Codeunit 414;
+                         BEGIN
+                           ReleaseSalesDoc.PerformManualRelease(Rec);
+                           MESSAGE('Document released');
+                         END;
+                          }
+
+    { 1008;2   ;Action    ;
+                Name=Reopen;
+                CaptionML=ENU=Reopen;
+                ToolTipML=ENU=Reopen the document for additional changes.;
+                ApplicationArea=#Basic,#Suite;
+                Image=ReOpen;
+                OnAction=VAR
+                           ReleaseSalesDoc@1000 : Codeunit 414;
+                         BEGIN
+                           ReleaseSalesDoc.PerformManualReopen(Rec);
+                           MESSAGE('Document reopened');
+                         END;
+                          }
+
+    { 1009;1   ;ActionGroup;
+                CaptionML=ENU=Posting;
+                Image=Post }
+
+    { 1010;2   ;Action    ;
+                Name=Post;
+                ShortCutKey=F9;
+                CaptionML=ENU=Post;
+                ToolTipML=ENU=Post the document.;
+                ApplicationArea=#Basic,#Suite;
+                Promoted=Yes;
+                PromotedIsBig=Yes;
+                Image=PostOrder;
+                PromotedCategory=Process;
+                OnAction=BEGIN
+                           CODEUNIT.RUN(CODEUNIT::"Sales-Post (Yes/No)",Rec);
+                         END;
+                          }
+
+    { 1011;2   ;Action    ;
+                Name=PostAndSend;
+                CaptionML=ENU=Post and Send;
+                ToolTipML=ENU=Post the document and send it to the customer.;
+                ApplicationArea=#Basic,#Suite;
+                Image=PostSendTo;
+                OnAction=BEGIN
+                           CODEUNIT.RUN(CODEUNIT::"Sales-Post and Send",Rec);
+                         END;
+                          }
+
+    { 1012;2   ;Action    ;
+                Name=PostAndNew;
+                CaptionML=ENU=Post and New;
+                ToolTipML=ENU=Post the document and create a new one.;
+                ApplicationArea=#Basic,#Suite;
+                Image=PostOrder;
+                OnAction=BEGIN
+                           PostDocumentAndCreateNew;
+                         END;
+                          }
+
+    { 1013;1   ;ActionGroup;
+                CaptionML=ENU=Print;
+                Image=Print }
+
+    { 1014;2   ;Action    ;
+                Name=Print;
+                CaptionML=ENU=Print;
+                ToolTipML=ENU=Print the document.;
+                ApplicationArea=#Basic,#Suite;
+                Promoted=Yes;
+                Image=Print;
+                PromotedCategory=Process;
+                OnAction=BEGIN
+                           REPORT.RUNMODAL(REPORT::"Sales Order",TRUE,FALSE,Rec);
+                         END;
+                          }
+
+    { 1015;2   ;Action    ;
+                Name=PrintConfirmation;
+                CaptionML=ENU=Print Confirmation;
+                ToolTipML=ENU=Print the order confirmation.;
+                ApplicationArea=#Basic,#Suite;
+                Image=Print;
+                OnAction=BEGIN
+                           REPORT.RUNMODAL(REPORT::"Sales Order Confirmation",TRUE,FALSE,Rec);
+                         END;
+                          }
+
+    { 1016;1   ;ActionGroup;
+                CaptionML=ENU=Navigate;
+                Image=Navigate }
+
+    { 1017;2   ;Action    ;
+                Name=Dimensions;
+                ShortCutKey=Shift+Ctrl+D;
+                CaptionML=ENU=Dimensions;
+                ToolTipML=ENU=View or edit dimensions.;
+                ApplicationArea=#Dimensions;
+                Image=Dimensions;
+                OnAction=VAR
+                           DimensionSetEntry@1000 : Record 480;
+                         BEGIN
+                           IF "Dimension Set ID" <> 0 THEN BEGIN
+                             DimensionSetEntry.SETRANGE("Dimension Set ID","Dimension Set ID");
+                             PAGE.RUNMODAL(PAGE::"Dimension Set Entries",DimensionSetEntry);
+                           END;
+                         END;
+                          }
+
+    { 1018;2   ;Action    ;
+                Name=Approvals;
+                CaptionML=ENU=Approvals;
+                ToolTipML=ENU=View or manage approval requests.;
+                ApplicationArea=#Basic,#Suite;
+                Image=Approvals;
+                OnAction=BEGIN
+                           ShowApprovals;
+                         END;
+                          }
+
+    { 1019;2   ;Action    ;
+                Name=Comments;
+                CaptionML=ENU=Comments;
+                ToolTipML=ENU=View or create comments for the document.;
+                ApplicationArea=#Basic,#Suite;
+                Image=ViewComments;
+                OnAction=BEGIN
+                           ShowComments;
+                         END;
+                          }
+
+    { 69  ;1   ;Separator  }
   }
   CODE
   {
+    VAR
+      ShowNotifications@1000 : Boolean;
+
+    LOCAL PROCEDURE SellToCustomerNoOnAfterValidate@1();
+    BEGIN
+      CurrPage.UPDATE;
+    END;
+
+    LOCAL PROCEDURE ValidateRequestedDeliveryDate@2();
+    BEGIN
+      IF "Requested Delivery Date" < "Order Date" THEN
+        ERROR('Requested delivery date cannot be before order date');
+    END;
+
+    LOCAL PROCEDURE CalculateTotals@3();
+    BEGIN
+      CALCFIELDS("Amount Including VAT","Total VAT Amount");
+    END;
+
+    LOCAL PROCEDURE ValidatePaymentMethod@4();
+    BEGIN
+      IF "Payment Method Code" = '' THEN
+        MESSAGE('Payment method should be specified');
+    END;
+
+    LOCAL PROCEDURE PostDocumentAndCreateNew@5();
+    VAR
+      SalesHeader@1000 : Record 36;
+    BEGIN
+      CODEUNIT.RUN(CODEUNIT::"Sales-Post (Yes/No)",Rec);
+      SalesHeader.INIT;
+      SalesHeader."Document Type" := "Document Type"::Order;
+      SalesHeader.INSERT(TRUE);
+      PAGE.RUN(PAGE::"Sales Order",SalesHeader);
+    END;
+
+    LOCAL PROCEDURE ShowApprovals@6();
+    VAR
+      ApprovalEntry@1000 : Record 454;
+    BEGIN
+      ApprovalEntry.SETRANGE("Table ID",DATABASE::"Sales Header");
+      ApprovalEntry.SETRANGE("Document Type","Document Type");
+      ApprovalEntry.SETRANGE("Document No.","No.");
+      PAGE.RUN(PAGE::"Approval Entries",ApprovalEntry);
+    END;
+
+    LOCAL PROCEDURE ShowComments@7();
+    VAR
+      SalesCommentLine@1000 : Record 44;
+    BEGIN
+      SalesCommentLine.SETRANGE("Document Type","Document Type");
+      SalesCommentLine.SETRANGE("No.","No.");
+      PAGE.RUN(PAGE::"Sales Comment Sheet",SalesCommentLine);
+    END;
 
     BEGIN
     END.
