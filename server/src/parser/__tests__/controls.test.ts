@@ -11,7 +11,7 @@
  * where:
  * - ID is an integer
  * - IndentLevel is an integer (0, 1, 2, etc.)
- * - ControlType is: Container, Group, Field, Part, or Separator
+ * - ControlType is: Container, Group, Field, Part, Separator, Action, ActionContainer, or ActionGroup
  * - Properties follow standard property format (Name=Value;)
  * - Triggers like OnValidate, OnDrillDown can have BEGIN...END blocks
  *

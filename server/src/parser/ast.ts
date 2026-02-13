@@ -437,7 +437,7 @@ export type ActionType = 'ActionContainer' | 'ActionGroup' | 'Action' | 'Separat
 /**
  * Control types in C/AL CONTROLS sections
  */
-export type ControlType = 'Container' | 'Group' | 'Field' | 'Part' | 'Separator';
+export type ControlType = 'Container' | 'Group' | 'Field' | 'Part' | 'Separator' | 'Action' | 'ActionContainer' | 'ActionGroup';
 
 /**
  * XMLport node types (column 4 in ELEMENTS section)

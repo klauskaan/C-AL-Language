@@ -1989,7 +1989,10 @@ export class Parser {
       'group': 'Group',
       'field': 'Field',
       'part': 'Part',
-      'separator': 'Separator'
+      'separator': 'Separator',
+      'action': 'Action',
+      'actioncontainer': 'ActionContainer',
+      'actiongroup': 'ActionGroup'
     };
 
     const normalizedType = typeMap[rawValue.toLowerCase()];
