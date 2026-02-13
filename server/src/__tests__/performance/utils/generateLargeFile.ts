@@ -18,6 +18,7 @@
  * ```bash
  * npx ts-node generateLargeFile.ts 5000 fixtures/huge.cal medium
  * npx ts-node generateLargeFile.ts 10000 fixtures/enormous.cal complex
+ * npx ts-node generateLargeFile.ts 5000 fixtures/huge.cal medium 12345
  * ```
  */
 
@@ -409,5 +410,15 @@ if (require.main === module) {
   }
   const complexity = complexityArg as 'simple' | 'medium' | 'complex';
 
-  generateLargeFile({ targetLines, outputPath, complexity });
+  // Validate seed (optional, defaults to 42)
+  let seed: number | undefined;
+  if (args[3]) {
+    seed = parseInt(args[3], 10);
+    if (isNaN(seed) || seed <= 0) {
+      console.error(`Error: Invalid seed "${args[3]}". Must be a positive number.`);
+      process.exit(1);
+    }
+  }
+
+  generateLargeFile({ targetLines, outputPath, complexity, seed });
 }
