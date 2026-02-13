@@ -100,10 +100,10 @@ async function benchmarkParser(): Promise<BenchmarkResult[]> {
   // Collect results
   const results: BenchmarkResult[] = bench.tasks.map(task => ({
     name: task.name || 'unnamed',
-    meanMs: (task.result?.mean || 0) * 1000,
-    stdDevMs: (task.result?.sd || 0) * 1000,
-    minMs: (task.result?.min || 0) * 1000,
-    maxMs: (task.result?.max || 0) * 1000,
+    meanMs: task.result?.mean || 0,
+    stdDevMs: task.result?.sd || 0,
+    minMs: task.result?.min || 0,
+    maxMs: task.result?.max || 0,
     ops: task.result?.hz || 0,
     samples: task.result?.samples?.length || 0
   }));
@@ -113,7 +113,7 @@ async function benchmarkParser(): Promise<BenchmarkResult[]> {
   reporter.reportBenchmark({
     suiteName: 'Parser Benchmarks',
     benchmarks: results,
-    totalDurationMs: bench.tasks.reduce((sum, t) => sum + ((t.result?.mean || 0) * 1000), 0)
+    totalDurationMs: bench.tasks.reduce((sum, t) => sum + (t.result?.mean || 0), 0)
   });
 
   // Memory usage summary

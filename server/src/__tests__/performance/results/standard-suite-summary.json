@@ -1,17 +1,18 @@
 {
-  "timestamp": "2025-12-27T16:12:24.528Z",
+  "timestamp": "2026-02-13T18:44:41.476Z",
   "version": "0.4.6",
   "environment": {
     "node": "v20.19.2",
     "platform": "linux",
     "arch": "x64"
   },
-  "duration": 40.68,
+  "duration": 46.271,
   "suites": [
     "lexer",
     "parser",
     "symbolTable",
     "integration",
+    "semanticTokens",
     "memory"
   ]
 }
