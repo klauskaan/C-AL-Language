@@ -70,10 +70,10 @@ async function benchmarkSemanticTokens(): Promise<BenchmarkResult[]> {
   // Collect results
   const results: BenchmarkResult[] = bench.tasks.map(task => ({
     name: task.name || 'unnamed',
-    meanMs: (task.result?.mean || 0) * 1000,
-    stdDevMs: (task.result?.sd || 0) * 1000,
-    minMs: (task.result?.min || 0) * 1000,
-    maxMs: (task.result?.max || 0) * 1000,
+    meanMs: task.result?.mean || 0,
+    stdDevMs: task.result?.sd || 0,
+    minMs: task.result?.min || 0,
+    maxMs: task.result?.max || 0,
     ops: task.result?.hz || 0,
     samples: task.result?.samples?.length || 0
   }));
@@ -83,7 +83,7 @@ async function benchmarkSemanticTokens(): Promise<BenchmarkResult[]> {
   reporter.reportBenchmark({
     suiteName: 'Semantic Tokens Benchmarks',
     benchmarks: results,
-    totalDurationMs: bench.tasks.reduce((sum, t) => sum + ((t.result?.mean || 0) * 1000), 0)
+    totalDurationMs: bench.tasks.reduce((sum, t) => sum + (t.result?.mean || 0), 0)
   });
 
   // Memory usage summary
@@ -97,14 +97,14 @@ async function benchmarkSemanticTokens(): Promise<BenchmarkResult[]> {
    * Calibration: Run `npm run perf:quick` 3 times and record mean time.
    * Set threshold to 3x that mean to catch significant regressions.
    *
-   * Calibration results (2026-02-12):
-   * - Run 1: 13063.70 ms
-   * - Run 2: 13545.63 ms
-   * - Run 3: 14322.37 ms
-   * - Average: 13643.90 ms
-   * - Threshold (3x): 40931.70 ms (rounded to 41000 ms)
+   * Calibration results (2026-02-12, de-inflated from #436):
+   * - Run 1: 13.06 ms
+   * - Run 2: 13.55 ms
+   * - Run 3: 14.32 ms
+   * - Average: 13.64 ms
+   * - Threshold (3x): 40.93 ms (rounded to 41 ms)
    */
-  const REGRESSION_THRESHOLD_MS = 41000; // 3x average of calibration runs
+  const REGRESSION_THRESHOLD_MS = 41; // 3x average of calibration runs
 
   if (meanMs > REGRESSION_THRESHOLD_MS) {
     const msg = `⚠️  REGRESSION DETECTED: Semantic token mean time ${meanMs.toFixed(2)}ms exceeds threshold ${REGRESSION_THRESHOLD_MS}ms`;

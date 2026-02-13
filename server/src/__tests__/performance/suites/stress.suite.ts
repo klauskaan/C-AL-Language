@@ -59,7 +59,7 @@ async function runComplexityStressTests(): Promise<StressTestResult[]> {
     await bench.run();
 
     const task = bench.tasks[0];
-    const meanMs = (task.result?.mean || 0) * 1000;
+    const meanMs = task.result?.mean || 0;
 
     // Memory test
     const memResult = await benchmarkMemory(`Memory: ${fixtureName}`, () => {
@@ -113,7 +113,7 @@ async function runMaxSizeStressTests(): Promise<void> {
   await hugeBench.run();
 
   const hugeTask = hugeBench.tasks[0];
-  const hugeMeanMs = (hugeTask.result?.mean || 0) * 1000;
+  const hugeMeanMs = hugeTask.result?.mean || 0;
   const hugeOps = hugeTask.result?.hz || 0;
 
   console.log(`\n   Mean: ${hugeMeanMs.toFixed(2)}ms`);
@@ -154,7 +154,7 @@ async function runMaxSizeStressTests(): Promise<void> {
   await enormousBench.run();
 
   const enormousTask = enormousBench.tasks[0];
-  const enormousMeanMs = (enormousTask.result?.mean || 0) * 1000;
+  const enormousMeanMs = enormousTask.result?.mean || 0;
   const enormousOps = enormousTask.result?.hz || 0;
 
   console.log(`\n   Mean: ${enormousMeanMs.toFixed(2)}ms`);
