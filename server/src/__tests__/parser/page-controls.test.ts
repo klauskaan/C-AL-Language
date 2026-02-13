@@ -687,6 +687,135 @@ describe('Page CONTROLS - Action control types', () => {
       expect(group1?.children.length).toBe(0);
     });
 
+    it('should parse mixed indent patterns at 5+ depth (0>1>1>2>2>3>3>4>4>5>5)', () => {
+      const source = `
+        OBJECT Page 50000 Test
+        {
+          OBJECT-PROPERTIES
+          {
+            Date=01-01-24;
+            Time=12:00:00;
+          }
+          PROPERTIES
+          {
+          }
+          CONTROLS
+          {
+            { 1;0;Container }
+            { 2;1;Group;
+                    CaptionML=ENU=Group L1-A }
+            { 3;1;Group;
+                    CaptionML=ENU=Group L1-B }
+            { 4;2;Group;
+                    CaptionML=ENU=Group L2-A }
+            { 5;2;Group;
+                    CaptionML=ENU=Group L2-B }
+            { 6;3;Group;
+                    CaptionML=ENU=Group L3-A }
+            { 7;3;Group;
+                    CaptionML=ENU=Group L3-B }
+            { 8;4;Group;
+                    CaptionML=ENU=Group L4-A }
+            { 9;4;Group;
+                    CaptionML=ENU=Group L4-B }
+            { 10;5;Field;
+                    SourceExpr="Field L5-A" }
+            { 11;5;Field;
+                    SourceExpr="Field L5-B" }
+          }
+          CODE
+          {
+            BEGIN
+            END.
+          }
+        }
+      `;
+
+      const result = parseCode(source);
+      const errors = result.errors.filter((e: any) => e.code !== 'parse-placeholder-skipped');
+      expect(errors.length).toBe(0);
+
+      const controls = result.ast!.object?.controls?.controls || [];
+      expect(controls.length).toBe(1);
+
+      // Root container (level 0)
+      const level0 = controls[0];
+      expect(level0?.id).toBe(1);
+      expect(level0?.controlType).toBe('Container');
+      expect(level0?.indentLevel).toBe(0);
+
+      // Two sibling groups at level 1
+      expect(level0?.children.length).toBe(2);
+      const level1a = level0?.children[0];
+      const level1b = level0?.children[1];
+
+      expect(level1a?.id).toBe(2);
+      expect(level1a?.indentLevel).toBe(1);
+      expect(level1a?.controlType).toBe('Group');
+      expect(level1a?.children.length).toBe(0); // L1-A has no children
+
+      expect(level1b?.id).toBe(3);
+      expect(level1b?.indentLevel).toBe(1);
+      expect(level1b?.controlType).toBe('Group');
+
+      // Two sibling groups at level 2 (children of L1-B)
+      expect(level1b?.children.length).toBe(2);
+      const level2a = level1b?.children[0];
+      const level2b = level1b?.children[1];
+
+      expect(level2a?.id).toBe(4);
+      expect(level2a?.indentLevel).toBe(2);
+      expect(level2a?.controlType).toBe('Group');
+      expect(level2a?.children.length).toBe(0); // L2-A has no children
+
+      expect(level2b?.id).toBe(5);
+      expect(level2b?.indentLevel).toBe(2);
+      expect(level2b?.controlType).toBe('Group');
+
+      // Two sibling groups at level 3 (children of L2-B)
+      expect(level2b?.children.length).toBe(2);
+      const level3a = level2b?.children[0];
+      const level3b = level2b?.children[1];
+
+      expect(level3a?.id).toBe(6);
+      expect(level3a?.indentLevel).toBe(3);
+      expect(level3a?.controlType).toBe('Group');
+      expect(level3a?.children.length).toBe(0); // L3-A has no children
+
+      expect(level3b?.id).toBe(7);
+      expect(level3b?.indentLevel).toBe(3);
+      expect(level3b?.controlType).toBe('Group');
+
+      // Two sibling groups at level 4 (children of L3-B)
+      expect(level3b?.children.length).toBe(2);
+      const level4a = level3b?.children[0];
+      const level4b = level3b?.children[1];
+
+      expect(level4a?.id).toBe(8);
+      expect(level4a?.indentLevel).toBe(4);
+      expect(level4a?.controlType).toBe('Group');
+      expect(level4a?.children.length).toBe(0); // L4-A has no children
+
+      expect(level4b?.id).toBe(9);
+      expect(level4b?.indentLevel).toBe(4);
+      expect(level4b?.controlType).toBe('Group');
+
+      // Two sibling fields at level 5 (children of L4-B)
+      expect(level4b?.children.length).toBe(2);
+      const level5a = level4b?.children[0];
+      const level5b = level4b?.children[1];
+
+      expect(level5a?.id).toBe(10);
+      expect(level5a?.indentLevel).toBe(5);
+      expect(level5a?.controlType).toBe('Field');
+      expect(level5a?.children.length).toBe(0);
+
+      expect(level5b?.id).toBe(11);
+      expect(level5b?.indentLevel).toBe(5);
+      expect(level5b?.controlType).toBe('Field');
+      expect(level5b?.children.length).toBe(0);
+    });
+
     it('should parse 6+ level nesting: Container > Group > Group > Group > Group > Field > Part', () => {
       const source = `
         OBJECT Page 50000 Test
