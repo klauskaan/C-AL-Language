@@ -154,7 +154,8 @@
     "mode": "node toggle-highlighting-mode.js",
     "mode:textmate": "node toggle-highlighting-mode.js textmate",
     "mode:semantic": "node toggle-highlighting-mode.js semantic",
-    "mode:both": "node toggle-highlighting-mode.js both"
+    "mode:both": "node toggle-highlighting-mode.js both",
+    "check:baseline": "node server/scripts/check-baseline-version.js"
   },
   "dependencies": {
     "vscode-languageclient": "^8.1.0",
