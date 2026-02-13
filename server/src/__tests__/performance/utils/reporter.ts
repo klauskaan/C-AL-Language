@@ -13,7 +13,7 @@ import { ComparisonResult } from './baseline';
 /**
  * Benchmark result data structure.
  *
- * CANONICAL DEFINITION: All benchmark files must import this from reporter.ts.
+ * CANONICAL DEFINITION: Import from '../utils/reporter'.
  * Do not duplicate this interface — import it instead.
  */
 export interface BenchmarkResult {
