@@ -17,35 +17,29 @@ import { readFileSync, existsSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 /**
- * Load benchmark results from a benchmark output file
+ * Load benchmark results from the most recent benchmark run
  */
 function loadBenchmarkResults(resultsDir: string): BenchResult[] {
-  const results: BenchResult[] = [];
+  const resultsFilePath = join(resultsDir, 'all-benchmarks.json');
 
-  // Check for individual benchmark result files
-  const benchmarkFiles = [
-    'lexer-results.json',
-    'parser-results.json',
-    'symbolTable-results.json',
-    'integration-results.json',
-    'memory-results.json'
-  ];
-
-  for (const file of benchmarkFiles) {
-    const filePath = join(resultsDir, file);
-    if (existsSync(filePath)) {
-      try {
-        const data = JSON.parse(readFileSync(filePath, 'utf-8'));
-        if (data.benchmarks && Array.isArray(data.benchmarks)) {
-          results.push(...data.benchmarks);
-        }
-      } catch (error) {
-        console.warn(`Warning: Failed to parse ${file}:`, error);
-      }
-    }
+  if (!existsSync(resultsFilePath)) {
+    return [];
   }
 
-  return results;
+  try {
+    const content = readFileSync(resultsFilePath, 'utf-8');
+    const results = JSON.parse(content);
+
+    if (!Array.isArray(results)) {
+      console.warn(`\n⚠️  Results file is not in expected format (expected array)\n`);
+      return [];
+    }
+
+    return results;
+  } catch (error) {
+    console.error(`\n❌ Failed to load results: ${error}\n`);
+    return [];
+  }
 }
 
 async function compareToBaseline(): Promise<void> {
