@@ -10,6 +10,12 @@ import chalk from 'chalk';
 import { writeFileSync } from 'fs';
 import { ComparisonResult } from './baseline';
 
+/**
+ * Benchmark result data structure.
+ *
+ * CANONICAL DEFINITION: All benchmark files must import this from reporter.ts.
+ * Do not duplicate this interface — import it instead.
+ */
 export interface BenchmarkResult {
   name: string;
   meanMs: number;

@@ -6,19 +6,9 @@
  */
 
 import { createBaselineFromResults, saveBaseline, getDefaultBaselinePath } from './baseline';
+import { BenchmarkResult } from './reporter';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
-
-interface BenchmarkResult {
-  name: string;
-  meanMs: number;
-  stdDevMs: number;
-  minMs: number;
-  maxMs: number;
-  ops: number;
-  samples: number;
-  memoryMB?: number;
-}
 
 /**
  * Load benchmark results from the most recent test run

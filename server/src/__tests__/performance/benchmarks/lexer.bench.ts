@@ -8,19 +8,8 @@
 import { Bench } from 'tinybench';
 import { Lexer } from '../../../lexer/lexer';
 import { loadFixture, FIXTURES } from '../utils/fixtures';
-import { ConsoleReporter } from '../utils/reporter';
+import { ConsoleReporter, BenchmarkResult } from '../utils/reporter';
 import { takeMemorySnapshot, formatMemorySize } from '../utils/memory';
-
-interface BenchmarkResult {
-  name: string;
-  meanMs: number;
-  stdDevMs: number;
-  minMs: number;
-  maxMs: number;
-  ops: number;
-  samples: number;
-  memoryMB?: number;
-}
 
 /**
  * Benchmark lexer tokenization
