@@ -1,7 +1,7 @@
 /**
  * Deterministic Generator for Set Literal Performance Test Fixture
  *
- * Generates a synthetic C/AL codeunit (~5K lines, 120+ set expressions)
+ * Generates a synthetic C/AL codeunit (~5K lines, 450 set expressions)
  * to benchmark semantic token performance for set literal highlighting.
  *
  * MUST be deterministic (no Math.random()) - uses procedure-number-based variation.
@@ -13,8 +13,8 @@ import * as path from 'path';
 
 interface GeneratorOptions {
   outputPath: string;
-  targetProcedures?: number; // ~40 procedures to reach ~5K lines
-  setsPerProcedure?: number; // ~3 set expressions per procedure = 120+ total
+  targetProcedures?: number; // 150 procedures to reach ~5K lines
+  setsPerProcedure?: number; // 3 set expressions per procedure = 450 total
 }
 
 /**
