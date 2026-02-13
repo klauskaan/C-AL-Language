@@ -30,6 +30,7 @@ interface GeneratorOptions {
   outputPath: string;
   complexity?: 'simple' | 'medium' | 'complex';
   seed?: number;
+  silent?: boolean;
 }
 
 /**
@@ -301,7 +302,7 @@ page ${50000 + num} "Custom List ${num}"
  * Generate a large CAL file programmatically
  */
 export function generateLargeFile(options: GeneratorOptions): void {
-  const { targetLines, outputPath, complexity = 'medium', seed = 42 } = options;
+  const { targetLines, outputPath, complexity = 'medium', seed = 42, silent = false } = options;
 
   // Initialize seeded PRNG
   const random = mulberry32(seed);
@@ -370,10 +371,12 @@ export function generateLargeFile(options: GeneratorOptions): void {
     throw error;
   }
 
-  console.log(`Generated ${currentLines} lines in ${fullPath}`);
-  console.log(`Procedures: ${procedureNum}`);
-  console.log(`Tables: ${tableNum}`);
-  console.log(`Pages: ${pageNum}`);
+  if (!silent) {
+    console.log(`Generated ${currentLines} lines in ${fullPath}`);
+    console.log(`Procedures: ${procedureNum}`);
+    console.log(`Tables: ${tableNum}`);
+    console.log(`Pages: ${pageNum}`);
+  }
 }
 
 // CLI support
