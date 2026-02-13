@@ -111,9 +111,23 @@ function generateProcedure(procNum: number, setsPerProcedure: number): string {
 
   // Add nested IF with set literals for more complexity
   if (setsPerProcedure > 3) {
+    let openDepth = 0;  // tracks deepest currently open nesting level
+
     for (let i = 3; i < sets.length; i++) {
       const depth = (i - 3) % 3;
       const indent = '    ' + '    '.repeat(depth);
+
+      // Before starting a new depth-0 cycle, close all open blocks from previous cycle
+      if (depth === 0 && openDepth > 0) {
+        // Close in reverse order (deepest first)
+        for (let d = openDepth; d >= 1; d--) {
+          const closeIndent = '    ' + '    '.repeat(d - 1);
+          lines.push(`${closeIndent}end;`);
+        }
+        openDepth = 0;
+      }
+
+      // Open block at current depth
       if (depth === 0) {
         lines.push(``);
         lines.push(`    if Input${procNum} in ${sets[i].literal} then begin`);
@@ -121,13 +135,14 @@ function generateProcedure(procNum: number, setsPerProcedure: number): string {
         lines.push(`${indent}if counter${procNum} in ${sets[i].literal} then begin`);
       }
       lines.push(`${indent}    counter${procNum} += ${i};`);
-      if (depth === 0) {
-        lines.push(`    end;`);
-      }
+
+      // Track the deepest open level (depth-0 stays open for nesting, unlike original)
+      openDepth = depth + 1;
     }
-    // Close any remaining nested blocks
-    for (let d = 1; d < Math.min(3, setsPerProcedure - 3); d++) {
-      const indent = '    ' + '    '.repeat(d);
+
+    // Close any remaining open blocks after loop
+    for (let d = openDepth; d >= 1; d--) {
+      const indent = '    ' + '    '.repeat(d - 1);
       lines.push(`${indent}end;`);
     }
   }
@@ -218,4 +233,4 @@ if (require.main === module) {
   });
 }
 
-export { generateSetLiteralFixture, GeneratorOptions };
+export { generateSetLiteralFixture, generateProcedure, GeneratorOptions };
