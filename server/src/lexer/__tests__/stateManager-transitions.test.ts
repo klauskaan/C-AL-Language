@@ -171,7 +171,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
     it('should return push transition from NORMAL to CODE_BLOCK', () => {
       const manager = new LexerStateManager();
 
-      const transition = manager.onBeginKeyword(LexerContext.NORMAL);
+      const transition = manager.onBeginKeyword();
 
       expect(transition).not.toBeNull();
       expect(transition).toEqual({
@@ -190,7 +190,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       manager.onOpenBrace(); // Pushes SECTION_LEVEL
 
       // In LABELS section, BEGIN is valid (no column protection)
-      const transition = manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      const transition = manager.onBeginKeyword();
 
       expect(transition).not.toBeNull();
       expect(transition).toEqual({
@@ -204,10 +204,10 @@ describe('LexerStateManager - ContextTransition feature', () => {
 
     it('should return push transition for nested BEGIN blocks', () => {
       const manager = new LexerStateManager();
-      manager.onBeginKeyword(LexerContext.NORMAL);
+      manager.onBeginKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
 
-      const transition = manager.onBeginKeyword(LexerContext.CODE_BLOCK);
+      const transition = manager.onBeginKeyword();
 
       expect(transition).not.toBeNull();
       expect(transition).toEqual({
@@ -234,7 +234,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
       manager.onEquals();
 
-      const transition = manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      const transition = manager.onBeginKeyword();
 
       expect(transition).not.toBeNull();
       expect(transition).toEqual({
@@ -252,7 +252,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       manager.onOpenBrace(); // Field definition - COL_1
 
       // BEGIN in COL_1 is protected (field name could be "BEGIN")
-      const transition = manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      const transition = manager.onBeginKeyword();
 
       expect(transition).toBeNull();
       expect(manager.getCurrentContext()).toBe(LexerContext.SECTION_LEVEL);
@@ -267,7 +267,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       manager.onEquals();
 
       // BEGIN in non-trigger property is just a value, not code
-      const transition = manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      const transition = manager.onBeginKeyword();
 
       expect(transition).toBeNull();
       expect(manager.getCurrentContext()).toBe(LexerContext.SECTION_LEVEL);
@@ -282,7 +282,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       manager.onOpenBracket();
 
       // BEGIN inside brackets is text
-      const transition = manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      const transition = manager.onBeginKeyword();
 
       expect(transition).toBeNull();
     });
@@ -291,10 +291,10 @@ describe('LexerStateManager - ContextTransition feature', () => {
   describe('onEndKeyword() - returns pop transition', () => {
     it('should return pop transition from CODE_BLOCK to NORMAL', () => {
       const manager = new LexerStateManager();
-      manager.onBeginKeyword(LexerContext.NORMAL);
+      manager.onBeginKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
 
-      const transition = manager.onEndKeyword(LexerContext.CODE_BLOCK);
+      const transition = manager.onEndKeyword();
 
       expect(transition).not.toBeNull();
       expect(transition).toEqual({
@@ -308,11 +308,11 @@ describe('LexerStateManager - ContextTransition feature', () => {
 
     it('should return pop transition from nested CODE_BLOCK', () => {
       const manager = new LexerStateManager();
-      manager.onBeginKeyword(LexerContext.NORMAL);
-      manager.onBeginKeyword(LexerContext.CODE_BLOCK);
+      manager.onBeginKeyword();
+      manager.onBeginKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
 
-      const transition = manager.onEndKeyword(LexerContext.CODE_BLOCK);
+      const transition = manager.onEndKeyword();
 
       expect(transition).not.toBeNull();
       expect(transition).toEqual({
@@ -326,11 +326,11 @@ describe('LexerStateManager - ContextTransition feature', () => {
 
     it('should return pop transition from CASE_BLOCK to CODE_BLOCK', () => {
       const manager = new LexerStateManager();
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
-      manager.onCaseKeyword(LexerContext.CODE_BLOCK);
+      manager.onBeginKeyword();
+      manager.onCaseKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CASE_BLOCK);
 
-      const transition = manager.onEndKeyword(LexerContext.CASE_BLOCK);
+      const transition = manager.onEndKeyword();
 
       expect(transition).not.toBeNull();
       expect(transition).toEqual({
@@ -350,7 +350,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       manager.onOpenBrace(); // Field definition - COL_1
 
       // END in COL_1 is protected (field name could be "END")
-      const transition = manager.onEndKeyword(LexerContext.SECTION_LEVEL);
+      const transition = manager.onEndKeyword();
 
       expect(transition).toBeNull();
       expect(manager.getCurrentContext()).toBe(LexerContext.SECTION_LEVEL);
@@ -365,7 +365,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       manager.onEquals();
 
       // END in non-trigger property is just a value
-      const transition = manager.onEndKeyword(LexerContext.SECTION_LEVEL);
+      const transition = manager.onEndKeyword();
 
       expect(transition).toBeNull();
       expect(manager.getCurrentContext()).toBe(LexerContext.SECTION_LEVEL);
@@ -380,7 +380,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       manager.onOpenBracket();
 
       // END inside brackets is text
-      const transition = manager.onEndKeyword(LexerContext.CODE_BLOCK);
+      const transition = manager.onEndKeyword();
 
       expect(transition).toBeNull();
     });
@@ -389,7 +389,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       const manager = new LexerStateManager();
 
       // Attempt to pop from NORMAL (underflow)
-      const transition = manager.onEndKeyword(LexerContext.NORMAL);
+      const transition = manager.onEndKeyword();
 
       // Should attempt to pop and set underflow flag
       expect(manager.getState().contextUnderflowDetected).toBe(true);
@@ -401,10 +401,10 @@ describe('LexerStateManager - ContextTransition feature', () => {
   describe('onCaseKeyword() - returns push transition', () => {
     it('should return push transition from CODE_BLOCK to CASE_BLOCK', () => {
       const manager = new LexerStateManager();
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
 
-      const transition = manager.onCaseKeyword(LexerContext.CODE_BLOCK);
+      const transition = manager.onCaseKeyword();
 
       expect(transition).not.toBeNull();
       expect(transition).toEqual({
@@ -418,11 +418,11 @@ describe('LexerStateManager - ContextTransition feature', () => {
 
     it('should return push transition for nested CASE in CASE_BLOCK', () => {
       const manager = new LexerStateManager();
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
-      manager.onCaseKeyword(LexerContext.CODE_BLOCK);
+      manager.onBeginKeyword();
+      manager.onCaseKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CASE_BLOCK);
 
-      const transition = manager.onCaseKeyword(LexerContext.CASE_BLOCK);
+      const transition = manager.onCaseKeyword();
 
       expect(transition).not.toBeNull();
       expect(transition).toEqual({
@@ -436,7 +436,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       const manager = new LexerStateManager();
 
       // CASE outside code blocks is malformed, guard prevents push
-      const transition = manager.onCaseKeyword(LexerContext.NORMAL);
+      const transition = manager.onCaseKeyword();
 
       expect(transition).toBeNull();
       expect(manager.getCurrentContext()).toBe(LexerContext.NORMAL);
@@ -608,17 +608,17 @@ describe('LexerStateManager - ContextTransition feature', () => {
       manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
       manager.onEquals();
 
-      const beginTransition = manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      const beginTransition = manager.onBeginKeyword();
       expect(beginTransition?.to).toBe(LexerContext.CODE_BLOCK);
 
-      const caseTransition = manager.onCaseKeyword(LexerContext.CODE_BLOCK);
+      const caseTransition = manager.onCaseKeyword();
       expect(caseTransition?.to).toBe(LexerContext.CASE_BLOCK);
 
-      const caseEndTransition = manager.onEndKeyword(LexerContext.CASE_BLOCK);
+      const caseEndTransition = manager.onEndKeyword();
       expect(caseEndTransition?.from).toBe(LexerContext.CASE_BLOCK);
       expect(caseEndTransition?.to).toBe(LexerContext.CODE_BLOCK);
 
-      const blockEndTransition = manager.onEndKeyword(LexerContext.CODE_BLOCK);
+      const blockEndTransition = manager.onEndKeyword();
       expect(blockEndTransition?.from).toBe(LexerContext.CODE_BLOCK);
       expect(blockEndTransition?.to).toBe(LexerContext.SECTION_LEVEL);
     });
@@ -629,7 +629,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       // Operations that don't change context
       expect(manager.onOpenBrace()).toBeNull(); // No section keyword
       expect(manager.onCloseBrace()).toBeNull(); // No context to pop
-      expect(manager.onCaseKeyword(LexerContext.NORMAL)).toBeNull(); // Not in code
+      expect(manager.onCaseKeyword()).toBeNull(); // Not in code
     });
 
     it('should maintain transition consistency with context changes', () => {
@@ -643,10 +643,10 @@ describe('LexerStateManager - ContextTransition feature', () => {
       const transition2 = manager.onOpenBrace();
       expect(transition2?.to).toBe(manager.getCurrentContext());
 
-      const transition3 = manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      const transition3 = manager.onBeginKeyword();
       expect(transition3?.to).toBe(manager.getCurrentContext());
 
-      const transition4 = manager.onEndKeyword(LexerContext.CODE_BLOCK);
+      const transition4 = manager.onEndKeyword();
       expect(transition4?.to).toBe(manager.getCurrentContext());
     });
   });

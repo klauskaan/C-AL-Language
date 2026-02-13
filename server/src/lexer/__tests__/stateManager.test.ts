@@ -179,7 +179,7 @@ describe('LexerStateManager', () => {
 
     it('should NOT enter property value mode on onEquals() in CODE_BLOCK', () => {
       const manager = new LexerStateManager();
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword();
       manager.onEquals(); // Comparison operator, not property assignment
 
       expect(manager.getState().inPropertyValue).toBe(false);
@@ -302,15 +302,15 @@ describe('LexerStateManager', () => {
 
     it('should push CASE_BLOCK on onCaseKeyword()', () => {
       const manager = new LexerStateManager();
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
-      manager.onCaseKeyword(LexerContext.CODE_BLOCK);
+      manager.onBeginKeyword();
+      manager.onCaseKeyword();
 
       expect(manager.getCurrentContext()).toBe(LexerContext.CASE_BLOCK);
     });
 
     it('should NOT push CASE_BLOCK if not in CODE_BLOCK context', () => {
       const manager = new LexerStateManager();
-      manager.onCaseKeyword(LexerContext.NORMAL);
+      manager.onCaseKeyword();
 
       // Should stay in NORMAL
       expect(manager.getCurrentContext()).toBe(LexerContext.NORMAL);
@@ -318,17 +318,17 @@ describe('LexerStateManager', () => {
 
     it('should pop context on onEndKeyword()', () => {
       const manager = new LexerStateManager();
-      manager.onBeginKeyword(LexerContext.NORMAL);
+      manager.onBeginKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
 
-      manager.onEndKeyword(LexerContext.CODE_BLOCK);
+      manager.onEndKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.NORMAL);
     });
 
     it('should detect context underflow on excessive pops', () => {
       const manager = new LexerStateManager();
       // Try to pop below minimum stack size
-      manager.onEndKeyword(LexerContext.NORMAL);
+      manager.onEndKeyword();
 
       expect(manager.getState().contextUnderflowDetected).toBe(true);
       // Stack should still have minimum size
@@ -339,7 +339,7 @@ describe('LexerStateManager', () => {
   describe('BEGIN/END keyword handling', () => {
     it('should push CODE_BLOCK on onBeginKeyword() from NORMAL context', () => {
       const manager = new LexerStateManager();
-      manager.onBeginKeyword(LexerContext.NORMAL);
+      manager.onBeginKeyword();
 
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
     });
@@ -352,7 +352,7 @@ describe('LexerStateManager', () => {
       manager.markSectionKeyword();
       manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
       // We're now in SECTION_LEVEL but not in any columnar tracking
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword();
 
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
     });
@@ -362,7 +362,7 @@ describe('LexerStateManager', () => {
       manager.onSectionKeyword('FIELDS');
       manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
       manager.onEquals();
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword();
 
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
     });
@@ -375,7 +375,7 @@ describe('LexerStateManager', () => {
       manager.onOpenBrace();  // Enter SECTION_LEVEL
       manager.onIdentifier('InitValue', LexerContext.SECTION_LEVEL);
       manager.onEquals();
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword();
 
       // BEGIN in non-trigger property value is just an identifier
       expect(manager.getCurrentContext()).toBe(LexerContext.SECTION_LEVEL);
@@ -383,18 +383,18 @@ describe('LexerStateManager', () => {
 
     it('should pop CODE_BLOCK on onEndKeyword()', () => {
       const manager = new LexerStateManager();
-      manager.onBeginKeyword(LexerContext.NORMAL);
+      manager.onBeginKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
 
-      manager.onEndKeyword(LexerContext.CODE_BLOCK);
+      manager.onEndKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.NORMAL);
     });
 
     it('should handle nested BEGIN/END blocks', () => {
       const manager = new LexerStateManager();
-      manager.onBeginKeyword(LexerContext.NORMAL);
-      manager.onBeginKeyword(LexerContext.CODE_BLOCK);
-      manager.onBeginKeyword(LexerContext.CODE_BLOCK);
+      manager.onBeginKeyword();
+      manager.onBeginKeyword();
+      manager.onBeginKeyword();
 
       expect(manager.getState().contextStack).toEqual([
         LexerContext.NORMAL,
@@ -403,9 +403,9 @@ describe('LexerStateManager', () => {
         LexerContext.CODE_BLOCK,
       ]);
 
-      manager.onEndKeyword(LexerContext.CODE_BLOCK);
-      manager.onEndKeyword(LexerContext.CODE_BLOCK);
-      manager.onEndKeyword(LexerContext.CODE_BLOCK);
+      manager.onEndKeyword();
+      manager.onEndKeyword();
+      manager.onEndKeyword();
 
       expect(manager.getCurrentContext()).toBe(LexerContext.NORMAL);
     });
@@ -719,13 +719,13 @@ describe('LexerStateManager', () => {
       expect(manager.isTriggerProperty()).toBe(true);
 
       // BEGIN
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
 
       // Code inside trigger...
 
       // END
-      manager.onEndKeyword(LexerContext.CODE_BLOCK);
+      manager.onEndKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.SECTION_LEVEL);
 
       manager.onSemicolon();
@@ -748,7 +748,7 @@ describe('LexerStateManager', () => {
       expect(manager.isTriggerProperty()).toBe(false);
 
       // BEGIN is just a value, not a code block start
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.SECTION_LEVEL);
 
       manager.onSemicolon();
@@ -765,17 +765,17 @@ describe('LexerStateManager', () => {
       manager.markSectionKeyword();
       manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
 
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
 
-      manager.onCaseKeyword(LexerContext.CODE_BLOCK);
+      manager.onCaseKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CASE_BLOCK);
 
       // CASE blocks end with END, not END;
-      manager.onEndKeyword(LexerContext.CASE_BLOCK);
+      manager.onEndKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
 
-      manager.onEndKeyword(LexerContext.CODE_BLOCK);
+      manager.onEndKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.SECTION_LEVEL);
     });
 
@@ -827,7 +827,7 @@ describe('LexerStateManager', () => {
 
       // Try to pop many times
       for (let i = 0; i < 10; i++) {
-        manager.onEndKeyword(LexerContext.NORMAL);
+        manager.onEndKeyword();
         expect(manager.getState().contextStack.length).toBeGreaterThanOrEqual(1);
       }
     });
@@ -841,15 +841,15 @@ describe('LexerStateManager', () => {
       // Use markSectionKeyword to avoid column tracking
       manager.markSectionKeyword();
       manager.onOpenBrace();  // SECTION open brace
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
-      manager.onCaseKeyword(LexerContext.CODE_BLOCK);
+      manager.onBeginKeyword();
+      manager.onCaseKeyword();
 
       const depth = manager.getState().contextStack.length;
       expect(depth).toBeGreaterThan(1);
 
       // Pop all the way back
-      manager.onEndKeyword(LexerContext.CASE_BLOCK);
-      manager.onEndKeyword(LexerContext.CODE_BLOCK);
+      manager.onEndKeyword();
+      manager.onEndKeyword();
       manager.onCloseBrace();  // Close SECTION
 
       // Should be back to OBJECT_LEVEL
@@ -925,7 +925,7 @@ describe('LexerStateManager', () => {
       expect(manager.getState().lastPropertyName).toBe('BEGIN');
 
       // onBeginKeyword transitions to CODE_BLOCK
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
 
       // lastPropertyName should be cleared (not a property context)
@@ -943,7 +943,7 @@ describe('LexerStateManager', () => {
 
       // Enter CODE_BLOCK via BEGIN from SECTION_LEVEL
       manager.onIdentifier('BEGIN', LexerContext.SECTION_LEVEL);
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
 
       // Equals inside CODE_BLOCK is an assignment operator
@@ -964,7 +964,7 @@ describe('LexerStateManager', () => {
 
       // Enter CODE_BLOCK via BEGIN
       manager.onIdentifier('BEGIN', LexerContext.SECTION_LEVEL);
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
 
       // Simulate assignment
@@ -972,7 +972,7 @@ describe('LexerStateManager', () => {
       expect(manager.getState().inPropertyValue).toBe(false);
 
       // END should pop CODE_BLOCK
-      manager.onEndKeyword(LexerContext.CODE_BLOCK);
+      manager.onEndKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.SECTION_LEVEL);
     });
 
@@ -993,7 +993,7 @@ describe('LexerStateManager', () => {
       expect(manager.isTriggerProperty()).toBe(true);
 
       // BEGIN in trigger context
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
 
       // lastPropertyName should NOT be cleared in trigger context
@@ -1069,7 +1069,7 @@ describe('LexerStateManager', () => {
       expect(manager.getState().lastWasSectionKeyword).toBe(true);
 
       // BEGIN should enter CODE_BLOCK
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword();
 
       // Assert flag is cleared (WILL FAIL before fix)
       expect(manager.getState().lastWasSectionKeyword).toBe(false);
@@ -1091,7 +1091,7 @@ describe('LexerStateManager', () => {
       expect(manager.getState().lastWasSectionKeyword).toBe(true);
 
       // BEGIN at SECTION_LEVEL (non-property context) should enter CODE_BLOCK
-      manager.onBeginKeyword(LexerContext.SECTION_LEVEL);
+      manager.onBeginKeyword();
 
       // Assert flag is cleared (WILL FAIL before fix)
       expect(manager.getState().lastWasSectionKeyword).toBe(false);
