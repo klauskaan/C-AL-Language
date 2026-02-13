@@ -21,10 +21,10 @@ export interface MemoryDelta {
 }
 
 /**
- * Result of a memory benchmark operation
+ * Result of a memory benchmark operation.
  *
- * This is the canonical definition. Do not duplicate this interface in other files.
- * Import it from this module instead: import { MemoryBenchmarkResult } from '../utils/memory'
+ * CANONICAL DEFINITION: Import from '../utils/memory'.
+ * Do not duplicate this interface — import it instead.
  */
 export interface MemoryBenchmarkResult {
   name: string;
