@@ -13,6 +13,28 @@ git config core.hooksPath .githooks
 
 ## Hooks
 
+### pre-commit
+
+**Purpose:** Warns when performance baselines are stale (version mismatch with package.json).
+
+**When it runs:** Before every commit.
+
+**Behavior:**
+- Compares `package.json` version with `server/src/__tests__/performance/baselines/baselines.json` version
+- Exits silently if baseline doesn't exist (expected for new projects)
+- Emits warning to stderr on version mismatch
+- Never blocks commits (always exits 0)
+
+**Expected workflow:**
+1. Bump version in `package.json` (e.g., `0.4.6` → `0.5.0`)
+2. Hook detects mismatch on next commit
+3. Developer updates baseline:
+   ```bash
+   cd server
+   npm run perf:benchmark && npm run perf:update-baseline
+   ```
+4. Baseline version now matches package version
+
 ### post-commit
 
 **Purpose:** Notifies FileTimelineTracker when commits are made to the main branch, enabling drift tracking for the rebase-before-merge workflow.
