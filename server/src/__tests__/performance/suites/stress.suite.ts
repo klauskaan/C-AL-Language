@@ -13,6 +13,7 @@ import { loadFixture, FIXTURES, COMPLEXITY_FIXTURES } from '../utils/fixtures';
 import { benchmarkMemory, formatMemorySize, getMemoryUsageSummary } from '../utils/memory';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
+import { version } from '../../../../../package.json';
 
 interface StressTestResult {
   fixture: string;
@@ -203,7 +204,7 @@ async function runStressSuite(): Promise<void> {
     // Generate stress test report
     const report = {
       timestamp: new Date().toISOString(),
-      version: '0.4.6',
+      version,
       duration,
       environment: {
         node: process.version,

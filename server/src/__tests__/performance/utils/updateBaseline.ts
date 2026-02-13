@@ -9,6 +9,7 @@ import { createBaselineFromResults, saveBaseline, getDefaultBaselinePath } from 
 import { BenchmarkResult } from './reporter';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { version } from '../../../../../package.json';
 
 /**
  * Load benchmark results from the most recent test run
@@ -53,7 +54,7 @@ async function updateBaseline(): Promise<void> {
     process.exit(1);
   }
 
-  const baseline = createBaselineFromResults(results, '0.4.6');
+  const baseline = createBaselineFromResults(results, version);
 
   saveBaseline(baselinePath, baseline);
 

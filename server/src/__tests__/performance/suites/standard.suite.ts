@@ -13,6 +13,7 @@ import { benchmarkSemanticTokens } from '../benchmarks/semanticTokens.bench';
 import { runMemoryBenchmarks } from '../benchmarks/memory.bench';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
+import { version } from '../../../../../package.json';
 
 interface BenchmarkSummary {
   timestamp: string;
@@ -88,7 +89,7 @@ async function runStandardSuite(): Promise<void> {
     // Write summary
     const summary: BenchmarkSummary = {
       timestamp: new Date().toISOString(),
-      version: '0.4.6',
+      version,
       environment: {
         node: process.version,
         platform: process.platform,
