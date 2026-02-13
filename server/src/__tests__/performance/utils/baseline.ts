@@ -7,7 +7,7 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
-import { BenchmarkResult as BenchResult } from './reporter';
+import { BenchmarkResult } from './reporter';
 
 export interface BaselineEntry {
   meanMs: number;
@@ -86,7 +86,7 @@ export function saveBaseline(baselinePath: string, data: BaselineData): void {
  * Compare current benchmark result against baseline
  */
 export function compareToBaseline(
-  current: BenchResult,
+  current: BenchmarkResult,
   baseline: BaselineEntry,
   thresholds: ThresholdConfig = DEFAULT_THRESHOLDS
 ): ComparisonResult {
@@ -148,7 +148,7 @@ export function compareToBaseline(
  * Compare all current results against baseline
  */
 export function compareAllToBaseline(
-  currentResults: BenchResult[],
+  currentResults: BenchmarkResult[],
   baseline: BaselineData,
   thresholds: ThresholdConfig = DEFAULT_THRESHOLDS
 ): ComparisonResult[] {
@@ -180,7 +180,7 @@ export function compareAllToBaseline(
  * Create baseline data from benchmark results
  */
 export function createBaselineFromResults(
-  results: BenchResult[],
+  results: BenchmarkResult[],
   version: string
 ): BaselineData {
   const benchmarks: Record<string, BaselineEntry> = {};
