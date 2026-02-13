@@ -9,49 +9,8 @@
 
 set -u
 
-# Paths (relative to repo root, where Git runs hooks)
-BASELINE_FILE="server/src/__tests__/performance/baselines/baselines.json"
-PACKAGE_JSON="package.json"
-
-# Check if baseline file exists (exit silently if not)
-if [[ ! -f "$BASELINE_FILE" ]]; then
-    exit 0
-fi
-
-# Extract versions using node (handles JSON reliably)
-extract_version() {
-    local file=$1
-    node -e "
-        try {
-            const data = require('./$file');
-            console.log(data.version || '');
-        } catch (e) {
-            // File read error or missing version field - exit silently
-            process.exit(0);
-        }
-    " 2>/dev/null || echo ""
-}
-
-PACKAGE_VERSION=$(extract_version "$PACKAGE_JSON")
-BASELINE_VERSION=$(extract_version "$BASELINE_FILE")
-
-# If either version is empty, exit silently (JSON read failed)
-if [[ -z "$PACKAGE_VERSION" ]] || [[ -z "$BASELINE_VERSION" ]]; then
-    exit 0
-fi
-
-# Compare versions
-if [[ "$PACKAGE_VERSION" != "$BASELINE_VERSION" ]]; then
-    echo "WARNING: Performance baseline version mismatch" >&2
-    echo "" >&2
-    echo "  Package version:  $PACKAGE_VERSION" >&2
-    echo "  Baseline version: $BASELINE_VERSION" >&2
-    echo "" >&2
-    echo "The baseline may be stale. To update:" >&2
-    echo "  cd server" >&2
-    echo "  npm run perf:benchmark && npm run perf:update-baseline" >&2
-    echo "" >&2
-fi
+# Run baseline version check (non-blocking)
+node server/scripts/check-baseline-version.js --format=stderr || true
 
 # Always exit 0 (non-blocking)
 exit 0
