@@ -1,4 +1,4 @@
-import { parseCAL } from '../../parser/parser';
+import { parseCode } from '../../parser/parser';
 
 describe('Page CONTROLS - Action control types', () => {
   describe('Action control type', () => {
@@ -28,11 +28,12 @@ describe('Page CONTROLS - Action control types', () => {
         }
       `;
 
-      const result = parseCAL(source);
-      const errors = result.errors.filter(e => e.code !== 'parse-placeholder-skipped');
+      const result = parseCode(source);
+      const errors = result.errors.filter((e: any) => e.code !== 'parse-placeholder-skipped');
       expect(errors.length).toBe(0);
 
-      const page = result.ast.object;
+      expect(result.ast).not.toBeNull();
+      const page = result.ast!.object;
       expect(page).toBeDefined();
       expect(page?.controls).toBeDefined();
       expect(page?.controls?.controls.length).toBe(1);
@@ -69,11 +70,11 @@ describe('Page CONTROLS - Action control types', () => {
         }
       `;
 
-      const result = parseCAL(source);
-      const errors = result.errors.filter(e => e.code !== 'parse-placeholder-skipped');
+      const result = parseCode(source);
+      const errors = result.errors.filter((e: any) => e.code !== 'parse-placeholder-skipped');
       expect(errors.length).toBe(0);
 
-      const control = result.ast.object?.controls?.controls[0];
+      const control = result.ast!.object?.controls?.controls[0];
       expect(control?.controlType).toBe('Action');
       expect(control?.properties?.properties.length).toBeGreaterThan(0);
     });
@@ -107,11 +108,11 @@ describe('Page CONTROLS - Action control types', () => {
         }
       `;
 
-      const result = parseCAL(source);
-      const errors = result.errors.filter(e => e.code !== 'parse-placeholder-skipped');
+      const result = parseCode(source);
+      const errors = result.errors.filter((e: any) => e.code !== 'parse-placeholder-skipped');
       expect(errors.length).toBe(0);
 
-      const control = result.ast.object?.controls?.controls[0];
+      const control = result.ast!.object?.controls?.controls[0];
       expect(control?.controlType).toBe('Action');
       expect(control?.triggers).toBeDefined();
       expect(control?.triggers?.length).toBeGreaterThan(0);
@@ -143,11 +144,11 @@ describe('Page CONTROLS - Action control types', () => {
         }
       `;
 
-      const result = parseCAL(source);
-      const errors = result.errors.filter(e => e.code !== 'parse-placeholder-skipped');
+      const result = parseCode(source);
+      const errors = result.errors.filter((e: any) => e.code !== 'parse-placeholder-skipped');
       expect(errors.length).toBe(0);
 
-      const control = result.ast.object?.controls?.controls[0];
+      const control = result.ast!.object?.controls?.controls[0];
       expect(control?.controlType).toBe('ActionContainer');
       expect(control?.rawControlType).toBeUndefined();
     });
@@ -177,11 +178,11 @@ describe('Page CONTROLS - Action control types', () => {
         }
       `;
 
-      const result = parseCAL(source);
-      const errors = result.errors.filter(e => e.code !== 'parse-placeholder-skipped');
+      const result = parseCode(source);
+      const errors = result.errors.filter((e: any) => e.code !== 'parse-placeholder-skipped');
       expect(errors.length).toBe(0);
 
-      const control = result.ast.object?.controls?.controls[0];
+      const control = result.ast!.object?.controls?.controls[0];
       expect(control?.controlType).toBe('ActionContainer');
       expect(control?.properties?.properties.length).toBeGreaterThan(0);
     });
@@ -212,11 +213,11 @@ describe('Page CONTROLS - Action control types', () => {
         }
       `;
 
-      const result = parseCAL(source);
-      const errors = result.errors.filter(e => e.code !== 'parse-placeholder-skipped');
+      const result = parseCode(source);
+      const errors = result.errors.filter((e: any) => e.code !== 'parse-placeholder-skipped');
       expect(errors.length).toBe(0);
 
-      const container = result.ast.object?.controls?.controls[0];
+      const container = result.ast!.object?.controls?.controls[0];
       expect(container?.controlType).toBe('ActionContainer');
       expect(container?.children.length).toBe(1);
       expect(container?.children[0]?.controlType).toBe('Action');
@@ -248,11 +249,11 @@ describe('Page CONTROLS - Action control types', () => {
         }
       `;
 
-      const result = parseCAL(source);
-      const errors = result.errors.filter(e => e.code !== 'parse-placeholder-skipped');
+      const result = parseCode(source);
+      const errors = result.errors.filter((e: any) => e.code !== 'parse-placeholder-skipped');
       expect(errors.length).toBe(0);
 
-      const control = result.ast.object?.controls?.controls[0];
+      const control = result.ast!.object?.controls?.controls[0];
       expect(control?.controlType).toBe('ActionGroup');
       expect(control?.rawControlType).toBeUndefined();
     });
@@ -282,11 +283,11 @@ describe('Page CONTROLS - Action control types', () => {
         }
       `;
 
-      const result = parseCAL(source);
-      const errors = result.errors.filter(e => e.code !== 'parse-placeholder-skipped');
+      const result = parseCode(source);
+      const errors = result.errors.filter((e: any) => e.code !== 'parse-placeholder-skipped');
       expect(errors.length).toBe(0);
 
-      const control = result.ast.object?.controls?.controls[0];
+      const control = result.ast!.object?.controls?.controls[0];
       expect(control?.controlType).toBe('ActionGroup');
       expect(control?.properties?.properties.length).toBeGreaterThan(0);
     });
@@ -317,11 +318,11 @@ describe('Page CONTROLS - Action control types', () => {
         }
       `;
 
-      const result = parseCAL(source);
-      const errors = result.errors.filter(e => e.code !== 'parse-placeholder-skipped');
+      const result = parseCode(source);
+      const errors = result.errors.filter((e: any) => e.code !== 'parse-placeholder-skipped');
       expect(errors.length).toBe(0);
 
-      const group = result.ast.object?.controls?.controls[0];
+      const group = result.ast!.object?.controls?.controls[0];
       expect(group?.controlType).toBe('ActionGroup');
       expect(group?.children.length).toBe(1);
       expect(group?.children[0]?.controlType).toBe('Action');
@@ -359,11 +360,11 @@ describe('Page CONTROLS - Action control types', () => {
         }
       `;
 
-      const result = parseCAL(source);
-      const errors = result.errors.filter(e => e.code !== 'parse-placeholder-skipped');
+      const result = parseCode(source);
+      const errors = result.errors.filter((e: any) => e.code !== 'parse-placeholder-skipped');
       expect(errors.length).toBe(0);
 
-      const container = result.ast.object?.controls?.controls[0];
+      const container = result.ast!.object?.controls?.controls[0];
       expect(container?.controlType).toBe('ActionContainer');
       expect(container?.children.length).toBe(1);
 
@@ -406,11 +407,11 @@ describe('Page CONTROLS - Action control types', () => {
         }
       `;
 
-      const result = parseCAL(source);
-      const errors = result.errors.filter(e => e.code !== 'parse-placeholder-skipped');
+      const result = parseCode(source);
+      const errors = result.errors.filter((e: any) => e.code !== 'parse-placeholder-skipped');
       expect(errors.length).toBe(0);
 
-      const controls = result.ast.object?.controls?.controls || [];
+      const controls = result.ast!.object?.controls?.controls || [];
       expect(controls[0]?.controlType).toBe('Action');
       expect(controls[1]?.controlType).toBe('Action');
       expect(controls[2]?.controlType).toBe('ActionContainer');
