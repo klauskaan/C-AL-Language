@@ -159,7 +159,7 @@ function generateProcedure(procNum: number, setsPerProcedure: number): string {
  * Generate the complete set-literals.cal fixture
  */
 function generateSetLiteralFixture(options: GeneratorOptions): void {
-  const targetProcedures = options.targetProcedures || 40;
+  const targetProcedures = options.targetProcedures || 150;
   const setsPerProcedure = options.setsPerProcedure || 3;
 
   const lines: string[] = [];
