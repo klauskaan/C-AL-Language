@@ -361,6 +361,59 @@ describe('Parser - CONTROLS Section', () => {
       expect(root2?.id).toBe(7);
       expect(root2?.children).toHaveLength(1);
     });
+
+    it('should handle non-monotonic indent levels (0→2→1) using stack algorithm', () => {
+      // This test validates the stack-based hierarchy building algorithm
+      // in buildControlHierarchy (parser.ts:2005-2039).
+      //
+      // The algorithm handles non-monotonic indents where levels are skipped:
+      // - Control 1 at indent 0 → becomes root, stack = [{0, C1}]
+      // - Control 2 at indent 2 → since 0 < 2, becomes child of C1, stack = [{0, C1}, {2, C2}]
+      // - Control 3 at indent 1 → pops indent 2 (since 2 >= 1), then:
+      //                            since 0 < 1, becomes child of C1 (not C2)
+      //                            stack = [{0, C1}, {1, C3}]
+      //
+      // Result: Both C2 and C3 are children of C1, despite C2 having higher indent than C3.
+      // This matches NAV's behavior where indent gaps don't create phantom parents.
+
+      const code = `OBJECT Page 50000 "Test Page"
+      {
+        PROPERTIES
+        {
+        }
+        CONTROLS
+        {
+          { 1   ;0   ;Container }
+          { 2   ;2   ;Field     ;
+                      SourceExpr="No." }
+          { 3   ;1   ;Field     ;
+                      SourceExpr=Name }
+        }
+      }`;
+
+      const result = parseControls(code);
+
+      expect(result.errors).toHaveLength(0);
+      expect(result.controls?.controls).toHaveLength(1);
+
+      // Control 1 should be the only root
+      const root = result.controls?.controls[0];
+      expect(root?.id).toBe(1);
+      expect(root?.indentLevel).toBe(0);
+
+      // Both Control 2 (indent 2) and Control 3 (indent 1) should be direct children of Control 1
+      expect(root?.children).toHaveLength(2);
+
+      // Control 2 appears first in source order
+      expect(root?.children?.[0].id).toBe(2);
+      expect(root?.children?.[0].indentLevel).toBe(2);
+      expect(root?.children?.[0].children).toHaveLength(0); // C2 has no children
+
+      // Control 3 appears second, as sibling to C2 (not child)
+      expect(root?.children?.[1].id).toBe(3);
+      expect(root?.children?.[1].indentLevel).toBe(1);
+      expect(root?.children?.[1].children).toHaveLength(0); // C3 has no children
+    });
   });
 
   describe('Property parsing', () => {
