@@ -163,5 +163,6 @@ export const COMPLEXITY_FIXTURES = {
   BAD_PRACTICES: 'bad-practices.cal',
   MULTILINGUAL: 'multilingual.cal',
   REAL_WORLD_BUSINESS_LOGIC: 'real-world-business-logic.cal',
-  SET_LITERALS: 'set-literals.cal' // ~5K lines, 450 set expressions for semantic token benchmarking
+  SET_LITERALS: 'set-literals.cal', // ~5K lines, 450 set expressions for semantic token benchmarking
+  LARGE_CONTROLS: 'large-controls.cal' // Page with 200+ controls for CONTROLS section benchmarking
 } as const;
