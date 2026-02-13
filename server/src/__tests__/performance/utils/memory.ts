@@ -20,6 +20,12 @@ export interface MemoryDelta {
   arrayBuffersMB: number;
 }
 
+/**
+ * Result of a memory benchmark operation
+ *
+ * This is the canonical definition. Do not duplicate this interface in other files.
+ * Import it from this module instead: import { MemoryBenchmarkResult } from '../utils/memory'
+ */
 export interface MemoryBenchmarkResult {
   name: string;
   meanMB: number;

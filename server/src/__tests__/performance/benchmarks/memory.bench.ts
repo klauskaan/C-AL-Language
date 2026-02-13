@@ -14,17 +14,9 @@ import {
   warnIfGCUnavailable,
   getMemoryUsageSummary,
   formatMemorySize,
-  takeMemorySnapshot
+  takeMemorySnapshot,
+  MemoryBenchmarkResult
 } from '../utils/memory';
-
-interface MemoryBenchmarkResult {
-  name: string;
-  meanMB: number;
-  stdDevMB: number;
-  minMB: number;
-  maxMB: number;
-  samples: number;
-}
 
 /**
  * Run memory profiling benchmarks
