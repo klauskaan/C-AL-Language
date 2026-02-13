@@ -613,7 +613,8 @@ describe('SemanticAnalyzer - Settings Integration', () => {
     const settings = options ? {
       diagnostics: {
         warnDeprecated: options.warnDeprecated ?? true,
-        warnUnknownAttributes: true
+        warnUnknownAttributes: true,
+        warnActionNesting: true
       },
       workspaceIndexing: {
         includeTxtFiles: true
