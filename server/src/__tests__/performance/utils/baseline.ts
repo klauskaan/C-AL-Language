@@ -7,6 +7,7 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { BenchmarkResult as BenchResult } from './reporter';
 
 export interface BaselineEntry {
   meanMs: number;
@@ -27,17 +28,6 @@ export interface BaselineData {
     cpu: string;
   };
   benchmarks: Record<string, BaselineEntry>;
-}
-
-export interface BenchResult {
-  name: string;
-  meanMs: number;
-  stdDevMs: number;
-  minMs: number;
-  maxMs: number;
-  ops: number;
-  samples: number;
-  memoryMB?: number;
 }
 
 export interface ThresholdConfig {

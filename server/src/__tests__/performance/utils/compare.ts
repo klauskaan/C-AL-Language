@@ -9,10 +9,9 @@ import {
   loadBaseline,
   getDefaultBaselinePath,
   compareAllToBaseline,
-  DEFAULT_THRESHOLDS,
-  BenchResult
+  DEFAULT_THRESHOLDS
 } from './baseline';
-import { ConsoleReporter, MarkdownReporter } from './reporter';
+import { ConsoleReporter, MarkdownReporter, BenchmarkResult as BenchResult } from './reporter';
 import { readFileSync, existsSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
