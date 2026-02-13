@@ -48,30 +48,7 @@ jobs:
         run: npm ci
 
       - name: Check baseline version freshness
-        run: |
-          BASELINE_FILE="server/src/__tests__/performance/baselines/baselines.json"
-          PACKAGE_JSON="package.json"
-
-          # Exit gracefully if baseline doesn't exist yet
-          if [ ! -f "$BASELINE_FILE" ]; then
-            echo "No baseline found (expected for new setup)"
-            exit 0
-          fi
-
-          # Extract versions using node
-          PACKAGE_VERSION=$(node -e "console.log(require('./$PACKAGE_JSON').version)" 2>/dev/null || echo "")
-          BASELINE_VERSION=$(node -e "console.log(require('./$BASELINE_FILE').version)" 2>/dev/null || echo "")
-
-          # Skip if extraction failed
-          if [ -z "$PACKAGE_VERSION" ] || [ -z "$BASELINE_VERSION" ]; then
-            echo "Could not extract versions, skipping check"
-            exit 0
-          fi
-
-          # Emit GitHub warning on mismatch (non-blocking)
-          if [ "$PACKAGE_VERSION" != "$BASELINE_VERSION" ]; then
-            echo "::warning::Performance baseline version mismatch: package.json=$PACKAGE_VERSION, baseline=$BASELINE_VERSION. Baseline may be stale."
-          fi
+        run: node server/scripts/check-baseline-version.js --format=github-actions
 
       - name: Determine suite to run
         id: suite

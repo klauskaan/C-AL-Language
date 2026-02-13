@@ -20,6 +20,7 @@ git config core.hooksPath .githooks
 **When it runs:** Before every commit.
 
 **Behavior:**
+- Delegates to `server/scripts/check-baseline-version.js` for version validation
 - Compares `package.json` version with `server/src/__tests__/performance/baselines/baselines.json` version
 - Exits silently if baseline doesn't exist (expected for new projects)
 - Emits warning to stderr on version mismatch
