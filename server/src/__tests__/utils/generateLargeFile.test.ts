@@ -32,14 +32,16 @@ describe('generateLargeFile', () => {
         targetLines: 500,
         outputPath: outputPath1,
         complexity: 'simple',
-        seed: 12345
+        seed: 12345,
+        silent: true
       });
 
       generateLargeFile({
         targetLines: 500,
         outputPath: outputPath2,
         complexity: 'simple',
-        seed: 12345
+        seed: 12345,
+        silent: true
       });
 
       // Read both files
@@ -59,14 +61,16 @@ describe('generateLargeFile', () => {
         targetLines: 500,
         outputPath: outputPath1,
         complexity: 'simple',
-        seed: 12345
+        seed: 12345,
+        silent: true
       });
 
       generateLargeFile({
         targetLines: 500,
         outputPath: outputPath2,
         complexity: 'simple',
-        seed: 54321
+        seed: 54321,
+        silent: true
       });
 
       // Read both files
@@ -85,13 +89,15 @@ describe('generateLargeFile', () => {
       generateLargeFile({
         targetLines: 500,
         outputPath: outputPath1,
-        complexity: 'simple'
+        complexity: 'simple',
+        silent: true
       });
 
       generateLargeFile({
         targetLines: 500,
         outputPath: outputPath2,
-        complexity: 'simple'
+        complexity: 'simple',
+        silent: true
       });
 
       // Read both files
@@ -110,7 +116,8 @@ describe('generateLargeFile', () => {
         targetLines: 500,
         outputPath,
         complexity: 'simple',
-        seed: 12345
+        seed: 12345,
+        silent: true
       });
 
       // Read content
@@ -137,21 +144,24 @@ describe('generateLargeFile', () => {
         targetLines: 500,
         outputPath: outputPathSimple,
         complexity: 'simple',
-        seed: 12345
+        seed: 12345,
+        silent: true
       });
 
       generateLargeFile({
         targetLines: 500,
         outputPath: outputPathMedium,
         complexity: 'medium',
-        seed: 12345
+        seed: 12345,
+        silent: true
       });
 
       generateLargeFile({
         targetLines: 500,
         outputPath: outputPathComplex,
         complexity: 'complex',
-        seed: 12345
+        seed: 12345,
+        silent: true
       });
 
       // Read all files
@@ -168,21 +178,24 @@ describe('generateLargeFile', () => {
         targetLines: 500,
         outputPath: outputPathSimple2,
         complexity: 'simple',
-        seed: 12345
+        seed: 12345,
+        silent: true
       });
 
       generateLargeFile({
         targetLines: 500,
         outputPath: outputPathMedium2,
         complexity: 'medium',
-        seed: 12345
+        seed: 12345,
+        silent: true
       });
 
       generateLargeFile({
         targetLines: 500,
         outputPath: outputPathComplex2,
         complexity: 'complex',
-        seed: 12345
+        seed: 12345,
+        silent: true
       });
 
       // Each complexity level should be deterministic
@@ -200,7 +213,8 @@ describe('generateLargeFile', () => {
         targetLines: 500,
         outputPath,
         complexity: 'simple',
-        seed: 12345
+        seed: 12345,
+        silent: true
       });
 
       expect(fs.existsSync(outputPath)).toBe(true);
@@ -214,7 +228,8 @@ describe('generateLargeFile', () => {
         targetLines,
         outputPath,
         complexity: 'simple',
-        seed: 12345
+        seed: 12345,
+        silent: true
       });
 
       const content = fs.readFileSync(outputPath, 'utf-8');
@@ -233,7 +248,8 @@ describe('generateLargeFile', () => {
         targetLines: 500,
         outputPath,
         complexity: 'simple',
-        seed: 12345
+        seed: 12345,
+        silent: true
       });
 
       const content = fs.readFileSync(outputPath, 'utf-8');
