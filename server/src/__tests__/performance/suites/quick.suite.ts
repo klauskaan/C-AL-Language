@@ -1,7 +1,7 @@
 /**
  * Quick Performance Test Suite
  *
- * Fast feedback for local development (~30 seconds).
+ * Fast feedback for local development (~45 seconds).
  * Runs a subset of benchmarks for rapid iteration.
  */
 
@@ -16,7 +16,7 @@ async function runQuickSuite(): Promise<void> {
   console.log('║                  Quick Performance Test Suite                      ║');
   console.log('║                                                                    ║');
   console.log('║  Purpose: Fast feedback for local development                     ║');
-  console.log('║  Duration: ~30 seconds                                             ║');
+  console.log('║  Duration: ~45 seconds                                             ║');
   console.log('║  Scope: Small & medium files only                                  ║');
   console.log('╚════════════════════════════════════════════════════════════════════╝');
 
