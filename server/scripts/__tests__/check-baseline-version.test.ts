@@ -11,11 +11,13 @@
  * - Missing version fields
  * - Format parameter handling
  * - Direct formatter function tests
+ * - CLI entry point integration tests
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { spawnSync } from 'child_process';
 
 // Import from plain JS file using require()
 const { checkBaselineVersion, formatStderr, formatGithubActions }
@@ -371,5 +373,157 @@ describe('formatGithubActions', () => {
     expect(output).toContain('::warning::');
     expect(output).toContain('3.0.0-rc.1');
     expect(output).toContain('2.9.0');
+  });
+});
+
+describe('CLI entry point', () => {
+  let tempDir: string;
+  const scriptPath = path.join(__dirname, '..', 'check-baseline-version.js');
+
+  beforeEach(() => {
+    // Create temp directory for test fixtures
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'baseline-check-cli-'));
+  });
+
+  afterEach(() => {
+    // Clean up temp directory
+    if (fs.existsSync(tempDir)) {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  /**
+   * Helper to create package.json in temp directory
+   */
+  function createPackageJson(version: string): void {
+    fs.writeFileSync(
+      path.join(tempDir, 'package.json'),
+      JSON.stringify({ version }, null, 2)
+    );
+  }
+
+  /**
+   * Helper to create baselines.json in temp directory
+   */
+  function createBaselinesJson(version: string): void {
+    const serverDir = path.join(tempDir, 'server', 'src', '__tests__', 'performance', 'baselines');
+    fs.mkdirSync(serverDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(serverDir, 'baselines.json'),
+      JSON.stringify({ version }, null, 2)
+    );
+  }
+
+  it('should write to stderr when versions mismatch with --format=stderr', () => {
+    createPackageJson('1.2.3');
+    createBaselinesJson('1.0.0');
+
+    const result = spawnSync(process.execPath, [scriptPath, '--format=stderr'], {
+      cwd: tempDir,
+      encoding: 'utf8'
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toContain('WARNING');
+    expect(result.stderr).toContain('1.2.3');
+    expect(result.stderr).toContain('1.0.0');
+    expect(result.stdout).toBe('');
+  });
+
+  it('should write to stdout when versions mismatch with --format=github-actions', () => {
+    createPackageJson('2.0.0');
+    createBaselinesJson('1.5.0');
+
+    const result = spawnSync(process.execPath, [scriptPath, '--format=github-actions'], {
+      cwd: tempDir,
+      encoding: 'utf8'
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('::warning::');
+    expect(result.stdout).toContain('2.0.0');
+    expect(result.stdout).toContain('1.5.0');
+    expect(result.stderr).toBe('');
+  });
+
+  it('should use stderr format by default when versions mismatch', () => {
+    createPackageJson('1.5.0');
+    createBaselinesJson('1.4.0');
+
+    const result = spawnSync(process.execPath, [scriptPath], {
+      cwd: tempDir,
+      encoding: 'utf8'
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toContain('WARNING');
+    expect(result.stderr).toContain('1.5.0');
+    expect(result.stderr).toContain('1.4.0');
+    expect(result.stdout).toBe('');
+  });
+
+  it('should exit 0 with no output when versions match', () => {
+    createPackageJson('1.2.3');
+    createBaselinesJson('1.2.3');
+
+    const result = spawnSync(process.execPath, [scriptPath], {
+      cwd: tempDir,
+      encoding: 'utf8'
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toBe('');
+  });
+
+  it('should exit 0 when baselines.json is missing', () => {
+    createPackageJson('1.2.3');
+    // Don't create baselines.json
+
+    const result = spawnSync(process.execPath, [scriptPath], {
+      cwd: tempDir,
+      encoding: 'utf8'
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toBe('');
+  });
+
+  it('should exit 0 when package.json is missing', () => {
+    createBaselinesJson('1.2.3');
+    // Don't create package.json
+
+    const result = spawnSync(process.execPath, [scriptPath], {
+      cwd: tempDir,
+      encoding: 'utf8'
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toBe('');
+  });
+
+  it('should exit 0 when both files have invalid JSON', () => {
+    const serverDir = path.join(tempDir, 'server', 'src', '__tests__', 'performance', 'baselines');
+    fs.mkdirSync(serverDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(tempDir, 'package.json'),
+      'not json at all'
+    );
+    fs.writeFileSync(
+      path.join(serverDir, 'baselines.json'),
+      'also not json'
+    );
+
+    const result = spawnSync(process.execPath, [scriptPath], {
+      cwd: tempDir,
+      encoding: 'utf8'
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toBe('');
   });
 });
