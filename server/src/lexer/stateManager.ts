@@ -508,9 +508,10 @@ export class LexerStateManager {
 
   /**
    * Handle BEGIN keyword
-   * @param currentContext - The lexer's current context (passed from Lexer.getCurrentContext())
    */
-  public onBeginKeyword(currentContext: LexerContext): ContextTransition | null {
+  public onBeginKeyword(): ContextTransition | null {
+    const currentContext = this.getCurrentContext();
+
     // Always clear stale lastWasSectionKeyword when we see BEGIN
     // Even if we don't enter CODE_BLOCK (due to protection guards), the flag is no longer valid
     this.lastWasSectionKeyword = false;
@@ -536,7 +537,7 @@ export class LexerStateManager {
       // Otherwise: BEGIN is just a property value identifier, don't change context
       return null;
     } else {
-      // Not in property value - use passed context to decide
+      // Not in property value - use current context to decide
       if (currentContext === LexerContext.NORMAL ||
           currentContext === LexerContext.SECTION_LEVEL ||
           currentContext === LexerContext.CODE_BLOCK ||
@@ -556,9 +557,10 @@ export class LexerStateManager {
 
   /**
    * Handle END keyword
-   * @param currentContext - The lexer's current context (passed from Lexer.getCurrentContext())
    */
-  public onEndKeyword(currentContext: LexerContext): ContextTransition | null {
+  public onEndKeyword(): ContextTransition | null {
+    const currentContext = this.getCurrentContext();
+
     // Guard: Don't pop CODE_BLOCK if END appears in structural columns
     if (this.shouldProtectFromBeginEnd()) {
       return null;
@@ -574,7 +576,7 @@ export class LexerStateManager {
       return null;
     }
 
-    // Pop the appropriate context based on what we're in (use passed context)
+    // Pop the appropriate context based on what we're in (use current context)
     // The context stack naturally handles nesting:
     // - CODE_BLOCK inside CODE_BLOCK pops to CODE_BLOCK
     // - CASE_BLOCK pops to CODE_BLOCK
@@ -591,9 +593,10 @@ export class LexerStateManager {
 
   /**
    * Handle CASE keyword
-   * @param currentContext - The lexer's current context (passed from Lexer.getCurrentContext())
    */
-  public onCaseKeyword(currentContext: LexerContext): ContextTransition | null {
+  public onCaseKeyword(): ContextTransition | null {
+    const currentContext = this.getCurrentContext();
+
     // Push CASE_BLOCK when in any code execution context
     // Guard against malformed input (only push when already in code)
     if (currentContext === LexerContext.CODE_BLOCK ||

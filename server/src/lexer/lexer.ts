@@ -1504,7 +1504,7 @@ export class Lexer {
         // Delegate to state manager's onBeginKeyword
         {
           const lastToken = this.tokens[this.tokens.length - 1];
-          const transition = this.state.onBeginKeyword(this.getCurrentContext());
+          const transition = this.state.onBeginKeyword();
           this.emitContextTransition(transition, {
             line: lastToken.line,
             column: lastToken.column,
@@ -1517,7 +1517,7 @@ export class Lexer {
         // Delegate to state manager's onCaseKeyword
         {
           const lastToken = this.tokens[this.tokens.length - 1];
-          const transition = this.state.onCaseKeyword(this.getCurrentContext());
+          const transition = this.state.onCaseKeyword();
           this.emitContextTransition(transition, {
             line: lastToken.line,
             column: lastToken.column,
@@ -1530,7 +1530,7 @@ export class Lexer {
         // Delegate to state manager's onEndKeyword
         {
           const lastToken = this.tokens[this.tokens.length - 1];
-          const transition = this.state.onEndKeyword(this.getCurrentContext());
+          const transition = this.state.onEndKeyword();
           this.emitContextTransition(transition, {
             line: lastToken.line,
             column: lastToken.column,
