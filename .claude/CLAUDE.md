@@ -13,6 +13,7 @@ No issue number? Create one first (`gh issue create`) — even a title and one-l
 ```
 1. INVESTIGATE  -  Read code, understand root cause (read-only, from main)
 2. WORKTREE     -  git worktree add ../worktree-issue-{number}
+                    then: npm install in server/ (worktrees share source, not node_modules)
                     (all writing happens here — never modify files in main)
 3. PLAN         -  Design approach, adversarial-reviewer critiques until approved
 4. TEST FIRST   -  test-writer writes tests, test-runner verifies they fail
@@ -124,7 +125,7 @@ npm test -- -u                        # Update snapshots
 npm run perf:quick                    # Quick benchmark
 ```
 
-**TypeScript errors:** Run `npm run compile` before investigating — IDE diagnostics can be stale. Test files showing false positives for Jest globals (`describe`, `it`) are normal; verify by running the tests.
+**TypeScript errors:** Run `npm run compile` before investigating — IDE diagnostics can be stale. Test files showing false positives for Jest globals (`describe`, `it`) are normal; verify by running the tests. Known pre-existing compile noise: `extension.ts` errors (client-side, not part of server build) and `lexer-health-ci.test.ts` tsconfig warnings — ignore both.
 
 ---
 
