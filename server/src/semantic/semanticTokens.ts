@@ -269,6 +269,13 @@ export class SemanticTokensProvider {
       case TokenType.Keys:
       case TokenType.FieldGroups:
       case TokenType.Actions:
+      case TokenType.Controls:
+      case TokenType.Dataset:
+      case TokenType.Elements:
+      case TokenType.Labels:
+      case TokenType.MenuNodes:
+      case TokenType.RequestForm:
+      case TokenType.RequestPage:
       case TokenType.Code:
       case TokenType.If:
       case TokenType.Then:

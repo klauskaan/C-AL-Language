@@ -278,6 +278,48 @@ describe('SemanticTokensProvider', () => {
         const semanticType = findSemanticType(code, 'CODE');
         expect(semanticType).toBe(SemanticTokenTypes.Keyword);
       });
+
+      it('should map CONTROLS keyword to Keyword type', () => {
+        const code = 'OBJECT Page 50000 TestPage { CONTROLS { } }';
+        const semanticType = findSemanticType(code, 'CONTROLS');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map ELEMENTS keyword to Keyword type', () => {
+        const code = 'OBJECT XMLport 50000 TestXMLport { ELEMENTS { } }';
+        const semanticType = findSemanticType(code, 'ELEMENTS');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map REQUESTFORM keyword to Keyword type', () => {
+        const code = 'OBJECT Report 50000 TestReport { REQUESTFORM { } }';
+        const semanticType = findSemanticType(code, 'REQUESTFORM');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map DATASET keyword to Keyword type', () => {
+        const code = 'OBJECT Query 50000 TestQuery { DATASET { } }';
+        const semanticType = findSemanticType(code, 'DATASET');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map REQUESTPAGE keyword to Keyword type', () => {
+        const code = 'OBJECT Report 50000 TestReport { REQUESTPAGE { } }';
+        const semanticType = findSemanticType(code, 'REQUESTPAGE');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map LABELS keyword to Keyword type', () => {
+        const code = 'OBJECT Codeunit 50000 TestCU { LABELS { } }';
+        const semanticType = findSemanticType(code, 'LABELS');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map MENUNODES keyword to Keyword type', () => {
+        const code = 'OBJECT MenuSuite 50000 TestMS { MENUNODES { } }';
+        const semanticType = findSemanticType(code, 'MENUNODES');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
     });
 
     describe('Control Flow Keywords', () => {
