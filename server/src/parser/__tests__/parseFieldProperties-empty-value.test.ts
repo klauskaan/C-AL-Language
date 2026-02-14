@@ -435,4 +435,44 @@ describe('Parser - Empty/Malformed Property Values in parseFieldProperties()', (
       expect(field.properties).toMatchSnapshot();
     });
   });
+
+  describe('Multi-word property names in error messages', () => {
+    it('should handle multi-word property name in error message', () => {
+      // Test case: Multi-word property name like "SQL Data Type" in malformed syntax
+      // Verifies that error messages correctly handle property names with spaces
+      const code = `OBJECT Table 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Name                ;Text50;
+                SQL Data Type=}
+  }
+  KEYS
+  {
+  }
+}`;
+      const { errors } = parseCode(code);
+
+      // Should have exactly one error for malformed property value
+      expect(errors).toHaveLength(1);
+
+      // Error message should mention empty or malformed value and include "property"
+      const relevantError = errors.find(e =>
+        (e.message.toLowerCase().includes('empty') ||
+         e.message.toLowerCase().includes('malformed')) &&
+        e.message.toLowerCase().includes('property')
+      );
+      expect(relevantError).toBeDefined();
+
+      // Verify full multi-word name was accumulated (3 tokens: "SQL", "Data", "Type")
+      // "SQL Data Type" is 13 characters, so sanitized output should contain "13 chars"
+      expect(errors[0].message).toContain('13 chars');
+    });
+  });
 });
