@@ -167,6 +167,14 @@ export const ACTION_PROPERTIES: CompletionItem[] = [
 ];
 
 /**
+ * Shared boolean (Yes/No) completion values
+ */
+const BOOLEAN_VALUES: CompletionItem[] = [
+  { label: 'Yes', kind: CompletionItemKind.Value, detail: 'Boolean' },
+  { label: 'No', kind: CompletionItemKind.Value, detail: 'Boolean' }
+];
+
+/**
  * Property value completion items
  * Context-dependent values based on property name
  */
@@ -276,30 +284,12 @@ export const ACTION_PROPERTY_VALUES = new Map<string, CompletionItem[]>([
   ]],
 
   // Boolean properties (Yes/No)
-  ['promoted', [
-    { label: 'Yes', kind: CompletionItemKind.Value, detail: 'Boolean' },
-    { label: 'No', kind: CompletionItemKind.Value, detail: 'Boolean' }
-  ]],
-  ['promotedisbig', [
-    { label: 'Yes', kind: CompletionItemKind.Value, detail: 'Boolean' },
-    { label: 'No', kind: CompletionItemKind.Value, detail: 'Boolean' }
-  ]],
-  ['promotedonly', [
-    { label: 'Yes', kind: CompletionItemKind.Value, detail: 'Boolean' },
-    { label: 'No', kind: CompletionItemKind.Value, detail: 'Boolean' }
-  ]],
-  ['visible', [
-    { label: 'Yes', kind: CompletionItemKind.Value, detail: 'Boolean' },
-    { label: 'No', kind: CompletionItemKind.Value, detail: 'Boolean' }
-  ]],
-  ['enabled', [
-    { label: 'Yes', kind: CompletionItemKind.Value, detail: 'Boolean' },
-    { label: 'No', kind: CompletionItemKind.Value, detail: 'Boolean' }
-  ]],
-  ['infooterbar', [
-    { label: 'Yes', kind: CompletionItemKind.Value, detail: 'Boolean' },
-    { label: 'No', kind: CompletionItemKind.Value, detail: 'Boolean' }
-  ]],
+  ['promoted', BOOLEAN_VALUES],
+  ['promotedisbig', BOOLEAN_VALUES],
+  ['promotedonly', BOOLEAN_VALUES],
+  ['visible', BOOLEAN_VALUES],
+  ['enabled', BOOLEAN_VALUES],
+  ['infooterbar', BOOLEAN_VALUES],
 
   // RunPageMode values
   ['runpagemode', [
