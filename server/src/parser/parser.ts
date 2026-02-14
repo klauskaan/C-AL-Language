@@ -650,6 +650,20 @@ export class Parser {
       };
     }
 
+    // Check if this is an ActionList property (value starts with ACTIONS {)
+    if (name.toLowerCase() === 'actionlist' && this.check(TokenType.Actions) && this.isFollowedByLeftBrace()) {
+      const actionSection = this.parseInlineActionSection('property');
+      const endToken = this.check(TokenType.Semicolon) ? this.advance() : actionSection.endToken;
+      return {
+        type: 'Property',
+        name,
+        value: 'ACTIONS {...}',
+        actionSection,
+        startToken,
+        endToken
+      };
+    }
+
     // Regular property value - read until semicolon, preserving whitespace
     // Special handling: ActionList/DataItemTable properties can have nested ACTIONS/DATAITEMS blocks
     let value = '';
@@ -1298,137 +1312,152 @@ export class Parser {
           if (this.check(TokenType.Begin) || this.check(TokenType.Var)) {
             // This is a field trigger (OnValidate, OnLookup, etc.)
             return { type: 'trigger' as const, trigger: this.parseFieldTrigger(name, startToken) };
-          } else {
-            // Regular property - read value until semicolon, tracking bracket depth for arrays
-            let value = '';
-            let braceDepth = 0;
-            let bracketDepth = 0;
-            let lastToken: Token | null = null;
-            const valueTokens: Token[] = [];  // Collect original tokens
+          }
 
-            while (!this.isAtEnd()) {
-              // Stop at semicolon only if not inside brackets or braces
-              if (this.check(TokenType.Semicolon) && braceDepth === 0 && bracketDepth === 0) {
-                break;
-              }
-
-              // Stop at right brace when not inside brackets or braces (end of field properties)
-              // Only stop if we have some value content (prevents stopping on malformed ActionList=})
-              if (this.check(TokenType.RightBrace) && braceDepth === 0 && bracketDepth === 0 && value.length > 0) {
-                break;
-              }
-
-              // Stop at section keywords when at depth 0 and have value content
-              // Only stop if the keyword is followed by '{' (indicating a section start)
-              // This prevents stopping on keywords used in property values like CaptionML=ENU=Actions
-              if (braceDepth === 0 && bracketDepth === 0 && value.length > 0 &&
-                  (this.check(TokenType.Actions) ||
-                   this.check(TokenType.Controls) ||
-                   this.check(TokenType.Elements) ||
-                   this.check(TokenType.RequestForm))) {
-                // Peek ahead to see if this keyword is followed by '{'
-                if (this.isFollowedByLeftBrace()) {
-                  break;
-                }
-              }
-
-              const currentToken = this.advance();
-              valueTokens.push(currentToken);  // Store original token
-
-              // Track brace depth for nested structures like ActionList=ACTIONS { ... }
-              if (currentToken.type === TokenType.LeftBrace) {
-                // If we see { at depth 0 and not after a container keyword, it likely starts a new item
-                if (braceDepth === 0 && bracketDepth === 0) {
-                  // Check if the previous token was a keyword indicating nested structure
-                  const prevTokenType = lastToken?.type;
-                  const isNestedStructure =
-                    prevTokenType === TokenType.Actions ||
-                    prevTokenType === TokenType.Controls ||
-                    prevTokenType === TokenType.Elements;
-
-                  if (!isNestedStructure) {
-                    // This { likely starts a new item definition, stop parsing property value
-                    // Put the { back by decrementing position
-                    this.current--;
-                    // Remove the { from valueTokens since we didn't consume it
-                    valueTokens.pop();
-                    break;
-                  }
-                }
-                braceDepth++;
-              } else if (currentToken.type === TokenType.RightBrace) {
-                braceDepth--;
-                if (braceDepth < 0) {
-                  const hasWhitespace = this.hasWhitespaceBetween(equalsToken, currentToken);
-                  if (!hasWhitespace) {
-                    // Truly empty/malformed: no tokens and no whitespace (e.g., ActionList=})
-                    this.recordError(`Empty or malformed value for property '${sanitizeContent(name)}'`, currentToken);
-                  }
-                  // Back up token position
-                  this.current--;
-                  // Restore this.braceDepth (decremented by advance())
-                  this.braceDepth++;
-                  braceDepth = 0;
-                  break;
-                }
-              }
-
-              // Track bracket depth
-              if (currentToken.type === TokenType.LeftBracket) {
-                bracketDepth++;
-              } else if (currentToken.type === TokenType.RightBracket) {
-                bracketDepth--;
-                if (bracketDepth < 0) {
-                  bracketDepth = 0;
-                }
-              }
-
-              // Preserve whitespace between tokens
-              if (lastToken !== null && currentToken.startOffset > lastToken.endOffset) {
-                value += ' ';
-              }
-
-              value += currentToken.value;
-              lastToken = currentToken;
-            }
-
-            if (this.check(TokenType.Semicolon)) {
-              this.advance();
-            }
-
+          // Check if this is an ActionList property (value starts with ACTIONS {)
+          if (name.toLowerCase() === 'actionlist' && this.check(TokenType.Actions) && this.isFollowedByLeftBrace()) {
+            const actionSection = this.parseInlineActionSection('control-property');
+            if (this.check(TokenType.Semicolon)) this.advance();
             const property: Property = {
               type: 'Property' as const,
               name,
-              value: value.trim(),
-              valueTokens: valueTokens.length > 0 ? valueTokens : undefined,
+              value: 'ACTIONS {...}',
+              actionSection,
               startToken,
               endToken: this.previous()
             };
+            return { type: 'property' as const, property };
+          }
 
-            // Parse complex property values
-            if (valueTokens.length > 0) {
-              const lowerName = name.toLowerCase();
+          // Regular property - read value until semicolon, tracking bracket depth for arrays
+          let value = '';
+          let braceDepth = 0;
+          let bracketDepth = 0;
+          let lastToken: Token | null = null;
+          const valueTokens: Token[] = [];  // Collect original tokens
 
-              if (lowerName === 'calcformula') {
-                const pvp = new PropertyValueParser(valueTokens);
-                property.calcFormula = pvp.parseCalcFormula() ?? undefined;
-                for (const diag of pvp.getDiagnostics()) {
-                  this.recordError(diag.message, diag.token, 'parse-property-value');
-                }
-              } else if (lowerName === 'tablerelation') {
-                const pvp = new PropertyValueParser(valueTokens);
-                property.tableRelation = pvp.parseTableRelation() ?? undefined;
-                for (const diag of pvp.getDiagnostics()) {
-                  this.recordError(diag.message, diag.token, 'parse-property-value');
-                }
+          while (!this.isAtEnd()) {
+            // Stop at semicolon only if not inside brackets or braces
+            if (this.check(TokenType.Semicolon) && braceDepth === 0 && bracketDepth === 0) {
+              break;
+            }
+
+            // Stop at right brace when not inside brackets or braces (end of field properties)
+            // Only stop if we have some value content (prevents stopping on malformed ActionList=})
+            if (this.check(TokenType.RightBrace) && braceDepth === 0 && bracketDepth === 0 && value.length > 0) {
+              break;
+            }
+
+            // Stop at section keywords when at depth 0 and have value content
+            // Only stop if the keyword is followed by '{' (indicating a section start)
+            // This prevents stopping on keywords used in property values like CaptionML=ENU=Actions
+            if (braceDepth === 0 && bracketDepth === 0 && value.length > 0 &&
+                (this.check(TokenType.Actions) ||
+                 this.check(TokenType.Controls) ||
+                 this.check(TokenType.Elements) ||
+                 this.check(TokenType.RequestForm))) {
+              // Peek ahead to see if this keyword is followed by '{'
+              if (this.isFollowedByLeftBrace()) {
+                break;
               }
             }
 
-            return {
-              type: 'property' as const,
-              property
-            };
+            const currentToken = this.advance();
+            valueTokens.push(currentToken);  // Store original token
+
+            // Track brace depth for nested structures like ActionList=ACTIONS { ... }
+            if (currentToken.type === TokenType.LeftBrace) {
+              // If we see { at depth 0 and not after a container keyword, it likely starts a new item
+              if (braceDepth === 0 && bracketDepth === 0) {
+                // Check if the previous token was a keyword indicating nested structure
+                const prevTokenType = lastToken?.type;
+                const isNestedStructure =
+                  prevTokenType === TokenType.Actions ||
+                  prevTokenType === TokenType.Controls ||
+                  prevTokenType === TokenType.Elements;
+
+                if (!isNestedStructure) {
+                  // This { likely starts a new item definition, stop parsing property value
+                  // Put the { back by decrementing position
+                  this.current--;
+                  // Remove the { from valueTokens since we didn't consume it
+                  valueTokens.pop();
+                  break;
+                }
+              }
+              braceDepth++;
+            } else if (currentToken.type === TokenType.RightBrace) {
+              braceDepth--;
+              if (braceDepth < 0) {
+                const hasWhitespace = this.hasWhitespaceBetween(equalsToken, currentToken);
+                if (!hasWhitespace) {
+                  // Truly empty/malformed: no tokens and no whitespace (e.g., ActionList=})
+                  this.recordError(`Empty or malformed value for property '${sanitizeContent(name)}'`, currentToken);
+                }
+                // Back up token position
+                this.current--;
+                // Restore this.braceDepth (decremented by advance())
+                this.braceDepth++;
+                braceDepth = 0;
+                break;
+              }
+            }
+
+            // Track bracket depth
+            if (currentToken.type === TokenType.LeftBracket) {
+              bracketDepth++;
+            } else if (currentToken.type === TokenType.RightBracket) {
+              bracketDepth--;
+              if (bracketDepth < 0) {
+                bracketDepth = 0;
+              }
+            }
+
+            // Preserve whitespace between tokens
+            if (lastToken !== null && currentToken.startOffset > lastToken.endOffset) {
+              value += ' ';
+            }
+
+            value += currentToken.value;
+            lastToken = currentToken;
           }
+
+          if (this.check(TokenType.Semicolon)) {
+            this.advance();
+          }
+
+          const property: Property = {
+            type: 'Property' as const,
+            name,
+            value: value.trim(),
+            valueTokens: valueTokens.length > 0 ? valueTokens : undefined,
+            startToken,
+            endToken: this.previous()
+          };
+
+          // Parse complex property values
+          if (valueTokens.length > 0) {
+            const lowerName = name.toLowerCase();
+
+            if (lowerName === 'calcformula') {
+              const pvp = new PropertyValueParser(valueTokens);
+              property.calcFormula = pvp.parseCalcFormula() ?? undefined;
+              for (const diag of pvp.getDiagnostics()) {
+                this.recordError(diag.message, diag.token, 'parse-property-value');
+              }
+            } else if (lowerName === 'tablerelation') {
+              const pvp = new PropertyValueParser(valueTokens);
+              property.tableRelation = pvp.parseTableRelation() ?? undefined;
+              for (const diag of pvp.getDiagnostics()) {
+                this.recordError(diag.message, diag.token, 'parse-property-value');
+              }
+            }
+          }
+
+          return {
+            type: 'property' as const,
+            property
+          };
         },
         [TokenType.Semicolon, TokenType.RightBrace]
       );
@@ -1688,6 +1717,30 @@ export class Parser {
     const startToken = this.consume(TokenType.Actions, 'Expected ACTIONS');
     this.consumeSectionBrace('ACTIONS', (t) => t === TokenType.Integer);
 
+    const flatActions = this.parseActionItems();
+
+    let endToken: Token;
+    if (this.check(TokenType.RightBrace)) {
+      endToken = this.advance();
+    } else {
+      this.recordError('Expected } to close ACTIONS section', undefined, 'parse-unclosed-block');
+      endToken = this.previous();
+    }
+    const hierarchicalActions = this.buildActionHierarchy(flatActions);
+
+    return {
+      type: 'ActionSection',
+      actions: hierarchicalActions,
+      source: 'top-level',
+      startToken,
+      endToken
+    };
+  }
+
+  /**
+   * Parse action items - used by both top-level ACTIONS and inline ActionList properties
+   */
+  private parseActionItems(): ActionDeclaration[] {
     const flatActions: ActionDeclaration[] = [];
 
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd() && !this.isSectionKeyword(this.peek().type)) {
@@ -1711,6 +1764,19 @@ export class Parser {
       }
     }
 
+    return flatActions;
+  }
+
+  /**
+   * Parse inline ActionList property (ActionList=ACTIONS { ... })
+   * Used for ActionList properties in PROPERTIES and field control properties
+   */
+  private parseInlineActionSection(source: 'property' | 'control-property'): ActionSection {
+    const startToken = this.consume(TokenType.Actions, 'Expected ACTIONS');
+    this.consumeSectionBrace('ACTIONS', (t) => t === TokenType.Integer);
+
+    const flatActions = this.parseActionItems();
+
     let endToken: Token;
     if (this.check(TokenType.RightBrace)) {
       endToken = this.advance();
@@ -1718,14 +1784,9 @@ export class Parser {
       this.recordError('Expected } to close ACTIONS section', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
-    const hierarchicalActions = this.buildActionHierarchy(flatActions);
 
-    return {
-      type: 'ActionSection',
-      actions: hierarchicalActions,
-      startToken,
-      endToken
-    };
+    const hierarchicalActions = this.buildActionHierarchy(flatActions);
+    return { type: 'ActionSection', actions: hierarchicalActions, source, startToken, endToken };
   }
 
   private parseActionItem(): ActionDeclaration {

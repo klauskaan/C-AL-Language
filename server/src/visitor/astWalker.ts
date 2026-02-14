@@ -420,6 +420,11 @@ export class ASTWalker {
         this.walk(statement, visitor);
       }
     }
+
+    // ActionList properties may have parsed inline action sections
+    if (node.actionSection) {
+      this.walk(node.actionSection, visitor);
+    }
   }
 
   private walkFieldDeclaration(node: FieldDeclaration, visitor: Partial<ASTVisitor>): void {

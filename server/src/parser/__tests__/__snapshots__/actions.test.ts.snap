@@ -599,6 +599,7 @@ exports[`Parser - ACTIONS Section Snapshot tests should match snapshot for compl
     "type": "RIGHT_BRACE",
     "value": "}",
   },
+  "source": "top-level",
   "startToken": {
     "column": 9,
     "endOffset": 94,
@@ -1085,6 +1086,7 @@ exports[`Parser - ACTIONS Section Snapshot tests should match snapshot for neste
     "type": "RIGHT_BRACE",
     "value": "}",
   },
+  "source": "top-level",
   "startToken": {
     "column": 9,
     "endOffset": 94,

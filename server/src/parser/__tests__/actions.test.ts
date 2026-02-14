@@ -29,6 +29,8 @@
 
 import { parseCode } from './parserTestHelpers';
 import { ObjectDeclaration } from '../ast';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Helper to parse and extract actions section
 function parseActions(code: string) {
@@ -39,6 +41,16 @@ function parseActions(code: string) {
     errors,
     actions: (ast.object as ObjectDeclaration)?.actions
   };
+}
+
+// Helper to parse and extract ActionList property from PROPERTIES section
+function parseInlineActionList(code: string) {
+  const { ast, errors } = parseCode(code);
+  const obj = ast.object as ObjectDeclaration;
+  const actionListProp = obj.properties?.properties?.find(
+    (p: any) => p.name === 'ActionList'
+  );
+  return { ast, errors, actionListProp, obj };
 }
 
 describe('Parser - ACTIONS Section', () => {
@@ -1032,6 +1044,209 @@ describe('Parser - ACTIONS Section', () => {
 
       expect(result.errors).toHaveLength(0);
       expect(result.actions).toMatchSnapshot();
+    });
+  });
+
+  describe('Inline ActionList property parsing', () => {
+    it('should parse basic ActionList property in PROPERTIES section', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+    ActionList=ACTIONS
+    {
+      { 1;0 ;ActionContainer;
+              ActionContainerType=ActionItems }
+    }
+  }
+}`;
+
+      const { errors, actionListProp } = parseInlineActionList(code);
+
+      expect(errors).toHaveLength(0);
+      expect(actionListProp).toBeDefined();
+      expect(actionListProp!.name).toBe('ActionList');
+      expect(actionListProp!.actionSection).toBeDefined();
+      expect(actionListProp!.actionSection!.source).toBe('property');
+      expect(actionListProp!.actionSection!.actions).toHaveLength(1);
+      expect(actionListProp!.value).toBe('ACTIONS {...}');
+      expect(actionListProp!.valueTokens).toBeUndefined();
+    });
+
+    it('should parse ActionList with hierarchy', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+    ActionList=ACTIONS
+    {
+      { 1;0 ;ActionContainer }
+      { 2;1 ;ActionGroup;
+              CaptionML=ENU=My Group }
+      { 3;2 ;Action;
+              Name=MyAction }
+    }
+  }
+}`;
+
+      const { errors, actionListProp } = parseInlineActionList(code);
+
+      expect(errors).toHaveLength(0);
+      expect(actionListProp).toBeDefined();
+      expect(actionListProp!.actionSection).toBeDefined();
+
+      const actions = actionListProp!.actionSection!.actions;
+      expect(actions).toHaveLength(1); // 1 root container
+
+      const container = actions[0];
+      expect(container.indentLevel).toBe(0);
+      expect(container.actionType).toBe('ActionContainer');
+      expect(container.children).toHaveLength(1); // 1 child group
+
+      const group = container.children[0];
+      expect(group.indentLevel).toBe(1);
+      expect(group.actionType).toBe('ActionGroup');
+      expect(group.children).toHaveLength(1); // 1 child action
+
+      const action = group.children[0];
+      expect(action.indentLevel).toBe(2);
+      expect(action.actionType).toBe('Action');
+      expect(action.properties?.properties?.find((p: any) => p.name === 'Name')).toBeDefined();
+    });
+
+    it('should parse ActionList with OnAction trigger', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+    ActionList=ACTIONS
+    {
+      { 1;0 ;ActionContainer }
+      { 2;1 ;Action;
+              Name=DoSomething;
+              OnAction=BEGIN
+                         DoWork;
+                       END;
+                        }
+    }
+  }
+}`;
+
+      const { errors, actionListProp } = parseInlineActionList(code);
+
+      expect(errors).toHaveLength(0);
+      expect(actionListProp).toBeDefined();
+      expect(actionListProp!.actionSection).toBeDefined();
+
+      const container = actionListProp!.actionSection!.actions[0];
+      const action = container.children[0];
+
+      expect(action.actionType).toBe('Action');
+      expect(action.triggers).toBeDefined();
+      expect(action.triggers).toHaveLength(1);
+      expect(action.triggers![0].name).toBe('OnAction');
+      expect(action.triggers![0].body).toBeDefined();
+    });
+
+    it('should parse ActionList as last property without trailing semicolon', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+    PageType=Card;
+    SourceTable=Table18;
+    ActionList=ACTIONS
+    {
+      { 1;0 ;ActionContainer }
+    }
+  }
+}`;
+
+      const { errors, actionListProp, obj } = parseInlineActionList(code);
+
+      expect(errors).toHaveLength(0);
+
+      const properties = obj.properties?.properties || [];
+      expect(properties).toHaveLength(3);
+
+      const pageTypeProp = properties.find((p: any) => p.name === 'PageType');
+      expect(pageTypeProp).toBeDefined();
+      expect(pageTypeProp!.value).toBe('Card');
+
+      const sourceTableProp = properties.find((p: any) => p.name === 'SourceTable');
+      expect(sourceTableProp).toBeDefined();
+      expect(sourceTableProp!.value).toBe('Table18');
+
+      expect(actionListProp).toBeDefined();
+      expect(actionListProp!.actionSection).toBeDefined();
+      expect(actionListProp!.actionSection!.actions).toHaveLength(1);
+    });
+
+    it('should parse ActionList in control properties', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1 ;0 ;Group;
+            GroupType=CueGroup;
+            ActionList=ACTIONS
+            {
+              { 1; ;Action;
+                    Name=CueAction }
+            } }
+  }
+}`;
+
+      const { errors, obj } = parseInlineActionList(code);
+
+      expect(errors).toHaveLength(0);
+
+      const control = obj.controls?.controls?.[0] as any;
+      expect(control).toBeDefined();
+
+      const actionListProp = control.properties?.properties?.find(
+        (p: any) => p.name === 'ActionList'
+      );
+
+      expect(actionListProp).toBeDefined();
+      expect(actionListProp.actionSection).toBeDefined();
+      expect(actionListProp.actionSection.source).toBe('control-property');
+      expect(actionListProp.actionSection.actions).toHaveLength(1);
+      expect(actionListProp.actionSection.actions[0].actionType).toBe('Action');
+    });
+
+    it('should parse regression fixture page-343 with ActionList', () => {
+      const fixturePath = path.resolve(
+        __dirname,
+        '../../../../test/fixtures/regression/page-343-check-credit-limit-minimal.cal'
+      );
+      const code = fs.readFileSync(fixturePath, 'utf-8');
+
+      const { errors, actionListProp } = parseInlineActionList(code);
+
+      expect(errors).toHaveLength(0);
+      expect(actionListProp).toBeDefined();
+      expect(actionListProp!.actionSection).toBeDefined();
+
+      const actions = actionListProp!.actionSection!.actions;
+      expect(actions).toHaveLength(1); // 1 root container
+
+      const container = actions[0];
+      expect(container.indentLevel).toBe(0);
+      expect(container.actionType).toBe('ActionContainer');
+      expect(container.children).toHaveLength(1); // 1 child group
+
+      const group = container.children[0];
+      expect(group.indentLevel).toBe(1);
+      expect(group.actionType).toBe('ActionGroup');
+      expect(group.children).toHaveLength(1); // 1 child action
+
+      const action = group.children[0];
+      expect(action.indentLevel).toBe(2);
+      expect(action.actionType).toBe('Action');
     });
   });
 });

@@ -156,7 +156,8 @@ describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
 
       const actionListProp = control.properties?.properties?.find(p => p.name === 'ActionList');
       expect(actionListProp).toBeDefined();
-      expect(actionListProp?.value).toContain('ActionGroup');
+      expect(actionListProp?.actionSection).toBeDefined();
+      expect(actionListProp?.actionSection?.actions[0]?.actionType).toBe('ActionGroup');
     });
   });
 
@@ -180,7 +181,8 @@ describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
 
       const actionListProp = control.properties?.properties?.find(p => p.name === 'ActionList');
       expect(actionListProp).toBeDefined();
-      expect(actionListProp?.value).toBe('ACTIONS { }');
+      expect(actionListProp?.actionSection).toBeDefined();
+      expect(actionListProp?.actionSection?.actions).toHaveLength(0);
     });
   });
 
@@ -355,9 +357,12 @@ describe('Parser - ActionList in Control Properties (Brace Depth Bug)', () => {
       );
 
       const actionListProp = cueGroup.properties?.properties?.find(p => p.name === 'ActionList');
-      expect(actionListProp?.value).toContain('ACTIONS');
-      expect(actionListProp?.value).toContain('ViewSalesOrders');
-      expect(actionListProp?.value).toContain('NewSalesOrder');
+      expect(actionListProp?.actionSection).toBeDefined();
+      // Actions are at indent 0 (empty indent column), so they're root-level
+      const actionNames = actionListProp?.actionSection?.actions
+        ?.map(a => a.properties?.properties?.find(p => p.name === 'Name')?.value);
+      expect(actionNames).toContain('ViewSalesOrders');
+      expect(actionNames).toContain('NewSalesOrder');
     });
   });
 
