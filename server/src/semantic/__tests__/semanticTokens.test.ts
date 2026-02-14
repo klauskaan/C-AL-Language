@@ -530,6 +530,47 @@ describe('SemanticTokensProvider', () => {
         const semanticType = findSemanticType(code, 'TEMPORARY');
         expect(semanticType).toBe(SemanticTokenTypes.Keyword);
       });
+
+      it('should map INDATASET keyword to Keyword type', () => {
+        const code = 'Amount : Decimal INDATASET';
+        const semanticType = findSemanticType(code, 'INDATASET');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map RUNONCLIENT keyword to Keyword type', () => {
+        const code = 'Process : DotNet MyLib RUNONCLIENT';
+        const semanticType = findSemanticType(code, 'RUNONCLIENT');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map WITHEVENTS keyword to Keyword type', () => {
+        const code = 'FSO : Automation MyLib WITHEVENTS';
+        const semanticType = findSemanticType(code, 'WITHEVENTS');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+
+      it('should map SECURITYFILTERING keyword to Keyword type', () => {
+        const code = 'Customer : Record 18 SECURITYFILTERING';
+        const semanticType = findSemanticType(code, 'SECURITYFILTERING');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+    });
+
+    describe('Variable Modifier Keywords', () => {
+      it('should highlight variable modifiers as keywords in full declarations', () => {
+        const code = `
+VAR
+  Amount : Decimal INDATASET;
+  Process : DotNet "'System'.Process" RUNONCLIENT;
+  TempRec : Record 18 SECURITYFILTERING(Filtered);
+`;
+        const { builder } = buildSemanticTokens(code);
+        const keywords = builder.getTokensOfType(SemanticTokenTypes.Keyword);
+
+        // VAR, INDATASET, RUNONCLIENT, SECURITYFILTERING = 4 keywords expected
+        // (DotNet, Decimal, Record are Types, not Keywords)
+        expect(keywords.length).toBe(4);
+      });
     });
 
     describe('Case Insensitivity', () => {

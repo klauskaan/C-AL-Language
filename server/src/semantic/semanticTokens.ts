@@ -313,6 +313,10 @@ export class SemanticTokensProvider {
       case TokenType.With:
       case TokenType.Array:
       case TokenType.Temporary:
+      case TokenType.InDataSet:
+      case TokenType.RunOnClient:
+      case TokenType.WithEvents:
+      case TokenType.SecurityFiltering:
       case TokenType.LeftBrace:
       case TokenType.RightBrace:
         return SemanticTokenTypes.Keyword;
