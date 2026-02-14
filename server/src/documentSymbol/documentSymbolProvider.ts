@@ -163,7 +163,7 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
    * Build a symbol for a control and recursively build symbols for its children
    */
   private buildControlSymbol(control: ControlDeclaration, parent: DocumentSymbol): void {
-    const nameProp = control.properties?.properties?.find(p => p.name === 'Name');
+    const nameProp = control.properties?.properties?.find(p => p.name.toLowerCase() === 'name');
     const nameStr = nameProp ? ` "${nameProp.value}"` : '';
 
     const symbol = this.createSymbol(

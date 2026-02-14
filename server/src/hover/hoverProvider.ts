@@ -416,11 +416,11 @@ export class HoverProvider extends ProviderBase {
     let content = `**${action.actionType}** (ID: ${action.id})${nameStr}\n\n`;
 
     // Show key properties (excluding Name which is already in the header)
-    const keyProps = ['Promoted', 'Image', 'RunObject', 'CaptionML', 'ActionContainerType'];
+    const keyProps = ['promoted', 'image', 'runobject', 'captionml', 'actioncontainertype'];
     const propValues: string[] = [];
     if (action.properties?.properties) {
       for (const prop of action.properties.properties) {
-        if (prop.name !== 'Name' && keyProps.includes(prop.name)) {
+        if (prop.name.toLowerCase() !== 'name' && keyProps.includes(prop.name.toLowerCase())) {
           propValues.push(`${prop.name}=${prop.value}`);
         }
       }

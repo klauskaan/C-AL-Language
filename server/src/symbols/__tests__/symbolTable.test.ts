@@ -1586,4 +1586,92 @@ describe('SymbolTable', () => {
       expect(allSymbols.some(s => s.name === 'Name')).toBe(true);
     });
   });
+
+  describe('case-insensitive property names', () => {
+    it('should extract action symbol when Name property is lowercase', () => {
+      const code = `OBJECT Page 50000 Test
+{
+  ACTIONS
+  {
+    { 1;0;ActionContainer }
+    { 2;1;Action;
+        name=MyAction }
+  }
+}`;
+      const symbolTable = buildSymbolTable(code);
+
+      expect(symbolTable.hasSymbol('MyAction')).toBe(true);
+      const symbol = symbolTable.getSymbol('MyAction');
+      expect(symbol).toBeDefined();
+      expect(symbol?.kind).toBe('action');
+      expect(symbol?.name).toBe('MyAction');
+    });
+
+    it('should extract action symbol when Name property is mixed case', () => {
+      const code = `OBJECT Page 50000 Test
+{
+  ACTIONS
+  {
+    { 1;0;ActionContainer }
+    { 2;1;Action;
+        NaMe=TestAction }
+  }
+}`;
+      const symbolTable = buildSymbolTable(code);
+
+      expect(symbolTable.hasSymbol('TestAction')).toBe(true);
+      const symbol = symbolTable.getSymbol('TestAction');
+      expect(symbol).toBeDefined();
+      expect(symbol?.kind).toBe('action');
+      expect(symbol?.name).toBe('TestAction');
+    });
+
+    it('should extract action symbol when Name property is uppercase', () => {
+      const code = `OBJECT Page 50000 Test
+{
+  ACTIONS
+  {
+    { 1;0;ActionContainer }
+    { 2;1;Action;
+        NAME=ActionItem }
+  }
+}`;
+      const symbolTable = buildSymbolTable(code);
+
+      expect(symbolTable.hasSymbol('ActionItem')).toBe(true);
+      const symbol = symbolTable.getSymbol('ActionItem');
+      expect(symbol).toBeDefined();
+      expect(symbol?.kind).toBe('action');
+      expect(symbol?.name).toBe('ActionItem');
+    });
+
+    it('should extract multiple action symbols with various Name property casings', () => {
+      const code = `OBJECT Page 50000 Test
+{
+  ACTIONS
+  {
+    { 1;0;ActionContainer }
+    { 2;1;Action;
+        Name=FirstAction }
+    { 3;1;Action;
+        name=SecondAction }
+    { 4;1;Action;
+        NAME=ThirdAction }
+  }
+}`;
+      const symbolTable = buildSymbolTable(code);
+
+      expect(symbolTable.hasSymbol('FirstAction')).toBe(true);
+      expect(symbolTable.hasSymbol('SecondAction')).toBe(true);
+      expect(symbolTable.hasSymbol('ThirdAction')).toBe(true);
+
+      const first = symbolTable.getSymbol('FirstAction');
+      const second = symbolTable.getSymbol('SecondAction');
+      const third = symbolTable.getSymbol('ThirdAction');
+
+      expect(first?.kind).toBe('action');
+      expect(second?.kind).toBe('action');
+      expect(third?.kind).toBe('action');
+    });
+  });
 });
