@@ -416,4 +416,136 @@ describe('Lexer - MENUNODES Section Support', () => {
       expect(state.contextStack).toEqual(['NORMAL']);
     });
   });
+
+  describe('Empty COL_1 handling', () => {
+    it('should handle empty COL_1 with GUID in COL_2 - basic case', () => {
+      // Real MenuSuite files contain entries where COL_1 (node type) is empty
+      // Example: {                ;[{GUID}] ;NextNodeID=[{...}] }
+      const code = `OBJECT MenuSuite 1 Test
+{
+  MENUNODES
+  {
+    {                ;[{8DFC1044-47E9-4B4C-A64E-31D312DE9D2A}] }
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const state = lexer.getContextState();
+
+      // Find the semicolon that advances from empty COL_1 to COL_2
+      const semicolons = tokens.filter(t => t.type === TokenType.Semicolon);
+      expect(semicolons.length).toBeGreaterThan(0);
+
+      // Find the GUID bracket
+      const leftBracketIndex = tokens.findIndex(t => t.type === TokenType.LeftBracket);
+      expect(leftBracketIndex).toBeGreaterThan(-1);
+
+      // Verify clean exit
+      expect(state.braceDepth).toBe(0);
+      expect(state.contextStack).toEqual(['NORMAL']);
+      expect(state.contextUnderflowDetected).toBe(false);
+      // Verify column tracking properly reset after traversing columns
+      expect(state.fieldDefColumn).toBe('NONE');
+    });
+
+    it('should handle empty COL_1 with property in COL_3', () => {
+      const code = `OBJECT MenuSuite 1 Test
+{
+  MENUNODES
+  {
+    {                ;[{8DFC1044-47E9-4B4C-A64E-31D312DE9D2A}] ;Deleted=Yes }
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const state = lexer.getContextState();
+
+      // Find the Deleted property and verify equals sign follows
+      const deletedIndex = tokens.findIndex(t =>
+        t.type === TokenType.Identifier && t.value === 'Deleted'
+      );
+      expect(deletedIndex).toBeGreaterThan(-1);
+      expect(tokens[deletedIndex + 1].type).toBe(TokenType.Equal);
+
+      // Verify clean exit
+      expect(state.braceDepth).toBe(0);
+      expect(state.contextStack).toEqual(['NORMAL']);
+      expect(state.contextUnderflowDetected).toBe(false);
+      // Verify column tracking properly reset after traversing columns
+      expect(state.fieldDefColumn).toBe('NONE');
+    });
+
+    it('should handle empty COL_1 with multiple properties', () => {
+      const code = `OBJECT MenuSuite 1 Test
+{
+  MENUNODES
+  {
+    {                ;[{8DFC1044-47E9-4B4C-A64E-31D312DE9D2A}] ;NextNodeID=[{9DFC1044-47E9-4B4C-A64E-31D312DE9D2A}];Name=Test }
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const state = lexer.getContextState();
+
+      // Find NextNodeID property
+      const nextNodeProp = tokens.find(t =>
+        t.type === TokenType.Identifier && t.value === 'NextNodeID'
+      );
+      expect(nextNodeProp).toBeDefined();
+
+      // Find Name property
+      const nameProp = tokens.find(t =>
+        t.type === TokenType.Identifier && t.value === 'Name'
+      );
+      expect(nameProp).toBeDefined();
+
+      // Verify multiple semicolons for column advancement
+      const semicolons = tokens.filter(t => t.type === TokenType.Semicolon);
+      expect(semicolons.length).toBeGreaterThanOrEqual(2);
+
+      // Verify clean exit
+      expect(state.braceDepth).toBe(0);
+      expect(state.contextStack).toEqual(['NORMAL']);
+      expect(state.contextUnderflowDetected).toBe(false);
+      // Verify column tracking properly reset after traversing columns
+      expect(state.fieldDefColumn).toBe('NONE');
+    });
+
+    it('should handle mixed MenuSuite with both empty and populated COL_1 entries', () => {
+      const code = `OBJECT MenuSuite 1 Test
+{
+  MENUNODES
+  {
+    { MenuItem      ;1 ;Name=Regular Item }
+    {                ;[{8DFC1044-47E9-4B4C-A64E-31D312DE9D2A}] ;Deleted=Yes }
+    { MenuItem      ;2 ;Name=Another Regular Item }
+    {                ;[{9DFC1044-47E9-4B4C-A64E-31D312DE9D2A}] ;NextNodeID=[{ADFC1044-47E9-4B4C-A64E-31D312DE9D2A}] }
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const state = lexer.getContextState();
+
+      // Find both MenuItem entries
+      const menuItemTokens = tokens.filter(t =>
+        t.type === TokenType.Identifier && t.value === 'MenuItem'
+      );
+      expect(menuItemTokens.length).toBe(2);
+
+      // Find GUID brackets (should be 2 for empty COL_1 entries)
+      const leftBrackets = tokens.filter(t => t.type === TokenType.LeftBracket);
+      expect(leftBrackets.length).toBeGreaterThanOrEqual(2);
+
+      // No STRING tokens should be present
+      const stringTokens = tokens.filter(t => t.type === TokenType.String);
+      expect(stringTokens.length).toBe(0);
+
+      // Verify clean exit
+      expect(state.braceDepth).toBe(0);
+      expect(state.contextStack).toEqual(['NORMAL']);
+      expect(state.contextUnderflowDetected).toBe(false);
+      // Verify column tracking properly reset after traversing columns
+      expect(state.fieldDefColumn).toBe('NONE');
+    });
+  });
 });
