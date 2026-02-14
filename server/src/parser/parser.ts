@@ -448,7 +448,7 @@ export class Parser {
           fieldGroups = this.parseFieldGroupSection();
         } else if (token.type === TokenType.Actions) {
           try {
-            actions = this.parseActionSection();
+            actions = this.parseActionSection('top-level');
           } catch (error) {
             if (error instanceof ParseError) {
               this.errors.push(error);
@@ -652,7 +652,7 @@ export class Parser {
 
     // Check if this is an ActionList property (value starts with ACTIONS {)
     if (name.toLowerCase() === 'actionlist' && this.check(TokenType.Actions) && this.isFollowedByLeftBrace()) {
-      const actionSection = this.parseInlineActionSection('property');
+      const actionSection = this.parseActionSection('property');
       const endToken = this.check(TokenType.Semicolon) ? this.advance() : actionSection.endToken;
       return {
         type: 'Property',
@@ -1316,7 +1316,7 @@ export class Parser {
 
           // Check if this is an ActionList property (value starts with ACTIONS {)
           if (name.toLowerCase() === 'actionlist' && this.check(TokenType.Actions) && this.isFollowedByLeftBrace()) {
-            const actionSection = this.parseInlineActionSection('control-property');
+            const actionSection = this.parseActionSection('control-property');
             if (this.check(TokenType.Semicolon)) this.advance();
             const property: Property = {
               type: 'Property' as const,
@@ -1711,14 +1711,14 @@ export class Parser {
   }
 
   /**
-   * Parse top-level ACTIONS section.
+   * Parse an ACTIONS section (top-level or inline ActionList property).
    *
    * Note: Corpus analysis of 3,333 real NAV page exports found 0 instances
    * of top-level ACTIONS sections. All 1,772 pages with actions use inline
-   * ActionList property values instead (see parseInlineActionSection).
-   * This path is kept for completeness but may never be exercised in practice.
+   * ActionList property values instead. The top-level path is kept for
+   * completeness but may never be exercised in practice.
    */
-  private parseActionSection(): ActionSection {
+  private parseActionSection(source: ActionSection['source']): ActionSection {
     const startToken = this.consume(TokenType.Actions, 'Expected ACTIONS');
     this.consumeSectionBrace('ACTIONS', (t) => t === TokenType.Integer);
 
@@ -1731,15 +1731,9 @@ export class Parser {
       this.recordError('Expected } to close ACTIONS section', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
-    const hierarchicalActions = this.buildActionHierarchy(flatActions);
 
-    return {
-      type: 'ActionSection',
-      actions: hierarchicalActions,
-      source: 'top-level',
-      startToken,
-      endToken
-    };
+    const hierarchicalActions = this.buildActionHierarchy(flatActions);
+    return { type: 'ActionSection', actions: hierarchicalActions, source, startToken, endToken };
   }
 
   /**
@@ -1770,28 +1764,6 @@ export class Parser {
     }
 
     return flatActions;
-  }
-
-  /**
-   * Parse inline ActionList property (ActionList=ACTIONS { ... })
-   * Used for ActionList properties in PROPERTIES and field control properties
-   */
-  private parseInlineActionSection(source: 'property' | 'control-property'): ActionSection {
-    const startToken = this.consume(TokenType.Actions, 'Expected ACTIONS');
-    this.consumeSectionBrace('ACTIONS', (t) => t === TokenType.Integer);
-
-    const flatActions = this.parseActionItems();
-
-    let endToken: Token;
-    if (this.check(TokenType.RightBrace)) {
-      endToken = this.advance();
-    } else {
-      this.recordError('Expected } to close ACTIONS section', undefined, 'parse-unclosed-block');
-      endToken = this.previous();
-    }
-
-    const hierarchicalActions = this.buildActionHierarchy(flatActions);
-    return { type: 'ActionSection', actions: hierarchicalActions, source, startToken, endToken };
   }
 
   private parseActionItem(): ActionDeclaration {
