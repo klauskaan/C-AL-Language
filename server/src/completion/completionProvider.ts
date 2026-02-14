@@ -38,6 +38,8 @@ function mapSymbolKind(kind: Symbol['kind']): CompletionItemKind {
       return CompletionItemKind.Function;
     case 'function':
       return CompletionItemKind.Function;
+    case 'action':
+      return CompletionItemKind.Event;
     default:
       return CompletionItemKind.Text;
   }

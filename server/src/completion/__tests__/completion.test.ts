@@ -166,6 +166,19 @@ describe('CompletionProvider', () => {
       expect(procItem?.kind).toBe(CompletionItemKind.Function);
     });
 
+    it('should include action symbols with Event kind', () => {
+      const doc = createDocument('Get');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'GetFileStructure', kind: 'action', token: createMockToken() });
+
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const actionItem = items.find(i => i.label === 'GetFileStructure');
+      expect(actionItem).toBeDefined();
+      expect(actionItem?.kind).toBe(CompletionItemKind.Event);
+    });
+
     it('should filter symbols by prefix', () => {
       const doc = createDocument('Na');
 
