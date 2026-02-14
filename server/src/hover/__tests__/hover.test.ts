@@ -986,4 +986,77 @@ describe('HoverProvider', () => {
       expect(content).toContain('Separator');
     });
   });
+
+  describe('Inline ActionList Hover (control-embedded actions)', () => {
+    it('should show action type description for Action in control-embedded ActionList', () => {
+      const code = `OBJECT Page 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+  }
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                ContainerType=ContentArea }
+    { 2   ;1   ;Group     ;
+                GroupType=CueGroup;
+                ActionList=ACTIONS
+                {
+                  { 3   ;    ;Action    ;
+                              Name=OpenList }
+                } }
+  }
+}`;
+      const { ast } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+      const lines = code.split('\n');
+      const actionLine = lines.findIndex(l => /;Action\s/.test(l));
+      const col = lines[actionLine].indexOf('Action');
+      const hover = provider.getHover(doc, Position.create(actionLine, col + 3), ast);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('Action Type');
+      expect(content).toContain('trigger');
+    });
+
+    it('should show action summary when hovering on action Name in control-embedded ActionList', () => {
+      const code = `OBJECT Page 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+  }
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                ContainerType=ContentArea }
+    { 2   ;1   ;Group     ;
+                GroupType=CueGroup;
+                ActionList=ACTIONS
+                {
+                  { 3   ;    ;Action    ;
+                              Name=OpenList }
+                } }
+  }
+}`;
+      const { ast } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+      const lines = code.split('\n');
+      const nameLine = lines.findIndex(l => l.includes('Name=OpenList'));
+      const col = lines[nameLine].indexOf('OpenList');
+      const hover = provider.getHover(doc, Position.create(nameLine, col + 3), ast);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('Action');
+      expect(content).toContain('OpenList');
+      expect(content).toContain('3');
+    });
+  });
 });
