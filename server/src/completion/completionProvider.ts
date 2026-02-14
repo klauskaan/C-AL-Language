@@ -40,8 +40,10 @@ function mapSymbolKind(kind: Symbol['kind']): CompletionItemKind {
       return CompletionItemKind.Function;
     case 'action':
       return CompletionItemKind.Event;
-    default:
-      return CompletionItemKind.Text;
+    default: {
+      const _exhaustive: never = kind;
+      return _exhaustive;
+    }
   }
 }
 
