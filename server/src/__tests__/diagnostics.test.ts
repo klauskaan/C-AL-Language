@@ -508,7 +508,7 @@ describe('Diagnostics', () => {
         expect(diagnostic.code).toBe('parse-unclosed-block');
       });
 
-      it('should assign parse-unclosed-block code for missing closing brace in CODE section', () => {
+      it('should assign parse-unclosed-block code for REPEAT without UNTIL', () => {
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -526,6 +526,26 @@ describe('Diagnostics', () => {
 
         const braceError = errors.find(e =>
           e.message.includes('Expected UNTIL to close REPEAT')
+        );
+        expect(braceError).toBeDefined();
+
+        const diagnostic = errorToDiagnostic(braceError!);
+        expect(diagnostic.code).toBe('parse-unclosed-block');
+      });
+
+      it('should assign parse-unclosed-block code for missing closing brace in CODE section', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    BEGIN
+    END;`;
+        const errors = getParseErrors(code);
+        expect(errors.length).toBeGreaterThan(0);
+
+        const braceError = errors.find(e =>
+          e.message.includes('Expected } to close CODE section')
         );
         expect(braceError).toBeDefined();
 
