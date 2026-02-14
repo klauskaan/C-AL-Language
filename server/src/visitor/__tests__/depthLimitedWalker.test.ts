@@ -3,15 +3,26 @@
  *
  * Tests for DepthLimitedWalker which prevents parser stack exhaustion by
  * limiting the maximum nesting depth of hierarchical C/AL structures
- * (Actions, Controls, XMLport Elements).
+ * (Actions, Controls, XMLport Elements, Statements).
  */
 
-import { DepthLimitedWalker } from '../depthLimitedWalker';
+import { DepthLimitedWalker, PHYSICAL_STACK_LIMIT } from '../depthLimitedWalker';
 import { ASTVisitor } from '../astVisitor';
 import {
   ActionDeclaration,
   ControlDeclaration,
-  XMLportElement
+  XMLportElement,
+  IfStatement,
+  WhileStatement,
+  ForStatement,
+  RepeatStatement,
+  CaseStatement,
+  WithStatement,
+  TriggerDeclaration,
+  Identifier,
+  Literal,
+  BinaryExpression,
+  Statement
 } from '../../parser/ast';
 import { Token, TokenType } from '../../lexer/tokens';
 
@@ -126,6 +137,255 @@ function createMixedNesting(totalDepth: number): ActionDeclaration {
   }
 
   return action;
+}
+
+/**
+ * Helper to create a simple literal expression
+ */
+function createLiteral(value: number): Literal {
+  const token = createToken(TokenType.Integer, value.toString(), 1, 1);
+  return {
+    type: 'Literal',
+    value,
+    literalType: 'integer',
+    startToken: token,
+    endToken: token
+  };
+}
+
+/**
+ * Helper to create a simple identifier
+ */
+function createIdentifier(name: string): Identifier {
+  const token = createToken(TokenType.Identifier, name, 1, 1);
+  return {
+    type: 'Identifier',
+    name,
+    isQuoted: false,
+    startToken: token,
+    endToken: token
+  };
+}
+
+/**
+ * Helper to create a simple binary expression (x = 1)
+ */
+function createBinaryExpression(): BinaryExpression {
+  const token = createToken(TokenType.Equal, '=', 1, 1);
+  return {
+    type: 'BinaryExpression',
+    operator: '=',
+    left: createIdentifier('x'),
+    right: createLiteral(1),
+    startToken: token,
+    endToken: token
+  };
+}
+
+/**
+ * Helper to create deeply nested IfStatement tree
+ */
+function createNestedIfStatements(depth: number, startId = 1): IfStatement {
+  const token = createToken(TokenType.Identifier, `If${startId}`, 1, 1);
+  const ifStmt: IfStatement = {
+    type: 'IfStatement',
+    condition: createBinaryExpression(),
+    thenBranch: {
+      type: 'BlockStatement',
+      statements: [],
+      startToken: token,
+      endToken: token
+    },
+    elseBranch: null,
+    startToken: token,
+    endToken: token
+  };
+
+  if (depth > 1) {
+    // Nest the next IF inside the THEN branch
+    ifStmt.thenBranch = createNestedIfStatements(depth - 1, startId + 1);
+  }
+
+  return ifStmt;
+}
+
+/**
+ * Helper to create deeply nested WhileStatement tree
+ */
+function createNestedWhileStatements(depth: number, startId = 1): WhileStatement {
+  const token = createToken(TokenType.Identifier, `While${startId}`, 1, 1);
+  const whileStmt: WhileStatement = {
+    type: 'WhileStatement',
+    condition: createBinaryExpression(),
+    body: {
+      type: 'BlockStatement',
+      statements: [],
+      startToken: token,
+      endToken: token
+    },
+    startToken: token,
+    endToken: token
+  };
+
+  if (depth > 1) {
+    // Nest the next WHILE inside the body
+    whileStmt.body = createNestedWhileStatements(depth - 1, startId + 1);
+  }
+
+  return whileStmt;
+}
+
+/**
+ * Helper to create deeply nested ForStatement tree
+ */
+function createNestedForStatements(depth: number, startId = 1): ForStatement {
+  const token = createToken(TokenType.Identifier, `For${startId}`, 1, 1);
+  const forStmt: ForStatement = {
+    type: 'ForStatement',
+    variable: createIdentifier('i'),
+    from: createLiteral(1),
+    to: createLiteral(10),
+    downto: false,
+    body: {
+      type: 'BlockStatement',
+      statements: [],
+      startToken: token,
+      endToken: token
+    },
+    startToken: token,
+    endToken: token
+  };
+
+  if (depth > 1) {
+    // Nest the next FOR inside the body
+    forStmt.body = createNestedForStatements(depth - 1, startId + 1);
+  }
+
+  return forStmt;
+}
+
+/**
+ * Helper to create deeply nested RepeatStatement tree
+ */
+function createNestedRepeatStatements(depth: number, startId = 1): RepeatStatement {
+  const token = createToken(TokenType.Identifier, `Repeat${startId}`, 1, 1);
+  const repeatStmt: RepeatStatement = {
+    type: 'RepeatStatement',
+    body: [],
+    condition: createBinaryExpression(),
+    startToken: token,
+    endToken: token
+  };
+
+  if (depth > 1) {
+    // Nest the next REPEAT inside the body
+    repeatStmt.body = [createNestedRepeatStatements(depth - 1, startId + 1)];
+  }
+
+  return repeatStmt;
+}
+
+/**
+ * Helper to create deeply nested CaseStatement tree
+ */
+function createNestedCaseStatements(depth: number, startId = 1): CaseStatement {
+  const token = createToken(TokenType.Identifier, `Case${startId}`, 1, 1);
+  const caseStmt: CaseStatement = {
+    type: 'CaseStatement',
+    expression: createIdentifier('x'),
+    branches: [
+      {
+        type: 'CaseBranch',
+        values: [createLiteral(1)],
+        statements: [],
+        startToken: token,
+        endToken: token
+      }
+    ],
+    elseBranch: null,
+    startToken: token,
+    endToken: token
+  };
+
+  if (depth > 1) {
+    // Nest the next CASE inside the branch statements
+    caseStmt.branches[0].statements = [createNestedCaseStatements(depth - 1, startId + 1)];
+  }
+
+  return caseStmt;
+}
+
+/**
+ * Helper to create deeply nested WithStatement tree
+ */
+function createNestedWithStatements(depth: number, startId = 1): WithStatement {
+  const token = createToken(TokenType.Identifier, `With${startId}`, 1, 1);
+  const withStmt: WithStatement = {
+    type: 'WithStatement',
+    record: createIdentifier('Rec'),
+    body: {
+      type: 'BlockStatement',
+      statements: [],
+      startToken: token,
+      endToken: token
+    },
+    startToken: token,
+    endToken: token
+  };
+
+  if (depth > 1) {
+    // Nest the next WITH inside the body
+    withStmt.body = createNestedWithStatements(depth - 1, startId + 1);
+  }
+
+  return withStmt;
+}
+
+/**
+ * Helper to create mixed statement nesting: IF containing WHILE containing FOR
+ */
+function createMixedStatementNesting(totalDepth: number): IfStatement {
+  const token = createToken(TokenType.Identifier, 'MixedRoot', 1, 1);
+  const ifStmt: IfStatement = {
+    type: 'IfStatement',
+    condition: createBinaryExpression(),
+    thenBranch: {
+      type: 'BlockStatement',
+      statements: [],
+      startToken: token,
+      endToken: token
+    },
+    elseBranch: null,
+    startToken: token,
+    endToken: token
+  };
+
+  if (totalDepth <= 1) {
+    return ifStmt;
+  }
+
+  // For mixed nesting: alternate between IF, WHILE, and FOR
+  const remaining = totalDepth - 1;
+  if (remaining % 3 === 0) {
+    // Add nested FOR
+    const forStmt = createNestedForStatements(1);
+    if (remaining > 1) {
+      forStmt.body = createMixedStatementNesting(remaining);
+    }
+    ifStmt.thenBranch = forStmt;
+  } else if (remaining % 3 === 1) {
+    // Add nested WHILE
+    const whileStmt = createNestedWhileStatements(1);
+    if (remaining > 1) {
+      whileStmt.body = createMixedStatementNesting(remaining);
+    }
+    ifStmt.thenBranch = whileStmt;
+  } else {
+    // Add nested IF
+    ifStmt.thenBranch = createMixedStatementNesting(remaining);
+  }
+
+  return ifStmt;
 }
 
 describe('DepthLimitedWalker', () => {
@@ -587,6 +847,540 @@ describe('DepthLimitedWalker', () => {
       defaultWalker.resetDiagnostics();
       defaultWalker.walk(actions101, visitor);
       expect(defaultWalker.getDiagnostics().length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Statement Depth Protection', () => {
+    describe('IfStatement Protection', () => {
+      it('should emit no diagnostics for shallow IF nesting', () => {
+        const ifStmts = createNestedIfStatements(5);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker.walk(ifStmts, visitor);
+
+        expect(walker.getDiagnostics()).toEqual([]);
+      });
+
+      it('should emit diagnostic when IF nesting exceeds depth limit', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const ifStmts = createNestedIfStatements(15);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(ifStmts, visitor);
+        const diagnostics = walker10.getDiagnostics();
+
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('depth');
+        expect(diagnostics[0].message).toContain('11');
+        expect(diagnostics[0].message).toContain('10');
+        expect(diagnostics[0].message).toContain('if statement');
+      });
+
+      it('should emit no diagnostic at depth = maxDepth for IF', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const ifStmts = createNestedIfStatements(10);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(ifStmts, visitor);
+
+        expect(walker10.getDiagnostics()).toEqual([]);
+      });
+
+      it('should emit diagnostic at depth = maxDepth + 1 for IF', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const ifStmts = createNestedIfStatements(11);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(ifStmts, visitor);
+        const diagnostics = walker10.getDiagnostics();
+
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('11');
+        expect(diagnostics[0].message).toContain('10');
+      });
+    });
+
+    describe('WhileStatement Protection', () => {
+      it('should emit no diagnostics for shallow WHILE nesting', () => {
+        const whileStmts = createNestedWhileStatements(5);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker.walk(whileStmts, visitor);
+
+        expect(walker.getDiagnostics()).toEqual([]);
+      });
+
+      it('should emit diagnostic when WHILE nesting exceeds depth limit', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const whileStmts = createNestedWhileStatements(15);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(whileStmts, visitor);
+        const diagnostics = walker10.getDiagnostics();
+
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('depth');
+        expect(diagnostics[0].message).toContain('11');
+        expect(diagnostics[0].message).toContain('10');
+        expect(diagnostics[0].message).toContain('while statement');
+      });
+
+      it('should emit no diagnostic at depth = maxDepth for WHILE', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const whileStmts = createNestedWhileStatements(10);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(whileStmts, visitor);
+
+        expect(walker10.getDiagnostics()).toEqual([]);
+      });
+
+      it('should emit diagnostic at depth = maxDepth + 1 for WHILE', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const whileStmts = createNestedWhileStatements(11);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(whileStmts, visitor);
+        const diagnostics = walker10.getDiagnostics();
+
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('11');
+        expect(diagnostics[0].message).toContain('10');
+      });
+    });
+
+    describe('ForStatement Protection', () => {
+      it('should emit no diagnostics for shallow FOR nesting', () => {
+        const forStmts = createNestedForStatements(5);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker.walk(forStmts, visitor);
+
+        expect(walker.getDiagnostics()).toEqual([]);
+      });
+
+      it('should emit diagnostic when FOR nesting exceeds depth limit', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const forStmts = createNestedForStatements(15);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(forStmts, visitor);
+        const diagnostics = walker10.getDiagnostics();
+
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('depth');
+        expect(diagnostics[0].message).toContain('11');
+        expect(diagnostics[0].message).toContain('10');
+        expect(diagnostics[0].message).toContain('for statement');
+      });
+
+      it('should emit no diagnostic at depth = maxDepth for FOR', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const forStmts = createNestedForStatements(10);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(forStmts, visitor);
+
+        expect(walker10.getDiagnostics()).toEqual([]);
+      });
+
+      it('should emit diagnostic at depth = maxDepth + 1 for FOR', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const forStmts = createNestedForStatements(11);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(forStmts, visitor);
+        const diagnostics = walker10.getDiagnostics();
+
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('11');
+        expect(diagnostics[0].message).toContain('10');
+      });
+    });
+
+    describe('RepeatStatement Protection', () => {
+      it('should emit no diagnostics for shallow REPEAT nesting', () => {
+        const repeatStmts = createNestedRepeatStatements(5);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker.walk(repeatStmts, visitor);
+
+        expect(walker.getDiagnostics()).toEqual([]);
+      });
+
+      it('should emit diagnostic when REPEAT nesting exceeds depth limit', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const repeatStmts = createNestedRepeatStatements(15);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(repeatStmts, visitor);
+        const diagnostics = walker10.getDiagnostics();
+
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('depth');
+        expect(diagnostics[0].message).toContain('11');
+        expect(diagnostics[0].message).toContain('10');
+        expect(diagnostics[0].message).toContain('repeat statement');
+      });
+
+      it('should emit no diagnostic at depth = maxDepth for REPEAT', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const repeatStmts = createNestedRepeatStatements(10);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(repeatStmts, visitor);
+
+        expect(walker10.getDiagnostics()).toEqual([]);
+      });
+
+      it('should emit diagnostic at depth = maxDepth + 1 for REPEAT', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const repeatStmts = createNestedRepeatStatements(11);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(repeatStmts, visitor);
+        const diagnostics = walker10.getDiagnostics();
+
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('11');
+        expect(diagnostics[0].message).toContain('10');
+      });
+    });
+
+    describe('CaseStatement Protection', () => {
+      it('should emit no diagnostics for shallow CASE nesting', () => {
+        const caseStmts = createNestedCaseStatements(5);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker.walk(caseStmts, visitor);
+
+        expect(walker.getDiagnostics()).toEqual([]);
+      });
+
+      it('should emit diagnostic when CASE nesting exceeds depth limit', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const caseStmts = createNestedCaseStatements(15);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(caseStmts, visitor);
+        const diagnostics = walker10.getDiagnostics();
+
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('depth');
+        expect(diagnostics[0].message).toContain('11');
+        expect(diagnostics[0].message).toContain('10');
+        expect(diagnostics[0].message).toContain('case statement');
+      });
+
+      it('should emit no diagnostic at depth = maxDepth for CASE', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const caseStmts = createNestedCaseStatements(10);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(caseStmts, visitor);
+
+        expect(walker10.getDiagnostics()).toEqual([]);
+      });
+
+      it('should emit diagnostic at depth = maxDepth + 1 for CASE', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const caseStmts = createNestedCaseStatements(11);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(caseStmts, visitor);
+        const diagnostics = walker10.getDiagnostics();
+
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('11');
+        expect(diagnostics[0].message).toContain('10');
+      });
+    });
+
+    describe('WithStatement Protection', () => {
+      it('should emit no diagnostics for shallow WITH nesting', () => {
+        const withStmts = createNestedWithStatements(5);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker.walk(withStmts, visitor);
+
+        expect(walker.getDiagnostics()).toEqual([]);
+      });
+
+      it('should emit diagnostic when WITH nesting exceeds depth limit', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const withStmts = createNestedWithStatements(15);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(withStmts, visitor);
+        const diagnostics = walker10.getDiagnostics();
+
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('depth');
+        expect(diagnostics[0].message).toContain('11');
+        expect(diagnostics[0].message).toContain('10');
+        expect(diagnostics[0].message).toContain('with statement');
+      });
+
+      it('should emit no diagnostic at depth = maxDepth for WITH', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const withStmts = createNestedWithStatements(10);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(withStmts, visitor);
+
+        expect(walker10.getDiagnostics()).toEqual([]);
+      });
+
+      it('should emit diagnostic at depth = maxDepth + 1 for WITH', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const withStmts = createNestedWithStatements(11);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(withStmts, visitor);
+        const diagnostics = walker10.getDiagnostics();
+
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('11');
+        expect(diagnostics[0].message).toContain('10');
+      });
+    });
+
+    describe('Mixed Statement Nesting - Shared Counter', () => {
+      it('should track total depth across mixed statement types', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const mixedStmts = createMixedStatementNesting(12);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker10.walk(mixedStmts, visitor);
+        const diagnostics = walker10.getDiagnostics();
+
+        // Should emit diagnostic since total depth exceeds 10
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('depth');
+      });
+
+      it('should use shared depth counter for IF containing WHILE containing FOR', () => {
+        const walker5 = new DepthLimitedWalker(5);
+        const mixedStmts = createMixedStatementNesting(6);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker5.walk(mixedStmts, visitor);
+
+        // Single counter means we should see diagnostic at depth 6
+        expect(walker5.getDiagnostics().length).toBeGreaterThan(0);
+      });
+
+      it('should share depth counter between Actions and Statements', () => {
+        const walker10 = new DepthLimitedWalker(10);
+
+        // Create Action tree with nested Actions (depth 5)
+        // Then add deeply nested IF statements in the innermost action's trigger
+        // Combined depth: 5 (actions) + 6 (statements) = 11, should emit diagnostic
+        const rootAction = createNestedActions(5);
+
+        // Navigate to the innermost action and add a trigger with deeply nested statements
+        let current = rootAction;
+        while (current.children && current.children.length > 0) {
+          current = current.children[0];
+        }
+
+        // Add a trigger body with 6 nested IF statements to the innermost action
+        // This creates a single tree: Action->Action->...->Action->Trigger->If->If->...->If
+        current.triggers = [
+          {
+            type: 'TriggerDeclaration',
+            name: 'OnAction',
+            variables: [],
+            body: [createNestedIfStatements(6) as Statement],
+            startToken: createToken(TokenType.Identifier, 'OnAction', 1, 1),
+            endToken: createToken(TokenType.Identifier, 'OnAction', 1, 1)
+          }
+        ];
+
+        // Single walk call - depths accumulate naturally as walker descends the tree
+        const visitor: Partial<ASTVisitor> = {};
+        walker10.walk(rootAction, visitor);
+
+        const diagnostics = walker10.getDiagnostics();
+
+        // Should emit diagnostic since combined depth (5 actions + 6 statements = 11) exceeds 10
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('depth');
+      });
+    });
+
+    describe('Extreme Depth - 5000+ Levels', () => {
+      it('should respect PHYSICAL_STACK_LIMIT value', () => {
+        // Verify the constant is set to 1000
+        expect(PHYSICAL_STACK_LIMIT).toBe(1000);
+
+        // Verify effectiveLimit is clamped to physical limit
+        const walker10000 = new DepthLimitedWalker(10000);
+        const walker500 = new DepthLimitedWalker(500);
+
+        // Walker with maxDepth=10000 should be clamped to 1000
+        const deepStmt1 = createNestedIfStatements(1001);
+        const visitor1: Partial<ASTVisitor> = {};
+        walker10000.walk(deepStmt1, visitor1);
+        expect(walker10000.getDiagnostics().length).toBeGreaterThan(0);
+
+        // Walker with maxDepth=500 should use 500 (below physical limit)
+        const deepStmt2 = createNestedIfStatements(501);
+        const visitor2: Partial<ASTVisitor> = {};
+        walker500.walk(deepStmt2, visitor2);
+        expect(walker500.getDiagnostics().length).toBeGreaterThan(0);
+      });
+
+      it('should handle 5500+ nested IF statements without stack overflow, stopping at physical limit', () => {
+        const walker10000 = new DepthLimitedWalker(10000);
+        const deepIfs = createNestedIfStatements(5500);
+        const visitor: Partial<ASTVisitor> = {};
+
+        // Should complete without crashing
+        expect(() => walker10000.walk(deepIfs, visitor)).not.toThrow();
+
+        // Should emit diagnostic at depth 1001 (physical limit)
+        const diagnostics = walker10000.getDiagnostics();
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('1001');
+        expect(diagnostics[0].message).toContain('1000');
+      });
+
+      it('should handle 5500+ nested WHILE statements without stack overflow, stopping at physical limit', () => {
+        const walker10000 = new DepthLimitedWalker(10000);
+        const deepWhiles = createNestedWhileStatements(5500);
+        const visitor: Partial<ASTVisitor> = {};
+
+        // Should complete without crashing
+        expect(() => walker10000.walk(deepWhiles, visitor)).not.toThrow();
+
+        // Should emit diagnostic at depth 1001 (physical limit)
+        const diagnostics = walker10000.getDiagnostics();
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('1001');
+        expect(diagnostics[0].message).toContain('1000');
+      });
+
+      it('should handle 1000 nested FOR statements at limit with acceptable performance', () => {
+        const walker10000 = new DepthLimitedWalker(10000);
+        const deepFors = createNestedForStatements(1000);
+        const visitor: Partial<ASTVisitor> = {};
+
+        const startTime = Date.now();
+        walker10000.walk(deepFors, visitor);
+        const elapsed = Date.now() - startTime;
+
+        // Should complete in reasonable time (< 1 second for 1000 levels)
+        expect(elapsed).toBeLessThan(1000);
+        // At depth 1000, should not emit diagnostic (at limit is OK)
+        expect(walker10000.getDiagnostics()).toEqual([]);
+      });
+
+      it('should handle 5500+ nested REPEAT statements without stack overflow, stopping at physical limit', () => {
+        const walker10000 = new DepthLimitedWalker(10000);
+        const deepRepeats = createNestedRepeatStatements(5500);
+        const visitor: Partial<ASTVisitor> = {};
+
+        // Should complete without crashing
+        expect(() => walker10000.walk(deepRepeats, visitor)).not.toThrow();
+
+        // Should emit diagnostic at depth 1001 (physical limit)
+        const diagnostics = walker10000.getDiagnostics();
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('1001');
+        expect(diagnostics[0].message).toContain('1000');
+      });
+
+      it('should handle 5500+ nested CASE statements without stack overflow, stopping at physical limit', () => {
+        const walker10000 = new DepthLimitedWalker(10000);
+        const deepCases = createNestedCaseStatements(5500);
+        const visitor: Partial<ASTVisitor> = {};
+
+        // Should complete without crashing
+        expect(() => walker10000.walk(deepCases, visitor)).not.toThrow();
+
+        // Should emit diagnostic at depth 1001 (physical limit)
+        const diagnostics = walker10000.getDiagnostics();
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('1001');
+        expect(diagnostics[0].message).toContain('1000');
+      });
+
+      it('should handle 5500+ nested WITH statements without stack overflow, stopping at physical limit', () => {
+        const walker10000 = new DepthLimitedWalker(10000);
+        const deepWiths = createNestedWithStatements(5500);
+        const visitor: Partial<ASTVisitor> = {};
+
+        // Should complete without crashing
+        expect(() => walker10000.walk(deepWiths, visitor)).not.toThrow();
+
+        // Should emit diagnostic at depth 1001 (physical limit)
+        const diagnostics = walker10000.getDiagnostics();
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].message).toContain('1001');
+        expect(diagnostics[0].message).toContain('1000');
+      });
+    });
+
+    describe('Statement Diagnostic Quality', () => {
+      it('should include correct position from statement startToken', () => {
+        const walker5 = new DepthLimitedWalker(5);
+        const deepStmt = createNestedIfStatements(10);
+
+        // Set a specific position on the 6th nested IF (first violation)
+        const token = createToken(TokenType.Identifier, 'DeepIf', 42, 15);
+        let current: any = deepStmt;
+        for (let i = 0; i < 5; i++) {
+          current = current.thenBranch;
+        }
+        current.startToken = token;
+
+        const visitor: Partial<ASTVisitor> = {};
+        walker5.walk(deepStmt, visitor);
+        const diagnostics = walker5.getDiagnostics();
+
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics[0].range.start.line).toBe(41); // LSP is 0-based, token is 1-based
+        expect(diagnostics[0].range.start.character).toBe(14); // 0-based
+      });
+
+      it('should set diagnostic severity to Warning for statements', () => {
+        const walker5 = new DepthLimitedWalker(5);
+        const whileStmts = createNestedWhileStatements(10);
+        const visitor: Partial<ASTVisitor> = {};
+
+        walker5.walk(whileStmts, visitor);
+        const diagnostics = walker5.getDiagnostics();
+
+        expect(diagnostics.length).toBeGreaterThan(0);
+        // DiagnosticSeverity.Warning = 2
+        expect(diagnostics[0].severity).toBe(2);
+        expect(diagnostics[0].code).toBe('nesting-depth-exceeded');
+      });
+
+      it('should include depth and limit values in diagnostic for all statement types', () => {
+        const walker10 = new DepthLimitedWalker(10);
+        const visitor: Partial<ASTVisitor> = {};
+
+        const testCases = [
+          { name: 'IF', stmt: createNestedIfStatements(15) },
+          { name: 'WHILE', stmt: createNestedWhileStatements(15) },
+          { name: 'FOR', stmt: createNestedForStatements(15) },
+          { name: 'REPEAT', stmt: createNestedRepeatStatements(15) },
+          { name: 'CASE', stmt: createNestedCaseStatements(15) },
+          { name: 'WITH', stmt: createNestedWithStatements(15) }
+        ];
+
+        for (const testCase of testCases) {
+          walker10.resetDiagnostics();
+          walker10.walk(testCase.stmt, visitor);
+          const diagnostics = walker10.getDiagnostics();
+
+          expect(diagnostics.length).toBeGreaterThan(0);
+          expect(diagnostics[0].message).toMatch(/depth.*11/i);
+          expect(diagnostics[0].message).toMatch(/limit.*10/i);
+        }
+      });
     });
   });
 });

@@ -636,7 +636,7 @@ export class ASTWalker {
     }
   }
 
-  private walkIfStatement(node: IfStatement, visitor: Partial<ASTVisitor>): void {
+  protected walkIfStatement(node: IfStatement, visitor: Partial<ASTVisitor>): void {
     if (visitor.visitIfStatement) {
       const result = visitor.visitIfStatement(node);
       if (result === false) {
@@ -650,7 +650,7 @@ export class ASTWalker {
     }
   }
 
-  private walkWhileStatement(node: WhileStatement, visitor: Partial<ASTVisitor>): void {
+  protected walkWhileStatement(node: WhileStatement, visitor: Partial<ASTVisitor>): void {
     if (visitor.visitWhileStatement) {
       const result = visitor.visitWhileStatement(node);
       if (result === false) {
@@ -661,7 +661,7 @@ export class ASTWalker {
     this.walkStatement(node.body, visitor);
   }
 
-  private walkRepeatStatement(node: RepeatStatement, visitor: Partial<ASTVisitor>): void {
+  protected walkRepeatStatement(node: RepeatStatement, visitor: Partial<ASTVisitor>): void {
     if (visitor.visitRepeatStatement) {
       const result = visitor.visitRepeatStatement(node);
       if (result === false) {
@@ -674,7 +674,7 @@ export class ASTWalker {
     this.walkExpression(node.condition, visitor);
   }
 
-  private walkForStatement(node: ForStatement, visitor: Partial<ASTVisitor>): void {
+  protected walkForStatement(node: ForStatement, visitor: Partial<ASTVisitor>): void {
     if (visitor.visitForStatement) {
       const result = visitor.visitForStatement(node);
       if (result === false) {
@@ -688,7 +688,7 @@ export class ASTWalker {
     this.walkStatement(node.body, visitor);
   }
 
-  private walkCaseStatement(node: CaseStatement, visitor: Partial<ASTVisitor>): void {
+  protected walkCaseStatement(node: CaseStatement, visitor: Partial<ASTVisitor>): void {
     if (visitor.visitCaseStatement) {
       const result = visitor.visitCaseStatement(node);
       if (result === false) {
@@ -768,7 +768,7 @@ export class ASTWalker {
     // EmptyStatement has no child nodes to traverse
   }
 
-  private walkWithStatement(node: WithStatement, visitor: Partial<ASTVisitor>): void {
+  protected walkWithStatement(node: WithStatement, visitor: Partial<ASTVisitor>): void {
     if (visitor.visitWithStatement) {
       const result = visitor.visitWithStatement(node);
       if (result === false) {
