@@ -460,7 +460,7 @@ export interface ActionSection {
   endToken: Token;
   actions: ActionDeclaration[];
   /** Where this ActionSection originated — enables context-aware validation */
-  source?: 'top-level' | 'property' | 'control-property';
+  source: 'top-level' | 'property' | 'control-property';
 }
 
 /**

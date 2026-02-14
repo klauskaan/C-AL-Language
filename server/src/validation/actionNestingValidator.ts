@@ -38,9 +38,8 @@ class ActionNestingValidatorVisitor implements Partial<ASTVisitor> {
    */
   private validateActionSection(section: ActionSection): void {
     // control-property source (CONTROLS section ActionList) doesn't require
-    // ActionContainer at root. All other sources (top-level, property,
-    // undefined) enforce the full ruleset — undefined defaults to strict
-    // as the safer assumption.
+    // ActionContainer at root. All other sources (top-level, property)
+    // enforce the full ruleset.
     const skipContainerRequirement = section.source === 'control-property';
 
     for (const action of section.actions) {
