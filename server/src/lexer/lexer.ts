@@ -459,6 +459,21 @@ export class Lexer {
   private static readonly LATIN_EXTENDED_A_END = 0x017F;      // ſ
   // Excluded from identifiers: U+00D7 (×), U+00F7 (÷)
 
+  // Section keyword mapping for unified handling
+  private static readonly SECTION_KEYWORD_MAP: ReadonlyMap<TokenType, SectionType> = new Map([
+    [TokenType.Fields, 'FIELDS' as SectionType],
+    [TokenType.Keys, 'KEYS' as SectionType],
+    [TokenType.Controls, 'CONTROLS' as SectionType],
+    [TokenType.Elements, 'ELEMENTS' as SectionType],
+    [TokenType.Actions, 'ACTIONS' as SectionType],
+    [TokenType.Dataset, 'DATASET' as SectionType],
+    [TokenType.RequestPage, 'REQUESTPAGE' as SectionType],
+    [TokenType.Labels, 'LABELS' as SectionType],
+    [TokenType.MenuNodes, 'MENUNODES' as SectionType],
+    [TokenType.DataItems, 'DATAITEMS' as SectionType],
+    [TokenType.Sections, 'SECTIONS' as SectionType],
+  ]);
+
   private input: string;
   private position: number = 0;
   private line: number = 1;
@@ -1220,9 +1235,54 @@ export class Lexer {
   }
 
   /**
+   * Shared handler for section keywords (FIELDS, KEYS, CONTROLS, etc.).
+   * Guards against section keyword recognition in code blocks, property values,
+   * and CODE sections, then delegates to stateManager.onSectionKeyword().
+   */
+  private handleSectionKeyword(sectionType: SectionType): void {
+    if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
+      return;
+    }
+    if (this.state.getInPropertyValue()) {
+      return;
+    }
+    // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
+    if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
+        this.state.getCurrentSectionType() === 'CODE') {
+      return;
+    }
+
+    const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
+    const oldCurrentSectionType = this.state.getCurrentSectionType();
+    this.state.onSectionKeyword(sectionType);
+
+    if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
+      this.invokeTraceCallback(() => ({
+        type: 'flag-change',
+        position: { line: this.line, column: this.column, offset: this.position },
+        data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() }
+      }));
+    }
+    if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
+      this.invokeTraceCallback(() => ({
+        type: 'flag-change',
+        position: { line: this.line, column: this.column, offset: this.position },
+        data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() }
+      }));
+    }
+  }
+
+  /**
    * Update lexer context based on keyword tokens
    */
   private updateContextForKeyword(tokenType: TokenType): void {
+    // Handle standard section keywords via shared handler
+    const sectionType = Lexer.SECTION_KEYWORD_MAP.get(tokenType);
+    if (sectionType !== undefined) {
+      this.handleSectionKeyword(sectionType);
+      return;
+    }
+
     switch (tokenType) {
       case TokenType.Object:
         // Only set objectTokenIndex when in NORMAL context (at document start)
@@ -1247,301 +1307,10 @@ export class Lexer {
         }
         break;
 
-      case TokenType.Fields:
-        // Guard: Don't mark as section keyword if appearing inside code blocks or property values
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
-          break;
-        }
-        {
-          if (this.state.getInPropertyValue()) {
-            break;
-          }
-          // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
-          if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              this.state.getCurrentSectionType() === 'CODE') {
-            break;
-          }
-
-          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
-          const oldCurrentSectionType = this.state.getCurrentSectionType();
-          this.state.onSectionKeyword('FIELDS');
-
-          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() }
-            }));
-          }
-          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() }
-            }));
-          }
-        }
-        break;
-
-      case TokenType.Keys:
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
-        {
-          if (this.state.getInPropertyValue()) { break; }
-          // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
-          if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              this.state.getCurrentSectionType() === 'CODE') {
-            break;
-          }
-          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
-          const oldCurrentSectionType = this.state.getCurrentSectionType();
-          this.state.onSectionKeyword('KEYS');
-          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
-          }
-          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
-          }
-        }
-        break;
-
-      case TokenType.Controls:
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
-        {
-          if (this.state.getInPropertyValue()) { break; }
-          // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
-          if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              this.state.getCurrentSectionType() === 'CODE') {
-            break;
-          }
-          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
-          const oldCurrentSectionType = this.state.getCurrentSectionType();
-          this.state.onSectionKeyword('CONTROLS');
-          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
-          }
-          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
-          }
-        }
-        break;
-
-      case TokenType.Elements:
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
-        {
-          if (this.state.getInPropertyValue()) { break; }
-          // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
-          if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              this.state.getCurrentSectionType() === 'CODE') {
-            break;
-          }
-          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
-          const oldCurrentSectionType = this.state.getCurrentSectionType();
-          this.state.onSectionKeyword('ELEMENTS');
-          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
-          }
-          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
-          }
-        }
-        break;
-
-      case TokenType.Actions:
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
-        {
-          if (this.state.getInPropertyValue()) { break; }
-          // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
-          if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              this.state.getCurrentSectionType() === 'CODE') {
-            break;
-          }
-          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
-          const oldCurrentSectionType = this.state.getCurrentSectionType();
-          this.state.onSectionKeyword('ACTIONS');
-          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
-          }
-          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
-          }
-        }
-        break;
-
-      case TokenType.Dataset:
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
-        {
-          if (this.state.getInPropertyValue()) { break; }
-          // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
-          if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              this.state.getCurrentSectionType() === 'CODE') {
-            break;
-          }
-          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
-          const oldCurrentSectionType = this.state.getCurrentSectionType();
-          this.state.onSectionKeyword('DATASET');
-          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
-          }
-          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
-          }
-        }
-        break;
-
-      case TokenType.RequestPage:
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
-        {
-          if (this.state.getInPropertyValue()) { break; }
-          // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
-          if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              this.state.getCurrentSectionType() === 'CODE') {
-            break;
-          }
-          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
-          const oldCurrentSectionType = this.state.getCurrentSectionType();
-          this.state.onSectionKeyword('REQUESTPAGE');
-          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
-          }
-          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
-          }
-        }
-        break;
-
-      case TokenType.Labels:
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
-        {
-          if (this.state.getInPropertyValue()) { break; }
-          // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
-          if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              this.state.getCurrentSectionType() === 'CODE') {
-            break;
-          }
-          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
-          const oldCurrentSectionType = this.state.getCurrentSectionType();
-          this.state.onSectionKeyword('LABELS');
-          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
-          }
-          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
-          }
-        }
-        break;
-
-      case TokenType.MenuNodes:
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
-        {
-          if (this.state.getInPropertyValue()) { break; }
-          // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
-          if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              this.state.getCurrentSectionType() === 'CODE') {
-            break;
-          }
-          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
-          const oldCurrentSectionType = this.state.getCurrentSectionType();
-          this.state.onSectionKeyword('MENUNODES');
-          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
-          }
-          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
-          }
-        }
-        break;
-
-      case TokenType.DataItems:
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
-        {
-          if (this.state.getInPropertyValue()) { break; }
-          // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
-          if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              this.state.getCurrentSectionType() === 'CODE') {
-            break;
-          }
-          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
-          const oldCurrentSectionType = this.state.getCurrentSectionType();
-          this.state.onSectionKeyword('DATAITEMS');
-          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
-          }
-          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
-          }
-        }
-        break;
-
-      case TokenType.Sections:
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
-        {
-          if (this.state.getInPropertyValue()) { break; }
-          // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
-          if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              this.state.getCurrentSectionType() === 'CODE') {
-            break;
-          }
-          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
-          const oldCurrentSectionType = this.state.getCurrentSectionType();
-          this.state.onSectionKeyword('SECTIONS');
-          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'lastWasSectionKeyword', from: oldLastWasSectionKeyword, to: this.state.getLastWasSectionKeyword() } }));
-          }
-          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
-            this.invokeTraceCallback(() => ({ type: 'flag-change', position: { line: this.line, column: this.column, offset: this.position }, data: { flag: 'currentSectionType', from: oldCurrentSectionType, to: this.state.getCurrentSectionType() } }));
-          }
-        }
-        break;
-
       case TokenType.Code:
-        // Guard: Don't mark as section keyword if appearing inside code blocks
-        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) {
-          break;
-        }
-        // Guard: Don't mark as section keyword if appearing in structural columns
-        if (this.shouldProtectFromSectionKeyword()) {
-          break;
-        }
-        // Guard: Section keywords inside CODE sections are identifiers (Issue #260)
-        {
-          if (this.state.getInPropertyValue()) {
-            break;
-          }
-          if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
-              this.state.getCurrentSectionType() === 'CODE') {
-            break;
-          }
-
-          const oldLastWasSectionKeyword = this.state.getLastWasSectionKeyword();
-          const oldCurrentSectionType = this.state.getCurrentSectionType();
-
-          // Use onSectionKeyword to track the CODE section type
-          this.state.onSectionKeyword('CODE');
-
-          // Emit trace events for flag changes
-          if (oldLastWasSectionKeyword !== this.state.getLastWasSectionKeyword()) {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: {
-                flag: 'lastWasSectionKeyword',
-                from: oldLastWasSectionKeyword,
-                to: this.state.getLastWasSectionKeyword()
-              }
-            }));
-          }
-          if (oldCurrentSectionType !== this.state.getCurrentSectionType()) {
-            this.invokeTraceCallback(() => ({
-              type: 'flag-change',
-              position: { line: this.line, column: this.column, offset: this.position },
-              data: {
-                flag: 'currentSectionType',
-                from: oldCurrentSectionType,
-                to: this.state.getCurrentSectionType()
-              }
-            }));
-          }
-        }
+        if (this.getCurrentContext() === LexerContext.CODE_BLOCK) { break; }
+        if (this.shouldProtectFromSectionKeyword()) { break; }
+        this.handleSectionKeyword('CODE');
         break;
 
       case TokenType.Properties:
