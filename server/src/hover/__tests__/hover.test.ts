@@ -1059,4 +1059,87 @@ describe('HoverProvider', () => {
       expect(content).toContain('3');
     });
   });
+
+  describe('case-insensitive property names', () => {
+    it('should show action summary when Name property is lowercase', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                ActionContainerType=ActionItems }
+    { 2   ;1   ;Action        ;
+                name=MyAction;
+                Image=Refresh }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseAndBuildSymbols(code);
+
+      const lines = code.split('\n');
+      const nameLine = lines.findIndex(l => l.includes('name=MyAction'));
+      const col = lines[nameLine].indexOf('MyAction');
+      const hover = provider.getHover(doc, Position.create(nameLine, col + 3), ast);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('Action');
+      expect(content).toContain('MyAction');
+      expect(content).toContain('2');
+    });
+
+    it('should show action summary when Name property is mixed case', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                ActionContainerType=ActionItems }
+    { 2   ;1   ;Action        ;
+                NaMe=TestAction;
+                Image=New }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseAndBuildSymbols(code);
+
+      const lines = code.split('\n');
+      const nameLine = lines.findIndex(l => l.includes('NaMe=TestAction'));
+      const col = lines[nameLine].indexOf('TestAction');
+      const hover = provider.getHover(doc, Position.create(nameLine, col + 3), ast);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('Action');
+      expect(content).toContain('TestAction');
+      expect(content).toContain('2');
+    });
+
+    it('should show action summary when Name property is uppercase', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                ActionContainerType=ActionItems }
+    { 2   ;1   ;Action        ;
+                NAME=ActionItem;
+                Image=Delete }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseAndBuildSymbols(code);
+
+      const lines = code.split('\n');
+      const nameLine = lines.findIndex(l => l.includes('NAME=ActionItem'));
+      const col = lines[nameLine].indexOf('ActionItem');
+      const hover = provider.getHover(doc, Position.create(nameLine, col + 3), ast);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('Action');
+      expect(content).toContain('ActionItem');
+      expect(content).toContain('2');
+    });
+  });
 });

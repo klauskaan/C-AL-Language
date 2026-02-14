@@ -485,7 +485,7 @@ export interface ActionDeclaration {
  * Get the Name property value from an action declaration
  */
 export function getActionName(action: ActionDeclaration): string | undefined {
-  return action.properties?.properties?.find(p => p.name === 'Name')?.value;
+  return action.properties?.properties?.find(p => p.name.toLowerCase() === 'name')?.value;
 }
 
 /**

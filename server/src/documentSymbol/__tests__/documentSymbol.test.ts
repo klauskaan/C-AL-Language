@@ -992,4 +992,138 @@ describe('DocumentSymbolProvider', () => {
       expect(actionsGroups?.[1].children?.[0].name).toBe('Action 5 "SecondCueAction"');
     });
   });
+
+  describe('case-insensitive property names', () => {
+    it('should show action Name with lowercase name property', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                ActionContainerType=ActionItems }
+    { 2   ;1   ;Action        ;
+                name=MyAction }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const actionsGroup = symbols[0].children?.find(c => c.name === 'ACTIONS');
+      const actionContainer = actionsGroup?.children?.[0];
+      const action = actionContainer?.children?.[0];
+
+      expect(action?.name).toBe('Action 2 "MyAction"');
+      expect(action?.kind).toBe(SymbolKind.Event);
+    });
+
+    it('should show action Name with mixed case name property', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                ActionContainerType=ActionItems }
+    { 2   ;1   ;Action        ;
+                NaMe=TestAction }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const actionsGroup = symbols[0].children?.find(c => c.name === 'ACTIONS');
+      const actionContainer = actionsGroup?.children?.[0];
+      const action = actionContainer?.children?.[0];
+
+      expect(action?.name).toBe('Action 2 "TestAction"');
+      expect(action?.kind).toBe(SymbolKind.Event);
+    });
+
+    it('should show action Name with uppercase NAME property', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                ActionContainerType=ActionItems }
+    { 2   ;1   ;Action        ;
+                NAME=ActionItem }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const actionsGroup = symbols[0].children?.find(c => c.name === 'ACTIONS');
+      const actionContainer = actionsGroup?.children?.[0];
+      const action = actionContainer?.children?.[0];
+
+      expect(action?.name).toBe('Action 2 "ActionItem"');
+      expect(action?.kind).toBe(SymbolKind.Event);
+    });
+
+    it('should show control Name with lowercase name property', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  CONTROLS
+  {
+    { 1   ;0   ;Container;
+                name=MyContainer;
+                ContainerType=ContentArea }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const controlsGroup = symbols[0].children?.find(c => c.name === 'CONTROLS');
+      const control = controlsGroup?.children?.[0];
+
+      expect(control?.name).toBe('Container 1 "MyContainer"');
+      expect(control?.kind).toBe(SymbolKind.Struct);
+    });
+
+    it('should show control Name with mixed case name property', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  CONTROLS
+  {
+    { 1   ;0   ;Group;
+                NaMe=TestGroup;
+                GroupType=Group }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const controlsGroup = symbols[0].children?.find(c => c.name === 'CONTROLS');
+      const control = controlsGroup?.children?.[0];
+
+      expect(control?.name).toBe('Group 1 "TestGroup"');
+      expect(control?.kind).toBe(SymbolKind.Struct);
+    });
+
+    it('should show control Name with uppercase NAME property', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  CONTROLS
+  {
+    { 1   ;0   ;Field;
+                NAME=CustomerName;
+                SourceExpr=Name }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const controlsGroup = symbols[0].children?.find(c => c.name === 'CONTROLS');
+      const control = controlsGroup?.children?.[0];
+
+      expect(control?.name).toBe('Field 1 "CustomerName"');
+      expect(control?.kind).toBe(SymbolKind.Struct);
+    });
+  });
 });
