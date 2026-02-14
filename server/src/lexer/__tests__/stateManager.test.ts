@@ -42,7 +42,8 @@ describe('LexerStateManager', () => {
       manager.onOpenBrace();
       manager.onObjectKeyword(5);
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
+      manager.onOpenBrace();
+      manager.onIdentifier('OnValidate');
       manager.onEquals();
 
       // Reset
@@ -114,8 +115,10 @@ describe('LexerStateManager', () => {
 
     it('should increment bracketDepth in property value mode', () => {
       const manager = new LexerStateManager();
+      manager.onObjectKeyword(0);
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('Name', LexerContext.SECTION_LEVEL);
+      manager.onOpenBrace();
+      manager.onIdentifier('Name');
       manager.onEquals();
       manager.onOpenBracket();
 
@@ -124,8 +127,10 @@ describe('LexerStateManager', () => {
 
     it('should decrement bracketDepth on onCloseBracket()', () => {
       const manager = new LexerStateManager();
+      manager.onObjectKeyword(0);
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('OptionCaptionML', LexerContext.SECTION_LEVEL);
+      manager.onOpenBrace();
+      manager.onIdentifier('OptionCaptionML');
       manager.onEquals();
       manager.onOpenBracket();
       manager.onOpenBracket();
@@ -149,8 +154,10 @@ describe('LexerStateManager', () => {
       expect(manager.getState().bracketDepth).toBe(2);
 
       // Enter property value
+      manager.onObjectKeyword(0);
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('OptionString', LexerContext.SECTION_LEVEL);
+      manager.onOpenBrace();
+      manager.onIdentifier('OptionString');
       manager.onEquals();
       manager.onOpenBracket();
       expect(manager.getState().bracketDepth).toBe(3);
@@ -170,8 +177,10 @@ describe('LexerStateManager', () => {
   describe('Property value tracking', () => {
     it('should enter property value mode on onEquals() at SECTION_LEVEL', () => {
       const manager = new LexerStateManager();
+      manager.onObjectKeyword(0);
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('Editable', LexerContext.SECTION_LEVEL);
+      manager.onOpenBrace();
+      manager.onIdentifier('Editable');
       manager.onEquals();
 
       expect(manager.getState().inPropertyValue).toBe(true);
@@ -187,8 +196,10 @@ describe('LexerStateManager', () => {
 
     it('should exit property value mode on onSemicolon()', () => {
       const manager = new LexerStateManager();
+      manager.onObjectKeyword(0);
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('Editable', LexerContext.SECTION_LEVEL);
+      manager.onOpenBrace();
+      manager.onIdentifier('Editable');
       manager.onEquals();
       expect(manager.getState().inPropertyValue).toBe(true);
 
@@ -198,8 +209,10 @@ describe('LexerStateManager', () => {
 
     it('should exit property value mode on onCloseBrace()', () => {
       const manager = new LexerStateManager();
+      manager.onObjectKeyword(0);
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('Editable', LexerContext.SECTION_LEVEL);
+      manager.onOpenBrace();
+      manager.onIdentifier('Editable');
       manager.onEquals();
       expect(manager.getState().inPropertyValue).toBe(true);
 
@@ -209,23 +222,27 @@ describe('LexerStateManager', () => {
 
     it('should track lastPropertyName from onIdentifier()', () => {
       const manager = new LexerStateManager();
+      manager.onObjectKeyword(0);
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
+      manager.onOpenBrace();
+      manager.onIdentifier('OnValidate');
 
       expect(manager.getState().lastPropertyName).toBe('OnValidate');
     });
 
     it('should NOT track lastPropertyName outside SECTION_LEVEL', () => {
       const manager = new LexerStateManager();
-      manager.onIdentifier('Customer', LexerContext.NORMAL);
+      manager.onIdentifier('Customer');
 
       expect(manager.getState().lastPropertyName).toBe('');
     });
 
     it('should clear lastPropertyName on onCloseBrace()', () => {
       const manager = new LexerStateManager();
+      manager.onObjectKeyword(0);
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
+      manager.onOpenBrace();
+      manager.onIdentifier('OnValidate');
       expect(manager.getState().lastPropertyName).toBe('OnValidate');
 
       manager.onCloseBrace();
@@ -359,8 +376,10 @@ describe('LexerStateManager', () => {
 
     it('should push CODE_BLOCK on onBeginKeyword() inside trigger property', () => {
       const manager = new LexerStateManager();
+      manager.onObjectKeyword(0);
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
+      manager.onOpenBrace();
+      manager.onIdentifier('OnValidate');
       manager.onEquals();
       manager.onBeginKeyword();
 
@@ -373,7 +392,7 @@ describe('LexerStateManager', () => {
       manager.onOpenBrace(); // Open object brace
       manager.onSectionKeyword('FIELDS');
       manager.onOpenBrace();  // Enter SECTION_LEVEL
-      manager.onIdentifier('InitValue', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('InitValue');
       manager.onEquals();
       manager.onBeginKeyword();
 
@@ -559,7 +578,7 @@ describe('LexerStateManager', () => {
         manager.onOpenBrace();
 
         // Simulate property name followed by equals
-        manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
+        manager.onIdentifier('OnValidate');
         manager.onEquals();
 
         // Now in property value mode at structural column
@@ -615,21 +634,30 @@ describe('LexerStateManager', () => {
       triggerProperties.forEach(prop => {
         it(`should recognize ${prop} as trigger property`, () => {
           const manager = new LexerStateManager();
-          manager.onIdentifier(prop, LexerContext.SECTION_LEVEL);
+          manager.onObjectKeyword(0);
+          manager.onSectionKeyword('FIELDS');
+          manager.onOpenBrace();
+          manager.onIdentifier(prop);
 
           expect(manager.isTriggerProperty()).toBe(true);
         });
 
         it(`should recognize ${prop.toLowerCase()} as trigger property (case insensitive)`, () => {
           const manager = new LexerStateManager();
-          manager.onIdentifier(prop.toLowerCase(), LexerContext.SECTION_LEVEL);
+          manager.onObjectKeyword(0);
+          manager.onSectionKeyword('FIELDS');
+          manager.onOpenBrace();
+          manager.onIdentifier(prop.toLowerCase());
 
           expect(manager.isTriggerProperty()).toBe(true);
         });
 
         it(`should recognize ${prop.toUpperCase()} as trigger property (case insensitive)`, () => {
           const manager = new LexerStateManager();
-          manager.onIdentifier(prop.toUpperCase(), LexerContext.SECTION_LEVEL);
+          manager.onObjectKeyword(0);
+          manager.onSectionKeyword('FIELDS');
+          manager.onOpenBrace();
+          manager.onIdentifier(prop.toUpperCase());
 
           expect(manager.isTriggerProperty()).toBe(true);
         });
@@ -643,7 +671,10 @@ describe('LexerStateManager', () => {
       nonTriggerProperties.forEach(prop => {
         it(`should NOT recognize ${prop} as trigger property`, () => {
           const manager = new LexerStateManager();
-          manager.onIdentifier(prop, LexerContext.SECTION_LEVEL);
+          manager.onObjectKeyword(0);
+          manager.onSectionKeyword('FIELDS');
+          manager.onOpenBrace();
+          manager.onIdentifier(prop);
 
           expect(manager.isTriggerProperty()).toBe(false);
         });
@@ -711,7 +742,7 @@ describe('LexerStateManager', () => {
       manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
 
       // Trigger property
-      manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('OnValidate');
       expect(manager.getState().lastPropertyName).toBe('OnValidate');
 
       manager.onEquals();
@@ -742,7 +773,7 @@ describe('LexerStateManager', () => {
       manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
 
       // Non-trigger property
-      manager.onIdentifier('InitValue', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('InitValue');
       manager.onEquals();
       expect(manager.getState().inPropertyValue).toBe(true);
       expect(manager.isTriggerProperty()).toBe(false);
@@ -782,8 +813,10 @@ describe('LexerStateManager', () => {
     it('should handle brackets in property values', () => {
       const manager = new LexerStateManager();
 
+      manager.onObjectKeyword(0);
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('OptionCaptionML', LexerContext.SECTION_LEVEL);
+      manager.onOpenBrace();
+      manager.onIdentifier('OptionCaptionML');
       manager.onEquals();
       expect(manager.getState().inPropertyValue).toBe(true);
 
@@ -860,8 +893,10 @@ describe('LexerStateManager', () => {
   describe('Edge cases', () => {
     it('should handle empty property name', () => {
       const manager = new LexerStateManager();
+      manager.onObjectKeyword(0);
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('', LexerContext.SECTION_LEVEL);
+      manager.onOpenBrace();
+      manager.onIdentifier('');
 
       expect(manager.getState().lastPropertyName).toBe('');
       expect(manager.isTriggerProperty()).toBe(false);
@@ -895,7 +930,7 @@ describe('LexerStateManager', () => {
 
       manager.onOpenBrace();
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('Test', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('Test');
       manager.onEquals();
       manager.onOpenBracket();
       manager.onOpenBrace(); // Comment brace inside property value
@@ -921,7 +956,7 @@ describe('LexerStateManager', () => {
 
       // BEGIN is encountered at SECTION_LEVEL
       // onIdentifier sets lastPropertyName = "BEGIN"
-      manager.onIdentifier('BEGIN', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('BEGIN');
       expect(manager.getState().lastPropertyName).toBe('BEGIN');
 
       // onBeginKeyword transitions to CODE_BLOCK
@@ -942,7 +977,7 @@ describe('LexerStateManager', () => {
       manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
 
       // Enter CODE_BLOCK via BEGIN from SECTION_LEVEL
-      manager.onIdentifier('BEGIN', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('BEGIN');
       manager.onBeginKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
 
@@ -963,7 +998,7 @@ describe('LexerStateManager', () => {
       manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
 
       // Enter CODE_BLOCK via BEGIN
-      manager.onIdentifier('BEGIN', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('BEGIN');
       manager.onBeginKeyword();
       expect(manager.getCurrentContext()).toBe(LexerContext.CODE_BLOCK);
 
@@ -985,7 +1020,7 @@ describe('LexerStateManager', () => {
       manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
 
       // OnValidate=BEGIN sequence (trigger property)
-      manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('OnValidate');
       expect(manager.getState().lastPropertyName).toBe('OnValidate');
 
       manager.onEquals();
@@ -1012,11 +1047,11 @@ describe('LexerStateManager', () => {
       manager.onOpenBrace(); // Open section brace - now in SECTION_LEVEL
 
       // CASE keyword at SECTION_LEVEL (unusual but possible)
-      manager.onIdentifier('CASE', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('CASE');
       expect(manager.getState().lastPropertyName).toBe('CASE');
 
       // Next identifier should overwrite
-      manager.onIdentifier('SomeProperty', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('SomeProperty');
       expect(manager.getState().lastPropertyName).toBe('SomeProperty');
 
       // Should not have any lingering CASE pollution
@@ -1061,7 +1096,7 @@ describe('LexerStateManager', () => {
       manager.onOpenBrace(); // Enter SECTION_LEVEL
 
       // Trigger property setup
-      manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('OnValidate');
       manager.onEquals(); // Enter property value mode
 
       // Set stale flag
@@ -1173,7 +1208,10 @@ describe('LexerStateManager', () => {
         expect(manager.getInPropertyValue()).toBe(manager.getState().inPropertyValue);
         expect(manager.getInPropertyValue()).toBe(false);
 
-        manager.onIdentifier('Editable', LexerContext.SECTION_LEVEL);
+        manager.onObjectKeyword(0);
+        manager.onSectionKeyword('FIELDS');
+        manager.onOpenBrace();
+        manager.onIdentifier('Editable');
         manager.onEquals();
         expect(manager.getInPropertyValue()).toBe(manager.getState().inPropertyValue);
         expect(manager.getInPropertyValue()).toBe(true);
@@ -1230,7 +1268,10 @@ describe('LexerStateManager', () => {
         expect(manager.getLastPropertyName()).toBe(manager.getState().lastPropertyName);
         expect(manager.getLastPropertyName()).toBe('');
 
-        manager.onIdentifier('Editable', LexerContext.SECTION_LEVEL);
+        manager.onObjectKeyword(0);
+        manager.onSectionKeyword('FIELDS');
+        manager.onOpenBrace();
+        manager.onIdentifier('Editable');
         expect(manager.getLastPropertyName()).toBe(manager.getState().lastPropertyName);
         expect(manager.getLastPropertyName()).toBe('Editable');
 

@@ -498,7 +498,9 @@ export class LexerStateManager {
   /**
    * Handle identifier at SECTION_LEVEL (potential property name)
    */
-  public onIdentifier(identifier: string, context: LexerContext): void {
+  public onIdentifier(identifier: string): void {
+    const context = this.getCurrentContext();
+
     // Track identifier as potential property name only at SECTION_LEVEL
     if (!this.inPropertyValue &&
         context === LexerContext.SECTION_LEVEL) {
