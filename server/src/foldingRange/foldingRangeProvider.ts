@@ -21,7 +21,9 @@ import {
   KeySection,
   FieldGroupSection,
   CodeSection,
-  ActionSection
+  ActionSection,
+  ControlSection,
+  ElementsSection
 } from '../parser/ast';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { ASTWalker } from '../visitor/astWalker';
@@ -159,6 +161,22 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit ACTIONS section - create folding range with Region kind
    */
   visitActionSection(node: ActionSection): void | false {
+    this.addFoldingRange(node.startToken.line, node.endToken.line, FoldingRangeKind.Region);
+    // Continue traversing children
+  }
+
+  /**
+   * Visit CONTROLS section - create folding range with Region kind
+   */
+  visitControlSection(node: ControlSection): void | false {
+    this.addFoldingRange(node.startToken.line, node.endToken.line, FoldingRangeKind.Region);
+    // Continue traversing children
+  }
+
+  /**
+   * Visit ELEMENTS section - create folding range with Region kind
+   */
+  visitElementsSection(node: ElementsSection): void | false {
     this.addFoldingRange(node.startToken.line, node.endToken.line, FoldingRangeKind.Region);
     // Continue traversing children
   }

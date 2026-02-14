@@ -467,7 +467,7 @@ describe('FoldingRangeProvider', () => {
       expect(codeRange?.kind).toBe(FoldingRangeKind.Region);
     });
 
-    it.skip('should create folding range for CONTROLS section with kind Region', () => {
+    it('should create folding range for CONTROLS section with kind Region', () => {
       const code = `OBJECT Page 50000 TestPage
 {
   PROPERTIES
@@ -499,6 +499,40 @@ describe('FoldingRangeProvider', () => {
 
       expect(controlsRange).toBeDefined();
       expect(controlsRange?.kind).toBe(FoldingRangeKind.Region);
+    });
+
+    it('should create folding range for ELEMENTS section with kind Region', () => {
+      const code = `OBJECT XMLport 50000 TestExport
+{
+  PROPERTIES
+  {
+    Direction=Export;
+  }
+  ELEMENTS
+  {
+    { [{GUID}];  ;Root                ;Element ;Text     }
+    { [{GUID}];1 ;Child               ;Element ;Table   ;
+                                                 Table=Customer }
+    { [{GUID}];2 ;No                  ;Element ;Field   ;
+                                                 SourceExpr=Customer."No." }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, lexer } = parseContent(code);
+
+      const ranges = provider.provide(doc, ast, lexer);
+
+      // Should have folding range for ELEMENTS section
+      const elementsRange = ranges.find((r: FoldingRange) => {
+        const startLineText = doc.getText({
+          start: { line: r.startLine, character: 0 },
+          end: { line: r.startLine, character: 100 }
+        });
+        return startLineText.trim().startsWith('ELEMENTS');
+      });
+
+      expect(elementsRange).toBeDefined();
+      expect(elementsRange?.kind).toBe(FoldingRangeKind.Region);
     });
 
     it('should create folding range for FIELDGROUPS section with kind Region', () => {
@@ -774,6 +808,29 @@ describe('FoldingRangeProvider', () => {
 
         expect(actionsRange).toBeDefined();
         expect(actionsRange?.kind).toBe(FoldingRangeKind.Region);
+      });
+
+      it('should fold empty ELEMENTS section', () => {
+        const code = `OBJECT XMLport 50000 TestExport
+{
+  ELEMENTS
+  {
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, lexer } = parseContent(code);
+        const ranges = provider.provide(doc, ast, lexer);
+
+        const elementsRange = ranges.find((r: FoldingRange) => {
+          const startLineText = doc.getText({
+            start: { line: r.startLine, character: 0 },
+            end: { line: r.startLine, character: 100 }
+          });
+          return startLineText.trim().startsWith('ELEMENTS');
+        });
+
+        expect(elementsRange).toBeDefined();
+        expect(elementsRange?.kind).toBe(FoldingRangeKind.Region);
       });
     });
   });
