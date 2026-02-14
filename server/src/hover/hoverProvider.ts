@@ -11,13 +11,23 @@ import {
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SymbolTable, Symbol } from '../symbols/symbolTable';
-import { CALDocument, ProcedureDeclaration } from '../parser/ast';
+import { CALDocument, ProcedureDeclaration, ActionSection, ActionDeclaration, ControlDeclaration } from '../parser/ast';
 import { Token, KEYWORDS, TokenType } from '../lexer/tokens';
 import { BuiltinFunction, BuiltinRegistry } from '../builtins';
 import { ProviderBase } from '../providers/providerBase';
 import { getMetadataByTokenType, getHoverLabel } from '../shared/keywordMetadata';
 import { findTokenAtOffset } from '../shared/tokenSearch';
 import { formatAttributeTokenValue } from '../shared/attributeFormat';
+
+/**
+ * Action type descriptions for hover information
+ */
+const ACTION_TYPE_DESCRIPTIONS = new Map<string, string>([
+  ['actioncontainer', 'Top-level container that groups page actions by category (ActionItems, RelatedInformation, Reports).'],
+  ['actiongroup', 'Groups related actions under a shared caption in the ribbon or menu.'],
+  ['action', 'Individual action (button/menu item) that triggers C/AL code via the OnAction trigger.'],
+  ['separator', 'Visual separator between actions or action groups.']
+]);
 
 /**
  * Get hover information for a keyword
@@ -123,6 +133,29 @@ export class HoverProvider extends ProviderBase {
             value: keywordHoverContent
           }
         };
+      }
+    }
+
+    // Check for action hover (action types and action names)
+    if (ast) {
+      const offset = document.offsetAt(position);
+      const action = this.findActionAtOffset(ast, offset);
+      if (action) {
+        // Check if word matches an action type
+        const typeDesc = ACTION_TYPE_DESCRIPTIONS.get(lowerWord);
+        if (typeDesc && lowerWord === action.actionType.toLowerCase()) {
+          return {
+            contents: {
+              kind: MarkupKind.Markdown,
+              value: `**Action Type**: ${action.actionType}\n\n${typeDesc}`
+            }
+          };
+        }
+        // Check if word matches the action's Name property value
+        const actionName = this.getActionName(action);
+        if (actionName && actionName.toLowerCase() === lowerWord) {
+          return this.buildActionHover(action);
+        }
       }
     }
 
@@ -293,5 +326,121 @@ export class HoverProvider extends ProviderBase {
       'report': 'Report Function'
     };
     return labels[category] || 'Built-in Function';
+  }
+
+  /**
+   * Find the ActionDeclaration at a given offset by searching all action sections
+   */
+  private findActionAtOffset(ast: CALDocument, offset: number): ActionDeclaration | null {
+    // Check top-level ACTIONS section
+    const topLevel = ast?.object?.actions;
+    const found = this.searchActionSection(topLevel, offset);
+    if (found) return found;
+
+    // Check control-embedded ActionList properties (recursive)
+    const controls = ast?.object?.controls?.controls;
+    if (controls) {
+      return this.searchControlsForActions(controls, offset);
+    }
+    return null;
+  }
+
+  /**
+   * Search an ActionSection for an action at the given offset
+   */
+  private searchActionSection(section: ActionSection | null | undefined, offset: number): ActionDeclaration | null {
+    if (!section) return null;
+    if (offset < section.startToken.startOffset || offset > section.endToken.endOffset) return null;
+
+    // Flatten the action tree and find the deepest action containing the offset
+    return this.searchActionTreeFlattened(section.actions, offset);
+  }
+
+  /**
+   * Flatten and search action tree for the action containing the offset.
+   * Returns the deepest (most specific) action that contains the offset.
+   */
+  private searchActionTreeFlattened(actions: readonly ActionDeclaration[], offset: number): ActionDeclaration | null {
+    let result: ActionDeclaration | null = null;
+    let maxDepth = -1;
+
+    const visit = (action: ActionDeclaration, depth: number) => {
+      if (offset >= action.startToken.startOffset && offset <= action.endToken.endOffset) {
+        // Prefer deeper (more specific) matches
+        if (depth > maxDepth) {
+          maxDepth = depth;
+          result = action;
+        }
+      }
+      for (const child of action.children) {
+        visit(child, depth + 1);
+      }
+    };
+
+    for (const action of actions) {
+      visit(action, 0);
+    }
+
+    return result;
+  }
+
+  /**
+   * Recursively search controls for embedded ActionList properties
+   */
+  private searchControlsForActions(controls: readonly ControlDeclaration[], offset: number): ActionDeclaration | null {
+    for (const control of controls) {
+      // Check properties for ActionList
+      if (control.properties?.properties) {
+        for (const prop of control.properties.properties) {
+          if (prop.actionSection) {
+            const found = this.searchActionSection(prop.actionSection, offset);
+            if (found) return found;
+          }
+        }
+      }
+      // Recurse into children
+      if (control.children) {
+        const found = this.searchControlsForActions(control.children, offset);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get the Name property value from an action declaration
+   */
+  private getActionName(action: ActionDeclaration): string | undefined {
+    return action.properties?.properties?.find(p => p.name === 'Name')?.value;
+  }
+
+  /**
+   * Build hover content for an action declaration summary
+   */
+  private buildActionHover(action: ActionDeclaration): Hover {
+    const name = this.getActionName(action);
+    const nameStr = name ? ` "${name}"` : '';
+    let content = `**${action.actionType}** (ID: ${action.id})${nameStr}\n\n`;
+
+    // Show key properties (excluding Name which is already in the header)
+    const keyProps = ['Promoted', 'Image', 'RunObject', 'CaptionML', 'ActionContainerType'];
+    const propValues: string[] = [];
+    if (action.properties?.properties) {
+      for (const prop of action.properties.properties) {
+        if (prop.name !== 'Name' && keyProps.includes(prop.name)) {
+          propValues.push(`${prop.name}=${prop.value}`);
+        }
+      }
+    }
+    if (propValues.length > 0) {
+      content += propValues.join(' | ');
+    }
+
+    return {
+      contents: {
+        kind: MarkupKind.Markdown,
+        value: content.trim()
+      }
+    };
   }
 }

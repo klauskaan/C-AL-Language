@@ -373,6 +373,11 @@ export const KEYWORD_METADATA = new Map<TokenType, KeywordMetadata>([
     category: 'Section',
     completionKind: CompletionItemKind.Keyword
   })],
+  [TokenType.Actions, createMetadata({
+    category: 'Section',
+    completionKind: CompletionItemKind.Keyword,
+    description: 'Contains page action definitions (ribbon buttons, menus, navigation actions).'
+  })],
 
   // Other keywords
   [TokenType.With, createMetadata({

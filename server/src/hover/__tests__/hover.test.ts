@@ -773,4 +773,217 @@ describe('HoverProvider', () => {
       expect(elapsed).toBeLessThan(200);
     });
   });
+
+  describe('Action Hover', () => {
+    it('should show ACTIONS as section keyword', () => {
+      const doc = createDocument('ACTIONS');
+      const hover = provider.getHover(doc, Position.create(0, 3));
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('ACTIONS');
+      expect(content).toContain('Section Keyword');
+    });
+
+    it('should show action type description for ActionContainer', () => {
+      const code = `OBJECT Page 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+  }
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                ActionContainerType=ActionItems }
+  }
+}`;
+      const { ast } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+      const lines = code.split('\n');
+      const actionLine = lines.findIndex(l => l.includes('ActionContainer'));
+      const col = lines[actionLine].indexOf('ActionContainer');
+      const hover = provider.getHover(doc, Position.create(actionLine, col + 5), ast);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('Action Type');
+      expect(content).toContain('ActionContainer');
+    });
+
+    it('should show action type description for Action', () => {
+      const code = `OBJECT Page 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+  }
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                ActionContainerType=ActionItems }
+    { 2   ;1   ;Action        ;
+                Name=Refresh }
+  }
+}`;
+      const { ast } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+      const lines = code.split('\n');
+      const actionLine = lines.findIndex(l => /;Action\s/.test(l));
+      const col = lines[actionLine].indexOf('Action');
+      const hover = provider.getHover(doc, Position.create(actionLine, col + 3), ast);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('Action Type');
+      expect(content).toContain('trigger');
+    });
+
+    it('should show action type description for ActionGroup', () => {
+      const code = `OBJECT Page 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+  }
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                ActionContainerType=ActionItems }
+    { 2   ;1   ;ActionGroup;
+                CaptionML=ENU=Functions }
+  }
+}`;
+      const { ast } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+      const lines = code.split('\n');
+      const actionGroupLine = lines.findIndex(l => l.includes('ActionGroup'));
+      const col = lines[actionGroupLine].indexOf('ActionGroup');
+      const hover = provider.getHover(doc, Position.create(actionGroupLine, col + 5), ast);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('Action Type');
+      expect(content).toContain('ActionGroup');
+    });
+
+    it('should show action type description for Separator', () => {
+      const code = `OBJECT Page 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+  }
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                ActionContainerType=ActionItems }
+    { 2   ;1   ;Separator }
+  }
+}`;
+      const { ast } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+      const lines = code.split('\n');
+      const sepLine = lines.findIndex(l => l.includes('Separator'));
+      const col = lines[sepLine].indexOf('Separator');
+      const hover = provider.getHover(doc, Position.create(sepLine, col + 3), ast);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('Action Type');
+      expect(content).toContain('Separator');
+    });
+
+    it('should show action summary when hovering on action Name value', () => {
+      const code = `OBJECT Page 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+  }
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                ActionContainerType=ActionItems }
+    { 2   ;1   ;Action        ;
+                Name=Refresh;
+                Promoted=Yes;
+                Image=Refresh }
+  }
+}`;
+      const { ast } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+      const lines = code.split('\n');
+      const nameLine = lines.findIndex(l => l.includes('Name=Refresh'));
+      const col = lines[nameLine].indexOf('Refresh');
+      const hover = provider.getHover(doc, Position.create(nameLine, col + 3), ast);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('Action');
+      expect(content).toContain('Refresh');
+      expect(content).toContain('2');
+    });
+
+    it('should not show action type hover outside ACTIONS section', () => {
+      const doc = createDocument('ActionContainer');
+      const hover = provider.getHover(doc, Position.create(0, 5));
+      expect(hover).toBeNull();
+    });
+
+    it('should be case-insensitive for action type hover', () => {
+      const code = `OBJECT Page 50000 Test
+{
+  OBJECT-PROPERTIES
+  {
+  }
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                ActionContainerType=ActionItems }
+    { 2   ;1   ;Separator }
+  }
+}`;
+      const { ast } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+      const lines = code.split('\n');
+      const sepLine = lines.findIndex(l => l.includes('Separator'));
+      const col = lines[sepLine].indexOf('Separator');
+      const hover = provider.getHover(doc, Position.create(sepLine, col + 3), ast);
+
+      expect(hover).not.toBeNull();
+      const content = getHoverContent(hover);
+      expect(content).toContain('Separator');
+    });
+  });
 });
