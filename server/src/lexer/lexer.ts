@@ -692,6 +692,14 @@ export class Lexer {
   }
 
   /**
+   * Check if current column should be protected from BEGIN/END/CASE context changes.
+   * Delegates to state manager.
+   */
+  private shouldProtectFromBeginEnd(): boolean {
+    return this.state.shouldProtectFromBeginEnd();
+  }
+
+  /**
    * Scan left brace '{' - handles both structural delimiters and block comments
    * In CODE_BLOCK or CASE_BLOCK context, braces start comments; otherwise they are structural delimiters
    */
@@ -1171,13 +1179,16 @@ export class Lexer {
       tokenType = TokenType.Identifier;
     }
 
-    // Downgrade BEGIN/END to identifiers in non-trigger property values
-    // Prevents BEGIN/END in property values (e.g., InitValue=Begin or OptionCaptionML=[ENU=Begin,End]) from being treated as code delimiters
-    // BUT: Keep BEGIN/END as keywords for:
+    // Downgrade BEGIN/END/CASE to identifiers in protected contexts:
+    // 1. Structural columns (FIELDS/KEYS/CONTROLS/ELEMENTS/ACTIONS/MENUNODES) - prevents "BEGIN" in field names from starting code blocks
+    // 2. Non-trigger property values - prevents InitValue=Begin or OptionCaptionML=[ENU=Begin,End] from being treated as code delimiters
+    // 3. Inside brackets (but not in code context) - handles ML property arrays
+    // BUT: Keep BEGIN/END/CASE as keywords for:
     // - Trigger properties (OnInsert, OnModify, etc.) where they delimit code blocks
     // - CODE_BLOCK context (actual code, not property values)
-    if ((tokenType === TokenType.Begin || tokenType === TokenType.End) &&
-        ((this.state.getBracketDepth() > 0 && !this.isInCodeContext()) ||
+    if ((tokenType === TokenType.Begin || tokenType === TokenType.End || tokenType === TokenType.Case) &&
+        (this.shouldProtectFromBeginEnd() ||
+         (this.state.getBracketDepth() > 0 && !this.isInCodeContext()) ||
          (this.state.getInPropertyValue() &&
           !this.isTriggerProperty() &&
           this.getCurrentContext() !== LexerContext.CODE_BLOCK))) {

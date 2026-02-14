@@ -279,7 +279,8 @@ export class LexerStateManager {
    * Check if current column should be protected from context changes
    * Section-aware protection:
    * - FIELDS: Protect COL_1-4 (structural columns)
-   * - KEYS: Protect COL_1-2 (structural columns)
+   * - KEYS: Protect COL_1-2 (reserved ; field list)
+   * - MENUNODES: Protect COL_1-2 (node type ; GUID)
    * - CONTROLS: Protect COL_1-3 (structural columns)
    * - ELEMENTS: Protect COL_1-4 (structural columns)
    * - ACTIONS: Protect COL_1-3 (structural columns)
@@ -299,7 +300,8 @@ export class LexerStateManager {
                this.fieldDefColumn === FieldDefColumn.COL_4;
 
       case 'KEYS':
-        // Protect only COL_1-2 (reserved ; field list)
+      case 'MENUNODES':
+        // Protect only COL_1-2 (KEYS: reserved ; field list | MENUNODES: node type ; GUID)
         return this.fieldDefColumn === FieldDefColumn.COL_1 ||
                this.fieldDefColumn === FieldDefColumn.COL_2;
 
@@ -393,7 +395,8 @@ export class LexerStateManager {
          this.currentSectionType === 'KEYS' ||
          this.currentSectionType === 'CONTROLS' ||
          this.currentSectionType === 'ELEMENTS' ||
-         this.currentSectionType === 'ACTIONS')) {
+         this.currentSectionType === 'ACTIONS' ||
+         this.currentSectionType === 'MENUNODES')) {
       this.fieldDefColumn = FieldDefColumn.COL_1;
     }
 

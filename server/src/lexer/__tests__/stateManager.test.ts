@@ -542,6 +542,24 @@ describe('LexerStateManager', () => {
         expect(manager.shouldProtectFromBeginEnd()).toBe(false);
       });
 
+      it('should protect structural columns in MENUNODES section', () => {
+        const manager = new LexerStateManager();
+        manager.onObjectKeyword(0); // Establish OBJECT_LEVEL context
+        manager.onOpenBrace(); // Open object brace
+        manager.onSectionKeyword('MENUNODES');
+        manager.onOpenBrace(); // Open section brace
+        manager.onOpenBrace(); // MenuNode definition start
+
+        // COL_1 and COL_2 should be protected in MENUNODES
+        expect(manager.shouldProtectFromBeginEnd()).toBe(true);
+
+        manager.onSemicolon(); // COL_2
+        expect(manager.shouldProtectFromBeginEnd()).toBe(true);
+
+        manager.onSemicolon(); // COL_3 - not protected in MENUNODES
+        expect(manager.shouldProtectFromBeginEnd()).toBe(false);
+      });
+
       it('should protect structural columns in CONTROLS section', () => {
         const manager = new LexerStateManager();
         manager.onObjectKeyword(0); // Establish OBJECT_LEVEL context
@@ -611,6 +629,24 @@ describe('LexerStateManager', () => {
         expect(manager.shouldProtectFromSectionKeyword()).toBe(true);
 
         manager.onSemicolon(); // PROPERTIES
+        expect(manager.shouldProtectFromSectionKeyword()).toBe(false);
+      });
+
+      it('should protect structural columns in MENUNODES section', () => {
+        const manager = new LexerStateManager();
+        manager.onObjectKeyword(0); // Establish OBJECT_LEVEL context
+        manager.onOpenBrace(); // Open object brace
+        manager.onSectionKeyword('MENUNODES');
+        manager.onOpenBrace(); // Open section brace
+        manager.onOpenBrace(); // MenuNode definition start
+
+        // COL_1 should be protected
+        expect(manager.shouldProtectFromSectionKeyword()).toBe(true);
+
+        manager.onSemicolon(); // COL_2
+        expect(manager.shouldProtectFromSectionKeyword()).toBe(true);
+
+        manager.onSemicolon(); // COL_3 - not protected in MENUNODES
         expect(manager.shouldProtectFromSectionKeyword()).toBe(false);
       });
 
