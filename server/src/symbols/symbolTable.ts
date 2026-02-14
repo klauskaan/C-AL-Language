@@ -5,7 +5,8 @@ import {
   ProcedureDeclaration,
   TriggerDeclaration,
   EventDeclaration,
-  FieldDeclaration
+  FieldDeclaration,
+  ActionDeclaration
 } from '../parser/ast';
 import { Type } from '../types/types';
 import { resolveType, resolveVariableType } from '../types/typeResolver';
@@ -14,7 +15,7 @@ import { ASTWalker } from '../visitor/astWalker';
 
 export interface Symbol {
   name: string;
-  kind: 'variable' | 'parameter' | 'field' | 'procedure' | 'function';
+  kind: 'variable' | 'parameter' | 'field' | 'procedure' | 'function' | 'action';
   token: Token;
   /** Syntactic type name as a string (for backwards compatibility) */
   type?: string;
@@ -310,6 +311,28 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
     // Return false to prevent walker from re-traversing children
     return false;
   }
+
+  /**
+   * Visit an ActionDeclaration node and add its Name property as a symbol.
+   * Only actions with a Name property are registered.
+   * Children and triggers are traversed by the walker automatically.
+   */
+  visitActionDeclaration(node: ActionDeclaration): void | false {
+    // Find the Name property in the action's properties
+    const nameProp = node.properties?.properties?.find(p => p.name === 'Name');
+    if (!nameProp) return;
+
+    // Use the value token for accurate source location, fallback to property start token
+    const token = nameProp.valueTokens?.[0] ?? nameProp.startToken;
+
+    this.currentScope.addSymbol({
+      name: nameProp.value,
+      kind: 'action',
+      token
+    });
+
+    // Do NOT return false — let the walker traverse triggers and children
+  }
 }
 
 export class SymbolTable {
@@ -426,7 +449,7 @@ export class SymbolTable {
    */
   public defineGlobal(symbol: {
     name: string;
-    kind: 'variable' | 'parameter' | 'field' | 'procedure' | 'function';
+    kind: 'variable' | 'parameter' | 'field' | 'procedure' | 'function' | 'action';
     type?: string;
     startOffset: number;
     endOffset: number;

@@ -1349,6 +1349,194 @@ describe('SymbolTable', () => {
         expect(symbolTable.getAllSymbols()).toEqual([]);
       });
     });
+
+    describe('with actions', () => {
+      it('should extract action symbol from standalone ACTIONS section with Name property', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1;0;ActionContainer }
+    { 2;1;Action;
+        Name=MyAction }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('MyAction')).toBe(true);
+        const symbol = symbolTable.getSymbol('MyAction');
+        expect(symbol).toBeDefined();
+        expect(symbol?.kind).toBe('action');
+        expect(symbol?.name).toBe('MyAction');
+      });
+
+      it('should extract multiple action symbols', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1;0;ActionContainer }
+    { 2;1;Action;
+        Name=Refresh }
+    { 3;1;Action;
+        Name=ShowErrors }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('Refresh')).toBe(true);
+        expect(symbolTable.hasSymbol('ShowErrors')).toBe(true);
+
+        const allSymbols = symbolTable.getAllSymbols();
+        expect(allSymbols.length).toBe(2);
+        expect(allSymbols.some(s => s.name === 'Refresh')).toBe(true);
+        expect(allSymbols.some(s => s.name === 'ShowErrors')).toBe(true);
+      });
+
+      it('should not register actions without Name property', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1;0;ActionContainer }
+    { 2;1;Separator }
+    { 3;1;Action;
+        Name=ValidAction }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('ActionContainer')).toBe(false);
+        expect(symbolTable.hasSymbol('Separator')).toBe(false);
+        expect(symbolTable.hasSymbol('ValidAction')).toBe(true);
+      });
+
+      it('should handle action with null properties (separator with no properties at all)', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1;0;ActionContainer }
+    { 30;1;Separator }
+    { 31;1;Action;
+        Name=TestAction }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('Separator')).toBe(false);
+        expect(symbolTable.hasSymbol('TestAction')).toBe(true);
+        expect(symbolTable.getAllSymbols().length).toBe(1);
+      });
+
+      it('should be case-insensitive for action name lookup', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1;0;ActionContainer }
+    { 2;1;Action;
+        Name=MyAction }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('myaction')).toBe(true);
+        expect(symbolTable.hasSymbol('MYACTION')).toBe(true);
+        expect(symbolTable.hasSymbol('MyAction')).toBe(true);
+      });
+
+      it('should create child scopes for action triggers', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1;0;ActionContainer }
+    { 2;1;Action;
+        Name=ProcessData;
+        OnAction=VAR
+                   Counter : Integer;
+                 BEGIN
+                   Counter := 0;
+                 END;
+                  }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        const rootScope = symbolTable.getRootScope();
+
+        expect(symbolTable.hasSymbol('ProcessData')).toBe(true);
+        expect(rootScope.hasOwnSymbol('Counter')).toBe(false);
+
+        expect(rootScope.children.length).toBeGreaterThan(0);
+        const triggerScope = rootScope.children.find(
+          child => child.getOwnSymbol('Counter') !== undefined
+        );
+        expect(triggerScope).toBeDefined();
+        expect(triggerScope?.getOwnSymbol('Counter')?.type).toBe('Integer');
+      });
+
+      it('should register actions from inline ActionList property', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    ActionList=ACTIONS
+    {
+      { 1;0;ActionContainer }
+      { 2;1;Action;
+          Name=InlineAction }
+    }
+  }
+  CONTROLS
+  {
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        expect(symbolTable.hasSymbol('InlineAction')).toBe(true);
+        const symbol = symbolTable.getSymbol('InlineAction');
+        expect(symbol?.kind).toBe('action');
+        expect(symbol?.name).toBe('InlineAction');
+      });
+    });
   });
 
   describe('Symbol lookup', () => {
