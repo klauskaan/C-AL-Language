@@ -1806,7 +1806,7 @@ export class Parser {
     this.consume(TokenType.Semicolon, 'Expected ; after indent level');
 
     // Column 3: Action Type
-    const { actionType, rawActionType } = this.parseActionType();
+    const { actionType, rawActionType, typeToken } = this.parseActionType();
 
     if (this.check(TokenType.Semicolon)) {
       this.advance();
@@ -1848,6 +1848,7 @@ export class Parser {
       id,
       indentLevel,
       actionType,
+      actionTypeToken: typeToken,
       rawActionType,
       properties,
       triggers,
@@ -1857,10 +1858,10 @@ export class Parser {
     };
   }
 
-  private parseActionType(): { actionType: ActionType; rawActionType?: string } {
+  private parseActionType(): { actionType: ActionType; rawActionType?: string; typeToken?: Token } {
     if (this.check(TokenType.Semicolon) || this.check(TokenType.RightBrace)) {
       this.recordError('Missing action type, defaulting to Action', this.peek());
-      return { actionType: 'Action' };
+      return { actionType: 'Action', typeToken: undefined };
     }
 
     const typeToken = this.advance();
@@ -1876,11 +1877,11 @@ export class Parser {
     const normalizedType = typeMap[rawValue.toLowerCase()];
 
     if (normalizedType) {
-      return { actionType: normalizedType };
+      return { actionType: normalizedType, typeToken };
     }
 
     this.recordError(`Unknown action type '${rawValue}', treating as Action`, typeToken);
-    return { actionType: 'Action', rawActionType: rawValue };
+    return { actionType: 'Action', rawActionType: rawValue, typeToken };
   }
 
   private buildActionHierarchy(flatActions: ActionDeclaration[]): ActionDeclaration[] {

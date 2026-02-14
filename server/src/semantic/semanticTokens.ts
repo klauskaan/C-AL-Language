@@ -1,7 +1,9 @@
 import { SemanticTokensBuilder } from 'vscode-languageserver';
 import { Token, TokenType } from '../lexer/tokens';
-import { CALDocument } from '../parser/ast';
+import { CALDocument, ActionDeclaration } from '../parser/ast';
 import { scanForSetLiterals, TokenContextType } from './setLiteralScanner';
+import { ASTWalker } from '../visitor/astWalker';
+import { ASTVisitor } from '../visitor/astVisitor';
 
 /**
  * Semantic token types - these will be sent to the client
@@ -59,6 +61,54 @@ export function getSemanticTokensLegend(): { tokenTypes: string[], tokenModifier
 }
 
 /**
+ * Scan AST for action type tokens and property name tokens
+ *
+ * Unlike setLiteralScanner (AST-only), this scanner takes both the AST
+ * and token array. Multi-word property names require scanning forward in
+ * the token array from Property.startToken to find all name tokens.
+ */
+function scanForActionTokens(ast: CALDocument, tokens: readonly Token[]): Map<number, SemanticTokenTypes> {
+  const contextMap = new Map<number, SemanticTokenTypes>();
+  const walker = new ASTWalker();
+
+  // Build a token index for offset-based lookup
+  const tokensByOffset = new Map<number, number>();  // startOffset -> array index
+  for (let i = 0; i < tokens.length; i++) {
+    tokensByOffset.set(tokens[i].startOffset, i);
+  }
+
+  const visitor: Partial<ASTVisitor> = {
+    visitActionDeclaration(node: ActionDeclaration): void | false {
+      // Mark action type token as Keyword
+      if (node.actionTypeToken) {
+        contextMap.set(node.actionTypeToken.startOffset, SemanticTokenTypes.Keyword);
+      }
+
+      // Mark property name tokens as Property
+      if (node.properties?.properties) {
+        for (const prop of node.properties.properties) {
+          const startIdx = tokensByOffset.get(prop.startToken.startOffset);
+          if (startIdx !== undefined) {
+            // Scan forward from property start token until = is found
+            const MAX_NAME_TOKENS = 5;  // Matches accumulatePropertyName
+            for (let j = startIdx; j < startIdx + MAX_NAME_TOKENS && j < tokens.length; j++) {
+              if (tokens[j].type === TokenType.Equal) break;
+              contextMap.set(tokens[j].startOffset, SemanticTokenTypes.Property);
+            }
+          }
+        }
+      }
+
+      // Don't return false — let the walker traverse children automatically
+      // This covers nested action hierarchies (children) and inline ActionList
+    }
+  };
+
+  walker.walk(ast, visitor);
+  return contextMap;
+}
+
+/**
  * Semantic Tokens Provider
  *
  * This is the key feature that solves the quoted identifier issue.
@@ -86,6 +136,7 @@ export class SemanticTokensProvider {
 
     // Scan for set literals and range operators
     const setLiteralContext = scanForSetLiterals(ast);
+    const actionContext = scanForActionTokens(ast, tokens);
 
     // Process all tokens and assign semantic token types
     for (let i = 0; i < tokens.length; i++) {
@@ -95,7 +146,7 @@ export class SemanticTokensProvider {
       // Track OBJECT-PROPERTIES and PROPERTIES context
       this.updatePropertiesContext(token);
 
-      this.processToken(token, builder, nextToken, setLiteralContext.contextMap);
+      this.processToken(token, builder, nextToken, setLiteralContext.contextMap, actionContext);
     }
   }
 
@@ -134,10 +185,20 @@ export class SemanticTokensProvider {
   }
 
 
-  private processToken(token: Token, builder: SemanticTokensBuilder, nextToken: Token | null, contextMap: Map<number, TokenContextType>): void {
+  private processToken(token: Token, builder: SemanticTokensBuilder, nextToken: Token | null, contextMap: Map<number, TokenContextType>, actionContextMap: Map<number, SemanticTokenTypes>): void {
     let tokenType: number | null = null;
 
-    // IMPORTANT: Check OBJECT-PROPERTIES context FIRST
+    // Check action context map FIRST (AST-derived, definitive)
+    const actionSemanticType = actionContextMap.get(token.startOffset);
+    if (actionSemanticType !== undefined) {
+      const line = token.line - 1;
+      const char = token.column - 1;
+      const length = token.endOffset - token.startOffset;
+      builder.push(line, char, length, actionSemanticType, 0);
+      return;
+    }
+
+    // Check OBJECT-PROPERTIES context next
     // If we're in OBJECT-PROPERTIES and this is handled there, use that result
     // This prevents OBJECT-PROPERTIES brackets from being marked as SetBracket
     if (this.inObjectProperties && this.propertiesBraceDepth > 0) {
@@ -207,6 +268,7 @@ export class SemanticTokensProvider {
       case TokenType.Fields:
       case TokenType.Keys:
       case TokenType.FieldGroups:
+      case TokenType.Actions:
       case TokenType.Code:
       case TokenType.If:
       case TokenType.Then:
