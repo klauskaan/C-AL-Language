@@ -548,4 +548,128 @@ describe('Lexer - MENUNODES Section Support', () => {
       expect(state.fieldDefColumn).toBe('NONE');
     });
   });
+
+  describe('MenuGroup entries in COL_1', () => {
+    it('should tokenize MenuGroup type declaration', () => {
+      const code = '{ MenuGroup  ;1 }';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Expected tokens: {, MenuGroup, ;, 1, }
+      expect(tokens[0].type).toBe(TokenType.LeftBrace);
+      expect(tokens[1].type).toBe(TokenType.Identifier); // MenuGroup is a value, not keyword
+      expect(tokens[1].value).toBe('MenuGroup');
+      expect(tokens[2].type).toBe(TokenType.Semicolon);
+      expect(tokens[3].type).toBe(TokenType.Integer);
+      expect(tokens[3].value).toBe('1');
+    });
+
+    it('should tokenize MenuGroup with GUID in COL_2', () => {
+      const code = '{ MenuGroup  ;[{12345678-1234-1234-1234-123456789ABC}] }';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Verify MenuGroup is an identifier
+      expect(tokens[1].type).toBe(TokenType.Identifier);
+      expect(tokens[1].value).toBe('MenuGroup');
+
+      // Verify brackets present for GUID
+      const leftBracketIndex = tokens.findIndex(t => t.type === TokenType.LeftBracket);
+      expect(leftBracketIndex).toBeGreaterThan(-1);
+
+      const rightBracketIndex = tokens.findIndex(t => t.type === TokenType.RightBracket);
+      expect(rightBracketIndex).toBeGreaterThan(leftBracketIndex);
+    });
+
+    it('should tokenize MenuGroup with properties in COL_3', () => {
+      const code = '{ MenuGroup  ;1 ;Name=Group Name }';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Verify MenuGroup is an identifier
+      expect(tokens[1].type).toBe(TokenType.Identifier);
+      expect(tokens[1].value).toBe('MenuGroup');
+
+      // Find Name property
+      const nameIndex = tokens.findIndex(t =>
+        t.type === TokenType.Identifier && t.value === 'Name'
+      );
+      expect(nameIndex).toBeGreaterThan(-1);
+      expect(tokens[nameIndex + 1].type).toBe(TokenType.Equal);
+    });
+
+    it('should handle complete MenuSuite with MenuGroup entries', () => {
+      const code = `OBJECT MenuSuite 1 Test MenuSuite
+{
+  OBJECT-PROPERTIES
+  {
+    Date=010125D;
+    Time=120000T;
+  }
+  PROPERTIES
+  {
+  }
+  MENUNODES
+  {
+    { MenuGroup  ;1 ;
+                  Name=Group Name;
+                  CaptionML=ENU=Employee Management }
+    { MenuGroup  ;2 ;
+                  ParentID=1;
+                  Name=Reports;
+                  CaptionML=ENU=Reports }
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const state = lexer.getContextState();
+
+      // No STRING tokens should be present
+      const stringTokens = tokens.filter(t => t.type === TokenType.String);
+      expect(stringTokens.length).toBe(0);
+
+      // Verify clean exit
+      expect(state.braceDepth).toBe(0);
+      expect(state.contextStack).toEqual(['NORMAL']);
+      expect(state.contextUnderflowDetected).toBe(false);
+      expect(state.fieldDefColumn).toBe('NONE');
+    });
+
+    it('should handle mixed MenuItem and MenuGroup entries', () => {
+      const code = `OBJECT MenuSuite 1 Test
+{
+  MENUNODES
+  {
+    { MenuGroup  ;1 ;Name=HR Management }
+    { MenuItem   ;2 ;ParentID=1;Name=Create HR's from Employees }
+    { MenuGroup  ;3 ;Name=Finance }
+    { MenuItem   ;4 ;ParentID=3;Name=Financial Report }
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const state = lexer.getContextState();
+
+      // No STRING tokens should be present (apostrophe in HR's must not trigger string tokenization)
+      const stringTokens = tokens.filter(t => t.type === TokenType.String);
+      expect(stringTokens.length).toBe(0);
+
+      // Verify both MenuGroup and MenuItem tokens found as identifiers
+      const menuGroupTokens = tokens.filter(t =>
+        t.type === TokenType.Identifier && t.value === 'MenuGroup'
+      );
+      expect(menuGroupTokens.length).toBe(2);
+
+      const menuItemTokens = tokens.filter(t =>
+        t.type === TokenType.Identifier && t.value === 'MenuItem'
+      );
+      expect(menuItemTokens.length).toBe(2);
+
+      // Verify clean exit
+      expect(state.braceDepth).toBe(0);
+      expect(state.contextStack).toEqual(['NORMAL']);
+      expect(state.contextUnderflowDetected).toBe(false);
+      expect(state.fieldDefColumn).toBe('NONE');
+    });
+  });
 });
