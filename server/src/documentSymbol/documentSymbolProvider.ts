@@ -19,7 +19,8 @@ import {
   ActionSection,
   ActionDeclaration,
   ControlSection,
-  ControlDeclaration
+  ControlDeclaration,
+  getActionName
 } from '../parser/ast';
 import { ProviderBase } from '../providers/providerBase';
 import { ASTVisitor } from '../visitor/astVisitor';
@@ -118,8 +119,8 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
    * Build a symbol for an action and recursively build symbols for its children
    */
   private buildActionSymbol(action: ActionDeclaration, parent: DocumentSymbol): void {
-    const nameProp = action.properties?.properties?.find(p => p.name === 'Name');
-    const nameStr = nameProp ? ` "${nameProp.value}"` : '';
+    const name = getActionName(action);
+    const nameStr = name ? ` "${name}"` : '';
 
     const symbol = this.createSymbol(
       `${action.actionType} ${action.id}${nameStr}`,
