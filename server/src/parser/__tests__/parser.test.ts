@@ -1834,7 +1834,13 @@ describe('Parser - Field Properties', () => {
           { 1 ; ; "No." ; Code20 ; CaptionML }
         }
       }`;
-      expectParseNoThrow(code);
+      const { ast, errors } = parseCode(code);
+
+      expect(ast).toBeDefined();
+      expect(errors.length).toBeGreaterThan(0);
+
+      // Verify error location for regression testing (issue #467)
+      expect(errors[0].token.line).toBe(3);
     });
 
     it('should continue parsing after field property error', () => {
@@ -1844,10 +1850,13 @@ describe('Parser - Field Properties', () => {
           { 2 ; ; Name ; Text100 }
         }
       }`;
-      const { ast } = parseCode(code);
+      const { ast, errors } = parseCode(code);
 
       expect(ast).toBeDefined();
       expect(ast.type).toBe('CALDocument');
+
+      // Verify error location for regression testing (issue #467)
+      expect(errors[0].token.line).toBe(3);
     });
   });
 });
