@@ -72,6 +72,8 @@ export interface Property {
   calcFormula?: CalcFormulaNode;
   /** Parsed TableRelation structure (for TableRelation properties) */
   tableRelation?: TableRelationNode;
+  /** Parsed ActionList structure (for ActionList properties) */
+  actionSection?: ActionSection;
 }
 
 /**
@@ -457,6 +459,8 @@ export interface ActionSection {
   startToken: Token;
   endToken: Token;
   actions: ActionDeclaration[];
+  /** Where this ActionSection originated — enables context-aware validation */
+  source?: 'top-level' | 'property' | 'control-property';
 }
 
 /**
