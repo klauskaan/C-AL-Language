@@ -233,7 +233,7 @@
         },
         {
           "name": "meta.section.generic.cal",
-          "begin": "^\\s*(FIELDS|KEYS|FIELDGROUPS|CONTROLS|ELEMENTS|DATASET|REQUESTPAGE|LABELS|SECTIONS)\\s*$",
+          "begin": "^\\s*(FIELDS|KEYS|FIELDGROUPS|CONTROLS|ACTIONS|ELEMENTS|DATASET|REQUESTPAGE|LABELS|SECTIONS)\\s*$",
           "end": "^\\s*\\}\\s*$",
           "beginCaptures": {
             "1": { "name": "storage.modifier.cal" }
@@ -509,7 +509,7 @@
         {
           "comment": "Section keywords - only match at line start to avoid highlighting identifiers/functions with same name",
           "name": "storage.modifier.section.cal",
-          "match": "^\\s*(PROPERTIES|FIELDS|KEYS|FIELDGROUPS|CODE|ELEMENTS|CONTROLS|SECTIONS|DATASET|REQUESTPAGE|LABELS)(?=\\s*$)"
+          "match": "^\\s*(PROPERTIES|FIELDS|KEYS|FIELDGROUPS|CODE|ELEMENTS|CONTROLS|ACTIONS|SECTIONS|DATASET|REQUESTPAGE|LABELS)(?=\\s*$)"
         },
         {
           "comment": "OBJECT-PROPERTIES section keyword - special case with hyphen, explicitly scope all parts to prevent operator highlighting",
