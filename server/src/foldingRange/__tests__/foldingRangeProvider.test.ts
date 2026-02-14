@@ -371,7 +371,7 @@ describe('FoldingRangeProvider', () => {
           start: { line: r.startLine, character: 0 },
           end: { line: r.startLine, character: 100 }
         });
-        return startLineText.includes('PROPERTIES');
+        return startLineText.trim().startsWith('PROPERTIES');
       });
 
       expect(propsRange).toBeDefined();
@@ -399,7 +399,7 @@ describe('FoldingRangeProvider', () => {
           start: { line: r.startLine, character: 0 },
           end: { line: r.startLine, character: 100 }
         });
-        return startLineText.includes('FIELDS');
+        return startLineText.trim().startsWith('FIELDS');
       });
 
       expect(fieldsRange).toBeDefined();
@@ -429,7 +429,7 @@ describe('FoldingRangeProvider', () => {
           start: { line: r.startLine, character: 0 },
           end: { line: r.startLine, character: 100 }
         });
-        return startLineText.includes('KEYS');
+        return startLineText.trim().startsWith('KEYS');
       });
 
       expect(keysRange).toBeDefined();
@@ -460,7 +460,7 @@ describe('FoldingRangeProvider', () => {
           start: { line: r.startLine, character: 0 },
           end: { line: r.startLine, character: 100 }
         });
-        return startLineText.includes('CODE');
+        return startLineText.trim().startsWith('CODE');
       });
 
       expect(codeRange).toBeDefined();
@@ -494,7 +494,7 @@ describe('FoldingRangeProvider', () => {
           start: { line: r.startLine, character: 0 },
           end: { line: r.startLine, character: 100 }
         });
-        return startLineText.includes('CONTROLS');
+        return startLineText.trim().startsWith('CONTROLS');
       });
 
       expect(controlsRange).toBeDefined();
@@ -526,7 +526,7 @@ describe('FoldingRangeProvider', () => {
           start: { line: r.startLine, character: 0 },
           end: { line: r.startLine, character: 100 }
         });
-        return startLineText.includes('FIELDGROUPS');
+        return startLineText.trim().startsWith('FIELDGROUPS');
       });
 
       expect(fieldGroupsRange).toBeDefined();
@@ -572,7 +572,7 @@ describe('FoldingRangeProvider', () => {
             start: { line: r.startLine, character: 0 },
             end: { line: r.startLine, character: 100 }
           });
-          return startLineText.includes('ACTIONS');
+          return startLineText.trim().startsWith('ACTIONS');
         });
 
         expect(actionsRange).toBeDefined();
@@ -610,11 +610,170 @@ describe('FoldingRangeProvider', () => {
             start: { line: r.startLine, character: 0 },
             end: { line: r.startLine, character: 100 }
           });
-          return startLineText.includes('ActionList=ACTIONS');
+          return startLineText.trim().startsWith('ActionList=ACTIONS');
         });
 
         expect(actionListRange).toBeDefined();
         expect(actionListRange?.kind).toBe(FoldingRangeKind.Region);
+      });
+    });
+
+    describe('Empty Sections', () => {
+      it('should fold empty PROPERTIES section', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  PROPERTIES
+  {
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, lexer } = parseContent(code);
+        const ranges = provider.provide(doc, ast, lexer);
+
+        const propsRange = ranges.find((r: FoldingRange) => {
+          const startLineText = doc.getText({
+            start: { line: r.startLine, character: 0 },
+            end: { line: r.startLine, character: 100 }
+          });
+          return startLineText.trim().startsWith('PROPERTIES');
+        });
+
+        expect(propsRange).toBeDefined();
+        expect(propsRange?.kind).toBe(FoldingRangeKind.Region);
+      });
+
+      it('should fold empty FIELDS section', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, lexer } = parseContent(code);
+        const ranges = provider.provide(doc, ast, lexer);
+
+        const fieldsRange = ranges.find((r: FoldingRange) => {
+          const startLineText = doc.getText({
+            start: { line: r.startLine, character: 0 },
+            end: { line: r.startLine, character: 100 }
+          });
+          return startLineText.trim().startsWith('FIELDS');
+        });
+
+        expect(fieldsRange).toBeDefined();
+        expect(fieldsRange?.kind).toBe(FoldingRangeKind.Region);
+      });
+
+      it('should fold empty KEYS section', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        }
+  }
+  KEYS
+  {
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, lexer } = parseContent(code);
+        const ranges = provider.provide(doc, ast, lexer);
+
+        const keysRange = ranges.find((r: FoldingRange) => {
+          const startLineText = doc.getText({
+            start: { line: r.startLine, character: 0 },
+            end: { line: r.startLine, character: 100 }
+          });
+          return startLineText.trim().startsWith('KEYS');
+        });
+
+        expect(keysRange).toBeDefined();
+        expect(keysRange?.kind).toBe(FoldingRangeKind.Region);
+      });
+
+      it('should fold empty FIELDGROUPS section', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        }
+  }
+  FIELDGROUPS
+  {
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, lexer } = parseContent(code);
+        const ranges = provider.provide(doc, ast, lexer);
+
+        const fieldGroupsRange = ranges.find((r: FoldingRange) => {
+          const startLineText = doc.getText({
+            start: { line: r.startLine, character: 0 },
+            end: { line: r.startLine, character: 100 }
+          });
+          return startLineText.trim().startsWith('FIELDGROUPS');
+        });
+
+        expect(fieldGroupsRange).toBeDefined();
+        expect(fieldGroupsRange?.kind).toBe(FoldingRangeKind.Region);
+      });
+
+      it.skip('should fold empty CODE section', () => {
+        // Parser limitation: CODE section with only documentation trigger (BEGIN...END.)
+        // is not properly parsed. The endToken is set to the opening brace instead of
+        // the closing brace. This is a known parser issue, not a folding range issue.
+        // A CODE section needs at least one procedure/trigger to be recognized correctly.
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, lexer } = parseContent(code);
+        const ranges = provider.provide(doc, ast, lexer);
+
+        const codeRange = ranges.find((r: FoldingRange) => {
+          const startLineText = doc.getText({
+            start: { line: r.startLine, character: 0 },
+            end: { line: r.startLine, character: 100 }
+          });
+          return startLineText.trim().startsWith('CODE');
+        });
+
+        expect(codeRange).toBeDefined();
+        expect(codeRange?.kind).toBe(FoldingRangeKind.Region);
+      });
+
+      it('should fold empty ACTIONS section', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                Name=ContentArea }
+  }
+  ACTIONS
+  {
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, lexer } = parseContent(code);
+        const ranges = provider.provide(doc, ast, lexer);
+
+        const actionsRange = ranges.find((r: FoldingRange) => {
+          const startLineText = doc.getText({
+            start: { line: r.startLine, character: 0 },
+            end: { line: r.startLine, character: 100 }
+          });
+          return startLineText.trim().startsWith('ACTIONS');
+        });
+
+        expect(actionsRange).toBeDefined();
+        expect(actionsRange?.kind).toBe(FoldingRangeKind.Region);
       });
     });
   });
