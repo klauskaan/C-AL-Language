@@ -2633,8 +2633,8 @@ export class Parser {
     if (this.check(TokenType.RightBrace)) {
       endToken = this.advance();
     } else {
-      // Fallback: use previous token if closing brace not found
-      // This handles cases where procedure parsing leaves unconsumed tokens
+      // Missing closing brace - record error but return the section
+      this.recordError('Expected } to close CODE section', undefined, 'parse-unclosed-block');
       endToken = this.previous();
     }
 
