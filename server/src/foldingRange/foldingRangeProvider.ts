@@ -119,8 +119,7 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit PROPERTIES section - create folding range with Region kind
    */
   visitPropertySection(node: PropertySection): void | false {
-    const effectiveEndToken = node.endToken || node.startToken;
-    this.addFoldingRange(node.startToken.line, effectiveEndToken.line, FoldingRangeKind.Region);
+    this.addFoldingRange(node.startToken.line, node.endToken.line, FoldingRangeKind.Region);
     // Continue traversing children
   }
 
@@ -128,8 +127,7 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit FIELDS section - create folding range with Region kind
    */
   visitFieldSection(node: FieldSection): void | false {
-    const effectiveEndToken = node.endToken || node.startToken;
-    this.addFoldingRange(node.startToken.line, effectiveEndToken.line, FoldingRangeKind.Region);
+    this.addFoldingRange(node.startToken.line, node.endToken.line, FoldingRangeKind.Region);
     // Continue traversing children
   }
 
@@ -137,8 +135,7 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit KEYS section - create folding range with Region kind
    */
   visitKeySection(node: KeySection): void | false {
-    const effectiveEndToken = node.endToken || node.startToken;
-    this.addFoldingRange(node.startToken.line, effectiveEndToken.line, FoldingRangeKind.Region);
+    this.addFoldingRange(node.startToken.line, node.endToken.line, FoldingRangeKind.Region);
     // Continue traversing children
   }
 
@@ -146,8 +143,7 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit FIELDGROUPS section - create folding range with Region kind
    */
   visitFieldGroupSection(node: FieldGroupSection): void | false {
-    const effectiveEndToken = node.endToken || node.startToken;
-    this.addFoldingRange(node.startToken.line, effectiveEndToken.line, FoldingRangeKind.Region);
+    this.addFoldingRange(node.startToken.line, node.endToken.line, FoldingRangeKind.Region);
     // Continue traversing children
   }
 
@@ -155,8 +151,7 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit CODE section - create folding range with Region kind
    */
   visitCodeSection(node: CodeSection): void | false {
-    const effectiveEndToken = node.endToken || node.startToken;
-    this.addFoldingRange(node.startToken.line, effectiveEndToken.line, FoldingRangeKind.Region);
+    this.addFoldingRange(node.startToken.line, node.endToken.line, FoldingRangeKind.Region);
     // Continue traversing children
   }
 
@@ -164,8 +159,7 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit ACTIONS section - create folding range with Region kind
    */
   visitActionSection(node: ActionSection): void | false {
-    const effectiveEndToken = node.endToken || node.startToken;
-    this.addFoldingRange(node.startToken.line, effectiveEndToken.line, FoldingRangeKind.Region);
+    this.addFoldingRange(node.startToken.line, node.endToken.line, FoldingRangeKind.Region);
     // Continue traversing children
   }
 
