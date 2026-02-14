@@ -40,8 +40,7 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit procedure declaration - create folding range for entire procedure
    */
   visitProcedureDeclaration(node: ProcedureDeclaration): void | false {
-    const effectiveEndToken = node.endToken || node.startToken;
-    this.addFoldingRange(node.startToken.line, effectiveEndToken.line, undefined);
+    this.addFoldingRange(node.startToken.line, node.endToken.line, undefined);
     // Continue traversing children (procedure body may contain nested foldable constructs)
   }
 
@@ -49,8 +48,7 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit trigger declaration - create folding range for entire trigger
    */
   visitTriggerDeclaration(node: TriggerDeclaration): void | false {
-    const effectiveEndToken = node.endToken || node.startToken;
-    this.addFoldingRange(node.startToken.line, effectiveEndToken.line, undefined);
+    this.addFoldingRange(node.startToken.line, node.endToken.line, undefined);
     // Continue traversing children
   }
 
@@ -58,8 +56,7 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit IF statement - create folding range if it spans multiple lines
    */
   visitIfStatement(node: IfStatement): void | false {
-    const effectiveEndToken = node.endToken || node.startToken;
-    this.addFoldingRange(node.startToken.line, effectiveEndToken.line, undefined);
+    this.addFoldingRange(node.startToken.line, node.endToken.line, undefined);
     // Continue traversing children (then/else branches may have nested constructs)
   }
 
@@ -67,8 +64,7 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit CASE statement - create folding range
    */
   visitCaseStatement(node: CaseStatement): void | false {
-    const effectiveEndToken = node.endToken || node.startToken;
-    this.addFoldingRange(node.startToken.line, effectiveEndToken.line, undefined);
+    this.addFoldingRange(node.startToken.line, node.endToken.line, undefined);
     // Continue traversing children (branches may have nested constructs)
   }
 
@@ -76,8 +72,7 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit FOR loop - create folding range
    */
   visitForStatement(node: ForStatement): void | false {
-    const effectiveEndToken = node.endToken || node.startToken;
-    this.addFoldingRange(node.startToken.line, effectiveEndToken.line, undefined);
+    this.addFoldingRange(node.startToken.line, node.endToken.line, undefined);
     // Continue traversing children (loop body may have nested constructs)
   }
 
@@ -85,8 +80,7 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit WHILE loop - create folding range
    */
   visitWhileStatement(node: WhileStatement): void | false {
-    const effectiveEndToken = node.endToken || node.startToken;
-    this.addFoldingRange(node.startToken.line, effectiveEndToken.line, undefined);
+    this.addFoldingRange(node.startToken.line, node.endToken.line, undefined);
     // Continue traversing children
   }
 
@@ -94,8 +88,7 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit REPEAT...UNTIL loop - create folding range
    */
   visitRepeatStatement(node: RepeatStatement): void | false {
-    const effectiveEndToken = node.endToken || node.startToken;
-    this.addFoldingRange(node.startToken.line, effectiveEndToken.line, undefined);
+    this.addFoldingRange(node.startToken.line, node.endToken.line, undefined);
     // Continue traversing children
   }
 
@@ -103,8 +96,7 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit WITH statement - create folding range
    */
   visitWithStatement(node: WithStatement): void | false {
-    const effectiveEndToken = node.endToken || node.startToken;
-    this.addFoldingRange(node.startToken.line, effectiveEndToken.line, undefined);
+    this.addFoldingRange(node.startToken.line, node.endToken.line, undefined);
     // Continue traversing children
   }
 
@@ -112,8 +104,7 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit BEGIN...END block - create folding range
    */
   visitBlockStatement(node: BlockStatement): void | false {
-    const effectiveEndToken = node.endToken || node.startToken;
-    this.addFoldingRange(node.startToken.line, effectiveEndToken.line, undefined);
+    this.addFoldingRange(node.startToken.line, node.endToken.line, undefined);
     // Continue traversing children (nested blocks)
   }
 
