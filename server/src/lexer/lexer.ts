@@ -161,7 +161,35 @@ export interface LexerContextState {
   contextStack: string[];
   /** Current brace nesting depth */
   braceDepth: number;
-  /** Current bracket nesting depth */
+  /**
+   * Current bracket nesting depth.
+   *
+   * When bracketDepth > 0, comment detection is suppressed. This prevents URLs
+   * (e.g., `https://...`) and text containing comment-like syntax (`/ *` or `//`)
+   * inside ML property values from being incorrectly tokenized as comments.
+   *
+   * Example - URL in ML property value:
+   * ```cal
+   * { 1   ;CaptionML=[ENU=Visit https://example.com/help for details] }
+   * ```
+   *
+   * Without bracket tracking, `//example.com/help` would be tokenized as a
+   * line comment, breaking the property value. With tracking, the lexer stays
+   * in property mode and correctly tokenizes the entire bracketed value as text.
+   *
+   * Example - Unclosed brackets:
+   * ```cal
+   * { 1   ;CaptionML=[ENU=Incomplete
+   * { 2   ;BEGIN  // bracketDepth reset to 0 here (error recovery)
+   * ```
+   *
+   * When an unclosed bracket is detected (bracketDepth > 0 at section boundary),
+   * the bracket depth is reset to 0 when entering code sections (BEGIN blocks,
+   * CASE blocks) to prevent unclosed brackets in property values from poisoning
+   * code tokenization.
+   *
+   * See also: scanToken() method (comment detection checks for bracketDepth === 0)
+   */
   bracketDepth: number;
   /** Whether currently parsing a property value */
   inPropertyValue: boolean;
