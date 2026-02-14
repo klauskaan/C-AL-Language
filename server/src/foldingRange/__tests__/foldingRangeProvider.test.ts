@@ -532,6 +532,91 @@ describe('FoldingRangeProvider', () => {
       expect(fieldGroupsRange).toBeDefined();
       expect(fieldGroupsRange?.kind).toBe(FoldingRangeKind.Region);
     });
+
+    describe('ACTIONS Sections', () => {
+      it('should create folding range for top-level ACTIONS section with kind Region', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    PageType=Card;
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                Name=ContentArea }
+  }
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                Name=ActionItems;
+                ActionContainerType=ActionItems }
+    { 2   ;1   ;Action    ;
+                Name=MyAction;
+                CaptionML=ENU=My Action }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, lexer } = parseContent(code);
+
+        const ranges = provider.provide(doc, ast, lexer);
+
+        // Should have folding range for ACTIONS section
+        const actionsRange = ranges.find((r: FoldingRange) => {
+          const startLineText = doc.getText({
+            start: { line: r.startLine, character: 0 },
+            end: { line: r.startLine, character: 100 }
+          });
+          return startLineText.includes('ACTIONS');
+        });
+
+        expect(actionsRange).toBeDefined();
+        expect(actionsRange?.kind).toBe(FoldingRangeKind.Region);
+      });
+
+      it('should create folding range for inline ActionList=ACTIONS with kind Region', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                Name=ContentArea;
+                ActionList=ACTIONS
+                {
+                  { 2   ;0   ;Action    ;
+                              Name=MyAction;
+                              CaptionML=ENU=Test }
+                } }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, lexer } = parseContent(code);
+
+        const ranges = provider.provide(doc, ast, lexer);
+
+        // Should have folding range for ActionList=ACTIONS property
+        const actionListRange = ranges.find((r: FoldingRange) => {
+          const startLineText = doc.getText({
+            start: { line: r.startLine, character: 0 },
+            end: { line: r.startLine, character: 100 }
+          });
+          return startLineText.includes('ActionList=ACTIONS');
+        });
+
+        expect(actionListRange).toBeDefined();
+        expect(actionListRange?.kind).toBe(FoldingRangeKind.Region);
+      });
+    });
   });
 
   describe('Nested Constructs', () => {
