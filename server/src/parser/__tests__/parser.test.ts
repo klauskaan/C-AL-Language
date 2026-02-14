@@ -1978,8 +1978,9 @@ describe('Parser - Multi-word Property Names', () => {
       expect(errors.length).toBeGreaterThan(0);
       expect(errors.some((e: any) => e.message.includes('='))).toBe(true);
 
-      // Verify error location for regression testing (issue #234)
+      // Verify error location for regression testing (issue #234, #466)
       expect(errors[0].token.line).toBe(3);
+      expect(errors[0].token.column).toBe(50);
     });
 
     it('should recover and parse subsequent valid fields after malformed multi-word property', () => {
@@ -2001,8 +2002,9 @@ describe('Parser - Multi-word Property Names', () => {
       // Verify error was still reported for the malformed field
       expect(errors.length).toBeGreaterThan(0);
 
-      // Verify error location for regression testing (issue #234)
+      // Verify error location for regression testing (issue #234, #466)
       expect(errors[0].token.line).toBe(3);
+      expect(errors[0].token.column).toBe(53);
     });
 
     it('should handle multiple consecutive malformed multi-word properties', () => {
@@ -2029,9 +2031,11 @@ describe('Parser - Multi-word Property Names', () => {
       const propertyErrors = errors.filter((e: any) => e.message.includes('='));
       expect(propertyErrors.length).toBeGreaterThanOrEqual(2);
 
-      // Verify error location for regression testing (issue #234)
+      // Verify error location for regression testing (issue #234, #466)
       expect(errors[0].token.line).toBe(3);
+      expect(errors[0].token.column).toBe(51);
       expect(errors[1].token.line).toBe(4);
+      expect(errors[1].token.column).toBe(53);
     });
 
     it('should handle partial multi-word property names gracefully (issue #179)', () => {
@@ -2052,8 +2056,9 @@ describe('Parser - Multi-word Property Names', () => {
       expect(errors.length).toBeGreaterThan(0);
       expect(errors.some((e: any) => e.message.includes('='))).toBe(true);
 
-      // Verify error location for regression testing (issue #234)
+      // Verify error location for regression testing (issue #234, #466)
       expect(errors[0].token.line).toBe(3);
+      expect(errors[0].token.column).toBe(45);
     });
 
     it('should handle single-word partial property names (issue #179)', () => {
@@ -2077,8 +2082,9 @@ describe('Parser - Multi-word Property Names', () => {
       expect(errors.length).toBeGreaterThan(0);
       expect(errors.some((e: any) => e.message.includes('='))).toBe(true);
 
-      // Verify error location for regression testing (issue #234)
+      // Verify error location for regression testing (issue #234, #466)
       expect(errors[0].token.line).toBe(4);
+      expect(errors[0].token.column).toBe(9);
     });
   });
 });
