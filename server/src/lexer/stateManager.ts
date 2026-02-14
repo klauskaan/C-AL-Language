@@ -283,6 +283,7 @@ export class LexerStateManager {
    * - MENUNODES: Protect COL_1-2 (node type ; GUID)
    * - CONTROLS: Protect COL_1-3 (structural columns)
    * - ELEMENTS: Protect COL_1-4 (structural columns)
+   * - DATASET: Protect COL_1-4 (structural columns)
    * - ACTIONS: Protect COL_1-3 (structural columns)
    */
   private shouldProtectStructuralColumn(): boolean {
@@ -293,6 +294,7 @@ export class LexerStateManager {
     switch (this.currentSectionType) {
       case 'FIELDS':
       case 'ELEMENTS':
+      case 'DATASET':
         // Protect all structural columns (COL_1-4)
         return this.fieldDefColumn === FieldDefColumn.COL_1 ||
                this.fieldDefColumn === FieldDefColumn.COL_2 ||
@@ -395,6 +397,7 @@ export class LexerStateManager {
          this.currentSectionType === 'KEYS' ||
          this.currentSectionType === 'CONTROLS' ||
          this.currentSectionType === 'ELEMENTS' ||
+         this.currentSectionType === 'DATASET' ||
          this.currentSectionType === 'ACTIONS' ||
          this.currentSectionType === 'MENUNODES')) {
       this.fieldDefColumn = FieldDefColumn.COL_1;

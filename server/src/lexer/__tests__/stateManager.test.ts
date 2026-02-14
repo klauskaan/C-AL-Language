@@ -496,6 +496,17 @@ describe('LexerStateManager', () => {
       manager.onSemicolon();
       expect(manager.getState().fieldDefColumn).toBe(FieldDefColumn.PROPERTIES);
     });
+
+    it('should advance to COL_1 for DATASET section', () => {
+      const manager = new LexerStateManager();
+      manager.onObjectKeyword(0); // Establish OBJECT_LEVEL context
+      manager.onOpenBrace(); // Open object brace
+      manager.onSectionKeyword('DATASET');
+      manager.onOpenBrace(); // Open section brace
+      manager.onOpenBrace(); // DataItem/Column definition start
+
+      expect(manager.getState().fieldDefColumn).toBe(FieldDefColumn.COL_1);
+    });
   });
 
   describe('Protection guards', () => {
@@ -557,6 +568,30 @@ describe('LexerStateManager', () => {
         expect(manager.shouldProtectFromBeginEnd()).toBe(true);
 
         manager.onSemicolon(); // COL_3 - not protected in MENUNODES
+        expect(manager.shouldProtectFromBeginEnd()).toBe(false);
+      });
+
+      it('should protect structural columns in DATASET section', () => {
+        const manager = new LexerStateManager();
+        manager.onObjectKeyword(0); // Establish OBJECT_LEVEL context
+        manager.onOpenBrace(); // Open object brace
+        manager.onSectionKeyword('DATASET');
+        manager.onOpenBrace(); // Open section brace
+        manager.onOpenBrace(); // DataItem/Column definition start
+
+        // COL_1 through COL_4 should be protected in DATASET
+        expect(manager.shouldProtectFromBeginEnd()).toBe(true);
+
+        manager.onSemicolon(); // COL_2
+        expect(manager.shouldProtectFromBeginEnd()).toBe(true);
+
+        manager.onSemicolon(); // COL_3
+        expect(manager.shouldProtectFromBeginEnd()).toBe(true);
+
+        manager.onSemicolon(); // COL_4
+        expect(manager.shouldProtectFromBeginEnd()).toBe(true);
+
+        manager.onSemicolon(); // PROPERTIES
         expect(manager.shouldProtectFromBeginEnd()).toBe(false);
       });
 
@@ -647,6 +682,30 @@ describe('LexerStateManager', () => {
         expect(manager.shouldProtectFromSectionKeyword()).toBe(true);
 
         manager.onSemicolon(); // COL_3 - not protected in MENUNODES
+        expect(manager.shouldProtectFromSectionKeyword()).toBe(false);
+      });
+
+      it('should protect structural columns in DATASET section', () => {
+        const manager = new LexerStateManager();
+        manager.onObjectKeyword(0); // Establish OBJECT_LEVEL context
+        manager.onOpenBrace(); // Open object brace
+        manager.onSectionKeyword('DATASET');
+        manager.onOpenBrace(); // Open section brace
+        manager.onOpenBrace(); // DataItem/Column definition start
+
+        // COL_1 through COL_4 should be protected in DATASET
+        expect(manager.shouldProtectFromSectionKeyword()).toBe(true);
+
+        manager.onSemicolon(); // COL_2
+        expect(manager.shouldProtectFromSectionKeyword()).toBe(true);
+
+        manager.onSemicolon(); // COL_3
+        expect(manager.shouldProtectFromSectionKeyword()).toBe(true);
+
+        manager.onSemicolon(); // COL_4
+        expect(manager.shouldProtectFromSectionKeyword()).toBe(true);
+
+        manager.onSemicolon(); // PROPERTIES
         expect(manager.shouldProtectFromSectionKeyword()).toBe(false);
       });
 
