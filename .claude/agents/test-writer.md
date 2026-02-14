@@ -16,6 +16,10 @@ You write tests for the C/AL language server, following TDD principles.
 
 Write tests that demonstrate the expected behavior — as they should look when the code is correct. Never add comments about expected pass/fail status to test code; report that in your output summary instead.
 
+## Before You Start
+
+Verify the working directory you've been given actually exists and contains the expected project structure (`server/src/`, `package.json`). If it doesn't, **stop and report the problem** — do not fall back to writing files elsewhere.
+
 ## Writing Good Tests
 
 - One behavior per test, descriptive names: `it('should parse TEMPORARY keyword in table variables')`
