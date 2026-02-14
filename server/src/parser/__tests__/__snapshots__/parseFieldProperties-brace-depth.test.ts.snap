@@ -94,6 +94,14 @@ exports[`Parser - ActionList in Control Properties (Brace Depth Bug) SNAPSHOT: A
         "actions": [
           {
             "actionType": "Action",
+            "actionTypeToken": {
+              "column": 27,
+              "endOffset": 250,
+              "line": 9,
+              "startOffset": 244,
+              "type": "IDENTIFIER",
+              "value": "Action",
+            },
             "children": [],
             "endToken": {
               "column": 69,
@@ -218,6 +226,14 @@ exports[`Parser - ActionList in Control Properties (Brace Depth Bug) SNAPSHOT: A
           },
           {
             "actionType": "Action",
+            "actionTypeToken": {
+              "column": 27,
+              "endOffset": 320,
+              "line": 10,
+              "startOffset": 314,
+              "type": "IDENTIFIER",
+              "value": "Action",
+            },
             "children": [],
             "endToken": {
               "column": 70,

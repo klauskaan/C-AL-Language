@@ -5,9 +5,25 @@ exports[`Parser - ACTIONS Section Snapshot tests should match snapshot for compl
   "actions": [
     {
       "actionType": "ActionContainer",
+      "actionTypeToken": {
+        "column": 29,
+        "endOffset": 148,
+        "line": 8,
+        "startOffset": 133,
+        "type": "IDENTIFIER",
+        "value": "ActionContainer",
+      },
       "children": [
         {
           "actionType": "Action",
+          "actionTypeToken": {
+            "column": 29,
+            "endOffset": 246,
+            "line": 10,
+            "startOffset": 240,
+            "type": "IDENTIFIER",
+            "value": "Action",
+          },
           "children": [],
           "endToken": {
             "column": 39,
@@ -373,9 +389,25 @@ exports[`Parser - ACTIONS Section Snapshot tests should match snapshot for compl
     },
     {
       "actionType": "ActionContainer",
+      "actionTypeToken": {
+        "column": 29,
+        "endOffset": 654,
+        "line": 19,
+        "startOffset": 639,
+        "type": "IDENTIFIER",
+        "value": "ActionContainer",
+      },
       "children": [
         {
           "actionType": "Action",
+          "actionTypeToken": {
+            "column": 29,
+            "endOffset": 759,
+            "line": 21,
+            "startOffset": 753,
+            "type": "IDENTIFIER",
+            "value": "Action",
+          },
           "children": [],
           "endToken": {
             "column": 39,
@@ -617,12 +649,36 @@ exports[`Parser - ACTIONS Section Snapshot tests should match snapshot for neste
   "actions": [
     {
       "actionType": "ActionContainer",
+      "actionTypeToken": {
+        "column": 29,
+        "endOffset": 148,
+        "line": 8,
+        "startOffset": 133,
+        "type": "IDENTIFIER",
+        "value": "ActionContainer",
+      },
       "children": [
         {
           "actionType": "ActionGroup",
+          "actionTypeToken": {
+            "column": 29,
+            "endOffset": 190,
+            "line": 9,
+            "startOffset": 179,
+            "type": "IDENTIFIER",
+            "value": "ActionGroup",
+          },
           "children": [
             {
               "actionType": "Action",
+              "actionTypeToken": {
+                "column": 29,
+                "endOffset": 278,
+                "line": 11,
+                "startOffset": 272,
+                "type": "IDENTIFIER",
+                "value": "Action",
+              },
               "children": [],
               "endToken": {
                 "column": 42,
@@ -700,6 +756,14 @@ exports[`Parser - ACTIONS Section Snapshot tests should match snapshot for neste
             },
             {
               "actionType": "Action",
+              "actionTypeToken": {
+                "column": 29,
+                "endOffset": 357,
+                "line": 13,
+                "startOffset": 351,
+                "type": "IDENTIFIER",
+                "value": "Action",
+              },
               "children": [],
               "endToken": {
                 "column": 42,
@@ -876,9 +940,25 @@ exports[`Parser - ACTIONS Section Snapshot tests should match snapshot for neste
         },
         {
           "actionType": "ActionGroup",
+          "actionTypeToken": {
+            "column": 29,
+            "endOffset": 441,
+            "line": 15,
+            "startOffset": 430,
+            "type": "IDENTIFIER",
+            "value": "ActionGroup",
+          },
           "children": [
             {
               "actionType": "Action",
+              "actionTypeToken": {
+                "column": 29,
+                "endOffset": 529,
+                "line": 17,
+                "startOffset": 523,
+                "type": "IDENTIFIER",
+                "value": "Action",
+              },
               "children": [],
               "endToken": {
                 "column": 42,

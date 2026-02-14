@@ -4743,6 +4743,558 @@ END;`;
       });
     });
   });
+
+  describe('Action Semantic Highlighting', () => {
+    describe('ACTIONS Section Keyword', () => {
+      it('should map ACTIONS keyword to Keyword type', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1000000000;0;ActionContainer;
+      Name=ActionItems }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const semanticType = findSemanticType(code, 'ACTIONS');
+        expect(semanticType).toBe(SemanticTokenTypes.Keyword);
+      });
+    });
+
+    describe('Action Type Identifiers', () => {
+      it('should map ActionContainer type to Keyword', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1000000000;0;ActionContainer;
+      Name=ActionItems }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const actionContainerToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'ActionContainer' &&
+          t.line === 11
+        );
+
+        expect(actionContainerToken).toBeDefined();
+
+        if (actionContainerToken) {
+          const semantic = builder.getTokenAt(actionContainerToken.line - 1, actionContainerToken.column - 1);
+          expect(semantic).toBeDefined();
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Keyword);
+        }
+      });
+
+      it('should map ActionGroup type to Keyword', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1000000000;0;ActionContainer;
+      Name=ActionItems }
+    { 1000000001;1;ActionGroup;
+      Name=MyGroup }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const actionGroupToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'ActionGroup' &&
+          t.line === 13
+        );
+
+        expect(actionGroupToken).toBeDefined();
+
+        if (actionGroupToken) {
+          const semantic = builder.getTokenAt(actionGroupToken.line - 1, actionGroupToken.column - 1);
+          expect(semantic).toBeDefined();
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Keyword);
+        }
+      });
+
+      it('should map Action type to Keyword', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1000000000;0;ActionContainer;
+      Name=ActionItems }
+    { 1000000001;1;Action;
+      Name=MyAction }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const actionToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'Action' &&
+          t.line === 13
+        );
+
+        expect(actionToken).toBeDefined();
+
+        if (actionToken) {
+          const semantic = builder.getTokenAt(actionToken.line - 1, actionToken.column - 1);
+          expect(semantic).toBeDefined();
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Keyword);
+        }
+      });
+
+      it('should map Separator type to Keyword', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1000000000;0;ActionContainer;
+      Name=ActionItems }
+    { 1000000001;1;Separator }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const separatorToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'Separator' &&
+          t.line === 13
+        );
+
+        expect(separatorToken).toBeDefined();
+
+        if (separatorToken) {
+          const semantic = builder.getTokenAt(separatorToken.line - 1, separatorToken.column - 1);
+          expect(semantic).toBeDefined();
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Keyword);
+        }
+      });
+
+      it('should map all four action types in a complete page', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01-01-25;
+    Time=12:00:00;
+    Modified=Yes;
+    Version List=TEST;
+  }
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1000000000;0 ;ActionContainer;
+      Name=ActionItems }
+    { 1000000001;1 ;ActionGroup;
+      Name=MyGroup;
+      CaptionML=ENU=Group }
+    { 1000000002;2 ;Action;
+      Name=MyAction;
+      CaptionML=ENU=Action }
+    { 1000000003;2 ;Separator }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const actionContainerToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'ActionContainer' &&
+          t.line === 18
+        );
+        const actionGroupToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'ActionGroup' &&
+          t.line === 20
+        );
+        const actionToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'Action' &&
+          t.line === 23
+        );
+        const separatorToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'Separator' &&
+          t.line === 26
+        );
+
+        expect(actionContainerToken).toBeDefined();
+        expect(actionGroupToken).toBeDefined();
+        expect(actionToken).toBeDefined();
+        expect(separatorToken).toBeDefined();
+
+        if (actionContainerToken) {
+          const semantic = builder.getTokenAt(actionContainerToken.line - 1, actionContainerToken.column - 1);
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Keyword);
+        }
+        if (actionGroupToken) {
+          const semantic = builder.getTokenAt(actionGroupToken.line - 1, actionGroupToken.column - 1);
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Keyword);
+        }
+        if (actionToken) {
+          const semantic = builder.getTokenAt(actionToken.line - 1, actionToken.column - 1);
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Keyword);
+        }
+        if (separatorToken) {
+          const semantic = builder.getTokenAt(separatorToken.line - 1, separatorToken.column - 1);
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Keyword);
+        }
+      });
+    });
+
+    describe('Action Property Names', () => {
+      it('should map action property name to Property type', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1000000000;0;ActionContainer;
+      Name=ActionItems }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const nameToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'Name' &&
+          t.line === 12
+        );
+
+        expect(nameToken).toBeDefined();
+
+        if (nameToken) {
+          const semantic = builder.getTokenAt(nameToken.line - 1, nameToken.column - 1);
+          expect(semantic).toBeDefined();
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Property);
+        }
+      });
+
+      it('should not map property value to Property type', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1000000000;0;ActionContainer;
+      Name=ActionItems }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const actionItemsToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'ActionItems' &&
+          t.line === 12
+        );
+
+        expect(actionItemsToken).toBeDefined();
+
+        if (actionItemsToken) {
+          const semantic = builder.getTokenAt(actionItemsToken.line - 1, actionItemsToken.column - 1);
+          expect(semantic).toBeDefined();
+          expect(semantic?.tokenType).not.toBe(SemanticTokenTypes.Property);
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Variable);
+        }
+      });
+
+      it('should map multiple property names to Property type', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1000000002;2;Action;
+      Name=MyAction;
+      CaptionML=ENU=Action;
+      Promoted=Yes;
+      PromotedCategory=Process }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const nameToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'Name' &&
+          t.line === 12
+        );
+        const captionMLToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'CaptionML' &&
+          t.line === 13
+        );
+        const promotedToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'Promoted' &&
+          t.line === 14
+        );
+        const promotedCategoryToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'PromotedCategory' &&
+          t.line === 15
+        );
+
+        expect(nameToken).toBeDefined();
+        expect(captionMLToken).toBeDefined();
+        expect(promotedToken).toBeDefined();
+        expect(promotedCategoryToken).toBeDefined();
+
+        if (nameToken) {
+          const semantic = builder.getTokenAt(nameToken.line - 1, nameToken.column - 1);
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Property);
+        }
+        if (captionMLToken) {
+          const semantic = builder.getTokenAt(captionMLToken.line - 1, captionMLToken.column - 1);
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Property);
+        }
+        if (promotedToken) {
+          const semantic = builder.getTokenAt(promotedToken.line - 1, promotedToken.column - 1);
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Property);
+        }
+        if (promotedCategoryToken) {
+          const semantic = builder.getTokenAt(promotedCategoryToken.line - 1, promotedCategoryToken.column - 1);
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Property);
+        }
+      });
+    });
+
+    describe('Inline ActionList Property Actions', () => {
+      it('should highlight action types in inline ActionList property', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+      Name=ContentArea;
+      ActionList=ACTIONS
+      {
+        { 1000000001;0;ActionContainer;
+          Name=Items }
+        { 1000000002;1;Action;
+          Name=TestAction }
+      } }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const actionContainerToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'ActionContainer' &&
+          t.line === 12
+        );
+        const actionToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'Action' &&
+          t.line === 14
+        );
+
+        expect(actionContainerToken).toBeDefined();
+        expect(actionToken).toBeDefined();
+
+        if (actionContainerToken) {
+          const semantic = builder.getTokenAt(actionContainerToken.line - 1, actionContainerToken.column - 1);
+          expect(semantic).toBeDefined();
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Keyword);
+        }
+        if (actionToken) {
+          const semantic = builder.getTokenAt(actionToken.line - 1, actionToken.column - 1);
+          expect(semantic).toBeDefined();
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Keyword);
+        }
+      });
+
+      it('should highlight ACTIONS keyword in inline ActionList', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+      Name=ContentArea;
+      ActionList=ACTIONS
+      {
+        { 1000000001;0;Action;
+          Name=TestAction }
+      } }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const actionsToken = tokens.find(t =>
+          t.type === TokenType.Actions &&
+          t.line === 10
+        );
+
+        expect(actionsToken).toBeDefined();
+
+        if (actionsToken) {
+          const semantic = builder.getTokenAt(actionsToken.line - 1, actionsToken.column - 1);
+          expect(semantic).toBeDefined();
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Keyword);
+        }
+      });
+
+      it('should highlight property names in inline ActionList actions', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+      Name=ContentArea;
+      ActionList=ACTIONS
+      {
+        { 1000000001;0;Action;
+          Name=TestAction;
+          CaptionML=ENU=Test }
+      } }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+        const { builder, tokens } = buildSemanticTokens(code);
+
+        const nameToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'Name' &&
+          t.line === 13
+        );
+        const captionMLToken = tokens.find(t =>
+          t.type === TokenType.Identifier &&
+          t.value === 'CaptionML' &&
+          t.line === 14
+        );
+
+        expect(nameToken).toBeDefined();
+        expect(captionMLToken).toBeDefined();
+
+        if (nameToken) {
+          const semantic = builder.getTokenAt(nameToken.line - 1, nameToken.column - 1);
+          expect(semantic).toBeDefined();
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Property);
+        }
+        if (captionMLToken) {
+          const semantic = builder.getTokenAt(captionMLToken.line - 1, captionMLToken.column - 1);
+          expect(semantic).toBeDefined();
+          expect(semantic?.tokenType).toBe(SemanticTokenTypes.Property);
+        }
+      });
+    });
+  });
 });
 
 describe('getSemanticTokensLegend', () => {

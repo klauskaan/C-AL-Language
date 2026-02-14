@@ -474,6 +474,7 @@ export interface ActionDeclaration {
   id: number;
   indentLevel: number;
   actionType: ActionType;
+  actionTypeToken?: Token;
   rawActionType?: string;
   properties: PropertySection | null;
   triggers: TriggerDeclaration[] | null;
