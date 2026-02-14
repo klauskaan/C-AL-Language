@@ -1161,7 +1161,7 @@ export class Lexer {
     // Track identifier as potential property name via state manager
     // The state manager's onIdentifier() handles all the context checking internally
     const oldLastPropertyName = this.state.getLastPropertyName();
-    this.state.onIdentifier(value, this.getCurrentContext());
+    this.state.onIdentifier(value);
 
     // Trace lastPropertyName changes (if any)
     if (oldLastPropertyName !== this.state.getLastPropertyName()) {

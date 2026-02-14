@@ -231,7 +231,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       manager.onSemicolon(); // COL_4 → PROPERTIES
 
       // Now we're in PROPERTIES, can use trigger property
-      manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('OnValidate');
       manager.onEquals();
 
       const transition = manager.onBeginKeyword();
@@ -263,7 +263,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       manager.onObjectKeyword(0); // Push OBJECT_LEVEL first
       manager.onSectionKeyword('FIELDS');
       manager.onOpenBrace(); // Now pushes SECTION_LEVEL
-      manager.onIdentifier('InitValue', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('InitValue');
       manager.onEquals();
 
       // BEGIN in non-trigger property is just a value, not code
@@ -277,7 +277,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       const manager = new LexerStateManager();
       manager.onObjectKeyword(0); // Push OBJECT_LEVEL first
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('Test', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('Test');
       manager.onEquals();
       manager.onOpenBracket();
 
@@ -361,7 +361,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       manager.onObjectKeyword(0); // Push OBJECT_LEVEL first
       manager.onSectionKeyword('FIELDS');
       manager.onOpenBrace(); // Now pushes SECTION_LEVEL
-      manager.onIdentifier('InitValue', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('InitValue');
       manager.onEquals();
 
       // END in non-trigger property is just a value
@@ -375,7 +375,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       const manager = new LexerStateManager();
       manager.onObjectKeyword(0); // Push OBJECT_LEVEL first
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('Test', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('Test');
       manager.onEquals();
       manager.onOpenBracket();
 
@@ -605,7 +605,7 @@ describe('LexerStateManager - ContextTransition feature', () => {
       manager.onSemicolon(); // COL_4 → PROPERTIES
 
       // Now in PROPERTIES, set up trigger
-      manager.onIdentifier('OnValidate', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('OnValidate');
       manager.onEquals();
 
       const beginTransition = manager.onBeginKeyword();
