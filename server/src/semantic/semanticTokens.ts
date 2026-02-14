@@ -274,6 +274,8 @@ export class SemanticTokensProvider {
       case TokenType.Elements:
       case TokenType.Labels:
       case TokenType.MenuNodes:
+      case TokenType.DataItems:
+      case TokenType.Sections:
       case TokenType.RequestForm:
       case TokenType.RequestPage:
       case TokenType.Code:

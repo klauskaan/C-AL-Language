@@ -177,7 +177,7 @@ export function sanitizeTokenType(tokenType: string): string {
     // Sections
     'PROPERTIES', 'OBJECT_PROPERTIES', 'FIELDS', 'KEYS', 'FIELDGROUPS', 'CODE',
     'CONTROLS', 'ACTIONS', 'ELEMENTS', 'REQUESTFORM', 'DATASET',
-    'REQUESTPAGE', 'LABELS',
+    'REQUESTPAGE', 'LABELS', 'MENUNODES', 'DATAITEMS', 'SECTIONS',
 
     // Data types
     'BOOLEAN', 'INTEGER_TYPE', 'DECIMAL_TYPE', 'TEXT', 'CODE_TYPE', 'DATE_TYPE',

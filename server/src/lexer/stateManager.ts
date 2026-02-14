@@ -58,7 +58,9 @@ export type SectionType =
   | 'DATASET'
   | 'REQUESTPAGE'
   | 'LABELS'
-  | 'MENUNODES';
+  | 'MENUNODES'
+  | 'DATAITEMS'
+  | 'SECTIONS';
 
 /**
  * Complete lexer state snapshot
@@ -399,7 +401,9 @@ export class LexerStateManager {
          this.currentSectionType === 'ELEMENTS' ||
          this.currentSectionType === 'DATASET' ||
          this.currentSectionType === 'ACTIONS' ||
-         this.currentSectionType === 'MENUNODES')) {
+         this.currentSectionType === 'MENUNODES' ||
+         this.currentSectionType === 'DATAITEMS' ||
+         this.currentSectionType === 'SECTIONS')) {
       this.fieldDefColumn = FieldDefColumn.COL_1;
     }
 

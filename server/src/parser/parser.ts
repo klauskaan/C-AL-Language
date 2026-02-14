@@ -115,6 +115,8 @@ const ALLOWED_KEYWORDS_AS_IDENTIFIERS = new Set<TokenType>([
   TokenType.RequestForm,   // Section keyword (REQUESTFORM section - Report)
   TokenType.RequestPage,   // Section keyword (REQUESTPAGE section - Report)
   TokenType.MenuNodes,     // Section keyword (MENUNODES section - MenuSuite)
+  TokenType.DataItems,     // Section keyword (DATAITEMS section - Report)
+  TokenType.Sections,      // Section keyword (SECTIONS section - Form, legacy)
   TokenType.ALOnlyKeyword,         // Enum, Interface, Extends, Implements can be variable names
   TokenType.ALOnlyAccessModifier,  // Internal, Protected, Public can be variable names
 ]);
@@ -145,10 +147,10 @@ const CONTROL_FLOW_KEYWORDS = new Set<TokenType>([
 ]);
 
 /**
- * All section keywords that can appear at the object level in C/AL (14 keywords).
+ * All section keywords that can appear at the object level in C/AL (15 keywords).
  * Used by isSectionKeyword() and synchronize() for error recovery.
  *
- * This is distinct from lexer.ts SECTION_KEYWORDS (11 keywords) which is used
+ * This is distinct from lexer.ts SECTION_KEYWORDS (12 keywords) which is used
  * for identifier downgrading. The parser includes three additional keywords:
  * - Fields: Table field definitions section
  * - Keys: Table key definitions section
@@ -179,6 +181,8 @@ export const SECTION_KEYWORDS = new Set<TokenType>([
   TokenType.Labels,
   TokenType.Elements,
   TokenType.RequestForm,
+  TokenType.DataItems,
+  TokenType.Sections,
 ]);
 
 /**
@@ -314,6 +318,8 @@ export const UNSUPPORTED_SECTIONS = new Set<TokenType>([
   TokenType.RequestPage,
   TokenType.Labels,
   TokenType.RequestForm,
+  TokenType.DataItems,
+  TokenType.Sections,
 ]);
 
 /**
@@ -486,7 +492,7 @@ export class Parser {
             this.skipUnsupportedSection(TokenType.Elements);
           }
         } else if (UNSUPPORTED_SECTIONS.has(token.type)) {
-          // Skip unsupported sections (DATAITEMS, DATASET, REQUESTPAGE, LABELS, REQUESTFORM, MENUNODES)
+          // Skip unsupported sections (DATAITEMS, SECTIONS, DATASET, REQUESTPAGE, LABELS, REQUESTFORM, MENUNODES)
           // These sections have complex nested structures that aren't fully parsed yet
           this.skipUnsupportedSection(token.type);
         } else {
@@ -693,7 +699,8 @@ export class Parser {
           (this.check(TokenType.Actions) ||
            this.check(TokenType.Controls) ||
            this.check(TokenType.Elements) ||
-           this.check(TokenType.RequestForm))) {
+           this.check(TokenType.RequestForm) ||
+           this.check(TokenType.DataItems))) {
         // Peek ahead to see if this keyword is followed by '{'
         if (this.isFollowedByLeftBrace()) {
           break;

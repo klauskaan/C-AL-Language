@@ -37,6 +37,8 @@ export enum TokenType {
   RequestPage = 'REQUESTPAGE',
   Labels = 'LABELS',
   MenuNodes = 'MENUNODES',
+  DataItems = 'DATAITEMS',
+  Sections = 'SECTIONS',
 
   // Keywords - Data Types
   Boolean = 'BOOLEAN',
@@ -220,6 +222,8 @@ export const KEYWORDS: Map<string, TokenType> = new Map([
   ['requestpage', TokenType.RequestPage],
   ['labels', TokenType.Labels],
   ['menunodes', TokenType.MenuNodes],
+  ['dataitems', TokenType.DataItems],
+  ['sections', TokenType.Sections],
 
   // Data types
   ['boolean', TokenType.Boolean],

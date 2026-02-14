@@ -6,16 +6,16 @@
  * The C/AL parser maintains its own SECTION_KEYWORDS set that is distinct from the
  * lexer's SECTION_KEYWORDS set, serving different purposes:
  *
- * Lexer SECTION_KEYWORDS (11 keywords):
+ * Lexer SECTION_KEYWORDS (12 keywords):
  *   - Purpose: Identifier downgrading - determines when to treat section keywords as identifiers
  *   - Context: Field names, key names, control names, ML properties, code blocks
  *   - Keywords: Properties, FieldGroups, Code, MenuNodes, Actions, DataItems, Dataset,
- *               RequestPage, Labels, Elements, RequestForm
+ *               RequestPage, Labels, Elements, RequestForm, Sections
  *
- * Parser SECTION_KEYWORDS (14 keywords):
+ * Parser SECTION_KEYWORDS (15 keywords):
  *   - Purpose: Error recovery and synchronization in parseObject()
  *   - Context: Object-level section recognition
- *   - Keywords: All 11 from lexer PLUS 3 additional:
+ *   - Keywords: All 12 from lexer PLUS 3 additional:
  *     - Fields: Table field definitions section
  *     - Keys: Table key definitions section
  *     - Controls: Page/Form control definitions section
@@ -35,8 +35,8 @@ import { TokenType } from '../../lexer/tokens';
 
 describe('SECTION_KEYWORDS (error recovery)', () => {
   // Regression guard: ensure count doesn't drift unexpectedly
-  it('should contain exactly 13 keywords', () => {
-    expect(SECTION_KEYWORDS.size).toBe(13);
+  it('should contain exactly 15 keywords', () => {
+    expect(SECTION_KEYWORDS.size).toBe(15);
   });
 
   // Test each keyword individually for clarity
@@ -92,6 +92,14 @@ describe('SECTION_KEYWORDS (error recovery)', () => {
     expect(SECTION_KEYWORDS.has(TokenType.RequestForm)).toBe(true);
   });
 
+  it('should include DataItems (Report DATAITEMS section)', () => {
+    expect(SECTION_KEYWORDS.has(TokenType.DataItems)).toBe(true);
+  });
+
+  it('should include Sections (SECTIONS section)', () => {
+    expect(SECTION_KEYWORDS.has(TokenType.Sections)).toBe(true);
+  });
+
   // Test exclusions
   it('should NOT include ObjectProperties', () => {
     expect(SECTION_KEYWORDS.has(TokenType.ObjectProperties)).toBe(false);
@@ -100,8 +108,8 @@ describe('SECTION_KEYWORDS (error recovery)', () => {
 
 describe('UNSUPPORTED_SECTIONS (always skipped)', () => {
   // Regression guard: ensure count doesn't drift unexpectedly
-  it('should contain exactly 5 keywords', () => {
-    expect(UNSUPPORTED_SECTIONS.size).toBe(5);
+  it('should contain exactly 7 keywords', () => {
+    expect(UNSUPPORTED_SECTIONS.size).toBe(7);
   });
 
   // Test each keyword individually
@@ -123,6 +131,14 @@ describe('UNSUPPORTED_SECTIONS (always skipped)', () => {
 
   it('should include RequestForm', () => {
     expect(UNSUPPORTED_SECTIONS.has(TokenType.RequestForm)).toBe(true);
+  });
+
+  it('should include DataItems (Report DATAITEMS section)', () => {
+    expect(UNSUPPORTED_SECTIONS.has(TokenType.DataItems)).toBe(true);
+  });
+
+  it('should include Sections (SECTIONS section)', () => {
+    expect(UNSUPPORTED_SECTIONS.has(TokenType.Sections)).toBe(true);
   });
 
   // Test dedicated parser exclusions
