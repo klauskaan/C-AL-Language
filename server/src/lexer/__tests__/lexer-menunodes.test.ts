@@ -248,6 +248,98 @@ describe('Lexer - MENUNODES Section Support', () => {
     });
   });
 
+  describe('Protection from BEGIN/END keywords in structural columns', () => {
+    it('should treat BEGIN in COL_1 as identifier, not code block keyword', () => {
+      const code = `OBJECT MenuSuite 1010 Test
+{
+  PROPERTIES
+  {
+    CaptionML=ENU=Test;
+  }
+  MENUNODES
+  {
+    { BEGIN ;[{00000000-0001-0000-0000-000000000000}] ;Name=Test }
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const state = lexer.getContextState();
+
+      // Find the BEGIN token inside MENUNODES
+      const beginToken = tokens.find(t =>
+        t.value.toUpperCase() === 'BEGIN' &&
+        t.line > 7 // After MENUNODES opening
+      );
+
+      // Should be tokenized as Identifier, not Begin keyword
+      expect(beginToken).toBeDefined();
+      expect(beginToken!.type).toBe(TokenType.Identifier);
+
+      // Should have clean exit (braceDepth = 0, no CODE_BLOCK context pushed)
+      expect(state.braceDepth).toBe(0);
+      expect(state.contextStack).toEqual(['NORMAL']);
+      expect(state.contextUnderflowDetected).toBe(false);
+    });
+
+    it('should treat END in COL_1 as identifier, not code block keyword', () => {
+      const code = `OBJECT MenuSuite 1010 Test
+{
+  PROPERTIES
+  {
+    CaptionML=ENU=Test;
+  }
+  MENUNODES
+  {
+    { END ;[{00000000-0001-0000-0000-000000000000}] ;Name=Test }
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const state = lexer.getContextState();
+
+      // Find the END token inside MENUNODES
+      const endToken = tokens.find(t =>
+        t.value.toUpperCase() === 'END' &&
+        t.line > 7
+      );
+
+      // Should be tokenized as Identifier, not End keyword
+      expect(endToken).toBeDefined();
+      expect(endToken!.type).toBe(TokenType.Identifier);
+
+      // Should have clean exit
+      expect(state.braceDepth).toBe(0);
+      expect(state.contextStack).toEqual(['NORMAL']);
+    });
+
+    it('should treat CASE in COL_1 as identifier, not case block keyword', () => {
+      const code = `OBJECT MenuSuite 1010 Test
+{
+  MENUNODES
+  {
+    { CASE ;[{00000000-0001-0000-0000-000000000000}] ;Name=Test }
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const state = lexer.getContextState();
+
+      // Find the CASE token inside MENUNODES
+      const caseToken = tokens.find(t =>
+        t.value.toUpperCase() === 'CASE' &&
+        t.line > 3
+      );
+
+      // Should be tokenized as Identifier, not Case keyword
+      expect(caseToken).toBeDefined();
+      expect(caseToken!.type).toBe(TokenType.Identifier);
+
+      // Should have clean exit (no CASE_BLOCK pushed)
+      expect(state.braceDepth).toBe(0);
+      expect(state.contextStack).toEqual(['NORMAL']);
+    });
+  });
+
   describe('Complete MenuSuite object', () => {
     it('should tokenize complete MenuSuite with MENUNODES section', () => {
       const code = `OBJECT MenuSuite 1 Test MenuSuite
