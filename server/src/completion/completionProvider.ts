@@ -4,6 +4,7 @@
  * Phase 2: Global symbol completion
  * Phase 3: Built-in function completion
  * Phase 4: Dot trigger and field completion
+ * Phase 5: Action completion (context-aware)
  */
 
 import {
@@ -16,10 +17,11 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 
 import { KEYWORDS, TokenType } from '../lexer/tokens';
 import { SymbolTable, Symbol, Scope } from '../symbols/symbolTable';
-import { CALDocument } from '../parser/ast';
+import { CALDocument, ActionSection, ControlDeclaration } from '../parser/ast';
 import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from './builtins';
 import { ProviderBase } from '../providers/providerBase';
 import { getMetadataByTokenType } from '../shared/keywordMetadata';
+import { ACTION_TYPES, ACTION_PROPERTIES, ACTION_PROPERTY_VALUES } from './actionCompletions';
 
 /**
  * Map symbol kind to completion item kind
@@ -160,6 +162,7 @@ export class CompletionProvider extends ProviderBase {
    * Phase 2: Global symbols (variables, fields, procedures)
    * Phase 3: Built-in functions
    * Phase 4: Dot trigger completions
+   * Phase 5: Action completion (context-aware)
    */
   public getCompletions(
     document: TextDocument,
@@ -209,6 +212,38 @@ export class CompletionProvider extends ProviderBase {
     for (const func of BUILTIN_FUNCTIONS) {
       if (!prefix || func.name.toLowerCase().startsWith(prefix)) {
         items.push(buildBuiltinItem(func));
+      }
+    }
+
+    // Phase 5: Action completion (context-aware)
+    if (ast) {
+      const offset = document.offsetAt(position);
+      const actionSection = this.findActionSectionAtOffset(ast, offset);
+      if (actionSection) {
+        // Action types
+        for (const item of ACTION_TYPES) {
+          if (!prefix || item.label.toLowerCase().startsWith(prefix)) {
+            items.push(item);
+          }
+        }
+        // Action properties
+        for (const item of ACTION_PROPERTIES) {
+          if (!prefix || item.label.toLowerCase().startsWith(prefix)) {
+            items.push(item);
+          }
+        }
+        // Property values (context-dependent)
+        const propName = this.getPropertyNameOnLine(document, position);
+        if (propName) {
+          const values = ACTION_PROPERTY_VALUES.get(propName.toLowerCase());
+          if (values) {
+            for (const item of values) {
+              if (!prefix || item.label.toLowerCase().startsWith(prefix)) {
+                items.push(item);
+              }
+            }
+          }
+        }
       }
     }
 
@@ -280,5 +315,108 @@ export class CompletionProvider extends ProviderBase {
     }
 
     return items;
+  }
+
+  /**
+   * Find ActionSection containing the given offset
+   * Searches top-level actions, control properties with ActionList, and nested control properties
+   *
+   * @param ast - The parsed AST
+   * @param offset - Character offset in document
+   * @returns ActionSection if found, null otherwise
+   */
+  private findActionSectionAtOffset(ast: CALDocument, offset: number): ActionSection | null {
+    // Guard: early return if object is null
+    if (!ast.object) {
+      return null;
+    }
+
+    // Check top-level ACTIONS section
+    if (ast.object.actions) {
+      const section = ast.object.actions;
+      if (offset >= section.startToken.startOffset && offset < section.endToken.endOffset) {
+        return section;
+      }
+    }
+
+    // Check properties for ActionList property
+    if (ast.object.properties?.properties) {
+      for (const prop of ast.object.properties.properties) {
+        if (prop.actionSection) {
+          const section = prop.actionSection;
+          if (offset >= section.startToken.startOffset && offset < section.endToken.endOffset) {
+            return section;
+          }
+        }
+      }
+    }
+
+    // Check controls for properties with ActionList (recursively)
+    if (ast.object.controls?.controls) {
+      const result = this.findActionSectionInControls(ast.object.controls.controls, offset);
+      if (result) {
+        return result;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Recursively search controls for ActionSection at offset
+   *
+   * @param controls - Array of control declarations to search
+   * @param offset - Character offset in document
+   * @returns ActionSection if found, null otherwise
+   */
+  private findActionSectionInControls(controls: ControlDeclaration[], offset: number): ActionSection | null {
+    for (const control of controls) {
+      // Check this control's properties for ActionList
+      if (control.properties?.properties) {
+        for (const prop of control.properties.properties) {
+          if (prop.actionSection) {
+            const section = prop.actionSection;
+            if (offset >= section.startToken.startOffset && offset < section.endToken.endOffset) {
+              return section;
+            }
+          }
+        }
+      }
+
+      // Recursively check children
+      if (control.children && control.children.length > 0) {
+        const result = this.findActionSectionInControls(control.children, offset);
+        if (result) {
+          return result;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Extract property name from the current line (for property value completion)
+   * Looks for pattern: PropertyName=
+   *
+   * @param document - The text document
+   * @param position - Current cursor position
+   * @returns Property name if found, null otherwise
+   */
+  private getPropertyNameOnLine(document: TextDocument, position: Position): string | null {
+    const text = document.getText();
+    const lineStart = document.offsetAt({ line: position.line, character: 0 });
+    const cursorOffset = document.offsetAt(position);
+
+    // Get text from line start to cursor
+    const lineText = text.substring(lineStart, cursorOffset);
+
+    // Match pattern: PropertyName=
+    const match = lineText.match(/^\s*(\w+)\s*=\s*\w*$/);
+    if (match) {
+      return match[1];
+    }
+
+    return null;
   }
 }
