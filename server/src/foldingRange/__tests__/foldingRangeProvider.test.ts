@@ -975,6 +975,29 @@ describe('FoldingRangeProvider', () => {
         expect(elementsRange).toBeDefined();
         expect(elementsRange?.kind).toBe(FoldingRangeKind.Region);
       });
+
+      it('should fold empty CONTROLS section', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  CONTROLS
+  {
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, lexer } = parseContent(code);
+        const ranges = provider.provide(doc, ast, lexer);
+
+        const controlsRange = ranges.find((r: FoldingRange) => {
+          const startLineText = doc.getText({
+            start: { line: r.startLine, character: 0 },
+            end: { line: r.startLine, character: 100 }
+          });
+          return startLineText.trim().startsWith('CONTROLS');
+        });
+
+        expect(controlsRange).toBeDefined();
+        expect(controlsRange?.kind).toBe(FoldingRangeKind.Region);
+      });
     });
   });
 
