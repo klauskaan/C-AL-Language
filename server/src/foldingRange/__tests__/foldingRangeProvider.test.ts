@@ -650,6 +650,149 @@ describe('FoldingRangeProvider', () => {
         expect(actionListRange).toBeDefined();
         expect(actionListRange?.kind).toBe(FoldingRangeKind.Region);
       });
+
+      describe('Action-Level Triggers', () => {
+        it('should create folding range for action OnAction trigger', () => {
+          const code = `OBJECT Page 50000 TestPage
+{
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                Name=ContentArea }
+  }
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                Name=ActionItems;
+                ActionContainerType=ActionItems }
+    { 2   ;1   ;Action    ;
+                Name=RefreshAction;
+                CaptionML=ENU=Refresh;
+                OnAction=BEGIN
+                           CurrPage.UPDATE;
+                         END;
+                          }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+          const doc = createDocument(code);
+          const { ast, lexer } = parseContent(code);
+
+          const ranges = provider.provide(doc, ast, lexer);
+
+          const triggerRange = ranges.find((r: FoldingRange) => {
+            const startLineText = doc.getText({
+              start: { line: r.startLine, character: 0 },
+              end: { line: r.startLine, character: 200 }
+            });
+            return startLineText.includes('OnAction=BEGIN');
+          });
+
+          expect(triggerRange).toBeDefined();
+          expect(triggerRange?.kind).toBeUndefined(); // Action triggers use default folding, not Region
+        });
+
+        it('should create folding range for action trigger with VAR section', () => {
+          const code = `OBJECT Page 50000 TestPage
+{
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                Name=ContentArea }
+  }
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                Name=ActionItems;
+                ActionContainerType=ActionItems }
+    { 2   ;1   ;Action    ;
+                Name=ProcessAction;
+                CaptionML=ENU=Process;
+                OnAction=VAR
+                           TempRec@1000 : Record 18;
+                         BEGIN
+                           IF TempRec.FIND('-') THEN
+                             MESSAGE('Found');
+                         END;
+                          }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+          const doc = createDocument(code);
+          const { ast, lexer } = parseContent(code);
+
+          const ranges = provider.provide(doc, ast, lexer);
+
+          const triggerRange = ranges.find((r: FoldingRange) => {
+            const startLineText = doc.getText({
+              start: { line: r.startLine, character: 0 },
+              end: { line: r.startLine, character: 200 }
+            });
+            return startLineText.includes('OnAction=VAR');
+          });
+
+          expect(triggerRange).toBeDefined();
+          expect(triggerRange?.kind).toBeUndefined();
+        });
+
+        it('should create folding ranges for multiple actions with triggers', () => {
+          const code = `OBJECT Page 50000 TestPage
+{
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                Name=ContentArea }
+  }
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                Name=ActionItems;
+                ActionContainerType=ActionItems }
+    { 2   ;1   ;Action    ;
+                Name=RefreshAction;
+                CaptionML=ENU=Refresh;
+                OnAction=BEGIN
+                           CurrPage.UPDATE;
+                         END;
+                          }
+    { 3   ;1   ;Action    ;
+                Name=ShowErrors;
+                CaptionML=ENU=Show Errors;
+                OnAction=BEGIN
+                           ShowErrorLog;
+                         END;
+                          }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+          const doc = createDocument(code);
+          const { ast, lexer } = parseContent(code);
+
+          const ranges = provider.provide(doc, ast, lexer);
+
+          const actionTriggerRanges = ranges.filter((r: FoldingRange) => {
+            const startLineText = doc.getText({
+              start: { line: r.startLine, character: 0 },
+              end: { line: r.startLine, character: 200 }
+            });
+            return startLineText.includes('OnAction=BEGIN');
+          });
+
+          expect(actionTriggerRanges.length).toBe(2);
+        });
+      });
     });
 
     describe('Empty Sections', () => {
