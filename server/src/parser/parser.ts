@@ -1711,7 +1711,12 @@ export class Parser {
   }
 
   /**
-   * Parse ACTIONS section
+   * Parse top-level ACTIONS section.
+   *
+   * Note: Corpus analysis of 3,333 real NAV page exports found 0 instances
+   * of top-level ACTIONS sections. All 1,772 pages with actions use inline
+   * ActionList property values instead (see parseInlineActionSection).
+   * This path is kept for completeness but may never be exercised in practice.
    */
   private parseActionSection(): ActionSection {
     const startToken = this.consume(TokenType.Actions, 'Expected ACTIONS');
