@@ -481,11 +481,28 @@ export interface ActionDeclaration {
   children: ActionDeclaration[];
 }
 
+type HasProperties = { properties: PropertySection | null };
+
+/**
+ * Find a property by name (case-insensitive) from any node with a properties section.
+ * Returns the full Property object, or undefined if not found.
+ */
+export function findProperty(node: HasProperties, propName: string): Property | undefined {
+  return node.properties?.properties?.find(p => p.name.toLowerCase() === propName.toLowerCase());
+}
+
 /**
  * Get the Name property value from an action declaration
  */
 export function getActionName(action: ActionDeclaration): string | undefined {
-  return action.properties?.properties?.find(p => p.name.toLowerCase() === 'name')?.value;
+  return findProperty(action, 'name')?.value;
+}
+
+/**
+ * Get the Name property value from a control declaration
+ */
+export function getControlName(control: ControlDeclaration): string | undefined {
+  return findProperty(control, 'name')?.value;
 }
 
 /**
