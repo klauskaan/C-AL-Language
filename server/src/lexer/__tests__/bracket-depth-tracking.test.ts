@@ -613,6 +613,60 @@ describe('Lexer - Bracket Depth Tracking in Property Values', () => {
     });
   });
 
+  describe('Braces inside brackets - {Locked} pattern (issue #231)', () => {
+    it('should handle {Locked} inside CaptionML brackets without resetting property state', () => {
+      // Pattern: CaptionML=[@@@={Locked};ENU=Begin]
+      // The {Locked} braces appear INSIDE the brackets, should not reset inPropertyValue
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ; ; MyField ; Code20 ;
+      CaptionML=[@@@={Locked};ENU=Begin]
+    }
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // All closing braces should be RightBrace
+      const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
+      expect(rightBraces.length).toBe(4); // OBJECT + FIELDS + field + inner field brace
+
+      // Bug symptom would be closing braces as UNKNOWN
+      // Check that no closing braces are UNKNOWN (the fix preserves inPropertyValue across {Locked})
+      const unknownBraces = tokens.filter(t => t.type === TokenType.Unknown && (t.value === '}' || t.value === '{'));
+      expect(unknownBraces).toHaveLength(0);
+
+      // Note: @@@ characters are UNKNOWN tokens but that's a separate lexer limitation,
+      // not related to the onCloseBrace property state reset bug
+    });
+
+    it('should handle {Locked} in TextConst variable', () => {
+      // Pattern: TextConst variable with @@@={Locked};ENU=Test
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Text001 : TextConst '@@@={Locked};ENU=Test';
+    BEGIN
+    END;
+  }
+}`;
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // All closing braces should be RightBrace
+      const rightBraces = tokens.filter(t => t.type === TokenType.RightBrace);
+      expect(rightBraces.length).toBe(2); // OBJECT + CODE
+
+      // No UNKNOWN tokens
+      const unknownTokens = tokens.filter(t => t.type === TokenType.Unknown);
+      expect(unknownTokens).toHaveLength(0);
+    });
+  });
+
   describe('Regression - ensure fix does not break normal property parsing', () => {
     it('should still reset inPropertyValue for semicolon OUTSIDE brackets', () => {
       // Normal case: semicolon not in brackets should still work as delimiter

@@ -402,7 +402,10 @@ export class LexerStateManager {
 
   /**
    * Handle closing brace '}'
-   * Atomically resets multiple state variables
+   * Two-tier reset approach:
+   * - Section-closing brace (transition !== null): full reset including bracketDepth for error recovery
+   * - Normal brace at bracketDepth === 0: reset property/column state
+   * - Normal brace at bracketDepth > 0: skip resets (brace inside brackets, e.g., {Locked} in ML values)
    */
   public onCloseBrace(): ContextTransition | null {
     if (this.braceDepth > 0) {
@@ -412,7 +415,6 @@ export class LexerStateManager {
     let transition: ContextTransition | null = null;
 
     // Close section when braceDepth drops BELOW entry depth
-    // Note: currentSectionType may be null for non-columnar sections (PROPERTIES, FieldGroups, RequestForm)
     if (this.getCurrentContext() === LexerContext.SECTION_LEVEL &&
         this.sectionEntryDepth !== -1 &&
         this.braceDepth < this.sectionEntryDepth) {
@@ -421,15 +423,44 @@ export class LexerStateManager {
       this.sectionEntryDepth = -1;
     }
 
-    // Reset property tracking (atomic operation)
-    this.inPropertyValue = false;
-    this.lastPropertyName = '';
-    this.bracketDepth = 0;
+    // Reset property and column tracking
+    // Two-tier approach:
+    // - Section-closing brace (transition !== null): always reset everything,
+    //   including bracketDepth as error recovery for unclosed brackets
+    // - Normal brace at bracketDepth === 0: reset property/column state
+    //   (this is the standard field-closing or property-terminating brace)
+    // - Normal brace at bracketDepth > 0: skip resets, we're inside brackets
+    //   (e.g., {Locked} inside CaptionML=[...{Locked}...])
+    //
+    // CRITICAL: Check bracketDepth FIRST, before section pop status
+    // When bracketDepth > 0, we're inside ML brackets
+    // Distinguish between:
+    // - Spurious micro-section pop (braceDepth drops to 0): preserve state
+    // - Real section close (braceDepth >= 1): error recovery, reset everything
+    if (this.bracketDepth > 0 && this.braceDepth === 0) {
+      // Inside brackets, closed spurious micro-section back to NORMAL: preserve ALL state
+      // (Exception: still reset bracketDepth if transition occurred for error recovery)
+      if (transition !== null) {
+        this.bracketDepth = 0;  // Error recovery for unclosed brackets
+      }
+      // Skip resets: inPropertyValue, lastPropertyName, fieldDefColumn all preserved
+    } else if (transition !== null) {
+      // Section boundary: full reset including error recovery
+      // This handles both:
+      // - Real section close (braceDepth >= 1) with unclosed brackets → error recovery
+      // - Any section close with balanced brackets (bracketDepth = 0)
+      this.inPropertyValue = false;
+      this.lastPropertyName = '';
+      this.bracketDepth = 0;
+      this.fieldDefColumn = FieldDefColumn.NONE;
+    } else if (this.bracketDepth === 0) {
+      // Normal close brace outside brackets: reset property/column state
+      this.inPropertyValue = false;
+      this.lastPropertyName = '';
+      this.fieldDefColumn = FieldDefColumn.NONE;
+    }
 
-    // Reset column tracking
-    this.fieldDefColumn = FieldDefColumn.NONE;
-
-    // Reset section keyword flag (issue #262)
+    // Reset section keyword flag unconditionally (issue #262)
     this.lastWasSectionKeyword = false;
 
     return transition;

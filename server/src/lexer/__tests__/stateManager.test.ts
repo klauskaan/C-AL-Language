@@ -1125,6 +1125,127 @@ describe('LexerStateManager', () => {
     });
   });
 
+  describe('onCloseBrace() property state reset guards (issue #231)', () => {
+    it('should NOT reset inPropertyValue when bracketDepth > 0', () => {
+      const manager = new LexerStateManager();
+
+      // Setup: Enter property value mode with brackets
+      manager.onSectionKeyword('FIELDS');
+      manager.onIdentifier('CaptionML', LexerContext.SECTION_LEVEL);
+      manager.onEquals(); // inPropertyValue = true
+      manager.onOpenBracket(); // bracketDepth = 1
+
+      expect(manager.getState().inPropertyValue).toBe(true);
+      expect(manager.getState().bracketDepth).toBe(1);
+
+      // Close brace inside brackets (e.g., {Locked} in CaptionML)
+      manager.onOpenBrace();
+      manager.onCloseBrace();
+
+      // inPropertyValue should NOT be reset because bracketDepth > 0
+      expect(manager.getState().inPropertyValue).toBe(true);
+    });
+
+    it('should NOT reset lastPropertyName when bracketDepth > 0', () => {
+      const manager = new LexerStateManager();
+
+      // Setup: Enter property value mode with brackets
+      manager.onSectionKeyword('FIELDS');
+      manager.onIdentifier('CaptionML', LexerContext.SECTION_LEVEL);
+      manager.onEquals();
+      manager.onOpenBracket(); // bracketDepth = 1
+
+      expect(manager.getState().lastPropertyName).toBe('CaptionML');
+      expect(manager.getState().bracketDepth).toBe(1);
+
+      // Close brace inside brackets
+      manager.onOpenBrace();
+      manager.onCloseBrace();
+
+      // lastPropertyName should NOT be reset because bracketDepth > 0
+      expect(manager.getState().lastPropertyName).toBe('CaptionML');
+    });
+
+    it('should NOT reset fieldDefColumn when bracketDepth > 0', () => {
+      const manager = new LexerStateManager();
+
+      // Setup: Field definition with property that uses brackets
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace();
+      manager.onSectionKeyword('FIELDS');
+      manager.onOpenBrace(); // Enter SECTION_LEVEL
+      manager.onOpenBrace(); // Start field - fieldDefColumn = COL_1
+      manager.onSemicolon(); // COL_2
+      manager.onSemicolon(); // COL_3
+      manager.onSemicolon(); // COL_4
+      manager.onSemicolon(); // PROPERTIES
+
+      expect(manager.getState().fieldDefColumn).toBe(FieldDefColumn.PROPERTIES);
+
+      // Enter CaptionML with brackets
+      manager.onIdentifier('CaptionML', LexerContext.SECTION_LEVEL);
+      manager.onEquals();
+      manager.onOpenBracket(); // bracketDepth = 1
+
+      // Close brace inside brackets
+      manager.onOpenBrace();
+      manager.onCloseBrace();
+
+      // fieldDefColumn should NOT be reset because bracketDepth > 0
+      expect(manager.getState().fieldDefColumn).toBe(FieldDefColumn.PROPERTIES);
+    });
+
+    it('should still decrement braceDepth when bracketDepth > 0', () => {
+      const manager = new LexerStateManager();
+
+      // Setup with brackets
+      manager.onSectionKeyword('FIELDS');
+      manager.onIdentifier('CaptionML', LexerContext.SECTION_LEVEL);
+      manager.onEquals();
+      manager.onOpenBracket(); // bracketDepth = 1
+
+      // Open and close brace inside brackets
+      manager.onOpenBrace(); // braceDepth = 1
+      const braceDepthBefore = manager.getState().braceDepth;
+      expect(braceDepthBefore).toBe(1);
+
+      manager.onCloseBrace();
+
+      // braceDepth should still be decremented
+      expect(manager.getState().braceDepth).toBe(braceDepthBefore - 1);
+      expect(manager.getState().braceDepth).toBe(0);
+    });
+
+    it('should perform full reset including bracketDepth when popping SECTION_LEVEL (error recovery)', () => {
+      const manager = new LexerStateManager();
+
+      // Setup: Enter SECTION_LEVEL with stale bracket depth from previous error
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace(); // braceDepth = 1
+      manager.onSectionKeyword('FIELDS');
+      manager.onOpenBrace(); // braceDepth = 2, enter SECTION_LEVEL
+
+      // Simulate unclosed bracket scenario
+      manager.onIdentifier('CaptionML', LexerContext.SECTION_LEVEL);
+      manager.onEquals();
+      manager.onOpenBracket(); // bracketDepth = 1
+      manager.onOpenBracket(); // bracketDepth = 2
+      // Missing close brackets...
+
+      expect(manager.getState().bracketDepth).toBe(2);
+      expect(manager.getState().inPropertyValue).toBe(true);
+      expect(manager.getState().lastPropertyName).toBe('CaptionML');
+
+      // Close section brace - should trigger full reset
+      manager.onCloseBrace(); // Pop SECTION_LEVEL
+
+      // All state should be reset (error recovery)
+      expect(manager.getState().bracketDepth).toBe(0);
+      expect(manager.getState().inPropertyValue).toBe(false);
+      expect(manager.getState().lastPropertyName).toBe('');
+    });
+  });
+
   describe('Accessor methods (issue #239 optimization)', () => {
     describe('getBracketDepth()', () => {
       it('should return same value as getState().bracketDepth', () => {
