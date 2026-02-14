@@ -20,7 +20,8 @@ import {
   ActionDeclaration,
   ControlSection,
   ControlDeclaration,
-  getActionName
+  getActionName,
+  getControlName
 } from '../parser/ast';
 import { ProviderBase } from '../providers/providerBase';
 import { ASTVisitor } from '../visitor/astVisitor';
@@ -163,8 +164,8 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
    * Build a symbol for a control and recursively build symbols for its children
    */
   private buildControlSymbol(control: ControlDeclaration, parent: DocumentSymbol): void {
-    const nameProp = control.properties?.properties?.find(p => p.name.toLowerCase() === 'name');
-    const nameStr = nameProp ? ` "${nameProp.value}"` : '';
+    const name = getControlName(control);
+    const nameStr = name ? ` "${name}"` : '';
 
     const symbol = this.createSymbol(
       `${control.controlType} ${control.id}${nameStr}`,

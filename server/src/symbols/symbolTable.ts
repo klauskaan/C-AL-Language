@@ -6,7 +6,8 @@ import {
   TriggerDeclaration,
   EventDeclaration,
   FieldDeclaration,
-  ActionDeclaration
+  ActionDeclaration,
+  findProperty
 } from '../parser/ast';
 import { Type } from '../types/types';
 import { resolveType, resolveVariableType } from '../types/typeResolver';
@@ -319,7 +320,7 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
    */
   visitActionDeclaration(node: ActionDeclaration): void | false {
     // Find the Name property in the action's properties
-    const nameProp = node.properties?.properties?.find(p => p.name.toLowerCase() === 'name');
+    const nameProp = findProperty(node, 'name');
     if (!nameProp) return;
 
     // Use the value token for accurate source location, fallback to property start token
