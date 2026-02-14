@@ -633,4 +633,142 @@ describe('DocumentSymbolProvider', () => {
       expect(fieldsGroup?.children?.length).toBe(1);
     });
   });
+
+  describe('Actions Section', () => {
+    it('should include ACTIONS group for page with top-level ACTIONS section', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                Name=ActionItems }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      expect(symbols.length).toBe(1);
+      const actionsGroup = symbols[0].children?.find(c => c.name === 'ACTIONS');
+      expect(actionsGroup).toBeDefined();
+      expect(actionsGroup?.kind).toBe(SymbolKind.Namespace);
+      expect(actionsGroup?.children?.length).toBe(1);
+    });
+
+    it('should show action type, ID, and Name in symbol name', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                Name=ActionItems }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const actionsGroup = symbols[0].children?.find(c => c.name === 'ACTIONS');
+      const action = actionsGroup?.children?.[0];
+
+      expect(action?.name).toBe('ActionContainer 1 "ActionItems"');
+      expect(action?.kind).toBe(SymbolKind.Event);
+    });
+
+    it('should show action type and ID only when Name property is missing', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  ACTIONS
+  {
+    { 5   ;1   ;Separator }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const actionsGroup = symbols[0].children?.find(c => c.name === 'ACTIONS');
+      const action = actionsGroup?.children?.[0];
+
+      expect(action?.name).toBe('Separator 5');
+      expect(action?.kind).toBe(SymbolKind.Event);
+    });
+
+    it('should create hierarchical nesting based on indent level', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  ACTIONS
+  {
+    { 1   ;0   ;ActionContainer;
+                Name=ActionItems }
+    { 2   ;1   ;ActionGroup;
+                Name=Functions }
+    { 3   ;2   ;Action;
+                Name=Refresh }
+    { 4   ;2   ;Action;
+                Name=Delete }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const actionsGroup = symbols[0].children?.find(c => c.name === 'ACTIONS');
+      expect(actionsGroup?.children?.length).toBe(1);
+
+      const actionContainer = actionsGroup?.children?.[0];
+      expect(actionContainer?.name).toBe('ActionContainer 1 "ActionItems"');
+      expect(actionContainer?.children?.length).toBe(1);
+
+      const actionGroup = actionContainer?.children?.[0];
+      expect(actionGroup?.name).toBe('ActionGroup 2 "Functions"');
+      expect(actionGroup?.children?.length).toBe(2);
+
+      const action1 = actionGroup?.children?.[0];
+      const action2 = actionGroup?.children?.[1];
+      expect(action1?.name).toBe('Action 3 "Refresh"');
+      expect(action2?.name).toBe('Action 4 "Delete"');
+    });
+
+    it('should include ACTIONS group for inline ActionList from property', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container;
+                ContainerType=ContentArea }
+    { 2   ;1   ;Group ;
+                GroupType=CueGroup;
+                ActionList=ACTIONS
+                {
+                  { 3   ;    ;Action    ;
+                                  Name=CueAction }
+                } }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      expect(symbols.length).toBe(1);
+      const actionsGroup = symbols[0].children?.find(c => c.name === 'ACTIONS');
+      expect(actionsGroup).toBeDefined();
+      expect(actionsGroup?.kind).toBe(SymbolKind.Namespace);
+    });
+  });
 });

@@ -15,7 +15,9 @@ import {
   KeyDeclaration,
   ProcedureDeclaration,
   TriggerDeclaration,
-  VariableDeclaration
+  VariableDeclaration,
+  ActionSection,
+  ActionDeclaration
 } from '../parser/ast';
 import { ProviderBase } from '../providers/providerBase';
 import { ASTVisitor } from '../visitor/astVisitor';
@@ -33,7 +35,7 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
   /** Current container for adding child symbols */
   private currentContainer: DocumentSymbol | null = null;
 
-  /** Group containers for Fields, Keys, Triggers, Procedures */
+  /** Group containers for section types */
   private fieldsGroup: DocumentSymbol | null = null;
   private keysGroup: DocumentSymbol | null = null;
   private triggersGroup: DocumentSymbol | null = null;
@@ -84,6 +86,50 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
     );
     this.keysGroup.children = [];
     this.pushChild(this.root, this.keysGroup);
+  }
+
+  /**
+   * Visit action section - creates an "ACTIONS" group
+   */
+  visitActionSection(node: ActionSection): void | false {
+    if (!this.root) return false;
+
+    const actionsGroup = this.createSymbol(
+      'ACTIONS',
+      SymbolKind.Namespace,
+      node.startToken,
+      node.endToken
+    );
+    actionsGroup.children = [];
+    this.pushChild(this.root, actionsGroup);
+
+    // Build action symbols recursively (manual traversal for hierarchical nesting)
+    for (const action of node.actions) {
+      this.buildActionSymbol(action, actionsGroup);
+    }
+
+    // Skip walker's child traversal — we built the tree ourselves
+    return false;
+  }
+
+  /**
+   * Build a symbol for an action and recursively build symbols for its children
+   */
+  private buildActionSymbol(action: ActionDeclaration, parent: DocumentSymbol): void {
+    const nameProp = action.properties?.properties?.find(p => p.name === 'Name');
+    const nameStr = nameProp ? ` "${nameProp.value}"` : '';
+
+    const symbol = this.createSymbol(
+      `${action.actionType} ${action.id}${nameStr}`,
+      SymbolKind.Event,
+      action.startToken,
+      action.endToken
+    );
+    this.pushChild(parent, symbol);
+
+    for (const child of action.children) {
+      this.buildActionSymbol(child, symbol);
+    }
   }
 
   /**
