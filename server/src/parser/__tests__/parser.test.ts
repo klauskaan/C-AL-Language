@@ -1968,6 +1968,9 @@ describe('Parser - Multi-word Property Names', () => {
       // Verify meaningful error message is reported (issue #69 acceptance criteria)
       expect(errors.length).toBeGreaterThan(0);
       expect(errors.some((e: any) => e.message.includes('='))).toBe(true);
+
+      // Verify error location for regression testing (issue #234)
+      expect(errors[0].token.line).toBe(3);
     });
 
     it('should recover and parse subsequent valid fields after malformed multi-word property', () => {
@@ -1988,6 +1991,9 @@ describe('Parser - Multi-word Property Names', () => {
 
       // Verify error was still reported for the malformed field
       expect(errors.length).toBeGreaterThan(0);
+
+      // Verify error location for regression testing (issue #234)
+      expect(errors[0].token.line).toBe(3);
     });
 
     it('should handle multiple consecutive malformed multi-word properties', () => {
@@ -2013,6 +2019,10 @@ describe('Parser - Multi-word Property Names', () => {
       // Verify errors relate to missing '=' in property values
       const propertyErrors = errors.filter((e: any) => e.message.includes('='));
       expect(propertyErrors.length).toBeGreaterThanOrEqual(2);
+
+      // Verify error location for regression testing (issue #234)
+      expect(errors[0].token.line).toBe(3);
+      expect(errors[1].token.line).toBe(4);
     });
 
     it('should handle partial multi-word property names gracefully (issue #179)', () => {
@@ -2032,6 +2042,9 @@ describe('Parser - Multi-word Property Names', () => {
       // Verify error is reported (missing '=')
       expect(errors.length).toBeGreaterThan(0);
       expect(errors.some((e: any) => e.message.includes('='))).toBe(true);
+
+      // Verify error location for regression testing (issue #234)
+      expect(errors[0].token.line).toBe(3);
     });
 
     it('should handle single-word partial property names (issue #179)', () => {
@@ -2054,6 +2067,9 @@ describe('Parser - Multi-word Property Names', () => {
       // Verify error is reported for malformed property
       expect(errors.length).toBeGreaterThan(0);
       expect(errors.some((e: any) => e.message.includes('='))).toBe(true);
+
+      // Verify error location for regression testing (issue #234)
+      expect(errors[0].token.line).toBe(4);
     });
   });
 });
