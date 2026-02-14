@@ -644,3 +644,229 @@ describe('ActionNestingValidator - Real-World Patterns', () => {
     expect(diagnostics[0].message).toBe('ActionGroup cannot be a root action; expected ActionContainer');
   });
 });
+
+describe('ActionNestingValidator - Context-Aware (control-property source)', () => {
+  it('should not flag bare Action at root in control-property context', () => {
+    const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1 ;0 ;Group;
+            GroupType=CueGroup;
+            ActionList=ACTIONS
+            {
+              { 1; ;Action;
+                    Name=CueAction }
+            } }
+  }
+}`;
+
+    const diagnostics = validateActionNesting(code);
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should not flag bare Separator at root in control-property context', () => {
+    const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1 ;0 ;Group;
+            GroupType=CueGroup;
+            ActionList=ACTIONS
+            {
+              { 1; ;Separator }
+            } }
+  }
+}`;
+
+    const diagnostics = validateActionNesting(code);
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should not flag ActionContainer at root in control-property context', () => {
+    const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1 ;0 ;Group;
+            GroupType=CueGroup;
+            ActionList=ACTIONS
+            {
+              { 1; ;ActionContainer;
+                    Name=Container }
+              { 2;1 ;Action;
+                    Name=ChildAction }
+            } }
+  }
+}`;
+
+    const diagnostics = validateActionNesting(code);
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should not flag ActionGroup at root in control-property context', () => {
+    const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1 ;0 ;Group;
+            GroupType=CueGroup;
+            ActionList=ACTIONS
+            {
+              { 1; ;ActionGroup;
+                    Name=MyGroup }
+              { 2;1 ;Action;
+                    Name=ChildAction }
+            } }
+  }
+}`;
+
+    const diagnostics = validateActionNesting(code);
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should not flag multiple bare Actions at root in control-property context', () => {
+    const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1 ;0 ;Group;
+            GroupType=CueGroup;
+            ActionList=ACTIONS
+            {
+              { 1; ;Action;
+                    Name=Action1 }
+              { 2; ;Action;
+                    Name=Action2 }
+              { 3; ;Action;
+                    Name=Action3 }
+            } }
+  }
+}`;
+
+    const diagnostics = validateActionNesting(code);
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should still flag nested ActionContainer in control-property context (Rule 2)', () => {
+    const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1 ;0 ;Group;
+            GroupType=CueGroup;
+            ActionList=ACTIONS
+            {
+              { 1; ;ActionGroup;
+                    Name=MyGroup }
+              { 2;1 ;ActionContainer;
+                    Name=InvalidNested }
+            } }
+  }
+}`;
+
+    const diagnostics = validateActionNesting(code);
+
+    expect(diagnostics).toHaveLength(1);
+    const diag = diagnostics[0];
+    expect(diag.message).toBe('ActionContainer must be at root level, not nested inside another action');
+    expect(diag.code).toBe('action-nesting-container');
+  });
+
+  it('should still flag Action with children in control-property context (Rule 3)', () => {
+    const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1 ;0 ;Group;
+            GroupType=CueGroup;
+            ActionList=ACTIONS
+            {
+              { 1; ;Action;
+                    Name=ParentAction }
+              { 2;1 ;Action;
+                    Name=ChildAction }
+            } }
+  }
+}`;
+
+    const diagnostics = validateActionNesting(code);
+
+    expect(diagnostics).toHaveLength(1);
+    const diag = diagnostics[0];
+    expect(diag.message).toBe('Action cannot have child actions (has 1)');
+    expect(diag.code).toBe('action-nesting-leaf');
+  });
+
+  it('should still flag nested ActionContainer in ActionGroup in control-property context', () => {
+    const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1 ;0 ;Group;
+            GroupType=CueGroup;
+            ActionList=ACTIONS
+            {
+              { 1; ;ActionGroup;
+                    Name=OuterGroup }
+              { 2;1 ;ActionGroup;
+                    Name=InnerGroup }
+              { 3;2 ;ActionContainer;
+                    Name=DeepNested }
+            } }
+  }
+}`;
+
+    const diagnostics = validateActionNesting(code);
+
+    expect(diagnostics).toHaveLength(1);
+    const diag = diagnostics[0];
+    expect(diag.message).toBe('ActionContainer must be at root level, not nested inside another action');
+    expect(diag.code).toBe('action-nesting-container');
+  });
+
+  it('should flag bare Action at root in property source (existing Rule 1 behavior)', () => {
+    const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+    ActionList=ACTIONS
+    {
+      { 1; ;Action;
+            Name=PropertyAction }
+    }
+  }
+}`;
+
+    const diagnostics = validateActionNesting(code);
+
+    expect(diagnostics).toHaveLength(1);
+    const diag = diagnostics[0];
+    expect(diag.message).toBe('Action cannot be a root action; expected ActionContainer');
+    expect(diag.code).toBe('action-nesting-root');
+  });
+});

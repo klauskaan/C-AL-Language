@@ -2,9 +2,14 @@
  * Action Nesting Validator
  *
  * Validates action nesting rules in C/AL ACTIONS sections:
- * 1. Root actions must be ActionContainer
+ * 1. Root actions must be ActionContainer (skipped for control-property source)
  * 2. ActionContainer must only appear at root level
  * 3. Action and Separator cannot have children
+ *
+ * Context: The source field on ActionSection indicates origin.
+ * 'control-property' ActionLists (in CONTROLS sections) don't require
+ * ActionContainer at root — bare Actions are the norm (86/87 corpus instances).
+ * All other sources (top-level, property, undefined) enforce Rule 1.
  */
 
 import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver';
@@ -32,9 +37,18 @@ class ActionNestingValidatorVisitor implements Partial<ASTVisitor> {
    * Validate an entire action section
    */
   private validateActionSection(section: ActionSection): void {
-    // Validate each root-level action
+    // control-property source (CONTROLS section ActionList) doesn't require
+    // ActionContainer at root. All other sources (top-level, property,
+    // undefined) enforce the full ruleset — undefined defaults to strict
+    // as the safer assumption.
+    const skipContainerRequirement = section.source === 'control-property';
+
     for (const action of section.actions) {
-      this.validateRootAction(action);
+      if (skipContainerRequirement) {
+        this.validateControlPropertyRootAction(action);
+      } else {
+        this.validateRootAction(action);
+      }
     }
   }
 
@@ -68,6 +82,45 @@ class ActionNestingValidatorVisitor implements Partial<ASTVisitor> {
     }
 
     // Recursively validate children
+    for (const child of action.children) {
+      this.validateNestedAction(child);
+    }
+  }
+
+  /**
+   * Validate a root-level action in control-property context.
+   * Rule 1 is skipped (ActionContainer not required at root).
+   * Rules 2 and 3 still apply.
+   */
+  private validateControlPropertyRootAction(action: ActionDeclaration): void {
+    // Skip if parser recovery node (rawActionType indicates parse error)
+    if (action.rawActionType !== undefined) {
+      return;
+    }
+
+    // No Rule 1 check — any action type is valid at root in control-property context
+
+    // Rule 3: Action and Separator cannot have children (applies even at root)
+    if ((action.actionType === 'Action' || action.actionType === 'Separator') && action.children.length > 0) {
+      this.diagnostics.push({
+        message: `${action.actionType} cannot have child actions (has ${action.children.length})`,
+        severity: DiagnosticSeverity.Warning,
+        range: {
+          start: {
+            line: action.startToken.line - 1,
+            character: action.startToken.column - 1
+          },
+          end: {
+            line: action.endToken.line - 1,
+            character: action.endToken.column + (action.endToken.endOffset - action.endToken.startOffset) - 1
+          }
+        },
+        source: 'cal',
+        code: 'action-nesting-leaf'
+      });
+    }
+
+    // Unconditionally recurse children — this is NOT conditional on Rule 3
     for (const child of action.children) {
       this.validateNestedAction(child);
     }
