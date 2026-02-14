@@ -25,7 +25,9 @@ No issue number? Create one first (`gh issue create`) — even a title and one-l
                     (if senior-merge-engineer was needed, run adversarial-reviewer before cleanup)
 ```
 
-Steps 1-3 and 7-8 are done directly by the orchestrator. Steps 4-6 are delegated to agents. Skip steps that aren't needed — trivial changes don't need a plan, mechanical fixes don't need investigation. But lean toward investigating; issue descriptions say WHAT, not WHY.
+Steps 1-2 and 7-8 are done directly by the orchestrator. Steps 4-5 are delegated to agents. Skip steps that aren't needed — trivial changes don't need a plan, mechanical fixes don't need investigation. But lean toward investigating; issue descriptions say WHAT, not WHY.
+
+**Review gates (steps 3 and 6) are structural, not optional.** Always spawn adversarial-reviewer at these points — no judgment calls, no skipping. This is enforced by architecture, not guidelines. Only an explicit "APPROVED" from the reviewer allows proceeding to the next step. "CHANGES REQUIRED" means fix and re-submit to the reviewer, not fix and move on.
 
 **Before starting:** `gh issue view N && gh issue view N -c` (the `-c` command produces no output when there are zero comments — this is normal).
 
@@ -33,14 +35,12 @@ Steps 1-3 and 7-8 are done directly by the orchestrator. Steps 4-6 are delegated
 
 **TDD:** Tests should fail before implementation. If they pass immediately, the diagnosis might be wrong. Exceptions: refactoring, test coverage, regression tests.
 
-**Review is mandatory.** adversarial-reviewer runs before every commit. Include any concerns from the planning phase in the review prompt — the reviewer should verify the implementation addressed them.
-
 **Feedback from reviewers:**
 - **Fix it** — change the code or revise the plan
 - **Defer it** — create a tracking issue (`gh issue create`), then move on
 - **Dismiss it** — explain why it doesn't apply
 
-Only an explicit "APPROVED" exits the review loop. Report feedback dispositions to the user.
+Report all feedback dispositions to the user.
 
 **Issue Creation Bias.** When a finding is valid but out-of-scope, prefer creating a tracking issue over moving on. Untracked observations get lost.
 
