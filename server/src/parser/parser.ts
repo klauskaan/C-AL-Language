@@ -2609,6 +2609,35 @@ export class Parser {
       }
     }
 
+    // Skip documentation trigger if present (BEGIN...END.)
+    if (this.check(TokenType.Begin)) {
+      this.advance(); // consume BEGIN
+
+      // Skip tokens until END is found
+      while (!this.check(TokenType.End) && !this.isAtEnd()) {
+        this.advance();
+      }
+
+      if (this.check(TokenType.End)) {
+        this.advance(); // consume END
+      }
+
+      // Consume trailing dot if present
+      if (this.check(TokenType.Dot)) {
+        this.advance();
+      }
+    }
+
+    // Consume closing brace of CODE section
+    let endToken: Token;
+    if (this.check(TokenType.RightBrace)) {
+      endToken = this.advance();
+    } else {
+      // Fallback: use previous token if closing brace not found
+      // This handles cases where procedure parsing leaves unconsumed tokens
+      endToken = this.previous();
+    }
+
     return {
       type: 'CodeSection',
       variables,
@@ -2616,7 +2645,7 @@ export class Parser {
       triggers,
       events,
       startToken,
-      endToken: this.previous()
+      endToken
     };
   }
 

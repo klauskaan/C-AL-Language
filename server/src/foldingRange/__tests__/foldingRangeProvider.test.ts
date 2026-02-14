@@ -753,11 +753,7 @@ describe('FoldingRangeProvider', () => {
         expect(fieldGroupsRange?.kind).toBe(FoldingRangeKind.Region);
       });
 
-      it.skip('should fold empty CODE section', () => {
-        // Parser limitation: CODE section with only documentation trigger (BEGIN...END.)
-        // is not properly parsed. The endToken is set to the opening brace instead of
-        // the closing brace. This is a known parser issue, not a folding range issue.
-        // A CODE section needs at least one procedure/trigger to be recognized correctly.
+      it('should fold empty CODE section', () => {
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE
