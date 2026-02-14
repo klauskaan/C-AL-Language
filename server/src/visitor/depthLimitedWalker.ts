@@ -23,6 +23,22 @@ import {
   WithStatement
 } from '../parser/ast';
 
+/**
+ * Node types protected by depth limiting.
+ *
+ * These AST nodes can be arbitrarily nested and require stack overflow protection.
+ */
+type DepthProtectedNode =
+  | ActionDeclaration
+  | ControlDeclaration
+  | XMLportElement
+  | IfStatement
+  | WhileStatement
+  | ForStatement
+  | RepeatStatement
+  | CaseStatement
+  | WithStatement;
+
 export const DEFAULT_MAX_DEPTH = 100;
 
 /**
@@ -239,7 +255,7 @@ export class DepthLimitedWalker extends ASTWalker {
   }
 
   private emitDepthExceededDiagnostic(
-    node: ActionDeclaration | ControlDeclaration | XMLportElement | IfStatement | WhileStatement | ForStatement | RepeatStatement | CaseStatement | WithStatement,
+    node: DepthProtectedNode,
     elementType: string
   ): void {
     // Get position from node's startToken (1-based to 0-based)
