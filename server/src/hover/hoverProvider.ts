@@ -11,7 +11,7 @@ import {
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SymbolTable, Symbol } from '../symbols/symbolTable';
-import { CALDocument, ProcedureDeclaration, ActionSection, ActionDeclaration, ControlDeclaration } from '../parser/ast';
+import { CALDocument, ProcedureDeclaration, ActionSection, ActionDeclaration, ControlDeclaration, getActionName } from '../parser/ast';
 import { Token, KEYWORDS, TokenType } from '../lexer/tokens';
 import { BuiltinFunction, BuiltinRegistry } from '../builtins';
 import { ProviderBase } from '../providers/providerBase';
@@ -152,7 +152,7 @@ export class HoverProvider extends ProviderBase {
           };
         }
         // Check if word matches the action's Name property value
-        const actionName = this.getActionName(action);
+        const actionName = getActionName(action);
         if (actionName && actionName.toLowerCase() === lowerWord) {
           return this.buildActionHover(action);
         }
@@ -408,17 +408,10 @@ export class HoverProvider extends ProviderBase {
   }
 
   /**
-   * Get the Name property value from an action declaration
-   */
-  private getActionName(action: ActionDeclaration): string | undefined {
-    return action.properties?.properties?.find(p => p.name === 'Name')?.value;
-  }
-
-  /**
    * Build hover content for an action declaration summary
    */
   private buildActionHover(action: ActionDeclaration): Hover {
-    const name = this.getActionName(action);
+    const name = getActionName(action);
     const nameStr = name ? ` "${name}"` : '';
     let content = `**${action.actionType}** (ID: ${action.id})${nameStr}\n\n`;
 
