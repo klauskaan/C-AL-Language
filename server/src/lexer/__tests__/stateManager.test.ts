@@ -1165,8 +1165,11 @@ describe('LexerStateManager', () => {
       const manager = new LexerStateManager();
 
       // Setup: Enter property value mode with brackets
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace();
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('CaptionML', LexerContext.SECTION_LEVEL);
+      manager.onOpenBrace(); // Enter SECTION_LEVEL
+      manager.onIdentifier('CaptionML');
       manager.onEquals(); // inPropertyValue = true
       manager.onOpenBracket(); // bracketDepth = 1
 
@@ -1185,8 +1188,11 @@ describe('LexerStateManager', () => {
       const manager = new LexerStateManager();
 
       // Setup: Enter property value mode with brackets
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace();
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('CaptionML', LexerContext.SECTION_LEVEL);
+      manager.onOpenBrace(); // Enter SECTION_LEVEL
+      manager.onIdentifier('CaptionML');
       manager.onEquals();
       manager.onOpenBracket(); // bracketDepth = 1
 
@@ -1218,7 +1224,7 @@ describe('LexerStateManager', () => {
       expect(manager.getState().fieldDefColumn).toBe(FieldDefColumn.PROPERTIES);
 
       // Enter CaptionML with brackets
-      manager.onIdentifier('CaptionML', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('CaptionML');
       manager.onEquals();
       manager.onOpenBracket(); // bracketDepth = 1
 
@@ -1234,21 +1240,24 @@ describe('LexerStateManager', () => {
       const manager = new LexerStateManager();
 
       // Setup with brackets
+      manager.onObjectKeyword(0);
+      manager.onOpenBrace();
       manager.onSectionKeyword('FIELDS');
-      manager.onIdentifier('CaptionML', LexerContext.SECTION_LEVEL);
+      manager.onOpenBrace(); // Enter SECTION_LEVEL
+      manager.onIdentifier('CaptionML');
       manager.onEquals();
       manager.onOpenBracket(); // bracketDepth = 1
 
       // Open and close brace inside brackets
-      manager.onOpenBrace(); // braceDepth = 1
+      manager.onOpenBrace(); // braceDepth = 3
       const braceDepthBefore = manager.getState().braceDepth;
-      expect(braceDepthBefore).toBe(1);
+      expect(braceDepthBefore).toBe(3);
 
       manager.onCloseBrace();
 
       // braceDepth should still be decremented
       expect(manager.getState().braceDepth).toBe(braceDepthBefore - 1);
-      expect(manager.getState().braceDepth).toBe(0);
+      expect(manager.getState().braceDepth).toBe(2);
     });
 
     it('should perform full reset including bracketDepth when popping SECTION_LEVEL (error recovery)', () => {
@@ -1261,7 +1270,7 @@ describe('LexerStateManager', () => {
       manager.onOpenBrace(); // braceDepth = 2, enter SECTION_LEVEL
 
       // Simulate unclosed bracket scenario
-      manager.onIdentifier('CaptionML', LexerContext.SECTION_LEVEL);
+      manager.onIdentifier('CaptionML');
       manager.onEquals();
       manager.onOpenBracket(); // bracketDepth = 1
       manager.onOpenBracket(); // bracketDepth = 2
