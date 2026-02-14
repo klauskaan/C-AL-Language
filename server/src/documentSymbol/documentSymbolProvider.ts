@@ -17,7 +17,9 @@ import {
   TriggerDeclaration,
   VariableDeclaration,
   ActionSection,
-  ActionDeclaration
+  ActionDeclaration,
+  ControlSection,
+  ControlDeclaration
 } from '../parser/ast';
 import { ProviderBase } from '../providers/providerBase';
 import { ASTVisitor } from '../visitor/astVisitor';
@@ -129,6 +131,72 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
 
     for (const child of action.children) {
       this.buildActionSymbol(child, symbol);
+    }
+  }
+
+  /**
+   * Visit control section - creates a "CONTROLS" group
+   */
+  visitControlSection(node: ControlSection): void | false {
+    if (!this.root) return false;
+
+    const controlsGroup = this.createSymbol(
+      'CONTROLS',
+      SymbolKind.Namespace,
+      node.startToken,
+      node.endToken
+    );
+    controlsGroup.children = [];
+    this.pushChild(this.root, controlsGroup);
+
+    // Build control symbols recursively (manual traversal for hierarchical nesting)
+    for (const control of node.controls) {
+      this.buildControlSymbol(control, controlsGroup);
+    }
+
+    // Skip walker's child traversal — we built the tree ourselves
+    return false;
+  }
+
+  /**
+   * Build a symbol for a control and recursively build symbols for its children
+   */
+  private buildControlSymbol(control: ControlDeclaration, parent: DocumentSymbol): void {
+    const nameProp = control.properties?.properties?.find(p => p.name === 'Name');
+    const nameStr = nameProp ? ` "${nameProp.value}"` : '';
+
+    const symbol = this.createSymbol(
+      `${control.controlType} ${control.id}${nameStr}`,
+      SymbolKind.Struct,
+      control.startToken,
+      control.endToken
+    );
+    this.pushChild(parent, symbol);
+
+    // Inline ActionList properties (e.g., CueGroup actions) are promoted to
+    // root-level ACTIONS groups, matching how top-level ACTIONS sections appear.
+    // This keeps all actions discoverable at the top level of the outline.
+    if (control.properties?.properties) {
+      for (const prop of control.properties.properties) {
+        if (prop.actionSection && this.root) {
+          const actionsGroup = this.createSymbol(
+            'ACTIONS',
+            SymbolKind.Namespace,
+            prop.actionSection.startToken,
+            prop.actionSection.endToken
+          );
+          actionsGroup.children = [];
+          this.pushChild(this.root, actionsGroup);
+
+          for (const action of prop.actionSection.actions) {
+            this.buildActionSymbol(action, actionsGroup);
+          }
+        }
+      }
+    }
+
+    for (const child of control.children) {
+      this.buildControlSymbol(child, symbol);
     }
   }
 

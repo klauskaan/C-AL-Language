@@ -771,4 +771,225 @@ describe('DocumentSymbolProvider', () => {
       expect(actionsGroup?.kind).toBe(SymbolKind.Namespace);
     });
   });
+
+  describe('Controls Section', () => {
+    it('should include CONTROLS group for page with CONTROLS section', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container;
+                ContainerType=ContentArea }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      expect(symbols.length).toBe(1);
+      const controlsGroup = symbols[0].children?.find(c => c.name === 'CONTROLS');
+      expect(controlsGroup).toBeDefined();
+      expect(controlsGroup?.kind).toBe(SymbolKind.Namespace);
+      expect(controlsGroup?.children?.length).toBe(1);
+    });
+
+    it('should show control type, ID, and Name in symbol name', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container;
+                Name=ContentArea;
+                ContainerType=ContentArea }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const controlsGroup = symbols[0].children?.find(c => c.name === 'CONTROLS');
+      const control = controlsGroup?.children?.[0];
+
+      expect(control?.name).toBe('Container 1 "ContentArea"');
+      expect(control?.kind).toBe(SymbolKind.Struct);
+    });
+
+    it('should show control type and ID only when Name property is missing', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 3   ;2   ;Field;
+                SourceExpr="No." }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const controlsGroup = symbols[0].children?.find(c => c.name === 'CONTROLS');
+      const control = controlsGroup?.children?.[0];
+
+      expect(control?.name).toBe('Field 3');
+      expect(control?.kind).toBe(SymbolKind.Struct);
+    });
+
+    it('should create hierarchical nesting based on indent level', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container;
+                ContainerType=ContentArea }
+    { 2   ;1   ;Group;
+                Name=General;
+                GroupType=Group }
+    { 3   ;2   ;Field;
+                Name=No;
+                SourceExpr="No." }
+    { 4   ;2   ;Field;
+                Name=CustomerName;
+                SourceExpr=Name }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const controlsGroup = symbols[0].children?.find(c => c.name === 'CONTROLS');
+      expect(controlsGroup?.children?.length).toBe(1);
+
+      const container = controlsGroup?.children?.[0];
+      expect(container?.name).toBe('Container 1');
+      expect(container?.children?.length).toBe(1);
+
+      const group = container?.children?.[0];
+      expect(group?.name).toBe('Group 2 "General"');
+      expect(group?.children?.length).toBe(2);
+
+      const field1 = group?.children?.[0];
+      const field2 = group?.children?.[1];
+      expect(field1?.name).toBe('Field 3 "No"');
+      expect(field2?.name).toBe('Field 4 "CustomerName"');
+    });
+
+    it('should use SymbolKind.Struct for individual control symbols', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container;
+                ContainerType=ContentArea }
+    { 2   ;1   ;Group;
+                Name=General }
+    { 3   ;2   ;Field;
+                Name=No }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      const controlsGroup = symbols[0].children?.find(c => c.name === 'CONTROLS');
+
+      const container = controlsGroup?.children?.[0];
+      expect(container?.kind).toBe(SymbolKind.Struct);
+
+      const group = container?.children?.[0];
+      expect(group?.kind).toBe(SymbolKind.Struct);
+
+      const field = group?.children?.[0];
+      expect(field?.kind).toBe(SymbolKind.Struct);
+    });
+
+    it('should handle page with both CONTROLS and ACTIONS sections', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container;
+                ContainerType=ContentArea }
+  }
+  ACTIONS
+  {
+    { 2   ;0   ;ActionContainer;
+                Name=ActionItems }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      expect(symbols.length).toBe(1);
+
+      const controlsGroup = symbols[0].children?.find(c => c.name === 'CONTROLS');
+      expect(controlsGroup).toBeDefined();
+      expect(controlsGroup?.children?.length).toBe(1);
+
+      const actionsGroup = symbols[0].children?.find(c => c.name === 'ACTIONS');
+      expect(actionsGroup).toBeDefined();
+      expect(actionsGroup?.children?.length).toBe(1);
+    });
+
+    it('should promote inline ActionList from multiple CueGroups to separate root-level ACTIONS groups', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container;
+                ContainerType=ContentArea }
+    { 2   ;1   ;Group ;
+                GroupType=CueGroup;
+                ActionList=ACTIONS
+                {
+                  { 3   ;    ;Action    ;
+                                  Name=FirstCueAction }
+                } }
+    { 4   ;1   ;Group ;
+                GroupType=CueGroup;
+                ActionList=ACTIONS
+                {
+                  { 5   ;    ;Action    ;
+                                  Name=SecondCueAction }
+                } }
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const symbols = provider.getDocumentSymbols(doc, ast);
+
+      expect(symbols.length).toBe(1);
+
+      // Both inline ActionList sections are promoted to root-level ACTIONS groups
+      const actionsGroups = symbols[0].children?.filter(c => c.name === 'ACTIONS');
+      expect(actionsGroups?.length).toBe(2);
+
+      expect(actionsGroups?.[0].children?.length).toBe(1);
+      expect(actionsGroups?.[0].children?.[0].name).toBe('Action 3 "FirstCueAction"');
+
+      expect(actionsGroups?.[1].children?.length).toBe(1);
+      expect(actionsGroups?.[1].children?.[0].name).toBe('Action 5 "SecondCueAction"');
+    });
+  });
 });
