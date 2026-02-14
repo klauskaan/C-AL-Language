@@ -21,7 +21,7 @@ No issue number? Create one first (`gh issue create`) — even a title and one-l
 6. REVIEW       -  adversarial-reviewer (always), plus typescript-reviewer and/or
                     cal-expert when relevant (TS changes, C/AL semantics)
 7. COMMIT       -  Commit with "Fixes #X", push to feature branch
-8. MERGE        -  Merge to main, clean up worktree
+8. MERGE & PUSH -  Merge to main, push, clean up worktree
                     (if senior-merge-engineer was needed, run adversarial-reviewer before cleanup)
 ```
 
