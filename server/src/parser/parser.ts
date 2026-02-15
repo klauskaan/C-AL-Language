@@ -2599,8 +2599,12 @@ export class Parser {
           // Skip to next procedure/trigger/event declaration
           // Note: BEGIN is intentionally NOT a stopping token here - if we're
           // recovering from "PROCEDURE BEGIN" (invalid), we need to skip past
-          // the BEGIN to find the next real procedure declaration
-          while (!PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type) && !this.isAtEnd()) {
+          // the BEGIN to find the next real procedure declaration.
+          // Stop at '}' by value (not just RightBrace type) because lexer context
+          // confusion from malformed input can tokenize '}' as UNKNOWN.
+          while (!PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type) &&
+                 this.peek().value !== '}' &&
+                 !this.isAtEnd()) {
             this.advance();
           }
         } else {
@@ -2629,13 +2633,25 @@ export class Parser {
     }
 
     // Consume closing brace of CODE section
+    // Note: '}' may be tokenized as UNKNOWN (not RightBrace) when lexer context
+    // is confused by malformed input (e.g., PROCEDURE BEGIN; causes lexer to enter
+    // CODE_BLOCK where braces are comment delimiters). Also, error recovery may
+    // leave unconsumed tokens before the closing brace. Check by value as fallback.
     let endToken: Token;
-    if (this.check(TokenType.RightBrace)) {
+    if (this.check(TokenType.RightBrace) || this.peek().value === '}') {
       endToken = this.advance();
     } else {
-      // Missing closing brace - record error but return the section
-      this.recordError('Expected } to close CODE section', undefined, 'parse-unclosed-block');
-      endToken = this.previous();
+      // Skip past unconsumed tokens to find closing brace
+      while (!this.isAtEnd() && !this.check(TokenType.RightBrace) && this.peek().value !== '}') {
+        this.advance();
+      }
+      if (!this.isAtEnd() && (this.check(TokenType.RightBrace) || this.peek().value === '}')) {
+        endToken = this.advance();
+      } else {
+        // Genuinely missing closing brace
+        this.recordError('Expected } to close CODE section', undefined, 'parse-unclosed-block');
+        endToken = this.previous();
+      }
     }
 
     return {
