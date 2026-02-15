@@ -2642,7 +2642,9 @@ export class Parser {
       endToken = this.advance();
     } else {
       // Skip past unconsumed tokens to find closing brace
-      while (!this.isAtEnd() && !this.check(TokenType.RightBrace) && this.peek().value !== '}') {
+      // Safety bound: stop at section keywords to avoid consuming into the next section (#499)
+      while (!this.isAtEnd() && !this.check(TokenType.RightBrace) && this.peek().value !== '}' &&
+             !SECTION_KEYWORDS.has(this.peek().type)) {
         this.advance();
       }
       if (!this.isAtEnd() && (this.check(TokenType.RightBrace) || this.peek().value === '}')) {
