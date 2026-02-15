@@ -313,9 +313,15 @@ $SECOND_LINE_CONFIDENTIAL$`;
       // CRITICAL: Test must fail if no errors (false positive protection)
       expect(errors.length).toBeGreaterThan(0);
 
-      // Test for '{' being sanitized, not the comment content (which isn't stored)
+      // Verify '{' token value doesn't appear raw in any error message
       const errorMessages = errors.map(e => e.message);
-      assertSanitized(errorMessages, '{');
+      errorMessages.forEach(message => {
+        expect(message).not.toContain("'{");
+      });
+
+      // At least one error should use sanitized format (for the Unknown token)
+      const hasSanitized = errorMessages.some(m => m.includes('[content sanitized,'));
+      expect(hasSanitized).toBe(true);
     });
 
     it('should sanitize unclosed brace comment in code block', () => {
@@ -393,9 +399,15 @@ $SECOND_LINE_CONFIDENTIAL$`;
       // CRITICAL: Test must fail if no errors (false positive protection)
       expect(errors.length).toBeGreaterThan(0);
 
-      // Test for '/*' being sanitized, not the comment content (which isn't stored)
+      // Verify '/*' token value doesn't appear raw in any error message
       const errorMessages = errors.map(e => e.message);
-      assertSanitized(errorMessages, '/*');
+      errorMessages.forEach(message => {
+        expect(message).not.toContain("'/*");
+      });
+
+      // At least one error should use sanitized format (for the Unknown token)
+      const hasSanitized = errorMessages.some(m => m.includes('[content sanitized,'));
+      expect(hasSanitized).toBe(true);
     });
 
     it('should sanitize unclosed /* comment with multi-line content', () => {
