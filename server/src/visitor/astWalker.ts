@@ -51,6 +51,7 @@ import {
   WhileStatement,
   RepeatStatement,
   ForStatement,
+  ForEachStatement,
   CaseStatement,
   CaseBranch,
   AssignmentStatement,
@@ -196,6 +197,9 @@ export class ASTWalker {
         break;
       case 'ForStatement':
         this.walkForStatement(node, visitor);
+        break;
+      case 'ForEachStatement':
+        this.walkForEachStatement(node, visitor);
         break;
       case 'CaseStatement':
         this.walkCaseStatement(node, visitor);
@@ -690,6 +694,18 @@ export class ASTWalker {
     this.walk(node.variable, visitor);
     this.walkExpression(node.from, visitor);
     this.walkExpression(node.to, visitor);
+    this.walkStatement(node.body, visitor);
+  }
+
+  protected walkForEachStatement(node: ForEachStatement, visitor: Partial<ASTVisitor>): void {
+    if (visitor.visitForEachStatement) {
+      const result = visitor.visitForEachStatement(node);
+      if (result === false) {
+        return;
+      }
+    }
+    this.walk(node.variable, visitor);
+    this.walkExpression(node.collection, visitor);
     this.walkStatement(node.body, visitor);
   }
 

@@ -40,6 +40,7 @@ import {
   WhileStatement,
   RepeatStatement,
   ForStatement,
+  ForEachStatement,
   CaseStatement,
   CaseBranch,
   ExitStatement,
@@ -3341,6 +3342,7 @@ export class Parser {
         if (stmt) {
           statements.push(stmt);
         }
+
         // Check if we've hit a procedure boundary after successfully parsing a statement
         // This handles cases where a statement parser (e.g., parseCaseStatement) detected
         // an error and returned a partial node but didn't throw
@@ -3427,7 +3429,7 @@ export class Parser {
 
     if (!couldBeExpressionContinuation && token.type === TokenType.Do) {
       this.recordError(
-        `Unexpected DO - cannot start a statement. DO must follow WHILE or FOR.`,
+        `Unexpected DO - cannot start a statement. DO must follow WHILE, FOR, or FOREACH.`,
         token
       );
       this.advance();
@@ -3617,6 +3619,12 @@ export class Parser {
       return this.parseEmptyStatement();
     }
 
+    // FOREACH statement (NAV 2016+: FOREACH var IN collection DO)
+    // Must check before parseAssignmentOrCall since FOREACH is an identifier token
+    if (token.type === TokenType.Identifier && token.value.toUpperCase() === 'FOREACH') {
+      return this.parseForEachStatement();
+    }
+
     // Assignment or procedure call
     return this.parseAssignmentOrCall();
   }
@@ -3725,6 +3733,7 @@ export class Parser {
       // Compound statements that wrap a single body: propagate from body
       case 'WhileStatement':
       case 'ForStatement':
+      case 'ForEachStatement':
       case 'WithStatement':
         return this.isStatementTerminatedBySemicolon(stmt.body);
 
@@ -4032,6 +4041,59 @@ export class Parser {
       from,
       to,
       downto,
+      body,
+      startToken,
+      endToken: this.previous()
+    };
+  }
+
+  private parseForEachStatement(): ForEachStatement {
+    const startToken = this.advance(); // consume FOREACH identifier
+
+    // Parse variable - use parsePrimary() + parsePostfixOperations()
+    // NOT parseExpression() which would consume IN as a binary operator
+    const variableExpr = this.parsePrimary();
+    const variable = this.parsePostfixOperations(variableExpr);
+
+    // Validate variable type (same pattern as parseForStatement)
+    if (variable.type !== 'Identifier' && variable.type !== 'MemberExpression') {
+      this.recordError('Invalid FOREACH loop variable: expected identifier or field reference', variable.startToken);
+    }
+
+    // IN
+    this.consumeExpected(TokenType.In, 'Expected IN after FOREACH variable');
+
+    // Parse collection expression - full parseExpression() is fine here since
+    // it will stop at DO which is not an operator
+    const collection = this.parseExpression();
+
+    // DO
+    this.consumeExpected(TokenType.Do, 'Expected DO after FOREACH collection');
+
+    // Parse body (same pattern as FOR body)
+    let body: Statement;
+    if (this.check(TokenType.Begin)) {
+      body = this.parseBlock();
+    } else if (this.check(TokenType.Semicolon)) {
+      body = this.parseEmptyStatement();
+    } else if (this.check(TokenType.End)) {
+      const st = this.previous();
+      body = { type: 'EmptyStatement', startToken: st, endToken: st };
+    } else if (!this.isStatementStarter()) {
+      this.recordError('Expected statement after DO', this.peek());
+      body = this.createEmptyBlock(this.previous());
+    } else {
+      const stmt = this.parseStatement();
+      if (!stmt) {
+        throw this.createParseError('Expected statement after DO');
+      }
+      body = stmt;
+    }
+
+    return {
+      type: 'ForEachStatement',
+      variable: variable as Identifier | MemberExpression,
+      collection,
       body,
       startToken,
       endToken: this.previous()

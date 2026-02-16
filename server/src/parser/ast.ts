@@ -747,6 +747,18 @@ export interface ForStatement {
   body: Statement;
 }
 
+export interface ForEachStatement {
+  type: 'ForEachStatement';
+  startToken: Token;
+  endToken: Token;
+  /** The loop variable (e.g., Item, XMLNode) */
+  variable: Identifier | MemberExpression;
+  /** The collection being iterated (e.g., Collection, XMLRootNode.ChildNodes) */
+  collection: Expression;
+  /** The loop body */
+  body: Statement;
+}
+
 export interface CaseStatement {
   type: 'CaseStatement';
   startToken: Token;
@@ -789,7 +801,7 @@ export interface ExitStatement {
 /**
  * BREAK statement - exits the innermost loop.
  * Unlike EXIT, BREAK takes no value and only affects loop control flow.
- * Valid in: FOR, WHILE, REPEAT-UNTIL loops.
+ * Valid in: FOR, FOREACH, WHILE, REPEAT-UNTIL loops.
  * Note: Parser accepts BREAK syntactically but does not validate loop context.
  * Semantic validation (ensuring BREAK appears within a loop) is deferred.
  */
@@ -929,7 +941,7 @@ export interface RangeExpression {
 /**
  * Union type for all Statement nodes
  */
-export type Statement = BlockStatement | IfStatement | WhileStatement | RepeatStatement | ForStatement | CaseStatement | AssignmentStatement | CallStatement | ExitStatement | BreakStatement | EmptyStatement | WithStatement;
+export type Statement = BlockStatement | IfStatement | WhileStatement | RepeatStatement | ForStatement | ForEachStatement | CaseStatement | AssignmentStatement | CallStatement | ExitStatement | BreakStatement | EmptyStatement | WithStatement;
 
 /**
  * Union type for all Expression nodes

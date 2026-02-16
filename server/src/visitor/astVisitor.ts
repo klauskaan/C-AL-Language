@@ -29,6 +29,7 @@ import {
   WhileStatement,
   RepeatStatement,
   ForStatement,
+  ForEachStatement,
   CaseStatement,
   CaseBranch,
   AssignmentStatement,
@@ -219,6 +220,11 @@ export interface ASTVisitor {
    * Visit a ForStatement node (FOR...TO/DOWNTO...DO)
    */
   visitForStatement?(node: ForStatement): void | false;
+
+  /**
+   * Visit a ForEachStatement node (FOREACH...IN...DO)
+   */
+  visitForEachStatement?(node: ForEachStatement): void | false;
 
   /**
    * Visit a CaseStatement node (CASE...OF)

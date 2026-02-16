@@ -12,6 +12,7 @@ import {
   IfStatement,
   CaseStatement,
   ForStatement,
+  ForEachStatement,
   WhileStatement,
   RepeatStatement,
   WithStatement,
@@ -72,6 +73,14 @@ class FoldingRangeCollectorVisitor implements Partial<ASTVisitor> {
    * Visit FOR loop - create folding range
    */
   visitForStatement(node: ForStatement): void | false {
+    this.addFoldingRange(node.startToken.line, node.endToken.line, undefined);
+    // Continue traversing children (loop body may have nested constructs)
+  }
+
+  /**
+   * Visit FOREACH loop - create folding range
+   */
+  visitForEachStatement(node: ForEachStatement): void | false {
     this.addFoldingRange(node.startToken.line, node.endToken.line, undefined);
     // Continue traversing children (loop body may have nested constructs)
   }
