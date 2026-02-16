@@ -35,6 +35,7 @@ import {
   MemberExpression,
   AssignmentStatement,
   ForStatement,
+  ForEachStatement,
   WithStatement
 } from '../parser/ast';
 import { ASTWalker } from '../visitor/astWalker';
@@ -229,6 +230,26 @@ class UsageTrackingVisitor implements Partial<ASTVisitor> {
     // Walk body
     this.walker.walk(node.body, this);
 
+    return false;
+  }
+
+  /**
+   * Visit ForEachStatement - mark loop variable as read
+   * The FOREACH loop variable is implicitly read by the loop (it's written to by the iteration)
+   * Returns false to prevent automatic traversal
+   */
+  visitForEachStatement(node: ForEachStatement): false {
+    // Mark the loop variable as read
+    if (node.variable.type === 'Identifier') {
+      const info = this.variables.get(node.variable.name.toLowerCase());
+      if (info) {
+        info.hasRead = true;
+      }
+    }
+    // Walk collection expression
+    this.walker.walk(node.collection, this);
+    // Walk body
+    this.walker.walk(node.body, this);
     return false;
   }
 

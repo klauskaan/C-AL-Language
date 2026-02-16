@@ -3276,3 +3276,286 @@ describe('Parser - RangeExpression operatorToken field', () => {
     });
   });
 });
+
+describe('FOREACH statement parsing (issue #504)', () => {
+  describe('Basic FOREACH syntax', () => {
+    it('should parse simple FOREACH with BEGIN...END body', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE Process@1();
+          VAR
+            Item@1000 : DotNet "'mscorlib'.System.Object";
+            Collection@1001 : DotNet "'mscorlib'.System.Collections.IEnumerable";
+          BEGIN
+            FOREACH Item IN Collection DO BEGIN
+              ProcessItem(Item);
+            END;
+          END;
+        }
+      }`;
+      const { ast, errors } = parseCode(code);
+      expect(ast).toBeDefined();
+      expect(errors).toHaveLength(0);
+
+      // Navigate to ForEachStatement
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      expect(proc).toBeDefined();
+
+      const forEachStmt = proc?.body?.[0] as any;
+      expect(forEachStmt.type).toBe('ForEachStatement');
+
+      // Check variable is an Identifier
+      expect(forEachStmt.variable).toBeDefined();
+      expect(forEachStmt.variable.type).toBe('Identifier');
+      expect(forEachStmt.variable.name).toBe('Item');
+
+      // Check collection is an Identifier
+      expect(forEachStmt.collection).toBeDefined();
+      expect(forEachStmt.collection.type).toBe('Identifier');
+      expect(forEachStmt.collection.name).toBe('Collection');
+
+      // Check body is a BlockStatement
+      expect(forEachStmt.body).toBeDefined();
+      expect(forEachStmt.body.type).toBe('BlockStatement');
+    });
+
+    it('should parse simple FOREACH with single statement body (no BEGIN...END)', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE Process@1();
+          VAR
+            Node@1000 : DotNet "'mscorlib'.System.Xml.XmlNode";
+            NodeList@1001 : DotNet "'mscorlib'.System.Xml.XmlNodeList";
+          BEGIN
+            FOREACH Node IN NodeList DO
+              ProcessNode(Node);
+          END;
+        }
+      }`;
+      const { ast, errors } = parseCode(code);
+      expect(ast).toBeDefined();
+      expect(errors).toHaveLength(0);
+
+      // Navigate to ForEachStatement
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      expect(proc).toBeDefined();
+      expect(proc?.body).toHaveLength(1);
+
+      const forEachStmt = proc?.body?.[0] as any;
+      expect(forEachStmt.type).toBe('ForEachStatement');
+
+      // Check variable
+      expect(forEachStmt.variable).toBeDefined();
+      expect(forEachStmt.variable.type).toBe('Identifier');
+      expect(forEachStmt.variable.name).toBe('Node');
+
+      // Check collection
+      expect(forEachStmt.collection).toBeDefined();
+      expect(forEachStmt.collection.type).toBe('Identifier');
+      expect(forEachStmt.collection.name).toBe('NodeList');
+
+      // Check body is a CallStatement (not BlockStatement)
+      expect(forEachStmt.body).toBeDefined();
+      expect(forEachStmt.body.type).toBe('CallStatement');
+    });
+  });
+
+  describe('FOREACH with complex expressions', () => {
+    it('should parse FOREACH with member expression as collection', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE Process@1();
+          VAR
+            XMLNode@1000 : DotNet "'mscorlib'.System.Xml.XmlNode";
+            XMLRootNode@1001 : DotNet "'mscorlib'.System.Xml.XmlNode";
+          BEGIN
+            FOREACH XMLNode IN XMLRootNode.ChildNodes DO BEGIN
+              ProcessXMLNode(XMLNode);
+            END;
+          END;
+        }
+      }`;
+      const { ast, errors } = parseCode(code);
+      expect(ast).toBeDefined();
+      expect(errors).toHaveLength(0);
+
+      // Navigate to ForEachStatement
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const forEachStmt = proc?.body?.[0] as any;
+
+      expect(forEachStmt.type).toBe('ForEachStatement');
+
+      // Check variable
+      expect(forEachStmt.variable.type).toBe('Identifier');
+      expect(forEachStmt.variable.name).toBe('XMLNode');
+
+      // Check collection is a MemberExpression
+      expect(forEachStmt.collection).toBeDefined();
+      expect(forEachStmt.collection.type).toBe('MemberExpression');
+      expect(forEachStmt.collection.object.name).toBe('XMLRootNode');
+      expect(forEachStmt.collection.property.name).toBe('ChildNodes');
+    });
+
+    it('should parse FOREACH with method call as collection', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE Process@1();
+          VAR
+            GraphUser@1000 : DotNet "'Microsoft.Dynamics.Nav.OAuthControlAddIn'.Microsoft.Dynamics.Nav.OAuthControlAddIn.GraphUser";
+            Graph@1001 : DotNet "'Microsoft.Dynamics.Nav.OAuthControlAddIn'.Microsoft.Dynamics.Nav.OAuthControlAddIn.Graph";
+            MaxNoToRetrieve@1002 : Integer;
+          BEGIN
+            MaxNoToRetrieve := 100;
+            FOREACH GraphUser IN Graph.GetUsers(MaxNoToRetrieve) DO BEGIN
+              ProcessUser(GraphUser);
+            END;
+          END;
+        }
+      }`;
+      const { ast, errors } = parseCode(code);
+      expect(ast).toBeDefined();
+      expect(errors).toHaveLength(0);
+
+      // Navigate to ForEachStatement (after assignment + semicolon empty statement)
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+
+      // Find the ForEachStatement in the body
+      const forEachStmt = proc?.body?.find((s: any) => s.type === 'ForEachStatement') as any;
+      expect(forEachStmt.type).toBe('ForEachStatement');
+
+      // Check variable
+      expect(forEachStmt.variable.type).toBe('Identifier');
+      expect(forEachStmt.variable.name).toBe('GraphUser');
+
+      // Check collection is a CallExpression
+      expect(forEachStmt.collection).toBeDefined();
+      expect(forEachStmt.collection.type).toBe('CallExpression');
+    });
+
+    it('should parse FOREACH with member expression variable reference', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE Process@1();
+          VAR
+            Claim@1000 : DotNet "'mscorlib'.System.Security.Claims.Claim";
+            JwtSecurityToken@1001 : DotNet "'mscorlib'.System.IdentityModel.Tokens.Jwt.JwtSecurityToken";
+          BEGIN
+            FOREACH Claim IN JwtSecurityToken.Claims DO
+              ProcessClaim(Claim.Type, Claim.Value);
+          END;
+        }
+      }`;
+      const { ast, errors } = parseCode(code);
+      expect(ast).toBeDefined();
+      expect(errors).toHaveLength(0);
+
+      // Navigate to ForEachStatement
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const forEachStmt = proc?.body?.[0] as any;
+
+      expect(forEachStmt.type).toBe('ForEachStatement');
+
+      // Variable should be simple Identifier "Claim"
+      expect(forEachStmt.variable.type).toBe('Identifier');
+      expect(forEachStmt.variable.name).toBe('Claim');
+
+      // Collection should be MemberExpression "JwtSecurityToken.Claims"
+      expect(forEachStmt.collection.type).toBe('MemberExpression');
+      expect(forEachStmt.collection.object.name).toBe('JwtSecurityToken');
+      expect(forEachStmt.collection.property.name).toBe('Claims');
+
+      // Body should be a CallStatement
+      expect(forEachStmt.body.type).toBe('CallStatement');
+    });
+  });
+
+  describe('Nested FOREACH loops', () => {
+    it('should parse nested FOREACH loops', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE Process@1();
+          VAR
+            Match@1000 : DotNet "'mscorlib'.System.Text.RegularExpressions.Match";
+            Group@1001 : DotNet "'mscorlib'.System.Text.RegularExpressions.Group";
+            MatchCollection@1002 : DotNet "'mscorlib'.System.Text.RegularExpressions.MatchCollection";
+          BEGIN
+            FOREACH Match IN MatchCollection DO
+              FOREACH Group IN Match.Groups DO BEGIN
+                ProcessGroup(Group);
+              END;
+          END;
+        }
+      }`;
+      const { ast, errors } = parseCode(code);
+      expect(ast).toBeDefined();
+      expect(errors).toHaveLength(0);
+
+      // Navigate to outer ForEachStatement
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const outerForEach = proc?.body?.[0] as any;
+
+      expect(outerForEach.type).toBe('ForEachStatement');
+      expect(outerForEach.variable.name).toBe('Match');
+      expect(outerForEach.collection.name).toBe('MatchCollection');
+
+      // Body should be an inner ForEachStatement
+      const innerForEach = outerForEach.body;
+      expect(innerForEach.type).toBe('ForEachStatement');
+      expect(innerForEach.variable.name).toBe('Group');
+
+      // Inner collection should be MemberExpression "Match.Groups"
+      expect(innerForEach.collection.type).toBe('MemberExpression');
+      expect(innerForEach.collection.object.name).toBe('Match');
+      expect(innerForEach.collection.property.name).toBe('Groups');
+
+      // Inner body should be BlockStatement
+      expect(innerForEach.body.type).toBe('BlockStatement');
+    });
+  });
+
+  describe('FOREACH error handling', () => {
+    it('should parse complete procedure with FOREACH without errors', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        OBJECT-PROPERTIES {
+          Date=01/01/20;
+          Modified=Yes;
+        }
+        PROPERTIES {
+        }
+        CODE {
+          PROCEDURE Process@1();
+          VAR
+            Item@1000 : DotNet "'mscorlib'.System.Object";
+            Collection@1001 : DotNet "'mscorlib'.System.Collections.IEnumerable";
+          BEGIN
+            FOREACH Item IN Collection DO
+              ProcessItem(Item);
+          END;
+
+          BEGIN
+          END.
+        }
+      }`;
+      const { ast, errors } = parseCode(code);
+      expect(ast).toBeDefined();
+
+      // Should have zero parse errors (no "Unexpected DO" or similar)
+      expect(errors).toHaveLength(0);
+
+      // Verify the FOREACH was parsed correctly
+      const obj = ast.object as ObjectDeclaration;
+      const proc = obj.code?.procedures[0];
+      const forEachStmt = proc?.body?.[0] as any;
+
+      expect(forEachStmt.type).toBe('ForEachStatement');
+      expect(forEachStmt.variable.name).toBe('Item');
+      expect(forEachStmt.collection.name).toBe('Collection');
+    });
+  });
+});

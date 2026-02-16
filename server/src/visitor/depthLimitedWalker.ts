@@ -18,6 +18,7 @@ import {
   IfStatement,
   WhileStatement,
   ForStatement,
+  ForEachStatement,
   RepeatStatement,
   CaseStatement,
   WithStatement
@@ -35,6 +36,7 @@ type DepthProtectedNode =
   | IfStatement
   | WhileStatement
   | ForStatement
+  | ForEachStatement
   | RepeatStatement
   | CaseStatement
   | WithStatement;
@@ -192,6 +194,25 @@ export class DepthLimitedWalker extends ASTWalker {
 
     try {
       super.walkForStatement(node, visitor);
+    } finally {
+      this.currentDepth--;
+    }
+  }
+
+  protected override walkForEachStatement(
+    node: ForEachStatement,
+    visitor: Partial<ASTVisitor>
+  ): void {
+    this.currentDepth++;
+
+    if (this.currentDepth > this.effectiveLimit) {
+      this.emitDepthExceededDiagnostic(node, 'foreach statement');
+      this.currentDepth--;
+      return;
+    }
+
+    try {
+      super.walkForEachStatement(node, visitor);
     } finally {
       this.currentDepth--;
     }
