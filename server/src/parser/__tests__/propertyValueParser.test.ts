@@ -833,22 +833,25 @@ describe('PropertyValueParser - Error Handling', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null for simple TableRelation with trailing garbage', () => {
-      // Bug #191: Parser accepts "Customer garbage" without validation
+    it('should return null for simple TableRelation with trailing structural token', () => {
+      // Bug #191: Parser rejects trailing structural tokens after valid TableRelation
+      // Note: trailing identifiers are now consumed as part of composite names
+      // (needed for multi-token names like "Country/Region"), so we test with
+      // structural tokens which are never part of a name.
       const tokens: Token[] = [
         { type: TokenType.Identifier, value: 'Customer', line: 1, column: 1, startOffset: 0, endOffset: 8 },
-        { type: TokenType.Identifier, value: 'garbage', line: 1, column: 10, startOffset: 10, endOffset: 17 },
+        { type: TokenType.LeftParen, value: '(', line: 1, column: 10, startOffset: 10, endOffset: 11 },
       ];
 
       const parser = new PropertyValueParser(tokens);
       const result = parser.parseTableRelation();
 
-      // Should reject trailing "garbage" token after valid TableRelation
+      // Should reject trailing '(' after valid TableRelation
       expect(result).toBeNull();
     });
 
-    it('should return null for conditional TableRelation with trailing garbage', () => {
-      // Bug #191: Parser accepts "IF (Type=CONST(Item)) Item garbage" without validation
+    it('should return null for conditional TableRelation with trailing structural token', () => {
+      // Bug #191: Parser rejects trailing structural tokens after valid conditional TableRelation
       const tokens: Token[] = [
         { type: TokenType.If, value: 'IF', line: 1, column: 1, startOffset: 0, endOffset: 2 },
         { type: TokenType.LeftParen, value: '(', line: 1, column: 4, startOffset: 4, endOffset: 5 },
@@ -860,7 +863,7 @@ describe('PropertyValueParser - Error Handling', () => {
         { type: TokenType.RightParen, value: ')', line: 1, column: 20, startOffset: 20, endOffset: 21 },
         { type: TokenType.RightParen, value: ')', line: 1, column: 21, startOffset: 21, endOffset: 22 },
         { type: TokenType.Identifier, value: 'Item', line: 1, column: 23, startOffset: 23, endOffset: 27 },
-        { type: TokenType.Identifier, value: 'garbage', line: 1, column: 28, startOffset: 28, endOffset: 35 },
+        { type: TokenType.LeftParen, value: '(', line: 1, column: 28, startOffset: 28, endOffset: 29 },
       ];
 
       const parser = new PropertyValueParser(tokens);
@@ -1230,9 +1233,11 @@ describe('PropertyValueParser - Diagnostic Reporting', () => {
     });
 
     it('should report diagnostic for trailing tokens after simple relation', () => {
+      // Trailing structural tokens (not identifiers) are detected as garbage.
+      // Trailing identifiers are consumed as part of composite names.
       const tokens: Token[] = [
         { type: TokenType.Identifier, value: 'Customer', line: 1, column: 1, startOffset: 0, endOffset: 8 },
-        { type: TokenType.Identifier, value: 'garbage', line: 1, column: 10, startOffset: 10, endOffset: 17 },
+        { type: TokenType.LeftParen, value: '(', line: 1, column: 10, startOffset: 10, endOffset: 11 },
       ];
 
       const parser = new PropertyValueParser(tokens);
@@ -1243,7 +1248,7 @@ describe('PropertyValueParser - Diagnostic Reporting', () => {
       const diagnostics = parser.getDiagnostics();
       expect(diagnostics).toHaveLength(1);
       expect(diagnostics[0].message).toMatch(/unexpected.*token/i);
-      expect(diagnostics[0].token.value).toBe('garbage');
+      expect(diagnostics[0].token.value).toBe('(');
     });
 
     it('should report diagnostic for trailing tokens after conditional relation', () => {
@@ -1258,7 +1263,7 @@ describe('PropertyValueParser - Diagnostic Reporting', () => {
         { type: TokenType.RightParen, value: ')', line: 1, column: 20, startOffset: 20, endOffset: 21 },
         { type: TokenType.RightParen, value: ')', line: 1, column: 21, startOffset: 21, endOffset: 22 },
         { type: TokenType.Identifier, value: 'Item', line: 1, column: 23, startOffset: 23, endOffset: 27 },
-        { type: TokenType.Identifier, value: 'garbage', line: 1, column: 28, startOffset: 28, endOffset: 35 },
+        { type: TokenType.LeftParen, value: '(', line: 1, column: 28, startOffset: 28, endOffset: 29 },
       ];
 
       const parser = new PropertyValueParser(tokens);
@@ -1269,7 +1274,7 @@ describe('PropertyValueParser - Diagnostic Reporting', () => {
       const diagnostics = parser.getDiagnostics();
       expect(diagnostics).toHaveLength(1);
       expect(diagnostics[0].message).toMatch(/unexpected.*token/i);
-      expect(diagnostics[0].token.value).toBe('garbage');
+      expect(diagnostics[0].token.value).toBe('(');
     });
 
     it('should report diagnostic for malformed WHERE clause', () => {
@@ -1398,17 +1403,17 @@ describe('PropertyValueParser - Diagnostic Reporting', () => {
       const code = `OBJECT Table 1 Test {
         FIELDS {
           { 1 ; ; CustomerNo ; Code20 ;
-            TableRelation=Customer garbage }
+            TableRelation=Customer WHERE }
         }
       }`;
 
       const { errors } = parseCode(code);
 
-      // Should have at least one error related to TableRelation parsing
+      // Should have at least one error from malformed WHERE (missing parenthesized conditions)
       const tableRelationError = errors.find(e =>
         e.message.includes('TableRelation') ||
-        e.message.includes('unexpected') ||
-        e.message.includes('garbage')
+        e.message.includes('WHERE') ||
+        e.message.includes('unexpected')
       );
       expect(tableRelationError).toBeDefined();
     });
@@ -1775,6 +1780,331 @@ describe('PropertyValueParser - WHERE Clause Bug Fixes (Issue #503)', () => {
       expect(condition4?.fieldName).toBe('Document Type');
       expect(condition4?.predicateType).toBe('FILTER');
       expect(condition4?.predicateValue).toBe('Order|Invoice');
+    });
+  });
+});
+
+describe('PropertyValueParser - TableRelation Composite Names (Issue #501)', () => {
+  describe('Bug 1: Slash in table names', () => {
+    it('should parse simple TableRelation with slash in table name: Country/Region', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; CountryCode ; Code10 ;
+            TableRelation=Country/Region }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.type).toBe('TableRelationNode');
+      expect(result?.tableName).toBe('Country/Region');
+      expect(result?.fieldName).toBeUndefined();
+      expect(result?.whereClause).toBeUndefined();
+    });
+
+    it('should parse simple TableRelation with slash in table name: Salesperson/Purchaser', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; SalespersonCode ; Code20 ;
+            TableRelation=Salesperson/Purchaser }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.tableName).toBe('Salesperson/Purchaser');
+      expect(result?.fieldName).toBeUndefined();
+      expect(result?.whereClause).toBeUndefined();
+    });
+
+    it('should parse TableRelation with slash table name and WHERE clause', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; CountryCode ; Code10 ;
+            TableRelation=Country/Region WHERE (EU Country/Region Code=FILTER(<>'')) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.tableName).toBe('Country/Region');
+      expect(result?.fieldName).toBeUndefined();
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+      expect(result?.whereClause?.conditions[0]?.fieldName).toBe('EU Country/Region Code');
+    });
+
+    it('should parse TableRelation with slash table name and dot field', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; CountryCode ; Code10 ;
+            TableRelation=Country/Region.Code }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.tableName).toBe('Country/Region');
+      expect(result?.fieldName).toBe('Code');
+      expect(result?.whereClause).toBeUndefined();
+    });
+  });
+
+  describe('Bug 2: Trailing dot in field names', () => {
+    it('should parse TableRelation with quoted table and trailing dot in field name', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; ICGLAccountNo ; Code20 ;
+            TableRelation="IC G/L Account".No. }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.tableName).toBe('IC G/L Account');
+      expect(result?.fieldName).toBe('No.');
+      expect(result?.whereClause).toBeUndefined();
+    });
+
+    it('should parse TableRelation with quoted "G/L Account" table and No. field', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; AccountNo ; Code20 ;
+            TableRelation="G/L Account".No. }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.tableName).toBe('G/L Account');
+      expect(result?.fieldName).toBe('No.');
+    });
+
+    it('should parse TableRelation with unquoted table, trailing dot field, and WHERE clause', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; FieldNo ; Integer ;
+            TableRelation=Field.No. WHERE (TableNo=FIELD(Table No.)) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.tableName).toBe('Field');
+      expect(result?.fieldName).toBe('No.');
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+      expect(result?.whereClause?.conditions[0]?.fieldName).toBe('TableNo');
+    });
+
+    it('should parse TableRelation with quoted table, trailing dot field, and WHERE with CONST', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; ProdOrderNo ; Code20 ;
+            TableRelation="Production Order".No. WHERE (Status=CONST(Released)) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.tableName).toBe('Production Order');
+      expect(result?.fieldName).toBe('No.');
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+      expect(result?.whereClause?.conditions[0]?.predicateValue).toBe('Released');
+    });
+
+    it('should parse TableRelation with quoted "HR Human Resource" table and No. field', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; HRNo ; Code20 ;
+            TableRelation="HR Human Resource".No. }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.tableName).toBe('HR Human Resource');
+      expect(result?.fieldName).toBe('No.');
+    });
+  });
+
+  describe('Bug 3: Combined in conditional relations', () => {
+    it('should parse IF condition with slash table and trailing dot field in THEN branch', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (Destination Type=CONST(Sales Order)) "Sales Header".No. WHERE (Document Type=CONST(Order)) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.conditionalRelations).toBeDefined();
+      expect(result?.conditionalRelations?.length).toBe(1);
+
+      const conditional = result?.conditionalRelations?.[0];
+      expect(conditional?.condition?.fieldName).toBe('Destination Type');
+      expect(conditional?.condition?.predicateValue).toBe('Sales Order');
+      expect(conditional?.thenRelation?.tableName).toBe('Sales Header');
+      expect(conditional?.thenRelation?.fieldName).toBe('No.');
+      expect(conditional?.thenRelation?.whereClause).toBeDefined();
+      expect(conditional?.thenRelation?.whereClause?.conditions).toHaveLength(1);
+    });
+
+    it('should parse complex conditional TableRelation with slash tables across multiple branches', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; SourceNo ; Code20 ;
+            TableRelation=IF (Destination Type=CONST(Sales Order)) "Sales Header".No. WHERE (Document Type=CONST(Order))
+                          ELSE IF (Destination Type=CONST(Purchase Order)) "Purchase Header".No. WHERE (Document Type=CONST(Order))
+                          ELSE Country/Region }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.conditionalRelations).toBeDefined();
+      expect(result?.conditionalRelations?.length).toBe(2);
+
+      // First condition: Sales Order
+      const firstCond = result?.conditionalRelations?.[0];
+      expect(firstCond?.condition?.predicateValue).toBe('Sales Order');
+      expect(firstCond?.thenRelation?.tableName).toBe('Sales Header');
+      expect(firstCond?.thenRelation?.fieldName).toBe('No.');
+
+      // Second condition: Purchase Order with ELSE -> Country/Region
+      const secondCond = result?.conditionalRelations?.[1];
+      expect(secondCond?.condition?.predicateValue).toBe('Purchase Order');
+      expect(secondCond?.thenRelation?.tableName).toBe('Purchase Header');
+      expect(secondCond?.thenRelation?.fieldName).toBe('No.');
+      expect(secondCond?.elseRelation).toBeDefined();
+      expect(secondCond?.elseRelation?.tableName).toBe('Country/Region');
+    });
+
+    it('should parse real NAV pattern from TAB5765 with trailing dots in ELSE IF chain', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; SourceNo ; Code20 ;
+            TableRelation=IF (Destination Type=CONST(Sales Order)) "Sales Header".No. WHERE (Document Type=CONST(Order))
+                          ELSE IF (Destination Type=CONST(Sales Return Order)) "Sales Header".No. WHERE (Document Type=CONST(Return Order))
+                          ELSE IF (Destination Type=CONST(Sales Invoice)) "Sales Invoice Header".No.
+                          ELSE IF (Destination Type=CONST(Sales Credit Memo)) "Sales Cr.Memo Header".No.
+                          ELSE IF (Destination Type=CONST(Sales Shipment)) "Sales Shipment Header".No.
+                          ELSE IF (Destination Type=CONST(Sales Return Receipt)) "Return Receipt Header".No.
+                          ELSE IF (Destination Type=CONST(Purchase Order)) "Purchase Header".No. WHERE (Document Type=CONST(Order))
+                          ELSE IF (Destination Type=CONST(Purchase Return Order)) "Purchase Header".No. WHERE (Document Type=CONST(Return Order))
+                          ELSE IF (Destination Type=CONST(Purchase Invoice)) "Purch. Inv. Header".No.
+                          ELSE IF (Destination Type=CONST(Purchase Credit Memo)) "Purch. Cr. Memo Hdr.".No.
+                          ELSE IF (Destination Type=CONST(Purchase Receipt)) "Purch. Rcpt. Header".No.
+                          ELSE IF (Destination Type=CONST(Purchase Return Shipment)) "Return Shipment Header".No.
+                          ELSE IF (Destination Type=CONST(Transfer Order)) "Transfer Header".No. WHERE (Document Type=CONST(Transfer Order))
+                          ELSE IF (Destination Type=CONST(Transfer Receipt)) "Transfer Receipt Header".No.
+                          ELSE IF (Destination Type=CONST(Transfer Shipment)) "Transfer Shipment Header".No.
+                          ELSE IF (Destination Type=CONST(Service Order)) "Service Header".No. WHERE (Document Type=CONST(Order))
+                          ELSE IF (Destination Type=CONST(Service Invoice)) "Service Invoice Header".No.
+                          ELSE IF (Destination Type=CONST(Service Credit Memo)) "Service Cr.Memo Header".No. }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.conditionalRelations).toBeDefined();
+      expect(result?.conditionalRelations?.length).toBeGreaterThanOrEqual(15);
+
+      // Spot check: Sales Invoice (3rd branch) - no WHERE clause
+      const salesInvoiceCond = result?.conditionalRelations?.[2];
+      expect(salesInvoiceCond?.condition?.predicateValue).toBe('Sales Invoice');
+      expect(salesInvoiceCond?.thenRelation?.tableName).toBe('Sales Invoice Header');
+      expect(salesInvoiceCond?.thenRelation?.fieldName).toBe('No.');
+
+      // Spot check: Service Credit Memo (last branch) - trailing dot field
+      // In the flat array, the last ELSE IF creates an entry with thenRelation (not elseRelation)
+      const lastCond = result?.conditionalRelations?.[result.conditionalRelations.length - 1];
+      expect(lastCond?.thenRelation).toBeDefined();
+      expect(lastCond?.thenRelation?.tableName).toBe('Service Cr.Memo Header');
+      expect(lastCond?.thenRelation?.fieldName).toBe('No.');
+    });
+  });
+
+  describe('Integration: Slash tables with WHERE clauses containing slash field names', () => {
+    it('should parse slash table with WHERE clause containing slash field name', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; PostCode ; Code20 ;
+            TableRelation="Post Code" WHERE (Country/Region Code=FIELD(Country/Region Code)) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.tableName).toBe('Post Code');
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+
+      const condition = result?.whereClause?.conditions[0];
+      expect(condition?.fieldName).toBe('Country/Region Code');
+      expect(condition?.predicateType).toBe('FIELD');
+      expect(condition?.predicateValue).toBe('Country/Region Code');
+    });
+
+    it('should parse slash table with dot field and WHERE with slash field name', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; AccountNo ; Code20 ;
+            TableRelation="G/L Account".No. WHERE (Account Type=FIELD(Gen. Bal. Account Type)) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.tableName).toBe('G/L Account');
+      expect(result?.fieldName).toBe('No.');
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+      expect(result?.whereClause?.conditions[0]?.fieldName).toBe('Account Type');
     });
   });
 });
