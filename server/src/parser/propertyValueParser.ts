@@ -260,17 +260,18 @@ export class PropertyValueParser {
         };
       }
 
-      // Parse simple table relation
-      const tableName = this.parseIdentifierValue();
+      // Parse simple table relation (supports composite names like "Country/Region")
+      const tableName = this.parseCompositeName(true);
       if (!tableName) {
         this.recordDiagnostic('Expected table name');
         return null;
       }
 
       // Parse optional field reference (after dot)
+      // Field names can include trailing dots (e.g., "No.")
       let fieldName: string | undefined;
       if (this.match(TokenType.Dot)) {
-        const field = this.parseIdentifierValue();
+        const field = this.parseCompositeName(false);
         if (!field) {
           this.recordDiagnostic("Expected field name after '.'");
           return null;
@@ -707,16 +708,17 @@ export class PropertyValueParser {
   private parseSimpleTableRelation(): TableRelationNode | undefined {
     const startToken = this.peekOrEOF();
 
-    // Parse table name
-    const tableName = this.parseIdentifierValue();
+    // Parse table name (supports composite names like "Country/Region")
+    const tableName = this.parseCompositeName(true);
     if (!tableName) {
       return undefined;
     }
 
     // Parse optional field reference (after dot)
+    // Field names can include trailing dots (e.g., "No.")
     let fieldName: string | undefined;
     if (this.match(TokenType.Dot)) {
-      const field = this.parseIdentifierValue();
+      const field = this.parseCompositeName(false);
       if (!field) {
         return undefined;
       }
@@ -786,6 +788,84 @@ export class PropertyValueParser {
     }
 
     return undefined;
+  }
+
+  /**
+   * Parse a composite table or field name that may span multiple tokens.
+   *
+   * Handles unquoted names with slashes (Country/Region), trailing dots (No.),
+   * and multi-word names. Quoted identifiers return immediately as complete names.
+   *
+   * String tokens are intentionally not handled here — unlike parseIdentifierValue(),
+   * this method is only used for table/field name contexts, not predicate values.
+   *
+   * @param stopAtDot - If true, stop at Dot tokens (table name context, dot is table.field separator).
+   *                    If false, consume Dot tokens (field name context, dots can be part of name like "No.").
+   */
+  private parseCompositeName(stopAtDot: boolean): string | undefined {
+    const token = this.peek();
+    if (!token) return undefined;
+
+    // Quoted identifiers are always complete names
+    if (token.type === TokenType.QuotedIdentifier) {
+      this.advance();
+      return token.value;
+    }
+
+    // Collect tokens for composite unquoted name
+    let name = '';
+    let lastToken: Token | undefined;
+
+    while (!this.isAtEnd()) {
+      const t = this.peek();
+      if (!t) break;
+
+      // Stop at structural boundaries
+      if (t.type === TokenType.LeftParen || t.type === TokenType.RightParen ||
+          t.type === TokenType.Comma || t.type === TokenType.Semicolon) {
+        break;
+      }
+
+      // Stop at keywords that signal the end of a name
+      if (this.checkIdentifier('WHERE') || t.type === TokenType.If || t.type === TokenType.Else) {
+        break;
+      }
+
+      // Stop at comparison operators
+      if (this.isOperator(t.type)) {
+        break;
+      }
+
+      // Stop at Dot when in table name context (dot is table.field separator)
+      if (stopAtDot && t.type === TokenType.Dot) {
+        break;
+      }
+
+      // Add space if there's a gap between tokens
+      if (lastToken && t.startOffset > lastToken.endOffset) {
+        name += ' ';
+      }
+
+      // Collect token value
+      if (t.type === TokenType.Identifier || t.type === TokenType.QuotedIdentifier) {
+        name += t.value;
+      } else if (t.type === TokenType.Divide) {
+        name += '/';
+      } else if (t.type === TokenType.Dot) {
+        name += '.';
+      } else if (t.type === TokenType.Minus) {
+        name += '-';
+      } else if (this.isIdentifierLike(t.type)) {
+        name += t.value;
+      } else {
+        break;
+      }
+
+      lastToken = t;
+      this.advance();
+    }
+
+    return name || undefined;
   }
 
   /**
