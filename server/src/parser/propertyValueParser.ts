@@ -409,11 +409,15 @@ export class PropertyValueParser {
         break;
       }
 
-      // Check if this is a predicate keyword (FIELD, CONST, FILTER) - means we went too far
+      // Check if this is a predicate keyword (FIELD, CONST, FILTER) followed by '('
+      // Only treat as predicate keyword when followed by '(' — otherwise it's part of
+      // a field name like "Item Filter" or "Employee Filter Code"
       const upperValue = token.value.toUpperCase();
       if (upperValue === 'FIELD' || upperValue === 'CONST' || upperValue === 'FILTER') {
-        // This shouldn't happen in well-formed WHERE clause, but handle gracefully
-        break;
+        const nextPos = this.position + 1;
+        if (nextPos < this.tokens.length && this.tokens[nextPos].type === TokenType.LeftParen) {
+          break;
+        }
       }
 
       // Add space if there's a gap between previous token end and current token start
@@ -532,7 +536,7 @@ export class PropertyValueParser {
 
     // Parse predicate value (can be composite like "Country/Region Code")
     const value = this.parseCompositeValue();
-    if (!value) {
+    if (value === undefined) {
       return undefined;
     }
 
@@ -598,7 +602,7 @@ export class PropertyValueParser {
       this.advance();
     }
 
-    return value || undefined;
+    return value;
   }
 
   /**

@@ -1414,3 +1414,367 @@ describe('PropertyValueParser - Diagnostic Reporting', () => {
     });
   });
 });
+
+describe('PropertyValueParser - WHERE Clause Bug Fixes (Issue #503)', () => {
+  describe('Bug 1: Predicate keywords in field names', () => {
+    it('should parse unquoted field name containing "Filter" keyword', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; TotalAmount ; Decimal ;
+            CalcFormula=Sum("Sales Line".Amount WHERE (Item Filter=FIELD(No.))) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).not.toBeNull();
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+
+      const condition = result?.whereClause?.conditions[0];
+      expect(condition?.fieldName).toBe('Item Filter');
+      expect(condition?.predicateType).toBe('FIELD');
+      expect(condition?.predicateValue).toBe('No.');
+    });
+
+    it('should parse unquoted field name containing "Field" keyword', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; Total ; Decimal ;
+            CalcFormula=Sum("Sales Line".Amount WHERE (My Field Name=FIELD(No.))) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).not.toBeNull();
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+
+      const condition = result?.whereClause?.conditions[0];
+      expect(condition?.fieldName).toBe('My Field Name');
+      expect(condition?.predicateType).toBe('FIELD');
+      expect(condition?.predicateValue).toBe('No.');
+    });
+
+    it('should parse unquoted field name containing "Const" keyword', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; Total ; Decimal ;
+            CalcFormula=Sum("Sales Line".Amount WHERE (Const Center=FIELD(No.))) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).not.toBeNull();
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+
+      const condition = result?.whereClause?.conditions[0];
+      expect(condition?.fieldName).toBe('Const Center');
+      expect(condition?.predicateType).toBe('FIELD');
+      expect(condition?.predicateValue).toBe('No.');
+    });
+
+    it('should parse CalcFormula with unquoted "Filter" field name', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; HasEntries ; Boolean ;
+            CalcFormula=Exist("Item Ledger Entry" WHERE (Item Filter=FIELD(No.))) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).not.toBeNull();
+      expect(result?.aggregationFunction).toBe('Exist');
+      expect(result?.sourceTable).toBe('Item Ledger Entry');
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+
+      const condition = result?.whereClause?.conditions[0];
+      expect(condition?.fieldName).toBe('Item Filter');
+      expect(condition?.predicateType).toBe('FIELD');
+      expect(condition?.predicateValue).toBe('No.');
+    });
+
+    it('should parse TableRelation with unquoted "Filter" field name', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; BinCode ; Code20 ;
+            TableRelation=Bin.Code WHERE (Item Filter=FIELD(No.)) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.tableName).toBe('Bin');
+      expect(result?.fieldName).toBe('Code');
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+
+      const condition = result?.whereClause?.conditions[0];
+      expect(condition?.fieldName).toBe('Item Filter');
+      expect(condition?.predicateType).toBe('FIELD');
+      expect(condition?.predicateValue).toBe('No.');
+    });
+
+    it('should parse real NAV pattern: Employee Filter Code field', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; FilterAuth ; Boolean ;
+            CalcFormula=Exist("Employee Filter Line" WHERE (Employee Filter Code=FIELD(Employee Filter Delimitation),
+                                                            Employee No.=FIELD(No.))) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).not.toBeNull();
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(2);
+
+      const condition1 = result?.whereClause?.conditions[0];
+      expect(condition1?.fieldName).toBe('Employee Filter Code');
+      expect(condition1?.predicateType).toBe('FIELD');
+      expect(condition1?.predicateValue).toBe('Employee Filter Delimitation');
+
+      const condition2 = result?.whereClause?.conditions[1];
+      expect(condition2?.fieldName).toBe('Employee No.');
+      expect(condition2?.predicateType).toBe('FIELD');
+      expect(condition2?.predicateValue).toBe('No.');
+    });
+
+    it('should parse real NAV pattern: Variant Filter field', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; BinCode ; Code20 ;
+            TableRelation=Bin.Code WHERE (Location Code=FIELD(Location Code),
+                                          Item Filter=FIELD(No.),
+                                          Variant Filter=FIELD(Variant Code)) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(3);
+
+      const condition2 = result?.whereClause?.conditions[1];
+      expect(condition2?.fieldName).toBe('Item Filter');
+      expect(condition2?.predicateType).toBe('FIELD');
+      expect(condition2?.predicateValue).toBe('No.');
+
+      const condition3 = result?.whereClause?.conditions[2];
+      expect(condition3?.fieldName).toBe('Variant Filter');
+      expect(condition3?.predicateType).toBe('FIELD');
+      expect(condition3?.predicateValue).toBe('Variant Code');
+    });
+  });
+
+  describe('Bug 2: Empty predicate values', () => {
+    it('should parse CONST() with empty value', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; LineCount ; Integer ;
+            CalcFormula=Count("Sales Line" WHERE ("Source Batch Name"=CONST())) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).not.toBeNull();
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+
+      const condition = result?.whereClause?.conditions[0];
+      expect(condition?.fieldName).toBe('Source Batch Name');
+      expect(condition?.predicateType).toBe('CONST');
+      expect(condition?.predicateValue).toBe('');
+    });
+
+    it('should parse FILTER with empty string', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; Total ; Decimal ;
+            CalcFormula=Sum("Customer Ledger Entry".Amount WHERE ("Assigned User ID"=FILTER(''))) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).not.toBeNull();
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+
+      const condition = result?.whereClause?.conditions[0];
+      expect(condition?.fieldName).toBe('Assigned User ID');
+      expect(condition?.predicateType).toBe('FILTER');
+      expect(condition?.predicateValue).toBe('');
+    });
+
+    it('should parse CalcFormula with CONST() empty value integration', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; HasOpenEntries ; Boolean ;
+            CalcFormula=Exist("Bank Account Ledger Entry" WHERE ("Void Check Indicator"=CONST())) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).not.toBeNull();
+      expect(result?.aggregationFunction).toBe('Exist');
+      expect(result?.sourceTable).toBe('Bank Account Ledger Entry');
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+
+      const condition = result?.whereClause?.conditions[0];
+      expect(condition?.fieldName).toBe('Void Check Indicator');
+      expect(condition?.predicateType).toBe('CONST');
+      expect(condition?.predicateValue).toBe('');
+    });
+
+    it('should parse real NAV example: Date Closed with FILTER empty string', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; Total ; Decimal ;
+            CalcFormula=Sum("Customer Ledger Entry".Amount WHERE ("Date Closed"=FILTER(''))) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).not.toBeNull();
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+
+      const condition = result?.whereClause?.conditions[0];
+      expect(condition?.fieldName).toBe('Date Closed');
+      expect(condition?.predicateType).toBe('FILTER');
+      expect(condition?.predicateValue).toBe('');
+    });
+  });
+
+  describe('Combined bugs: Multiple conditions with keywords and empty values', () => {
+    it('should parse WHERE clause with unquoted "Filter" field name and CONST() empty value', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; Total ; Decimal ;
+            CalcFormula=Sum("Item Ledger Entry".Quantity WHERE (Item Filter=FIELD(No.),
+                                                                Source Batch Name=CONST())) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).not.toBeNull();
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(2);
+
+      const condition1 = result?.whereClause?.conditions[0];
+      expect(condition1?.fieldName).toBe('Item Filter');
+      expect(condition1?.predicateType).toBe('FIELD');
+      expect(condition1?.predicateValue).toBe('No.');
+
+      const condition2 = result?.whereClause?.conditions[1];
+      expect(condition2?.fieldName).toBe('Source Batch Name');
+      expect(condition2?.predicateType).toBe('CONST');
+      expect(condition2?.predicateValue).toBe('');
+    });
+
+    it('should parse WHERE clause with multiple unquoted "Filter" field names', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; Total ; Decimal ;
+            CalcFormula=Sum("Item Ledger Entry".Quantity WHERE (Item Filter=FIELD(No.),
+                                                                Variant Filter=FIELD(Variant Code))) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).not.toBeNull();
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(2);
+
+      const condition1 = result?.whereClause?.conditions[0];
+      expect(condition1?.fieldName).toBe('Item Filter');
+      expect(condition1?.predicateType).toBe('FIELD');
+      expect(condition1?.predicateValue).toBe('No.');
+
+      const condition2 = result?.whereClause?.conditions[1];
+      expect(condition2?.fieldName).toBe('Variant Filter');
+      expect(condition2?.predicateType).toBe('FIELD');
+      expect(condition2?.predicateValue).toBe('Variant Code');
+    });
+
+    it('should parse complex WHERE with unquoted keyword field names, empty values, and normal conditions', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; Total ; Decimal ;
+            CalcFormula=Sum("Sales Line".Amount WHERE (Item Filter=FIELD(No.),
+                                                        Type=CONST(Item),
+                                                        Source Batch Name=CONST(),
+                                                        Document Type=FILTER('Order|Invoice'))) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).not.toBeNull();
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(4);
+
+      const condition1 = result?.whereClause?.conditions[0];
+      expect(condition1?.fieldName).toBe('Item Filter');
+      expect(condition1?.predicateType).toBe('FIELD');
+
+      const condition2 = result?.whereClause?.conditions[1];
+      expect(condition2?.fieldName).toBe('Type');
+      expect(condition2?.predicateType).toBe('CONST');
+      expect(condition2?.predicateValue).toBe('Item');
+
+      const condition3 = result?.whereClause?.conditions[2];
+      expect(condition3?.fieldName).toBe('Source Batch Name');
+      expect(condition3?.predicateType).toBe('CONST');
+      expect(condition3?.predicateValue).toBe('');
+
+      const condition4 = result?.whereClause?.conditions[3];
+      expect(condition4?.fieldName).toBe('Document Type');
+      expect(condition4?.predicateType).toBe('FILTER');
+      expect(condition4?.predicateValue).toBe('Order|Invoice');
+    });
+  });
+});
