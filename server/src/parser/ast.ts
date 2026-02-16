@@ -106,6 +106,8 @@ export interface CalcFormulaNode {
   type: 'CalcFormulaNode';
   startToken: Token;
   endToken: Token;
+  /** Whether the CalcFormula is negated (e.g., -Sum(...)) */
+  negated?: boolean;
   /** Aggregation function: Sum, Count, Lookup, Exist, Min, Max, Average */
   aggregationFunction: 'Sum' | 'Count' | 'Lookup' | 'Exist' | 'Min' | 'Max' | 'Average';
   /** Source table name (quoted or unquoted) */

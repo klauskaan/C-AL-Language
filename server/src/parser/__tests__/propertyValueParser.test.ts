@@ -363,6 +363,182 @@ describe('PropertyValueParser - CalcFormula Parsing', () => {
       expect(result?.endToken.line).toBeGreaterThan(0);
     });
   });
+
+  describe('CalcFormula parsing - issue #502 patterns', () => {
+    it('should parse negated Sum function', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; Total ; Decimal ;
+            CalcFormula=-Sum("Sales Line".Amount) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeDefined();
+      expect(result?.negated).toBe(true);
+      expect(result?.aggregationFunction).toBe('Sum');
+      expect(result?.sourceTable).toBe('Sales Line');
+      expect(result?.sourceField).toBe('Amount');
+    });
+
+    it('should parse negated Exist function', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; HasEntries ; Boolean ;
+            CalcFormula=-Exist("Post Value Entry to G/L" WHERE (Item No.=FIELD(No.))) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeDefined();
+      expect(result?.negated).toBe(true);
+      expect(result?.aggregationFunction).toBe('Exist');
+      expect(result?.sourceTable).toBe('Post Value Entry to G/L');
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+    });
+
+    it('should parse square-bracket-wrapped CalcFormula', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; UnreviewedCount ; Integer ;
+            CalcFormula=[Count("User Security Status" WHERE (Reviewed=CONST(No)))] }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeDefined();
+      expect(result?.aggregationFunction).toBe('Count');
+      expect(result?.sourceTable).toBe('User Security Status');
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+      const condition = result?.whereClause?.conditions[0];
+      expect(condition?.fieldName).toBe('Reviewed');
+      expect(condition?.predicateType).toBe('CONST');
+      expect(condition?.predicateValue).toBe('No');
+    });
+
+    it('should parse FIELD(FILTER(...)) compound predicate', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; Total ; Decimal ;
+            CalcFormula=Sum("Cost Entry".Amount WHERE (Cost Type No.=FIELD(No.), Cost Type No.=FIELD(FILTER(Totaling)))) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeDefined();
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(2);
+
+      const condition1 = result?.whereClause?.conditions[0];
+      expect(condition1?.fieldName).toBe('Cost Type No.');
+      expect(condition1?.predicateType).toBe('FIELD');
+      expect(condition1?.predicateValue).toBe('No.');
+
+      const condition2 = result?.whereClause?.conditions[1];
+      expect(condition2?.fieldName).toBe('Cost Type No.');
+      expect(condition2?.predicateType).toBe('FIELD');
+      expect(condition2?.predicateValue).toBe('FILTER(Totaling)');
+    });
+
+    it('should parse FIELD(UPPERLIMIT(...)) compound predicate', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; Total ; Decimal ;
+            CalcFormula=Sum("Detailed Cust. Ledg. Entry".Amount WHERE (Customer No.=FIELD(No.), Posting Date=FIELD(UPPERLIMIT(Date Filter)))) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeDefined();
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(2);
+
+      const condition1 = result?.whereClause?.conditions[0];
+      expect(condition1?.fieldName).toBe('Customer No.');
+      expect(condition1?.predicateType).toBe('FIELD');
+      expect(condition1?.predicateValue).toBe('No.');
+
+      const condition2 = result?.whereClause?.conditions[1];
+      expect(condition2?.fieldName).toBe('Posting Date');
+      expect(condition2?.predicateType).toBe('FIELD');
+      expect(condition2?.predicateValue).toBe('UPPERLIMIT(Date Filter)');
+    });
+
+    it('should parse table name with slash - Count(Salesperson/Purchaser)', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; SalespersonCount ; Integer ;
+            CalcFormula=Count(Salesperson/Purchaser) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeDefined();
+      expect(result?.aggregationFunction).toBe('Count');
+      expect(result?.sourceTable).toBe('Salesperson/Purchaser');
+      expect(result?.sourceField).toBeUndefined();
+    });
+
+    it('should parse table name with slash - Lookup(Salesperson/Purchaser.Name)', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; SalespersonName ; Text50 ;
+            CalcFormula=Lookup(Salesperson/Purchaser.Name WHERE (Code=FIELD(Salesperson Code))) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeDefined();
+      expect(result?.aggregationFunction).toBe('Lookup');
+      expect(result?.sourceTable).toBe('Salesperson/Purchaser');
+      expect(result?.sourceField).toBe('Name');
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(1);
+    });
+
+    it('should parse table name with keywords - To-do', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; NextDate ; Date ;
+            CalcFormula=Min(To-do.Date WHERE (Team Code=FIELD(Code), Closed=CONST(No))) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'CalcFormula');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseCalcFormula();
+
+      expect(result).toBeDefined();
+      expect(result?.aggregationFunction).toBe('Min');
+      expect(result?.sourceTable).toBe('To-do');
+      expect(result?.sourceField).toBe('Date');
+      expect(result?.whereClause).toBeDefined();
+      expect(result?.whereClause?.conditions).toHaveLength(2);
+    });
+  });
 });
 
 describe('PropertyValueParser - TableRelation Parsing', () => {
