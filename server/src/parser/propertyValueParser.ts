@@ -143,6 +143,12 @@ export class PropertyValueParser {
 
       const startToken = this.peekOrEOF();
 
+      // Handle optional bracket prefix
+      const hasBracket = this.match(TokenType.LeftBracket);
+
+      // Handle optional negation prefix
+      const negated = this.match(TokenType.Minus);
+
       // Parse aggregation function
       const aggregationFunction = this.parseAggregationFunction();
       if (!aggregationFunction) {
@@ -157,7 +163,7 @@ export class PropertyValueParser {
       }
 
       // Parse table reference
-      const sourceTable = this.parseIdentifierValue();
+      const sourceTable = this.parseCompositeName(true);
       if (!sourceTable) {
         this.recordDiagnostic("Expected table reference after '('");
         return null;
@@ -166,7 +172,7 @@ export class PropertyValueParser {
       // Parse optional field reference (after dot)
       let sourceField: string | undefined;
       if (this.match(TokenType.Dot)) {
-        const field = this.parseIdentifierValue();
+        const field = this.parseCompositeName(false);
         if (!field) {
           this.recordDiagnostic("Expected field name after '.'");
           return null;
@@ -188,6 +194,15 @@ export class PropertyValueParser {
 
       // Expect closing parenthesis (or accept EOF for incomplete expressions)
       this.match(TokenType.RightParen); // Consume if present
+
+      // Handle optional closing bracket (if opening bracket was present)
+      if (hasBracket) {
+        if (!this.match(TokenType.RightBracket)) {
+          this.recordDiagnostic("Expected ']' to match opening '['");
+          return null;
+        }
+      }
+
       const endToken = this.previousOrEOF();
 
       // Reject if there are unconsumed tokens (trailing garbage)
@@ -202,6 +217,7 @@ export class PropertyValueParser {
         sourceTable,
         sourceField,
         whereClause,
+        ...(negated && { negated }),
         startToken,
         endToken
       };
@@ -535,10 +551,61 @@ export class PropertyValueParser {
       return undefined;
     }
 
-    // Parse predicate value (can be composite like "Country/Region Code")
-    const value = this.parseCompositeValue();
-    if (value === undefined) {
-      return undefined;
+    // Check for nested function call (FIELD(FILTER(...)) or FIELD(UPPERLIMIT(...)))
+    let value: string;
+    if (predicateType === 'FIELD') {
+      const nextToken = this.peek();
+      if (nextToken && this.isIdentifierLike(nextToken.type)) {
+        const upperValue = nextToken.value.toUpperCase();
+        if (upperValue === 'FILTER' || upperValue === 'UPPERLIMIT') {
+          const lookaheadPos = this.position + 1;
+          if (lookaheadPos < this.tokens.length && this.tokens[lookaheadPos].type === TokenType.LeftParen) {
+            // Nested function detected
+            const functionName = nextToken.value;
+            this.advance(); // consume function name
+            this.match(TokenType.LeftParen); // consume inner (
+
+            const innerValue = this.parseCompositeValue();
+            if (innerValue === undefined) {
+              return undefined;
+            }
+
+            if (!this.match(TokenType.RightParen)) {
+              return undefined;
+            }
+
+            value = `${functionName}(${innerValue})`;
+          } else {
+            // Not a nested function, parse normally
+            const parsedValue = this.parseCompositeValue();
+            if (parsedValue === undefined) {
+              return undefined;
+            }
+            value = parsedValue;
+          }
+        } else {
+          // Not a nested function, parse normally
+          const parsedValue = this.parseCompositeValue();
+          if (parsedValue === undefined) {
+            return undefined;
+          }
+          value = parsedValue;
+        }
+      } else {
+        // No next token or not identifier-like, parse normally
+        const parsedValue = this.parseCompositeValue();
+        if (parsedValue === undefined) {
+          return undefined;
+        }
+        value = parsedValue;
+      }
+    } else {
+      // CONST or FILTER predicates - parse normally
+      const parsedValue = this.parseCompositeValue();
+      if (parsedValue === undefined) {
+        return undefined;
+      }
+      value = parsedValue;
     }
 
     // Expect closing parenthesis
@@ -763,40 +830,12 @@ export class PropertyValueParser {
   }
 
   /**
-   * Parse identifier value (handles both quoted and unquoted identifiers)
-   * Also handles identifiers split across multiple tokens (e.g., "Country/Region Code")
-   */
-  private parseIdentifierValue(): string | undefined {
-    const token = this.peek();
-    if (!token) return undefined;
-
-    if (token.type === TokenType.QuotedIdentifier) {
-      this.advance();
-      return token.value;
-    }
-
-    // Handle special case: string literals in FILTER predicates
-    if (token.type === TokenType.String) {
-      this.advance();
-      return token.value;
-    }
-
-    // Accept any identifier-like token (including keywords)
-    if (this.isIdentifierLike(token.type)) {
-      this.advance();
-      return token.value;
-    }
-
-    return undefined;
-  }
-
-  /**
    * Parse a composite table or field name that may span multiple tokens.
    *
    * Handles unquoted names with slashes (Country/Region), trailing dots (No.),
    * and multi-word names. Quoted identifiers return immediately as complete names.
    *
-   * String tokens are intentionally not handled here — unlike parseIdentifierValue(),
+   * String tokens are intentionally not handled here — unlike parseCompositeValue(),
    * this method is only used for table/field name contexts, not predicate values.
    *
    * @param stopAtDot - If true, stop at Dot tokens (table name context, dot is table.field separator).
