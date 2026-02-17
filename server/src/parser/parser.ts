@@ -151,16 +151,8 @@ const CONTROL_FLOW_KEYWORDS = new Set<TokenType>([
  * All section keywords that can appear at the object level in C/AL (15 keywords).
  * Used by isSectionKeyword() and synchronize() for error recovery.
  *
- * This is distinct from lexer.ts SECTION_KEYWORDS (12 keywords) which is used
- * for identifier downgrading. The parser includes three additional keywords:
- * - Fields: Table field definitions section
- * - Keys: Table key definitions section
- * - Controls: Page/Form control definitions section
- *
- * These three keywords cannot appear as identifiers in contexts where the lexer
- * performs downgrading (field names, key names, control names, ML properties, code blocks),
- * so they are excluded from the lexer set. However, they are section keywords
- * for error recovery purposes in the parser.
+ * This set is aligned with lexer.ts SECTION_KEYWORDS, which is used for identifier
+ * downgrading. Both sets now include all 15 section keywords.
  *
  * Note: Code and Controls require special handling (must be followed by '{')
  * to distinguish from use as identifiers. The isSectionKeyword() method
@@ -230,7 +222,7 @@ export const CASE_EXIT_STATEMENT_KEYWORDS = new Set<TokenType>([
  * and would break parsing if consumed. These tokens are "wrong enough" that we
  * should error without consuming them, preserving the token stream for recovery.
  *
- * Note: Minus and Not are NOT in this set - they are handled by parseUnary() before
+ * Note: Minus, Plus, and Not are NOT in this set - they are handled by parseUnary() before
  * parsePrimary() is reached, so they are unreachable here.
  *
  * @internal
@@ -263,14 +255,13 @@ const NEVER_PRIMARY_THROW = new Set<TokenType>([
  * they require a left operand to be valid. We consume them and return an error
  * sentinel to allow parsing to continue.
  *
- * Note: Minus and Not are NOT in this set - they are handled by parseUnary() before
+ * Note: Minus, Plus, and Not are NOT in this set - they are handled by parseUnary() before
  * parsePrimary() is reached, so they are unreachable here.
  *
  * @internal
  */
 const NEVER_PRIMARY_CONSUME = new Set<TokenType>([
   // Binary arithmetic operators
-  TokenType.Plus,          // Binary + (unary + not in C/AL)
   TokenType.Multiply,      // Binary * operator
   TokenType.Divide,        // Binary / operator
   // Assignment operators
@@ -4746,7 +4737,7 @@ export class Parser {
   }
 
   private parseUnary(): Expression {
-    if (this.check(TokenType.Not) || this.check(TokenType.Minus)) {
+    if (this.check(TokenType.Not) || this.check(TokenType.Minus) || this.check(TokenType.Plus)) {
       const operator = this.advance();
       const operand = this.parseUnary();
       return {
