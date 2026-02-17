@@ -702,11 +702,11 @@ describe('PropertyValueParser - TableRelation Parsing', () => {
 
       const conditional = result?.conditionalRelations?.[0];
       expect(conditional?.type).toBe('ConditionalTableRelation');
-      expect(conditional?.condition).toBeDefined();
-      expect(conditional?.condition?.fieldName).toBe('Type');
-      expect(conditional?.condition?.operator).toBe('=');
-      expect(conditional?.condition?.predicateType).toBe('CONST');
-      expect(conditional?.condition?.predicateValue).toBe('Item');
+      expect(conditional?.conditions).toBeDefined();
+      expect(conditional?.conditions?.[0]?.fieldName).toBe('Type');
+      expect(conditional?.conditions?.[0]?.operator).toBe('=');
+      expect(conditional?.conditions?.[0]?.predicateType).toBe('CONST');
+      expect(conditional?.conditions?.[0]?.predicateValue).toBe('Item');
       expect(conditional?.thenRelation?.tableName).toBe('Item');
       expect(conditional?.elseRelation).toBeUndefined();
     });
@@ -776,11 +776,11 @@ describe('PropertyValueParser - TableRelation Parsing', () => {
       expect(result?.conditionalRelations?.length).toBeGreaterThan(1);
 
       // First condition: IF Type=CONST(G/L Account)
-      expect(result?.conditionalRelations?.[0]?.condition?.predicateValue).toBe('G/L Account');
+      expect(result?.conditionalRelations?.[0]?.conditions?.[0]?.predicateValue).toBe('G/L Account');
       expect(result?.conditionalRelations?.[0]?.thenRelation?.tableName).toBe('G/L Account');
 
       // Second condition: ELSE IF Type=CONST(Item)
-      expect(result?.conditionalRelations?.[1]?.condition?.predicateValue).toBe('Item');
+      expect(result?.conditionalRelations?.[1]?.conditions?.[0]?.predicateValue).toBe('Item');
       expect(result?.conditionalRelations?.[1]?.thenRelation?.tableName).toBe('Item');
 
       // Final ELSE
@@ -828,15 +828,15 @@ describe('PropertyValueParser - TableRelation Parsing', () => {
 
       // First condition: IF Type=CONST(G/L Account) -> "G/L Account"
       const firstCondition = result?.conditionalRelations?.[0];
-      expect(firstCondition?.condition?.fieldName).toBe('Type');
-      expect(firstCondition?.condition?.predicateValue).toBe('G/L Account');
+      expect(firstCondition?.conditions?.[0]?.fieldName).toBe('Type');
+      expect(firstCondition?.conditions?.[0]?.predicateValue).toBe('G/L Account');
       expect(firstCondition?.thenRelation?.tableName).toBe('G/L Account');
       expect(firstCondition?.elseRelation).toBeUndefined(); // Should not have ELSE
 
       // Second condition: ELSE IF Type=CONST(Item) -> Item ELSE Resource
       const secondCondition = result?.conditionalRelations?.[1];
-      expect(secondCondition?.condition?.fieldName).toBe('Type');
-      expect(secondCondition?.condition?.predicateValue).toBe('Item');
+      expect(secondCondition?.conditions?.[0]?.fieldName).toBe('Type');
+      expect(secondCondition?.conditions?.[0]?.predicateValue).toBe('Item');
       expect(secondCondition?.thenRelation?.tableName).toBe('Item');
       expect(secondCondition?.elseRelation).toBeDefined(); // Final ELSE
       expect(secondCondition?.elseRelation?.tableName).toBe('Resource');
@@ -970,6 +970,119 @@ describe('PropertyValueParser - TableRelation Parsing', () => {
       expect(result?.endToken).toBeDefined();
       expect(result?.startToken.type).toBe(TokenType.Identifier);
       expect(result?.startToken.value).toBe('Customer');
+    });
+  });
+
+  describe('Multi-condition IF in TableRelation (#506)', () => {
+    it('should parse two comma-separated conditions in a single IF clause', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (Type=CONST(G/L Account),System-Created Entry=CONST(No)) "G/L Account" }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.conditionalRelations).toBeDefined();
+      expect(result?.conditionalRelations).toHaveLength(1);
+
+      const conditional = result?.conditionalRelations?.[0];
+      expect(conditional?.conditions).toHaveLength(2);
+
+      expect(conditional?.conditions?.[0]?.fieldName).toBe('Type');
+      expect(conditional?.conditions?.[0]?.predicateType).toBe('CONST');
+      expect(conditional?.conditions?.[0]?.predicateValue).toBe('G/L Account');
+
+      expect(conditional?.conditions?.[1]?.fieldName).toBe('System-Created Entry');
+      expect(conditional?.conditions?.[1]?.predicateType).toBe('CONST');
+      expect(conditional?.conditions?.[1]?.predicateValue).toBe('No');
+
+      expect(conditional?.thenRelation?.tableName).toBe('G/L Account');
+    });
+
+    it('should parse multi-condition IF with ELSE IF chain', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (Type=CONST(G/L Account),System-Created Entry=CONST(No)) "G/L Account"
+                          ELSE IF (Type=CONST(Item)) Item }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.conditionalRelations).toHaveLength(2);
+
+      const firstConditional = result?.conditionalRelations?.[0];
+      expect(firstConditional?.conditions).toHaveLength(2);
+      expect(firstConditional?.thenRelation?.tableName).toBe('G/L Account');
+
+      const secondConditional = result?.conditionalRelations?.[1];
+      expect(secondConditional?.conditions).toHaveLength(1);
+      expect(secondConditional?.conditions?.[0]?.predicateValue).toBe('Item');
+      expect(secondConditional?.thenRelation?.tableName).toBe('Item');
+    });
+
+    it('should parse multi-condition IF with FILTER predicate', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (Document Type=FILTER(Order|Invoice),Qty. to Asm. to Order (Base)=CONST(0)) "Sales Line" }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.conditionalRelations).toHaveLength(1);
+
+      const conditional = result?.conditionalRelations?.[0];
+      expect(conditional?.conditions).toHaveLength(2);
+
+      expect(conditional?.conditions?.[0]?.fieldName).toBe('Document Type');
+      expect(conditional?.conditions?.[0]?.predicateType).toBe('FILTER');
+      expect(conditional?.conditions?.[0]?.predicateValue).toBe('Order|Invoice');
+
+      expect(conditional?.conditions?.[1]?.fieldName).toBe('Qty. to Asm. to Order (Base)');
+      expect(conditional?.conditions?.[1]?.predicateType).toBe('CONST');
+      expect(conditional?.conditions?.[1]?.predicateValue).toBe('0');
+    });
+
+    it('should parse multi-condition IF with WHERE clause on thenRelation', () => {
+      const code = `OBJECT Table 1 Test {
+        FIELDS {
+          { 1 ; ; No ; Code20 ;
+            TableRelation=IF (Type=CONST(G/L Account),System-Created Entry=CONST(No)) "G/L Account" WHERE (Income/Balance=CONST(Income Statement)) }
+        }
+      }`;
+
+      const tokens = getPropertyValueTokens(code, 'TableRelation');
+      const parser = new PropertyValueParser(tokens);
+      const result = parser.parseTableRelation();
+
+      expect(result).not.toBeNull();
+      expect(result?.conditionalRelations).toHaveLength(1);
+
+      const conditional = result?.conditionalRelations?.[0];
+      expect(conditional?.conditions).toHaveLength(2);
+      expect(conditional?.thenRelation?.tableName).toBe('G/L Account');
+
+      expect(conditional?.thenRelation?.whereClause).toBeDefined();
+      expect(conditional?.thenRelation?.whereClause?.conditions).toHaveLength(1);
+
+      const whereCondition = conditional?.thenRelation?.whereClause?.conditions[0];
+      expect(whereCondition?.fieldName).toBe('Income/Balance');
+      expect(whereCondition?.predicateType).toBe('CONST');
+      expect(whereCondition?.predicateValue).toBe('Income Statement');
     });
   });
 });
@@ -2150,8 +2263,8 @@ describe('PropertyValueParser - TableRelation Composite Names (Issue #501)', () 
       expect(result?.conditionalRelations?.length).toBe(1);
 
       const conditional = result?.conditionalRelations?.[0];
-      expect(conditional?.condition?.fieldName).toBe('Destination Type');
-      expect(conditional?.condition?.predicateValue).toBe('Sales Order');
+      expect(conditional?.conditions?.[0]?.fieldName).toBe('Destination Type');
+      expect(conditional?.conditions?.[0]?.predicateValue).toBe('Sales Order');
       expect(conditional?.thenRelation?.tableName).toBe('Sales Header');
       expect(conditional?.thenRelation?.fieldName).toBe('No.');
       expect(conditional?.thenRelation?.whereClause).toBeDefined();
@@ -2178,13 +2291,13 @@ describe('PropertyValueParser - TableRelation Composite Names (Issue #501)', () 
 
       // First condition: Sales Order
       const firstCond = result?.conditionalRelations?.[0];
-      expect(firstCond?.condition?.predicateValue).toBe('Sales Order');
+      expect(firstCond?.conditions?.[0]?.predicateValue).toBe('Sales Order');
       expect(firstCond?.thenRelation?.tableName).toBe('Sales Header');
       expect(firstCond?.thenRelation?.fieldName).toBe('No.');
 
       // Second condition: Purchase Order with ELSE -> Country/Region
       const secondCond = result?.conditionalRelations?.[1];
-      expect(secondCond?.condition?.predicateValue).toBe('Purchase Order');
+      expect(secondCond?.conditions?.[0]?.predicateValue).toBe('Purchase Order');
       expect(secondCond?.thenRelation?.tableName).toBe('Purchase Header');
       expect(secondCond?.thenRelation?.fieldName).toBe('No.');
       expect(secondCond?.elseRelation).toBeDefined();
@@ -2226,7 +2339,7 @@ describe('PropertyValueParser - TableRelation Composite Names (Issue #501)', () 
 
       // Spot check: Sales Invoice (3rd branch) - no WHERE clause
       const salesInvoiceCond = result?.conditionalRelations?.[2];
-      expect(salesInvoiceCond?.condition?.predicateValue).toBe('Sales Invoice');
+      expect(salesInvoiceCond?.conditions?.[0]?.predicateValue).toBe('Sales Invoice');
       expect(salesInvoiceCond?.thenRelation?.tableName).toBe('Sales Invoice Header');
       expect(salesInvoiceCond?.thenRelation?.fieldName).toBe('No.');
 

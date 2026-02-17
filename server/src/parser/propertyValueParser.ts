@@ -711,10 +711,20 @@ export class PropertyValueParser {
       return undefined;
     }
 
-    // Parse condition (same as WHERE condition)
-    const condition = this.parseWhereCondition();
-    if (!condition) {
+    // Parse conditions (comma-separated, same as WHERE conditions)
+    const conditions: WhereConditionNode[] = [];
+    const firstCondition = this.parseWhereCondition();
+    if (!firstCondition) {
       return undefined;
+    }
+    conditions.push(firstCondition);
+
+    while (this.match(TokenType.Comma)) {
+      const condition = this.parseWhereCondition();
+      if (!condition) {
+        return undefined;
+      }
+      conditions.push(condition);
     }
 
     // Expect closing parenthesis
@@ -754,7 +764,7 @@ export class PropertyValueParser {
 
     return {
       type: 'ConditionalTableRelation',
-      condition,
+      conditions,
       thenRelation,
       elseRelation,
       startToken,
