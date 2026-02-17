@@ -184,7 +184,7 @@ export interface TableRelationNode {
  * // Produces:
  * {
  *   type: 'ConditionalTableRelation',
- *   condition: { fieldName: 'Type', operator: '=', predicateType: 'CONST', predicateValue: 'Item' },
+ *   conditions: [{ fieldName: 'Type', operator: '=', predicateType: 'CONST', predicateValue: 'Item' }],
  *   thenRelation: { tableName: 'Item', ... },
  *   elseRelation: { tableName: 'Resource', ... }
  * }
@@ -193,16 +193,16 @@ export interface TableRelationNode {
  * IF (Type=CONST(G/L Account)) "G/L Account" ELSE IF (Type=CONST(Item)) Item ELSE Resource
  * // Produces multiple ConditionalTableRelation nodes in array:
  * [
- *   { condition: {...G/L Account...}, thenRelation: {...}, elseRelation: undefined },
- *   { condition: {...Item...}, thenRelation: {...}, elseRelation: {...Resource...} }
+ *   { conditions: [{...G/L Account...}], thenRelation: {...}, elseRelation: undefined },
+ *   { conditions: [{...Item...}], thenRelation: {...}, elseRelation: {...Resource...} }
  * ]
  */
 export interface ConditionalTableRelation {
   type: 'ConditionalTableRelation';
   startToken: Token;
   endToken: Token;
-  /** The condition to test (e.g., Type=CONST(Item)) */
-  condition: WhereConditionNode;
+  /** The conditions to test (comma-separated in IF clause) */
+  conditions: WhereConditionNode[];
   /** The table relation if condition is true */
   thenRelation: TableRelationNode;
   /** The table relation if condition is false (optional ELSE clause) */
