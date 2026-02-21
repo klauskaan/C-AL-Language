@@ -550,6 +550,25 @@ describe('TypeMismatchValidator - Compatible Assignments', () => {
       const mismatch = diagnostics.find(d => d.message.includes('Type mismatch'));
       expect(mismatch).toBeUndefined();
     });
+
+    it('should allow BigInteger variable assigned to Duration variable', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE TestProc();
+          VAR
+            Millisec : BigInteger;
+            DurationVar : Duration;
+          BEGIN
+            DurationVar := Millisec;
+          END;
+        }
+      }`;
+
+      const diagnostics = validateTypeMismatch(code);
+
+      const mismatch = diagnostics.find(d => d.message.includes('Type mismatch'));
+      expect(mismatch).toBeUndefined();
+    });
   });
 });
 

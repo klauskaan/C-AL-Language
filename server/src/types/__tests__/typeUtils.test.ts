@@ -1092,6 +1092,18 @@ describe('isAssignmentCompatible', () => {
       expect(isAssignmentCompatible(source, target)).toBe(true);
     });
 
+    it('should allow BigInteger to Duration', () => {
+      const source = createPrimitiveType(PrimitiveName.BigInteger);
+      const target = createPrimitiveType(PrimitiveName.Duration);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should reject Decimal to Duration (no evidence in C/AL production code)', () => {
+      const source = createPrimitiveType(PrimitiveName.Decimal);
+      const target = createPrimitiveType(PrimitiveName.Duration);
+      expect(isAssignmentCompatible(source, target)).toBe(false);
+    });
+
     it('should reject Decimal to Char (only Integer narrows to Char)', () => {
       const source = createPrimitiveType(PrimitiveName.Decimal);
       const target = createPrimitiveType(PrimitiveName.Char);
