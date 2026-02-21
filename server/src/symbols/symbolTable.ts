@@ -1,6 +1,8 @@
 import { Token } from '../lexer/tokens';
 import {
   CALDocument,
+  ObjectKind,
+  ObjectDeclaration,
   VariableDeclaration,
   ProcedureDeclaration,
   TriggerDeclaration,
@@ -341,6 +343,57 @@ export class SymbolTable {
   private rootScope: Scope = new Scope(null);
 
   /**
+   * Inject implicit system variables into the root scope based on object kind.
+   * These variables are always available in specific object types but are never
+   * explicitly declared in C/AL source code.
+   *
+   * - Table:   Rec, xRec
+   * - Page:    Rec, CurrPage
+   * - Report:  Rec, CurrReport
+   * - XMLport: currXMLport
+   */
+  private injectImplicitVariables(objectDecl: ObjectDeclaration): void {
+    const { objectKind, objectId, startToken } = objectDecl;
+
+    const makeToken = (name: string): Token => ({
+      type: 'IDENTIFIER' as any,
+      value: name,
+      line: startToken.line,
+      column: startToken.column,
+      startOffset: startToken.startOffset,
+      endOffset: startToken.startOffset + name.length
+    });
+
+    const inject = (name: string, type: string): void => {
+      this.rootScope.addSymbol({
+        name,
+        kind: 'variable',
+        token: makeToken(name),
+        type
+      });
+    };
+
+    switch (objectKind) {
+      case ObjectKind.Table:
+        inject('Rec', `Record ${objectId}`);
+        inject('xRec', `Record ${objectId}`);
+        break;
+      case ObjectKind.Page:
+        inject('Rec', 'Record');
+        inject('CurrPage', 'Page');
+        break;
+      case ObjectKind.Report:
+        inject('Rec', 'Record');
+        inject('CurrReport', 'Report');
+        break;
+      case ObjectKind.XMLport:
+        inject('currXMLport', 'XMLport');
+        break;
+      // Codeunit, Query, MenuSuite: no implicit variables
+    }
+  }
+
+  /**
    * Build symbol table from AST using the visitor pattern.
    * Creates a hierarchical scope structure:
    * - Root scope: fields, global variables, procedure/trigger names
@@ -353,6 +406,9 @@ export class SymbolTable {
     if (!ast.object) {
       return;
     }
+
+    // Pre-populate implicit variables based on object kind
+    this.injectImplicitVariables(ast.object);
 
     const walker = new ASTWalker();
     const visitor = new SymbolCollectorVisitor(this.rootScope);
