@@ -16,9 +16,10 @@
  * - Test: Test function marker (NAV 2016+)
  * - CheckPrecondition: Precondition check for upgrade codeunits (NAV 2016+)
  * - TableSyncSetup: Table sync setup for upgrade codeunits (NAV 2016+)
+ * - Internal: Internal access modifier (NAV 2017+, 10.0 through BC14)
+ * - ServiceEnabled: Web service method marker (NAV 2017+, 10.0 through BC14)
  *
  * AL-only attributes NOT supported in C/AL:
- * - Internal (BC 19+)
  * - Scope (BC 15+)
  * - BusinessEvent (BC 15+)
  * - IntegrationEvent (BC 15+)
@@ -31,7 +32,9 @@ export const KNOWN_CAL_ATTRIBUTES: ReadonlySet<string> = new Set([
   'eventsubscriber',
   'test',
   'checkprecondition',
-  'tablesyncsetup'
+  'tablesyncsetup',
+  'internal',
+  'serviceenabled'
 ]);
 
 /**
@@ -45,7 +48,9 @@ export const KNOWN_CAL_ATTRIBUTES_CASED: readonly string[] = [
   'EventSubscriber',
   'Test',
   'CheckPrecondition',
-  'TableSyncSetup'
+  'TableSyncSetup',
+  'Internal',
+  'ServiceEnabled'
 ];
 
 /**

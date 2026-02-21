@@ -9,8 +9,10 @@
  * - [TryFunction]
  * - [Integration(TRUE/FALSE)]
  * - [EventSubscriber(...)]
+ * - [Internal] - NAV 2017+
+ * - [ServiceEnabled] - NAV 2017+
  *
- * Note: AL-only attributes like [Internal], [Scope('OnPrem')], [BusinessEvent]
+ * Note: AL-only attributes like [Scope('OnPrem')], [BusinessEvent]
  * are NOT supported in C/AL and should return false.
  */
 
@@ -102,8 +104,12 @@ describe('attributeData - isKnownAttribute', () => {
   });
 
   describe('Unknown Attributes', () => {
-    it('should return false for [Internal] (AL-only)', () => {
-      expect(isKnownAttribute('Internal')).toBe(false);
+    it('should return true for [Internal] (NAV 2017+, C/AL)', () => {
+      expect(isKnownAttribute('Internal')).toBe(true);
+    });
+
+    it('should return true for [ServiceEnabled] (NAV 2017+, C/AL)', () => {
+      expect(isKnownAttribute('ServiceEnabled')).toBe(true);
     });
 
     it('should return false for [Scope] (AL-only)', () => {

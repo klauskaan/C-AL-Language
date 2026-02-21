@@ -8,7 +8,7 @@
  * - AL-only attributes (e.g., [Scope], [IntegrationEvent])
  * - Typos in valid C/AL attributes
  *
- * Valid C/AL attributes (7 total):
+ * Valid C/AL attributes (9 total):
  * - [External] - NAV 2016+
  * - [TryFunction] - All C/AL versions
  * - [Integration(Include)] - NAV 2016+
@@ -16,12 +16,12 @@
  * - [Test] - NAV 2016+
  * - [CheckPrecondition] - NAV 2016+
  * - [TableSyncSetup] - NAV 2016+
+ * - [Internal] - NAV 2017+
+ * - [ServiceEnabled] - NAV 2017+
  *
  * AL-only attributes (not valid in C/AL):
- * - [Internal] - AL-only (BC 19+)
  * - [Business] - AL-only
  * - [InternalEvent] - AL-only
- * - [ServiceEnabled] - AL-only
  * - [Scope] - AL-only
  * - [BusinessEvent] - AL-only
  *
@@ -454,7 +454,7 @@ describe('UnknownAttributeValidator - Unknown Attributes without Suggestions', (
 });
 
 describe('UnknownAttributeValidator - AL-Only Attributes', () => {
-  it('should flag [Internal] as AL-only attribute (BC 19+)', () => {
+  it('should produce no diagnostics for [Internal] (valid C/AL attribute, NAV 2017+)', () => {
     const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -468,11 +468,7 @@ describe('UnknownAttributeValidator - AL-Only Attributes', () => {
 
     const diagnostics = validateUnknownAttributes(code);
 
-    expect(diagnostics).toHaveLength(1);
-    const diag = diagnostics[0];
-    expect(diag.message).toBe("Unknown attribute '[Internal]'");
-    expect(diag.severity).toBe(DiagnosticSeverity.Warning);
-    expect(diag.source).toBe('cal');
+    expect(diagnostics).toHaveLength(0);
   });
 
   it('should flag [Business] as unknown attribute', () => {
@@ -517,7 +513,7 @@ describe('UnknownAttributeValidator - AL-Only Attributes', () => {
     expect(diag.source).toBe('cal');
   });
 
-  it('should flag [ServiceEnabled] as AL-only attribute', () => {
+  it('should produce no diagnostics for [ServiceEnabled] (valid C/AL attribute, NAV 2017+)', () => {
     const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -531,11 +527,7 @@ describe('UnknownAttributeValidator - AL-Only Attributes', () => {
 
     const diagnostics = validateUnknownAttributes(code);
 
-    expect(diagnostics).toHaveLength(1);
-    const diag = diagnostics[0];
-    expect(diag.message).toBe("Unknown attribute '[ServiceEnabled]'");
-    expect(diag.severity).toBe(DiagnosticSeverity.Warning);
-    expect(diag.source).toBe('cal');
+    expect(diagnostics).toHaveLength(0);
   });
 
   it('should flag [Scope] as AL-only attribute', () => {
