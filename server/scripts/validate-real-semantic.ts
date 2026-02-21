@@ -10,6 +10,7 @@ import { hasTxtExtension } from '../src/utils/fileExtensions';
 import { escapeMarkdown } from '../src/utils/escapeMarkdown';
 import { defaultSettings } from '../src/settings';
 import { DiagnosticSeverity } from 'vscode-languageserver';
+import { ObjectKind } from '../src/parser/ast';
 
 interface DiagnosticResult {
   code: string;
@@ -40,6 +41,22 @@ function objectType(filename: string): string {
   return filename.substring(0, 3).toUpperCase();
 }
 
+function buildTableRegistry(realDir: string, files: string[]): Map<number, string> {
+  const registry = new Map<number, string>();
+  for (const file of files) {
+    const filePath = join(realDir, file);
+    const { content } = readFileWithEncoding(filePath);
+    const lexer = new Lexer(content);
+    const tokens = lexer.tokenize();
+    const parser = new Parser(tokens);
+    const ast = parser.parse();
+    if (ast.object?.objectKind === ObjectKind.Table && ast.object.objectName) {
+      registry.set(ast.object.objectId, ast.object.objectName);
+    }
+  }
+  return registry;
+}
+
 function validateAllRealFiles(): SemanticValidationResult[] {
   const realDir = join(__dirname, '../../test/REAL');
   const files = readdirSync(realDir)
@@ -47,6 +64,11 @@ function validateAllRealFiles(): SemanticValidationResult[] {
     .sort();
 
   console.log(`Found ${files.length} files to analyse\n`);
+
+  // Pre-scan: build tableId→tableName registry for blank-named DataItem resolution (#518)
+  console.log('Building table registry...');
+  const tableRegistry = buildTableRegistry(realDir, files);
+  console.log(`Table registry: ${tableRegistry.size} tables indexed\n`);
 
   const builtins = new BuiltinRegistry();
   const analyzer = new SemanticAnalyzer(builtins);
@@ -63,7 +85,7 @@ function validateAllRealFiles(): SemanticValidationResult[] {
     const parser = new Parser(tokens);
     const ast = parser.parse();
     const symbolTable = new SymbolTable();
-    symbolTable.buildFromAST(ast);
+    symbolTable.buildFromAST(ast, tableRegistry);
     const diagnostics = analyzer.analyze(ast, symbolTable, `file://${filePath}`, defaultSettings);
     const analyzeTime = Date.now() - startTime;
 
