@@ -661,5 +661,42 @@ describe('WorkspaceIndex', () => {
       expect(registry.get(27)).toBe('Item');
       expect(registry.get(36)).toBe('Sales Header');
     });
+
+    it('should populate registry via indexDirectory', async () => {
+      const tableFile18 = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile18, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      const tableFile27 = path.join(tempDir, 'Table27.cal');
+      fs.writeFileSync(tableFile27, `OBJECT Table 27 Item
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      const codeunitFile = path.join(tempDir, 'Codeunit50000.cal');
+      fs.writeFileSync(codeunitFile, `OBJECT Codeunit 50000 Utils
+{
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`);
+
+      await workspaceIndex.indexDirectory(tempDir);
+
+      const registry = workspaceIndex.getTableRegistry();
+      expect(registry.size).toBe(2);
+      expect(registry.get(18)).toBe('Customer');
+      expect(registry.get(27)).toBe('Item');
+    });
   });
 });
