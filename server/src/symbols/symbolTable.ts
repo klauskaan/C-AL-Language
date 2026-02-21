@@ -9,6 +9,7 @@ import {
   EventDeclaration,
   FieldDeclaration,
   ActionDeclaration,
+  type Property,
   type XMLportElement,
   findProperty
 } from '../parser/ast';
@@ -262,6 +263,46 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
         type: variable.dataType.typeName,
         resolvedType: resolveVariableType(variable)
       });
+    }
+
+    // Restore previous scope
+    this.currentScope = prevScope;
+
+    // Return false to prevent walker from re-traversing children
+    return false;
+  }
+
+  /**
+   * Visit a Property node. For trigger properties (those with a triggerBody), create a
+   * child scope so that local variables declared inside the trigger are not leaked into
+   * the parent (root) scope. Non-trigger properties are left to normal walker traversal.
+   */
+  visitProperty(node: Property): void | false {
+    // Only act on trigger properties (e.g. OnRun, OnValidate in PROPERTIES sections)
+    if (!node.triggerBody) {
+      return;
+    }
+
+    // Create child scope for property trigger body
+    const triggerScope = new Scope(this.currentScope);
+    triggerScope.startOffset = node.startToken.startOffset;
+    triggerScope.endOffset = node.endToken.endOffset;
+
+    // Switch to trigger scope, handle variables, then restore
+    const prevScope = this.currentScope;
+    this.currentScope = triggerScope;
+
+    // Add local variables to trigger scope (may be undefined for triggers without VAR section)
+    if (node.triggerVariables) {
+      for (const variable of node.triggerVariables) {
+        triggerScope.addSymbol({
+          name: variable.name,
+          kind: 'variable',
+          token: variable.startToken,
+          type: variable.dataType.typeName,
+          resolvedType: resolveVariableType(variable)
+        });
+      }
     }
 
     // Restore previous scope
