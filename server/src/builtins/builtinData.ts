@@ -753,6 +753,12 @@ export const RECORD_METHODS: BuiltinFunction[] = [
     documentation: 'Returns the field caption.',
     category: 'record'
   },
+  {
+    name: 'FIELDACTIVE',
+    signature: '(Field): Boolean',
+    documentation: 'Returns TRUE if the specified field is enabled in the table definition.',
+    category: 'record'
+  },
 
   // Counting
   {

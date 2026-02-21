@@ -105,9 +105,9 @@ describe('Builtins Module', () => {
   });
 
   describe('Data Integrity - RECORD_METHODS', () => {
-    it('should have exactly 54 record method entries', () => {
-      // 53 existing + RENAME (added as dual-purpose)
-      expect(RECORD_METHODS).toHaveLength(54);
+    it('should have exactly 55 record method entries', () => {
+      // 53 existing + RENAME (added as dual-purpose) + FIELDACTIVE
+      expect(RECORD_METHODS).toHaveLength(55);
     });
 
     it('should have all required fields for each entry', () => {
@@ -146,6 +146,24 @@ describe('Builtins Module', () => {
       const copy = RECORD_METHODS.find((fn) => fn.name === 'COPY');
       expect(copy).toBeDefined();
       expect(copy?.category).toBe('record');
+    });
+
+    it('should include FIELDACTIVE as a record method', () => {
+      const fieldactive = RECORD_METHODS.find((fn) => fn.name === 'FIELDACTIVE');
+      expect(fieldactive).toBeDefined();
+      expect(fieldactive?.category).toBe('record');
+    });
+
+    it('should have FIELDACTIVE signature that returns Boolean', () => {
+      const fieldactive = RECORD_METHODS.find((fn) => fn.name === 'FIELDACTIVE');
+      expect(fieldactive).toBeDefined();
+      expect(fieldactive?.signature).toContain('Boolean');
+    });
+
+    it('should have FIELDACTIVE signature that accepts a Field parameter', () => {
+      const fieldactive = RECORD_METHODS.find((fn) => fn.name === 'FIELDACTIVE');
+      expect(fieldactive).toBeDefined();
+      expect(fieldactive?.signature).toContain('Field');
     });
   });
 
@@ -240,6 +258,14 @@ describe('Builtins Module', () => {
 
     it('should NOT recognize CALCTIME (not a real C/AL function)', () => {
       expect(registry.isGlobalFunction('CALCTIME')).toBe(false);
+    });
+
+    it('should recognize FIELDACTIVE as a record method', () => {
+      expect(registry.isRecordMethod('FIELDACTIVE')).toBe(true);
+    });
+
+    it('should NOT recognize FIELDACTIVE as a global function', () => {
+      expect(registry.isGlobalFunction('FIELDACTIVE')).toBe(false);
     });
   });
 
