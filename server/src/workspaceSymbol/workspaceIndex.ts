@@ -10,6 +10,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { pathToFileURL } from 'url';
 import { DocumentSymbolProvider } from '../documentSymbol/documentSymbolProvider';
 import { Parser } from '../parser/parser';
+import { ObjectKind } from '../parser/ast';
 import { Lexer } from '../lexer/lexer';
 import { readFileWithEncodingAsync } from '../utils/encoding';
 import { discoverFiles } from '../utils/fileDiscovery';
@@ -32,6 +33,8 @@ interface IndexEntry {
 export class WorkspaceIndex {
   private index = new Map<string, IndexEntry>();
   private documentSymbolProvider = new DocumentSymbolProvider();
+  private tableRegistry = new Map<number, string>();
+  private fileTableContributions = new Map<string, number>();
 
   /**
    * Index a single file and add it to the index
@@ -42,7 +45,20 @@ export class WorkspaceIndex {
    */
   async add(filePath: string): Promise<void> {
     const indexedAt = Date.now();
-    const symbols = await this.extractSymbols(filePath);
+    const { symbols, tableInfo } = await this.extractSymbols(filePath);
+
+    // Remove old table contribution for this file (if any)
+    const oldId = this.fileTableContributions.get(filePath);
+    if (oldId !== undefined) {
+      this.tableRegistry.delete(oldId);
+      this.fileTableContributions.delete(filePath);
+    }
+
+    // Add new table contribution
+    if (tableInfo) {
+      this.tableRegistry.set(tableInfo.id, tableInfo.name);
+      this.fileTableContributions.set(filePath, tableInfo.id);
+    }
 
     this.index.set(filePath, {
       symbols,
@@ -83,6 +99,11 @@ export class WorkspaceIndex {
    * @param filePath - Absolute file path to remove
    */
   remove(filePath: string): void {
+    const oldId = this.fileTableContributions.get(filePath);
+    if (oldId !== undefined) {
+      this.tableRegistry.delete(oldId);
+      this.fileTableContributions.delete(filePath);
+    }
     this.index.delete(filePath);
   }
 
@@ -91,6 +112,8 @@ export class WorkspaceIndex {
    */
   clear(): void {
     this.index.clear();
+    this.tableRegistry.clear();
+    this.fileTableContributions.clear();
   }
 
   /**
@@ -123,6 +146,16 @@ export class WorkspaceIndex {
    */
   get fileCount(): number {
     return this.index.size;
+  }
+
+  /**
+   * Get the table registry mapping table IDs to table names.
+   * Used by SymbolTable.buildFromAST() to resolve blank-named DataItems.
+   *
+   * @returns ReadonlyMap of tableId → tableName
+   */
+  getTableRegistry(): ReadonlyMap<number, string> {
+    return this.tableRegistry;
   }
 
   /**
@@ -192,7 +225,7 @@ export class WorkspaceIndex {
    * @returns Promise<SymbolInformation[]> - Extracted symbols
    * @throws Error if file cannot be read or parsed
    */
-  private async extractSymbols(filePath: string): Promise<SymbolInformation[]> {
+  private async extractSymbols(filePath: string): Promise<{ symbols: SymbolInformation[]; tableInfo?: { id: number; name: string } }> {
     // Read file with encoding detection
     const { content } = await readFileWithEncodingAsync(filePath);
 
@@ -218,6 +251,12 @@ export class WorkspaceIndex {
       symbols.push(...flatSymbols);
     }
 
-    return symbols;
+    // Extract table info for the table registry
+    let tableInfo: { id: number; name: string } | undefined;
+    if (ast.object?.objectKind === ObjectKind.Table && ast.object.objectName) {
+      tableInfo = { id: ast.object.objectId, name: ast.object.objectName };
+    }
+
+    return { symbols, tableInfo };
   }
 }

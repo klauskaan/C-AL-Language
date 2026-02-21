@@ -563,6 +563,19 @@ export interface ControlDeclaration {
 }
 
 /**
+ * Represents a blank-named DataItem row in a Report DATASET section.
+ * NAV uses the table name (resolved via table registry) as the implicit variable name.
+ * Stored separately from VariableDeclaration -- NOT part of the ASTNode union.
+ * Invisible to ASTWalker; only consumed by SymbolTable.buildFromAST().
+ */
+export interface UnresolvedDataItem {
+  type: 'UnresolvedDataItem';
+  tableId: number;
+  startToken: Token;
+  endToken: Token;
+}
+
+/**
  * CODE section
  */
 export interface CodeSection {
@@ -573,6 +586,7 @@ export interface CodeSection {
   procedures: ProcedureDeclaration[];
   triggers: TriggerDeclaration[];
   events: EventDeclaration[];
+  unresolvedDataItems?: UnresolvedDataItem[];
 }
 
 /**
