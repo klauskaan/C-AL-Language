@@ -1641,4 +1641,42 @@ describe('UndefinedIdentifierValidator - field-reference arguments in record met
     const docTypeError = diagnostics.find(d => d.message.includes('Document Type') || d.message.includes('"Document Type"'));
     expect(docTypeError).toBeUndefined();
   });
+
+  it('should not flag first arg (field) in FIELDACTIVE', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+          IsActive : Boolean;
+        BEGIN
+          IsActive := Rec.FIELDACTIVE(Status);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const statusError = diagnostics.find(d => d.message.includes("'Status'"));
+    expect(statusError).toBeUndefined();
+  });
+
+  it('should not flag quoted field name in FIELDACTIVE', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+          IsActive : Boolean;
+        BEGIN
+          IsActive := Rec.FIELDACTIVE("Posting Date");
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const postingDateError = diagnostics.find(d => d.message.includes('Posting Date') || d.message.includes('"Posting Date"'));
+    expect(postingDateError).toBeUndefined();
+  });
 });

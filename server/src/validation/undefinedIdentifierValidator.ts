@@ -7,7 +7,6 @@
 
 import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver';
 import {
-  CALDocument,
   Identifier,
   VariableDeclaration,
   ParameterDeclaration,
@@ -20,7 +19,6 @@ import {
   WithStatement,
   MemberExpression,
   CallExpression,
-  Expression
 } from '../parser/ast';
 import { ASTWalker } from '../visitor/astWalker';
 import { ASTVisitor } from '../visitor/astVisitor';
@@ -48,6 +46,7 @@ const FIELD_REFERENCE_METHODS: Map<string, 'first' | 'all'> = new Map([
   ['FIELDERROR', 'first'],
   ['FIELDNO', 'first'],
   ['FIELDCAPTION', 'first'],
+  ['FIELDACTIVE', 'first'],
   ['MODIFYALL', 'first'],
   ['SETCURRENTKEY', 'all'],
   ['CALCFIELDS', 'all'],
