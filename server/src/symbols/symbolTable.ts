@@ -322,7 +322,7 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
   visitActionDeclaration(node: ActionDeclaration): void | false {
     // Find the Name property in the action's properties
     const nameProp = findProperty(node, 'name');
-    if (!nameProp) return;
+    if (!nameProp || !nameProp.value) return;
 
     // Use the value token for accurate source location, fallback to property start token
     const token = nameProp.valueTokens?.[0] ?? nameProp.startToken;
@@ -345,7 +345,7 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
   visitXMLportElement(node: XMLportElement): void | false {
     const nameProp = findProperty(node, 'variablename');
 
-    if (nameProp) {
+    if (nameProp?.value) {
       // VariableName property present: register the alias name
       const token = nameProp.valueTokens?.[0] ?? nameProp.startToken;
       this.currentScope.addSymbol({
