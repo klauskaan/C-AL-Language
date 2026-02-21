@@ -324,3 +324,152 @@ describe('SymbolCollectorVisitor Integration', () => {
     });
   });
 });
+
+describe('Property Trigger Scopes', () => {
+  it('should not expose Codeunit OnRun trigger variable in root scope', () => {
+    const code = `OBJECT Codeunit 1 Test
+{
+  PROPERTIES
+  {
+    OnRun=VAR
+            myVar@1000 : Integer;
+          BEGIN
+            myVar := 5;
+          END;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const lexer = new Lexer(code);
+    const tokens = lexer.tokenize();
+    const parser = new Parser(tokens);
+    const ast = parser.parse();
+    const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast);
+
+    // myVar belongs to the OnRun property trigger — NOT to root scope
+    expect(symbolTable.hasSymbol('myVar')).toBe(false);
+
+    // myVar IS visible when looked up at an offset inside the trigger body
+    const property = ast.object!.properties!.properties[0];
+    const triggerOffset = property.startToken.startOffset + 10;
+    const myVarAtOffset = symbolTable.getSymbolAtOffset('myVar', triggerOffset);
+    expect(myVarAtOffset).toBeDefined();
+    expect(myVarAtOffset!.kind).toBe('variable');
+  });
+
+  it('should isolate property trigger variables from CODE section procedure scope', () => {
+    const code = `OBJECT Codeunit 1 Test
+{
+  PROPERTIES
+  {
+    OnRun=VAR
+            localVar@1000 : Integer;
+          BEGIN
+            localVar := 1;
+          END;
+  }
+  CODE
+  {
+    PROCEDURE Helper@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+    const lexer = new Lexer(code);
+    const tokens = lexer.tokenize();
+    const parser = new Parser(tokens);
+    const ast = parser.parse();
+    const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast);
+
+    // localVar should be visible inside the OnRun property trigger
+    const property = ast.object!.properties!.properties[0];
+    const triggerOffset = property.startToken.startOffset + 10;
+    const localVarInTrigger = symbolTable.getSymbolAtOffset('localVar', triggerOffset);
+    expect(localVarInTrigger).toBeDefined();
+
+    // localVar must NOT be visible inside the CODE section procedure
+    const proc = ast.object!.code!.procedures[0];
+    const procOffset = proc.startToken.startOffset + 10;
+    const localVarInProc = symbolTable.getSymbolAtOffset('localVar', procOffset);
+    expect(localVarInProc).toBeUndefined();
+  });
+
+  it('should create a scope covering the property trigger start and end offsets', () => {
+    // Location assertions depend on fixture structure - do not reformat
+    const code = `OBJECT Codeunit 1 Test
+{
+  PROPERTIES
+  {
+    OnRun=VAR
+            myVar@1000 : Integer;
+          BEGIN
+            myVar := 5;
+          END;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const lexer = new Lexer(code);
+    const tokens = lexer.tokenize();
+    const parser = new Parser(tokens);
+    const ast = parser.parse();
+    const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast);
+
+    const property = ast.object!.properties!.properties[0];
+    const triggerOffset = property.startToken.startOffset + 10;
+    const scope = symbolTable.getScopeAtOffset(triggerOffset);
+
+    expect(scope.startOffset).toBe(property.startToken.startOffset);
+    expect(scope.endOffset).toBe(property.endToken.endOffset);
+  });
+
+  it('should create a property trigger scope even when no variables are declared', () => {
+    const code = `OBJECT Codeunit 1 Test
+{
+  PROPERTIES
+  {
+    OnRun=BEGIN
+          END;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const lexer = new Lexer(code);
+    const tokens = lexer.tokenize();
+    const parser = new Parser(tokens);
+    const ast = parser.parse();
+    const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast);
+
+    // Root scope should have no trigger variables leaked into it
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.getOwnSymbols().length).toBe(0);
+
+    // A child scope should exist for the trigger (lookup at property offset returns non-root scope)
+    const property = ast.object!.properties!.properties[0];
+    const triggerOffset = property.startToken.startOffset + 10;
+    const scope = symbolTable.getScopeAtOffset(triggerOffset);
+
+    // The scope found must be a child scope, not the root
+    expect(scope).not.toBe(rootScope);
+  });
+});

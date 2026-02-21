@@ -1680,3 +1680,84 @@ describe('UndefinedIdentifierValidator - field-reference arguments in record met
     expect(postingDateError).toBeUndefined();
   });
 });
+
+describe('UndefinedIdentifierValidator - Property Trigger Scoping', () => {
+  it('should not flag property trigger local variable as undefined within the trigger body', () => {
+    const code = `OBJECT Codeunit 1 Test
+{
+  PROPERTIES
+  {
+    OnRun=VAR
+            myVar@1000 : Integer;
+          BEGIN
+            myVar := 5;
+          END;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const myVarError = diagnostics.find(d => d.message.includes('myVar'));
+    expect(myVarError).toBeUndefined();
+  });
+
+  it('should flag an unknown identifier used in a property trigger body', () => {
+    const code = `OBJECT Codeunit 1 Test
+{
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            UndefinedVar := 5;
+          END;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const undefinedError = diagnostics.find(d => d.message.includes('UndefinedVar'));
+    expect(undefinedError).toBeDefined();
+    expect(undefinedError!.message).toBe("Undefined identifier: 'UndefinedVar'");
+  });
+
+  it('should not let property trigger local variable pollute the global scope visible from CODE section', () => {
+    const code = `OBJECT Codeunit 1 Test
+{
+  PROPERTIES
+  {
+    OnRun=VAR
+            localVar@1000 : Integer;
+          BEGIN
+            localVar := 1;
+          END;
+  }
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    BEGIN
+      localVar := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    // localVar inside OnRun body should not be flagged (it is declared there)
+    // localVar inside TestProc body should be flagged (out of scope)
+    const localVarError = diagnostics.find(d => d.message.includes('localVar'));
+    expect(localVarError).toBeDefined();
+    expect(localVarError!.message).toBe("Undefined identifier: 'localVar'");
+  });
+});
