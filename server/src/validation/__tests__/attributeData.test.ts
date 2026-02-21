@@ -101,6 +101,22 @@ describe('attributeData - isKnownAttribute', () => {
     it('should return true for lowercase "tablesyncsetup"', () => {
       expect(isKnownAttribute('tablesyncsetup')).toBe(true);
     });
+
+    it('should return true for lowercase "internal"', () => {
+      expect(isKnownAttribute('internal')).toBe(true);
+    });
+
+    it('should return true for uppercase "INTERNAL"', () => {
+      expect(isKnownAttribute('INTERNAL')).toBe(true);
+    });
+
+    it('should return true for lowercase "serviceenabled"', () => {
+      expect(isKnownAttribute('serviceenabled')).toBe(true);
+    });
+
+    it('should return true for uppercase "SERVICEENABLED"', () => {
+      expect(isKnownAttribute('SERVICEENABLED')).toBe(true);
+    });
   });
 
   describe('Unknown Attributes', () => {

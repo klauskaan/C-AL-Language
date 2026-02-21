@@ -298,6 +298,70 @@ describe('UnknownAttributeValidator - Case Insensitivity', () => {
     const diagnostics = validateUnknownAttributes(code);
     expect(diagnostics).toHaveLength(0);
   });
+
+  it('should not flag [internal] in lowercase', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [internal]
+    PROCEDURE DoSomething();
+    BEGIN
+    END;
+  }
+}`;
+
+    const diagnostics = validateUnknownAttributes(code);
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should not flag [INTERNAL] in uppercase', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [INTERNAL]
+    PROCEDURE DoSomething();
+    BEGIN
+    END;
+  }
+}`;
+
+    const diagnostics = validateUnknownAttributes(code);
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should not flag [serviceenabled] in lowercase', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [serviceenabled]
+    PROCEDURE DoSomething();
+    BEGIN
+    END;
+  }
+}`;
+
+    const diagnostics = validateUnknownAttributes(code);
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should not flag [SERVICEENABLED] in uppercase', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [SERVICEENABLED]
+    PROCEDURE DoSomething();
+    BEGIN
+    END;
+  }
+}`;
+
+    const diagnostics = validateUnknownAttributes(code);
+    expect(diagnostics).toHaveLength(0);
+  });
 });
 
 describe('UnknownAttributeValidator - Unknown Attributes with Suggestions', () => {
