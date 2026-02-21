@@ -894,18 +894,20 @@ function areUnknownTypesEqual(typeA: UnknownType, typeB: UnknownType): boolean {
  * Determines if a source type can be assigned to a target type according to
  * C/AL type compatibility rules.
  *
- * This function implements the 26 compatibility rules from C/AL:
+ * This function implements C/AL type compatibility rules:
  * 1. Identical types are always compatible
  * 2. Unknown types always return true (bail out)
  * 3. Numeric widening: Char → Integer, Byte → Integer, Integer → BigInteger,
  *    Integer → Decimal, BigInteger → Decimal
- * 4. Numeric narrowing: Decimal → Integer is NOT allowed
- * 5. Text/Code interoperability: Text ↔ Code (bidirectional)
- * 6. Text length: Any length to any length (runtime truncates)
- * 7. Char to Text/Code conversion
- * 8. Option/Integer interoperability (bidirectional)
- * 9. Record compatibility by tableId (isTemporary ignored)
- * 10. Codeunit compatibility by ID
+ * 4. Numeric implicit narrowing: Integer → Char, Integer → Byte (ordinal types),
+ *    Integer → Duration (Duration is stored as milliseconds)
+ * 5. Numeric narrowing: Decimal → Integer is NOT allowed
+ * 6. Text/Code interoperability: Text ↔ Code (bidirectional)
+ * 7. Text length: Any length to any length (runtime truncates)
+ * 8. Char to Text/Code conversion
+ * 9. Option/Integer interoperability (bidirectional)
+ * 10. Record compatibility by tableId (isTemporary ignored)
+ * 11. Codeunit compatibility by ID
  *
  * @param sourceType - The type being assigned from
  * @param targetType - The type being assigned to
@@ -980,6 +982,21 @@ export function isAssignmentCompatible(sourceType: Type, targetType: Type): bool
 
     // Byte → Decimal (transitive: Byte → Integer → Decimal)
     if (sourceType.name === PrimitiveName.Byte && targetType.name === PrimitiveName.Decimal) {
+      return true;
+    }
+
+    // Integer → Char (C/AL allows integer assignment to Char; ordinal types are interchangeable)
+    if (sourceType.name === PrimitiveName.Integer && targetType.name === PrimitiveName.Char) {
+      return true;
+    }
+
+    // Integer → Byte (same as Integer → Char; ordinal types are interchangeable)
+    if (sourceType.name === PrimitiveName.Integer && targetType.name === PrimitiveName.Byte) {
+      return true;
+    }
+
+    // Integer → Duration (Duration is stored as milliseconds; integer literal assignment is idiomatic in C/AL)
+    if (sourceType.name === PrimitiveName.Integer && targetType.name === PrimitiveName.Duration) {
       return true;
     }
 

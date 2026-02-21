@@ -1073,6 +1073,38 @@ describe('isAssignmentCompatible', () => {
     });
   });
 
+  describe('Integer implicit narrowing conversions (C/AL allowed)', () => {
+    it('should allow Integer to Char', () => {
+      const source = createPrimitiveType(PrimitiveName.Integer);
+      const target = createPrimitiveType(PrimitiveName.Char);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Integer to Byte', () => {
+      const source = createPrimitiveType(PrimitiveName.Integer);
+      const target = createPrimitiveType(PrimitiveName.Byte);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Integer to Duration', () => {
+      const source = createPrimitiveType(PrimitiveName.Integer);
+      const target = createPrimitiveType(PrimitiveName.Duration);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should reject Decimal to Char (only Integer narrows to Char)', () => {
+      const source = createPrimitiveType(PrimitiveName.Decimal);
+      const target = createPrimitiveType(PrimitiveName.Char);
+      expect(isAssignmentCompatible(source, target)).toBe(false);
+    });
+
+    it('should reject Decimal to Byte (only Integer narrows to Byte)', () => {
+      const source = createPrimitiveType(PrimitiveName.Decimal);
+      const target = createPrimitiveType(PrimitiveName.Byte);
+      expect(isAssignmentCompatible(source, target)).toBe(false);
+    });
+  });
+
   describe('Text/Code interoperability', () => {
     it('should allow Text to Code', () => {
       const source = createTextType(50, false);
