@@ -1513,6 +1513,60 @@ describe('SymbolTable', () => {
         expect(triggerScope?.getOwnSymbol('Counter')?.type).toBe('Integer');
       });
 
+      it('should not register a symbol when the Name property value is empty', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1;0;ActionContainer }
+    { 2;1;Action;
+        Name=;
+        Visible=Yes }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        // Empty Name value must not produce a symbol with name ""
+        const emptySymbol = symbolTable.getAllSymbols().find(s => s.name === '');
+        expect(emptySymbol).toBeUndefined();
+      });
+
+      it('should still register a valid named action when it follows an action with an empty Name', () => {
+        const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  ACTIONS
+  {
+    { 1;0;ActionContainer }
+    { 2;1;Action;
+        Name=;
+        Caption=Unnamed }
+    { 3;1;Action;
+        Name=ValidAction }
+  }
+}`;
+        const symbolTable = buildSymbolTable(code);
+
+        // The empty-Name action must not produce a symbol with name ""
+        const emptySymbol = symbolTable.getAllSymbols().find(s => s.name === '');
+        expect(emptySymbol).toBeUndefined();
+
+        // The following valid action must still be registered
+        expect(symbolTable.hasSymbol('ValidAction')).toBe(true);
+        expect(symbolTable.getSymbol('ValidAction')?.kind).toBe('action');
+      });
+
       it('should register actions from inline ActionList property', () => {
         const code = `OBJECT Page 50000 TestPage
 {
@@ -1942,6 +1996,74 @@ describe('XMLport element symbols', () => {
     const symbolTable = buildSymbolTable(code);
 
     expect(symbolTable.hasSymbol('CreditNote')).toBe(false);
+  });
+
+  it('should not register an empty-string symbol when VariableName property value is empty', () => {
+    const code = `OBJECT XMLport 50000 Test XMLport
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  ELEMENTS
+  {
+    { [{0538A0EB-2372-43D4-B37C-BFDEA0F605CE}];  ;root                ;Element ;Text     }
+
+    { [{A75DC6DE-02B6-4719-B43E-3C90D19B3BE5}];1 ;IssueDate           ;Element ;Table   ;
+                                                  VariableName=;
+                                                  SourceTable=Table114 }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    // An empty VariableName must not produce a symbol with name ""
+    const emptySymbol = symbolTable.getAllSymbols().find(s => s.name === '');
+    expect(emptySymbol).toBeUndefined();
+  });
+
+  it('should fall through to element name when VariableName property value is empty', () => {
+    const code = `OBJECT XMLport 50000 Test XMLport
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  ELEMENTS
+  {
+    { [{0538A0EB-2372-43D4-B37C-BFDEA0F605CE}];  ;root                ;Element ;Text     }
+
+    { [{A75DC6DE-02B6-4719-B43E-3C90D19B3BE5}];1 ;IssueDate           ;Element ;Table   ;
+                                                  VariableName=;
+                                                  SourceTable=Table114 }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    // When VariableName is empty, the element name itself should be registered as a fallback
+    const symbol = symbolTable.getSymbol('IssueDate');
+    expect(symbol).toBeDefined();
+    expect(symbol?.name).toBe('IssueDate');
+    expect(symbol?.kind).toBe('variable');
   });
 
   it('should register all element names when an XMLport has multiple elements at different nesting levels', () => {
