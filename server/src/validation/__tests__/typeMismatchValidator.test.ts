@@ -496,6 +496,60 @@ describe('TypeMismatchValidator - Compatible Assignments', () => {
       const mismatch = diagnostics.find(d => d.message.includes('Type mismatch'));
       expect(mismatch).toBeUndefined();
     });
+
+    it('should allow Integer literal assigned to Char variable', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE TestProc();
+          VAR
+            MyChar : Char;
+          BEGIN
+            MyChar := 65;
+          END;
+        }
+      }`;
+
+      const diagnostics = validateTypeMismatch(code);
+
+      const mismatch = diagnostics.find(d => d.message.includes('Type mismatch'));
+      expect(mismatch).toBeUndefined();
+    });
+
+    it('should allow Integer literal assigned to Byte variable', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE TestProc();
+          VAR
+            MyByte : Byte;
+          BEGIN
+            MyByte := 200;
+          END;
+        }
+      }`;
+
+      const diagnostics = validateTypeMismatch(code);
+
+      const mismatch = diagnostics.find(d => d.message.includes('Type mismatch'));
+      expect(mismatch).toBeUndefined();
+    });
+
+    it('should allow Integer literal assigned to Duration variable', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE TestProc();
+          VAR
+            MyDuration : Duration;
+          BEGIN
+            MyDuration := 0;
+          END;
+        }
+      }`;
+
+      const diagnostics = validateTypeMismatch(code);
+
+      const mismatch = diagnostics.find(d => d.message.includes('Type mismatch'));
+      expect(mismatch).toBeUndefined();
+    });
   });
 });
 
