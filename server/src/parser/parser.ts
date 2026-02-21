@@ -550,19 +550,12 @@ export class Parser {
       // Quoted name - single token
       objectName = this.advance().value;
     } else {
-      // Unquoted name - use offset-based accumulation to preserve original spacing
-      const nameParts: string[] = [];
-      let lastEndOffset = -1;
+      // Unquoted name - collect tokens, then use shared helper to preserve spacing
+      const nameTokens: Token[] = [];
       while (!this.check(TokenType.LeftBrace) && !this.isAtEnd()) {
-        const token = this.advance();
-        // Add space only if there was whitespace between tokens in source
-        if (lastEndOffset !== -1 && token.startOffset > lastEndOffset) {
-          nameParts.push(' ');
-        }
-        nameParts.push(token.value);
-        lastEndOffset = token.endOffset;
+        nameTokens.push(this.advance());
       }
-      objectName = nameParts.join('').trim();
+      objectName = this.buildNameFromTokens(nameTokens).trim();
     }
 
     return { startToken, objectKind, objectId, objectName };
