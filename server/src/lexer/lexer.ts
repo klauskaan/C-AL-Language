@@ -98,6 +98,7 @@ const SECTION_KEYWORDS = new Set<TokenType>([
   TokenType.Controls,
   TokenType.Actions,
   TokenType.Elements,
+  TokenType.Events,
   TokenType.RequestForm,
   TokenType.Dataset,
   TokenType.RequestPage,

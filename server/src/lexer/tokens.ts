@@ -108,6 +108,7 @@ export enum TokenType {
   Temporary = 'TEMPORARY',
   InDataSet = 'INDATASET',
   RunOnClient = 'RUNONCLIENT',
+  Events = 'EVENTS',
   WithEvents = 'WITHEVENTS',
   /** SECURITYFILTERING modifier (NAV 2013 R2+) for Record/Query variables */
   SecurityFiltering = 'SECURITYFILTERING',
@@ -292,6 +293,7 @@ export const KEYWORDS: Map<string, TokenType> = new Map([
   ['temporary', TokenType.Temporary],
   ['indataset', TokenType.InDataSet],
   ['runonclient', TokenType.RunOnClient],
+  ['events', TokenType.Events],
   ['withevents', TokenType.WithEvents],
   ['securityfiltering', TokenType.SecurityFiltering]
 ]);
