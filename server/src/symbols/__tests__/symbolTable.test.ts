@@ -1744,6 +1744,36 @@ describe('Implicit System Variables', () => {
     expect(symbolTable.getSymbol('currXMLport')?.type).toBe('XMLport');
   });
 
+  it('should pre-populate currQuery for Query objects', () => {
+    const code = `OBJECT Query 100 "My Query"
+{
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    expect(symbolTable.hasSymbol('currQuery')).toBe(true);
+    expect(symbolTable.getSymbol('currQuery')?.kind).toBe('variable');
+    expect(symbolTable.getSymbol('currQuery')?.type).toBe('Query');
+  });
+
+  it('should not pre-populate Rec or other record variables for Query objects', () => {
+    const code = `OBJECT Query 100 "My Query"
+{
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    expect(symbolTable.hasSymbol('Rec')).toBe(false);
+    expect(symbolTable.hasSymbol('xRec')).toBe(false);
+    expect(symbolTable.hasSymbol('CurrPage')).toBe(false);
+    expect(symbolTable.hasSymbol('CurrReport')).toBe(false);
+    expect(symbolTable.hasSymbol('currXMLport')).toBe(false);
+  });
+
   it('should not pre-populate any implicit variables for Codeunit objects', () => {
     const code = `OBJECT Codeunit 50000 "My Codeunit"
 {
@@ -1758,6 +1788,7 @@ describe('Implicit System Variables', () => {
     expect(symbolTable.hasSymbol('CurrPage')).toBe(false);
     expect(symbolTable.hasSymbol('CurrReport')).toBe(false);
     expect(symbolTable.hasSymbol('currXMLport')).toBe(false);
+    expect(symbolTable.hasSymbol('currQuery')).toBe(false);
   });
 
   it('should look up implicit Table variables case-insensitively', () => {
