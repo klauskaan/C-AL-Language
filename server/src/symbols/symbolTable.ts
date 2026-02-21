@@ -427,7 +427,7 @@ export class SymbolTable {
    * - Root scope: fields, global variables, procedure/trigger names
    * - Child scopes: procedure parameters and local variables, trigger local variables
    */
-  public buildFromAST(ast: CALDocument): void {
+  public buildFromAST(ast: CALDocument, tableRegistry?: ReadonlyMap<number, string>): void {
     // Create fresh root scope
     this.rootScope = new Scope(null);
 
@@ -442,6 +442,23 @@ export class SymbolTable {
     const visitor = new SymbolCollectorVisitor(this.rootScope);
 
     walker.walk(ast, visitor);
+
+    // Resolve blank-named DataItem variables using workspace table registry
+    const unresolvedDataItems = ast.object?.code?.unresolvedDataItems;
+    if (tableRegistry && unresolvedDataItems) {
+      for (const item of unresolvedDataItems) {
+        const tableName = tableRegistry.get(item.tableId);
+        if (tableName) {
+          this.rootScope.addSymbol({
+            name: tableName,
+            kind: 'variable',
+            token: item.startToken,
+            type: 'Record',
+          });
+        }
+        // If table not in registry, skip silently (graceful degradation)
+      }
+    }
   }
 
   /**

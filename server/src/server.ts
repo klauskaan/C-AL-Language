@@ -729,7 +729,7 @@ function parseDocument(document: TextDocument): ParsedDocument {
 
   // Build symbol table
   const symbolTable = new SymbolTable();
-  symbolTable.buildFromAST(ast);
+  symbolTable.buildFromAST(ast, workspaceIndex.getTableRegistry());
 
   // Cache result including errors
   const result: ParsedDocument = { ast, lexer, symbolTable, errors };
