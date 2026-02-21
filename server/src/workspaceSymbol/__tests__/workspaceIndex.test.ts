@@ -383,6 +383,66 @@ describe('WorkspaceIndex', () => {
       expect(workspaceIndex.has(testFile)).toBe(true);
       expect(workspaceIndex.symbolCount).toBe(1);
     });
+
+    it('should update registry when update is accepted', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+      expect(workspaceIndex.getTableRegistry().get(18)).toBe('Customer');
+
+      // Overwrite with a different table name
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Vendor
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      // Wait to ensure the new timestamp is strictly newer than indexedAt
+      await new Promise(resolve => setTimeout(resolve, 10));
+      const wasUpdated = await workspaceIndex.updateIfNotFresher(tableFile, Date.now());
+
+      expect(wasUpdated).toBe(true);
+      expect(workspaceIndex.getTableRegistry().get(18)).toBe('Vendor');
+    });
+
+    it('should leave registry unchanged when update is rejected', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+      expect(workspaceIndex.getTableRegistry().get(18)).toBe('Customer');
+
+      // Overwrite with a different table name
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Vendor
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      // Stale timestamp — rejected because existing entry is fresher
+      const staleTimestamp = Date.now() - 10000;
+      const wasUpdated = await workspaceIndex.updateIfNotFresher(tableFile, staleTimestamp);
+
+      expect(wasUpdated).toBe(false);
+      expect(workspaceIndex.getTableRegistry().get(18)).toBe('Customer');
+    });
   });
 
   describe('Properties', () => {
