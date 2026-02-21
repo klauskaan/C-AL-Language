@@ -488,4 +488,178 @@ describe('WorkspaceIndex', () => {
       await expect(workspaceIndex.indexDirectory(nonExistent)).rejects.toThrow();
     });
   });
+
+  describe('Table Registry', () => {
+    it('should add table entry to registry when indexing a Table object', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+
+      const registry = workspaceIndex.getTableRegistry();
+      expect(registry.has(18)).toBe(true);
+      expect(registry.get(18)).toBe('Customer');
+    });
+
+    it('should not add any entry to registry when indexing a non-Table object', async () => {
+      const codeunitFile = path.join(tempDir, 'Codeunit50000.cal');
+      fs.writeFileSync(codeunitFile, `OBJECT Codeunit 50000 Utils
+{
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`);
+
+      await workspaceIndex.add(codeunitFile);
+
+      const registry = workspaceIndex.getTableRegistry();
+      expect(registry.size).toBe(0);
+    });
+
+    it('should replace old table entry when same file is re-indexed with a different table ID', async () => {
+      const tableFile = path.join(tempDir, 'Table.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+      expect(workspaceIndex.getTableRegistry().has(18)).toBe(true);
+
+      // Overwrite same file with a different table ID
+      fs.writeFileSync(tableFile, `OBJECT Table 19 Item
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+
+      const registry = workspaceIndex.getTableRegistry();
+      expect(registry.has(19)).toBe(true);
+      expect(registry.get(19)).toBe('Item');
+      expect(registry.has(18)).toBe(false);
+      expect(registry.size).toBe(1);
+    });
+
+    it('should remove table entry from registry when file is removed', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+      expect(workspaceIndex.getTableRegistry().has(18)).toBe(true);
+
+      workspaceIndex.remove(tableFile);
+
+      expect(workspaceIndex.getTableRegistry().has(18)).toBe(false);
+      expect(workspaceIndex.getTableRegistry().size).toBe(0);
+    });
+
+    it('should leave registry unchanged when removing a non-Table file', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      const codeunitFile = path.join(tempDir, 'Codeunit50000.cal');
+      fs.writeFileSync(codeunitFile, `OBJECT Codeunit 50000 Utils
+{
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+      await workspaceIndex.add(codeunitFile);
+
+      workspaceIndex.remove(codeunitFile);
+
+      const registry = workspaceIndex.getTableRegistry();
+      expect(registry.has(18)).toBe(true);
+      expect(registry.get(18)).toBe('Customer');
+      expect(registry.size).toBe(1);
+    });
+
+    it('should empty the registry when clear() is called', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+      expect(workspaceIndex.getTableRegistry().size).toBe(1);
+
+      workspaceIndex.clear();
+
+      expect(workspaceIndex.getTableRegistry().size).toBe(0);
+    });
+
+    it('should contain all table entries when multiple Table files are indexed', async () => {
+      const tableFile18 = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile18, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      const tableFile27 = path.join(tempDir, 'Table27.cal');
+      fs.writeFileSync(tableFile27, `OBJECT Table 27 Item
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      const tableFile36 = path.join(tempDir, 'Table36.cal');
+      fs.writeFileSync(tableFile36, `OBJECT Table 36 "Sales Header"
+{
+  FIELDS
+  {
+    { 1   ;   ;"Document Type"   ;Option        }
+  }
+}`);
+
+      await workspaceIndex.add(tableFile18);
+      await workspaceIndex.add(tableFile27);
+      await workspaceIndex.add(tableFile36);
+
+      const registry = workspaceIndex.getTableRegistry();
+      expect(registry.size).toBe(3);
+      expect(registry.get(18)).toBe('Customer');
+      expect(registry.get(27)).toBe('Item');
+      expect(registry.get(36)).toBe('Sales Header');
+    });
+  });
 });
