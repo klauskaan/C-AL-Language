@@ -1814,3 +1814,148 @@ describe('Implicit System Variables', () => {
     expect(triggerScope!.getSymbol('Rec')?.type).toBe('Record 18');
   });
 });
+
+describe('XMLport element symbols', () => {
+  it('should register the element name as a symbol when no VariableName property is present', () => {
+    const code = `OBJECT XMLport 50000 Test XMLport
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  ELEMENTS
+  {
+    { [{0538A0EB-2372-43D4-B37C-BFDEA0F605CE}];  ;root                ;Element ;Text     }
+
+    { [{A75DC6DE-02B6-4719-B43E-3C90D19B3BE5}];1 ;IssueDate           ;Element ;Text     }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    const symbol = symbolTable.getSymbol('IssueDate');
+    expect(symbol).toBeDefined();
+    expect(symbol?.name).toBe('IssueDate');
+    expect(symbol?.kind).toBe('variable');
+  });
+
+  it('should register the VariableName value instead of the element name when VariableName property is present', () => {
+    const code = `OBJECT XMLport 50000 Test XMLport
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  ELEMENTS
+  {
+    { [{0538A0EB-2372-43D4-B37C-BFDEA0F605CE}];  ;root                ;Element ;Text     }
+
+    { [{A75DC6DE-02B6-4719-B43E-3C90D19B3BE5}];1 ;CreditNote          ;Element ;Table   ;
+                                                  VariableName=CrMemoHeaderLoop;
+                                                  SourceTable=Table114 }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    const alias = symbolTable.getSymbol('CrMemoHeaderLoop');
+    expect(alias).toBeDefined();
+    expect(alias?.name).toBe('CrMemoHeaderLoop');
+    expect(alias?.kind).toBe('variable');
+  });
+
+  it('should NOT register the element name itself when a VariableName property is present', () => {
+    const code = `OBJECT XMLport 50000 Test XMLport
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  ELEMENTS
+  {
+    { [{0538A0EB-2372-43D4-B37C-BFDEA0F605CE}];  ;root                ;Element ;Text     }
+
+    { [{A75DC6DE-02B6-4719-B43E-3C90D19B3BE5}];1 ;CreditNote          ;Element ;Table   ;
+                                                  VariableName=CrMemoHeaderLoop;
+                                                  SourceTable=Table114 }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    expect(symbolTable.hasSymbol('CreditNote')).toBe(false);
+  });
+
+  it('should register all element names when an XMLport has multiple elements at different nesting levels', () => {
+    const code = `OBJECT XMLport 50000 Test XMLport
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  ELEMENTS
+  {
+    { [{0538A0EB-2372-43D4-B37C-BFDEA0F605CE}];  ;root                ;Element ;Text     }
+
+    { [{A75DC6DE-02B6-4719-B43E-3C90D19B3BE5}];1 ;DataExchDef         ;Element ;Table   ;
+                                                  SourceTable=Table1222 }
+
+    { [{DAE9B066-1422-4AE9-945C-77B8CC451316}];2 ;DataExchLineDef     ;Element ;Table   ;
+                                                  SourceTable=Table1227 }
+
+    { [{CA5A4317-A701-4FEC-B787-E7B0F2A438F6}];3 ;DataExchColumnDef   ;Element ;Table   ;
+                                                  SourceTable=Table1223 }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    const dataExchDef = symbolTable.getSymbol('DataExchDef');
+    expect(dataExchDef).toBeDefined();
+    expect(dataExchDef?.kind).toBe('variable');
+
+    const dataExchLineDef = symbolTable.getSymbol('DataExchLineDef');
+    expect(dataExchLineDef).toBeDefined();
+    expect(dataExchLineDef?.kind).toBe('variable');
+
+    const dataExchColumnDef = symbolTable.getSymbol('DataExchColumnDef');
+    expect(dataExchColumnDef).toBeDefined();
+    expect(dataExchColumnDef?.kind).toBe('variable');
+  });
+});

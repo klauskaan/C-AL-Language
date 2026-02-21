@@ -9,6 +9,7 @@ import {
   EventDeclaration,
   FieldDeclaration,
   ActionDeclaration,
+  type XMLportElement,
   findProperty
 } from '../parser/ast';
 import { Type } from '../types/types';
@@ -150,11 +151,9 @@ export class Scope {
  * Used internally by SymbolTable to build symbol tables using the ASTWalker.
  */
 class SymbolCollectorVisitor implements Partial<ASTVisitor> {
-  private readonly rootScope: Scope;
   private currentScope: Scope;
 
   constructor(rootScope: Scope) {
-    this.rootScope = rootScope;
     this.currentScope = rootScope;
   }
 
@@ -335,6 +334,35 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
     });
 
     // Do NOT return false — let the walker traverse triggers and children
+  }
+
+  /**
+   * Visit an XMLportElement node and register it as a symbol in the current scope.
+   * If the element has a VariableName property, that value is used as the symbol name.
+   * Otherwise, the element's name is used (if non-empty).
+   * Does NOT return false — the walker must continue to traverse child elements and triggers.
+   */
+  visitXMLportElement(node: XMLportElement): void | false {
+    const nameProp = findProperty(node, 'variablename');
+
+    if (nameProp) {
+      // VariableName property present: register the alias name
+      const token = nameProp.valueTokens?.[0] ?? nameProp.startToken;
+      this.currentScope.addSymbol({
+        name: nameProp.value,
+        kind: 'variable',
+        token
+      });
+    } else if (node.name) {
+      // No VariableName property: register the element name itself
+      this.currentScope.addSymbol({
+        name: node.name,
+        kind: 'variable',
+        token: node.startToken
+      });
+    }
+
+    // Do NOT return false — let the walker traverse child elements and triggers
   }
 }
 
