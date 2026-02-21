@@ -2,7 +2,7 @@
  * Unknown Attribute Validator
  *
  * Detects unknown procedure attributes in C/AL code.
- * Valid C/AL attributes: External, TryFunction, Integration, EventSubscriber.
+ * Valid C/AL attributes: External, TryFunction, Integration, EventSubscriber, Internal, ServiceEnabled.
  *
  * Uses Levenshtein distance to suggest corrections for typos.
  */
@@ -19,13 +19,11 @@ import { isKnownAttribute, KNOWN_CAL_ATTRIBUTES_CASED } from './attributeData';
  * These are legitimate keywords in AL but not valid in C/AL
  */
 const AL_ONLY_ATTRIBUTES_LOWER = [
-  'internal',      // BC 19+ access modifier
   'scope',         // BC 15+ scope modifier
   'businessevent', // BC 15+ event type
   'internalevent', // BC 15+ event type (not the same as Integration)
   'integrationevent', // BC 15+ attribute
-  'obsolete',      // BC 15+ deprecation
-  'serviceenabled' // AL-only web service marker
+  'obsolete'       // BC 15+ deprecation
 ];
 
 /**

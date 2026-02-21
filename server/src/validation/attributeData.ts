@@ -13,9 +13,10 @@
  * - TryFunction: Error-handling function (all C/AL versions)
  * - Integration: Integration event publisher (NAV 2016+)
  * - EventSubscriber: Event subscriber registration (NAV 2016+)
+ * - Internal: Internal access modifier (NAV 2017+, 10.0 through BC14)
+ * - ServiceEnabled: Web service method marker (NAV 2017+, 10.0 through BC14)
  *
  * AL-only attributes NOT supported in C/AL:
- * - Internal (BC 19+)
  * - Scope (BC 15+)
  * - BusinessEvent (BC 15+)
  * - IntegrationEvent (BC 15+)
@@ -25,7 +26,9 @@ export const KNOWN_CAL_ATTRIBUTES: ReadonlySet<string> = new Set([
   'external',
   'tryfunction',
   'integration',
-  'eventsubscriber'
+  'eventsubscriber',
+  'internal',
+  'serviceenabled'
 ]);
 
 /**
@@ -36,7 +39,9 @@ export const KNOWN_CAL_ATTRIBUTES_CASED: readonly string[] = [
   'External',
   'TryFunction',
   'Integration',
-  'EventSubscriber'
+  'EventSubscriber',
+  'Internal',
+  'ServiceEnabled'
 ];
 
 /**
