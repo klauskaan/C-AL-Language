@@ -173,6 +173,7 @@ export const SECTION_KEYWORDS = new Set<TokenType>([
   TokenType.RequestPage,
   TokenType.Labels,
   TokenType.Elements,
+  TokenType.Events,
   TokenType.RequestForm,
   TokenType.DataItems,
   TokenType.Sections,
@@ -305,6 +306,7 @@ const NEVER_PRIMARY_CONSUME = new Set<TokenType>([
  * @internal Exported for testing only. Do not use outside of parser tests.
  */
 export const UNSUPPORTED_SECTIONS = new Set<TokenType>([
+  TokenType.Events,
   TokenType.MenuNodes,
   TokenType.Dataset,
   TokenType.RequestPage,
@@ -484,7 +486,7 @@ export class Parser {
             this.skipUnsupportedSection(TokenType.Elements);
           }
         } else if (UNSUPPORTED_SECTIONS.has(token.type)) {
-          // Skip unsupported sections (DATAITEMS, SECTIONS, DATASET, REQUESTPAGE, LABELS, REQUESTFORM, MENUNODES)
+          // Skip unsupported sections (EVENTS, DATAITEMS, SECTIONS, DATASET, REQUESTPAGE, LABELS, REQUESTFORM, MENUNODES)
           // These sections have complex nested structures that aren't fully parsed yet
           this.skipUnsupportedSection(token.type);
         } else {

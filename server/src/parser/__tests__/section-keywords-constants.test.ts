@@ -35,8 +35,8 @@ import { TokenType } from '../../lexer/tokens';
 
 describe('SECTION_KEYWORDS (error recovery)', () => {
   // Regression guard: ensure count doesn't drift unexpectedly
-  it('should contain exactly 15 keywords', () => {
-    expect(SECTION_KEYWORDS.size).toBe(15);
+  it('should contain exactly 16 keywords', () => {
+    expect(SECTION_KEYWORDS.size).toBe(16);
   });
 
   // Test each keyword individually for clarity
@@ -100,6 +100,10 @@ describe('SECTION_KEYWORDS (error recovery)', () => {
     expect(SECTION_KEYWORDS.has(TokenType.Sections)).toBe(true);
   });
 
+  it('should include Events (XMLport EVENTS section)', () => {
+    expect(SECTION_KEYWORDS.has(TokenType.Events)).toBe(true);
+  });
+
   // Test exclusions
   it('should NOT include ObjectProperties', () => {
     expect(SECTION_KEYWORDS.has(TokenType.ObjectProperties)).toBe(false);
@@ -108,8 +112,8 @@ describe('SECTION_KEYWORDS (error recovery)', () => {
 
 describe('UNSUPPORTED_SECTIONS (always skipped)', () => {
   // Regression guard: ensure count doesn't drift unexpectedly
-  it('should contain exactly 7 keywords', () => {
-    expect(UNSUPPORTED_SECTIONS.size).toBe(7);
+  it('should contain exactly 8 keywords', () => {
+    expect(UNSUPPORTED_SECTIONS.size).toBe(8);
   });
 
   // Test each keyword individually
@@ -139,6 +143,10 @@ describe('UNSUPPORTED_SECTIONS (always skipped)', () => {
 
   it('should include Sections (SECTIONS section)', () => {
     expect(UNSUPPORTED_SECTIONS.has(TokenType.Sections)).toBe(true);
+  });
+
+  it('should include Events (XMLport EVENTS section)', () => {
+    expect(UNSUPPORTED_SECTIONS.has(TokenType.Events)).toBe(true);
   });
 
   // Test dedicated parser exclusions
