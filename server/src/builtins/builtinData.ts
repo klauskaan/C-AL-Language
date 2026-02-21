@@ -381,31 +381,31 @@ const SYSTEM_FUNCTIONS: BuiltinFunction[] = [
   {
     name: 'SETDEFAULTTABLECONNECTION',
     signature: '(ConnectionType: TableConnectionType, ConnectionName: Text)',
-    documentation: 'Sets the default table connection for the specified connection type. Introduced in NAV 2016 (BC13).',
+    documentation: 'Sets the default table connection for the specified connection type. Introduced in NAV 2016.',
     category: 'system'
   },
   {
     name: 'GETDEFAULTTABLECONNECTION',
     signature: '(ConnectionType: TableConnectionType): Text',
-    documentation: 'Returns the current default table connection value for the specified connection type. Introduced in NAV 2016 (BC13).',
+    documentation: 'Returns the current default table connection value for the specified connection type. Introduced in NAV 2016.',
     category: 'system'
   },
   {
     name: 'REGISTERTABLECONNECTION',
     signature: '(ConnectionType: TableConnectionType, ConnectionName: Text, ConnectionString: Text)',
-    documentation: 'Registers a table connection for the specified connection type. Introduced in NAV 2016 (BC13).',
+    documentation: 'Registers a table connection for the specified connection type. Introduced in NAV 2016.',
     category: 'system'
   },
   {
     name: 'UNREGISTERTABLECONNECTION',
     signature: '(ConnectionType: TableConnectionType, ConnectionName: Text)',
-    documentation: 'Removes a registered table connection for the specified connection type. Introduced in NAV 2016 (BC13).',
+    documentation: 'Removes a registered table connection for the specified connection type. Introduced in NAV 2016.',
     category: 'system'
   },
   {
     name: 'HASTABLECONNECTION',
     signature: '(ConnectionType: TableConnectionType, ConnectionName: Text): Boolean',
-    documentation: 'Returns TRUE if a table connection of the specified type and value is registered. Introduced in NAV 2016 (BC13).',
+    documentation: 'Returns TRUE if a table connection of the specified type and value is registered. Introduced in NAV 2016.',
     category: 'system'
   },
   {

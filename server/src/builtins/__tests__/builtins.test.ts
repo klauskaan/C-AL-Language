@@ -65,7 +65,7 @@ describe('Builtins Module', () => {
       expect(rename?.category).toBe('file');
     });
 
-    describe('Table Connection Functions (BC13+)', () => {
+    describe('Table Connection Functions (NAV 2016+)', () => {
       it('should include SETDEFAULTTABLECONNECTION with category system', () => {
         const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'SETDEFAULTTABLECONNECTION');
         expect(fn).toBeDefined();
