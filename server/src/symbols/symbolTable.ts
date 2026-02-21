@@ -379,6 +379,7 @@ export class SymbolTable {
    * - Page:    Rec, CurrPage
    * - Report:  Rec, CurrReport
    * - XMLport: currXMLport
+   * - Query:   currQuery
    */
   private injectImplicitVariables(objectDecl: ObjectDeclaration): void {
     const { objectKind, objectId, startToken } = objectDecl;
@@ -417,7 +418,10 @@ export class SymbolTable {
       case ObjectKind.XMLport:
         inject('currXMLport', 'XMLport');
         break;
-      // Codeunit, Query, MenuSuite: no implicit variables
+      case ObjectKind.Query:
+        inject('currQuery', 'Query');
+        break;
+      // Codeunit, MenuSuite: no implicit variables
     }
   }
 
