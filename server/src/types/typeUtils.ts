@@ -900,7 +900,8 @@ function areUnknownTypesEqual(typeA: UnknownType, typeB: UnknownType): boolean {
  * 3. Numeric widening: Char → Integer, Byte → Integer, Integer → BigInteger,
  *    Integer → Decimal, BigInteger → Decimal
  * 4. Numeric implicit narrowing: Integer → Char, Integer → Byte (ordinal types),
- *    Integer → Duration (Duration is stored as milliseconds)
+ *    Integer → Duration (Duration is stored as milliseconds),
+ *    BigInteger → Duration (BigInteger is Duration's underlying type)
  * 5. Numeric narrowing: Decimal → Integer is NOT allowed
  * 6. Text/Code interoperability: Text ↔ Code (bidirectional)
  * 7. Text length: Any length to any length (runtime truncates)
@@ -997,6 +998,11 @@ export function isAssignmentCompatible(sourceType: Type, targetType: Type): bool
 
     // Integer → Duration (Duration is stored as milliseconds; integer literal assignment is idiomatic in C/AL)
     if (sourceType.name === PrimitiveName.Integer && targetType.name === PrimitiveName.Duration) {
+      return true;
+    }
+
+    // BigInteger → Duration (Duration is stored as milliseconds; BigInteger is Duration's underlying type)
+    if (sourceType.name === PrimitiveName.BigInteger && targetType.name === PrimitiveName.Duration) {
       return true;
     }
 
