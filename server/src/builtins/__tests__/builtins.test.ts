@@ -13,13 +13,13 @@
  * 5. Known issues (CREATEGUID vs CREATEGUIDS typo, CALCTIME not in C/AL)
  */
 
-import { BuiltinFunction, BUILTIN_FUNCTIONS, RECORD_METHODS } from '../builtinData';
+import { BUILTIN_FUNCTIONS, RECORD_METHODS } from '../builtinData';
 import { BuiltinRegistry } from '../builtinRegistry';
 
 describe('Builtins Module', () => {
   describe('Data Integrity - BUILTIN_FUNCTIONS', () => {
-    it('should have exactly 71 global function entries', () => {
-      expect(BUILTIN_FUNCTIONS).toHaveLength(71);
+    it('should have exactly 77 global function entries', () => {
+      expect(BUILTIN_FUNCTIONS).toHaveLength(77);
     });
 
     it('should have all required fields for each entry', () => {
@@ -63,6 +63,44 @@ describe('Builtins Module', () => {
       const rename = BUILTIN_FUNCTIONS.find((fn) => fn.name === 'RENAME');
       expect(rename).toBeDefined();
       expect(rename?.category).toBe('file');
+    });
+
+    describe('Table Connection Functions (BC13+)', () => {
+      it('should include SETDEFAULTTABLECONNECTION with category system', () => {
+        const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'SETDEFAULTTABLECONNECTION');
+        expect(fn).toBeDefined();
+        expect(fn?.category).toBe('system');
+      });
+
+      it('should include GETDEFAULTTABLECONNECTION with category system', () => {
+        const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'GETDEFAULTTABLECONNECTION');
+        expect(fn).toBeDefined();
+        expect(fn?.category).toBe('system');
+      });
+
+      it('should include REGISTERTABLECONNECTION with category system', () => {
+        const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'REGISTERTABLECONNECTION');
+        expect(fn).toBeDefined();
+        expect(fn?.category).toBe('system');
+      });
+
+      it('should include UNREGISTERTABLECONNECTION with category system', () => {
+        const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'UNREGISTERTABLECONNECTION');
+        expect(fn).toBeDefined();
+        expect(fn?.category).toBe('system');
+      });
+
+      it('should include HASTABLECONNECTION with category system', () => {
+        const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'HASTABLECONNECTION');
+        expect(fn).toBeDefined();
+        expect(fn?.category).toBe('system');
+      });
+    });
+
+    it('should include SYSTEM as a builtin system object identifier with category system', () => {
+      const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'SYSTEM');
+      expect(fn).toBeDefined();
+      expect(fn?.category).toBe('system');
     });
   });
 
