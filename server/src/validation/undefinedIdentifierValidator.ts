@@ -30,6 +30,31 @@ import { SymbolTable } from '../symbols/symbolTable';
 import { BuiltinRegistry } from '../semantic/builtinRegistry';
 
 /**
+ * Record methods whose arguments include field references (not variable identifiers).
+ * Maps method name (UPPERCASE) to which argument positions are field references:
+ * - 'first': Only the first argument is a field reference
+ * - 'all': All arguments are field references
+ *
+ * Non-field arguments (e.g., value args in SETRANGE, SETFILTER) are still validated.
+ */
+const FIELD_REFERENCE_METHODS: Map<string, 'first' | 'all'> = new Map([
+  ['SETRANGE', 'first'],
+  ['SETFILTER', 'first'],
+  ['GETRANGEMIN', 'first'],
+  ['GETRANGEMAX', 'first'],
+  ['GETFILTER', 'first'],
+  ['VALIDATE', 'first'],
+  ['TESTFIELD', 'first'],
+  ['FIELDERROR', 'first'],
+  ['FIELDNO', 'first'],
+  ['FIELDCAPTION', 'first'],
+  ['MODIFYALL', 'first'],
+  ['SETCURRENTKEY', 'all'],
+  ['CALCFIELDS', 'all'],
+  ['CALCSUMS', 'all'],
+]);
+
+/**
  * Visitor that collects diagnostics for undefined identifiers.
  * Uses manual traversal control to properly handle scope-dependent constructs.
  */
@@ -83,28 +108,43 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
   }
 
   /**
-   * Visit CallExpression - handle callee specially, walk arguments normally
+   * Visit CallExpression - handle callee specially, skip field-reference arguments
    * Returns false to prevent automatic traversal
    */
   visitCallExpression(node: CallExpression): false {
-    // Handle callee
-    if (node.callee.type === 'Identifier') {
-      // Direct call - check if identifier is defined
-      this.walker.walk(node.callee, this);
-    } else if (node.callee.type === 'MemberExpression') {
-      // Method call - walk callee (which will skip the method name)
-      this.walker.walk(node.callee, this);
-    } else {
-      // Other expression types - walk normally
-      this.walker.walk(node.callee, this);
-    }
+    // Walk the callee (receiver + method name)
+    this.walker.walk(node.callee, this);
 
-    // Walk all arguments
-    for (const arg of node.arguments) {
-      this.walker.walk(arg, this);
+    // Determine if this is a record method call with field-reference arguments
+    const fieldRefMode = this.getFieldReferenceMode(node);
+
+    // Walk arguments, skipping field-reference positions
+    for (let i = 0; i < node.arguments.length; i++) {
+      if (fieldRefMode === 'all') {
+        // All args are field references - skip all
+        continue;
+      }
+      if (fieldRefMode === 'first' && i === 0) {
+        // First arg is a field reference - skip it
+        continue;
+      }
+      this.walker.walk(node.arguments[i], this);
     }
 
     return false; // Prevent automatic traversal
+  }
+
+  /**
+   * Determine if a call expression is a record method with field-reference arguments.
+   * Returns the field-reference mode ('first', 'all') or undefined if not applicable.
+   */
+  private getFieldReferenceMode(node: CallExpression): 'first' | 'all' | undefined {
+    if (node.callee.type !== 'MemberExpression') {
+      return undefined;
+    }
+    const memberExpr = node.callee as MemberExpression;
+    const methodName = memberExpr.property.name.toUpperCase();
+    return FIELD_REFERENCE_METHODS.get(methodName);
   }
 
   /**
