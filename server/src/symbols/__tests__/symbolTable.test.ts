@@ -1097,7 +1097,7 @@ describe('SymbolTable', () => {
         expect(symbolTable.hasSymbol('Balance')).toBe(true);
 
         const allSymbols = symbolTable.getAllSymbols();
-        expect(allSymbols.length).toBe(3);
+        expect(allSymbols.length).toBe(5);
       });
 
       it('should correctly extract field types for various data types', () => {
@@ -1400,7 +1400,7 @@ describe('SymbolTable', () => {
         expect(symbolTable.hasSymbol('ShowErrors')).toBe(true);
 
         const allSymbols = symbolTable.getAllSymbols();
-        expect(allSymbols.length).toBe(2);
+        expect(allSymbols.length).toBe(4);
         expect(allSymbols.some(s => s.name === 'Refresh')).toBe(true);
         expect(allSymbols.some(s => s.name === 'ShowErrors')).toBe(true);
       });
@@ -1450,7 +1450,7 @@ describe('SymbolTable', () => {
 
         expect(symbolTable.hasSymbol('Separator')).toBe(false);
         expect(symbolTable.hasSymbol('TestAction')).toBe(true);
-        expect(symbolTable.getAllSymbols().length).toBe(1);
+        expect(symbolTable.getAllSymbols().length).toBe(3);
       });
 
       it('should be case-insensitive for action name lookup', () => {
@@ -1581,7 +1581,7 @@ describe('SymbolTable', () => {
       const symbolTable = buildSymbolTable(code);
 
       const allSymbols = symbolTable.getAllSymbols();
-      expect(allSymbols.length).toBe(2);
+      expect(allSymbols.length).toBe(4);
       expect(allSymbols.some(s => s.name === 'No.')).toBe(true);
       expect(allSymbols.some(s => s.name === 'Name')).toBe(true);
     });
@@ -1673,5 +1673,144 @@ describe('SymbolTable', () => {
       expect(second?.kind).toBe('action');
       expect(third?.kind).toBe('action');
     });
+  });
+});
+
+describe('Implicit System Variables', () => {
+  it('should pre-populate Rec and xRec for Table objects', () => {
+    const code = `OBJECT Table 18 Customer
+{
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    expect(symbolTable.hasSymbol('Rec')).toBe(true);
+    expect(symbolTable.getSymbol('Rec')?.kind).toBe('variable');
+    expect(symbolTable.getSymbol('Rec')?.type).toBe('Record 18');
+
+    expect(symbolTable.hasSymbol('xRec')).toBe(true);
+    expect(symbolTable.getSymbol('xRec')?.kind).toBe('variable');
+    expect(symbolTable.getSymbol('xRec')?.type).toBe('Record 18');
+  });
+
+  it('should pre-populate Rec and CurrPage for Page objects', () => {
+    const code = `OBJECT Page 21 Customer Card
+{
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    expect(symbolTable.hasSymbol('Rec')).toBe(true);
+    expect(symbolTable.getSymbol('Rec')?.kind).toBe('variable');
+    expect(symbolTable.getSymbol('Rec')?.type).toBe('Record');
+
+    expect(symbolTable.hasSymbol('CurrPage')).toBe(true);
+    expect(symbolTable.getSymbol('CurrPage')?.kind).toBe('variable');
+    expect(symbolTable.getSymbol('CurrPage')?.type).toBe('Page');
+  });
+
+  it('should pre-populate Rec and CurrReport for Report objects', () => {
+    const code = `OBJECT Report 111 "Customer List"
+{
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    expect(symbolTable.hasSymbol('Rec')).toBe(true);
+    expect(symbolTable.getSymbol('Rec')?.type).toBe('Record');
+
+    expect(symbolTable.hasSymbol('CurrReport')).toBe(true);
+    expect(symbolTable.getSymbol('CurrReport')?.kind).toBe('variable');
+    expect(symbolTable.getSymbol('CurrReport')?.type).toBe('Report');
+  });
+
+  it('should pre-populate currXMLport for XMLport objects', () => {
+    const code = `OBJECT XMLport 50000 "Test Export"
+{
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    expect(symbolTable.hasSymbol('currXMLport')).toBe(true);
+    expect(symbolTable.getSymbol('currXMLport')?.kind).toBe('variable');
+    expect(symbolTable.getSymbol('currXMLport')?.type).toBe('XMLport');
+  });
+
+  it('should not pre-populate any implicit variables for Codeunit objects', () => {
+    const code = `OBJECT Codeunit 50000 "My Codeunit"
+{
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    expect(symbolTable.hasSymbol('Rec')).toBe(false);
+    expect(symbolTable.hasSymbol('xRec')).toBe(false);
+    expect(symbolTable.hasSymbol('CurrPage')).toBe(false);
+    expect(symbolTable.hasSymbol('CurrReport')).toBe(false);
+    expect(symbolTable.hasSymbol('currXMLport')).toBe(false);
+  });
+
+  it('should look up implicit Table variables case-insensitively', () => {
+    const code = `OBJECT Table 18 Customer
+{
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    expect(symbolTable.hasSymbol('rec')).toBe(true);
+    expect(symbolTable.hasSymbol('REC')).toBe(true);
+    expect(symbolTable.hasSymbol('XREC')).toBe(true);
+  });
+
+  it('should use the correct objectId in the Rec type for Table objects', () => {
+    const code = `OBJECT Table 50000 MyTable
+{
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    expect(symbolTable.getSymbol('Rec')?.type).toBe('Record 50000');
+  });
+
+  it('should make implicit variables visible from trigger scope via scope chain', () => {
+    // Location assertions depend on fixture structure - do not reformat
+    const code = `OBJECT Table 18 Customer
+{
+  CODE
+  {
+    TRIGGER OnInsert()
+    BEGIN
+    END;
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+
+    // Rec must be in the root scope as an implicit variable
+    expect(rootScope.hasOwnSymbol('Rec')).toBe(true);
+
+    // Find the trigger's child scope
+    const triggerScope = rootScope.children.find(
+      child => child.startOffset > 0
+    );
+    expect(triggerScope).toBeDefined();
+
+    // Rec should be accessible from inside the trigger scope via parent chain
+    expect(triggerScope!.getSymbol('Rec')).toBeDefined();
+    expect(triggerScope!.getSymbol('Rec')?.type).toBe('Record 18');
   });
 });

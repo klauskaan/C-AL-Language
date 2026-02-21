@@ -261,7 +261,7 @@ describe('Cross-File Test Infrastructure', () => {
       ]);
 
       const allSymbols = getAllSymbolsInContext(context);
-      expect(allSymbols.length).toBe(2);
+      expect(allSymbols.length).toBe(4);
 
       const symbolNames = allSymbols.map(s => s.symbol?.name);
       expect(symbolNames).toContain('No.');  // Original case is preserved
@@ -1671,9 +1671,11 @@ describe('Cross-File Table References', () => {
       expect(doc?.symbolTable.getSymbol('Balance')?.type).toBe('Decimal');
       expect(doc?.symbolTable.getSymbol('Blocked')?.type).toBe('Option');
 
-      // All should be fields
+      // All field symbols should be fields (implicit variables Rec/xRec are also present)
       const allSymbols = doc?.symbolTable.getAllSymbols() ?? [];
-      expect(allSymbols.every(s => s.kind === 'field')).toBe(true);
+      const fieldSymbols = allSymbols.filter(s => s.kind === 'field');
+      expect(fieldSymbols.length).toBe(5);
+      expect(fieldSymbols.every(s => s.kind === 'field')).toBe(true);
     });
 
     it('should parse Table and Codeunit with Record reference independently', () => {
@@ -1828,9 +1830,9 @@ describe('Cross-File Table References', () => {
       const itemDoc = getDocument(context, 'file:///itemTable.cal');
       const salesDoc = getDocument(context, 'file:///salesHeader.cal');
 
-      expect(customerDoc?.symbolTable.getAllSymbols().length).toBe(2);
-      expect(itemDoc?.symbolTable.getAllSymbols().length).toBe(3);
-      expect(salesDoc?.symbolTable.getAllSymbols().length).toBe(3);
+      expect(customerDoc?.symbolTable.getAllSymbols().length).toBe(4);
+      expect(itemDoc?.symbolTable.getAllSymbols().length).toBe(5);
+      expect(salesDoc?.symbolTable.getAllSymbols().length).toBe(5);
 
       // Verify specific fields in each table
       expect(customerDoc?.symbolTable.hasSymbol('Name')).toBe(true);
@@ -1882,18 +1884,18 @@ describe('Cross-File Table References', () => {
       // Get all symbols across both documents
       const allSymbols = getAllSymbolsInContext(context);
 
-      // Should have 3 fields + 1 variable + 1 procedure = 5 total
-      expect(allSymbols.length).toBe(5);
+      // Should have 3 fields + 2 implicit table vars (Rec/xRec) + 1 variable + 1 procedure = 7 total
+      expect(allSymbols.length).toBe(7);
 
       // Verify fields from table
       const fieldSymbols = allSymbols.filter(s => s.symbol?.kind === 'field');
       expect(fieldSymbols.length).toBe(3);
       expect(fieldSymbols.every(s => s.uri === 'file:///customerTable.cal')).toBe(true);
 
-      // Verify variable from codeunit
+      // Verify variable from codeunit (plus Rec/xRec implicit vars from table)
       const variableSymbols = allSymbols.filter(s => s.symbol?.kind === 'variable');
-      expect(variableSymbols.length).toBe(1);
-      expect(variableSymbols[0].uri).toBe('file:///salesCodeunit.cal');
+      expect(variableSymbols.length).toBe(3);
+      expect(variableSymbols.some(s => s.uri === 'file:///salesCodeunit.cal')).toBe(true);
 
       // Verify procedure from codeunit
       const procedureSymbols = allSymbols.filter(s => s.symbol?.kind === 'procedure');
@@ -2167,7 +2169,7 @@ describe('Cross-File Table References', () => {
       const procedures = allSymbols.filter(s => s.kind === 'procedure');
 
       expect(fields.length).toBe(3);
-      expect(variables.length).toBe(2);
+      expect(variables.length).toBe(4); // 2 explicit vars + Rec + xRec (implicit)
       expect(procedures.length).toBe(2);
 
       // Verify specific symbols
@@ -2250,9 +2252,9 @@ describe('Cross-File Table References', () => {
       // Count total symbols
       const allSymbols = getAllSymbolsInContext(context);
 
-      // Tables: 3 + 3 = 6 fields
+      // Tables: 3 + 3 = 6 fields, plus 2+2 = 4 implicit vars (Rec/xRec per table)
       // Codeunits: 2 + 2 + 1 + 1 = 6 symbols (variables + procedures)
-      expect(allSymbols.length).toBe(12);
+      expect(allSymbols.length).toBe(16);
 
       // Verify we can find symbols from all files
       expect(findSymbolInContext(context, 'Name')?.uri).toBe('file:///customerTable.cal');
@@ -3158,7 +3160,7 @@ describe('Cross-File Page-Table References', () => {
       const variableSymbols = allSymbols.filter(s => s.symbol?.kind === 'variable');
       const procedureSymbols = allSymbols.filter(s => s.symbol?.kind === 'procedure');
 
-      expect(variableSymbols.length).toBe(1);
+      expect(variableSymbols.length).toBe(5); // 2 implicit (Rec/xRec) from table + 3 (Counter/Rec/CurrPage) from page
       expect(procedureSymbols.length).toBe(1);
 
       // Verify fields come from table
@@ -3167,7 +3169,7 @@ describe('Cross-File Page-Table References', () => {
       }
 
       // Verify code symbols come from page
-      expect(variableSymbols[0].uri).toBe('file:///employeeCard.cal');
+      expect(variableSymbols.some(s => s.uri === 'file:///employeeCard.cal')).toBe(true);
       expect(procedureSymbols[0].uri).toBe('file:///employeeCard.cal');
     });
 
@@ -3447,7 +3449,7 @@ describe('Cross-File Page-Table References', () => {
       const procedureCount = allSymbols.filter(s => s.symbol?.kind === 'procedure').length;
 
       expect(fieldCount).toBe(7); // 7 table fields
-      expect(variableCount).toBe(3); // 1 page var + 2 codeunit vars
+      expect(variableCount).toBe(7); // 2 implicit (Rec/xRec) from table + 3 page vars (TotalLineAmount/Rec/CurrPage) + 2 codeunit vars
       expect(procedureCount).toBe(3); // 1 page proc + 1 public codeunit proc + 1 LOCAL codeunit proc
     });
   });
