@@ -140,7 +140,7 @@ describe('Parser - DataItem name extraction from DATASET section', () => {
     expect(names).not.toContain('COMPANYNAME');
   });
 
-  it('should NOT create a variable for a DataItem with a blank name', () => {
+  it('should store blank-named DataItem as UnresolvedDataItem with tableId, not discard it', () => {
     const code = `OBJECT Report 50001 Test
 {
   DATASET
@@ -155,9 +155,117 @@ describe('Parser - DataItem name extraction from DATASET section', () => {
 
     const { ast } = parseCode(code);
 
-    // An unnamed DataItem should not produce any variable node
+    // A blank-named DataItem must NOT appear in variables (no name to register)
     const variables = ast.object?.code?.variables ?? [];
     expect(variables).toHaveLength(0);
+
+    // But it must be stored as an UnresolvedDataItem so the symbol table can
+    // resolve it once the table registry is available
+    const unresolvedDataItems = ast.object?.code?.unresolvedDataItems ?? [];
+    expect(unresolvedDataItems).toHaveLength(1);
+    expect(unresolvedDataItems[0].type).toBe('UnresolvedDataItem');
+    expect(unresolvedDataItems[0].tableId).toBe(18);
+  });
+
+  it('should NOT produce an UnresolvedDataItem entry for a named DataItem', () => {
+    const code = `OBJECT Report 50001 Test
+{
+  DATASET
+  {
+    { 6455;    ;DataItem;PageLoop            ;
+               DataItemTable=Table2000000026 }
+  }
+  CODE
+  {
+  }
+}`;
+
+    const { ast } = parseCode(code);
+
+    // Named DataItem goes into variables, not unresolvedDataItems
+    const variables = ast.object?.code?.variables ?? [];
+    expect(variables.map(v => v.name)).toContain('PageLoop');
+
+    const unresolvedDataItems = ast.object?.code?.unresolvedDataItems ?? [];
+    expect(unresolvedDataItems).toHaveLength(0);
+  });
+
+  it('should store multiple blank-named DataItems as multiple UnresolvedDataItem entries', () => {
+    const code = `OBJECT Report 50001 Test
+{
+  DATASET
+  {
+    { 6569;    ;DataItem;                    ;
+               DataItemTable=Table18 }
+    { 6570;    ;DataItem;                    ;
+               DataItemTable=Table36 }
+  }
+  CODE
+  {
+  }
+}`;
+
+    const { ast } = parseCode(code);
+
+    const variables = ast.object?.code?.variables ?? [];
+    expect(variables).toHaveLength(0);
+
+    const unresolvedDataItems = ast.object?.code?.unresolvedDataItems ?? [];
+    expect(unresolvedDataItems).toHaveLength(2);
+
+    const tableIds = unresolvedDataItems.map(u => u.tableId);
+    expect(tableIds).toContain(18);
+    expect(tableIds).toContain(36);
+  });
+
+  it('should NOT produce an UnresolvedDataItem entry for a Column row with a blank name', () => {
+    const code = `OBJECT Report 50001 Test
+{
+  DATASET
+  {
+    { 6455;    ;DataItem;PageLoop            ;
+               DataItemTable=Table2000000026 }
+    { 3   ;1   ;Column  ;                   ;
+               SourceExpr=COMPANYPROPERTY.DISPLAYNAME }
+  }
+  CODE
+  {
+  }
+}`;
+
+    const { ast } = parseCode(code);
+
+    // Column rows must never generate UnresolvedDataItem entries
+    const unresolvedDataItems = ast.object?.code?.unresolvedDataItems ?? [];
+    const hasColumnEntry = unresolvedDataItems.some(u => u.type !== 'UnresolvedDataItem');
+    expect(hasColumnEntry).toBe(false);
+
+    // The blank Column row must also not appear in variables
+    const variables = ast.object?.code?.variables ?? [];
+    expect(variables.map(v => v.name)).toContain('PageLoop');
+    expect(variables).toHaveLength(1);
+  });
+
+  it('should not store an UnresolvedDataItem when DataItemTable property is missing', () => {
+    const code = `OBJECT Report 50001 Test
+{
+  DATASET
+  {
+    { 6569;    ;DataItem;                    ;
+               CaptionML=ENU=Test }
+  }
+  CODE
+  {
+  }
+}`;
+
+    const { ast } = parseCode(code);
+
+    // Without DataItemTable=TableN the tableId cannot be determined;
+    // such rows must be silently skipped rather than producing a null/invalid entry
+    const unresolvedDataItems = ast.object?.code?.unresolvedDataItems ?? [];
+    const hasInvalidEntry = unresolvedDataItems.some(u => u.tableId == null);
+    expect(hasInvalidEntry).toBe(false);
   });
 });
 

@@ -58,7 +58,8 @@ import {
   CallExpression,
   ArrayAccessExpression,
   SetLiteral,
-  RangeExpression
+  RangeExpression,
+  UnresolvedDataItem
 } from './ast';
 
 /**
@@ -431,6 +432,7 @@ export class Parser {
     let elements: ElementsSection | null = null;
     let code: CodeSection | null = null;
     let objectLevelVariables: VariableDeclaration[] = [];
+    let objectLevelUnresolved: UnresolvedDataItem[] = [];
 
     while (!this.isAtEnd()) {
       // Check for AL-only tokens at section level
@@ -468,6 +470,10 @@ export class Parser {
           if (objectLevelVariables.length > 0 && code) {
             code.variables = [...objectLevelVariables, ...code.variables];
           }
+          // Attach unresolved DataItems to code section for later registry resolution
+          if (objectLevelUnresolved.length > 0 && code) {
+            code.unresolvedDataItems = objectLevelUnresolved;
+          }
         } else if (token.type === TokenType.Controls) {
           try {
             controls = this.parseControlSection();
@@ -490,8 +496,9 @@ export class Parser {
           // For DATASET/DATAITEMS: scan for named DataItem variable declarations
           // DataItem names act as record variables accessible in all triggers and the CODE section
           if (token.type === TokenType.Dataset || token.type === TokenType.DataItems) {
-            const dataItemVars = this.scanDatasetSection();
+            const { variables: dataItemVars, unresolvedDataItems: dataItemUnresolved } = this.scanDatasetSection();
             objectLevelVariables.push(...dataItemVars);
+            objectLevelUnresolved.push(...dataItemUnresolved);
           } else {
             // Skip other unsupported sections (EVENTS, REQUESTPAGE, LABELS, REQUESTFORM, MENUNODES, SECTIONS)
             this.skipUnsupportedSection(token.type);
@@ -6185,9 +6192,10 @@ export class Parser {
    * This method consumes all tokens in the section (same as skipUnsupportedSection)
    * but additionally returns VariableDeclaration nodes for named DataItem rows.
    */
-  private scanDatasetSection(): VariableDeclaration[] {
+  private scanDatasetSection(): { variables: VariableDeclaration[]; unresolvedDataItems: UnresolvedDataItem[] } {
     const sectionDepth = this.braceDepth;
-    const result: VariableDeclaration[] = [];
+    const variables: VariableDeclaration[] = [];
+    const unresolvedDataItems: UnresolvedDataItem[] = [];
 
     // Consume the DATASET/DATAITEMS keyword
     this.advance();
@@ -6202,9 +6210,13 @@ export class Parser {
 
       // Each DataItem/Column row starts with '{' at sectionDepth+1
       if (token.type === TokenType.LeftBrace && this.braceDepth === sectionDepth + 1) {
-        const varDecl = this.tryExtractDataItemRow();
-        if (varDecl) {
-          result.push(varDecl);
+        const result = this.tryExtractDataItemRow();
+        if (result === null) {
+          // skip
+        } else if (result.type === 'VariableDeclaration') {
+          variables.push(result);
+        } else if (result.type === 'UnresolvedDataItem') {
+          unresolvedDataItems.push(result);
         }
         // tryExtractDataItemRow consumed all tokens in the row including closing '}'
       } else {
@@ -6212,7 +6224,7 @@ export class Parser {
       }
     }
 
-    return result;
+    return { variables, unresolvedDataItems };
   }
 
   /**
@@ -6224,7 +6236,7 @@ export class Parser {
    *
    * @returns A synthetic VariableDeclaration for the DataItem, or null if not a named DataItem.
    */
-  private tryExtractDataItemRow(): VariableDeclaration | null {
+  private tryExtractDataItemRow(): VariableDeclaration | UnresolvedDataItem | null {
     // Consume '{' — braceDepth increments to rowDepth
     this.advance();
     const rowDepth = this.braceDepth;
@@ -6236,6 +6248,7 @@ export class Parser {
 
     const typeTokens: Token[] = [];
     const nameTokens: Token[] = [];
+    const restTokens: Token[] = [];
 
     while (!this.isAtEnd()) {
       // Row ends when braceDepth drops below rowDepth (after consuming '}')
@@ -6258,12 +6271,14 @@ export class Parser {
         continue;
       }
 
-      // Collect tokens for type (COL_3) and name (COL_4) at rowDepth only
+      // Collect tokens for type (COL_3), name (COL_4), and rest at rowDepth only
       if (this.braceDepth === rowDepth) {
         if (state === 'type') {
           typeTokens.push(token);
         } else if (state === 'name') {
           nameTokens.push(token);
+        } else if (state === 'rest') {
+          restTokens.push(token);
         }
       }
 
@@ -6279,7 +6294,18 @@ export class Parser {
     // Build name string, preserving spaces for multi-word names
     const nameStr = this.buildNameFromTokens(nameTokens).trim();
     if (!nameStr) {
-      return null; // Blank name — table-name-derived, cannot extract here
+      // Blank name — try to extract tableId from DataItemTable=TableN in rest properties
+      const tableId = this.extractDataItemTableId(restTokens);
+      if (tableId !== null) {
+        const refToken = typeTokens[0] ?? this.previous();
+        return {
+          type: 'UnresolvedDataItem',
+          tableId,
+          startToken: refToken,
+          endToken: refToken,
+        } satisfies UnresolvedDataItem;
+      }
+      return null; // No tableId found, discard
     }
 
     const startToken = nameTokens[0];
@@ -6297,6 +6323,29 @@ export class Parser {
         typeName: 'Record',
       },
     };
+  }
+
+  /**
+   * Scan rest tokens for DataItemTable=TableN pattern and extract table ID.
+   * Looks for: IDENTIFIER("DataItemTable") + any("=") + IDENTIFIER matching /^Table(\d+)$/i
+   * Returns the numeric table ID, or null if not found.
+   */
+  private extractDataItemTableId(tokens: Token[]): number | null {
+    for (let i = 0; i < tokens.length - 2; i++) {
+      const t = tokens[i];
+      if (t.value.toLowerCase() === 'dataitemtable') {
+        // Look for '=' then 'TableN'
+        const eq = tokens[i + 1];
+        const ref = tokens[i + 2];
+        if (eq && ref && eq.value === '=') {
+          const match = ref.value.match(/^Table(\d+)$/i);
+          if (match) {
+            return parseInt(match[1], 10);
+          }
+        }
+      }
+    }
+    return null;
   }
 
   /**
