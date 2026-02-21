@@ -8,11 +8,14 @@
  * - AL-only attributes (e.g., [Scope], [IntegrationEvent])
  * - Typos in valid C/AL attributes
  *
- * Valid C/AL attributes (only 4):
+ * Valid C/AL attributes (7 total):
  * - [External] - NAV 2016+
  * - [TryFunction] - All C/AL versions
  * - [Integration(Include)] - NAV 2016+
  * - [EventSubscriber(...)] - NAV 2016+
+ * - [Test] - NAV 2016+
+ * - [CheckPrecondition] - NAV 2016+
+ * - [TableSyncSetup] - NAV 2016+
  *
  * AL-only attributes (not valid in C/AL):
  * - [Internal] - AL-only (BC 19+)
@@ -151,6 +154,63 @@ describe('UnknownAttributeValidator - Valid C/AL Attributes', () => {
   }
 }`;
 
+    const diagnostics = validateUnknownAttributes(code);
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should not flag [Test] attribute', () => {
+    const code = `OBJECT Codeunit 50000 TestCodeunit
+{
+  PROPERTIES
+  {
+    Subtype=Test;
+  }
+  CODE
+  {
+    [Test]
+    PROCEDURE RunTest();
+    BEGIN
+    END;
+  }
+}`;
+    const diagnostics = validateUnknownAttributes(code);
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should not flag [CheckPrecondition] attribute', () => {
+    const code = `OBJECT Codeunit 50000 UpgradeCodeunit
+{
+  PROPERTIES
+  {
+    Subtype=Upgrade;
+  }
+  CODE
+  {
+    [CheckPrecondition]
+    PROCEDURE CheckPreconditions();
+    BEGIN
+    END;
+  }
+}`;
+    const diagnostics = validateUnknownAttributes(code);
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should not flag [TableSyncSetup] attribute', () => {
+    const code = `OBJECT Codeunit 50000 UpgradeCodeunit
+{
+  PROPERTIES
+  {
+    Subtype=Upgrade;
+  }
+  CODE
+  {
+    [TableSyncSetup]
+    PROCEDURE GetTableSyncSetup(VAR TableSynchSetup : Record 2000000135);
+    BEGIN
+    END;
+  }
+}`;
     const diagnostics = validateUnknownAttributes(code);
     expect(diagnostics).toHaveLength(0);
   });

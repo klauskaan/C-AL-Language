@@ -33,6 +33,18 @@ describe('attributeData - isKnownAttribute', () => {
     it('should return true for [EventSubscriber]', () => {
       expect(isKnownAttribute('EventSubscriber')).toBe(true);
     });
+
+    it('should return true for [Test]', () => {
+      expect(isKnownAttribute('Test')).toBe(true);
+    });
+
+    it('should return true for [CheckPrecondition]', () => {
+      expect(isKnownAttribute('CheckPrecondition')).toBe(true);
+    });
+
+    it('should return true for [TableSyncSetup]', () => {
+      expect(isKnownAttribute('TableSyncSetup')).toBe(true);
+    });
   });
 
   describe('Case Insensitivity', () => {
@@ -74,6 +86,18 @@ describe('attributeData - isKnownAttribute', () => {
 
     it('should return true for uppercase "EVENTSUBSCRIBER"', () => {
       expect(isKnownAttribute('EVENTSUBSCRIBER')).toBe(true);
+    });
+
+    it('should return true for lowercase "test"', () => {
+      expect(isKnownAttribute('test')).toBe(true);
+    });
+
+    it('should return true for lowercase "checkprecondition"', () => {
+      expect(isKnownAttribute('checkprecondition')).toBe(true);
+    });
+
+    it('should return true for lowercase "tablesyncsetup"', () => {
+      expect(isKnownAttribute('tablesyncsetup')).toBe(true);
     });
   });
 
