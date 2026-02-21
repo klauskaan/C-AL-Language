@@ -1307,3 +1307,338 @@ describe('UndefinedIdentifierValidator - Real-World Patterns', () => {
     });
   });
 });
+
+describe('UndefinedIdentifierValidator - field-reference arguments in record method calls', () => {
+  it('should not flag bare field name in TESTFIELD', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.TESTFIELD(Date);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const dateError = diagnostics.find(d => d.message.includes("'Date'"));
+    expect(dateError).toBeUndefined();
+  });
+
+  it('should not flag first arg (field) in SETRANGE but still flag undefined value args', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.SETRANGE("Employee No.", UndefinedFrom, UndefinedTo);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const fieldError = diagnostics.find(d => d.message.includes('"Employee No."') || d.message.includes('Employee No.'));
+    expect(fieldError).toBeUndefined();
+
+    const fromError = diagnostics.find(d => d.message.includes('UndefinedFrom'));
+    expect(fromError).toBeDefined();
+    expect(fromError!.message).toBe("Undefined identifier: 'UndefinedFrom'");
+
+    const toError = diagnostics.find(d => d.message.includes('UndefinedTo'));
+    expect(toError).toBeDefined();
+    expect(toError!.message).toBe("Undefined identifier: 'UndefinedTo'");
+  });
+
+  it('should not flag field or defined value args in SETRANGE', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+          x : Code[20];
+          y : Code[20];
+        BEGIN
+          Rec.SETRANGE(Status, x, y);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const statusError = diagnostics.find(d => d.message.includes("'Status'"));
+    expect(statusError).toBeUndefined();
+
+    const xError = diagnostics.find(d => d.message.includes("'x'"));
+    expect(xError).toBeUndefined();
+
+    const yError = diagnostics.find(d => d.message.includes("'y'"));
+    expect(yError).toBeUndefined();
+  });
+
+  it('should not flag first arg (field) in SETFILTER but still flag undefined other args', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.SETFILTER(Name, '@*%1*', UndefinedVar);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const nameError = diagnostics.find(d => d.message.includes("'Name'"));
+    expect(nameError).toBeUndefined();
+
+    const undefinedError = diagnostics.find(d => d.message.includes('UndefinedVar'));
+    expect(undefinedError).toBeDefined();
+    expect(undefinedError!.message).toBe("Undefined identifier: 'UndefinedVar'");
+  });
+
+  it('should not flag any field args in CALCFIELDS', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.CALCFIELDS("Balance (LCY)", Amount, "Debit Amount");
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const balanceError = diagnostics.find(d => d.message.includes('Balance (LCY)') || d.message.includes('"Balance (LCY)"'));
+    expect(balanceError).toBeUndefined();
+
+    const amountError = diagnostics.find(d => d.message.includes("'Amount'"));
+    expect(amountError).toBeUndefined();
+
+    const debitError = diagnostics.find(d => d.message.includes('Debit Amount') || d.message.includes('"Debit Amount"'));
+    expect(debitError).toBeUndefined();
+  });
+
+  it('should not flag any field args in CALCSUMS', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.CALCSUMS("Amount (LCY)", Quantity);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const amountError = diagnostics.find(d => d.message.includes('Amount (LCY)') || d.message.includes('"Amount (LCY)"'));
+    expect(amountError).toBeUndefined();
+
+    const quantityError = diagnostics.find(d => d.message.includes("'Quantity'"));
+    expect(quantityError).toBeUndefined();
+  });
+
+  it('should not flag any field args in SETCURRENTKEY', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.SETCURRENTKEY("Posting Date", "Document No.");
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const postingDateError = diagnostics.find(d => d.message.includes('Posting Date') || d.message.includes('"Posting Date"'));
+    expect(postingDateError).toBeUndefined();
+
+    const docNoError = diagnostics.find(d => d.message.includes('Document No.') || d.message.includes('"Document No."'));
+    expect(docNoError).toBeUndefined();
+  });
+
+  it('should not flag first arg (field) in VALIDATE but still flag undefined second arg', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.VALIDATE(Status, UndefinedValue);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const statusError = diagnostics.find(d => d.message.includes("'Status'"));
+    expect(statusError).toBeUndefined();
+
+    const undefinedError = diagnostics.find(d => d.message.includes('UndefinedValue'));
+    expect(undefinedError).toBeDefined();
+    expect(undefinedError!.message).toBe("Undefined identifier: 'UndefinedValue'");
+  });
+
+  it('should not flag first arg (field) in FIELDNO, FIELDCAPTION, FIELDERROR', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.FIELDNO(Name);
+          Rec.FIELDCAPTION("No.");
+          Rec.FIELDERROR(Status, 'must be valid');
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const nameError = diagnostics.find(d => d.message.includes("'Name'"));
+    expect(nameError).toBeUndefined();
+
+    const noError = diagnostics.find(d => d.message.includes('"No."') || d.message.includes("No."));
+    expect(noError).toBeUndefined();
+
+    const statusError = diagnostics.find(d => d.message.includes("'Status'"));
+    expect(statusError).toBeUndefined();
+  });
+
+  it('should not flag first arg (field) in GETRANGEMIN, GETRANGEMAX, GETFILTER', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.GETRANGEMIN("No.");
+          Rec.GETRANGEMAX("Posting Date");
+          Rec.GETFILTER(Status);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const noError = diagnostics.find(d => d.message.includes('"No."') || d.message.includes("'No.'"));
+    expect(noError).toBeUndefined();
+
+    const postingDateError = diagnostics.find(d => d.message.includes('Posting Date') || d.message.includes('"Posting Date"'));
+    expect(postingDateError).toBeUndefined();
+
+    const statusError = diagnostics.find(d => d.message.includes("'Status'"));
+    expect(statusError).toBeUndefined();
+  });
+
+  it('should not flag first arg (field) in MODIFYALL but still flag undefined second arg', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.MODIFYALL(Status, UndefinedNewValue);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const statusError = diagnostics.find(d => d.message.includes("'Status'"));
+    expect(statusError).toBeUndefined();
+
+    const undefinedError = diagnostics.find(d => d.message.includes('UndefinedNewValue'));
+    expect(undefinedError).toBeDefined();
+    expect(undefinedError!.message).toBe("Undefined identifier: 'UndefinedNewValue'");
+  });
+
+  it('should suppress field arg in SETRANGE regardless of method name casing', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.setrange(Name, 'A', 'Z');
+          Rec.Setrange(Name, 'A', 'Z');
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const nameError = diagnostics.find(d => d.message.includes("'Name'"));
+    expect(nameError).toBeUndefined();
+  });
+
+  it('should still validate all args in non-field-reference record methods like FIND', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.FIND(UndefinedArg);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const undefinedError = diagnostics.find(d => d.message.includes('UndefinedArg'));
+    expect(undefinedError).toBeDefined();
+    expect(undefinedError!.message).toBe("Undefined identifier: 'UndefinedArg'");
+  });
+
+  it('should validate all args in non-member-expression call expressions', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          x : Integer;
+        BEGIN
+          SomeFunc(x, UndefinedArg);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const someFuncError = diagnostics.find(d => d.message.includes('SomeFunc'));
+    expect(someFuncError).toBeDefined();
+    expect(someFuncError!.message).toBe("Undefined identifier: 'SomeFunc'");
+
+    const undefinedError = diagnostics.find(d => d.message.includes('UndefinedArg'));
+    expect(undefinedError).toBeDefined();
+    expect(undefinedError!.message).toBe("Undefined identifier: 'UndefinedArg'");
+  });
+
+  it('should not flag quoted field name in TESTFIELD', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.TESTFIELD("Document Type");
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const docTypeError = diagnostics.find(d => d.message.includes('Document Type') || d.message.includes('"Document Type"'));
+    expect(docTypeError).toBeUndefined();
+  });
+});
