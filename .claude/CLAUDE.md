@@ -131,6 +131,8 @@ Report all feedback items and their dispositions to the user for visibility.
 ### test/REAL/ — Proprietary NAV Objects
 Real NAV C/AL objects (gitignored). Read freely for analysis, never copy content to committed files or reference in public artifacts (PRs, issues, commit messages). Create synthetic fixtures instead.
 
+**Object number ranges are also confidential.** NAV partner and customer solutions use object number ranges (e.g. 6,000,000–6,999,999) that can identify the specific partner or customer. Never name specific object numbers from the 6M+ range (or any other recognisable partner range) in public artifacts. Use generic labels such as `[COD-partner]`, `[PAG-partner]`, etc. when referring to such objects in issues, PRs, or commit messages.
+
 ### File Encoding
 NAV exports use Windows OEM codepages (typically CP850 for Western Europe). The LSP server relies on VS Code's encoding handling. `files.autoGuessEncoding: true` is configured in `.vscode/settings.json`.
 
