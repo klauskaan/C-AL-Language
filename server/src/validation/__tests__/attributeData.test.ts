@@ -47,6 +47,14 @@ describe('attributeData - isKnownAttribute', () => {
     it('should return true for [TableSyncSetup]', () => {
       expect(isKnownAttribute('TableSyncSetup')).toBe(true);
     });
+
+    it('should return true for [Internal] (NAV 2017+, C/AL)', () => {
+      expect(isKnownAttribute('Internal')).toBe(true);
+    });
+
+    it('should return true for [ServiceEnabled] (NAV 2017+, C/AL)', () => {
+      expect(isKnownAttribute('ServiceEnabled')).toBe(true);
+    });
   });
 
   describe('Case Insensitivity', () => {
@@ -120,14 +128,6 @@ describe('attributeData - isKnownAttribute', () => {
   });
 
   describe('Unknown Attributes', () => {
-    it('should return true for [Internal] (NAV 2017+, C/AL)', () => {
-      expect(isKnownAttribute('Internal')).toBe(true);
-    });
-
-    it('should return true for [ServiceEnabled] (NAV 2017+, C/AL)', () => {
-      expect(isKnownAttribute('ServiceEnabled')).toBe(true);
-    });
-
     it('should return false for [Scope] (AL-only)', () => {
       expect(isKnownAttribute('Scope')).toBe(false);
     });
