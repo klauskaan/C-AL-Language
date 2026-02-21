@@ -4,11 +4,11 @@
  * Central registry of C/AL builtin functions and record methods.
  * Provides case-insensitive lookup for semantic validation.
  *
- * IMPORTANT: This registry contains CALLABLE identifiers only.
+ * IMPORTANT: This registry contains callable identifiers and system type keywords.
  * It does NOT include syntactic keywords like IF, THEN, BEGIN, END, etc.
  */
 
-import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from './builtinData';
+import { BUILTIN_FUNCTIONS, RECORD_METHODS, SYSTEM_TYPE_KEYWORDS, BuiltinFunction } from './builtinData';
 
 export class BuiltinRegistry {
   /**
@@ -25,6 +25,12 @@ export class BuiltinRegistry {
    */
   private recordMethods: Map<string, BuiltinFunction> = new Map();
 
+  /**
+   * System type keywords used with `::` notation (e.g. DATABASE, PAGE, ACTION)
+   * Stored uppercase for case-insensitive lookup
+   */
+  private systemTypeKeywords: Set<string>;
+
   constructor() {
     // Build maps from the data arrays
     for (const fn of BUILTIN_FUNCTIONS) {
@@ -33,6 +39,7 @@ export class BuiltinRegistry {
     for (const method of RECORD_METHODS) {
       this.recordMethods.set(method.name.toUpperCase(), method);
     }
+    this.systemTypeKeywords = SYSTEM_TYPE_KEYWORDS;
   }
 
   /**
@@ -50,10 +57,18 @@ export class BuiltinRegistry {
   }
 
   /**
+   * Check if a name is a system type keyword (case-insensitive)
+   * Examples: DATABASE, PAGE, CODEUNIT, ACTION, DataClassification
+   */
+  public isSystemTypeKeyword(name: string): boolean {
+    return this.systemTypeKeywords.has(name.toUpperCase());
+  }
+
+  /**
    * Check if a name is any kind of builtin (case-insensitive)
    */
   public isKnownBuiltin(name: string): boolean {
-    return this.isGlobalFunction(name) || this.isRecordMethod(name);
+    return this.isGlobalFunction(name) || this.isRecordMethod(name) || this.isSystemTypeKeyword(name);
   }
 
   /**

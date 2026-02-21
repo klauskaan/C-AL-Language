@@ -841,6 +841,28 @@ export const RECORD_METHODS: BuiltinFunction[] = [
 ];
 
 /**
+ * System type keywords used with `::` notation to reference object IDs or enum
+ * values at runtime (e.g. `DATABASE::"Sales Header"`, `ACTION::OK`).
+ * Not callable functions — these are identifier prefixes that the C/AL runtime
+ * resolves to numeric IDs or enum members.
+ *
+ * Stored uppercase; the registry performs case-insensitive lookup via
+ * `.toUpperCase()`.
+ */
+export const SYSTEM_TYPE_KEYWORDS: Set<string> = new Set([
+  'DATABASE',            // Table ID references: DATABASE::"Sales Header"
+  'PAGE',                // Page ID references
+  'CODEUNIT',            // Codeunit ID references
+  'REPORT',              // Report ID references
+  'XMLPORT',             // XMLport ID references
+  'QUERY',               // Query ID references
+  'ACTION',              // Page action results: ACTION::OK, ACTION::LookupOK, ACTION::Cancel
+  'TABLECONNECTIONTYPE', // Enum for SETDEFAULTTABLECONNECTION
+  'DATACLASSIFICATION',  // BC14 (NAV 2018+) enum: DataClassification::CustomerContent
+  'OBSOLETESTATE',       // BC14 enum: ObsoleteState::Pending, ObsoleteState::Removed
+]);
+
+/**
  * All built-in functions combined
  */
 export const BUILTIN_FUNCTIONS: BuiltinFunction[] = [
