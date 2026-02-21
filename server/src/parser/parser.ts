@@ -488,8 +488,10 @@ export class Parser {
         } else if (token.type === TokenType.Elements) {
           if (objectKind === ObjectKind.XMLport) {
             elements = this.parseElementsSection();
+          } else if (objectKind === ObjectKind.Query) {
+            const queryVars = this.scanQueryElementsSection();
+            objectLevelVariables.push(...queryVars);
           } else {
-            // Query ELEMENTS have different format - not yet supported
             this.skipUnsupportedSection(TokenType.Elements);
           }
         } else if (UNSUPPORTED_SECTIONS.has(token.type)) {
@@ -6225,6 +6227,136 @@ export class Parser {
     }
 
     return { variables, unresolvedDataItems };
+  }
+
+  /**
+   * Scan a Query ELEMENTS section to extract named Column and Filter element declarations.
+   * Named Column/Filter elements act as identifiers usable in query triggers (e.g., OnBeforeOpen).
+   *
+   * Row format: { id ; parent ; type ; name ; ...properties... }
+   * - COL_1: Element ID number
+   * - COL_2: Parent element ID (empty or number)
+   * - COL_3: Row type: "DataItem" | "Column" | "Filter"
+   * - COL_4: Element name (identifier used in code; blank means it cannot be referenced)
+   *
+   * Only Column and Filter rows with non-empty names are registered.
+   * DataItem rows and blank-named rows are silently skipped.
+   *
+   * This method consumes all tokens in the section (same as skipUnsupportedSection)
+   * but additionally returns VariableDeclaration nodes for named Column/Filter rows.
+   */
+  private scanQueryElementsSection(): VariableDeclaration[] {
+    const sectionDepth = this.braceDepth;
+    const variables: VariableDeclaration[] = [];
+
+    // Consume the ELEMENTS keyword
+    this.advance();
+
+    while (!this.isAtEnd()) {
+      const token = this.peek();
+
+      // Break when we reach another section keyword at the same depth
+      if (this.braceDepth === sectionDepth && this.isSectionKeyword(token.type)) {
+        break;
+      }
+
+      // Each element row starts with '{' at sectionDepth+1
+      if (token.type === TokenType.LeftBrace && this.braceDepth === sectionDepth + 1) {
+        const variable = this.tryExtractQueryElementRow();
+        if (variable !== null) {
+          variables.push(variable);
+        }
+      } else {
+        this.advance();
+      }
+    }
+
+    return variables;
+  }
+
+  /**
+   * Try to extract a named Column or Filter variable declaration from a single Query ELEMENTS row.
+   * The '{' token is at the current position when this method is called.
+   *
+   * Scans the 4-column structure, extracts name from COL_4 if row type is "Column" or "Filter".
+   * Consumes all tokens in the row including the closing '}'.
+   *
+   * @returns A synthetic VariableDeclaration for the element, or null if not a named Column/Filter.
+   */
+  private tryExtractQueryElementRow(): VariableDeclaration | null {
+    // Consume '{' — braceDepth increments to rowDepth
+    this.advance();
+    const rowDepth = this.braceDepth;
+
+    // State machine for the 4-column prefix
+    // 'col1' → 'col2' → 'type' → 'name' → 'rest'
+    type ColumnState = 'col1' | 'col2' | 'type' | 'name' | 'rest';
+    let state: ColumnState = 'col1';
+
+    const typeTokens: Token[] = [];
+    const nameTokens: Token[] = [];
+
+    while (!this.isAtEnd()) {
+      // Row ends when braceDepth drops below rowDepth (after consuming '}')
+      if (this.braceDepth < rowDepth) {
+        break;
+      }
+
+      const token = this.peek();
+
+      // Semicolons at rowDepth advance the column state
+      if (this.braceDepth === rowDepth && token.type === TokenType.Semicolon) {
+        switch (state) {
+          case 'col1': state = 'col2'; break;
+          case 'col2': state = 'type'; break;
+          case 'type': state = 'name'; break;
+          case 'name': state = 'rest'; break;
+          // 'rest': remain in rest
+        }
+        this.advance();
+        continue;
+      }
+
+      // Collect tokens for type (COL_3) and name (COL_4) at rowDepth only
+      if (this.braceDepth === rowDepth) {
+        if (state === 'type') {
+          typeTokens.push(token);
+        } else if (state === 'name') {
+          nameTokens.push(token);
+        }
+      }
+
+      this.advance();
+    }
+
+    // Only care about Column and Filter rows (not DataItem, Integer, etc.)
+    const typeStr = typeTokens.map(t => t.value).join('').trim().toLowerCase();
+    if (typeStr !== 'column' && typeStr !== 'filter') {
+      return null;
+    }
+
+    // Build name string from tokens
+    const nameStr = this.buildNameFromTokens(nameTokens).trim();
+    if (!nameStr) {
+      // Blank name — cannot be referenced in code, silently skip
+      return null;
+    }
+
+    const startToken = nameTokens[0];
+    const endToken = nameTokens[nameTokens.length - 1];
+
+    return {
+      type: 'VariableDeclaration',
+      startToken,
+      endToken,
+      name: nameStr,
+      dataType: {
+        type: 'DataType',
+        startToken,
+        endToken: startToken,
+        typeName: 'Integer',
+      },
+    };
   }
 
   /**
