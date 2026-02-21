@@ -294,8 +294,9 @@ const NEVER_PRIMARY_CONSUME = new Set<TokenType>([
 ]);
 
 /**
- * Section keywords that are ALWAYS skipped via skipUnsupportedSection().
- * These sections have complex nested structures that are not parsed.
+ * Section keywords handled by the parseObject section loop.
+ * Most are fully skipped via skipUnsupportedSection(); Dataset and DataItems
+ * are scanned for named DataItem variables via scanDatasetSection().
  *
  * This set excludes:
  * - Actions: Has dedicated parseActionSection() with fallback to skip on error
@@ -486,9 +487,15 @@ export class Parser {
             this.skipUnsupportedSection(TokenType.Elements);
           }
         } else if (UNSUPPORTED_SECTIONS.has(token.type)) {
-          // Skip unsupported sections (EVENTS, DATAITEMS, SECTIONS, DATASET, REQUESTPAGE, LABELS, REQUESTFORM, MENUNODES)
-          // These sections have complex nested structures that aren't fully parsed yet
-          this.skipUnsupportedSection(token.type);
+          // For DATASET/DATAITEMS: scan for named DataItem variable declarations
+          // DataItem names act as record variables accessible in all triggers and the CODE section
+          if (token.type === TokenType.Dataset || token.type === TokenType.DataItems) {
+            const dataItemVars = this.scanDatasetSection();
+            objectLevelVariables.push(...dataItemVars);
+          } else {
+            // Skip other unsupported sections (EVENTS, REQUESTPAGE, LABELS, REQUESTFORM, MENUNODES, SECTIONS)
+            this.skipUnsupportedSection(token.type);
+          }
         } else {
           break;
         }
@@ -6143,7 +6150,7 @@ export class Parser {
   }
 
   /**
-   * Skip an unsupported section (CONTROLS, ACTIONS, DATAITEMS, ELEMENTS, REQUESTFORM).
+   * Skip an unsupported section (CONTROLS, ACTIONS, ELEMENTS, REQUESTFORM, MENUNODES, etc.).
    * These sections have complex nested structures with @ numbering that aren't fully parsed yet.
    * This method consumes the section keyword and its entire content block.
    */
@@ -6170,6 +6177,151 @@ export class Parser {
 
     // Note: We don't record an error here because these sections are intentionally skipped
     // Full parsing support for these sections would be a future enhancement
+  }
+
+  /**
+   * Scan a DATASET or DATAITEMS section to extract named DataItem variable declarations.
+   * Named DataItems act as record variables accessible throughout all triggers and CODE section.
+   *
+   * Row format: { id ; parent ; type ; name ; ...properties... }
+   * - COL_1: DataItem ID number
+   * - COL_2: Parent DataItem ID (empty or number)
+   * - COL_3: Row type: "DataItem" | "Column" | "Integer" etc.
+   * - COL_4: DataItem variable name (empty means table-name-based, which we cannot extract here)
+   *
+   * This method consumes all tokens in the section (same as skipUnsupportedSection)
+   * but additionally returns VariableDeclaration nodes for named DataItem rows.
+   */
+  private scanDatasetSection(): VariableDeclaration[] {
+    const sectionDepth = this.braceDepth;
+    const result: VariableDeclaration[] = [];
+
+    // Consume the DATASET/DATAITEMS keyword
+    this.advance();
+
+    while (!this.isAtEnd()) {
+      const token = this.peek();
+
+      // Break when we reach another section keyword at the same depth
+      if (this.braceDepth === sectionDepth && this.isSectionKeyword(token.type)) {
+        break;
+      }
+
+      // Each DataItem/Column row starts with '{' at sectionDepth+1
+      if (token.type === TokenType.LeftBrace && this.braceDepth === sectionDepth + 1) {
+        const varDecl = this.tryExtractDataItemRow();
+        if (varDecl) {
+          result.push(varDecl);
+        }
+        // tryExtractDataItemRow consumed all tokens in the row including closing '}'
+      } else {
+        this.advance();
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Try to extract a named DataItem variable declaration from a single DATASET row.
+   * The '{' token is at the current position when this method is called.
+   *
+   * Scans the 4-column structure, extracts name from COL_4 if row type is "DataItem".
+   * Consumes all tokens in the row including the closing '}'.
+   *
+   * @returns A synthetic VariableDeclaration for the DataItem, or null if not a named DataItem.
+   */
+  private tryExtractDataItemRow(): VariableDeclaration | null {
+    // Consume '{' — braceDepth increments to rowDepth
+    this.advance();
+    const rowDepth = this.braceDepth;
+
+    // State machine for the 4-column prefix
+    // 'col1' → 'col2' → 'type' → 'name' → 'rest'
+    type ColumnState = 'col1' | 'col2' | 'type' | 'name' | 'rest';
+    let state: ColumnState = 'col1';
+
+    const typeTokens: Token[] = [];
+    const nameTokens: Token[] = [];
+
+    while (!this.isAtEnd()) {
+      // Row ends when braceDepth drops below rowDepth (after consuming '}')
+      if (this.braceDepth < rowDepth) {
+        break;
+      }
+
+      const token = this.peek();
+
+      // Semicolons at rowDepth advance the column state
+      if (this.braceDepth === rowDepth && token.type === TokenType.Semicolon) {
+        switch (state) {
+          case 'col1': state = 'col2'; break;
+          case 'col2': state = 'type'; break;
+          case 'type': state = 'name'; break;
+          case 'name': state = 'rest'; break;
+          // 'rest': remain in rest
+        }
+        this.advance();
+        continue;
+      }
+
+      // Collect tokens for type (COL_3) and name (COL_4) at rowDepth only
+      if (this.braceDepth === rowDepth) {
+        if (state === 'type') {
+          typeTokens.push(token);
+        } else if (state === 'name') {
+          nameTokens.push(token);
+        }
+      }
+
+      this.advance();
+    }
+
+    // Only care about DataItem rows (not Column, Integer, etc.)
+    const typeStr = typeTokens.map(t => t.value).join('').trim().toLowerCase();
+    if (typeStr !== 'dataitem') {
+      return null;
+    }
+
+    // Build name string, preserving spaces for multi-word names
+    const nameStr = this.buildNameFromTokens(nameTokens).trim();
+    if (!nameStr) {
+      return null; // Blank name — table-name-derived, cannot extract here
+    }
+
+    const startToken = nameTokens[0];
+    const endToken = nameTokens[nameTokens.length - 1];
+
+    return {
+      type: 'VariableDeclaration',
+      startToken,
+      endToken,
+      name: nameStr,
+      dataType: {
+        type: 'DataType',
+        startToken,
+        endToken: startToken,
+        typeName: 'Record',
+      },
+    };
+  }
+
+  /**
+   * Build a name string from a list of tokens, preserving inter-token spacing.
+   * Multi-word names (e.g., "Dimension Value 2") produce tokens with space-based offsets.
+   */
+  private buildNameFromTokens(tokens: Token[]): string {
+    if (tokens.length === 0) return '';
+    const parts: string[] = [];
+    let lastEndOffset = -1;
+    for (const token of tokens) {
+      if (lastEndOffset !== -1 && token.startOffset > lastEndOffset) {
+        parts.push(' ');
+      }
+      parts.push(token.value);
+      lastEndOffset = token.endOffset;
+    }
+    return parts.join('');
   }
 
   /**
