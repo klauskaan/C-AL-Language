@@ -13,6 +13,9 @@
  * - TryFunction: Error-handling function (all C/AL versions)
  * - Integration: Integration event publisher (NAV 2016+)
  * - EventSubscriber: Event subscriber registration (NAV 2016+)
+ * - Test: Test function marker (NAV 2016+)
+ * - CheckPrecondition: Precondition check for upgrade codeunits (NAV 2016+)
+ * - TableSyncSetup: Table sync setup for upgrade codeunits (NAV 2016+)
  *
  * AL-only attributes NOT supported in C/AL:
  * - Internal (BC 19+)
@@ -25,7 +28,10 @@ export const KNOWN_CAL_ATTRIBUTES: ReadonlySet<string> = new Set([
   'external',
   'tryfunction',
   'integration',
-  'eventsubscriber'
+  'eventsubscriber',
+  'test',
+  'checkprecondition',
+  'tablesyncsetup'
 ]);
 
 /**
@@ -36,7 +42,10 @@ export const KNOWN_CAL_ATTRIBUTES_CASED: readonly string[] = [
   'External',
   'TryFunction',
   'Integration',
-  'EventSubscriber'
+  'EventSubscriber',
+  'Test',
+  'CheckPrecondition',
+  'TableSyncSetup'
 ];
 
 /**
