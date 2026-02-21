@@ -5,6 +5,8 @@ out/
 
 test/REAL/
 validation-report.md
+ROADMAP.md
+semantic-report.md
 
 # Auto Claude data directory
 .auto-claude/
