@@ -253,6 +253,73 @@ describe('Builtins Module', () => {
     });
   });
 
+  describe('System Type Keywords', () => {
+    let registry: BuiltinRegistry;
+
+    beforeEach(() => {
+      registry = new BuiltinRegistry();
+    });
+
+    it('should recognize DATABASE as a known builtin', () => {
+      expect(registry.isKnownBuiltin('DATABASE')).toBe(true);
+    });
+
+    it('should recognize PAGE as a known builtin', () => {
+      expect(registry.isKnownBuiltin('PAGE')).toBe(true);
+    });
+
+    it('should recognize CODEUNIT as a known builtin', () => {
+      expect(registry.isKnownBuiltin('CODEUNIT')).toBe(true);
+    });
+
+    it('should recognize REPORT as a known builtin', () => {
+      expect(registry.isKnownBuiltin('REPORT')).toBe(true);
+    });
+
+    it('should recognize XMLPORT as a known builtin', () => {
+      expect(registry.isKnownBuiltin('XMLPORT')).toBe(true);
+    });
+
+    it('should recognize QUERY as a known builtin', () => {
+      expect(registry.isKnownBuiltin('QUERY')).toBe(true);
+    });
+
+    it('should recognize ACTION as a known builtin', () => {
+      expect(registry.isKnownBuiltin('ACTION')).toBe(true);
+    });
+
+    it('should recognize TABLECONNECTIONTYPE as a known builtin', () => {
+      expect(registry.isKnownBuiltin('TABLECONNECTIONTYPE')).toBe(true);
+    });
+
+    it('should recognize DataClassification as a known builtin', () => {
+      expect(registry.isKnownBuiltin('DataClassification')).toBe(true);
+    });
+
+    it('should recognize ObsoleteState as a known builtin', () => {
+      expect(registry.isKnownBuiltin('ObsoleteState')).toBe(true);
+    });
+
+    it('should recognize system type keywords case-insensitively', () => {
+      expect(registry.isKnownBuiltin('database')).toBe(true);
+      expect(registry.isKnownBuiltin('action')).toBe(true);
+    });
+
+    it('should return true for system type keywords via isSystemTypeKeyword', () => {
+      expect(registry.isSystemTypeKeyword('DATABASE')).toBe(true);
+    });
+
+    it('should return false for global function via isSystemTypeKeyword', () => {
+      // MESSAGE is a global function, not a system type keyword
+      expect(registry.isSystemTypeKeyword('MESSAGE')).toBe(false);
+    });
+
+    it('should return false for record method via isSystemTypeKeyword', () => {
+      // FIND is a record method, not a system type keyword
+      expect(registry.isSystemTypeKeyword('FIND')).toBe(false);
+    });
+  });
+
   describe('Registry Getter Methods', () => {
     let registry: BuiltinRegistry;
 
