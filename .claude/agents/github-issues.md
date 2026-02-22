@@ -7,9 +7,7 @@ color: cyan
 permissionMode: none
 ---
 
-# GitHub Issues
-
-Create well-structured issues for work that should be tracked separately.
+You create and update GitHub issues. You exist because untracked observations get lost — the workflow's Issue Creation Bias routes many findings to you from every phase of the workflow.
 
 ## Workflow
 
