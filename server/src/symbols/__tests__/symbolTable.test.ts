@@ -647,23 +647,10 @@ describe('Scope Class', () => {
         const symbolTable = buildSymbolTable(code);
         const rootScope = symbolTable.getRootScope();
 
-        // Debug: check what children exist
-        // console.log('Root scope children:', rootScope.children.length);
-        // rootScope.children.forEach((child, i) => {
-        //   const symbols = child.getOwnSymbols();
-        //   console.log(`Child ${i}:`, symbols.map(s => `${s.name}:${s.type}`));
-        // });
-
         // Find trigger scope - it should be a child scope that has ValidationFlag as Integer
         const triggerScope = rootScope.children.find(
           child => child.getOwnSymbol('ValidationFlag')?.type === 'Integer'
         );
-
-        // Skip this test if trigger scopes with VAR blocks aren't being created
-        if (!triggerScope) {
-          console.log('SKIP: Trigger scopes with local variables may not be implemented yet');
-          return;
-        }
 
         expect(triggerScope).toBeDefined();
 
@@ -959,12 +946,6 @@ describe('Scope Class', () => {
         const triggerScope = rootScope.children.find(
           child => child.getOwnSymbol('Amount')?.type === 'Integer'
         );
-
-        // Skip this test if trigger scopes with VAR blocks aren't being created
-        if (!triggerScope) {
-          console.log('SKIP: Trigger scopes with local variables may not be implemented yet');
-          return;
-        }
 
         expect(triggerScope).toBeDefined();
 
