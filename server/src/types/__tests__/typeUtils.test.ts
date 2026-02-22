@@ -1116,6 +1116,12 @@ describe('isAssignmentCompatible', () => {
       expect(isAssignmentCompatible(source, target)).toBe(false);
     });
 
+    it('should reject Duration to Integer (Duration is BigInteger underneath, no narrowing to Integer)', () => {
+      const source = createPrimitiveType(PrimitiveName.Duration);
+      const target = createPrimitiveType(PrimitiveName.Integer);
+      expect(isAssignmentCompatible(source, target)).toBe(false);
+    });
+
     it('should reject Decimal to Char (only Integer narrows to Char)', () => {
       const source = createPrimitiveType(PrimitiveName.Decimal);
       const target = createPrimitiveType(PrimitiveName.Char);
