@@ -902,13 +902,15 @@ function areUnknownTypesEqual(typeA: UnknownType, typeB: UnknownType): boolean {
  * 4. Numeric implicit narrowing: Integer → Char, Integer → Byte (ordinal types),
  *    Integer → Duration (Duration is stored as milliseconds),
  *    BigInteger → Duration (BigInteger is Duration's underlying type)
- * 5. Numeric narrowing: Decimal → Integer is NOT allowed
- * 6. Text/Code interoperability: Text ↔ Code (bidirectional)
- * 7. Text length: Any length to any length (runtime truncates)
- * 8. Char to Text/Code conversion
- * 9. Option/Integer interoperability (bidirectional)
- * 10. Record compatibility by tableId (isTemporary ignored)
- * 11. Codeunit compatibility by ID
+ * 5. Duration numeric widening: Duration → BigInteger (symmetric inverse of BigInteger → Duration),
+ *    Duration → Decimal (evidenced by real NAV code assigning DateTime − DateTime result to Decimal)
+ * 6. Numeric narrowing: Decimal → Integer is NOT allowed
+ * 7. Text/Code interoperability: Text ↔ Code (bidirectional)
+ * 8. Text length: Any length to any length (runtime truncates)
+ * 9. Char to Text/Code conversion
+ * 10. Option/Integer interoperability (bidirectional)
+ * 11. Record compatibility by tableId (isTemporary ignored)
+ * 12. Codeunit compatibility by ID
  *
  * @param sourceType - The type being assigned from
  * @param targetType - The type being assigned to
@@ -1003,6 +1005,16 @@ export function isAssignmentCompatible(sourceType: Type, targetType: Type): bool
 
     // BigInteger → Duration (Duration is stored as milliseconds; BigInteger is Duration's underlying type)
     if (sourceType.name === PrimitiveName.BigInteger && targetType.name === PrimitiveName.Duration) {
+      return true;
+    }
+
+    // Duration → BigInteger (Duration's underlying type is BigInteger; symmetric inverse of BigInteger → Duration)
+    if (sourceType.name === PrimitiveName.Duration && targetType.name === PrimitiveName.BigInteger) {
+      return true;
+    }
+
+    // Duration → Decimal (evidenced by real NAV code: DateTime subtraction result assigned to Decimal variable)
+    if (sourceType.name === PrimitiveName.Duration && targetType.name === PrimitiveName.Decimal) {
       return true;
     }
 
