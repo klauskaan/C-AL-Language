@@ -758,5 +758,64 @@ describe('WorkspaceIndex', () => {
       expect(registry.get(18)).toBe('Customer');
       expect(registry.get(27)).toBe('Item');
     });
+
+    it('should not remove table entry when a non-owning file is removed (duplicate table ID)', async () => {
+      const fileA = path.join(tempDir, 'TableA.cal');
+      fs.writeFileSync(fileA, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      const fileB = path.join(tempDir, 'TableB.cal');
+      fs.writeFileSync(fileB, `OBJECT Table 18 Vendor
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(fileA);
+      await workspaceIndex.add(fileB);
+
+      // File B becomes the owner via last-writer-wins; registry has 18 → 'Vendor'
+      workspaceIndex.remove(fileA);
+
+      const registry = workspaceIndex.getTableRegistry();
+      expect(registry.has(18)).toBe(true);
+      expect(registry.get(18)).toBe('Vendor');
+    });
+
+    it('should remove table entry when the owning file is removed (duplicate table ID)', async () => {
+      const fileA = path.join(tempDir, 'TableA.cal');
+      fs.writeFileSync(fileA, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      const fileB = path.join(tempDir, 'TableB.cal');
+      fs.writeFileSync(fileB, `OBJECT Table 18 Vendor
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(fileA);
+      await workspaceIndex.add(fileB);
+
+      // File B becomes the owner via last-writer-wins; removing it should clear the entry
+      workspaceIndex.remove(fileB);
+
+      const registry = workspaceIndex.getTableRegistry();
+      expect(registry.has(18)).toBe(false);
+    });
   });
 });
