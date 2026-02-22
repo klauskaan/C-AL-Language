@@ -34,6 +34,7 @@ export class WorkspaceIndex {
   private index = new Map<string, IndexEntry>();
   private documentSymbolProvider = new DocumentSymbolProvider();
   private tableRegistry = new Map<number, string>();
+  private tableOwner = new Map<number, string>();
   private fileTableContributions = new Map<string, number>();
 
   /**
@@ -50,13 +51,17 @@ export class WorkspaceIndex {
     // Remove old table contribution for this file (if any)
     const oldId = this.fileTableContributions.get(filePath);
     if (oldId !== undefined) {
-      this.tableRegistry.delete(oldId);
+      if (this.tableOwner.get(oldId) === filePath) {
+        this.tableRegistry.delete(oldId);
+        this.tableOwner.delete(oldId);
+      }
       this.fileTableContributions.delete(filePath);
     }
 
     // Add new table contribution
     if (tableInfo) {
       this.tableRegistry.set(tableInfo.id, tableInfo.name);
+      this.tableOwner.set(tableInfo.id, filePath);
       this.fileTableContributions.set(filePath, tableInfo.id);
     }
 
@@ -101,7 +106,10 @@ export class WorkspaceIndex {
   remove(filePath: string): void {
     const oldId = this.fileTableContributions.get(filePath);
     if (oldId !== undefined) {
-      this.tableRegistry.delete(oldId);
+      if (this.tableOwner.get(oldId) === filePath) {
+        this.tableRegistry.delete(oldId);
+        this.tableOwner.delete(oldId);
+      }
       this.fileTableContributions.delete(filePath);
     }
     this.index.delete(filePath);
@@ -113,6 +121,7 @@ export class WorkspaceIndex {
   clear(): void {
     this.index.clear();
     this.tableRegistry.clear();
+    this.tableOwner.clear();
     this.fileTableContributions.clear();
   }
 
