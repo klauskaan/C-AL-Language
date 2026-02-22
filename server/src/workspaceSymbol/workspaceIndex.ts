@@ -109,8 +109,16 @@ export class WorkspaceIndex {
       if (this.tableOwner.get(oldId) === filePath) {
         this.tableRegistry.delete(oldId);
         this.tableOwner.delete(oldId);
+        // Clear all other fileTableContributions entries that point to the
+        // same table ID — they are now orphaned since the owning file is gone.
+        for (const [contributorPath, id] of this.fileTableContributions) {
+          if (id === oldId) {
+            this.fileTableContributions.delete(contributorPath);
+          }
+        }
+      } else {
+        this.fileTableContributions.delete(filePath);
       }
-      this.fileTableContributions.delete(filePath);
     }
     this.index.delete(filePath);
   }

@@ -819,6 +819,115 @@ describe('WorkspaceIndex', () => {
     });
   });
 
+  describe('Orphan cleanup on owner removal (duplicate table ID)', () => {
+    it('should remove non-owner file contribution when the owning file is removed', async () => {
+      const fileA = path.join(tempDir, 'TableA.cal');
+      fs.writeFileSync(fileA, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      const fileB = path.join(tempDir, 'TableB.cal');
+      fs.writeFileSync(fileB, `OBJECT Table 18 Vendor
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(fileA);
+      await workspaceIndex.add(fileB);
+      // fileB wins ownership via last-writer-wins; fileA has a non-owner contribution
+
+      workspaceIndex.remove(fileB);
+      // fileB (owner) is removed; fileA's stale contribution should also be cleaned up
+
+      const contributions = (workspaceIndex as any).fileTableContributions as Map<string, number>;
+      expect(contributions.has(fileA)).toBe(false);
+    });
+
+    it('should not affect owner contribution when the non-owning file is removed', async () => {
+      const fileA = path.join(tempDir, 'TableA.cal');
+      fs.writeFileSync(fileA, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      const fileB = path.join(tempDir, 'TableB.cal');
+      fs.writeFileSync(fileB, `OBJECT Table 18 Vendor
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(fileA);
+      await workspaceIndex.add(fileB);
+      // fileB wins ownership; fileA is the non-owner
+
+      workspaceIndex.remove(fileA);
+      // Removing the non-owner should not disturb fileB's contribution
+
+      const contributions = (workspaceIndex as any).fileTableContributions as Map<string, number>;
+      expect(contributions.has(fileB)).toBe(true);
+      expect(contributions.get(fileB)).toBe(18);
+    });
+
+    it('should not accumulate stale contributions across repeated add/remove cycles of duplicate table files', async () => {
+      const fileA = path.join(tempDir, 'TableA.cal');
+      fs.writeFileSync(fileA, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      const fileB = path.join(tempDir, 'TableB.cal');
+      fs.writeFileSync(fileB, `OBJECT Table 18 Vendor
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      const fileC = path.join(tempDir, 'TableC.cal');
+      fs.writeFileSync(fileC, `OBJECT Table 18 Item
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(fileA);
+      await workspaceIndex.add(fileB);
+      // fileB owns; fileA has non-owner contribution
+
+      workspaceIndex.remove(fileB);
+      // Without the fix: fileA's orphan persists in fileTableContributions
+
+      await workspaceIndex.add(fileC);
+      // fileC becomes new owner of t18; without the fix, fileA's orphan still present
+
+      workspaceIndex.remove(fileC);
+      // fileC (owner) removed; without fix: fileA's orphan persists AGAIN
+
+      const contributions = (workspaceIndex as any).fileTableContributions as Map<string, number>;
+      // Only fileA is still indexed — it should have zero contributions since t18 registry is empty
+      expect(contributions.has(fileA)).toBe(false);
+    });
+  });
+
   describe('Partial Failure Handling', () => {
     it('should continue indexing remaining files when one file throws during add()', async () => {
       // Parser error recovery means malformed C/AL does not throw; use EACCES
