@@ -209,6 +209,7 @@ describe('SymbolTable - Column/Filter names from Query ELEMENTS section', () => 
 
     expect(symbolTable.hasSymbol('PostingDate')).toBe(true);
     expect(symbolTable.getSymbol('PostingDate')?.kind).toBe('variable');
+    expect(symbolTable.getSymbol('PostingDate')?.type).toBe('QueryColumn');
   });
 
   it('should register Filter name as a symbol with kind "variable"', () => {
@@ -237,6 +238,7 @@ describe('SymbolTable - Column/Filter names from Query ELEMENTS section', () => 
 
     expect(symbolTable.hasSymbol('GLAccount')).toBe(true);
     expect(symbolTable.getSymbol('GLAccount')?.kind).toBe('variable');
+    expect(symbolTable.getSymbol('GLAccount')?.type).toBe('QueryFilter');
   });
 });
 
