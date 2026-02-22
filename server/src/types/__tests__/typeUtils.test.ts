@@ -1127,6 +1127,12 @@ describe('isAssignmentCompatible', () => {
       const target = createPrimitiveType(PrimitiveName.Byte);
       expect(isAssignmentCompatible(source, target)).toBe(false);
     });
+
+    it('should reject Duration to Integer (Duration is BigInteger-backed, does not narrow to Integer)', () => {
+      const source = createPrimitiveType(PrimitiveName.Duration);
+      const target = createPrimitiveType(PrimitiveName.Integer);
+      expect(isAssignmentCompatible(source, target)).toBe(false);
+    });
   });
 
   describe('Text/Code interoperability', () => {
