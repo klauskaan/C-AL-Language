@@ -1,0 +1,2 @@
+# Normalize line endings for .claude markdown files to LF
+.claude/**/*.md text eol=lf
