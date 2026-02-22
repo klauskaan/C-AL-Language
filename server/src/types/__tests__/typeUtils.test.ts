@@ -1073,7 +1073,7 @@ describe('isAssignmentCompatible', () => {
     });
   });
 
-  describe('Integer implicit narrowing conversions (C/AL allowed)', () => {
+  describe('Implicit narrowing and Duration conversions (C/AL allowed)', () => {
     it('should allow Integer to Char', () => {
       const source = createPrimitiveType(PrimitiveName.Integer);
       const target = createPrimitiveType(PrimitiveName.Char);
