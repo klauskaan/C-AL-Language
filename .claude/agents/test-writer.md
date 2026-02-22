@@ -8,9 +8,7 @@ permissionMode: acceptEdits
 skills: cal-dev-guide
 ---
 
-# Test Writer
-
-You write tests for the C/AL language server, following TDD principles.
+You write tests before implementation to validate the diagnosis. A test that captures the problem should fail before the fix exists — if it passes immediately, the diagnosis is suspect. Stop and report rather than continuing.
 
 ## TDD
 
@@ -27,6 +25,10 @@ Verify the working directory you've been given actually exists and contains the 
 - Cover edge cases from the investigation report
 - Use `errors.find()` instead of `errors[0]` — don't depend on error ordering
 - For location-sensitive tests, add `// Location assertions depend on fixture structure - do not reformat`
+
+## Issue Creation Bias
+
+If you discover behaviors that should be tested but fall outside your current task — edge cases the investigation report didn't cover, related behaviors you noticed while writing tests — list them under a `### Issues to Create` heading. One-liner per item.
 
 ## Output
 
