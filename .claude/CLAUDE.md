@@ -27,7 +27,7 @@ No issue number? Create one first via github-issues — even a title and one-lin
                     (if senior-merge-engineer was needed, run adversarial-reviewer before cleanup)
 ```
 
-**Skip steps that aren't needed.** Trivial changes don't need an architect. Use judgment — but lean toward investigating. A detailed issue description tells you WHAT is happening, not WHY. Skip the detective only after glancing at the relevant code to confirm the root cause is genuinely obvious (single file, clear cause, no ambiguity about where to fix) — don't trust the issue description alone. For bugs and non-trivial features, default to investigating.
+**INVESTIGATE and PLAN can be skipped when genuinely unnecessary.** Trivial changes don't need an architect. Use judgment — but lean toward investigating. A detailed issue description tells you WHAT is happening, not WHY. Skip the detective only after glancing at the relevant code to confirm the root cause is genuinely obvious (single file, clear cause, no ambiguity about where to fix) — don't trust the issue description alone. For bugs and non-trivial features, default to investigating.
 
 **Show your reasoning when skipping.** When skipping INVESTIGATE or PLAN, use a structured format that makes your decision chain explicit. This makes judgment visible and gives the user a chance to course-correct before work starts.
 
@@ -75,6 +75,8 @@ Do not use narrative summaries like "Skipping investigation -- this looks straig
 **Staleness of workflow-spawned issues.** Issues created during work on another issue ("Discovered during #N", "Deferred from #N") may go stale if the referenced code changes after filing. When picking up such an issue, check how many commits have touched the relevant files since it was created — count commits, not calendar days. High churn means investigate even if the description looks obvious; no churn means the original observation still holds.
 
 **TDD:** Tests should fail before implementation (bug fixes and new features). If they pass immediately, the diagnosis might be wrong. Exceptions: refactoring, test coverage tasks, regression tests.
+
+**The worktree (step 2) is structural, not optional.** All file writes must happen in the worktree — never modify files on main, regardless of how trivial the change. No judgment calls, no exceptions.
 
 **Review gates (steps 3 and 6) are structural, not optional.** Always spawn adversarial-reviewer at these points — no judgment calls, no skipping. This is enforced by architecture, not guidelines. Only an explicit "APPROVED" from the reviewer allows proceeding to the next step. "CHANGES REQUIRED" means fix and re-submit to the reviewer, not fix and move on. Include planning-phase concerns in the step 6 review prompt so the reviewer can verify they were addressed.
 
