@@ -1098,6 +1098,18 @@ describe('isAssignmentCompatible', () => {
       expect(isAssignmentCompatible(source, target)).toBe(true);
     });
 
+    it('should allow Duration to BigInteger (Duration underlying type is BigInteger)', () => {
+      const source = createPrimitiveType(PrimitiveName.Duration);
+      const target = createPrimitiveType(PrimitiveName.BigInteger);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Duration to Decimal (evidenced by DateTime subtraction assigned to Decimal in C/AL)', () => {
+      const source = createPrimitiveType(PrimitiveName.Duration);
+      const target = createPrimitiveType(PrimitiveName.Decimal);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
     it('should reject Decimal to Duration (no evidence in C/AL production code)', () => {
       const source = createPrimitiveType(PrimitiveName.Decimal);
       const target = createPrimitiveType(PrimitiveName.Duration);
