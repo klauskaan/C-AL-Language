@@ -1,2 +1,8 @@
-# Normalize line endings for .claude markdown files to LF
+# Normalize all text files to LF repository-wide
+* text=auto eol=lf
+
+# Normalize line endings for .claude markdown files to LF (original #546 rule)
 .claude/**/*.md text eol=lf
+
+# NAV text exports: preserve CRLF as authentic Windows format
+*.TXT -text
