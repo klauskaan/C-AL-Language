@@ -6354,7 +6354,7 @@ export class Parser {
         type: 'DataType',
         startToken,
         endToken: startToken,
-        typeName: 'Integer',
+        typeName: typeStr === 'column' ? 'QueryColumn' : 'QueryFilter',
       },
     };
   }
