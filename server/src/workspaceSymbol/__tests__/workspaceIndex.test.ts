@@ -818,4 +818,46 @@ describe('WorkspaceIndex', () => {
       expect(registry.has(18)).toBe(false);
     });
   });
+
+  describe('Partial Failure Handling', () => {
+    it('should continue indexing remaining files when one file throws during add()', async () => {
+      // Parser error recovery means malformed C/AL does not throw; use EACCES
+      // (permission denied) to reliably trigger the catch block in indexDirectory.
+      if (process.getuid?.() === 0) {
+        // chmod 0 has no effect for root — skip the test
+        return;
+      }
+
+      const unreadableFile = path.join(tempDir, 'A_Unreadable.cal');
+      const goodFile = path.join(tempDir, 'B_Good.cal');
+
+      fs.writeFileSync(unreadableFile, `OBJECT Codeunit 99001 Unreadable
+{
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`);
+      fs.writeFileSync(goodFile, `OBJECT Codeunit 99002 Good
+{
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`);
+
+      fs.chmodSync(unreadableFile, 0o000);
+      try {
+        await expect(workspaceIndex.indexDirectory(tempDir)).resolves.not.toThrow();
+
+        expect(workspaceIndex.has(goodFile)).toBe(true);
+        expect(workspaceIndex.fileCount).toBe(1);
+        expect(workspaceIndex.has(unreadableFile)).toBe(false);
+      } finally {
+        fs.chmodSync(unreadableFile, 0o644);
+      }
+    });
+  });
 });
