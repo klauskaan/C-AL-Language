@@ -305,6 +305,29 @@ npm test -- --watch
 
 Suppression tests use one of three assertion patterns based on what is being tested:
 
+> **Note:** Examples below use `validate(code)` for simplicity. Actual tests call validator-specific functions such as `validateUndefinedIdentifiers(code, registry)` or `validateEmptySet(code)`. See individual validator test files for real import patterns.
+
+#### Pattern Selection Flowchart
+
+Use this decision tree when writing new suppression tests:
+
+```
+Start: What does the test input look like?
+  |
+  |-- Only valid constructs (no identifiers that should be flagged)?
+  |   --> Pattern A: toHaveLength(0)
+  |
+  |-- Mix of flagged and unflagged identifiers?
+  |   --> Pattern B: find() + toBeUndefined()
+  |
+  |-- Complex scenario needing both specific documentation AND total count safety?
+  |   --> Pattern C: Hybrid (rare -- see Pattern C "When NOT to use" below)
+  |
+  +-- Still unsure?
+      --> Default to Pattern A. Upgrade to B if a bug reveals
+          that a specific identifier matters.
+```
+
 **Pattern A: `toHaveLength(0)` - "No diagnostics at all"**
 
 Use when the entire test input is clean by construction and no diagnostics should exist.
@@ -375,6 +398,11 @@ Use when documenting a specific identifier provides value AND verifying zero tot
 - Complex scenarios where specific checks document intent and length check provides a safety net
 - Tests that benefit from both explicit identifier verification and holistic validation
 
+**When NOT to use:**
+- As a default "play it safe" choice when Pattern A or B alone is sufficient
+- When the test input contains only a single construct (Pattern A is clearer)
+- When there are intentionally mixed flagged/unflagged identifiers (Pattern B handles this)
+
 **Example:**
 ```typescript
 it('should not flag Data Exch. Def when ELEMENTS registry resolves SourceTable', () => {
@@ -415,7 +443,7 @@ it('should not flag Data Exch. Def when ELEMENTS registry resolves SourceTable',
 ### Migration Note
 
 **Do not mass-convert existing tests.** The codebase already uses these patterns appropriately based on what each test verifies. Convert only when:
-- A location bug reveals that specificity matters (upgrade to Pattern B)
+- A bug reveals that a specific identifier matters (upgrade to Pattern B)
 - A test's purpose changes to warrant a different pattern
 - Review feedback identifies a mismatch between test intent and assertion style
 
