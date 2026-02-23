@@ -1815,3 +1815,144 @@ describe('UndefinedIdentifierValidator - Property Trigger Scoping', () => {
     expect(localVarError!.message).toBe("Undefined identifier: 'localVar'");
   });
 });
+
+describe('UndefinedIdentifierValidator - XMLport ELEMENTS validation suppression', () => {
+  it('should not flag table display name references in XMLport ELEMENTS triggers', () => {
+    // XMLport ELEMENTS contain triggers that reference table display names (e.g., "Data Exch. Def")
+    // which are not in the symbol table (only the element name DataExchDef is)
+    const code = `OBJECT XMLport 1225 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+  }
+  ELEMENTS
+  {
+    { [{ABC}];  ;root                ;Element ;Text     }
+    { [{DEF}];1 ;DataExchDef         ;Element ;Table   ;
+                                      SourceTable=Table1222;
+                                      Import::OnBeforeInsertRecord=BEGIN
+                                                                     "Data Exch. Def".VALIDATE(Type);
+                                                                     "Data Exch. Def".VALIDATE("File Type");
+                                                                   END;
+                                                                    }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    // Before fix: would flag "Data Exch. Def" as undefined
+    // After fix: should produce zero diagnostics
+    const dataExchDefError = diagnostics.find(d => d.message.includes('Data Exch. Def'));
+    expect(dataExchDefError).toBeUndefined();
+  });
+
+  it('should still validate CODE section in XMLports', () => {
+    // XMLport CODE section should still be validated normally
+    const code = `OBJECT XMLport 1225 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+  }
+  ELEMENTS
+  {
+    { [{ABC}];  ;root                ;Element ;Text     }
+  }
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      UndefinedVar := 42;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    // CODE section should still be validated
+    const undefinedError = diagnostics.find(d => d.message.includes('UndefinedVar'));
+    expect(undefinedError).toBeDefined();
+    expect(undefinedError!.message).toBe("Undefined identifier: 'UndefinedVar'");
+  });
+
+  it('should not flag ELEMENTS triggers without errors when no display names present', () => {
+    // Simple ELEMENTS section without complex trigger references
+    const code = `OBJECT XMLport 1225 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+  }
+  ELEMENTS
+  {
+    { [{ABC}];  ;root                ;Element ;Text     }
+    { [{DEF}];1 ;Item                ;Element ;Table   ;
+                                      SourceTable=Table27 }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    // Should produce zero diagnostics (baseline)
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should not flag multiple table display name references in single XMLport', () => {
+    // XMLport with multiple elements that have triggers with display name references
+    const code = `OBJECT XMLport 1225 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+  }
+  ELEMENTS
+  {
+    { [{ABC}];  ;root                ;Element ;Text     }
+    { [{DEF}];1 ;DataExchDef         ;Element ;Table   ;
+                                      SourceTable=Table1222;
+                                      Import::OnBeforeInsertRecord=BEGIN
+                                                                     "Data Exch. Def".VALIDATE(Type);
+                                                                   END;
+                                                                    }
+    { [{GHI}];2 ;DataExchLineDef     ;Element ;Table   ;
+                                      SourceTable=Table1227;
+                                      Export::OnBeforePassField=BEGIN
+                                                                  IF "Data Exch. Line Def".Namespace = '' THEN
+                                                                    currXMLport.SKIP;
+                                                                END;
+                                                                 }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    // Should not flag any table display names
+    const dataExchDefError = diagnostics.find(d => d.message.includes('Data Exch. Def'));
+    const dataExchLineDefError = diagnostics.find(d => d.message.includes('Data Exch. Line Def'));
+    expect(dataExchDefError).toBeUndefined();
+    expect(dataExchLineDefError).toBeUndefined();
+  });
+});
