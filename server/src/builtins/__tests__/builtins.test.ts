@@ -18,8 +18,8 @@ import { BuiltinRegistry } from '../builtinRegistry';
 
 describe('Builtins Module', () => {
   describe('Data Integrity - BUILTIN_FUNCTIONS', () => {
-    it('should have exactly 77 global function entries', () => {
-      expect(BUILTIN_FUNCTIONS).toHaveLength(77);
+    it('should have exactly 80 global function entries', () => {
+      expect(BUILTIN_FUNCTIONS).toHaveLength(80);
     });
 
     it('should have all required fields for each entry', () => {
@@ -101,6 +101,44 @@ describe('Builtins Module', () => {
       const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'SYSTEM');
       expect(fn).toBeDefined();
       expect(fn?.category).toBe('system');
+    });
+  });
+
+  describe('Event Subscriber Functions (NAV 2016+)', () => {
+    it('should include BINDSUBSCRIPTION with category system', () => {
+      const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'BINDSUBSCRIPTION');
+      expect(fn).toBeDefined();
+      expect(fn?.category).toBe('system');
+    });
+
+    it('should include UNBINDSUBSCRIPTION with category system', () => {
+      const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'UNBINDSUBSCRIPTION');
+      expect(fn).toBeDefined();
+      expect(fn?.category).toBe('system');
+    });
+
+    it('should include SELECTLATESTVERSION with category system', () => {
+      const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'SELECTLATESTVERSION');
+      expect(fn).toBeDefined();
+      expect(fn?.category).toBe('system');
+    });
+
+    it('should have BINDSUBSCRIPTION signature with Codeunit parameter and Boolean return', () => {
+      const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'BINDSUBSCRIPTION');
+      expect(fn).toBeDefined();
+      expect(fn?.signature).toBe('(Codeunit): Boolean');
+    });
+
+    it('should have UNBINDSUBSCRIPTION signature with Codeunit parameter and Boolean return', () => {
+      const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'UNBINDSUBSCRIPTION');
+      expect(fn).toBeDefined();
+      expect(fn?.signature).toBe('(Codeunit): Boolean');
+    });
+
+    it('should have SELECTLATESTVERSION signature with no parameters', () => {
+      const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'SELECTLATESTVERSION');
+      expect(fn).toBeDefined();
+      expect(fn?.signature).toBe('()');
     });
   });
 
@@ -266,6 +304,30 @@ describe('Builtins Module', () => {
 
     it('should NOT recognize FIELDACTIVE as a global function', () => {
       expect(registry.isGlobalFunction('FIELDACTIVE')).toBe(false);
+    });
+
+    it('should recognize BINDSUBSCRIPTION as a global function', () => {
+      expect(registry.isGlobalFunction('BINDSUBSCRIPTION')).toBe(true);
+    });
+
+    it('should NOT recognize BINDSUBSCRIPTION as a record method', () => {
+      expect(registry.isRecordMethod('BINDSUBSCRIPTION')).toBe(false);
+    });
+
+    it('should recognize UNBINDSUBSCRIPTION as a global function', () => {
+      expect(registry.isGlobalFunction('UNBINDSUBSCRIPTION')).toBe(true);
+    });
+
+    it('should NOT recognize UNBINDSUBSCRIPTION as a record method', () => {
+      expect(registry.isRecordMethod('UNBINDSUBSCRIPTION')).toBe(false);
+    });
+
+    it('should recognize SELECTLATESTVERSION as a global function', () => {
+      expect(registry.isGlobalFunction('SELECTLATESTVERSION')).toBe(true);
+    });
+
+    it('should NOT recognize SELECTLATESTVERSION as a record method', () => {
+      expect(registry.isRecordMethod('SELECTLATESTVERSION')).toBe(false);
     });
   });
 

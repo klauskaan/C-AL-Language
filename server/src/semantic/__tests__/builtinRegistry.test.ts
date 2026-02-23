@@ -76,6 +76,18 @@ describe('BuiltinRegistry - Global Functions', () => {
   it('should recognize CALCDATE as global function', () => {
     expect(registry.isGlobalFunction('CALCDATE')).toBe(true);
   });
+
+  it('should recognize BINDSUBSCRIPTION as global function', () => {
+    expect(registry.isGlobalFunction('BINDSUBSCRIPTION')).toBe(true);
+  });
+
+  it('should recognize UNBINDSUBSCRIPTION as global function', () => {
+    expect(registry.isGlobalFunction('UNBINDSUBSCRIPTION')).toBe(true);
+  });
+
+  it('should recognize SELECTLATESTVERSION as global function', () => {
+    expect(registry.isGlobalFunction('SELECTLATESTVERSION')).toBe(true);
+  });
 });
 
 describe('BuiltinRegistry - Case Insensitivity', () => {
@@ -219,6 +231,21 @@ describe('BuiltinRegistry - Function vs Method Distinction', () => {
   it('should identify INSERT as method, not function', () => {
     expect(registry.isRecordMethod('INSERT')).toBe(true);
     expect(registry.isGlobalFunction('INSERT')).toBe(false);
+  });
+
+  it('should identify BINDSUBSCRIPTION as function, not method', () => {
+    expect(registry.isGlobalFunction('BINDSUBSCRIPTION')).toBe(true);
+    expect(registry.isRecordMethod('BINDSUBSCRIPTION')).toBe(false);
+  });
+
+  it('should identify UNBINDSUBSCRIPTION as function, not method', () => {
+    expect(registry.isGlobalFunction('UNBINDSUBSCRIPTION')).toBe(true);
+    expect(registry.isRecordMethod('UNBINDSUBSCRIPTION')).toBe(false);
+  });
+
+  it('should identify SELECTLATESTVERSION as function, not method', () => {
+    expect(registry.isGlobalFunction('SELECTLATESTVERSION')).toBe(true);
+    expect(registry.isRecordMethod('SELECTLATESTVERSION')).toBe(false);
   });
 });
 
