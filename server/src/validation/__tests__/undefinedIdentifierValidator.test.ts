@@ -1327,12 +1327,6 @@ describe('UndefinedIdentifierValidator - Real-World Patterns', () => {
       // Methods on Codeunit variables cannot be validated
       // We don't know what methods exist on external codeunits
       expect(diagnostics).toHaveLength(0);
-      // Methods on Codeunit variables cannot be validated
-      // We don't know what methods exist on external codeunits
-      expect(diagnostics).toHaveLength(0);
-      // Methods on Codeunit variables cannot be validated
-      // We don't know what methods exist on external codeunits
-      expect(diagnostics).toHaveLength(0);
     });
 
     it('should handle global variable access', () => {
