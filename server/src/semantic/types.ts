@@ -29,6 +29,9 @@ export interface ValidationContext {
 
   /** User settings (optional) */
   settings?: CALSettings;
+
+  /** Whether table registry has been populated (used for conditional validation) */
+  hasTableRegistry?: boolean;
 }
 
 /**

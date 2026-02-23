@@ -60,6 +60,7 @@ const FIELD_REFERENCE_METHODS: Map<string, 'first' | 'all'> = new Map([
  */
 class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
   public readonly diagnostics: Diagnostic[] = [];
+  private readonly hasTableRegistry: boolean;
 
   /**
    * Constructor
@@ -67,13 +68,17 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
    * @param symbolTable - Symbol table for identifier resolution
    * @param builtins - Registry of builtin functions
    * @param walker - ASTWalker instance for manual child traversal
+   * @param hasTableRegistry - Whether table registry has been populated
    */
   constructor(
     private readonly scopeTracker: ScopeTracker,
     private readonly symbolTable: SymbolTable,
     private readonly builtins: BuiltinRegistry,
-    private readonly walker: ASTWalker
-  ) {}
+    private readonly walker: ASTWalker,
+    hasTableRegistry: boolean
+  ) {
+    this.hasTableRegistry = hasTableRegistry;
+  }
 
   /**
    * Visit WithStatement - enter WITH context, walk children, exit WITH context
@@ -230,18 +235,21 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
   }
 
   /**
-   * Skip XMLport ELEMENTS section entirely.
+   * Skip XMLport ELEMENTS section if table registry is not populated.
    *
    * XMLport elements reference record variables by table display name
    * (e.g., "Data Exch. Def") but the symbol table only registers the
    * element name (e.g., DataExchDef). These names never match, causing
    * false positives for every identifier in trigger bodies.
    *
-   * Tracked for proper resolution: register table display names from
-   * SourceTable properties using the workspace table registry.
+   * When table registry is available, table display names are registered
+   * from SourceTable properties, enabling proper validation.
    */
-  visitElementsSection(_node: ElementsSection): false {
-    return false; // Skip traversal - suppresses false positives
+  visitElementsSection(_node: ElementsSection): false | void {
+    if (!this.hasTableRegistry) {
+      return false; // Skip traversal - suppresses false positives
+    }
+    // Otherwise, allow traversal (return void/undefined)
   }
 
   /**
@@ -309,7 +317,8 @@ export class UndefinedIdentifierValidator implements Validator {
       scopeTracker,
       context.symbolTable,
       context.builtins,
-      walker  // Pass walker reference for manual traversal
+      walker,  // Pass walker reference for manual traversal
+      context.hasTableRegistry ?? false
     );
 
     walker.walk(context.ast, visitor);
