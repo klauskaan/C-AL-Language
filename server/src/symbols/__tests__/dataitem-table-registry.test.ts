@@ -60,7 +60,8 @@ function validateUndefinedIdentifiers(
     ast,
     symbolTable,
     builtins,
-    documentUri: 'file:///test.cal'
+    documentUri: 'file:///test.cal',
+    hasTableRegistry: symbolTable.hadTableRegistry
   };
 
   const validator = new UndefinedIdentifierValidator();
