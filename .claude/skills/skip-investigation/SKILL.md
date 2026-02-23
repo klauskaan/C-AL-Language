@@ -75,3 +75,15 @@ One-file changes can have multi-file impact: callers of a changed function, test
 If you need to read more than 2-3 files to verify that a skip is safe, you're investigating. At that point, just spawn code-detective — the work is being done anyway, and a dedicated investigation produces a structured report that helps the architect.
 
 The skip is justified when the root cause is visible without looking, or when a brief glance at 1-2 files confirms the issue description completely and unambiguously.
+
+## After the Skip Decision
+
+Skipping a phase does not mean it disappears from the record. When you skip investigation or planning:
+
+1. **The skip reasoning is posted as a GitHub comment** on the issue (via github-issues agent). This creates a permanent audit trail. See CLAUDE.md "Audit Trail Comments" for templates.
+
+2. **The skip reasoning is forwarded to CODE reviewers.** The orchestrator must include it in the review prompt because reviewers cannot access GitHub comments directly. This is a mandatory step -- see the skip-context forwarding mandate in CLAUDE.md's Plan section.
+
+3. **Reviewers validate the skip retrospectively.** At the CODE gate, both adversarial-verifier and adversarial-reviewer evaluate whether the skip was justified given what the implementation reveals. A skip that seemed safe but led to missed edge cases or design gaps will be flagged.
+
+The structured format (What I looked at / What I found / What this means / Decision) exists for two audiences: Klaus reviewing after the fact, and the CODE reviewers validating the decision during the session.

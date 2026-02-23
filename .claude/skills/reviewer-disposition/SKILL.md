@@ -46,3 +46,16 @@ Report all four dispositions to Klaus for visibility — including Acknowledge a
 | "This function should handle Unicode normalization" | Defer | Valid, out of scope for this issue |
 | "The parser error recovery is getting complex" | Acknowledge | True observation, no specific action |
 | "Consider using async/await here" | Dismiss | Not applicable — this codebase uses synchronous LSP patterns |
+
+## Dispositions in the Review Comment
+
+All dispositions are documented in the review comment posted to the GitHub issue after CODE review approval. This is the permanent record -- what Klaus sees when reviewing sessions after the fact.
+
+The review comment uses a findings table with columns: Finding, Severity, Disposition, Detail. For each disposition:
+
+- **Fix it** -- Detail column describes what was changed
+- **Defer it** -- Detail column contains the created issue number as a link (e.g., `#557`)
+- **Acknowledge it** -- Detail column contains the meta-observation text
+- **Dismiss it** -- Detail column contains the justification
+
+Deferred items must include the actual issue number, not just a description. Create the issue first (via github-issues), then reference it in the review comment. This creates bidirectional traceability: the issue links back to the parent work, the review comment links forward to the issue.

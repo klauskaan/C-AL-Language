@@ -31,6 +31,7 @@ Check each of these with tool calls, not reasoning:
 - **Scope**: Did the developer add changes not in the plan? Flag for reviewer's attention (not necessarily a blocker).
 - **Bugs and correctness**: Review the implementation for bugs — off-by-one errors, null dereferences, incorrect conditions, missing guard clauses. Does the logic correctly implement what was intended?
 - **Code smells**: Unnecessary complexity, unclear naming, functions doing too many things, suspicious patterns, code that will be hard to maintain or debug. Flag even if it works.
+- **Skip-decision validation**: If the orchestrator indicates investigation or planning was skipped, verify the skip was justified: does the implementation reveal complexity, edge cases, or design decisions that the skip reasoning didn't anticipate? If the skip looks unjustified in hindsight, flag as CHANGES REQUIRED with specific evidence of what was missed. If the orchestrator's prompt does not state whether phases were skipped or completed, ask before proceeding -- do not assume.
 
 ## Issue Creation Bias
 

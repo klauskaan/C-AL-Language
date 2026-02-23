@@ -30,14 +30,17 @@ Every piece of work starts with a GitHub issue. Worktrees are named after issue 
 
 ```
 1. INVESTIGATE  -  code-detective finds root cause (read-only, runs from main)
+                    then: github-issues posts comment
 2. WORKTREE     -  file-ops creates ../worktree-issue-{number}
                     then: npm install in server/ (worktrees share source, not node_modules)
 3. PLAN         -  architect designs, adversarial-verifier checks facts,
                     adversarial-reviewer critiques design — both must approve
+                    then: github-issues posts comment
 4. TEST FIRST   -  test-writer writes tests, then test-runner verifies they fail
 5. IMPLEMENT    -  senior-developer executes the plan
 6. REVIEW       -  adversarial-verifier (always), adversarial-reviewer (always),
                     plus typescript-reviewer and/or cal-expert when relevant
+                    then: github-issues posts comment
 7. COMMIT       -  file-ops commits with "Fixes #X", pushes to feature branch
 8. MERGE & PUSH -  merge-agent merges to main, push, cleans up worktree
 ```
@@ -67,6 +70,8 @@ Don't use narrative summaries like "this looks straightforward." The structured 
 
 **Staleness of workflow-spawned issues.** Issues created during work on another issue ("Discovered during #N", "Deferred from #N") may go stale if the referenced code changes after filing. When picking up such an issue, check how many commits have touched the relevant files since it was created — count commits, not calendar days. High churn means investigate even if the description looks obvious; no churn means the original observation still holds.
 
+**Audit trail.** After investigation completes or is skipped, post the investigation comment. See "Audit Trail Comments" for template, error handling, and re-run behavior.
+
 ### Plan
 
 The plan+review loop is the quality engine of this workflow. In practice the adversarial reviewer finds critical flaws and unexamined assumptions every single time. Skip it and you're implementing a plan that hasn't been stress-tested.
@@ -75,7 +80,9 @@ The architect designs based on investigation findings. The adversarial-verifier 
 
 PLAN can be skipped for genuinely trivial changes using the same structured reasoning format as INVESTIGATE.
 
-The review prompt for step 6 should include concerns raised during planning — this gives the final reviewers the opportunity to verify they were adequately addressed, closing the loop on the full cycle.
+**Audit trail.** After both reviewers approve the plan or planning is skipped, post the plan comment. See "Audit Trail Comments" for template, error handling, and re-run behavior.
+
+The review prompt for step 6 should include concerns raised during planning and any skip reasoning from earlier phases — this gives the final reviewers the opportunity to verify they were adequately addressed, closing the loop on the full cycle. **Skip-context forwarding is mandatory.** When investigation or planning was skipped, the orchestrator must include the skip reasoning in the review prompt. Reviewers cannot access GitHub comments directly; without this context, skip validation is impossible. No judgment calls, no exceptions.
 
 ### Dual-Reviewer Protocol
 
@@ -109,6 +116,8 @@ Only an explicit **APPROVED** from both reviewers advances to commit. Anything e
 
 **Review gates are structural, not optional.** Any code change gets reviewed. The one exception: small changes implemented verbatim from reviewer feedback don't need reapproval — the reviewer already approved them by suggesting them.
 
+**Audit trail.** After both reviewers approve the code, post the review comment before proceeding to COMMIT. See "Audit Trail Comments" for template, error handling, and re-run behavior.
+
 ### Commit and Merge
 
 The commit references `Fixes #X` to link work to its issue and trigger automatic closure. The merge targets main in a way that plays well with parallel sessions.
@@ -136,6 +145,45 @@ Handle every item from every reviewer:
 When a finding is valid but out of scope, prefer creating a tracking issue over acknowledging and moving on. Untracked observations get lost.
 
 Report all feedback items and their dispositions to Klaus for visibility.
+
+### Audit Trail Comments
+
+Structured GitHub comments document each workflow phase — what was skipped, what was investigated, what was planned, and what was reviewed. These comments are the permanent record Klaus sees when reviewing sessions after the fact.
+
+**When to post:**
+
+1. After INVESTIGATE completes or is skipped
+2. After PLAN is approved or is skipped
+3. After CODE review is approved
+
+**Comment posting is non-optional.** Every issue worked through the workflow gets these comments unless the session aborts before completing the phase. The github-issues agent posts them; see its prompt for the templates.
+
+**Error handling:**
+
+- If comment posting fails, log the error and continue. This is not a blocking failure — the work is still valid. Notify Klaus that the audit trail is incomplete.
+- If the gh CLI is unavailable or the issue number is invalid, log and continue.
+
+**Re-run behavior (same phase twice):**
+
+When investigation or planning runs twice (first attempt revealed the skip was unjustified), post only once — after the final attempt that advances to the next phase. Do not post duplicate comments for intermediate attempts.
+
+When code review runs multiple times due to CHANGES REQUIRED cycles, post only once — after the final APPROVED that advances to COMMIT.
+
+**Templates:**
+
+The github-issues agent has the full templates. Key structure:
+
+- **Investigation comment**: Collapsed root cause analysis, impact assessment, skip reasoning if skipped
+- **Plan comment**: Collapsed implementation approach, assumptions, risks, concerns from reviewers, skip reasoning if skipped
+- **Review comment**: Findings table with Severity/Disposition/Detail, skip-validation notes, approval confirmation
+
+**Cross-linking:**
+
+Comments reference prior phases: the plan comment links to investigation findings, the review comment links to planning concerns and skip decisions. This creates a navigable audit trail within the issue.
+
+**Skip-context forwarding to reviewers:**
+
+When investigation or planning was skipped, the orchestrator must include the skip reasoning in the CODE review prompt. Reviewers cannot access GitHub comments directly; without this forwarded context, they cannot validate whether the skip was justified. This is mandatory. See the skip-context forwarding mandate in the Plan section above.
 
 ---
 
