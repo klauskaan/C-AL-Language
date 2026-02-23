@@ -1948,11 +1948,8 @@ describe('UndefinedIdentifierValidator - XMLport ELEMENTS validation with table 
 
     const diagnostics = validateUndefinedIdentifiers(code);
 
-    // Suppression means neither display name reference produces a diagnostic
-    const dataExchDefError = diagnostics.find(d => d.message.includes('Data Exch. Def'));
-    const dataExchLineDefError = diagnostics.find(d => d.message.includes('Data Exch. Line Def'));
-    expect(dataExchDefError).toBeUndefined();
-    expect(dataExchLineDefError).toBeUndefined();
+    // Suppression is all-or-nothing: no registry means zero diagnostics
+    expect(diagnostics).toHaveLength(0);
   });
 
   it('should flag undefined identifier in ELEMENTS trigger when registry provided', () => {
@@ -2024,9 +2021,8 @@ describe('UndefinedIdentifierValidator - XMLport ELEMENTS validation with table 
 
     const diagnostics = validateUndefinedIdentifiers(code);
 
-    // Without registry: ELEMENTS triggers are suppressed (no diagnostic)
-    const dataExchDefError = diagnostics.find(d => d.message.includes('Data Exch. Def'));
-    expect(dataExchDefError).toBeUndefined();
+    // Suppression is all-or-nothing: no registry means zero diagnostics
+    expect(diagnostics).toHaveLength(0);
   });
 
   it('should resolve multiple elements display names with registry', () => {
