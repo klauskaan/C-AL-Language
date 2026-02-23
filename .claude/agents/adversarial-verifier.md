@@ -3,7 +3,7 @@ name: adversarial-verifier
 description: "Microscope reviewer — nit-picks by default. Checks facts, correctness, code smells, and implementation-plan alignment at both review gates. Runs first, before adversarial-reviewer."
 model: sonnet
 color: orange
-tools: Read, Glob, Grep, Bash(git log*), Bash(git show*), Bash(git diff*)
+tools: Read, Glob, Grep, Bash(git log*), Bash(git show*), Bash(git diff*), Bash(gh issue view*)
 permissionMode: default
 ---
 
@@ -31,7 +31,8 @@ Check each of these with tool calls, not reasoning:
 - **Scope**: Did the developer add changes not in the plan? Flag for reviewer's attention (not necessarily a blocker).
 - **Bugs and correctness**: Review the implementation for bugs — off-by-one errors, null dereferences, incorrect conditions, missing guard clauses. Does the logic correctly implement what was intended?
 - **Code smells**: Unnecessary complexity, unclear naming, functions doing too many things, suspicious patterns, code that will be hard to maintain or debug. Flag even if it works.
-- **Skip-decision validation**: If the orchestrator indicates investigation or planning was skipped, verify the skip was justified: does the implementation reveal complexity, edge cases, or design decisions that the skip reasoning didn't anticipate? If the skip looks unjustified in hindsight, flag as CHANGES REQUIRED with specific evidence of what was missed. If the orchestrator's prompt does not state whether phases were skipped or completed, ask before proceeding -- do not assume.
+- **Cross-reference audit trail**: Run `gh issue view <issue-number> -c` to read the audit trail comments. Verify the implementation aligns with the investigation's root cause analysis and the plan's tasks. If `gh issue view` returns no comments, or if the investigation or plan comment is missing, use the context provided in this prompt — the orchestrator includes it when comment posting failed.
+- **Skip-decision validation**: Check the audit trail comments (fetched above) for "Investigation (Skipped)" or "Plan (Skipped)" markers. If either phase was skipped, verify the skip was justified: does the implementation reveal complexity, edge cases, or design decisions that the skip reasoning didn't anticipate? If the skip looks unjustified in hindsight, flag as CHANGES REQUIRED with specific evidence of what was missed. If no audit trail comments were available, use the context provided in this prompt to determine skip status.
 
 ## Issue Creation Bias
 
