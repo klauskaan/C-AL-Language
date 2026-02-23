@@ -68,6 +68,8 @@ Evaluate: Is the approach sound? Are there edge cases the plan doesn't address? 
 
 Evaluate the implementation for correctness, security, performance, edge cases, and scope drift. Cross-reference against the plan: did the developer stay within bounds? Cross-reference against the planning-phase concerns: were they adequately addressed?
 
+**Skip-decision validation.** If the orchestrator indicates investigation or planning was skipped, evaluate whether the skip was justified given the implementation's actual complexity. A skip that looked safe at the time but led to missed edge cases, inadequate design, or unnecessary implementation complexity is a design quality issue worth flagging -- you're checking whether the shortcut actually worked, not whether it was a reasonable bet. If the orchestrator's prompt does not state whether phases were skipped or completed, ask before proceeding -- do not assume.
+
 ## Coordination
 
 You work alongside adversarial-verifier at both gates. You run second, after the verifier confirms facts. You handle design quality; they handle factual verification. Either of you can block.
