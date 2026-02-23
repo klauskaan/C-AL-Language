@@ -488,6 +488,9 @@ export class SymbolTable {
   /** Root scope containing global symbols (fields, global variables, procedures) */
   private rootScope: Scope = new Scope(null);
 
+  /** Captures whether a table registry was available when the symbol table was built */
+  private _hadTableRegistry: boolean = false;
+
   /**
    * Inject implicit system variables into the root scope based on object kind.
    * These variables are always available in specific object types but are never
@@ -545,6 +548,9 @@ export class SymbolTable {
     // Create fresh root scope
     this.rootScope = new Scope(null);
 
+    // Capture whether a table registry was available at build time
+    this._hadTableRegistry = tableRegistry !== undefined && tableRegistry.size > 0;
+
     if (!ast.object) {
       return;
     }
@@ -580,6 +586,14 @@ export class SymbolTable {
    */
   public getRootScope(): Scope {
     return this.rootScope;
+  }
+
+  /**
+   * Check whether a table registry was available when this symbol table was built.
+   * Used by validation to determine if "ELEMENTS name not found" warnings should be shown.
+   */
+  public get hadTableRegistry(): boolean {
+    return this._hadTableRegistry;
   }
 
   /**
