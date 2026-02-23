@@ -297,6 +297,128 @@ npm test -- --watch
 - Share state between tests
 - Commit broken tests
 
+## Suppression Test Assertion Patterns
+
+**Purpose:** Establish consistent patterns for tests that verify validators do NOT report diagnostics in specific scenarios.
+
+### Pattern Selection
+
+Suppression tests use one of three assertion patterns based on what is being tested:
+
+**Pattern A: `toHaveLength(0)` - "No diagnostics at all"**
+
+Use when the entire test input is clean by construction and no diagnostics should exist.
+
+**When to use:**
+- Baseline/edge case tests (empty input, no procedures)
+- Tests where the input contains exactly one construct that might trigger validation
+- Tests verifying an all-or-nothing suppression mechanism (e.g., ELEMENTS without registry)
+- The test input is designed to be completely valid
+
+**Example:**
+```typescript
+it('should not report errors for valid field declaration', () => {
+  const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        }
+  }
+}`;
+  const diagnostics = validate(code);
+
+  // Pattern A: The entire input is valid - expect zero diagnostics
+  expect(diagnostics).toHaveLength(0);
+});
+```
+
+**Pattern B: `find()` + `toBeUndefined()` - "Specific identifier not flagged"**
+
+Use when testing that a specific named entity is not flagged, especially when other diagnostics might legitimately exist.
+
+**When to use:**
+- Tests where the input contains specific named entities and the assertion targets one
+- Tests with mixed assertions (some identifiers should be flagged, others should not)
+- Tests that document why a particular construct is suppressed
+- The specific entity name is important for test documentation
+
+**Example:**
+```typescript
+it('should not flag Customer as undefined when declared as Record variable', () => {
+  const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.INIT;
+    END;
+  }
+}`;
+  const diagnostics = validate(code);
+
+  // Pattern B: Specifically checking that 'Customer' is not flagged
+  const customerError = diagnostics.find(d =>
+    d.message.includes('Customer') && d.message.includes('Undefined')
+  );
+  expect(customerError).toBeUndefined();
+});
+```
+
+**Pattern C (Hybrid): Both patterns**
+
+Use when documenting a specific identifier provides value AND verifying zero total diagnostics adds safety.
+
+**When to use:**
+- Complex scenarios where specific checks document intent and length check provides a safety net
+- Tests that benefit from both explicit identifier verification and holistic validation
+
+**Example:**
+```typescript
+it('should not flag Data Exch. Def when ELEMENTS registry resolves SourceTable', () => {
+  const code = `OBJECT XMLport 1220 Exch.
+{
+  FORMAT/VERSION
+  {
+    // ... format details ...
+  }
+  ELEMENTS
+  {
+    { [{DEF}];1 ;DataExchDef         ;Element ;Table   ;
+                                      SourceTable=Table1222;
+                                      Import::OnBeforeInsertRecord=BEGIN
+                                                                     "Data Exch. Def".VALIDATE(Type);
+                                                                   END;
+  }
+}`;
+  const diagnostics = validate(code);
+
+  // Pattern C: Document specific identifier AND verify total count
+  const dataExchError = diagnostics.find(d => d.message.includes('Data Exch. Def'));
+  expect(dataExchError).toBeUndefined();
+
+  // Belt-and-suspenders: no other diagnostics either
+  expect(diagnostics).toHaveLength(0);
+});
+```
+
+### Trade-offs
+
+| Pattern | Strengths | Weaknesses | Best For |
+|---------|-----------|------------|----------|
+| **A: `toHaveLength(0)`** | More informative on failure (shows all unexpected diagnostics); Stronger assertion | Less explicit about what is being tested | Holistic validity checks |
+| **B: `find()` + `toBeUndefined()`** | More explicit; Better test documentation; Clear intent | Would pass if other unexpected diagnostics appeared; Weaker for all-or-nothing scenarios | Precision checks on specific identifiers |
+| **C: Hybrid** | Combines documentation with safety | Slightly redundant | Complex multi-entity scenarios |
+
+### Migration Note
+
+**Do not mass-convert existing tests.** The codebase already uses these patterns appropriately based on what each test verifies. Convert only when:
+- A location bug reveals that specificity matters (upgrade to Pattern B)
+- A test's purpose changes to warrant a different pattern
+- Review feedback identifies a mismatch between test intent and assertion style
+
 ## Error Location Assertion Strategy
 
 **Purpose:** Prevent location regressions (like Issue #308) while avoiding excessive test brittleness.
