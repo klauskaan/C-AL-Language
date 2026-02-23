@@ -1,4 +1,4 @@
-import { Token } from '../lexer/tokens';
+import { Token, TokenType } from '../lexer/tokens';
 import {
   CALDocument,
   ObjectKind,
@@ -148,14 +148,30 @@ export class Scope {
 }
 
 /**
+ * Implicit parameters for page property triggers.
+ * These parameters are provided by the C/AL runtime and are always
+ * available inside the trigger body, but never declared in source code.
+ * Map key is the lowercase trigger name for case-insensitive lookup.
+ */
+const PAGE_TRIGGER_IMPLICIT_PARAMS = new Map<string, { name: string; type: string }>([
+  ['onfindrecord',     { name: 'Which', type: 'Text' }],
+  ['onnextrecord',     { name: 'Steps', type: 'Integer' }],
+  ['onnewrecord',      { name: 'BelowxRec', type: 'Boolean' }],
+  ['oninsertrecord',   { name: 'BelowxRec', type: 'Boolean' }],
+  ['onqueryclosepage', { name: 'CloseAction', type: 'Action' }],
+]);
+
+/**
  * Visitor that collects symbols from AST nodes and builds a hierarchical scope structure.
  * Used internally by SymbolTable to build symbol tables using the ASTWalker.
  */
 class SymbolCollectorVisitor implements Partial<ASTVisitor> {
   private currentScope: Scope;
+  private objectKind: ObjectKind | undefined;
 
-  constructor(rootScope: Scope) {
+  constructor(rootScope: Scope, objectKind?: ObjectKind) {
     this.currentScope = rootScope;
+    this.objectKind = objectKind;
   }
 
   /**
@@ -291,6 +307,29 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
     // Switch to trigger scope, handle variables, then restore
     const prevScope = this.currentScope;
     this.currentScope = triggerScope;
+
+    // Inject implicit parameter for page triggers (e.g., OnFindRecord gets 'Which')
+    // Graceful degradation: if objectKind is undefined, no parameters are injected
+    if (this.objectKind === ObjectKind.Page) {
+      const implicitParam = PAGE_TRIGGER_IMPLICIT_PARAMS.get(node.name.toLowerCase());
+      if (implicitParam) {
+        const makeToken = (name: string): Token => ({
+          type: TokenType.Identifier,
+          value: name,
+          line: node.startToken.line,
+          column: node.startToken.column,
+          startOffset: node.startToken.startOffset,
+          endOffset: node.startToken.startOffset + name.length
+        });
+
+        triggerScope.addSymbol({
+          name: implicitParam.name,
+          kind: 'parameter',
+          token: makeToken(implicitParam.name),
+          type: implicitParam.type
+        });
+      }
+    }
 
     // Add local variables to trigger scope (may be undefined for triggers without VAR section)
     if (node.triggerVariables) {
@@ -485,7 +524,7 @@ export class SymbolTable {
     this.injectImplicitVariables(ast.object);
 
     const walker = new ASTWalker();
-    const visitor = new SymbolCollectorVisitor(this.rootScope);
+    const visitor = new SymbolCollectorVisitor(this.rootScope, ast.object.objectKind);
 
     walker.walk(ast, visitor);
 

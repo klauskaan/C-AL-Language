@@ -1885,6 +1885,246 @@ describe('Implicit System Variables', () => {
   });
 });
 
+describe('Page trigger implicit parameters', () => {
+  it('should inject Which parameter into OnFindRecord trigger scope', () => {
+    const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnFindRecord=BEGIN
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    const triggerScope = rootScope.children[0];
+
+    const whichSymbol = triggerScope.getOwnSymbol('Which');
+    expect(whichSymbol).toBeDefined();
+    expect(whichSymbol?.kind).toBe('parameter');
+    expect(whichSymbol?.type).toBe('Text');
+  });
+
+  it('should inject Steps parameter into OnNextRecord trigger scope', () => {
+    const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnNextRecord=BEGIN
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    const triggerScope = rootScope.children[0];
+
+    const stepsSymbol = triggerScope.getOwnSymbol('Steps');
+    expect(stepsSymbol).toBeDefined();
+    expect(stepsSymbol?.kind).toBe('parameter');
+    expect(stepsSymbol?.type).toBe('Integer');
+  });
+
+  it('should inject BelowxRec parameter into OnNewRecord trigger scope', () => {
+    const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnNewRecord=BEGIN
+                END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    const triggerScope = rootScope.children[0];
+
+    const belowxRecSymbol = triggerScope.getOwnSymbol('BelowxRec');
+    expect(belowxRecSymbol).toBeDefined();
+    expect(belowxRecSymbol?.kind).toBe('parameter');
+    expect(belowxRecSymbol?.type).toBe('Boolean');
+  });
+
+  it('should inject BelowxRec parameter into OnInsertRecord trigger scope', () => {
+    const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnInsertRecord=BEGIN
+                   END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    const triggerScope = rootScope.children[0];
+
+    const belowxRecSymbol = triggerScope.getOwnSymbol('BelowxRec');
+    expect(belowxRecSymbol).toBeDefined();
+    expect(belowxRecSymbol?.kind).toBe('parameter');
+    expect(belowxRecSymbol?.type).toBe('Boolean');
+  });
+
+  it('should inject CloseAction parameter into OnQueryClosePage trigger scope', () => {
+    const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnQueryClosePage=BEGIN
+                     END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    const triggerScope = rootScope.children[0];
+
+    const closeActionSymbol = triggerScope.getOwnSymbol('CloseAction');
+    expect(closeActionSymbol).toBeDefined();
+    expect(closeActionSymbol?.kind).toBe('parameter');
+    expect(closeActionSymbol?.type).toBe('Action');
+  });
+
+  it('should allow explicit VAR declaration to shadow implicit parameter', () => {
+    const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnFindRecord=VAR
+                   Which@1000 : Integer;
+                 BEGIN
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    const triggerScope = rootScope.children[0];
+
+    const whichSymbol = triggerScope.getOwnSymbol('Which');
+    expect(whichSymbol).toBeDefined();
+    expect(whichSymbol?.kind).toBe('variable');
+    expect(whichSymbol?.type).toBe('Integer');
+  });
+
+  it('should match trigger names case-insensitively', () => {
+    const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    onfindrecord=BEGIN
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    const triggerScope = rootScope.children[0];
+
+    const whichSymbol = triggerScope.getOwnSymbol('Which');
+    expect(whichSymbol).toBeDefined();
+    expect(whichSymbol?.kind).toBe('parameter');
+    expect(whichSymbol?.type).toBe('Text');
+  });
+
+  it('should not inject parameters into non-parameterized page triggers', () => {
+    const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnOpenPage=BEGIN
+               END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    const triggerScope = rootScope.children[0];
+
+    expect(triggerScope.getOwnSymbol('Which')).toBeUndefined();
+    expect(triggerScope.getOwnSymbol('Steps')).toBeUndefined();
+    expect(triggerScope.getOwnSymbol('BelowxRec')).toBeUndefined();
+    expect(triggerScope.getOwnSymbol('CloseAction')).toBeUndefined();
+  });
+
+  it('should not inject page trigger parameters into non-page objects', () => {
+    const code = `OBJECT Codeunit 50000 TestCodeunit
+{
+  PROPERTIES
+  {
+    OnRun=BEGIN
+          END;
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    const triggerScope = rootScope.children[0];
+
+    expect(triggerScope.getOwnSymbol('Which')).toBeUndefined();
+    expect(triggerScope.getOwnSymbol('Steps')).toBeUndefined();
+    expect(triggerScope.getOwnSymbol('BelowxRec')).toBeUndefined();
+    expect(triggerScope.getOwnSymbol('CloseAction')).toBeUndefined();
+  });
+
+  it('should make implicit parameter accessible via scope chain from trigger body', () => {
+    const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnFindRecord=VAR
+                   MyVar : Integer;
+                 BEGIN
+                   IF Which = '-' THEN
+                     EXIT(FALSE);
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    const triggerScope = rootScope.children[0];
+
+    // The implicit parameter should be directly in the trigger scope
+    const whichInTrigger = triggerScope.getOwnSymbol('Which');
+    expect(whichInTrigger).toBeDefined();
+    expect(whichInTrigger?.kind).toBe('parameter');
+
+    // It should also be accessible via getSymbol (scope chain lookup)
+    const whichViaChain = triggerScope.getSymbol('Which');
+    expect(whichViaChain).toBeDefined();
+    expect(whichViaChain?.type).toBe('Text');
+  });
+});
+
 describe('XMLport element symbols', () => {
   it('should register the element name as a symbol when no VariableName property is present', () => {
     const code = `OBJECT XMLport 50000 Test XMLport
