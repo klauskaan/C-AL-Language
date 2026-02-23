@@ -1,0 +1,4 @@
+# Whitespace-only commits to ignore for git blame
+
+# Line ending normalization (CRLF -> LF), issue #547
+05850a7163bccdd0901c416f3eaf684193feacc7
