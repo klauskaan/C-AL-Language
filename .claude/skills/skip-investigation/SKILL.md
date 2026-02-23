@@ -82,7 +82,7 @@ Skipping a phase does not mean it disappears from the record. When you skip inve
 
 1. **The skip reasoning is posted as a GitHub comment** on the issue (via github-issues agent). This creates a permanent audit trail. See CLAUDE.md "Audit Trail Comments" for templates.
 
-2. **The skip reasoning is forwarded to CODE reviewers.** The orchestrator must include it in the review prompt because reviewers cannot access GitHub comments directly. This is a mandatory step -- see the skip-context forwarding mandate in CLAUDE.md's Plan section.
+2. **Reviewers read skip reasoning from the GitHub audit trail.** At the CODE gate, both reviewers run `gh issue view <issue-number> -c` to access investigation and plan comments, including skip decisions. If comment posting failed, the orchestrator includes the context directly in the review prompt as a fallback.
 
 3. **Reviewers validate the skip retrospectively.** At the CODE gate, both adversarial-verifier and adversarial-reviewer evaluate whether the skip was justified given what the implementation reveals. A skip that seemed safe but led to missed edge cases or design gaps will be flagged.
 

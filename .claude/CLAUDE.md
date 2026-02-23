@@ -82,7 +82,7 @@ PLAN can be skipped for genuinely trivial changes using the same structured reas
 
 **Audit trail.** After both reviewers approve the plan or planning is skipped, post the plan comment. See "Audit Trail Comments" for template, error handling, and re-run behavior.
 
-The review prompt for step 6 should include concerns raised during planning and any skip reasoning from earlier phases — this gives the final reviewers the opportunity to verify they were adequately addressed, closing the loop on the full cycle. **Skip-context forwarding is mandatory.** When investigation or planning was skipped, the orchestrator must include the skip reasoning in the review prompt. Reviewers cannot access GitHub comments directly; without this context, skip validation is impossible. No judgment calls, no exceptions.
+Reviewers fetch investigation findings, plan comments, and skip decisions directly from GitHub via `gh issue view N -c`. The orchestrator does not need to forward this context by default. **Fallback:** If github-issues reports a comment posting failure for investigation or plan comments, include the relevant context directly in the review prompt so reviewers can fall back to it.
 
 ### Dual-Reviewer Protocol
 
@@ -181,9 +181,9 @@ The github-issues agent has the full templates. Key structure:
 
 Comments reference prior phases: the plan comment links to investigation findings, the review comment links to planning concerns and skip decisions. This creates a navigable audit trail within the issue.
 
-**Skip-context forwarding to reviewers:**
+**Reviewer self-service context:**
 
-When investigation or planning was skipped, the orchestrator must include the skip reasoning in the CODE review prompt. Reviewers cannot access GitHub comments directly; without this forwarded context, they cannot validate whether the skip was justified. This is mandatory. See the skip-context forwarding mandate in the Plan section above.
+Reviewers read investigation, plan, and skip-decision comments directly from GitHub using `gh issue view N -c`. If github-issues reported a comment posting failure earlier in the session, the orchestrator includes the missing context in the review prompt as a fallback.
 
 ---
 
