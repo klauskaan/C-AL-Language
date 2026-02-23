@@ -423,7 +423,7 @@ const SYSTEM_FUNCTIONS: BuiltinFunction[] = [
   {
     name: 'SELECTLATESTVERSION',
     signature: '()',
-    documentation: 'Forces the next database read to use the latest committed version of the data. Used after COMMIT to ensure subsequent reads see committed changes. Introduced in NAV 2016.',
+    documentation: 'Forces the next database read to use the latest committed version of the data. Used after COMMIT to ensure subsequent reads see committed changes.',
     category: 'system'
   },
   {
