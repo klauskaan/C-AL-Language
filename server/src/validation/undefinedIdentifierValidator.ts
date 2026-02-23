@@ -6,6 +6,7 @@
  */
 
 import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver';
+import type { ElementsSection } from '../parser/ast';
 import {
   Identifier,
   VariableDeclaration,
@@ -226,6 +227,21 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
     }
 
     return false; // Prevent automatic traversal
+  }
+
+  /**
+   * Skip XMLport ELEMENTS section entirely.
+   *
+   * XMLport elements reference record variables by table display name
+   * (e.g., "Data Exch. Def") but the symbol table only registers the
+   * element name (e.g., DataExchDef). These names never match, causing
+   * false positives for every identifier in trigger bodies.
+   *
+   * Tracked for proper resolution: register table display names from
+   * SourceTable properties using the workspace table registry.
+   */
+  visitElementsSection(_node: ElementsSection): false {
+    return false; // Skip traversal - suppresses false positives
   }
 
   /**
