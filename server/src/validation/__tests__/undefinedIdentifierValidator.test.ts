@@ -1913,8 +1913,8 @@ describe('UndefinedIdentifierValidator - XMLport ELEMENTS validation with table 
     expect(diagnostics).toHaveLength(0);
   });
 
-  it('should not flag multiple table display name references in single XMLport', () => {
-    // XMLport with multiple elements that have triggers with display name references
+  it('should suppress ELEMENTS validation for multiple XMLport elements when no registry available', () => {
+    // XMLport with multiple elements that have triggers — no registry provided, so ELEMENTS validation is suppressed
     const code = `OBJECT XMLport 1225 Test
 {
   OBJECT-PROPERTIES
@@ -1948,7 +1948,7 @@ describe('UndefinedIdentifierValidator - XMLport ELEMENTS validation with table 
 
     const diagnostics = validateUndefinedIdentifiers(code);
 
-    // Should not flag any table display names
+    // Suppression means neither display name reference produces a diagnostic
     const dataExchDefError = diagnostics.find(d => d.message.includes('Data Exch. Def'));
     const dataExchLineDefError = diagnostics.find(d => d.message.includes('Data Exch. Line Def'));
     expect(dataExchDefError).toBeUndefined();
