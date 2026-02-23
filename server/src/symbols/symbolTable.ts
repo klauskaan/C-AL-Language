@@ -417,7 +417,7 @@ export class SymbolTable {
    * explicitly declared in C/AL source code.
    *
    * - Table:   Rec, xRec
-   * - Page:    Rec, CurrPage
+   * - Page:    Rec, xRec, CurrPage
    * - Report:  Rec, CurrReport
    * - XMLport: currXMLport
    * - Query:   currQuery
@@ -450,6 +450,7 @@ export class SymbolTable {
         break;
       case ObjectKind.Page:
         inject('Rec', 'Record');
+        inject('xRec', 'Record');
         inject('CurrPage', 'Page');
         break;
       case ObjectKind.Report:

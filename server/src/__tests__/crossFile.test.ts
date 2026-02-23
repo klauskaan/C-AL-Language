@@ -3160,7 +3160,7 @@ describe('Cross-File Page-Table References', () => {
       const variableSymbols = allSymbols.filter(s => s.symbol?.kind === 'variable');
       const procedureSymbols = allSymbols.filter(s => s.symbol?.kind === 'procedure');
 
-      expect(variableSymbols.length).toBe(5); // 2 implicit (Rec/xRec) from table + 3 (Counter/Rec/CurrPage) from page
+      expect(variableSymbols.length).toBe(6); // 2 implicit (Rec/xRec) from table + 4 (Counter/xRec/Rec/CurrPage) from page
       expect(procedureSymbols.length).toBe(1);
 
       // Verify fields come from table
@@ -3449,7 +3449,7 @@ describe('Cross-File Page-Table References', () => {
       const procedureCount = allSymbols.filter(s => s.symbol?.kind === 'procedure').length;
 
       expect(fieldCount).toBe(7); // 7 table fields
-      expect(variableCount).toBe(7); // 2 implicit (Rec/xRec) from table + 3 page vars (TotalLineAmount/Rec/CurrPage) + 2 codeunit vars
+      expect(variableCount).toBe(8); // 2 implicit (Rec/xRec) from table + 4 page vars (TotalLineAmount/xRec/Rec/CurrPage) + 2 codeunit vars
       expect(procedureCount).toBe(3); // 1 page proc + 1 public codeunit proc + 1 LOCAL codeunit proc
     });
   });
