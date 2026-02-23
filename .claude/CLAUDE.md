@@ -269,6 +269,7 @@ The most critical is `/cal-reference` — C/AL and AL look similar but AL featur
 | What meaningful test coverage looks like | `/coverage-quality` |
 | How to handle reviewer findings | `/reviewer-disposition` |
 | Which information source to trust | `/trust-hierarchy` |
+| Running diagnostics & benchmarks | `/diagnostics-guide` |
 
 ---
 
