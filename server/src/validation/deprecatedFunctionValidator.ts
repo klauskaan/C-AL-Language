@@ -6,7 +6,7 @@
  */
 
 import { Diagnostic, DiagnosticSeverity, DiagnosticTag } from 'vscode-languageserver';
-import { CALDocument, CallExpression, MemberExpression, Identifier } from '../parser/ast';
+import { CallExpression, Identifier } from '../parser/ast';
 import { ASTWalker } from '../visitor/astWalker';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { Validator, ValidationContext } from '../semantic/types';
@@ -56,11 +56,6 @@ class DeprecatedFunctionValidatorVisitor implements Partial<ASTVisitor> {
    * Check if an identifier refers to the builtin (not shadowed by local symbol)
    */
   private isActualBuiltin(identifier: Identifier): boolean {
-    // Build symbol table from AST if not already built
-    if (this.context.symbolTable.getAllSymbols().length === 0) {
-      this.context.symbolTable.buildFromAST(this.context.ast);
-    }
-
     // Look up in symbol table - if found locally, it's shadowing the builtin
     const symbol = this.context.symbolTable.getSymbol(identifier.name);
 

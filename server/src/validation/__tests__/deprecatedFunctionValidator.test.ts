@@ -33,6 +33,7 @@ function validateDeprecatedFunctions(code: string): Diagnostic[] {
   const ast = parser.parse();
 
   const symbolTable = new SymbolTable();
+  symbolTable.buildFromAST(ast);
   const builtins = new BuiltinRegistry();
 
   const context: ValidationContext = {
@@ -946,6 +947,61 @@ describe('DeprecatedFunctionValidator - Context-specific deprecation lookup', ()
   });
 });
 
+
+describe('DeprecatedFunctionValidator - Architectural purity', () => {
+  it('should NOT call buildFromAST on the symbol table (PURE validator)', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Test();
+    BEGIN
+      // Call a deprecated global function without receiver
+      // This should trigger isActualBuiltin() check
+      OLDDEPRECATEDGLOBAL();
+    END;
+  }
+}`;
+
+    const lexer = new Lexer(code);
+    const tokens = lexer.tokenize();
+    const parser = new Parser(tokens);
+    const ast = parser.parse();
+
+    const symbolTable = new SymbolTable();
+    const builtins = new BuiltinRegistry();
+    
+    // Manually add a deprecated global function to test the code path
+    // This simulates what would happen if a global function was deprecated
+    (builtins as any).globalFunctions.set('OLDDEPRECATEDGLOBAL', {
+      name: 'OLDDEPRECATEDGLOBAL',
+      signature: '()',
+      documentation: 'Deprecated test function',
+      category: 'function',
+      deprecated: 'Use NEWFUNCTION instead'
+    });
+
+    // Spy on buildFromAST to verify it's NOT called
+    const buildSpy = jest.spyOn(symbolTable, 'buildFromAST');
+
+    const context: ValidationContext = {
+      ast,
+      symbolTable,
+      builtins,
+      documentUri: 'file:///test.cal'
+    };
+
+    const validator = new DeprecatedFunctionValidator();
+    validator.validate(context);
+
+    // The validator should NOT mutate the symbol table
+    // THIS WILL FAIL with the buggy code at line 61
+    expect(buildSpy).not.toHaveBeenCalled();
+
+    buildSpy.mockRestore();
+  });
+});
+
 describe('DeprecatedFunctionValidator - Configuration (warnDeprecated setting)', () => {
   /**
    * Helper to parse C/AL code and run deprecated function validation with settings
@@ -960,6 +1016,7 @@ describe('DeprecatedFunctionValidator - Configuration (warnDeprecated setting)',
     const ast = parser.parse();
 
     const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast);
     const builtins = new BuiltinRegistry();
 
     const context: ValidationContext = {
