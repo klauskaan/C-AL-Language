@@ -451,6 +451,60 @@ describe('UndefinedIdentifierValidator - Builtin Functions Suppressed', () => {
       expect(strposError).toBeUndefined();
       expect(copystrError).toBeUndefined();
     });
+
+    it('should not flag BINDSUBSCRIPTION builtin', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE TestProc();
+          VAR
+            EventSubscriberCodeunit : Codeunit 50000;
+            Success : Boolean;
+          BEGIN
+            Success := BINDSUBSCRIPTION(EventSubscriberCodeunit);
+          END;
+        }
+      }`;
+
+      const diagnostics = validateUndefinedIdentifiers(code);
+
+      const bindError = diagnostics.find(d => d.message.includes('BINDSUBSCRIPTION'));
+      expect(bindError).toBeUndefined();
+    });
+
+    it('should not flag UNBINDSUBSCRIPTION builtin', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE TestProc();
+          VAR
+            EventSubscriberCodeunit : Codeunit 50000;
+            Success : Boolean;
+          BEGIN
+            Success := UNBINDSUBSCRIPTION(EventSubscriberCodeunit);
+          END;
+        }
+      }`;
+
+      const diagnostics = validateUndefinedIdentifiers(code);
+
+      const unbindError = diagnostics.find(d => d.message.includes('UNBINDSUBSCRIPTION'));
+      expect(unbindError).toBeUndefined();
+    });
+
+    it('should not flag SELECTLATESTVERSION builtin', () => {
+      const code = `OBJECT Codeunit 1 Test {
+        CODE {
+          PROCEDURE TestProc();
+          BEGIN
+            SELECTLATESTVERSION();
+          END;
+        }
+      }`;
+
+      const diagnostics = validateUndefinedIdentifiers(code);
+
+      const selectError = diagnostics.find(d => d.message.includes('SELECTLATESTVERSION'));
+      expect(selectError).toBeUndefined();
+    });
   });
 });
 

@@ -409,6 +409,24 @@ const SYSTEM_FUNCTIONS: BuiltinFunction[] = [
     category: 'system'
   },
   {
+    name: 'BINDSUBSCRIPTION',
+    signature: '(Codeunit): Boolean',
+    documentation: 'Binds an event subscriber codeunit instance to the current session. Returns TRUE if successful. Introduced in NAV 2016.',
+    category: 'system'
+  },
+  {
+    name: 'UNBINDSUBSCRIPTION',
+    signature: '(Codeunit): Boolean',
+    documentation: 'Unbinds a previously bound event subscriber codeunit instance from the current session. Returns TRUE if successful. Introduced in NAV 2016.',
+    category: 'system'
+  },
+  {
+    name: 'SELECTLATESTVERSION',
+    signature: '()',
+    documentation: 'Forces the next database read to use the latest committed version of the data. Used after COMMIT to ensure subsequent reads see committed changes. Introduced in NAV 2016.',
+    category: 'system'
+  },
+  {
     name: 'SYSTEM',
     signature: '',
     documentation: 'Built-in system object providing access to system-level properties and methods (e.g. SYSTEM.VARIANT, SYSTEM.ISNULL). Used as a member expression receiver.',
