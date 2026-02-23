@@ -154,8 +154,7 @@ describe('ScopeTracker - shouldFlagAsUndefined Outside WITH', () => {
       name: 'KnownVariable',
       kind: 'variable',
       type: 'Integer',
-      startOffset: 0,
-      endOffset: 10
+      startOffset: 0
     });
 
     const shouldFlag = tracker.shouldFlagAsUndefined(
@@ -194,8 +193,7 @@ describe('ScopeTracker - shouldFlagAsUndefined Outside WITH', () => {
       name: 'MyVariable',
       kind: 'variable',
       type: 'Integer',
-      startOffset: 0,
-      endOffset: 10
+      startOffset: 0
     });
 
     // Different case variations
@@ -244,8 +242,7 @@ describe('ScopeTracker - shouldFlagAsUndefined Inside WITH', () => {
       name: 'LocalVar',
       kind: 'variable',
       type: 'Integer',
-      startOffset: 0,
-      endOffset: 10
+      startOffset: 0
     });
 
     const shouldFlag = tracker.shouldFlagAsUndefined(

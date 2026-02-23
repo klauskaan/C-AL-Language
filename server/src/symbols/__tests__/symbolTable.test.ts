@@ -2337,3 +2337,27 @@ describe('XMLport element symbols', () => {
     expect(dataExchColumnDef?.kind).toBe('variable');
   });
 });
+
+describe('defineGlobal', () => {
+  it('should create synthetic tokens with correct structure in defineGlobal', () => {
+    const symbolTable = new SymbolTable();
+    const symbolName = 'TestSymbol';
+    const startOffset = 100;
+
+    symbolTable.defineGlobal({
+      name: symbolName,
+      kind: 'variable',
+      type: 'Integer',
+      startOffset
+    });
+
+    const symbol = symbolTable.getSymbol(symbolName);
+    expect(symbol).toBeDefined();
+    expect(symbol?.token.type).toBe(TokenType.Identifier);
+    expect(symbol?.token.value).toBe(symbolName);
+    expect(symbol?.token.line).toBe(1);
+    expect(symbol?.token.column).toBe(1);
+    expect(symbol?.token.startOffset).toBe(startOffset);
+    expect(symbol?.token.endOffset).toBe(startOffset + symbolName.length);
+  });
+});
