@@ -37,6 +37,25 @@ function normalizeIdentifier(name: string): string {
 }
 
 /**
+ * Create a synthetic identifier token anchored to a source position.
+ * Used for implicit variables and parameters that exist in the C/AL runtime
+ * but are never explicitly declared in source code.
+ */
+function makeSyntheticToken(
+  name: string,
+  position: Pick<Token, 'line' | 'column' | 'startOffset'>
+): Token {
+  return {
+    type: TokenType.Identifier,
+    value: name,
+    line: position.line,
+    column: position.column,
+    startOffset: position.startOffset,
+    endOffset: position.startOffset + name.length
+  };
+}
+
+/**
  * Represents a lexical scope in C/AL code.
  * Scopes form a tree structure with parent/child relationships.
  *
@@ -313,19 +332,10 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
     if (this.objectKind === ObjectKind.Page) {
       const implicitParam = PAGE_TRIGGER_IMPLICIT_PARAMS.get(node.name.toLowerCase());
       if (implicitParam) {
-        const makeToken = (name: string): Token => ({
-          type: TokenType.Identifier,
-          value: name,
-          line: node.startToken.line,
-          column: node.startToken.column,
-          startOffset: node.startToken.startOffset,
-          endOffset: node.startToken.startOffset + name.length
-        });
-
         triggerScope.addSymbol({
           name: implicitParam.name,
           kind: 'parameter',
-          token: makeToken(implicitParam.name),
+          token: makeSyntheticToken(implicitParam.name, node.startToken),
           type: implicitParam.type
         });
       }
@@ -464,20 +474,11 @@ export class SymbolTable {
   private injectImplicitVariables(objectDecl: ObjectDeclaration): void {
     const { objectKind, objectId, startToken } = objectDecl;
 
-    const makeToken = (name: string): Token => ({
-      type: 'IDENTIFIER' as any,
-      value: name,
-      line: startToken.line,
-      column: startToken.column,
-      startOffset: startToken.startOffset,
-      endOffset: startToken.startOffset + name.length
-    });
-
     const inject = (name: string, type: string): void => {
       this.rootScope.addSymbol({
         name,
         kind: 'variable',
-        token: makeToken(name),
+        token: makeSyntheticToken(name, startToken),
         type
       });
     };
@@ -632,24 +633,19 @@ export class SymbolTable {
   /**
    * Helper method to define a global symbol for testing purposes.
    * Creates a synthetic token and adds the symbol to the root scope.
-   * @param symbol - Symbol definition with name, kind, type, and offsets
+   * @param symbol - Symbol definition with name, kind, type, and startOffset
    */
   public defineGlobal(symbol: {
     name: string;
     kind: 'variable' | 'parameter' | 'field' | 'procedure' | 'function' | 'action';
     type?: string;
     startOffset: number;
-    endOffset: number;
   }): void {
-    // Create a synthetic token for the symbol
-    const syntheticToken: Token = {
-      type: 'IDENTIFIER' as any,
-      value: symbol.name,
+    const syntheticToken = makeSyntheticToken(symbol.name, {
       line: 1,
       column: 1,
-      startOffset: symbol.startOffset,
-      endOffset: symbol.endOffset
-    };
+      startOffset: symbol.startOffset
+    });
 
     this.rootScope.addSymbol({
       name: symbol.name,

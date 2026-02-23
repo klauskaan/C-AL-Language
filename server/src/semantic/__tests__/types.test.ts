@@ -124,8 +124,7 @@ describe('Semantic Types - ValidationContext', () => {
       name: 'TestSymbol',
       kind: 'variable',
       type: 'Integer',
-      startOffset: 0,
-      endOffset: 10
+      startOffset: 0
     });
 
     const context: ValidationContext = {
