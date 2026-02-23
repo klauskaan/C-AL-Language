@@ -1993,8 +1993,9 @@ describe('UndefinedIdentifierValidator - XMLport ELEMENTS validation with table 
     expect(undefinedVarError!.message).toBe("Undefined identifier: 'UndefinedVar'");
   });
 
-  it('should still suppress undefined identifiers in ELEMENTS triggers without registry (graceful degradation)', () => {
-    // Without registry: ELEMENTS triggers are still suppressed (legacy behavior)
+  it('should suppress truly undefined identifiers in ELEMENTS triggers when no registry available', () => {
+    // Without registry: entire ELEMENTS validation is suppressed — even truly undefined identifiers are not flagged.
+    // Counterpart to the registry test above where UndefinedVar IS caught.
     const code = `OBJECT XMLport 1225 Test
 {
   OBJECT-PROPERTIES
@@ -2009,6 +2010,7 @@ describe('UndefinedIdentifierValidator - XMLport ELEMENTS validation with table 
                                       SourceTable=Table1222;
                                       Import::OnBeforeInsertRecord=BEGIN
                                                                      "Data Exch. Def".VALIDATE(Type);
+                                                                     UndefinedVar := 42;
                                                                    END;
                                                                     }
   }
@@ -2021,8 +2023,13 @@ describe('UndefinedIdentifierValidator - XMLport ELEMENTS validation with table 
 
     const diagnostics = validateUndefinedIdentifiers(code);
 
-    // Suppression is all-or-nothing: no registry means zero diagnostics
-    expect(diagnostics).toHaveLength(0);
+    // Display name references are suppressed (same as before)
+    const dataExchDefError = diagnostics.find(d => d.message.includes('Data Exch. Def'));
+    expect(dataExchDefError).toBeUndefined();
+
+    // Even truly undefined identifiers are suppressed (no registry means no ELEMENTS validation)
+    const undefinedVarError = diagnostics.find(d => d.message.includes('UndefinedVar'));
+    expect(undefinedVarError).toBeUndefined();
   });
 
   it('should resolve multiple elements display names with registry', () => {
