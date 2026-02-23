@@ -75,13 +75,15 @@ export class SemanticAnalyzer {
    * @param symbolTable - Symbol table for the document
    * @param documentUri - URI of the document being analyzed
    * @param settings - Optional user settings
+   * @param hasTableRegistry - Whether table registry has been populated
    * @returns Array of diagnostics (may be empty)
    */
   public analyze(
     ast: CALDocument,
     symbolTable: SymbolTable,
     documentUri: string,
-    settings?: CALSettings
+    settings?: CALSettings,
+    hasTableRegistry?: boolean
   ): Diagnostic[] {
     // Assemble validation context
     const context: ValidationContext = {
@@ -89,7 +91,8 @@ export class SemanticAnalyzer {
       symbolTable,
       builtins: this.builtins,
       documentUri,
-      settings
+      settings,
+      hasTableRegistry
     };
 
     // Run validation pipeline

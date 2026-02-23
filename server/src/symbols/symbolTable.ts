@@ -187,10 +187,12 @@ const PAGE_TRIGGER_IMPLICIT_PARAMS = new Map<string, { name: string; type: strin
 class SymbolCollectorVisitor implements Partial<ASTVisitor> {
   private currentScope: Scope;
   private objectKind: ObjectKind | undefined;
+  private tableRegistry?: ReadonlyMap<number, string>;
 
-  constructor(rootScope: Scope, objectKind?: ObjectKind) {
+  constructor(rootScope: Scope, objectKind?: ObjectKind, tableRegistry?: ReadonlyMap<number, string>) {
     this.currentScope = rootScope;
     this.objectKind = objectKind;
+    this.tableRegistry = tableRegistry;
   }
 
   /**
@@ -430,6 +432,7 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
    * Visit an XMLportElement node and register it as a symbol in the current scope.
    * If the element has a VariableName property, that value is used as the symbol name.
    * Otherwise, the element's name is used (if non-empty).
+   * When SourceType=Table and table registry is available, also registers the table display name.
    * Does NOT return false — the walker must continue to traverse child elements and triggers.
    */
   visitXMLportElement(node: XMLportElement): void | false {
@@ -450,6 +453,31 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
         kind: 'variable',
         token: node.startToken
       });
+    }
+
+    // Register table display name if sourceType=Table and registry is available
+    if (node.sourceType === 'Table' && this.tableRegistry) {
+      const sourceTableProp = findProperty(node, 'sourcetable');
+      if (sourceTableProp?.value) {
+        // Parse SourceTable property: "Table18" or "Table 18"
+        const match = sourceTableProp.value.match(/^Table\s*(\d+)$/i);
+        if (match) {
+          const tableId = parseInt(match[1], 10);
+          const displayName = this.tableRegistry.get(tableId);
+          if (displayName) {
+            // Only register if display name differs from already-registered name
+            const alreadyRegisteredName = nameProp?.value ?? node.name;
+            if (alreadyRegisteredName && displayName.toLowerCase() !== alreadyRegisteredName.toLowerCase()) {
+              const token = sourceTableProp.valueTokens?.[0] ?? sourceTableProp.startToken;
+              this.currentScope.addSymbol({
+                name: displayName,
+                kind: 'variable',
+                token
+              });
+            }
+          }
+        }
+      }
     }
 
     // Do NOT return false — let the walker traverse child elements and triggers
@@ -525,7 +553,7 @@ export class SymbolTable {
     this.injectImplicitVariables(ast.object);
 
     const walker = new ASTWalker();
-    const visitor = new SymbolCollectorVisitor(this.rootScope, ast.object.objectKind);
+    const visitor = new SymbolCollectorVisitor(this.rootScope, ast.object.objectKind, tableRegistry);
 
     walker.walk(ast, visitor);
 

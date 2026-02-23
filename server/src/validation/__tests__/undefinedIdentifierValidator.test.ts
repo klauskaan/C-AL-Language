@@ -34,14 +34,17 @@ import { ValidationContext } from '../../semantic/types';
 /**
  * Helper to parse C/AL code and run undefined identifier validation
  */
-function validateUndefinedIdentifiers(code: string): Diagnostic[] {
+function validateUndefinedIdentifiers(
+  code: string,
+  tableRegistry?: ReadonlyMap<number, string>
+): Diagnostic[] {
   const lexer = new Lexer(code);
   const tokens = lexer.tokenize();
   const parser = new Parser(tokens);
   const ast = parser.parse();
 
   const symbolTable = new SymbolTable();
-  symbolTable.buildFromAST(ast);
+  symbolTable.buildFromAST(ast, tableRegistry);
 
   const builtins = new BuiltinRegistry();
 
@@ -49,7 +52,8 @@ function validateUndefinedIdentifiers(code: string): Diagnostic[] {
     ast,
     symbolTable,
     builtins,
-    documentUri: 'file:///test.cal'
+    documentUri: 'file:///test.cal',
+    hasTableRegistry: tableRegistry !== undefined && tableRegistry.size > 0
   };
 
   const validator = new UndefinedIdentifierValidator();
@@ -1810,10 +1814,10 @@ describe('UndefinedIdentifierValidator - Property Trigger Scoping', () => {
   });
 });
 
-describe('UndefinedIdentifierValidator - XMLport ELEMENTS validation suppression', () => {
-  it('should not flag table display name references in XMLport ELEMENTS triggers', () => {
+describe('UndefinedIdentifierValidator - XMLport ELEMENTS validation with table registry', () => {
+  it('should not flag table display name references when registry resolves SourceTable', () => {
     // XMLport ELEMENTS contain triggers that reference table display names (e.g., "Data Exch. Def")
-    // which are not in the symbol table (only the element name DataExchDef is)
+    // With table registry: display name is resolved and registered, so no diagnostic expected
     const code = `OBJECT XMLport 1225 Test
 {
   OBJECT-PROPERTIES
@@ -1839,12 +1843,13 @@ describe('UndefinedIdentifierValidator - XMLport ELEMENTS validation suppression
   }
 }`;
 
-    const diagnostics = validateUndefinedIdentifiers(code);
+    const registry = new Map<number, string>([[1222, 'Data Exch. Def']]);
+    const diagnostics = validateUndefinedIdentifiers(code, registry);
 
-    // Before fix: would flag "Data Exch. Def" as undefined
-    // After fix: should produce zero diagnostics
+    // With registry: table display name is resolved, should produce zero diagnostics
     const dataExchDefError = diagnostics.find(d => d.message.includes('Data Exch. Def'));
     expect(dataExchDefError).toBeUndefined();
+    expect(diagnostics).toHaveLength(0);
   });
 
   it('should still validate CODE section in XMLports', () => {
@@ -1948,5 +1953,162 @@ describe('UndefinedIdentifierValidator - XMLport ELEMENTS validation suppression
     const dataExchLineDefError = diagnostics.find(d => d.message.includes('Data Exch. Line Def'));
     expect(dataExchDefError).toBeUndefined();
     expect(dataExchLineDefError).toBeUndefined();
+  });
+
+  it('should flag undefined identifier in ELEMENTS trigger when registry provided', () => {
+    // With table registry: defined identifiers should NOT be flagged,
+    // but truly undefined identifiers should still be caught
+    const code = `OBJECT XMLport 1225 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+  }
+  ELEMENTS
+  {
+    { [{ABC}];  ;root                ;Element ;Text     }
+    { [{DEF}];1 ;DataExchDef         ;Element ;Table   ;
+                                      SourceTable=Table1222;
+                                      Import::OnBeforeInsertRecord=BEGIN
+                                                                     "Data Exch. Def".VALIDATE(Type);
+                                                                     UndefinedVar := 42;
+                                                                   END;
+                                                                    }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const registry = new Map<number, string>([[1222, 'Data Exch. Def']]);
+    const diagnostics = validateUndefinedIdentifiers(code, registry);
+
+    // Table display name should NOT be flagged (it's resolved via registry)
+    const dataExchDefError = diagnostics.find(d => d.message.includes('Data Exch. Def'));
+    expect(dataExchDefError).toBeUndefined();
+
+    // But truly undefined identifier should still be caught
+    const undefinedVarError = diagnostics.find(d => d.message.includes('UndefinedVar'));
+    expect(undefinedVarError).toBeDefined();
+    expect(undefinedVarError!.message).toBe("Undefined identifier: 'UndefinedVar'");
+  });
+
+  it('should still suppress undefined identifiers in ELEMENTS triggers without registry (graceful degradation)', () => {
+    // Without registry: ELEMENTS triggers are still suppressed (legacy behavior)
+    const code = `OBJECT XMLport 1225 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+  }
+  ELEMENTS
+  {
+    { [{ABC}];  ;root                ;Element ;Text     }
+    { [{DEF}];1 ;DataExchDef         ;Element ;Table   ;
+                                      SourceTable=Table1222;
+                                      Import::OnBeforeInsertRecord=BEGIN
+                                                                     "Data Exch. Def".VALIDATE(Type);
+                                                                   END;
+                                                                    }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    // Without registry: ELEMENTS triggers are suppressed (no diagnostic)
+    const dataExchDefError = diagnostics.find(d => d.message.includes('Data Exch. Def'));
+    expect(dataExchDefError).toBeUndefined();
+  });
+
+  it('should resolve multiple elements display names with registry', () => {
+    // Multiple elements with different SourceTable values, all resolved via registry
+    const code = `OBJECT XMLport 1225 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+  }
+  ELEMENTS
+  {
+    { [{ABC}];  ;root                ;Element ;Text     }
+    { [{DEF}];1 ;DataExchDef         ;Element ;Table   ;
+                                      SourceTable=Table1222;
+                                      Import::OnBeforeInsertRecord=BEGIN
+                                                                     "Data Exch. Def".VALIDATE(Type);
+                                                                   END;
+                                                                    }
+    { [{GHI}];2 ;DataExchLineDef     ;Element ;Table   ;
+                                      SourceTable=Table1227;
+                                      Export::OnBeforePassField=BEGIN
+                                                                  "Data Exch. Line Def".VALIDATE(Code);
+                                                                END;
+                                                                 }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const registry = new Map<number, string>([
+      [1222, 'Data Exch. Def'],
+      [1227, 'Data Exch. Line Def']
+    ]);
+    const diagnostics = validateUndefinedIdentifiers(code, registry);
+
+    // Both table display names should be resolved
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should handle currXMLport implicit variable in ELEMENTS triggers', () => {
+    // currXMLport is an implicit builtin variable available in XMLport triggers
+    const code = `OBJECT XMLport 1225 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+  }
+  ELEMENTS
+  {
+    { [{ABC}];  ;root                ;Element ;Text     }
+    { [{DEF}];1 ;DataExchDef         ;Element ;Table   ;
+                                      SourceTable=Table1222;
+                                      Export::OnBeforePassField=BEGIN
+                                                                  IF "Data Exch. Def".Code = '' THEN
+                                                                    currXMLport.SKIP;
+                                                                END;
+                                                                 }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const registry = new Map<number, string>([[1222, 'Data Exch. Def']]);
+    const diagnostics = validateUndefinedIdentifiers(code, registry);
+
+    // currXMLport should not be flagged as undefined (it's a builtin)
+    const currXMLportError = diagnostics.find(d => d.message.includes('currXMLport'));
+    expect(currXMLportError).toBeUndefined();
+
+    // Table display name should not be flagged
+    const dataExchDefError = diagnostics.find(d => d.message.includes('Data Exch. Def'));
+    expect(dataExchDefError).toBeUndefined();
+
+    expect(diagnostics).toHaveLength(0);
   });
 });
