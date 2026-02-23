@@ -1381,7 +1381,7 @@ describe('SymbolTable', () => {
         expect(symbolTable.hasSymbol('ShowErrors')).toBe(true);
 
         const allSymbols = symbolTable.getAllSymbols();
-        expect(allSymbols.length).toBe(4);
+        expect(allSymbols.length).toBe(5);
         expect(allSymbols.some(s => s.name === 'Refresh')).toBe(true);
         expect(allSymbols.some(s => s.name === 'ShowErrors')).toBe(true);
       });
@@ -1431,7 +1431,7 @@ describe('SymbolTable', () => {
 
         expect(symbolTable.hasSymbol('Separator')).toBe(false);
         expect(symbolTable.hasSymbol('TestAction')).toBe(true);
-        expect(symbolTable.getAllSymbols().length).toBe(3);
+        expect(symbolTable.getAllSymbols().length).toBe(4);
       });
 
       it('should be case-insensitive for action name lookup', () => {
@@ -1730,7 +1730,7 @@ describe('Implicit System Variables', () => {
     expect(symbolTable.getSymbol('xRec')?.type).toBe('Record 18');
   });
 
-  it('should pre-populate Rec and CurrPage for Page objects', () => {
+  it('should pre-populate Rec, xRec, and CurrPage for Page objects', () => {
     const code = `OBJECT Page 21 Customer Card
 {
   CODE
@@ -1746,6 +1746,10 @@ describe('Implicit System Variables', () => {
     expect(symbolTable.hasSymbol('CurrPage')).toBe(true);
     expect(symbolTable.getSymbol('CurrPage')?.kind).toBe('variable');
     expect(symbolTable.getSymbol('CurrPage')?.type).toBe('Page');
+
+    expect(symbolTable.hasSymbol('xRec')).toBe(true);
+    expect(symbolTable.getSymbol('xRec')?.kind).toBe('variable');
+    expect(symbolTable.getSymbol('xRec')?.type).toBe('Record');
   });
 
   it('should pre-populate Rec and CurrReport for Report objects', () => {
