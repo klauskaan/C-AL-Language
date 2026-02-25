@@ -1053,3 +1053,75 @@ describe('TypeMismatchValidator - Real-World Patterns', () => {
     });
   });
 });
+
+describe('TypeMismatchValidator - Report DataItem Integration (Issue #571)', () => {
+  describe('DataItem variable assignments', () => {
+    it('should not flag type mismatch when named DataItem (Record 7190) is assigned to Record 7190 variable', () => {
+      // This is the key regression test for Issue #571.
+      // Before the fix: Named DataItem variables have tableId undefined, causing them to resolve
+      // as generic Record (tableId=0). When assigned to a Record 7190 variable, the validator
+      // reports a false positive "Type mismatch: cannot assign Record to Record 7190".
+      // After the fix: Named DataItem variables have tableId=7190, resolving as Record 7190,
+      // and the assignment is correctly recognized as compatible.
+      const code = `OBJECT Report 1306 Exp. Mapping
+{
+  DATASET
+  {
+    { 1000;    ;DataItem;Data Exch.               ;
+               DataItemTable=Table7190 }
+  }
+  CODE
+  {
+    PROCEDURE ProcessRecord@1();
+    VAR
+      TempRecord : Record 7190;
+    BEGIN
+      TempRecord := "Data Exch.";
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+      const diagnostics = validateTypeMismatch(code);
+
+      // Pattern B: Specifically checking that no type mismatch is reported for this assignment
+      const dataExchMismatch = diagnostics.find(d =>
+        d.message.includes('Type mismatch') &&
+        (d.message.includes('Data Exch.') || d.message.includes('TempRecord'))
+      );
+      expect(dataExchMismatch).toBeUndefined();
+    });
+
+    it('should detect type mismatch when named DataItem (Record 18) is assigned to Record 27 variable', () => {
+      const code = `OBJECT Report 50001 Test
+{
+  DATASET
+  {
+    { 1000;    ;DataItem;Customer            ;
+               DataItemTable=Table18 }
+  }
+  CODE
+  {
+    PROCEDURE MismatchTest@1();
+    VAR
+      ItemRecord : Record 27;
+    BEGIN
+      ItemRecord := Customer;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+      const diagnostics = validateTypeMismatch(code);
+
+      // Should correctly detect mismatch between Record 18 and Record 27
+      const mismatch = diagnostics.find(d => d.message.includes('Type mismatch'));
+      expect(mismatch).toBeDefined();
+      expect(mismatch!.message).toContain('Record');
+    });
+  });
+});

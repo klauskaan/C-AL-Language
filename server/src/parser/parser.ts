@@ -6443,6 +6443,7 @@ export class Parser {
     const startToken = nameTokens[0];
     const endToken = nameTokens[nameTokens.length - 1];
 
+    const tableId = this.extractDataItemTableId(restTokens);
     return {
       type: 'VariableDeclaration',
       startToken,
@@ -6452,7 +6453,8 @@ export class Parser {
         type: 'DataType',
         startToken,
         endToken: startToken,
-        typeName: 'Record',
+        typeName: tableId !== null ? `Record ${tableId}` : 'Record',
+        ...(tableId !== null && { tableId }),
       },
     };
   }
