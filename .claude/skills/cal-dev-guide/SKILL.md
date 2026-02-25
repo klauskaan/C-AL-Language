@@ -313,18 +313,18 @@ Use this decision tree when writing new suppression tests:
 
 ```
 Start: What does the test input look like?
-  |
-  |-- Only valid constructs (no identifiers that should be flagged)?
-  |   --> Pattern A: toHaveLength(0)
-  |
-  |-- Mix of flagged and unflagged identifiers?
-  |   --> Pattern B: find() + toBeUndefined()
-  |
-  |-- Complex scenario needing both specific documentation AND total count safety?
-  |   --> Pattern C: Hybrid (rare -- see Pattern C "When NOT to use" below)
-  |
-  +-- Still unsure?
-      --> Default to Pattern A. Upgrade to B if a bug reveals
+  │
+  ├─▶ Only valid constructs (no identifiers that should be flagged)?
+  │   └─▶ Pattern A: toHaveLength(0)
+  │
+  ├─▶ Mix of flagged and unflagged identifiers?
+  │   └─▶ Pattern B: find() + toBeUndefined()
+  │
+  ├─▶ Complex scenario needing both specific documentation AND total count safety?
+  │   └─▶ Pattern C: Hybrid (rare -- see Pattern C "When NOT to use" below)
+  │
+  └─▶ Still unsure?
+      └─▶ Default to Pattern A. Upgrade to B if a bug reveals
           that a specific identifier matters.
 ```
 
