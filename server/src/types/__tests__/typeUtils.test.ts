@@ -1187,6 +1187,66 @@ describe('isAssignmentCompatible', () => {
       const target = createPrimitiveType(PrimitiveName.Integer);
       expect(isAssignmentCompatible(source, target)).toBe(true);
     });
+
+    it('should allow Char to Option', () => {
+      const source = createPrimitiveType(PrimitiveName.Char);
+      const target = createOptionType(['Open', 'Closed']);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Byte to Option', () => {
+      const source = createPrimitiveType(PrimitiveName.Byte);
+      const target = createOptionType(['Open', 'Closed']);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow BigInteger to Option', () => {
+      const source = createPrimitiveType(PrimitiveName.BigInteger);
+      const target = createOptionType(['Open', 'Closed']);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Decimal to Option', () => {
+      const source = createPrimitiveType(PrimitiveName.Decimal);
+      const target = createOptionType(['Open', 'Closed']);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Duration to Option', () => {
+      const source = createPrimitiveType(PrimitiveName.Duration);
+      const target = createOptionType(['Open', 'Closed']);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Option to Char', () => {
+      const source = createOptionType(['Open', 'Closed']);
+      const target = createPrimitiveType(PrimitiveName.Char);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Option to Byte', () => {
+      const source = createOptionType(['Open', 'Closed']);
+      const target = createPrimitiveType(PrimitiveName.Byte);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Option to BigInteger', () => {
+      const source = createOptionType(['Open', 'Closed']);
+      const target = createPrimitiveType(PrimitiveName.BigInteger);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Option to Decimal', () => {
+      const source = createOptionType(['Open', 'Closed']);
+      const target = createPrimitiveType(PrimitiveName.Decimal);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Option to Duration', () => {
+      const source = createOptionType(['Open', 'Closed']);
+      const target = createPrimitiveType(PrimitiveName.Duration);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
   });
 
   describe('Record compatibility', () => {
