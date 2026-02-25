@@ -70,6 +70,73 @@ describe('Parser - DataItem name extraction from DATASET section', () => {
     expect(names).toContain('PageLoop');
   });
 
+  it('should extract tableId from DataItemTable property for named DataItem', () => {
+    const code = `OBJECT Report 1306 Exp. Mapping
+{
+  DATASET
+  {
+    { 1000;    ;DataItem;Data Exch.               ;
+               DataItemTable=Table7190 }
+  }
+  CODE
+  {
+  }
+}`;
+
+    const { ast } = parseCode(code);
+
+    const variables = ast.object?.code?.variables ?? [];
+    const dataExchVar = variables.find(v => v.name === 'Data Exch.');
+
+    expect(dataExchVar).toBeDefined();
+    expect(dataExchVar!.dataType.tableId).toBe(7190);
+  });
+
+  it('should set typeName to "Record N" format for named DataItem with tableId', () => {
+    const code = `OBJECT Report 1306 Exp. Mapping
+{
+  DATASET
+  {
+    { 1000;    ;DataItem;Data Exch.               ;
+               DataItemTable=Table7190 }
+  }
+  CODE
+  {
+  }
+}`;
+
+    const { ast } = parseCode(code);
+
+    const variables = ast.object?.code?.variables ?? [];
+    const dataExchVar = variables.find(v => v.name === 'Data Exch.');
+
+    expect(dataExchVar).toBeDefined();
+    expect(dataExchVar!.dataType.typeName).toBe('Record 7190');
+  });
+
+  it('should have tableId undefined for named DataItem without DataItemTable property', () => {
+    const code = `OBJECT Report 50001 Test
+{
+  DATASET
+  {
+    { 6455;    ;DataItem;PageLoop            ;
+               CaptionML=ENU=Test }
+  }
+  CODE
+  {
+  }
+}`;
+
+    const { ast } = parseCode(code);
+
+    const variables = ast.object?.code?.variables ?? [];
+    const pageLoopVar = variables.find(v => v.name === 'PageLoop');
+
+    expect(pageLoopVar).toBeDefined();
+    expect(pageLoopVar!.dataType.tableId).toBeUndefined();
+    expect(pageLoopVar!.dataType.typeName).toBe('Record');
+  });
+
   it('should extract multiple named DataItems into code.variables', () => {
     const code = `OBJECT Report 50001 Test
 {
