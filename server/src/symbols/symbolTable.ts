@@ -507,7 +507,7 @@ export class SymbolTable {
    * These variables are always available in specific object types but are never
    * explicitly declared in C/AL source code.
    *
-   * - Table:   Rec, xRec
+   * - Table:   Rec, xRec, CurrFieldNo
    * - Page:    Rec, xRec, CurrPage
    * - Report:  Rec, CurrReport
    * - XMLport: currXMLport
@@ -529,6 +529,7 @@ export class SymbolTable {
       case ObjectKind.Table:
         inject('Rec', `Record ${objectId}`);
         inject('xRec', `Record ${objectId}`);
+        inject('CurrFieldNo', 'Integer');
         break;
       case ObjectKind.Page:
         inject('Rec', 'Record');
