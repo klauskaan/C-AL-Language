@@ -891,26 +891,40 @@ function areUnknownTypesEqual(typeA: UnknownType, typeB: UnknownType): boolean {
 // ============================================================================
 
 /**
+ * Set of primitive type names that participate in C/AL numeric interoperability.
+ * Per Microsoft's C/AL specification, all numeric types are mutually assignable
+ * with implicit truncation/conversion at runtime.
+ */
+const NUMERIC_PRIMITIVE_NAMES: ReadonlySet<PrimitiveName> = new Set([
+  PrimitiveName.Char,
+  PrimitiveName.Byte,
+  PrimitiveName.Integer,
+  PrimitiveName.BigInteger,
+  PrimitiveName.Decimal,
+  PrimitiveName.Duration,
+]);
+
+/**
+ * Checks if a primitive type is a numeric type.
+ */
+function isNumericPrimitiveType(name: PrimitiveName): boolean {
+  return NUMERIC_PRIMITIVE_NAMES.has(name);
+}
+
+/**
  * Determines if a source type can be assigned to a target type according to
  * C/AL type compatibility rules.
  *
  * This function implements C/AL type compatibility rules:
  * 1. Identical types are always compatible
  * 2. Unknown types always return true (bail out)
- * 3. Numeric widening: Char → Integer, Byte → Integer, Integer → BigInteger,
- *    Integer → Decimal, BigInteger → Decimal
- * 4. Numeric implicit narrowing: Integer → Char, Integer → Byte (ordinal types),
- *    Integer → Duration (Duration is stored as milliseconds),
- *    BigInteger → Duration (BigInteger is Duration's underlying type)
- * 5. Duration numeric widening: Duration → BigInteger (symmetric inverse of BigInteger → Duration),
- *    Duration → Decimal (evidenced by real NAV code assigning DateTime − DateTime result to Decimal)
- * 6. Numeric narrowing: Decimal → Integer is NOT allowed
- * 7. Text/Code interoperability: Text ↔ Code (bidirectional)
- * 8. Text length: Any length to any length (runtime truncates)
- * 9. Char to Text/Code conversion
- * 10. Option/Integer interoperability (bidirectional)
- * 11. Record compatibility by tableId (isTemporary ignored)
- * 12. Codeunit compatibility by ID
+ * 3. All numeric types (Char, Byte, Integer, BigInteger, Decimal, Duration) are mutually assignable
+ * 4. Text/Code interoperability: Text ↔ Code (bidirectional)
+ * 5. Text length: Any length to any length (runtime truncates)
+ * 6. Char to Text/Code conversion
+ * 7. Option/Numeric interoperability (bidirectional with all numeric types)
+ * 8. Record compatibility by tableId (isTemporary ignored)
+ * 9. Codeunit compatibility by ID
  *
  * @param sourceType - The type being assigned from
  * @param targetType - The type being assigned to
@@ -924,11 +938,11 @@ function areUnknownTypesEqual(typeA: UnknownType, typeB: UnknownType): boolean {
  * ); // true
  *
  * @example
- * // Incompatible: Decimal to Integer
+ * // Compatible: Decimal to Integer (C/AL allows with implicit conversion)
  * isAssignmentCompatible(
  *   createPrimitiveType(PrimitiveName.Decimal),
  *   createPrimitiveType(PrimitiveName.Integer)
- * ); // false
+ * ); // true
  */
 export function isAssignmentCompatible(sourceType: Type, targetType: Type): boolean {
   // Bail out for unknown types (cannot validate)
@@ -943,84 +957,8 @@ export function isAssignmentCompatible(sourceType: Type, targetType: Type): bool
 
   // Numeric type compatibility
   if (isPrimitiveType(targetType) && isPrimitiveType(sourceType)) {
-    // Char → Integer
-    if (sourceType.name === PrimitiveName.Char && targetType.name === PrimitiveName.Integer) {
+    if (isNumericPrimitiveType(sourceType.name) && isNumericPrimitiveType(targetType.name)) {
       return true;
-    }
-
-    // Byte → Integer
-    if (sourceType.name === PrimitiveName.Byte && targetType.name === PrimitiveName.Integer) {
-      return true;
-    }
-
-    // Integer → BigInteger
-    if (sourceType.name === PrimitiveName.Integer && targetType.name === PrimitiveName.BigInteger) {
-      return true;
-    }
-
-    // Integer → Decimal
-    if (sourceType.name === PrimitiveName.Integer && targetType.name === PrimitiveName.Decimal) {
-      return true;
-    }
-
-    // BigInteger → Decimal
-    if (sourceType.name === PrimitiveName.BigInteger && targetType.name === PrimitiveName.Decimal) {
-      return true;
-    }
-
-    // Char → BigInteger (transitive: Char → Integer → BigInteger)
-    if (sourceType.name === PrimitiveName.Char && targetType.name === PrimitiveName.BigInteger) {
-      return true;
-    }
-
-    // Char → Decimal (transitive: Char → Integer → Decimal)
-    if (sourceType.name === PrimitiveName.Char && targetType.name === PrimitiveName.Decimal) {
-      return true;
-    }
-
-    // Byte → BigInteger (transitive: Byte → Integer → BigInteger)
-    if (sourceType.name === PrimitiveName.Byte && targetType.name === PrimitiveName.BigInteger) {
-      return true;
-    }
-
-    // Byte → Decimal (transitive: Byte → Integer → Decimal)
-    if (sourceType.name === PrimitiveName.Byte && targetType.name === PrimitiveName.Decimal) {
-      return true;
-    }
-
-    // Integer → Char (C/AL allows integer assignment to Char; ordinal types are interchangeable)
-    if (sourceType.name === PrimitiveName.Integer && targetType.name === PrimitiveName.Char) {
-      return true;
-    }
-
-    // Integer → Byte (same as Integer → Char; ordinal types are interchangeable)
-    if (sourceType.name === PrimitiveName.Integer && targetType.name === PrimitiveName.Byte) {
-      return true;
-    }
-
-    // Integer → Duration (Duration is stored as milliseconds; integer literal assignment is idiomatic in C/AL)
-    if (sourceType.name === PrimitiveName.Integer && targetType.name === PrimitiveName.Duration) {
-      return true;
-    }
-
-    // BigInteger → Duration (Duration is stored as milliseconds; BigInteger is Duration's underlying type)
-    if (sourceType.name === PrimitiveName.BigInteger && targetType.name === PrimitiveName.Duration) {
-      return true;
-    }
-
-    // Duration → BigInteger (Duration's underlying type is BigInteger; symmetric inverse of BigInteger → Duration)
-    if (sourceType.name === PrimitiveName.Duration && targetType.name === PrimitiveName.BigInteger) {
-      return true;
-    }
-
-    // Duration → Decimal (evidenced by real NAV code: DateTime subtraction result assigned to Decimal variable)
-    if (sourceType.name === PrimitiveName.Duration && targetType.name === PrimitiveName.Decimal) {
-      return true;
-    }
-
-    // Decimal → Integer is NOT allowed (narrowing)
-    if (sourceType.name === PrimitiveName.Decimal && targetType.name === PrimitiveName.Integer) {
-      return false;
     }
   }
 
@@ -1036,12 +974,12 @@ export function isAssignmentCompatible(sourceType: Type, targetType: Type): bool
     return true;
   }
 
-  // Option/Integer interoperability (bidirectional)
-  if (isOptionType(targetType) && isPrimitiveType(sourceType) && sourceType.name === PrimitiveName.Integer) {
+  // Option/Numeric interoperability (bidirectional)
+  if (isOptionType(targetType) && isPrimitiveType(sourceType) && isNumericPrimitiveType(sourceType.name)) {
     return true;
   }
 
-  if (isPrimitiveType(targetType) && targetType.name === PrimitiveName.Integer && isOptionType(sourceType)) {
+  if (isPrimitiveType(targetType) && isNumericPrimitiveType(targetType.name) && isOptionType(sourceType)) {
     return true;
   }
 
