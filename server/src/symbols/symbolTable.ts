@@ -256,6 +256,17 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
       });
     }
 
+    // Add return value variable to procedure scope (if named return)
+    if (node.returnValueName && node.returnType && node.returnValueToken) {
+      procScope.addSymbol({
+        name: node.returnValueName,
+        kind: 'variable',
+        token: node.returnValueToken,
+        type: node.returnType.typeName,
+        resolvedType: resolveType(node.returnType)
+      });
+    }
+
     // Switch to procedure scope to collect local variables, then restore
     const prevScope = this.currentScope;
     this.currentScope = procScope;

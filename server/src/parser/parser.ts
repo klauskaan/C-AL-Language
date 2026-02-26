@@ -2934,7 +2934,7 @@ export class Parser {
 
     const parameters = this.parseProcedureParameters();
 
-    const returnType = this.parseProcedureReturnType();
+    const { returnType, returnValueName, returnValueToken } = this.parseProcedureReturnType();
 
     // Parse local variables
     const variables: VariableDeclaration[] = [];
@@ -2964,6 +2964,8 @@ export class Parser {
               nameToken,
               parameters,
               returnType,
+              returnValueName,
+              returnValueToken,
               isLocal,
               variables,
               body,
@@ -2995,6 +2997,8 @@ export class Parser {
       nameToken,
       parameters,
       returnType,
+      returnValueName,
+      returnValueToken,
       isLocal,
       variables,
       body,
@@ -3129,11 +3133,51 @@ export class Parser {
 
   /**
    * Parse optional return type for procedure/function declarations
+   * Supports named return values: "Name : Type" or "Name@N : Type"
    */
-  private parseProcedureReturnType(): DataType | null {
+  private parseProcedureReturnType(): { returnType: DataType | null; returnValueName?: string; returnValueToken?: Token } {
     let returnType: DataType | null = null;
+    let returnValueName: string | undefined;
+    let returnValueToken: Token | undefined;
 
-    if (this.check(TokenType.Colon)) {
+    // Check for named return value pattern: Identifier[@N] : Type
+    // Need to distinguish from just ": Type"
+    if (this.canBeUsedAsIdentifier()) {
+      // Lookahead to check if this is a named return value
+      // Pattern 1: Name : Type
+      const next1 = this.peekNextMeaningfulToken(1);
+      if (next1 && next1.type === TokenType.Colon) {
+        // This is a named return value
+        returnValueToken = this.advance();
+        returnValueName = returnValueToken.value;
+
+        // Skip @number if present (e.g., Result@1000)
+        this.skipAutoNumberSuffix();
+
+        // Now consume colon and parse type
+        this.advance(); // consume :
+        returnType = this.parseDataType();
+      } else {
+        // Pattern 2: Name@N : Type
+        const next2 = this.peekNextMeaningfulToken(2);
+        const next3 = this.peekNextMeaningfulToken(3);
+        if (next1 && next1.value === '@' && next2 && next2.type === TokenType.Integer && next3 && next3.type === TokenType.Colon) {
+          // This is a named return value with @number
+          returnValueToken = this.advance();
+          returnValueName = returnValueToken.value;
+
+          // Skip @number
+          this.skipAutoNumberSuffix();
+
+          // Now consume colon and parse type
+          this.advance(); // consume :
+          returnType = this.parseDataType();
+        }
+      }
+    }
+
+    // If we didn't find a named return value, check for plain ": Type"
+    if (!returnType && this.check(TokenType.Colon)) {
       this.advance();
       returnType = this.parseDataType();
     }
@@ -3143,7 +3187,7 @@ export class Parser {
       this.advance();
     }
 
-    return returnType;
+    return { returnType, returnValueName, returnValueToken };
   }
 
   /**
