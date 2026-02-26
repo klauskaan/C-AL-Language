@@ -1460,21 +1460,21 @@ describe('UndefinedIdentifierValidator - field-reference arguments in record met
         VAR
           Rec : Record 18;
         BEGIN
-          Rec.CALCFIELDS("Balance (LCY)", Amount, "Debit Amount");
+          Rec.CALCFIELDS(Balance, Amount, Quantity);
         END;
       }
     }`;
 
     const diagnostics = validateUndefinedIdentifiers(code);
 
-    const balanceError = diagnostics.find(d => d.message.includes('Balance (LCY)') || d.message.includes('"Balance (LCY)"'));
+    const balanceError = diagnostics.find(d => d.message.includes("'Balance'"));
     expect(balanceError).toBeUndefined();
 
     const amountError = diagnostics.find(d => d.message.includes("'Amount'"));
     expect(amountError).toBeUndefined();
 
-    const debitError = diagnostics.find(d => d.message.includes('Debit Amount') || d.message.includes('"Debit Amount"'));
-    expect(debitError).toBeUndefined();
+    const quantityError = diagnostics.find(d => d.message.includes("'Quantity'"));
+    expect(quantityError).toBeUndefined();
   });
 
   it('should not flag any field args in CALCSUMS', () => {
@@ -1484,18 +1484,21 @@ describe('UndefinedIdentifierValidator - field-reference arguments in record met
         VAR
           Rec : Record 18;
         BEGIN
-          Rec.CALCSUMS("Amount (LCY)", Quantity);
+          Rec.CALCSUMS(Amount, Quantity, Balance);
         END;
       }
     }`;
 
     const diagnostics = validateUndefinedIdentifiers(code);
 
-    const amountError = diagnostics.find(d => d.message.includes('Amount (LCY)') || d.message.includes('"Amount (LCY)"'));
+    const amountError = diagnostics.find(d => d.message.includes("'Amount'"));
     expect(amountError).toBeUndefined();
 
     const quantityError = diagnostics.find(d => d.message.includes("'Quantity'"));
     expect(quantityError).toBeUndefined();
+
+    const balanceError = diagnostics.find(d => d.message.includes("'Balance'"));
+    expect(balanceError).toBeUndefined();
   });
 
   it('should not flag any field args in SETCURRENTKEY', () => {
@@ -1505,18 +1508,21 @@ describe('UndefinedIdentifierValidator - field-reference arguments in record met
         VAR
           Rec : Record 18;
         BEGIN
-          Rec.SETCURRENTKEY("Posting Date", "Document No.");
+          Rec.SETCURRENTKEY(PostingDate, DocumentNo, Amount);
         END;
       }
     }`;
 
     const diagnostics = validateUndefinedIdentifiers(code);
 
-    const postingDateError = diagnostics.find(d => d.message.includes('Posting Date') || d.message.includes('"Posting Date"'));
+    const postingDateError = diagnostics.find(d => d.message.includes("'PostingDate'"));
     expect(postingDateError).toBeUndefined();
 
-    const docNoError = diagnostics.find(d => d.message.includes('Document No.') || d.message.includes('"Document No."'));
+    const docNoError = diagnostics.find(d => d.message.includes("'DocumentNo'"));
     expect(docNoError).toBeUndefined();
+
+    const amountError = diagnostics.find(d => d.message.includes("'Amount'"));
+    expect(amountError).toBeUndefined();
   });
 
   it('should not flag first arg (field) in VALIDATE but still flag undefined second arg', () => {
@@ -1757,19 +1763,18 @@ describe('UndefinedIdentifierValidator - field-reference arguments in record met
         PROCEDURE TestProc();
         VAR
           Rec : Record 18;
-          OtherRec : Record 21;
         BEGIN
-          Rec.COPYFILTER("Field A", OtherRec."Field B");
+          Rec.COPYFILTER(FieldA, FieldB);
         END;
       }
     }`;
 
     const diagnostics = validateUndefinedIdentifiers(code);
 
-    const fieldAError = diagnostics.find(d => d.message.includes('Field A') || d.message.includes('"Field A"'));
+    const fieldAError = diagnostics.find(d => d.message.includes("'FieldA'"));
     expect(fieldAError).toBeUndefined();
 
-    const fieldBError = diagnostics.find(d => d.message.includes('Field B') || d.message.includes('"Field B"'));
+    const fieldBError = diagnostics.find(d => d.message.includes("'FieldB'"));
     expect(fieldBError).toBeUndefined();
   });
 });
