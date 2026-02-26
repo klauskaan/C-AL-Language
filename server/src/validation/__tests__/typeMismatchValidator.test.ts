@@ -726,8 +726,7 @@ describe('TypeMismatchValidator - Edge Cases', () => {
       expect(intError).toBeDefined();
     });
 
-    // TODO: Fix - table triggers are not being visited properly
-    it.skip('should handle assignments in triggers', () => {
+    it('should handle assignments in triggers', () => {
       const code = `OBJECT Table 50000 MyTable {
         PROPERTIES {
         }
@@ -735,7 +734,7 @@ describe('TypeMismatchValidator - Edge Cases', () => {
           { 1 ; ; MyField ; Integer }
         }
         CODE {
-          OnInsert();
+          TRIGGER OnInsert@1();
           VAR
             x : Integer;
           BEGIN

@@ -3237,6 +3237,9 @@ export class Parser {
     const nameToken = this.advance();
     const name = nameToken.value;
 
+    // Skip @number if present (C/AL auto-numbering)
+    this.skipAutoNumberSuffix();
+
     // Skip parentheses if present (e.g., OnInsert())
     if (this.check(TokenType.LeftParen)) {
       this.advance();

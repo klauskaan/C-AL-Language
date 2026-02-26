@@ -72,7 +72,7 @@ describe('FoldingRangeProvider', () => {
       expect(procRange?.kind).toBeUndefined(); // Procedures don't use FoldingRangeKind.Region
     });
 
-    it.skip('should create folding range for trigger', () => {
+    it('should create folding range for trigger', () => {
       const code = `OBJECT Table 50000 Test
 {
   CODE
