@@ -13,13 +13,13 @@
  * 5. Known issues (CREATEGUID vs CREATEGUIDS typo, CALCTIME not in C/AL)
  */
 
-import { BUILTIN_FUNCTIONS, RECORD_METHODS } from '../builtinData';
+import { BUILTIN_FUNCTIONS, RECORD_METHODS, SYSTEM_TYPE_KEYWORDS } from '../builtinData';
 import { BuiltinRegistry } from '../builtinRegistry';
 
 describe('Builtins Module', () => {
   describe('Data Integrity - BUILTIN_FUNCTIONS', () => {
-    it('should have exactly 80 global function entries', () => {
-      expect(BUILTIN_FUNCTIONS).toHaveLength(80);
+    it('should have exactly 86 global function entries', () => {
+      expect(BUILTIN_FUNCTIONS).toHaveLength(86);
     });
 
     it('should have all required fields for each entry', () => {
@@ -143,9 +143,9 @@ describe('Builtins Module', () => {
   });
 
   describe('Data Integrity - RECORD_METHODS', () => {
-    it('should have exactly 55 record method entries', () => {
-      // 53 existing + RENAME (added as dual-purpose) + FIELDACTIVE
-      expect(RECORD_METHODS).toHaveLength(55);
+    it('should have exactly 56 record method entries', () => {
+      // 53 existing + RENAME (added as dual-purpose) + FIELDACTIVE + COPYFILTER
+      expect(RECORD_METHODS).toHaveLength(56);
     });
 
     it('should have all required fields for each entry', () => {
@@ -386,6 +386,10 @@ describe('Builtins Module', () => {
       registry = new BuiltinRegistry();
     });
 
+    it('should have exactly 13 system type keyword entries', () => {
+      expect(SYSTEM_TYPE_KEYWORDS.size).toBe(13);
+    });
+
     it('should recognize DATABASE as a known builtin', () => {
       expect(registry.isKnownBuiltin('DATABASE')).toBe(true);
     });
@@ -512,6 +516,115 @@ describe('Builtins Module', () => {
       expect(recordCopy).toBeDefined();
       expect(globalCopy?.category).toBe('file');
       expect(recordCopy?.category).toBe('record');
+    });
+  });
+
+  describe('Missing Builtin Identifiers (#573)', () => {
+    let registry: BuiltinRegistry;
+
+    beforeEach(() => {
+      registry = new BuiltinRegistry();
+    });
+
+    describe('New SYSTEM_FUNCTIONS', () => {
+      it('should recognize SENDTRACETAG as a global function with system category', () => {
+        expect(registry.isGlobalFunction('SENDTRACETAG')).toBe(true);
+        const func = registry.getGlobalFunction('SENDTRACETAG');
+        expect(func).toBeDefined();
+        expect(func?.category).toBe('system');
+      });
+
+      it('should recognize CURRFIELDNO as a global function with system category and empty signature', () => {
+        expect(registry.isGlobalFunction('CURRFIELDNO')).toBe(true);
+        const func = registry.getGlobalFunction('CURRFIELDNO');
+        expect(func).toBeDefined();
+        expect(func?.category).toBe('system');
+        expect(func?.signature).toBe('');
+      });
+
+      it('should recognize ISNULL as a global function with system category', () => {
+        expect(registry.isGlobalFunction('ISNULL')).toBe(true);
+        const func = registry.getGlobalFunction('ISNULL');
+        expect(func).toBeDefined();
+        expect(func?.category).toBe('system');
+      });
+
+      it('should recognize GETLASTERRORTEXT as a global function with system category', () => {
+        expect(registry.isGlobalFunction('GETLASTERRORTEXT')).toBe(true);
+        const func = registry.getGlobalFunction('GETLASTERRORTEXT');
+        expect(func).toBeDefined();
+        expect(func?.category).toBe('system');
+      });
+
+      it('should recognize USERSECURITYID as a global function with system category', () => {
+        expect(registry.isGlobalFunction('USERSECURITYID')).toBe(true);
+        const func = registry.getGlobalFunction('USERSECURITYID');
+        expect(func).toBeDefined();
+        expect(func?.category).toBe('system');
+      });
+
+      it('should recognize HYPERLINK as a global function with system category', () => {
+        expect(registry.isGlobalFunction('HYPERLINK')).toBe(true);
+        const func = registry.getGlobalFunction('HYPERLINK');
+        expect(func).toBeDefined();
+        expect(func?.category).toBe('system');
+      });
+    });
+
+    describe('New SYSTEM_TYPE_KEYWORDS', () => {
+      it('should recognize VERBOSITY as a system type keyword', () => {
+        expect(registry.isSystemTypeKeyword('VERBOSITY')).toBe(true);
+        expect(registry.isKnownBuiltin('VERBOSITY')).toBe(true);
+      });
+
+      it('should recognize CLIENTTYPE as a system type keyword', () => {
+        expect(registry.isSystemTypeKeyword('CLIENTTYPE')).toBe(true);
+        expect(registry.isKnownBuiltin('CLIENTTYPE')).toBe(true);
+      });
+
+      it('should recognize TEXTENCODING as a system type keyword', () => {
+        expect(registry.isSystemTypeKeyword('TEXTENCODING')).toBe(true);
+        expect(registry.isKnownBuiltin('TEXTENCODING')).toBe(true);
+      });
+    });
+
+    describe('New RECORD_METHOD', () => {
+      it('should recognize COPYFILTER as a record method', () => {
+        expect(registry.isRecordMethod('COPYFILTER')).toBe(true);
+        const func = registry.getRecordMethod('COPYFILTER');
+        expect(func).toBeDefined();
+        expect(func?.category).toBe('record');
+      });
+    });
+
+    describe('Coexistence Tests', () => {
+      it('should have both COPYFILTER and COPYFILTERS as distinct record methods', () => {
+        const copyfilter = registry.getRecordMethod('COPYFILTER');
+        const copyfilters = registry.getRecordMethod('COPYFILTERS');
+
+        expect(copyfilter).toBeDefined();
+        expect(copyfilters).toBeDefined();
+        expect(copyfilter?.category).toBe('record');
+        expect(copyfilters?.category).toBe('record');
+
+        // Verify they are distinct entries
+        expect(copyfilter?.name).toBe('COPYFILTER');
+        expect(copyfilters?.name).toBe('COPYFILTERS');
+      });
+
+      it('should have both ISNULL and ISNULLGUID as distinct global functions', () => {
+        const isnull = registry.getGlobalFunction('ISNULL');
+        const isnullguid = registry.getGlobalFunction('ISNULLGUID');
+
+        expect(isnull).toBeDefined();
+        expect(isnullguid).toBeDefined();
+        expect(isnull?.category).toBe('system');
+        expect(isnullguid?.category).toBe('system');
+
+        // Verify they are distinct entries
+        expect(isnull?.name).toBe('ISNULL');
+        expect(isnullguid?.name).toBe('ISNULLGUID');
+      });
     });
   });
 });

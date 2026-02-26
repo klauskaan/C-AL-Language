@@ -289,6 +289,12 @@ const SYSTEM_FUNCTIONS: BuiltinFunction[] = [
     category: 'system'
   },
   {
+    name: 'USERSECURITYID',
+    signature: '(): GUID',
+    documentation: 'Returns the security ID (SID) of the current user.',
+    category: 'system'
+  },
+  {
     name: 'COMPANYNAME',
     signature: '(): Text',
     documentation: 'Returns the current company name.',
@@ -319,6 +325,18 @@ const SYSTEM_FUNCTIONS: BuiltinFunction[] = [
     category: 'system'
   },
   {
+    name: 'CURRFIELDNO',
+    signature: '',
+    documentation: 'System variable (not a function) that returns the field number of the current field during OnValidate triggers in table objects. Pragmatically placed here for builtin recognition; a proper fix would inject this as an implicit variable in Table scopes via injectImplicitVariables().',
+    category: 'system'
+  },
+  {
+    name: 'GETLASTERRORTEXT',
+    signature: '(): Text',
+    documentation: 'Returns the text of the last error that occurred.',
+    category: 'system'
+  },
+  {
     name: 'COPYARRAY',
     signature: '(NewArray, Array, Position [, Length])',
     documentation: 'Copies elements from one array to another.',
@@ -340,6 +358,12 @@ const SYSTEM_FUNCTIONS: BuiltinFunction[] = [
     name: 'GUIALLOWED',
     signature: '(): Boolean',
     documentation: 'Returns TRUE if a graphical user interface is available.',
+    category: 'system'
+  },
+  {
+    name: 'HYPERLINK',
+    signature: '(URL: Text)',
+    documentation: 'Opens the specified URL in the default browser.',
     category: 'system'
   },
   {
@@ -430,6 +454,18 @@ const SYSTEM_FUNCTIONS: BuiltinFunction[] = [
     name: 'SYSTEM',
     signature: '',
     documentation: 'Built-in system object providing access to system-level properties and methods (e.g. SYSTEM.VARIANT, SYSTEM.ISNULL). Used as a member expression receiver.',
+    category: 'system'
+  },
+  {
+    name: 'SENDTRACETAG',
+    signature: '(Tag: Text, Category: Text, Verbosity: Verbosity, Message: Text [, DataClassification: DataClassification])',
+    documentation: 'Sends a trace tag to the telemetry system for diagnostics. Introduced in BC14.',
+    category: 'system'
+  },
+  {
+    name: 'ISNULL',
+    signature: '(DotNetObject): Boolean',
+    documentation: 'Returns TRUE if the DotNet variable has been set to null.',
     category: 'system'
   }
 ];
@@ -663,6 +699,12 @@ export const RECORD_METHODS: BuiltinFunction[] = [
     name: 'COPYFILTERS',
     signature: '(FromRecord)',
     documentation: 'Copies filters from another record variable.',
+    category: 'record'
+  },
+  {
+    name: 'COPYFILTER',
+    signature: '(FromField, ToField)',
+    documentation: 'Copies the filter for a single field from another record variable.',
     category: 'record'
   },
   {
@@ -920,6 +962,9 @@ export const SYSTEM_TYPE_KEYWORDS: Set<string> = new Set([
   'TABLECONNECTIONTYPE', // Enum for SETDEFAULTTABLECONNECTION
   'DATACLASSIFICATION',  // BC14 (NAV 2018+) enum: DataClassification::CustomerContent
   'OBSOLETESTATE',       // BC14 enum: ObsoleteState::Pending, ObsoleteState::Removed
+  'VERBOSITY',           // Enum for SENDTRACETAG: Verbosity::Normal, Verbosity::Warning, etc. (BC14)
+  'CLIENTTYPE',          // Enum for CURRENTCLIENTTYPE: CLIENTTYPE::Windows, CLIENTTYPE::Web, etc.
+  'TEXTENCODING',        // Enum for file I/O encoding: TEXTENCODING::MSDos, TEXTENCODING::UTF8, etc.
 ]);
 
 /**
