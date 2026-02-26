@@ -45,6 +45,7 @@ const FIELD_REFERENCE_METHODS: Map<string, 'first' | 'all'> = new Map([
   ['VALIDATE', 'first'],
   ['TESTFIELD', 'first'],
   ['FIELDERROR', 'first'],
+  ['FIELDNAME', 'first'],
   ['FIELDNO', 'first'],
   ['FIELDCAPTION', 'first'],
   ['FIELDACTIVE', 'first'],
@@ -52,6 +53,7 @@ const FIELD_REFERENCE_METHODS: Map<string, 'first' | 'all'> = new Map([
   ['SETCURRENTKEY', 'all'],
   ['CALCFIELDS', 'all'],
   ['CALCSUMS', 'all'],
+  ['COPYFILTER', 'all'],
 ]);
 
 /**
