@@ -564,17 +564,12 @@ describe('SetLiteralScanner - Edge Cases', () => {
     expect(context.contextMap.size).toBe(0);
   });
 
-  it.skip('should handle enum-style set literals', () => {
-    // SKIPPED: Parser limitation - Option type with scope resolution (::)
-    // not fully supported yet. The parser fails to parse the procedure body
-    // containing "Status::Open", so no SetLiteral nodes are created.
-    // This is a pre-existing parser issue, not a scanner bug.
-
+  it('should handle enum-style set literals', () => {
     const code = `OBJECT Codeunit 50000 Test {
       CODE {
         PROCEDURE Test();
         VAR
-          Status : Option Open,Released,Closed;
+          Status : Option;
         BEGIN
           IF Status IN [Status::Open, Status::Released] THEN;
         END;

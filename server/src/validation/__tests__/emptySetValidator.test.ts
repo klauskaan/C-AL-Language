@@ -70,10 +70,7 @@ describe('EmptySetValidator - Basic Empty Sets', () => {
       expect(diagnostics[0].range).toBeDefined();
     });
 
-    // TODO: Parser limitation - set literals only recognized on RIGHT side of IN operator
-    // The parser's special handling (parser.ts:2755) only triggers for "IN [" sequence
-    // Would require parser enhancement to support "[ ... ] IN ..." pattern
-    it.skip('should detect empty set on left operand: [] IN x', () => {
+    it('should detect empty set on left operand: [] IN x', () => {
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           PROCEDURE Test();
@@ -245,7 +242,7 @@ describe('EmptySetValidator - Should NOT produce diagnostic', () => {
       CODE {
         PROCEDURE Test();
         VAR
-          Status : Option Open,Released,Closed;
+          Status : Option;
         BEGIN
           IF Status IN [Status::Open] THEN
             EXIT;
@@ -263,7 +260,7 @@ describe('EmptySetValidator - Should NOT produce diagnostic', () => {
       CODE {
         PROCEDURE Test();
         VAR
-          Status : Option Open,Released,Closed;
+          Status : Option;
         BEGIN
           IF Status IN [Status::Open, Status::Released] THEN
             ProcessDocument();
