@@ -1731,6 +1731,47 @@ describe('UndefinedIdentifierValidator - field-reference arguments in record met
     const postingDateError = diagnostics.find(d => d.message.includes('Posting Date') || d.message.includes('"Posting Date"'));
     expect(postingDateError).toBeUndefined();
   });
+
+  it('should not flag first arg (field) in FIELDNAME', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+          FieldName : Text;
+        BEGIN
+          FieldName := Rec.FIELDNAME("Primary Key");
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const primaryKeyError = diagnostics.find(d => d.message.includes('Primary Key') || d.message.includes('"Primary Key"'));
+    expect(primaryKeyError).toBeUndefined();
+  });
+
+  it('should not flag field arguments in COPYFILTER', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+          OtherRec : Record 21;
+        BEGIN
+          Rec.COPYFILTER("Field A", OtherRec."Field B");
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const fieldAError = diagnostics.find(d => d.message.includes('Field A') || d.message.includes('"Field A"'));
+    expect(fieldAError).toBeUndefined();
+
+    const fieldBError = diagnostics.find(d => d.message.includes('Field B') || d.message.includes('"Field B"'));
+    expect(fieldBError).toBeUndefined();
+  });
 });
 
 describe('UndefinedIdentifierValidator - Property Trigger Scoping', () => {
