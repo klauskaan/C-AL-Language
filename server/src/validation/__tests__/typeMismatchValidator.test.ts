@@ -1034,7 +1034,7 @@ describe('TypeMismatchValidator - Real-World Patterns', () => {
         CODE {
           PROCEDURE SetDocumentType();
           VAR
-            DocType : Option Quote,Order,Invoice;
+            DocType : Option;
             TypeValue : Integer;
           BEGIN
             DocType := 0;
