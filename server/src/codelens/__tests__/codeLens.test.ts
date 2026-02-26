@@ -39,12 +39,16 @@ describe('CodeLensProvider', () => {
 
     it('should return empty array for file with no declarations', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-}
-CODE
-  BEGIN
-  END.`;
+  FIELDS
+  {
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
       const lenses = provider.getCodeLenses(doc, ast);
@@ -136,15 +140,19 @@ CODE
       expect(lenses.length).toBe(2);
     });
 
-    it.skip('should show CodeLens for table field', () => {
+    it('should show CodeLens for table field', () => {
       const code = `OBJECT Table 50000 Test
-FIELDS
 {
-  { 1   ;   ;No              ;Code20        }
-}
-CODE
-  BEGIN
-  END.`;
+  FIELDS
+  {
+    { 1   ;   ;No              ;Code20        }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
       const doc = createDocument(code);
       const { ast } = parseContent(code);
       const lenses = provider.getCodeLenses(doc, ast);
