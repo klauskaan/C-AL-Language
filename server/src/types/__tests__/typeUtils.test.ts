@@ -1065,11 +1065,17 @@ describe('isAssignmentCompatible', () => {
     });
   });
 
-  describe('Numeric narrowing (incompatible)', () => {
-    it('should reject Decimal to Integer', () => {
+  describe('Numeric narrowing (C/AL allows with implicit FORMAT)', () => {
+    it('should allow Decimal to Integer', () => {
       const source = createPrimitiveType(PrimitiveName.Decimal);
       const target = createPrimitiveType(PrimitiveName.Integer);
-      expect(isAssignmentCompatible(source, target)).toBe(false);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Decimal to BigInteger', () => {
+      const source = createPrimitiveType(PrimitiveName.Decimal);
+      const target = createPrimitiveType(PrimitiveName.BigInteger);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
     });
   });
 
@@ -1110,28 +1116,28 @@ describe('isAssignmentCompatible', () => {
       expect(isAssignmentCompatible(source, target)).toBe(true);
     });
 
-    it('should reject Decimal to Duration (no evidence in C/AL production code)', () => {
+    it('should allow Decimal to Duration (C/AL allows numeric conversions)', () => {
       const source = createPrimitiveType(PrimitiveName.Decimal);
       const target = createPrimitiveType(PrimitiveName.Duration);
-      expect(isAssignmentCompatible(source, target)).toBe(false);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
     });
 
-    it('should reject Duration to Integer (Duration is BigInteger underneath, no narrowing to Integer)', () => {
+    it('should allow Duration to Integer (C/AL allows numeric narrowing)', () => {
       const source = createPrimitiveType(PrimitiveName.Duration);
       const target = createPrimitiveType(PrimitiveName.Integer);
-      expect(isAssignmentCompatible(source, target)).toBe(false);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
     });
 
-    it('should reject Decimal to Char (only Integer narrows to Char)', () => {
+    it('should allow Decimal to Char (C/AL allows numeric narrowing)', () => {
       const source = createPrimitiveType(PrimitiveName.Decimal);
       const target = createPrimitiveType(PrimitiveName.Char);
-      expect(isAssignmentCompatible(source, target)).toBe(false);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
     });
 
-    it('should reject Decimal to Byte (only Integer narrows to Byte)', () => {
+    it('should allow Decimal to Byte (C/AL allows numeric narrowing)', () => {
       const source = createPrimitiveType(PrimitiveName.Decimal);
       const target = createPrimitiveType(PrimitiveName.Byte);
-      expect(isAssignmentCompatible(source, target)).toBe(false);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
     });
   });
 
@@ -1194,33 +1200,15 @@ describe('isAssignmentCompatible', () => {
       expect(isAssignmentCompatible(source, target)).toBe(true);
     });
 
-    it('should allow Byte to Option', () => {
-      const source = createPrimitiveType(PrimitiveName.Byte);
-      const target = createOptionType(['Open', 'Closed']);
-      expect(isAssignmentCompatible(source, target)).toBe(true);
-    });
-
-    it('should allow BigInteger to Option', () => {
-      const source = createPrimitiveType(PrimitiveName.BigInteger);
-      const target = createOptionType(['Open', 'Closed']);
-      expect(isAssignmentCompatible(source, target)).toBe(true);
-    });
-
-    it('should allow Decimal to Option', () => {
-      const source = createPrimitiveType(PrimitiveName.Decimal);
-      const target = createOptionType(['Open', 'Closed']);
-      expect(isAssignmentCompatible(source, target)).toBe(true);
-    });
-
-    it('should allow Duration to Option', () => {
-      const source = createPrimitiveType(PrimitiveName.Duration);
-      const target = createOptionType(['Open', 'Closed']);
-      expect(isAssignmentCompatible(source, target)).toBe(true);
-    });
-
     it('should allow Option to Char', () => {
       const source = createOptionType(['Open', 'Closed']);
       const target = createPrimitiveType(PrimitiveName.Char);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Byte to Option', () => {
+      const source = createPrimitiveType(PrimitiveName.Byte);
+      const target = createOptionType(['Open', 'Closed']);
       expect(isAssignmentCompatible(source, target)).toBe(true);
     });
 
@@ -1230,15 +1218,33 @@ describe('isAssignmentCompatible', () => {
       expect(isAssignmentCompatible(source, target)).toBe(true);
     });
 
+    it('should allow BigInteger to Option', () => {
+      const source = createPrimitiveType(PrimitiveName.BigInteger);
+      const target = createOptionType(['Open', 'Closed']);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
     it('should allow Option to BigInteger', () => {
       const source = createOptionType(['Open', 'Closed']);
       const target = createPrimitiveType(PrimitiveName.BigInteger);
       expect(isAssignmentCompatible(source, target)).toBe(true);
     });
 
+    it('should allow Decimal to Option', () => {
+      const source = createPrimitiveType(PrimitiveName.Decimal);
+      const target = createOptionType(['Open', 'Closed']);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
     it('should allow Option to Decimal', () => {
       const source = createOptionType(['Open', 'Closed']);
       const target = createPrimitiveType(PrimitiveName.Decimal);
+      expect(isAssignmentCompatible(source, target)).toBe(true);
+    });
+
+    it('should allow Duration to Option', () => {
+      const source = createPrimitiveType(PrimitiveName.Duration);
+      const target = createOptionType(['Open', 'Closed']);
       expect(isAssignmentCompatible(source, target)).toBe(true);
     });
 

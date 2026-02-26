@@ -229,7 +229,7 @@ describe('TypeMismatchValidator - Incompatible Variable Assignments', () => {
       expect(mismatch!.message).toContain('Decimal');
     });
 
-    it('should detect Integer variable assigned to Decimal (narrowing)', () => {
+    it('should allow Integer variable assigned from Decimal (C/AL allows numeric narrowing)', () => {
       const code = `OBJECT Codeunit 1 Test {
         CODE {
           PROCEDURE TestProc();
@@ -245,9 +245,7 @@ describe('TypeMismatchValidator - Incompatible Variable Assignments', () => {
       const diagnostics = validateTypeMismatch(code);
 
       const mismatch = diagnostics.find(d => d.message.includes('Type mismatch'));
-      expect(mismatch).toBeDefined();
-      expect(mismatch!.message).toContain('Decimal');
-      expect(mismatch!.message).toContain('Integer');
+      expect(mismatch).toBeUndefined();
     });
 
     it('should detect type mismatch with different Record types', () => {
