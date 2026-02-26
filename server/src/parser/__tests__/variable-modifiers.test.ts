@@ -412,11 +412,11 @@ describe('Parser - Variable Modifiers', () => {
   });
 
   describe('Real-world NAV patterns', () => {
-    // TODO: Complex trigger parsing with inline VAR may need improvements
-    it.skip('should parse Report 6049738 pattern with multiple RUNONCLIENT variables', () => {
+    it('should parse Report 6049738 pattern with multiple RUNONCLIENT variables', () => {
       // Simplified from REP6049738.TXT
       const code = `OBJECT Report 6049738 "Org Chart Export" {
-        CODE {
+        PROPERTIES
+        {
           OnPostReport=VAR
                          FileMgt@1160030004 : Codeunit 419;
                          SystemDiagnosticsProcess@1160030003 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Diagnostics.Process" RUNONCLIENT;
@@ -430,15 +430,29 @@ describe('Parser - Variable Modifiers', () => {
       expect(errors).toHaveLength(0);
       expect(ast.object?.objectKind).toBe('Report');
 
-      // Find the OnPostReport trigger
-      const trigger = ast.object!.code!.triggers.find(t => t.name === 'OnPostReport');
-      expect(trigger).toBeDefined();
-      expect(trigger!.variables).toHaveLength(3);
+      // Find the OnPostReport property trigger
+      const onPostReport = ast.object!.properties!.properties.find(p => p.name === 'OnPostReport');
+      expect(onPostReport).toBeDefined();
+      expect(onPostReport!.value).toBe('BEGIN...END');
 
-      const dotNetVar = trigger!.variables.find(v => v.name === 'SystemDiagnosticsProcess');
+      // Verify all 3 trigger variables were parsed
+      expect(onPostReport!.triggerVariables).toBeDefined();
+      expect(onPostReport!.triggerVariables).toHaveLength(3);
+
+      // Verify individual variables
+      const fileMgt = onPostReport!.triggerVariables!.find(v => v.name === 'FileMgt');
+      expect(fileMgt).toBeDefined();
+      expect(fileMgt!.dataType.typeName).toBe('Codeunit 419');
+
+      const dotNetVar = onPostReport!.triggerVariables!.find(v => v.name === 'SystemDiagnosticsProcess');
       expect(dotNetVar).toBeDefined();
       expect(dotNetVar!.dataType.typeName).toBe('DotNet');
       expect(dotNetVar!.runOnClient).toBe(true);
+
+      const textVar = onPostReport!.triggerVariables!.find(v => v.name === 'FileNameOnClient');
+      expect(textVar).toBeDefined();
+      expect(textVar!.dataType.typeName).toBe('Text[1024]');
+      expect(textVar!.dataType.length).toBe(1024);
     });
 
     it('should parse COD397 pattern with Office integration', () => {
