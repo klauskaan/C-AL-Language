@@ -2005,7 +2005,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(closeError).toBeDefined();
       });
 
-      it.skip('should provide context for missing { to open field definition', () => {
+      it('should provide context for missing { to open field definition', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -2085,7 +2085,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(closeError).toBeDefined();
       });
 
-      it.skip('should provide context for missing { to open key definition', () => {
+      it('should provide context for missing { to open key definition', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -2172,7 +2172,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(closeError).toBeDefined();
       });
 
-      it.skip('should provide context for missing { to open field group definition', () => {
+      it('should provide context for missing { to open field group definition', () => {
         const code = `OBJECT Table 18 Customer
 {
   FIELDS
@@ -2279,7 +2279,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(ast.object!.actions!.actions[1].id).toBe(2);
       });
 
-      it.skip('should provide context for missing { to open action definition', () => {
+      it('should provide context for missing { to open action definition', () => {
         const code = `OBJECT Page 21 Customer
 {
   ACTIONS
@@ -2351,7 +2351,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(closeError).toBeDefined();
       });
 
-      it.skip('should provide context for missing { to open control definition', () => {
+      it('should provide context for missing { to open control definition', () => {
         const code = `OBJECT Page 21 Customer
 {
   CONTROLS
@@ -2441,7 +2441,7 @@ describe('Parser - Error Messages with Context', () => {
         expect(closeError).toBeDefined();
       });
 
-      it.skip('should provide context for missing { to open element definition', () => {
+      it('should provide context for missing { to open element definition', () => {
         const code = `OBJECT XMLport 99999 Test
 {
   ELEMENTS
@@ -2481,8 +2481,7 @@ describe('Parser - Error Messages with Context', () => {
     });
 
     describe('Set literal', () => {
-      // Skipped: Parser takes wrong path when [ is missing. Needs new issue.
-      it.skip('should provide context for missing [ to open set literal', () => {
+      it('should provide context for missing [ to open set literal', () => {
         const code = `OBJECT Codeunit 50000 Test
 {
   CODE

@@ -4752,7 +4752,7 @@ export class Parser {
 
       // Special handling for IN operator - right side can be a set literal [...]
       let right: Expression;
-      if (operator.type === TokenType.In && this.check(TokenType.LeftBracket)) {
+      if (operator.type === TokenType.In) {
         right = this.parseSetLiteral();
       } else {
         right = this.parseTerm();
@@ -5286,7 +5286,13 @@ export class Parser {
    *   [1, 5..10, 20] - mixed
    */
   private parseSetLiteral(): Expression {
-    const startToken = this.consume(TokenType.LeftBracket, 'Expected [ to open set literal');
+    let startToken: Token;
+    if (this.check(TokenType.LeftBracket)) {
+      startToken = this.advance();
+    } else {
+      this.recordError('Expected [ to open set literal', undefined, 'parse-expected-token');
+      startToken = this.previous();
+    }
     const elements: (Expression | RangeExpression)[] = [];
 
     // Empty set
@@ -5932,9 +5938,13 @@ export class Parser {
     // Check if we're about to consume an item brace instead of section brace
     // This is detected when the token after { matches item content pattern
     if (isItemContentToken(tokenAfterBrace?.type)) {
-      // We would consume an item brace as section brace
-      // Record section-level error but do NOT consume the brace
-      // This allows item parsing to proceed normally
+      const braceToken = this.peek();
+      if (tokenAfterBrace && braceToken.line !== tokenAfterBrace.line) {
+        // Different lines: this is a real section brace, consume it
+        // Let item parser throw the item-level error
+        return this.advance();
+      }
+      // Same line: section brace is missing (item brace was stolen)
       this.recordError(`Expected { to open ${sectionName} section`, undefined, 'parse-unclosed-block');
       return this.previous();
     }
