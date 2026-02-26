@@ -19,10 +19,8 @@ import { Parser } from '../parser';
 
 describe('Parser - Nested CASE Error Recovery', () => {
   describe('Issue #299 exact example', () => {
-    it.skip('should detect malformed statement in inner CASE branch', () => {
-      // BLOCKED: Test uses invalid C/AL syntax (Option A,B,C) - needs test fixture fix
-      // Issue #299: Original example from investigation
-      // CASE x OF 1: CASE y OF A: [malformed statement;
+    it('should detect malformed statement in inner CASE branch', () => {
+      // Issue #299: Verify error detection for malformed statement in inner CASE branch
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
@@ -30,7 +28,7 @@ describe('Parser - Nested CASE Error Recovery', () => {
     PROCEDURE TestProc();
     VAR
       x : Integer;
-      y : Option A,B,C;
+      y : Option;
     BEGIN
       CASE x OF
         1:

@@ -4749,11 +4749,7 @@ END;`;
     });
 
     describe('Edge Cases', () => {
-      it.skip('should handle set literal as function parameter', () => {
-        // SKIPPED: In C/AL semantics, [1, 2, 3] is only a SetLiteral when used with
-        // the IN operator (e.g., x IN [1, 2, 3]). When passed as a function parameter,
-        // the parser does not create a SetLiteral AST node, so no semantic highlighting
-        // is applied. This is correct behavior by design - not a missing implementation.
+      it('should handle set literal as function parameter', () => {
         const code = `OBJECT Codeunit 50000 Test {
   CODE {
     PROCEDURE Test();
