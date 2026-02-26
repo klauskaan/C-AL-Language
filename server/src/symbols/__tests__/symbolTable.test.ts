@@ -1078,7 +1078,7 @@ describe('SymbolTable', () => {
         expect(symbolTable.hasSymbol('Balance')).toBe(true);
 
         const allSymbols = symbolTable.getAllSymbols();
-        expect(allSymbols.length).toBe(5);
+        expect(allSymbols.length).toBe(6);
       });
 
       it('should correctly extract field types for various data types', () => {
@@ -1616,7 +1616,7 @@ describe('SymbolTable', () => {
       const symbolTable = buildSymbolTable(code);
 
       const allSymbols = symbolTable.getAllSymbols();
-      expect(allSymbols.length).toBe(4);
+      expect(allSymbols.length).toBe(5);
       expect(allSymbols.some(s => s.name === 'No.')).toBe(true);
       expect(allSymbols.some(s => s.name === 'Name')).toBe(true);
     });
@@ -1730,6 +1730,20 @@ describe('Implicit System Variables', () => {
     expect(symbolTable.getSymbol('xRec')?.type).toBe('Record 18');
   });
 
+  it('should inject CurrFieldNo as implicit variable for Table objects', () => {
+    const code = `OBJECT Table 18 Customer
+{
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    expect(symbolTable.hasSymbol('CurrFieldNo')).toBe(true);
+    expect(symbolTable.getSymbol('CurrFieldNo')?.kind).toBe('variable');
+    expect(symbolTable.getSymbol('CurrFieldNo')?.type).toBe('Integer');
+  });
+
   it('should pre-populate Rec, xRec, and CurrPage for Page objects', () => {
     const code = `OBJECT Page 21 Customer Card
 {
@@ -1750,6 +1764,9 @@ describe('Implicit System Variables', () => {
     expect(symbolTable.hasSymbol('xRec')).toBe(true);
     expect(symbolTable.getSymbol('xRec')?.kind).toBe('variable');
     expect(symbolTable.getSymbol('xRec')?.type).toBe('Record');
+
+    // CurrFieldNo is Table-specific, not available for Pages
+    expect(symbolTable.hasSymbol('CurrFieldNo')).toBe(false);
   });
 
   it('should pre-populate Rec and CurrReport for Report objects', () => {
@@ -1767,6 +1784,9 @@ describe('Implicit System Variables', () => {
     expect(symbolTable.hasSymbol('CurrReport')).toBe(true);
     expect(symbolTable.getSymbol('CurrReport')?.kind).toBe('variable');
     expect(symbolTable.getSymbol('CurrReport')?.type).toBe('Report');
+
+    // CurrFieldNo is Table-specific, not available for Reports
+    expect(symbolTable.hasSymbol('CurrFieldNo')).toBe(false);
   });
 
   it('should pre-populate currXMLport for XMLport objects', () => {
@@ -1777,6 +1797,9 @@ describe('Implicit System Variables', () => {
   }
 }`;
     const symbolTable = buildSymbolTable(code);
+
+    // CurrFieldNo is Table-specific, not available for XMLports
+    expect(symbolTable.hasSymbol('CurrFieldNo')).toBe(false);
 
     expect(symbolTable.hasSymbol('currXMLport')).toBe(true);
     expect(symbolTable.getSymbol('currXMLport')?.kind).toBe('variable');
@@ -1811,6 +1834,7 @@ describe('Implicit System Variables', () => {
     expect(symbolTable.hasSymbol('CurrPage')).toBe(false);
     expect(symbolTable.hasSymbol('CurrReport')).toBe(false);
     expect(symbolTable.hasSymbol('currXMLport')).toBe(false);
+    expect(symbolTable.hasSymbol('CurrFieldNo')).toBe(false);
   });
 
   it('should not pre-populate any implicit variables for Codeunit objects', () => {
@@ -1828,6 +1852,7 @@ describe('Implicit System Variables', () => {
     expect(symbolTable.hasSymbol('CurrReport')).toBe(false);
     expect(symbolTable.hasSymbol('currXMLport')).toBe(false);
     expect(symbolTable.hasSymbol('currQuery')).toBe(false);
+    expect(symbolTable.hasSymbol('CurrFieldNo')).toBe(false);
   });
 
   it('should look up implicit Table variables case-insensitively', () => {
@@ -1842,6 +1867,20 @@ describe('Implicit System Variables', () => {
     expect(symbolTable.hasSymbol('rec')).toBe(true);
     expect(symbolTable.hasSymbol('REC')).toBe(true);
     expect(symbolTable.hasSymbol('XREC')).toBe(true);
+  });
+
+  it('should look up CurrFieldNo case-insensitively in Table objects', () => {
+    const code = `OBJECT Table 18 Customer
+{
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    expect(symbolTable.hasSymbol('CurrFieldNo')).toBe(true);
+    expect(symbolTable.hasSymbol('currfieldno')).toBe(true);
+    expect(symbolTable.hasSymbol('CURRFIELDNO')).toBe(true);
   });
 
   it('should use the correct objectId in the Rec type for Table objects', () => {
@@ -1882,6 +1921,34 @@ describe('Implicit System Variables', () => {
     // Rec should be accessible from inside the trigger scope via parent chain
     expect(triggerScope!.getSymbol('Rec')).toBeDefined();
     expect(triggerScope!.getSymbol('Rec')?.type).toBe('Record 18');
+  });
+
+  it('should make CurrFieldNo accessible from trigger scope via scope chain', () => {
+    // Location assertions depend on fixture structure - do not reformat
+    const code = `OBJECT Table 18 Customer
+{
+  CODE
+  {
+    TRIGGER OnInsert()
+    BEGIN
+    END;
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+
+    // CurrFieldNo must be in the root scope as an implicit variable
+    expect(rootScope.hasOwnSymbol('CurrFieldNo')).toBe(true);
+
+    // Find the trigger's child scope
+    const triggerScope = rootScope.children.find(
+      child => child.startOffset > 0
+    );
+    expect(triggerScope).toBeDefined();
+
+    // CurrFieldNo should be accessible from inside the trigger scope via parent chain
+    expect(triggerScope!.getSymbol('CurrFieldNo')).toBeDefined();
+    expect(triggerScope!.getSymbol('CurrFieldNo')?.type).toBe('Integer');
   });
 });
 

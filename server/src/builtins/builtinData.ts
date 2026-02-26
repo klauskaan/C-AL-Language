@@ -325,12 +325,6 @@ const SYSTEM_FUNCTIONS: BuiltinFunction[] = [
     category: 'system'
   },
   {
-    name: 'CURRFIELDNO',
-    signature: '',
-    documentation: 'System variable (not a function) that returns the field number of the current field during OnValidate triggers in table objects. Pragmatically placed here for builtin recognition; a proper fix would inject this as an implicit variable in Table scopes via injectImplicitVariables().',
-    category: 'system'
-  },
-  {
     name: 'GETLASTERRORTEXT',
     signature: '(): Text',
     documentation: 'Returns the text of the last error that occurred.',

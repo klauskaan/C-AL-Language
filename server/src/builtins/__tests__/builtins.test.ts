@@ -18,8 +18,8 @@ import { BuiltinRegistry } from '../builtinRegistry';
 
 describe('Builtins Module', () => {
   describe('Data Integrity - BUILTIN_FUNCTIONS', () => {
-    it('should have exactly 86 global function entries', () => {
-      expect(BUILTIN_FUNCTIONS).toHaveLength(86);
+    it('should have exactly 85 global function entries', () => {
+      expect(BUILTIN_FUNCTIONS).toHaveLength(85);
     });
 
     it('should have all required fields for each entry', () => {
@@ -532,14 +532,6 @@ describe('Builtins Module', () => {
         const func = registry.getGlobalFunction('SENDTRACETAG');
         expect(func).toBeDefined();
         expect(func?.category).toBe('system');
-      });
-
-      it('should recognize CURRFIELDNO as a global function with system category and empty signature', () => {
-        expect(registry.isGlobalFunction('CURRFIELDNO')).toBe(true);
-        const func = registry.getGlobalFunction('CURRFIELDNO');
-        expect(func).toBeDefined();
-        expect(func?.category).toBe('system');
-        expect(func?.signature).toBe('');
       });
 
       it('should recognize ISNULL as a global function with system category', () => {
