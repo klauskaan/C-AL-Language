@@ -259,7 +259,9 @@ export class HoverProvider extends ProviderBase {
       const varPrefix = p.isVar ? 'VAR ' : '';
       return `${varPrefix}${p.name}: ${p.dataType.typeName}`;
     }).join('; ');
-    const returnType = proc.returnType ? ` : ${proc.returnType.typeName}` : '';
+    const returnType = proc.returnType
+      ? ` ${proc.returnValueName ? proc.returnValueName + ' ' : ''}: ${proc.returnType.typeName}`
+      : '';
 
     content += `\`${localPrefix}PROCEDURE ${proc.name}(${params})${returnType}\`\n\n`;
     content += '*Procedure*';

@@ -652,6 +652,10 @@ export interface ProcedureDeclaration {
   nameToken: Token;
   parameters: ParameterDeclaration[];
   returnType: DataType | null;
+  /** Name of the return value variable (e.g., "Result" in "Result : Decimal") */
+  returnValueName?: string;
+  /** Token pointing to the return value name identifier (for symbol resolution) */
+  returnValueToken?: Token;
   isLocal: boolean;
   variables: VariableDeclaration[];
   body: Statement[];

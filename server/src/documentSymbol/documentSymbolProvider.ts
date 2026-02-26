@@ -303,7 +303,9 @@ class DocumentSymbolCollectorVisitor implements Partial<ASTVisitor> {
       return `${prefix}${p.name || '?'}: ${p.dataType?.typeName || '?'}`;
     }).join('; ');
 
-    const returnType = node.returnType ? ` : ${node.returnType.typeName}` : '';
+    const returnType = node.returnType
+      ? ` ${node.returnValueName ? node.returnValueName + ' ' : ''}: ${node.returnType.typeName}`
+      : '';
     const localPrefix = node.isLocal ? 'LOCAL ' : '';
     const name = `${attributePrefix}${localPrefix}${node.name}(${params})${returnType}`;
 
