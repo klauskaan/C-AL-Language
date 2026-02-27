@@ -12,7 +12,7 @@ import { defaultSettings } from '../src/settings';
 import { DiagnosticSeverity } from 'vscode-languageserver';
 import { ObjectKind } from '../src/parser/ast';
 
-interface DiagnosticResult {
+export interface DiagnosticResult {
   code: string;
   severity: number;
   message: string;
@@ -20,14 +20,15 @@ interface DiagnosticResult {
   column: number;
 }
 
-interface SemanticValidationResult {
+export interface SemanticValidationResult {
   file: string;
   lines: number;
   analyzeTime: number;
   diagnostics: DiagnosticResult[];
 }
 
-function severityLabel(severity: number): string {
+// Exported for testing only
+export function severityLabel(severity: number): string {
   switch (severity) {
     case DiagnosticSeverity.Error:   return 'Error';
     case DiagnosticSeverity.Warning: return 'Warning';
@@ -37,11 +38,13 @@ function severityLabel(severity: number): string {
   }
 }
 
-function objectType(filename: string): string {
+// Exported for testing only
+export function objectType(filename: string): string {
   return filename.substring(0, 3).toUpperCase();
 }
 
-function buildTableRegistry(realDir: string, files: string[]): Map<number, string> {
+// Exported for testing only
+export function buildTableRegistry(realDir: string, files: string[]): Map<number, string> {
   const registry = new Map<number, string>();
   for (const file of files) {
     const filePath = join(realDir, file);
@@ -57,7 +60,8 @@ function buildTableRegistry(realDir: string, files: string[]): Map<number, strin
   return registry;
 }
 
-function buildFieldRegistry(realDir: string, files: string[]): Map<number, Map<string, string>> {
+// Exported for testing only
+export function buildFieldRegistry(realDir: string, files: string[]): Map<number, Map<string, string>> {
   const registry = new Map<number, Map<string, string>>();
   for (const file of files) {
     const filePath = join(realDir, file);
@@ -89,7 +93,8 @@ function buildFieldRegistry(realDir: string, files: string[]): Map<number, Map<s
   return registry;
 }
 
-function validateAllRealFiles(): SemanticValidationResult[] {
+// Exported for testing only
+export function validateAllRealFiles(): SemanticValidationResult[] {
   const realDir = join(__dirname, '../../test/REAL');
   const files = readdirSync(realDir)
     .filter(hasTxtExtension)
@@ -154,7 +159,8 @@ function validateAllRealFiles(): SemanticValidationResult[] {
   return results;
 }
 
-function generateMarkdownReport(results: SemanticValidationResult[]): string {
+// Exported for testing only
+export function generateMarkdownReport(results: SemanticValidationResult[]): string {
   const filesWithDiag = results.filter(r => r.diagnostics.length > 0);
   const totalDiag = results.reduce((sum, r) => sum + r.diagnostics.length, 0);
   const totalTime = results.reduce((sum, r) => sum + r.analyzeTime, 0);
