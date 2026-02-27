@@ -5,7 +5,7 @@
  * - severityLabel() function (all 5 cases)
  * - objectType() function (extracts first 3 chars uppercased)
  * - generateMarkdownReport() function (all sections, markdown escaping)
- * - validateAllRealFiles() orchestration (mocking, timers, hasTableRegistry)
+ * - validateAllRealFiles() orchestration (mocking, timers, tableRegistryPopulated)
  *
  * These tests require the exported functions from validate-real-semantic.ts.
  */
@@ -779,7 +779,7 @@ describe('validateAllRealFiles', () => {
       expect(tableFields?.get('NO.')).toEqual({ originalName: 'No.', typeName: 'Code20' });
     });
 
-    it('should propagate hasTableRegistry flag from symbolTable to analyzer', () => {
+    it('should propagate tableRegistryPopulated flag from symbolTable to analyzer', () => {
       const mockFiles = ['test.txt'];
       (readdirSync as unknown as jest.Mock).mockReturnValue(mockFiles);
       (readFileWithEncoding as unknown as jest.Mock).mockReturnValue({
@@ -808,11 +808,11 @@ describe('validateAllRealFiles', () => {
 
       validateAllRealFiles();
 
-      // Verify analyzer.analyze was called with hasTableRegistry = true
+      // Verify analyzer.analyze was called with tableRegistryPopulated = true
       expect(mockAnalyzer.analyze).toHaveBeenCalled();
       const analyzeCall = mockAnalyzer.analyze.mock.calls[0];
       const options = analyzeCall[3]; // 4th argument (options object)
-      expect(options.hasTableRegistry).toBe(true);
+      expect(options.tableRegistryPopulated).toBe(true);
     });
 
     it('should pass fieldRegistry and tableRegistry to analyzer.analyze', () => {

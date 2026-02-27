@@ -64,7 +64,7 @@ const FIELD_REFERENCE_METHODS: Map<string, 'first' | 'all'> = new Map([
  */
 class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
   public readonly diagnostics: Diagnostic[] = [];
-  private readonly hasTableRegistry: boolean;
+  private readonly tableRegistryPopulated: boolean;
 
   /**
    * Constructor
@@ -72,7 +72,7 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
    * @param symbolTable - Symbol table for identifier resolution
    * @param builtins - Registry of builtin functions
    * @param walker - ASTWalker instance for manual child traversal
-   * @param hasTableRegistry - Whether table registry has been populated
+   * @param tableRegistryPopulated - Whether table registry has been populated
    * @param fieldRegistry - Optional field registry mapping table numbers to field info
    * @param tableRegistry - Optional table registry mapping table numbers to table names
    */
@@ -81,11 +81,11 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
     private readonly symbolTable: SymbolTable,
     private readonly builtins: BuiltinRegistry,
     private readonly walker: ASTWalker,
-    hasTableRegistry: boolean,
+    tableRegistryPopulated: boolean,
     private readonly fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>,
     private readonly tableRegistry?: ReadonlyMap<number, string>
   ) {
-    this.hasTableRegistry = hasTableRegistry;
+    this.tableRegistryPopulated = tableRegistryPopulated;
   }
 
   /**
@@ -259,7 +259,7 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
    * from SourceTable properties, enabling proper validation.
    */
   visitElementsSection(_node: ElementsSection): false | void {
-    if (!this.hasTableRegistry) {
+    if (!this.tableRegistryPopulated) {
       return false; // Skip traversal - suppresses false positives
     }
     // Otherwise, allow traversal (return void/undefined)
@@ -434,7 +434,7 @@ export class UndefinedIdentifierValidator implements Validator {
       context.symbolTable,
       context.builtins,
       walker,  // Pass walker reference for manual traversal
-      context.hasTableRegistry ?? false,
+      context.tableRegistryPopulated ?? false,
       context.fieldRegistry,
       context.tableRegistry
     );

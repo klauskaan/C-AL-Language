@@ -63,7 +63,7 @@ function validateUndefinedIdentifiers(
     symbolTable,
     builtins,
     documentUri: 'file:///test.cal',
-    hasTableRegistry: symbolTable.hadTableRegistry
+    tableRegistryPopulated: symbolTable.hadTableRegistry
   };
 
   const validator = new UndefinedIdentifierValidator();
@@ -466,7 +466,7 @@ describe('UndefinedIdentifierValidator - XMLport ELEMENTS with table registry', 
     const symbolTable = new SymbolTable();
     symbolTable.buildFromAST(ast);
 
-    // Step 2: Create ValidationContext with hasTableRegistry derived from symbolTable.hadTableRegistry
+    // Step 2: Create ValidationContext with tableRegistryPopulated derived from symbolTable.hadTableRegistry
     // This is the fix: validation should check whether the symbol table HAD a registry at build time,
     // not whether a registry exists NOW
     const builtins = new BuiltinRegistry();
@@ -475,7 +475,7 @@ describe('UndefinedIdentifierValidator - XMLport ELEMENTS with table registry', 
       symbolTable,
       builtins,
       documentUri: 'file:///test.cal',
-      hasTableRegistry: symbolTable.hadTableRegistry
+      tableRegistryPopulated: symbolTable.hadTableRegistry
     };
 
     // Step 3: Run UndefinedIdentifierValidator
