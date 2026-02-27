@@ -8,22 +8,7 @@
  * - AL-only attributes (e.g., [Scope], [IntegrationEvent])
  * - Typos in valid C/AL attributes
  *
- * Valid C/AL attributes (10 total):
- * - [External] - NAV 2016+
- * - [TryFunction] - All C/AL versions
- * - [Integration(Include)] - NAV 2016+
- * - [EventSubscriber(...)] - NAV 2016+
- * - [Test] - NAV 2016+
- * - [CheckPrecondition] - NAV 2016+
- * - [TableSyncSetup] - NAV 2016+
- * - [Internal] - NAV 2017+
- * - [ServiceEnabled] - NAV 2017+
- * - [Business] - NAV 2016+
- *
- * AL-only attributes (not valid in C/AL):
- * - [InternalEvent] - AL-only
- * - [Scope] - AL-only
- * - [BusinessEvent] - AL-only
+ * For the full list of valid C/AL attributes, see: ../attributeData.ts
  *
  * Diagnostic:
  * - Message: "Unknown attribute '[AttributeName]'"
