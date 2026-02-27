@@ -747,7 +747,7 @@ describe('validateAllRealFiles', () => {
             objectName: 'Customer',
             fields: {
               fields: [
-                { fieldName: 'No.', dataType: { type: 'Code20' } }
+                { fieldName: 'No.', dataType: { typeName: 'Code20' } }
               ]
             }
           }
@@ -776,7 +776,7 @@ describe('validateAllRealFiles', () => {
       expect(fieldRegistry).toBeInstanceOf(Map);
       const tableFields = fieldRegistry.get(18);
       expect(tableFields).toBeInstanceOf(Map);
-      expect(tableFields?.get('No.')).toBe('Code20');
+      expect(tableFields?.get('NO.')).toEqual({ originalName: 'No.', typeName: 'Code20' });
     });
 
     it('should propagate hasTableRegistry flag from symbolTable to analyzer', () => {

@@ -11,6 +11,7 @@ import { SymbolTable } from '../symbols/symbolTable';
 import { BuiltinRegistry } from './builtinRegistry';
 import { ValidationPipeline } from './validationPipeline';
 import { ValidationContext } from './types';
+import { FieldInfo } from '../workspaceSymbol/workspaceIndex';
 import { EmptySetValidator } from '../validation/emptySetValidator';
 import { UndefinedIdentifierValidator } from '../validation/undefinedIdentifierValidator';
 import { UnusedVariableValidator } from '../validation/unusedVariableValidator';
@@ -33,8 +34,8 @@ export interface AnalyzeOptions {
   /** Table registry mapping table numbers to table names (optional) */
   tableRegistry?: ReadonlyMap<number, string>;
 
-  /** Field registry mapping table numbers to field names (optional, used for member property validation) */
-  fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>;
+  /** Field registry mapping table numbers to field info (optional, used for member property validation) */
+  fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>;
 }
 
 export class SemanticAnalyzer {

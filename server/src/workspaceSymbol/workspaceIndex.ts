@@ -19,6 +19,14 @@ import { isCalContent } from '../utils/calDetection';
 import { flattenDocumentSymbols } from './flattenSymbols';
 
 /**
+ * Field information with original casing preserved
+ */
+export interface FieldInfo {
+  originalName: string;  // Preserves original casing: "No.", "Balance (LCY)"
+  typeName: string;      // Data type: "Code20", "Decimal"
+}
+
+/**
  * Index entry for a single file
  */
 interface IndexEntry {
@@ -36,7 +44,7 @@ export class WorkspaceIndex {
   private tableRegistry = new Map<number, string>();
   private tableOwner = new Map<number, string>();
   private fileTableContributions = new Map<string, number>();
-  private tableFieldRegistry = new Map<number, Map<string, string>>();
+  private tableFieldRegistry = new Map<number, Map<string, FieldInfo>>();
   private fieldOwner = new Map<number, string>();
   private fileFieldContributions = new Map<string, number>();
 
@@ -220,9 +228,9 @@ export class WorkspaceIndex {
    * Get the field registry mapping table IDs to field maps.
    * Used by SymbolTable.buildFromAST() to inject SourceTable fields into pages.
    *
-   * @returns ReadonlyMap of tableId → (fieldName → fieldType)
+   * @returns ReadonlyMap of tableId → (uppercaseFieldName → FieldInfo)
    */
-  getFieldRegistry(): ReadonlyMap<number, ReadonlyMap<string, string>> {
+  getFieldRegistry(): ReadonlyMap<number, ReadonlyMap<string, FieldInfo>> {
     return this.tableFieldRegistry;
   }
 
@@ -296,7 +304,7 @@ export class WorkspaceIndex {
   private async extractSymbols(filePath: string): Promise<{
     symbols: SymbolInformation[];
     tableInfo?: { id: number; name: string };
-    fieldInfo?: { id: number; fields: Map<string, string> };
+    fieldInfo?: { id: number; fields: Map<string, FieldInfo> };
   }> {
     // Read file with encoding detection
     const { content } = await readFileWithEncodingAsync(filePath);
@@ -325,17 +333,20 @@ export class WorkspaceIndex {
 
     // Extract table info for the table registry
     let tableInfo: { id: number; name: string } | undefined;
-    let fieldInfo: { id: number; fields: Map<string, string> } | undefined;
+    let fieldInfo: { id: number; fields: Map<string, FieldInfo> } | undefined;
 
     if (ast.object?.objectKind === ObjectKind.Table && ast.object.objectName) {
       tableInfo = { id: ast.object.objectId, name: ast.object.objectName };
 
-      // Extract field information
-      const fields = new Map<string, string>();
+      // Extract field information with uppercase keys
+      const fields = new Map<string, FieldInfo>();
       if (ast.object.fields?.fields) {
         for (const field of ast.object.fields.fields) {
           if (field.fieldName) {
-            fields.set(field.fieldName, field.dataType.typeName);
+            fields.set(field.fieldName.toUpperCase(), {
+              originalName: field.fieldName,
+              typeName: field.dataType.typeName
+            });
           }
         }
       }

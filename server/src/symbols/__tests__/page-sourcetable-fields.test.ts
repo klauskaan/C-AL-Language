@@ -17,6 +17,7 @@ import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../../parser/parser';
 import { SymbolTable } from '../symbolTable';
 import { CALDocument } from '../../parser/ast';
+import { FieldInfo } from '../../workspaceSymbol/workspaceIndex';
 
 /**
  * Helper to parse C/AL code into an AST
@@ -33,7 +34,7 @@ function parseCode(code: string): CALDocument {
  */
 function buildSymbolTableWithFieldRegistry(
   code: string,
-  fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>
+  fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>
 ): SymbolTable {
   const ast = parseCode(code);
   const symbolTable = new SymbolTable();
@@ -65,11 +66,11 @@ describe('Page SourceTable Field Injection', () => {
 }`;
 
       // Create field registry with Customer table fields
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
-      customerFields.set('Name', 'Text50');
-      customerFields.set('Address', 'Text50');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
+      customerFields.set('ADDRESS', { originalName: 'Address', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
       const symbolTable = buildSymbolTableWithFieldRegistry(code, fieldRegistry);
@@ -101,10 +102,10 @@ describe('Page SourceTable Field Injection', () => {
   }
 }`;
 
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
-      customerFields.set('Name', 'Text50');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
       const symbolTable = buildSymbolTableWithFieldRegistry(code, fieldRegistry);
@@ -129,13 +130,13 @@ describe('Page SourceTable Field Injection', () => {
   }
 }`;
 
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
       // Real NAV field names with special characters
-      customerFields.set('E-Mail', 'Text80');
-      customerFields.set('Balance (LCY)', 'Decimal');
-      customerFields.set('Salesperson Code', 'Code10');
-      customerFields.set('Gen. Bus. Posting Group', 'Code10');
+      customerFields.set('E-MAIL', { originalName: 'E-Mail', typeName: 'Text80' });
+      customerFields.set('BALANCE (LCY)', { originalName: 'Balance (LCY)', typeName: 'Decimal' });
+      customerFields.set('SALESPERSON CODE', { originalName: 'Salesperson Code', typeName: 'Code10' });
+      customerFields.set('GEN. BUS. POSTING GROUP', { originalName: 'Gen. Bus. Posting Group', typeName: 'Code10' });
       fieldRegistry.set(18, customerFields);
 
       const symbolTable = buildSymbolTableWithFieldRegistry(code, fieldRegistry);
@@ -170,9 +171,9 @@ describe('Page SourceTable Field Injection', () => {
   }
 }`;
 
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('Name', 'Text50');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
       const symbolTable = buildSymbolTableWithFieldRegistry(code, fieldRegistry);
@@ -219,9 +220,9 @@ describe('Page SourceTable Field Injection', () => {
   }
 }`;
 
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('Name', 'Text50');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
       const symbolTable = buildSymbolTableWithFieldRegistry(code, fieldRegistry);
@@ -247,9 +248,9 @@ describe('Page SourceTable Field Injection', () => {
   }
 }`;
 
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('Name', 'Text50');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
       const symbolTable = buildSymbolTableWithFieldRegistry(code, fieldRegistry);
@@ -269,9 +270,9 @@ describe('Page SourceTable Field Injection', () => {
 }`;
 
       // Field registry exists but doesn't contain table 18
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const itemFields = new Map<string, string>();
-      itemFields.set('Description', 'Text50');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const itemFields = new Map<string, FieldInfo>();
+      itemFields.set('DESCRIPTION', { originalName: 'Description', typeName: 'Text50' });
       fieldRegistry.set(27, itemFields);
 
       // Should not crash - graceful degradation
@@ -292,8 +293,8 @@ describe('Page SourceTable Field Injection', () => {
 }`;
 
       // Table exists in registry but has no fields
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      fieldRegistry.set(18, new Map<string, string>());
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      fieldRegistry.set(18, new Map<string, FieldInfo>());
 
       const symbolTable = buildSymbolTableWithFieldRegistry(code, fieldRegistry);
       const rootScope = symbolTable.getRootScope();
@@ -335,9 +336,9 @@ describe('Page SourceTable Field Injection', () => {
   }
 }`;
 
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('Name', 'Text50');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
       const symbolTable = buildSymbolTableWithFieldRegistry(code, fieldRegistry);
@@ -356,9 +357,9 @@ describe('Page SourceTable Field Injection', () => {
   }
 }`;
 
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('Name', 'Text50');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
       const symbolTable = buildSymbolTableWithFieldRegistry(code, fieldRegistry);
@@ -384,9 +385,9 @@ describe('Page SourceTable Field Injection', () => {
   }
 }`;
 
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('Name', 'Text50');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
       const symbolTable = buildSymbolTableWithFieldRegistry(code, fieldRegistry);
@@ -408,17 +409,17 @@ describe('Page SourceTable Field Injection', () => {
   }
 }`;
 
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
       // Real Customer table fields (partial)
-      customerFields.set('No.', 'Code20');
-      customerFields.set('Name', 'Text50');
-      customerFields.set('Address', 'Text50');
-      customerFields.set('City', 'Text30');
-      customerFields.set('Phone No.', 'Text30');
-      customerFields.set('E-Mail', 'Text80');
-      customerFields.set('Balance (LCY)', 'Decimal');
-      customerFields.set('Credit Limit (LCY)', 'Decimal');
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
+      customerFields.set('ADDRESS', { originalName: 'Address', typeName: 'Text50' });
+      customerFields.set('CITY', { originalName: 'City', typeName: 'Text30' });
+      customerFields.set('PHONE NO.', { originalName: 'Phone No.', typeName: 'Text30' });
+      customerFields.set('E-MAIL', { originalName: 'E-Mail', typeName: 'Text80' });
+      customerFields.set('BALANCE (LCY)', { originalName: 'Balance (LCY)', typeName: 'Decimal' });
+      customerFields.set('CREDIT LIMIT (LCY)', { originalName: 'Credit Limit (LCY)', typeName: 'Decimal' });
       fieldRegistry.set(18, customerFields);
 
       const symbolTable = buildSymbolTableWithFieldRegistry(code, fieldRegistry);

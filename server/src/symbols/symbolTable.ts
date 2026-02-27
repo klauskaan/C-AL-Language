@@ -17,6 +17,7 @@ import { Type } from '../types/types';
 import { resolveType, resolveVariableType } from '../types/typeResolver';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { ASTWalker } from '../visitor/astWalker';
+import { FieldInfo } from '../workspaceSymbol/workspaceIndex';
 
 export interface Symbol {
   name: string;
@@ -559,7 +560,7 @@ export class SymbolTable {
   public buildFromAST(
     ast: CALDocument,
     tableRegistry?: ReadonlyMap<number, string>,
-    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>
+    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>
   ): void {
     // Create fresh root scope
     this.rootScope = new Scope(null);
@@ -586,12 +587,13 @@ export class SymbolTable {
 
           if (tableFields) {
             // Inject each field into root scope with kind='field'
-            for (const [fieldName, fieldType] of tableFields) {
+            // Note: keys are uppercase, use fieldInfo.originalName to preserve casing
+            for (const [_uppercaseKey, fieldInfo] of tableFields) {
               this.rootScope.addSymbol({
-                name: fieldName,
+                name: fieldInfo.originalName,
                 kind: 'field',
-                token: makeSyntheticToken(fieldName, ast.object.startToken),
-                type: fieldType
+                token: makeSyntheticToken(fieldInfo.originalName, ast.object.startToken),
+                type: fieldInfo.typeName
               });
             }
           }

@@ -30,6 +30,7 @@ import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver';
 import { SymbolTable } from '../../symbols/symbolTable';
 import { BuiltinRegistry } from '../../semantic/builtinRegistry';
 import { ValidationContext } from '../../semantic/types';
+import { FieldInfo } from '../../workspaceSymbol/workspaceIndex';
 
 /**
  * Helper to parse C/AL code and run undefined identifier validation
@@ -37,7 +38,7 @@ import { ValidationContext } from '../../semantic/types';
 function validateUndefinedIdentifiers(
   code: string,
   tableRegistry?: ReadonlyMap<number, string>,
-  fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>
+  fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>
 ): Diagnostic[] {
   const lexer = new Lexer(code);
   const tokens = lexer.tokenize();
@@ -2497,7 +2498,7 @@ describe('UndefinedIdentifierValidator - Page SourceTable Field Integration', ()
   function validateWithFieldRegistry(
     code: string,
     tableRegistry?: ReadonlyMap<number, string>,
-    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>
+    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>
   ): Diagnostic[] {
     const lexer = new Lexer(code);
     const tokens = lexer.tokenize();
@@ -2542,11 +2543,11 @@ describe('UndefinedIdentifierValidator - Page SourceTable Field Integration', ()
 }`;
 
     const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-    const fieldRegistry = new Map<number, Map<string, string>>();
-    const customerFields = new Map<string, string>();
-    customerFields.set('No.', 'Code20');
-    customerFields.set('Name', 'Text50');
-    customerFields.set('Address', 'Text50');
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const customerFields = new Map<string, FieldInfo>();
+    customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+    customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
+    customerFields.set('ADDRESS', { originalName: 'Address', typeName: 'Text50' });
     fieldRegistry.set(18, customerFields);
 
     const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
@@ -2614,11 +2615,11 @@ describe('UndefinedIdentifierValidator - Page SourceTable Field Integration', ()
 }`;
 
     const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-    const fieldRegistry = new Map<number, Map<string, string>>();
-    const customerFields = new Map<string, string>();
-    customerFields.set('E-Mail', 'Text80');
-    customerFields.set('Balance (LCY)', 'Decimal');
-    customerFields.set('Gen. Bus. Posting Group', 'Code10');
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const customerFields = new Map<string, FieldInfo>();
+    customerFields.set('E-MAIL', { originalName: 'E-Mail', typeName: 'Text80' });
+    customerFields.set('BALANCE (LCY)', { originalName: 'Balance (LCY)', typeName: 'Decimal' });
+    customerFields.set('GEN. BUS. POSTING GROUP', { originalName: 'Gen. Bus. Posting Group', typeName: 'Code10' });
     fieldRegistry.set(18, customerFields);
 
     const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
@@ -2646,10 +2647,10 @@ describe('UndefinedIdentifierValidator - Page SourceTable Field Integration', ()
 }`;
 
     const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-    const fieldRegistry = new Map<number, Map<string, string>>();
-    const customerFields = new Map<string, string>();
-    customerFields.set('Name', 'Text50');
-    customerFields.set('Address', 'Text50');
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const customerFields = new Map<string, FieldInfo>();
+    customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
+    customerFields.set('ADDRESS', { originalName: 'Address', typeName: 'Text50' });
     fieldRegistry.set(18, customerFields);
 
     const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
@@ -2671,9 +2672,9 @@ describe('UndefinedIdentifierValidator - Page SourceTable Field Integration', ()
 }`;
 
     const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-    const fieldRegistry = new Map<number, Map<string, string>>();
-    const customerFields = new Map<string, string>();
-    customerFields.set('Name', 'Text50');
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const customerFields = new Map<string, FieldInfo>();
+    customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
     fieldRegistry.set(18, customerFields);
 
     const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
@@ -2702,9 +2703,9 @@ describe('UndefinedIdentifierValidator - Page SourceTable Field Integration', ()
 }`;
 
     const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-    const fieldRegistry = new Map<number, Map<string, string>>();
-    const customerFields = new Map<string, string>();
-    customerFields.set('Name', 'Text50');
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const customerFields = new Map<string, FieldInfo>();
+    customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
     fieldRegistry.set(18, customerFields);
 
     const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
@@ -2726,9 +2727,9 @@ describe('UndefinedIdentifierValidator - Page SourceTable Field Integration', ()
 }`;
 
     const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-    const fieldRegistry = new Map<number, Map<string, string>>();
-    const customerFields = new Map<string, string>();
-    customerFields.set('Name', 'Text50');
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const customerFields = new Map<string, FieldInfo>();
+    customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
     fieldRegistry.set(18, customerFields);
 
     const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
@@ -2756,10 +2757,10 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
-      customerFields.set('Name', 'Text50');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -2788,10 +2789,10 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
-      customerFields.set('Name', 'Text50');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -2819,10 +2820,10 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
-      customerFields.set('Name', 'Text50');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -2847,9 +2848,9 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -2877,10 +2878,10 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
-      customerFields.set('Name', 'Text50');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -2905,9 +2906,9 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('Name', 'Text50');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -2934,9 +2935,9 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -2959,9 +2960,9 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('FIND', 'Text50');  // Field named FIND
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('FIND', { originalName: 'FIND', typeName: 'Text50' });  // Field named FIND
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -3012,7 +3013,7 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
       // Table 18 not in fieldRegistry
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -3035,9 +3036,9 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -3065,9 +3066,9 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -3093,9 +3094,9 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[36, 'Sales Header']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const salesFields = new Map<string, string>();
-      salesFields.set('Customer', 'Record 18');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const salesFields = new Map<string, FieldInfo>();
+      salesFields.set('CUSTOMER', { originalName: 'Customer', typeName: 'Record 18' });
       fieldRegistry.set(36, salesFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -3133,16 +3134,16 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
         [18, 'Customer'],
         [36, 'Sales Header']
       ]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
 
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
-      customerFields.set('Name', 'Text50');
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
-      const salesFields = new Map<string, string>();
-      salesFields.set('Document Type', 'Option');
-      salesFields.set('No.', 'Code20');
+      const salesFields = new Map<string, FieldInfo>();
+      salesFields.set('DOCUMENT TYPE', { originalName: 'Document Type', typeName: 'Option' });
+      salesFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
       fieldRegistry.set(36, salesFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -3173,15 +3174,15 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
         [18, 'Customer'],
         [36, 'Sales Header']
       ]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
 
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
-      customerFields.set('Name', 'Text50');
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
-      const salesFields = new Map<string, string>();
-      salesFields.set('No.', 'Code20');
+      const salesFields = new Map<string, FieldInfo>();
+      salesFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
       // No Name field
       fieldRegistry.set(36, salesFields);
 
@@ -3213,9 +3214,9 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -3253,10 +3254,10 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
-      customerFields.set('Name', 'Text50');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+      customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -3287,9 +3288,9 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
       fieldRegistry.set(18, customerFields);
 
       // Validate undefined identifiers
@@ -3316,9 +3317,9 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -3343,9 +3344,9 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -3370,9 +3371,9 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
@@ -3397,9 +3398,9 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 }`;
 
       const tableRegistry = new Map<number, string>([[18, 'Customer']]);
-      const fieldRegistry = new Map<number, Map<string, string>>();
-      const customerFields = new Map<string, string>();
-      customerFields.set('No.', 'Code20');
+      const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+      const customerFields = new Map<string, FieldInfo>();
+      customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
       fieldRegistry.set(18, customerFields);
 
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);

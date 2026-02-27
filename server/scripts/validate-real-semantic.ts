@@ -11,6 +11,7 @@ import { escapeMarkdown } from '../src/utils/escapeMarkdown';
 import { defaultSettings } from '../src/settings';
 import { DiagnosticSeverity } from 'vscode-languageserver';
 import { ObjectKind } from '../src/parser/ast';
+import { FieldInfo } from '../src/workspaceSymbol/workspaceIndex';
 
 export interface DiagnosticResult {
   code: string;
@@ -61,8 +62,8 @@ export function buildTableRegistry(realDir: string, files: string[]): Map<number
 }
 
 // Exported for testing only
-export function buildFieldRegistry(realDir: string, files: string[]): Map<number, Map<string, string>> {
-  const registry = new Map<number, Map<string, string>>();
+export function buildFieldRegistry(realDir: string, files: string[]): Map<number, Map<string, FieldInfo>> {
+  const registry = new Map<number, Map<string, FieldInfo>>();
   for (const file of files) {
     const filePath = join(realDir, file);
     const { content } = readFileWithEncoding(filePath);
@@ -72,15 +73,17 @@ export function buildFieldRegistry(realDir: string, files: string[]): Map<number
     const ast = parser.parse();
 
     if (ast.object?.objectKind === ObjectKind.Table) {
-      const fields = new Map<string, string>();
+      const fields = new Map<string, FieldInfo>();
 
       // Extract fields from FIELDS section
       if (ast.object.fields?.fields) {
         for (const field of ast.object.fields.fields) {
           if (field.fieldName && field.dataType) {
-            // Store field name and type
-            const fieldType = field.dataType.type || 'Unknown';
-            fields.set(field.fieldName, fieldType);
+            // Store field info with uppercase key (matching workspaceIndex.ts)
+            fields.set(field.fieldName.toUpperCase(), {
+              originalName: field.fieldName,
+              typeName: field.dataType.typeName
+            });
           }
         }
       }
