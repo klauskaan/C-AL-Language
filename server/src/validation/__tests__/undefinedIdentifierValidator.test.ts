@@ -1860,6 +1860,330 @@ describe('UndefinedIdentifierValidator - Property Trigger Scoping', () => {
   });
 });
 
+describe('UndefinedIdentifierValidator - Page Trigger Implicit Parameter Validation', () => {
+  describe('OnFindRecord trigger (Which : Text)', () => {
+    it('should not flag Which when used in OnFindRecord trigger body', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnFindRecord=BEGIN
+                   IF Which = '-' THEN
+                     EXIT(FALSE);
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('Which'))).toHaveLength(0);
+    });
+
+    it('should flag Which typo (Wich) in OnFindRecord trigger', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnFindRecord=BEGIN
+                   IF Wich = '-' THEN
+                     EXIT(FALSE);
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      const whichError = diagnostics.find(d => d.message.includes('Wich'));
+      expect(whichError).toBeDefined();
+      expect(whichError!.message).toBe("Undefined identifier: 'Wich'");
+    });
+
+    it('should handle Which case-insensitively in OnFindRecord', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnFindRecord=BEGIN
+                   IF WHICH = '-' THEN
+                     EXIT(FALSE);
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('WHICH'))).toHaveLength(0);
+    });
+  });
+
+  describe('OnNextRecord trigger (Steps : Integer)', () => {
+    it('should not flag Steps when used in OnNextRecord trigger body', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnNextRecord=BEGIN
+                   Steps := 1;
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('Steps'))).toHaveLength(0);
+    });
+
+    it('should flag Steps typo (Step) in OnNextRecord trigger', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnNextRecord=BEGIN
+                   Step := 1;
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      const stepError = diagnostics.find(d => d.message.includes('Step'));
+      expect(stepError).toBeDefined();
+      expect(stepError!.message).toBe("Undefined identifier: 'Step'");
+    });
+
+    it('should handle Steps case-insensitively in OnNextRecord', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnNextRecord=BEGIN
+                   steps := 1;
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('steps'))).toHaveLength(0);
+    });
+  });
+
+  describe('OnNewRecord trigger (BelowxRec : Boolean)', () => {
+    it('should not flag BelowxRec when used in OnNewRecord trigger body', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnNewRecord=BEGIN
+                  IF BelowxRec THEN
+                    MESSAGE('Below');
+                END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('BelowxRec'))).toHaveLength(0);
+    });
+
+    it('should flag BelowxRec typo (BelowRec) in OnNewRecord trigger', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnNewRecord=BEGIN
+                  IF BelowRec THEN
+                    MESSAGE('Below');
+                END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      const belowError = diagnostics.find(d => d.message.includes('BelowRec'));
+      expect(belowError).toBeDefined();
+      expect(belowError!.message).toBe("Undefined identifier: 'BelowRec'");
+    });
+  });
+
+  describe('OnInsertRecord trigger (BelowxRec : Boolean)', () => {
+    it('should not flag BelowxRec when used in OnInsertRecord trigger body', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnInsertRecord=BEGIN
+                     IF BelowxRec THEN
+                       EXIT(TRUE);
+                   END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('BelowxRec'))).toHaveLength(0);
+    });
+  });
+
+  describe('OnQueryClosePage trigger (CloseAction : Action)', () => {
+    it('should not flag CloseAction when used in OnQueryClosePage trigger body', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnQueryClosePage=BEGIN
+                       IF CloseAction = ACTION::OK THEN
+                         EXIT(TRUE);
+                     END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('CloseAction'))).toHaveLength(0);
+    });
+
+    it('should flag CloseAction typo (ClosAction) in OnQueryClosePage trigger', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnQueryClosePage=BEGIN
+                       IF ClosAction = ACTION::OK THEN
+                         EXIT(TRUE);
+                     END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      const closeError = diagnostics.find(d => d.message.includes('ClosAction'));
+      expect(closeError).toBeDefined();
+      expect(closeError!.message).toBe("Undefined identifier: 'ClosAction'");
+    });
+  });
+
+  describe('Cross-cutting scenarios', () => {
+    it('should flag Which in wrong object type (Codeunit OnRun)', () => {
+      const code = `OBJECT Codeunit 50000 TestCodeunit
+{
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            IF Which = '-' THEN
+              EXIT;
+          END;
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      const whichError = diagnostics.find(d => d.message.includes('Which'));
+      expect(whichError).toBeDefined();
+      expect(whichError!.message).toBe("Undefined identifier: 'Which'");
+    });
+
+    it('should flag Which in non-parameterized trigger (OnOpenPage)', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnOpenPage=BEGIN
+                 IF Which = '-' THEN
+                   EXIT;
+               END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      const whichError = diagnostics.find(d => d.message.includes('Which'));
+      expect(whichError).toBeDefined();
+      expect(whichError!.message).toBe("Undefined identifier: 'Which'");
+    });
+
+    it('should not flag both local VAR and Which in OnFindRecord', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnFindRecord=VAR
+                   localVar@1000 : Integer;
+                 BEGIN
+                   IF Which = '-' THEN
+                     localVar := 1;
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('Which'))).toHaveLength(0);
+      expect(diagnostics.filter(d => d.message.includes('localVar'))).toHaveLength(0);
+    });
+
+    it('should not flag global symbols (Rec/xRec) with Which in OnFindRecord', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    SourceTable=Table18;
+    OnFindRecord=BEGIN
+                   Rec.SETRANGE("No.");
+                   IF Which = '-' THEN
+                     EXIT(xRec.FINDFIRST);
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('Rec'))).toHaveLength(0);
+      expect(diagnostics.filter(d => d.message.includes('xRec'))).toHaveLength(0);
+      expect(diagnostics.filter(d => d.message.includes('Which'))).toHaveLength(0);
+    });
+
+    it('should flag Which in CODE section procedure (not in trigger scope)', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    BEGIN
+      IF Which = '-' THEN
+        EXIT;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      const whichError = diagnostics.find(d => d.message.includes('Which'));
+      expect(whichError).toBeDefined();
+      expect(whichError!.message).toBe("Undefined identifier: 'Which'");
+    });
+  });
+});
+
 describe('UndefinedIdentifierValidator - XMLport ELEMENTS validation with table registry', () => {
   it('should not flag table display name references when registry resolves SourceTable', () => {
     // XMLport ELEMENTS contain triggers that reference table display names (e.g., "Data Exch. Def")
