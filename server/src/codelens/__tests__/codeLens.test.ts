@@ -295,6 +295,87 @@ describe('CodeLensProvider', () => {
       );
       expect(recursiveLens?.command?.title).toBe('1 reference');
     });
+
+    it('should show "0 references" for unused field', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;No              ;Code20        }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const lenses = provider.getCodeLenses(doc, ast);
+
+      expect(lenses.length).toBe(1);
+      expect(lenses[0].command?.title).toBe('0 references');
+    });
+
+    it('should show "1 reference" for field used once', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;No              ;Code20        }
+  }
+  CODE
+  {
+    PROCEDURE DoSomething@1();
+    BEGIN
+      No := 'ABC';
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const lenses = provider.getCodeLenses(doc, ast);
+
+      // Find the CodeLens for field No (on line 5, 0-based: 4)
+      const noFieldLens = lenses.find(lens =>
+        lens.command?.arguments?.[1]?.line === 4
+      );
+      expect(noFieldLens?.command?.title).toBe('1 reference');
+    });
+
+    it('should show "N references" for field used multiple times', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;No              ;Code20        }
+  }
+  CODE
+  {
+    PROCEDURE DoSomething@1();
+    BEGIN
+      No := 'ABC';
+      IF No = '' THEN
+        No := 'DEF';
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const lenses = provider.getCodeLenses(doc, ast);
+
+      // Find the CodeLens for field No (on line 5, 0-based: 4)
+      const noFieldLens = lenses.find(lens =>
+        lens.command?.arguments?.[1]?.line === 4
+      );
+      expect(noFieldLens?.command?.title).toBe('3 references');
+    });
   });
 
   describe('Declaration vs Usage', () => {
