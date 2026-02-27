@@ -2845,6 +2845,34 @@ export class Parser {
         // Issue #53: Record error when reserved keyword is used as variable name, but only
         // if the syntax matches a variable declaration attempt (i.e., followed by @number or colon)
         const token = this.peek();
+
+        // Issue #601: Detect misplaced TEMPORARY keyword (before variable name instead of after colon)
+        if (this.check(TokenType.Temporary)) {
+          const afterTemp = this.peekAhead(1);
+          if (afterTemp && (afterTemp.type === TokenType.Identifier || afterTemp.type === TokenType.QuotedIdentifier)) {
+            let colonOffset = 2;
+            const maybeAt = this.peekAhead(2);
+            if (maybeAt && maybeAt.type === TokenType.Unknown && maybeAt.value === '@') {
+              colonOffset = 4; // skip @ and number
+            }
+            const maybeColon = this.peekAhead(colonOffset);
+            if (maybeColon && maybeColon.type === TokenType.Colon) {
+              this.recordError(
+                `Invalid TEMPORARY placement: TEMPORARY must appear after the colon, not before the variable name. Use '${sanitizeContent(afterTemp.value)} : TEMPORARY ...' instead`,
+                token
+              );
+              // Error recovery: skip to semicolon and continue
+              while (!this.isAtEnd() && !this.check(TokenType.Semicolon) && !this.isVariableSectionBoundary()) {
+                this.advance();
+              }
+              if (this.check(TokenType.Semicolon)) {
+                this.advance();
+              }
+              continue;
+            }
+          }
+        }
+
         const nextToken = this.peekAhead(1);
         const isAttemptedVarDecl = this.isVariableDeclarationAttempt(nextToken);
 
