@@ -20,6 +20,23 @@ import { UnknownAttributeValidator } from '../validation/unknownAttributeValidat
 import { ActionNestingValidator } from '../validation/actionNestingValidator';
 import { CALSettings } from '../settings';
 
+/**
+ * Options for semantic analysis
+ */
+export interface AnalyzeOptions {
+  /** User settings (optional) */
+  settings?: CALSettings;
+
+  /** Whether table registry has been populated (used for conditional validation) */
+  hasTableRegistry?: boolean;
+
+  /** Table registry mapping table numbers to table names (optional) */
+  tableRegistry?: ReadonlyMap<number, string>;
+
+  /** Field registry mapping table numbers to field names (optional, used for member property validation) */
+  fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>;
+}
+
 export class SemanticAnalyzer {
   /** Builtin function and method registry */
   private builtins: BuiltinRegistry;
@@ -74,21 +91,18 @@ export class SemanticAnalyzer {
    * @param ast - Parsed AST to analyze
    * @param symbolTable - Symbol table for the document
    * @param documentUri - URI of the document being analyzed
-   * @param settings - Optional user settings
-   * @param hasTableRegistry - Whether table registry has been populated
-   * @param fieldRegistry - Optional field registry mapping table numbers to field names
-   * @param tableRegistry - Optional table registry mapping table numbers to table names
+   * @param options - Optional analysis options (settings, registries)
    * @returns Array of diagnostics (may be empty)
    */
   public analyze(
     ast: CALDocument,
     symbolTable: SymbolTable,
     documentUri: string,
-    settings?: CALSettings,
-    hasTableRegistry?: boolean,
-    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>,
-    tableRegistry?: ReadonlyMap<number, string>
+    options?: AnalyzeOptions
   ): Diagnostic[] {
+    // Destructure options with defaults
+    const { settings, hasTableRegistry, tableRegistry, fieldRegistry } = options ?? {};
+
     // Assemble validation context
     const context: ValidationContext = {
       ast,
@@ -97,8 +111,8 @@ export class SemanticAnalyzer {
       documentUri,
       settings,
       hasTableRegistry,
-      fieldRegistry,
-      tableRegistry
+      tableRegistry,
+      fieldRegistry
     };
 
     // Run validation pipeline
