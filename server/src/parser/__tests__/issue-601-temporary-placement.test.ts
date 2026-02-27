@@ -194,6 +194,52 @@ describe('Issue #601 - TEMPORARY keyword placement', () => {
       expect(otherVar).toBeDefined();
       expect(otherVar?.dataType.typeName).toBe('Integer');
     });
+
+    // Issue #603: Edge case where @ appears without a number
+    it('should report error for TEMPORARY before variable name with @ but no number', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      TEMPORARY Customer@ : Record 18;
+  }
+}`;
+      const { errors } = parseCode(code);
+
+      // Should detect invalid TEMPORARY placement even when @ has no number
+      const temporaryError = errors.find(e =>
+        e.message.includes('TEMPORARY') &&
+        (e.message.includes('placement') || e.message.includes('position') || e.message.includes('before'))
+      );
+      expect(temporaryError).toBeDefined();
+    });
+
+    it('should recover and parse subsequent variable after TEMPORARY with @ but no number', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      TEMPORARY Customer@ : Record 18;
+      OtherVar : Integer;
+  }
+}`;
+      const { ast, errors } = parseCode(code);
+
+      // Error is reported
+      const temporaryError = errors.find(e =>
+        e.message.includes('TEMPORARY') &&
+        (e.message.includes('placement') || e.message.includes('position') || e.message.includes('before'))
+      );
+      expect(temporaryError).toBeDefined();
+
+      // Recovery: subsequent variable is parsed
+      const variables = ast.object?.code?.variables || [];
+      const otherVar = variables.find(v => v.name === 'OtherVar');
+      expect(otherVar).toBeDefined();
+      expect(otherVar?.dataType.typeName).toBe('Integer');
+    });
   });
 
   describe('Invalid syntax: TEMPORARY with QuotedIdentifier', () => {

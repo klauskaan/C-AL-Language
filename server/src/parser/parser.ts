@@ -2853,7 +2853,8 @@ export class Parser {
             let colonOffset = 2;
             const maybeAt = this.peekAhead(2);
             if (maybeAt && maybeAt.type === TokenType.Unknown && maybeAt.value === '@') {
-              colonOffset = 4; // skip @ and number
+              const afterAt = this.peekAhead(3);
+              colonOffset = (afterAt && afterAt.type === TokenType.Integer) ? 4 : 3; // skip @ (and number if present)
             }
             const maybeColon = this.peekAhead(colonOffset);
             if (maybeColon && maybeColon.type === TokenType.Colon) {
