@@ -36,6 +36,9 @@ export class WorkspaceIndex {
   private tableRegistry = new Map<number, string>();
   private tableOwner = new Map<number, string>();
   private fileTableContributions = new Map<string, number>();
+  private tableFieldRegistry = new Map<number, Map<string, string>>();
+  private fieldOwner = new Map<number, string>();
+  private fileFieldContributions = new Map<string, number>();
 
   /**
    * Index a single file and add it to the index
@@ -46,7 +49,7 @@ export class WorkspaceIndex {
    */
   async add(filePath: string): Promise<void> {
     const indexedAt = Date.now();
-    const { symbols, tableInfo } = await this.extractSymbols(filePath);
+    const { symbols, tableInfo, fieldInfo } = await this.extractSymbols(filePath);
 
     // Remove old table contribution for this file (if any)
     const oldId = this.fileTableContributions.get(filePath);
@@ -63,6 +66,23 @@ export class WorkspaceIndex {
       this.tableRegistry.set(tableInfo.id, tableInfo.name);
       this.tableOwner.set(tableInfo.id, filePath);
       this.fileTableContributions.set(filePath, tableInfo.id);
+    }
+
+    // Remove old field contribution for this file (if any)
+    const oldFieldId = this.fileFieldContributions.get(filePath);
+    if (oldFieldId !== undefined) {
+      if (this.fieldOwner.get(oldFieldId) === filePath) {
+        this.tableFieldRegistry.delete(oldFieldId);
+        this.fieldOwner.delete(oldFieldId);
+      }
+      this.fileFieldContributions.delete(filePath);
+    }
+
+    // Add new field contribution
+    if (fieldInfo) {
+      this.tableFieldRegistry.set(fieldInfo.id, fieldInfo.fields);
+      this.fieldOwner.set(fieldInfo.id, filePath);
+      this.fileFieldContributions.set(filePath, fieldInfo.id);
     }
 
     this.index.set(filePath, {
@@ -120,6 +140,24 @@ export class WorkspaceIndex {
         this.fileTableContributions.delete(filePath);
       }
     }
+
+    const oldFieldId = this.fileFieldContributions.get(filePath);
+    if (oldFieldId !== undefined) {
+      if (this.fieldOwner.get(oldFieldId) === filePath) {
+        this.tableFieldRegistry.delete(oldFieldId);
+        this.fieldOwner.delete(oldFieldId);
+        // Clear all other fileFieldContributions entries that point to the
+        // same table ID — they are now orphaned since the owning file is gone.
+        for (const [contributorPath, id] of this.fileFieldContributions) {
+          if (id === oldFieldId) {
+            this.fileFieldContributions.delete(contributorPath);
+          }
+        }
+      } else {
+        this.fileFieldContributions.delete(filePath);
+      }
+    }
+
     this.index.delete(filePath);
   }
 
@@ -131,6 +169,9 @@ export class WorkspaceIndex {
     this.tableRegistry.clear();
     this.tableOwner.clear();
     this.fileTableContributions.clear();
+    this.tableFieldRegistry.clear();
+    this.fieldOwner.clear();
+    this.fileFieldContributions.clear();
   }
 
   /**
@@ -173,6 +214,16 @@ export class WorkspaceIndex {
    */
   getTableRegistry(): ReadonlyMap<number, string> {
     return this.tableRegistry;
+  }
+
+  /**
+   * Get the field registry mapping table IDs to field maps.
+   * Used by SymbolTable.buildFromAST() to inject SourceTable fields into pages.
+   *
+   * @returns ReadonlyMap of tableId → (fieldName → fieldType)
+   */
+  getFieldRegistry(): ReadonlyMap<number, ReadonlyMap<string, string>> {
+    return this.tableFieldRegistry;
   }
 
   /**
@@ -242,7 +293,11 @@ export class WorkspaceIndex {
    * @returns Promise<SymbolInformation[]> - Extracted symbols
    * @throws Error if file cannot be read or parsed
    */
-  private async extractSymbols(filePath: string): Promise<{ symbols: SymbolInformation[]; tableInfo?: { id: number; name: string } }> {
+  private async extractSymbols(filePath: string): Promise<{
+    symbols: SymbolInformation[];
+    tableInfo?: { id: number; name: string };
+    fieldInfo?: { id: number; fields: Map<string, string> };
+  }> {
     // Read file with encoding detection
     const { content } = await readFileWithEncodingAsync(filePath);
 
@@ -270,10 +325,24 @@ export class WorkspaceIndex {
 
     // Extract table info for the table registry
     let tableInfo: { id: number; name: string } | undefined;
+    let fieldInfo: { id: number; fields: Map<string, string> } | undefined;
+
     if (ast.object?.objectKind === ObjectKind.Table && ast.object.objectName) {
       tableInfo = { id: ast.object.objectId, name: ast.object.objectName };
+
+      // Extract field information
+      const fields = new Map<string, string>();
+      if (ast.object.fields?.fields) {
+        for (const field of ast.object.fields.fields) {
+          if (field.fieldName) {
+            fields.set(field.fieldName, field.dataType.typeName);
+          }
+        }
+      }
+
+      fieldInfo = { id: ast.object.objectId, fields };
     }
 
-    return { symbols, tableInfo };
+    return { symbols, tableInfo, fieldInfo };
   }
 }

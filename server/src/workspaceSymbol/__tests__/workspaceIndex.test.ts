@@ -969,4 +969,188 @@ describe('WorkspaceIndex', () => {
       }
     });
   });
+
+  describe('Field Registry', () => {
+    it('should populate field registry with field names when indexing Table object', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+    { 2   ;   ;Name              ;Text50        }
+    { 3   ;   ;Address           ;Text50        }
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+
+      const fieldRegistry = workspaceIndex.getFieldRegistry();
+      expect(fieldRegistry).toBeDefined();
+
+      const customerFields = fieldRegistry.get(18);
+      expect(customerFields).toBeDefined();
+      expect(customerFields!.size).toBe(3);
+      expect(customerFields!.get('No.')).toBe('Code20');
+      expect(customerFields!.get('Name')).toBe('Text50');
+      expect(customerFields!.get('Address')).toBe('Text50');
+    });
+
+    it('should clear field registry when table file is removed', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+    { 2   ;   ;Name              ;Text50        }
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+
+      const fieldRegistryBefore = workspaceIndex.getFieldRegistry();
+      expect(fieldRegistryBefore.get(18)).toBeDefined();
+
+      workspaceIndex.remove(tableFile);
+
+      const fieldRegistryAfter = workspaceIndex.getFieldRegistry();
+      expect(fieldRegistryAfter.get(18)).toBeUndefined();
+    });
+
+    it('should update field registry when table file is re-indexed', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+
+      const fieldRegistryBefore = workspaceIndex.getFieldRegistry();
+      const fieldsBefore = fieldRegistryBefore.get(18);
+      expect(fieldsBefore!.size).toBe(1);
+      expect(fieldsBefore!.get('No.')).toBe('Code20');
+
+      // Update table file with more fields
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+    { 2   ;   ;Name              ;Text50        }
+    { 3   ;   ;Address           ;Text50        }
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+
+      const fieldRegistryAfter = workspaceIndex.getFieldRegistry();
+      const fieldsAfter = fieldRegistryAfter.get(18);
+      expect(fieldsAfter!.size).toBe(3);
+      expect(fieldsAfter!.get('No.')).toBe('Code20');
+      expect(fieldsAfter!.get('Name')).toBe('Text50');
+      expect(fieldsAfter!.get('Address')).toBe('Text50');
+    });
+
+    it('should handle fields with special characters in names', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"E-Mail"              ;Text80        }
+    { 2   ;   ;"Balance (LCY)"       ;Decimal       }
+    { 3   ;   ;"Gen. Bus. Posting Group" ;Code10   }
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+
+      const fieldRegistry = workspaceIndex.getFieldRegistry();
+      const customerFields = fieldRegistry.get(18);
+
+      expect(customerFields!.get('E-Mail')).toBe('Text80');
+      expect(customerFields!.get('Balance (LCY)')).toBe('Decimal');
+      expect(customerFields!.get('Gen. Bus. Posting Group')).toBe('Code10');
+    });
+
+    it('should not populate field registry for non-Table objects', async () => {
+      const codeunitFile = path.join(tempDir, 'Codeunit50000.cal');
+      fs.writeFileSync(codeunitFile, `OBJECT Codeunit 50000 Utils
+{
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`);
+
+      await workspaceIndex.add(codeunitFile);
+
+      const fieldRegistry = workspaceIndex.getFieldRegistry();
+      expect(fieldRegistry.size).toBe(0);
+    });
+
+    it('should handle table with no fields', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+
+      const fieldRegistry = workspaceIndex.getFieldRegistry();
+      const customerFields = fieldRegistry.get(18);
+
+      // Table exists in registry but has no fields
+      expect(customerFields).toBeDefined();
+      expect(customerFields!.size).toBe(0);
+    });
+
+    it('should handle multiple tables with different field sets', async () => {
+      const customerFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(customerFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+    { 2   ;   ;Name              ;Text50        }
+  }
+}`);
+
+      const itemFile = path.join(tempDir, 'Table27.cal');
+      fs.writeFileSync(itemFile, `OBJECT Table 27 Item
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+    { 3   ;   ;Description       ;Text50        }
+    { 4   ;   ;"Unit Price"      ;Decimal       }
+  }
+}`);
+
+      await workspaceIndex.add(customerFile);
+      await workspaceIndex.add(itemFile);
+
+      const fieldRegistry = workspaceIndex.getFieldRegistry();
+
+      const customerFields = fieldRegistry.get(18);
+      expect(customerFields!.size).toBe(2);
+      expect(customerFields!.get('No.')).toBe('Code20');
+      expect(customerFields!.get('Name')).toBe('Text50');
+
+      const itemFields = fieldRegistry.get(27);
+      expect(itemFields!.size).toBe(3);
+      expect(itemFields!.get('No.')).toBe('Code20');
+      expect(itemFields!.get('Description')).toBe('Text50');
+      expect(itemFields!.get('Unit Price')).toBe('Decimal');
+    });
+  });
 });

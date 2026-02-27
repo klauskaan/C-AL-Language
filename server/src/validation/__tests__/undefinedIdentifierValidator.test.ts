@@ -2161,3 +2161,251 @@ describe('UndefinedIdentifierValidator - XMLport ELEMENTS validation with table 
     expect(diagnostics).toHaveLength(0);
   });
 });
+
+describe('UndefinedIdentifierValidator - Page SourceTable Field Integration', () => {
+  /**
+   * Helper to validate with both table registry and field registry.
+   * After implementation, validateUndefinedIdentifiers will need to accept fieldRegistry as well.
+   */
+  function validateWithFieldRegistry(
+    code: string,
+    tableRegistry?: ReadonlyMap<number, string>,
+    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>
+  ): Diagnostic[] {
+    const lexer = new Lexer(code);
+    const tokens = lexer.tokenize();
+    const parser = new Parser(tokens);
+    const ast = parser.parse();
+
+    const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast, tableRegistry, fieldRegistry);
+
+    const builtins = new BuiltinRegistry();
+
+    const context: ValidationContext = {
+      ast,
+      symbolTable,
+      builtins,
+      documentUri: 'file:///test.cal',
+      hasTableRegistry: symbolTable.hadTableRegistry
+    };
+
+    const validator = new UndefinedIdentifierValidator();
+    return validator.validate(context);
+  }
+
+  it('should not flag SourceTable field references when field registry is populated', () => {
+    const code = `OBJECT Page 21 "Customer Card"
+{
+  PROPERTIES
+  {
+    SourceTable=Table18;
+  }
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      "No." := 'CUST001';
+      Name := 'Test Customer';
+      VALIDATE(Address);
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('No.', 'Code20');
+    customerFields.set('Name', 'Text50');
+    customerFields.set('Address', 'Text50');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // No fields should be flagged as undefined
+    const noFieldError = diagnostics.find(d => d.message.includes('No.'));
+    expect(noFieldError).toBeUndefined();
+
+    const nameFieldError = diagnostics.find(d => d.message.includes('Name'));
+    expect(nameFieldError).toBeUndefined();
+
+    const addressFieldError = diagnostics.find(d => d.message.includes('Address'));
+    expect(addressFieldError).toBeUndefined();
+
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should flag field references when field registry is NOT populated', () => {
+    // Same code as above, but without field registry
+    const code = `OBJECT Page 21 "Customer Card"
+{
+  PROPERTIES
+  {
+    SourceTable=Table18;
+  }
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      "No." := 'CUST001';
+      Name := 'Test Customer';
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    // No field registry provided
+
+    const diagnostics = validateUndefinedIdentifiers(code, tableRegistry);
+
+    // Fields SHOULD be flagged as undefined (existing behavior preserved)
+    const noFieldError = diagnostics.find(d => d.message.includes('No.'));
+    expect(noFieldError).toBeDefined();
+
+    const nameFieldError = diagnostics.find(d => d.message.includes('Name'));
+    expect(nameFieldError).toBeDefined();
+  });
+
+  it('should handle field references with special characters', () => {
+    const code = `OBJECT Page 21 "Customer Card"
+{
+  PROPERTIES
+  {
+    SourceTable=Table18;
+  }
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      "E-Mail" := 'test@example.com';
+      "Balance (LCY)" := 1000.00;
+      "Gen. Bus. Posting Group" := 'DOMESTIC';
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('E-Mail', 'Text80');
+    customerFields.set('Balance (LCY)', 'Decimal');
+    customerFields.set('Gen. Bus. Posting Group', 'Code10');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should allow local variable to shadow SourceTable field without warning', () => {
+    const code = `OBJECT Page 21 "Customer Card"
+{
+  PROPERTIES
+  {
+    SourceTable=Table18;
+  }
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Name : Integer;
+    BEGIN
+      Name := 5;  // Local variable shadows table field - OK
+      Address := 'Main Street';  // Table field - OK
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('Name', 'Text50');
+    customerFields.set('Address', 'Text50');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // Both Name (local var) and Address (field) should be valid
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should handle pages without SourceTable property', () => {
+    const code = `OBJECT Page 21 "General Page"
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      Name := 'Test';  // Should be flagged - no SourceTable
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('Name', 'Text50');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // Name should be flagged as undefined
+    const nameError = diagnostics.find(d => d.message.includes('Name'));
+    expect(nameError).toBeDefined();
+  });
+
+  it('should handle case-insensitive field references', () => {
+    const code = `OBJECT Page 21 "Customer Card"
+{
+  PROPERTIES
+  {
+    SourceTable=Table18;
+  }
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      name := 'Customer 1';  // lowercase
+      NAME := 'Customer 2';  // uppercase
+      NaMe := 'Customer 3';  // mixed case
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('Name', 'Text50');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // All case variations should resolve to the same field
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should not inject fields for non-page objects', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      Name := 'Test';  // Should be flagged - not a page
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('Name', 'Text50');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // Name should be flagged as undefined (not a page)
+    const nameError = diagnostics.find(d => d.message.includes('Name'));
+    expect(nameError).toBeDefined();
+  });
+});
