@@ -13,7 +13,6 @@ import { DiagnosticSeverity } from 'vscode-languageserver';
 import { ObjectKind } from '../src/parser/ast';
 import { FieldInfo } from '../src/workspaceSymbol/workspaceIndex';
 
-// Exported for testing only
 export interface DiagnosticResult {
   code: string;
   severity: number;
@@ -22,7 +21,6 @@ export interface DiagnosticResult {
   column: number;
 }
 
-// Exported for testing only
 export interface SemanticValidationResult {
   file: string;
   lines: number;

@@ -3293,6 +3293,7 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
       customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
       fieldRegistry.set(18, customerFields);
 
+      // Validate undefined identifiers
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
 
       const invalidField = diagnostics.find(d => d.message.includes('InvalidField'));
