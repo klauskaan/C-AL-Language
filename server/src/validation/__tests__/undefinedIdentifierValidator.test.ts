@@ -290,7 +290,7 @@ describe('UndefinedIdentifierValidator - Known Symbols Suppressed', () => {
         CODE {
           PROCEDURE TestProc();
           VAR
-            TEMPORARY TempCustomer : Record 18;
+            TempCustomer : TEMPORARY Record 18;
           BEGIN
             TempCustomer.INIT;
           END;
@@ -3271,14 +3271,14 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
   });
 
   describe('TEMPORARY keyword handling', () => {
-    it.skip('should validate fields on TEMPORARY record variables', () => {
+    it('should validate fields on TEMPORARY record variables', () => {
       const code = `OBJECT Codeunit 50000 Test
 {
   CODE
   {
     PROCEDURE TestProc();
     VAR
-      TEMPORARY TempCustomer : Record 18;
+      TempCustomer : TEMPORARY Record 18;
     BEGIN
       TempCustomer."No." := '10000';
       TempCustomer.InvalidField := 'test';
@@ -3292,10 +3292,7 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
       customerFields.set('No.', 'Code20');
       fieldRegistry.set(18, customerFields);
 
-      // Parse and check AST structure
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      const parser = new Parser(tokens);
+      // Validate undefined identifiers
       const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
 
       const invalidField = diagnostics.find(d => d.message.includes('InvalidField'));
