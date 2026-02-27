@@ -57,6 +57,38 @@ function buildTableRegistry(realDir: string, files: string[]): Map<number, strin
   return registry;
 }
 
+function buildFieldRegistry(realDir: string, files: string[]): Map<number, Map<string, string>> {
+  const registry = new Map<number, Map<string, string>>();
+  for (const file of files) {
+    const filePath = join(realDir, file);
+    const { content } = readFileWithEncoding(filePath);
+    const lexer = new Lexer(content);
+    const tokens = lexer.tokenize();
+    const parser = new Parser(tokens);
+    const ast = parser.parse();
+
+    if (ast.object?.objectKind === ObjectKind.Table) {
+      const fields = new Map<string, string>();
+
+      // Extract fields from FIELDS section
+      if (ast.object.fields?.fields) {
+        for (const field of ast.object.fields.fields) {
+          if (field.fieldName && field.dataType) {
+            // Store field name and type
+            const fieldType = field.dataType.type || 'Unknown';
+            fields.set(field.fieldName, fieldType);
+          }
+        }
+      }
+
+      if (fields.size > 0) {
+        registry.set(ast.object.objectId, fields);
+      }
+    }
+  }
+  return registry;
+}
+
 function validateAllRealFiles(): SemanticValidationResult[] {
   const realDir = join(__dirname, '../../test/REAL');
   const files = readdirSync(realDir)
@@ -68,7 +100,12 @@ function validateAllRealFiles(): SemanticValidationResult[] {
   // Pre-scan: build tableId→tableName registry for blank-named DataItem resolution (#518)
   console.log('Building table registry...');
   const tableRegistry = buildTableRegistry(realDir, files);
-  console.log(`Table registry: ${tableRegistry.size} tables indexed\n`);
+  console.log(`Table registry: ${tableRegistry.size} tables indexed`);
+
+  // Pre-scan: build field registry for SourceTable field injection (#589)
+  console.log('Building field registry...');
+  const fieldRegistry = buildFieldRegistry(realDir, files);
+  console.log(`Field registry: ${fieldRegistry.size} tables with fields indexed\n`);
 
   const builtins = new BuiltinRegistry();
   const analyzer = new SemanticAnalyzer(builtins);
@@ -85,7 +122,7 @@ function validateAllRealFiles(): SemanticValidationResult[] {
     const parser = new Parser(tokens);
     const ast = parser.parse();
     const symbolTable = new SymbolTable();
-    symbolTable.buildFromAST(ast, tableRegistry);
+    symbolTable.buildFromAST(ast, tableRegistry, fieldRegistry);
     const diagnostics = analyzer.analyze(ast, symbolTable, `file://${filePath}`, defaultSettings);
     const analyzeTime = Date.now() - startTime;
 
