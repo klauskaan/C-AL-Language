@@ -731,6 +731,18 @@ export const RECORD_METHODS: BuiltinFunction[] = [
     documentation: 'Clears all marks on the record variable.',
     category: 'record'
   },
+  {
+    name: 'SETVIEW',
+    signature: '(String)',
+    documentation: 'Sets the current sort order, key, and filters from a string representation.',
+    category: 'record'
+  },
+  {
+    name: 'GETVIEW',
+    signature: '([UseNames]): Text',
+    documentation: 'Returns the current sort order, key, and filters as a string. UseNames controls whether field names or numbers are used.',
+    category: 'record'
+  },
 
   // Key and sorting
   {
@@ -743,6 +755,18 @@ export const RECORD_METHODS: BuiltinFunction[] = [
     name: 'ASCENDING',
     signature: '([NewValue]): Boolean',
     documentation: 'Gets or sets ascending sort order.',
+    category: 'record'
+  },
+  {
+    name: 'SETASCENDING',
+    signature: '(Field, Value)',
+    documentation: 'Sets ascending (TRUE) or descending (FALSE) sort order for a specific field.',
+    category: 'record'
+  },
+  {
+    name: 'GETASCENDING',
+    signature: '(Field): Boolean',
+    documentation: 'Returns TRUE if the specified field is sorted in ascending order.',
     category: 'record'
   },
 
@@ -811,6 +835,18 @@ export const RECORD_METHODS: BuiltinFunction[] = [
     name: 'FIELDACTIVE',
     signature: '(Field): Boolean',
     documentation: 'Returns TRUE if the specified field is enabled in the table definition.',
+    category: 'record'
+  },
+  {
+    name: 'ISTEMPORARY',
+    signature: '(): Boolean',
+    documentation: 'Returns TRUE if the record variable is temporary (in-memory only).',
+    category: 'record'
+  },
+  {
+    name: 'SETAUTOCALCFIELDS',
+    signature: '(Field1 [, Field2, ...])',
+    documentation: 'Sets FlowFields to automatically calculate when the record is retrieved.',
     category: 'record'
   },
 
@@ -905,6 +941,30 @@ export const RECORD_METHODS: BuiltinFunction[] = [
     category: 'record',
     deprecated: 'Use RECORDID instead.'
   },
+  {
+    name: 'READPERMISSION',
+    signature: '(): Boolean',
+    documentation: 'Returns TRUE if the user has read permission on the table.',
+    category: 'record'
+  },
+  {
+    name: 'WRITEPERMISSION',
+    signature: '(): Boolean',
+    documentation: 'Returns TRUE if the user has write permission on the table.',
+    category: 'record'
+  },
+  {
+    name: 'SETPERMISSIONFILTER',
+    signature: '()',
+    documentation: 'Applies the user\'s security filter to the record.',
+    category: 'record'
+  },
+  {
+    name: 'SECURITYFILTERING',
+    signature: '([SecurityFilter]): SecurityFilter',
+    documentation: 'Gets or sets the security filtering mode for the record variable. Values: SECURITYFILTER::Filtered, Ignored, Validated, Disallowed.',
+    category: 'record'
+  },
 
   // BLOB handling
   {
@@ -932,6 +992,38 @@ export const RECORD_METHODS: BuiltinFunction[] = [
     name: 'SETRECFILTER',
     signature: '()',
     documentation: 'Sets the filter to the current record\'s primary key values.',
+    category: 'record'
+  },
+
+  // Links
+  {
+    name: 'HASLINKS',
+    signature: '(): Boolean',
+    documentation: 'Returns TRUE if the record has any links attached.',
+    category: 'record'
+  },
+  {
+    name: 'ADDLINK',
+    signature: '(URL [, Description])',
+    documentation: 'Adds a link (URL or path) to the record.',
+    category: 'record'
+  },
+  {
+    name: 'DELETELINKS',
+    signature: '()',
+    documentation: 'Deletes all links from the current record.',
+    category: 'record'
+  },
+  {
+    name: 'DELETELINK',
+    signature: '(ID)',
+    documentation: 'Deletes a specific link by its ID.',
+    category: 'record'
+  },
+  {
+    name: 'COPYLINKS',
+    signature: '(FromRecord)',
+    documentation: 'Copies all links from another record to this record.',
     category: 'record'
   }
 ];

@@ -1781,6 +1781,67 @@ describe('UndefinedIdentifierValidator - field-reference arguments in record met
     const fieldBError = diagnostics.find(d => d.message.includes("'FieldB'"));
     expect(fieldBError).toBeUndefined();
   });
+
+  it('should not flag any field args in SETAUTOCALCFIELDS', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.SETAUTOCALCFIELDS(Content, "BLOB Value");
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const contentError = diagnostics.find(d => d.message.includes("'Content'"));
+    expect(contentError).toBeUndefined();
+
+    const blobError = diagnostics.find(d => d.message.includes('"BLOB Value"') || d.message.includes('BLOB Value'));
+    expect(blobError).toBeUndefined();
+  });
+
+  it('should not flag first arg (field) in SETASCENDING but still validate second arg', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.SETASCENDING("Due Date", UndefinedBool);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const fieldError = diagnostics.find(d => d.message.includes('"Due Date"') || d.message.includes('Due Date'));
+    expect(fieldError).toBeUndefined();
+
+    const undefinedError = diagnostics.find(d => d.message.includes('UndefinedBool'));
+    expect(undefinedError).toBeDefined();
+    expect(undefinedError!.message).toBe("Undefined identifier: 'UndefinedBool'");
+  });
+
+  it('should not flag first arg (field) in GETASCENDING', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        VAR
+          Rec : Record 18;
+        BEGIN
+          Rec.GETASCENDING(Name);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const nameError = diagnostics.find(d => d.message.includes("'Name'"));
+    expect(nameError).toBeUndefined();
+  });
 });
 
 describe('UndefinedIdentifierValidator - Property Trigger Scoping', () => {
