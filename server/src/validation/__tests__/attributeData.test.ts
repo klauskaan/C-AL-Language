@@ -4,16 +4,10 @@
  * Tests for the attribute registry data structure that tracks known C/AL attributes.
  * This is a foundational unit test before building the validator.
  *
- * Valid C/AL attributes (NAV 2013 through BC14):
- * - [External]
- * - [TryFunction]
- * - [Integration(TRUE/FALSE)]
- * - [EventSubscriber(...)]
- * - [Internal] - NAV 2017+
- * - [ServiceEnabled] - NAV 2017+
+ * For the full list of valid C/AL attributes, see: ../attributeData.ts
  *
- * Note: AL-only attributes like [Scope('OnPrem')], [BusinessEvent]
- * are NOT supported in C/AL and should return false.
+ * Note: AL-only attributes (not defined in attributeData.ts) are NOT supported
+ * in C/AL and should return false from isKnownAttribute().
  */
 
 import { isKnownAttribute } from '../attributeData';
