@@ -624,7 +624,7 @@ describe('SemanticAnalyzer - Settings Integration', () => {
       ast,
       symbolTable,
       'file:///test.cal',
-      settings
+      settings ? { settings } : undefined
     );
   }
 

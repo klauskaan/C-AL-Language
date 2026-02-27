@@ -28,6 +28,7 @@ import { ScopeTracker } from '../semantic/scopeTracker';
 import { SymbolTable } from '../symbols/symbolTable';
 import { BuiltinRegistry } from '../semantic/builtinRegistry';
 import { RecordType, isRecordType } from '../types/types';
+import { FieldInfo } from '../workspaceSymbol/workspaceIndex';
 
 /**
  * Record methods whose arguments include field references (not variable identifiers).
@@ -72,7 +73,7 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
    * @param builtins - Registry of builtin functions
    * @param walker - ASTWalker instance for manual child traversal
    * @param hasTableRegistry - Whether table registry has been populated
-   * @param fieldRegistry - Optional field registry mapping table numbers to field names
+   * @param fieldRegistry - Optional field registry mapping table numbers to field info
    * @param tableRegistry - Optional table registry mapping table numbers to table names
    */
   constructor(
@@ -81,7 +82,7 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
     private readonly builtins: BuiltinRegistry,
     private readonly walker: ASTWalker,
     hasTableRegistry: boolean,
-    private readonly fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>,
+    private readonly fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>,
     private readonly tableRegistry?: ReadonlyMap<number, string>
   ) {
     this.hasTableRegistry = hasTableRegistry;
@@ -372,16 +373,8 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
       return; // Table not in registry - gracefully skip
     }
 
-    // Check if property exists in table fields (case-insensitive)
-    const propertyNameUpper = propertyName.toUpperCase();
-    let fieldExists = false;
-
-    for (const fieldName of tableFields.keys()) {
-      if (fieldName.toUpperCase() === propertyNameUpper) {
-        fieldExists = true;
-        break;
-      }
-    }
+    // Check if property exists in table fields (O(1) case-insensitive lookup)
+    const fieldExists = tableFields.has(propertyName.toUpperCase());
 
     // If field doesn't exist, add diagnostic
     if (!fieldExists) {

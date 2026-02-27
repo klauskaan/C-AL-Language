@@ -11,8 +11,10 @@ import { escapeMarkdown } from '../src/utils/escapeMarkdown';
 import { defaultSettings } from '../src/settings';
 import { DiagnosticSeverity } from 'vscode-languageserver';
 import { ObjectKind } from '../src/parser/ast';
+import { FieldInfo } from '../src/workspaceSymbol/workspaceIndex';
 
-interface DiagnosticResult {
+// Exported for testing only
+export interface DiagnosticResult {
   code: string;
   severity: number;
   message: string;
@@ -20,14 +22,16 @@ interface DiagnosticResult {
   column: number;
 }
 
-interface SemanticValidationResult {
+// Exported for testing only
+export interface SemanticValidationResult {
   file: string;
   lines: number;
   analyzeTime: number;
   diagnostics: DiagnosticResult[];
 }
 
-function severityLabel(severity: number): string {
+// Exported for testing only
+export function severityLabel(severity: number): string {
   switch (severity) {
     case DiagnosticSeverity.Error:   return 'Error';
     case DiagnosticSeverity.Warning: return 'Warning';
@@ -37,11 +41,13 @@ function severityLabel(severity: number): string {
   }
 }
 
-function objectType(filename: string): string {
+// Exported for testing only
+export function objectType(filename: string): string {
   return filename.substring(0, 3).toUpperCase();
 }
 
-function buildTableRegistry(realDir: string, files: string[]): Map<number, string> {
+// Exported for testing only
+export function buildTableRegistry(realDir: string, files: string[]): Map<number, string> {
   const registry = new Map<number, string>();
   for (const file of files) {
     const filePath = join(realDir, file);
@@ -57,8 +63,9 @@ function buildTableRegistry(realDir: string, files: string[]): Map<number, strin
   return registry;
 }
 
-function buildFieldRegistry(realDir: string, files: string[]): Map<number, Map<string, string>> {
-  const registry = new Map<number, Map<string, string>>();
+// Exported for testing only
+export function buildFieldRegistry(realDir: string, files: string[]): Map<number, Map<string, FieldInfo>> {
+  const registry = new Map<number, Map<string, FieldInfo>>();
   for (const file of files) {
     const filePath = join(realDir, file);
     const { content } = readFileWithEncoding(filePath);
@@ -68,15 +75,17 @@ function buildFieldRegistry(realDir: string, files: string[]): Map<number, Map<s
     const ast = parser.parse();
 
     if (ast.object?.objectKind === ObjectKind.Table) {
-      const fields = new Map<string, string>();
+      const fields = new Map<string, FieldInfo>();
 
       // Extract fields from FIELDS section
       if (ast.object.fields?.fields) {
         for (const field of ast.object.fields.fields) {
           if (field.fieldName && field.dataType) {
-            // Store field name and type
-            const fieldType = field.dataType.type || 'Unknown';
-            fields.set(field.fieldName, fieldType);
+            // Store field info with uppercase key (matching workspaceIndex.ts)
+            fields.set(field.fieldName.toUpperCase(), {
+              originalName: field.fieldName,
+              typeName: field.dataType.typeName
+            });
           }
         }
       }
@@ -89,7 +98,8 @@ function buildFieldRegistry(realDir: string, files: string[]): Map<number, Map<s
   return registry;
 }
 
-function validateAllRealFiles(): SemanticValidationResult[] {
+// Exported for testing only
+export function validateAllRealFiles(): SemanticValidationResult[] {
   const realDir = join(__dirname, '../../test/REAL');
   const files = readdirSync(realDir)
     .filter(hasTxtExtension)
@@ -124,7 +134,12 @@ function validateAllRealFiles(): SemanticValidationResult[] {
     const symbolTable = new SymbolTable();
     symbolTable.buildFromAST(ast, tableRegistry, fieldRegistry);
     const hasTableRegistry = symbolTable.hadTableRegistry;
-    const diagnostics = analyzer.analyze(ast, symbolTable, `file://${filePath}`, defaultSettings, hasTableRegistry, fieldRegistry, tableRegistry);
+    const diagnostics = analyzer.analyze(ast, symbolTable, `file://${filePath}`, {
+      settings: defaultSettings,
+      hasTableRegistry,
+      tableRegistry,
+      fieldRegistry
+    });
     const analyzeTime = Date.now() - startTime;
 
     results.push({
@@ -149,7 +164,8 @@ function validateAllRealFiles(): SemanticValidationResult[] {
   return results;
 }
 
-function generateMarkdownReport(results: SemanticValidationResult[]): string {
+// Exported for testing only
+export function generateMarkdownReport(results: SemanticValidationResult[]): string {
   const filesWithDiag = results.filter(r => r.diagnostics.length > 0);
   const totalDiag = results.reduce((sum, r) => sum + r.diagnostics.length, 0);
   const totalTime = results.reduce((sum, r) => sum + r.analyzeTime, 0);

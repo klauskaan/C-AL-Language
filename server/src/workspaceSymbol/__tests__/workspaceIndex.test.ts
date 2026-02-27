@@ -991,9 +991,9 @@ describe('WorkspaceIndex', () => {
       const customerFields = fieldRegistry.get(18);
       expect(customerFields).toBeDefined();
       expect(customerFields!.size).toBe(3);
-      expect(customerFields!.get('No.')).toBe('Code20');
-      expect(customerFields!.get('Name')).toBe('Text50');
-      expect(customerFields!.get('Address')).toBe('Text50');
+      expect(customerFields!.get('NO.')).toEqual({ originalName: 'No.', typeName: 'Code20' });
+      expect(customerFields!.get('NAME')).toEqual({ originalName: 'Name', typeName: 'Text50' });
+      expect(customerFields!.get('ADDRESS')).toEqual({ originalName: 'Address', typeName: 'Text50' });
     });
 
     it('should clear field registry when table file is removed', async () => {
@@ -1033,7 +1033,7 @@ describe('WorkspaceIndex', () => {
       const fieldRegistryBefore = workspaceIndex.getFieldRegistry();
       const fieldsBefore = fieldRegistryBefore.get(18);
       expect(fieldsBefore!.size).toBe(1);
-      expect(fieldsBefore!.get('No.')).toBe('Code20');
+      expect(fieldsBefore!.get('NO.')).toEqual({ originalName: 'No.', typeName: 'Code20' });
 
       // Update table file with more fields
       fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
@@ -1051,9 +1051,9 @@ describe('WorkspaceIndex', () => {
       const fieldRegistryAfter = workspaceIndex.getFieldRegistry();
       const fieldsAfter = fieldRegistryAfter.get(18);
       expect(fieldsAfter!.size).toBe(3);
-      expect(fieldsAfter!.get('No.')).toBe('Code20');
-      expect(fieldsAfter!.get('Name')).toBe('Text50');
-      expect(fieldsAfter!.get('Address')).toBe('Text50');
+      expect(fieldsAfter!.get('NO.')).toEqual({ originalName: 'No.', typeName: 'Code20' });
+      expect(fieldsAfter!.get('NAME')).toEqual({ originalName: 'Name', typeName: 'Text50' });
+      expect(fieldsAfter!.get('ADDRESS')).toEqual({ originalName: 'Address', typeName: 'Text50' });
     });
 
     it('should handle fields with special characters in names', async () => {
@@ -1073,9 +1073,9 @@ describe('WorkspaceIndex', () => {
       const fieldRegistry = workspaceIndex.getFieldRegistry();
       const customerFields = fieldRegistry.get(18);
 
-      expect(customerFields!.get('E-Mail')).toBe('Text80');
-      expect(customerFields!.get('Balance (LCY)')).toBe('Decimal');
-      expect(customerFields!.get('Gen. Bus. Posting Group')).toBe('Code10');
+      expect(customerFields!.get('E-MAIL')).toEqual({ originalName: 'E-Mail', typeName: 'Text80' });
+      expect(customerFields!.get('BALANCE (LCY)')).toEqual({ originalName: 'Balance (LCY)', typeName: 'Decimal' });
+      expect(customerFields!.get('GEN. BUS. POSTING GROUP')).toEqual({ originalName: 'Gen. Bus. Posting Group', typeName: 'Code10' });
     });
 
     it('should not populate field registry for non-Table objects', async () => {
@@ -1143,14 +1143,14 @@ describe('WorkspaceIndex', () => {
 
       const customerFields = fieldRegistry.get(18);
       expect(customerFields!.size).toBe(2);
-      expect(customerFields!.get('No.')).toBe('Code20');
-      expect(customerFields!.get('Name')).toBe('Text50');
+      expect(customerFields!.get('NO.')).toEqual({ originalName: 'No.', typeName: 'Code20' });
+      expect(customerFields!.get('NAME')).toEqual({ originalName: 'Name', typeName: 'Text50' });
 
       const itemFields = fieldRegistry.get(27);
       expect(itemFields!.size).toBe(3);
-      expect(itemFields!.get('No.')).toBe('Code20');
-      expect(itemFields!.get('Description')).toBe('Text50');
-      expect(itemFields!.get('Unit Price')).toBe('Decimal');
+      expect(itemFields!.get('NO.')).toEqual({ originalName: 'No.', typeName: 'Code20' });
+      expect(itemFields!.get('DESCRIPTION')).toEqual({ originalName: 'Description', typeName: 'Text50' });
+      expect(itemFields!.get('UNIT PRICE')).toEqual({ originalName: 'Unit Price', typeName: 'Decimal' });
     });
   });
 });

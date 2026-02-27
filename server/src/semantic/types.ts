@@ -9,6 +9,7 @@ import { SymbolTable } from '../symbols/symbolTable';
 import { BuiltinRegistry } from './builtinRegistry';
 import { Diagnostic } from 'vscode-languageserver';
 import { CALSettings } from '../settings';
+import { FieldInfo } from '../workspaceSymbol/workspaceIndex';
 
 /**
  * ValidationContext provides all information needed for semantic validation.
@@ -36,8 +37,8 @@ export interface ValidationContext {
   /** Table registry mapping table numbers to table names (optional) */
   tableRegistry?: ReadonlyMap<number, string>;
 
-  /** Field registry mapping table numbers to field names (optional, used for member property validation) */
-  fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>;
+  /** Field registry mapping table numbers to field info (optional, used for member property validation) */
+  fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>;
 }
 
 /**
