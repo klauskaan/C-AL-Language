@@ -76,7 +76,8 @@ export class SemanticAnalyzer {
    * @param documentUri - URI of the document being analyzed
    * @param settings - Optional user settings
    * @param hasTableRegistry - Whether table registry has been populated
-   * @param fieldRegistry - Field registry providing cross-file field information
+   * @param fieldRegistry - Optional field registry mapping table numbers to field names
+   * @param tableRegistry - Optional table registry mapping table numbers to table names
    * @returns Array of diagnostics (may be empty)
    */
   public analyze(
@@ -85,7 +86,8 @@ export class SemanticAnalyzer {
     documentUri: string,
     settings?: CALSettings,
     hasTableRegistry?: boolean,
-    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>
+    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>,
+    tableRegistry?: ReadonlyMap<number, string>
   ): Diagnostic[] {
     // Assemble validation context
     const context: ValidationContext = {
@@ -95,7 +97,8 @@ export class SemanticAnalyzer {
       documentUri,
       settings,
       hasTableRegistry,
-      fieldRegistry
+      fieldRegistry,
+      tableRegistry
     };
 
     // Run validation pipeline

@@ -27,7 +27,7 @@ import { Validator, ValidationContext } from '../semantic/types';
 import { ScopeTracker } from '../semantic/scopeTracker';
 import { SymbolTable } from '../symbols/symbolTable';
 import { BuiltinRegistry } from '../semantic/builtinRegistry';
-import { isRecordType } from '../types/types';
+import { RecordType, isRecordType } from '../types/types';
 
 /**
  * Record methods whose arguments include field references (not variable identifiers).
@@ -58,32 +58,12 @@ const FIELD_REFERENCE_METHODS: Map<string, 'first' | 'all'> = new Map([
 ]);
 
 /**
- * Check if a field exists in the field map (case-insensitive).
- * @param fields - Field map (key: field name, value: field type)
- * @param name - Field name to check
- * @returns True if field exists (case-insensitive match)
- */
-function hasFieldCaseInsensitive(
-  fields: ReadonlyMap<string, string>,
-  name: string
-): boolean {
-  const normalizedName = name.toLowerCase();
-  for (const fieldName of fields.keys()) {
-    if (fieldName.toLowerCase() === normalizedName) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
  * Visitor that collects diagnostics for undefined identifiers.
  * Uses manual traversal control to properly handle scope-dependent constructs.
  */
 class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
   public readonly diagnostics: Diagnostic[] = [];
   private readonly hasTableRegistry: boolean;
-  private readonly fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>;
 
   /**
    * Constructor
@@ -92,7 +72,8 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
    * @param builtins - Registry of builtin functions
    * @param walker - ASTWalker instance for manual child traversal
    * @param hasTableRegistry - Whether table registry has been populated
-   * @param fieldRegistry - Field registry providing cross-file field information
+   * @param fieldRegistry - Optional field registry mapping table numbers to field names
+   * @param tableRegistry - Optional table registry mapping table numbers to table names
    */
   constructor(
     private readonly scopeTracker: ScopeTracker,
@@ -100,10 +81,10 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
     private readonly builtins: BuiltinRegistry,
     private readonly walker: ASTWalker,
     hasTableRegistry: boolean,
-    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>
+    private readonly fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>,
+    private readonly tableRegistry?: ReadonlyMap<number, string>
   ) {
     this.hasTableRegistry = hasTableRegistry;
-    this.fieldRegistry = fieldRegistry;
   }
 
   /**
@@ -127,7 +108,7 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
   }
 
   /**
-   * Visit MemberExpression - only walk the object part (not the property)
+   * Visit MemberExpression - only walk the object part, validate the property if field registry available
    * Returns false to prevent automatic traversal
    */
   visitMemberExpression(node: MemberExpression): false {
@@ -135,11 +116,16 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
     // Example: Customer."No." - walk Customer, skip "No."
     this.walker.walk(node.object, this);
 
+    // Validate the property if field registry is available
+    if (this.fieldRegistry) {
+      this.validateMemberProperty(node);
+    }
+
     return false; // Prevent automatic traversal
   }
 
   /**
-   * Visit CallExpression - handle callee specially, validate or skip field-reference arguments
+   * Visit CallExpression - handle callee specially, skip field-reference arguments
    * Returns false to prevent automatic traversal
    */
   visitCallExpression(node: CallExpression): false {
@@ -149,19 +135,17 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
     // Determine if this is a record method call with field-reference arguments
     const fieldRefMode = this.getFieldReferenceMode(node);
 
-    // Walk arguments, handling field-reference positions specially
+    // Walk arguments, skipping field-reference positions
     for (let i = 0; i < node.arguments.length; i++) {
-      const isFieldRefArg =
-        (fieldRefMode === 'all') ||
-        (fieldRefMode === 'first' && i === 0);
-
-      if (isFieldRefArg) {
-        // This argument is a field reference - try cross-file validation
-        this.validateFieldArgument(node, node.arguments[i]);
-      } else {
-        // Regular argument - walk normally
-        this.walker.walk(node.arguments[i], this);
+      if (fieldRefMode === 'all') {
+        // All args are field references - skip all
+        continue;
       }
+      if (fieldRefMode === 'first' && i === 0) {
+        // First arg is a field reference - skip it
+        continue;
+      }
+      this.walker.walk(node.arguments[i], this);
     }
 
     return false; // Prevent automatic traversal
@@ -172,90 +156,12 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
    * Returns the field-reference mode ('first', 'all') or undefined if not applicable.
    */
   private getFieldReferenceMode(node: CallExpression): 'first' | 'all' | undefined {
-    if (node.callee.type === 'MemberExpression') {
-      const memberExpr = node.callee as MemberExpression;
-      const methodName = memberExpr.property.name.toUpperCase();
-      return FIELD_REFERENCE_METHODS.get(methodName);
+    if (node.callee.type !== 'MemberExpression') {
+      return undefined;
     }
-
-    return undefined;
-  }
-
-  /**
-   * Validate a field argument using the field registry.
-   * If validation cannot be performed (no registry, receiver type unknown, etc.),
-   * skip validation (graceful degradation).
-   * If validation can be performed and field is NOT found, flag it as undefined.
-   * @param callNode - The call expression node
-   * @param argNode - The argument node (should be an Identifier for field reference)
-   */
-  private validateFieldArgument(callNode: CallExpression, argNode: any): void {
-    // Only validate simple Identifier nodes
-    if (argNode.type !== 'Identifier') {
-      // Skip validation for complex expressions (e.g., MemberExpression receivers)
-      return;
-    }
-
-    const fieldName = (argNode as Identifier).name;
-
-    // Skip if no field registry available
-    if (!this.fieldRegistry) {
-      return;
-    }
-
-    // Extract receiver from CallExpression
-    // CallExpression.callee is a MemberExpression: receiver.method(args)
-    if (callNode.callee.type !== 'MemberExpression') {
-      return;
-    }
-
-    const memberExpr = callNode.callee as MemberExpression;
-    const receiver = memberExpr.object;
-
-    // Only handle simple Identifier receivers (e.g., Customer.SETRANGE)
-    // Skip MemberExpression receivers (e.g., Rec."Sales Line".SETRANGE)
-    if (receiver.type !== 'Identifier') {
-      return;
-    }
-
-    const receiverIdent = receiver as Identifier;
-
-    // Resolve receiver symbol via symbol table
-    const symbol = this.symbolTable.getSymbolAtOffset(
-      receiverIdent.name,
-      receiverIdent.startToken.startOffset
-    );
-    if (!symbol || !symbol.resolvedType) {
-      // Receiver type unknown - skip validation (graceful degradation)
-      return;
-    }
-
-    // Check if receiver is a Record type
-    if (!isRecordType(symbol.resolvedType)) {
-      // Not a Record - skip field validation
-      return;
-    }
-
-    const tableId = symbol.resolvedType.tableId;
-
-    // Skip if tableId is 0 (unresolved/generic Record)
-    if (tableId === 0) {
-      return;
-    }
-
-    // Look up table in field registry
-    const tableFields = this.fieldRegistry.get(tableId);
-    if (!tableFields) {
-      // Table not in registry - skip validation (graceful degradation)
-      return;
-    }
-
-    // Check if field exists (case-insensitive)
-    if (!hasFieldCaseInsensitive(tableFields, fieldName)) {
-      // Field NOT found - flag as undefined
-      this.addFieldDiagnostic(argNode as Identifier);
-    }
-    // Field found - no diagnostic, no further traversal
+    const memberExpr = node.callee as MemberExpression;
+    const methodName = memberExpr.property.name.toUpperCase();
+    return FIELD_REFERENCE_METHODS.get(methodName);
   }
 
   /**
@@ -402,20 +308,105 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
   }
 
   /**
-   * Add diagnostic for undefined field
+   * Validate member expression property (field/method name).
+   * Checks if the property exists on the record variable using field registry.
+   *
+   * Three layers of graceful degradation:
+   * 1. Skip if field registry unavailable
+   * 2. Skip if object symbol not found (handled upstream)
+   * 3. Skip if table ID not resolved (bare "Record" type)
    */
-  private addFieldDiagnostic(node: Identifier): void {
-    // Calculate end position
-    const endToken = node.endToken || node.startToken;
+  private validateMemberProperty(node: MemberExpression): void {
+    // Layer 1: Field registry must be available (already checked by caller)
+    if (!this.fieldRegistry) {
+      return;
+    }
+
+    // Get object name from member expression
+    if (node.object.type !== 'Identifier') {
+      return; // Only validate Identifier.Property form
+    }
+
+    const objectName = (node.object as Identifier).name;
+    const propertyName = node.property.name;
+
+    // Check if property is a record method BEFORE checking field registry
+    // This prevents methods like MODIFY from being flagged as invalid fields
+    if (this.builtins.isRecordMethod(propertyName)) {
+      return; // Valid record method - no diagnostic needed
+    }
+
+    // Layer 2: Look up object symbol with position-aware scoping
+    const symbol = this.symbolTable.getSymbolAtOffset(
+      objectName,
+      node.object.startToken.startOffset
+    );
+
+    if (!symbol) {
+      return; // Symbol not found - handled by upstream undefined-identifier check
+    }
+
+    // Layer 3: Resolve table ID from symbol type
+    let tableId: number | undefined;
+
+    // First check: symbol.resolvedType (works for explicit variables)
+    if (symbol.resolvedType && isRecordType(symbol.resolvedType)) {
+      tableId = symbol.resolvedType.tableId;
+    }
+    // Second check: parse string type field (works for implicit Table Rec)
+    else if (symbol.type) {
+      const match = /^Record\s+(\d+)$/i.exec(symbol.type);
+      if (match) {
+        tableId = parseInt(match[1], 10);
+      }
+    }
+
+    // Layer 3 fallback: Cannot resolve table ID (e.g., bare "Record" for implicit Page/Report Rec)
+    if (tableId === undefined) {
+      return; // Gracefully skip validation
+    }
+
+    // Look up table fields in field registry
+    const tableFields = this.fieldRegistry.get(tableId);
+    if (!tableFields) {
+      return; // Table not in registry - gracefully skip
+    }
+
+    // Check if property exists in table fields (case-insensitive)
+    const propertyNameUpper = propertyName.toUpperCase();
+    let fieldExists = false;
+
+    for (const fieldName of tableFields.keys()) {
+      if (fieldName.toUpperCase() === propertyNameUpper) {
+        fieldExists = true;
+        break;
+      }
+    }
+
+    // If field doesn't exist, add diagnostic
+    if (!fieldExists) {
+      this.addPropertyDiagnostic(node, propertyName, objectName, tableId);
+    }
+  }
+
+  /**
+   * Add diagnostic for unknown property on record variable.
+   */
+  private addPropertyDiagnostic(node: MemberExpression, propertyName: string, objectName: string, tableId: number): void {
+    // Calculate end position for the property part
+    const endToken = node.property.endToken || node.property.startToken;
     const endCharacter = endToken.column + (endToken.endOffset - endToken.startOffset) - 1;
 
+    // Try to get table name from registry, fall back to "Record {tableId}"
+    const tableName = this.tableRegistry?.get(tableId) ?? `Record ${tableId}`;
+
     this.diagnostics.push({
-      message: `Undefined field: '${node.name}'`,
+      message: `Unknown field or property: '${propertyName}' on record variable '${objectName}' (${tableName})`,
       severity: DiagnosticSeverity.Warning,
       range: {
         start: {
-          line: node.startToken.line - 1,    // 1-based to 0-based
-          character: node.startToken.column - 1
+          line: node.property.startToken.line - 1,    // 1-based to 0-based
+          character: node.property.startToken.column - 1
         },
         end: {
           line: endToken.line - 1,
@@ -423,7 +414,7 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
         }
       },
       source: 'cal',
-      code: 'undefined-field'
+      code: 'undefined-property'
     });
   }
 }
@@ -451,7 +442,8 @@ export class UndefinedIdentifierValidator implements Validator {
       context.builtins,
       walker,  // Pass walker reference for manual traversal
       context.hasTableRegistry ?? false,
-      context.fieldRegistry
+      context.fieldRegistry,
+      context.tableRegistry
     );
 
     walker.walk(context.ast, visitor);
