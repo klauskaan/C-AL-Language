@@ -27,6 +27,7 @@ import { Validator, ValidationContext } from '../semantic/types';
 import { ScopeTracker } from '../semantic/scopeTracker';
 import { SymbolTable } from '../symbols/symbolTable';
 import { BuiltinRegistry } from '../semantic/builtinRegistry';
+import { RecordType, isRecordType } from '../types/types';
 
 /**
  * Record methods whose arguments include field references (not variable identifiers).
@@ -71,13 +72,17 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
    * @param builtins - Registry of builtin functions
    * @param walker - ASTWalker instance for manual child traversal
    * @param hasTableRegistry - Whether table registry has been populated
+   * @param fieldRegistry - Optional field registry mapping table numbers to field names
+   * @param tableRegistry - Optional table registry mapping table numbers to table names
    */
   constructor(
     private readonly scopeTracker: ScopeTracker,
     private readonly symbolTable: SymbolTable,
     private readonly builtins: BuiltinRegistry,
     private readonly walker: ASTWalker,
-    hasTableRegistry: boolean
+    hasTableRegistry: boolean,
+    private readonly fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>,
+    private readonly tableRegistry?: ReadonlyMap<number, string>
   ) {
     this.hasTableRegistry = hasTableRegistry;
   }
@@ -103,13 +108,18 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
   }
 
   /**
-   * Visit MemberExpression - only walk the object part (not the property)
+   * Visit MemberExpression - only walk the object part, validate the property if field registry available
    * Returns false to prevent automatic traversal
    */
   visitMemberExpression(node: MemberExpression): false {
     // Only walk the object (left side), not the property (right side)
     // Example: Customer."No." - walk Customer, skip "No."
     this.walker.walk(node.object, this);
+
+    // Validate the property if field registry is available
+    if (this.fieldRegistry) {
+      this.validateMemberProperty(node);
+    }
 
     return false; // Prevent automatic traversal
   }
@@ -296,6 +306,117 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
       code: 'undefined-identifier'
     });
   }
+
+  /**
+   * Validate member expression property (field/method name).
+   * Checks if the property exists on the record variable using field registry.
+   *
+   * Three layers of graceful degradation:
+   * 1. Skip if field registry unavailable
+   * 2. Skip if object symbol not found (handled upstream)
+   * 3. Skip if table ID not resolved (bare "Record" type)
+   */
+  private validateMemberProperty(node: MemberExpression): void {
+    // Layer 1: Field registry must be available (already checked by caller)
+    if (!this.fieldRegistry) {
+      return;
+    }
+
+    // Get object name from member expression
+    if (node.object.type !== 'Identifier') {
+      return; // Only validate Identifier.Property form
+    }
+
+    const objectName = (node.object as Identifier).name;
+    const propertyName = node.property.name;
+
+    // Check if property is a record method BEFORE checking field registry
+    // This prevents methods like MODIFY from being flagged as invalid fields
+    if (this.builtins.isRecordMethod(propertyName)) {
+      return; // Valid record method - no diagnostic needed
+    }
+
+    // Layer 2: Look up object symbol with position-aware scoping
+    const symbol = this.symbolTable.getSymbolAtOffset(
+      objectName,
+      node.object.startToken.startOffset
+    );
+
+    if (!symbol) {
+      return; // Symbol not found - handled by upstream undefined-identifier check
+    }
+
+    // Layer 3: Resolve table ID from symbol type
+    let tableId: number | undefined;
+
+    // First check: symbol.resolvedType (works for explicit variables)
+    if (symbol.resolvedType && isRecordType(symbol.resolvedType)) {
+      tableId = symbol.resolvedType.tableId;
+    }
+    // Second check: parse string type field (works for implicit Table Rec)
+    else if (symbol.type) {
+      const match = /^Record\s+(\d+)$/i.exec(symbol.type);
+      if (match) {
+        tableId = parseInt(match[1], 10);
+      }
+    }
+
+    // Layer 3 fallback: Cannot resolve table ID (e.g., bare "Record" for implicit Page/Report Rec)
+    if (tableId === undefined) {
+      return; // Gracefully skip validation
+    }
+
+    // Look up table fields in field registry
+    const tableFields = this.fieldRegistry.get(tableId);
+    if (!tableFields) {
+      return; // Table not in registry - gracefully skip
+    }
+
+    // Check if property exists in table fields (case-insensitive)
+    const propertyNameUpper = propertyName.toUpperCase();
+    let fieldExists = false;
+
+    for (const fieldName of tableFields.keys()) {
+      if (fieldName.toUpperCase() === propertyNameUpper) {
+        fieldExists = true;
+        break;
+      }
+    }
+
+    // If field doesn't exist, add diagnostic
+    if (!fieldExists) {
+      this.addPropertyDiagnostic(node, propertyName, objectName, tableId);
+    }
+  }
+
+  /**
+   * Add diagnostic for unknown property on record variable.
+   */
+  private addPropertyDiagnostic(node: MemberExpression, propertyName: string, objectName: string, tableId: number): void {
+    // Calculate end position for the property part
+    const endToken = node.property.endToken || node.property.startToken;
+    const endCharacter = endToken.column + (endToken.endOffset - endToken.startOffset) - 1;
+
+    // Try to get table name from registry, fall back to "Record {tableId}"
+    const tableName = this.tableRegistry?.get(tableId) ?? `Record ${tableId}`;
+
+    this.diagnostics.push({
+      message: `Unknown field or property: '${propertyName}' on record variable '${objectName}' (${tableName})`,
+      severity: DiagnosticSeverity.Warning,
+      range: {
+        start: {
+          line: node.property.startToken.line - 1,    // 1-based to 0-based
+          character: node.property.startToken.column - 1
+        },
+        end: {
+          line: endToken.line - 1,
+          character: endCharacter
+        }
+      },
+      source: 'cal',
+      code: 'undefined-property'
+    });
+  }
 }
 
 /**
@@ -320,7 +441,9 @@ export class UndefinedIdentifierValidator implements Validator {
       context.symbolTable,
       context.builtins,
       walker,  // Pass walker reference for manual traversal
-      context.hasTableRegistry ?? false
+      context.hasTableRegistry ?? false,
+      context.fieldRegistry,
+      context.tableRegistry
     );
 
     walker.walk(context.ast, visitor);

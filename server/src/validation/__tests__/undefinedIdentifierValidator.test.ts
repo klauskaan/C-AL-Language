@@ -36,7 +36,8 @@ import { ValidationContext } from '../../semantic/types';
  */
 function validateUndefinedIdentifiers(
   code: string,
-  tableRegistry?: ReadonlyMap<number, string>
+  tableRegistry?: ReadonlyMap<number, string>,
+  fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>
 ): Diagnostic[] {
   const lexer = new Lexer(code);
   const tokens = lexer.tokenize();
@@ -44,7 +45,7 @@ function validateUndefinedIdentifiers(
   const ast = parser.parse();
 
   const symbolTable = new SymbolTable();
-  symbolTable.buildFromAST(ast, tableRegistry);
+  symbolTable.buildFromAST(ast, tableRegistry, fieldRegistry);
 
   const builtins = new BuiltinRegistry();
 
@@ -53,7 +54,9 @@ function validateUndefinedIdentifiers(
     symbolTable,
     builtins,
     documentUri: 'file:///test.cal',
-    hasTableRegistry: symbolTable.hadTableRegistry
+    hasTableRegistry: symbolTable.hadTableRegistry,
+    fieldRegistry,
+    tableRegistry
   };
 
   const validator = new UndefinedIdentifierValidator();
@@ -2511,7 +2514,9 @@ describe('UndefinedIdentifierValidator - Page SourceTable Field Integration', ()
       symbolTable,
       builtins,
       documentUri: 'file:///test.cal',
-      hasTableRegistry: symbolTable.hadTableRegistry
+      hasTableRegistry: symbolTable.hadTableRegistry,
+      fieldRegistry,
+      tableRegistry
     };
 
     const validator = new UndefinedIdentifierValidator();
@@ -2731,5 +2736,683 @@ describe('UndefinedIdentifierValidator - Page SourceTable Field Integration', ()
     // Name should be flagged as undefined (not a page)
     const nameError = diagnostics.find(d => d.message.includes('Name'));
     expect(nameError).toBeDefined();
+  });
+});
+
+describe('UndefinedIdentifierValidator - Member Property Validation', () => {
+  describe('Detection: Invalid field on explicit Record variable', () => {
+    it('should detect invalid field on explicit Record variable', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer."InvalidField" := 'test';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      customerFields.set('Name', 'Text50');
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      const invalidFieldError = diagnostics.find(d =>
+        d.message.includes('InvalidField') && d.message.includes('Unknown field')
+      );
+      expect(invalidFieldError).toBeDefined();
+      expect(invalidFieldError!.code).toBe('undefined-property');
+      expect(invalidFieldError!.severity).toBe(DiagnosticSeverity.Warning);
+      expect(invalidFieldError!.message).toContain('Customer');
+    });
+
+    it('should detect invalid field with bare identifier (no quotes)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      MESSAGE(Customer.InvalidField);
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      customerFields.set('Name', 'Text50');
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      const invalidFieldError = diagnostics.find(d => d.message.includes('InvalidField'));
+      expect(invalidFieldError).toBeDefined();
+      expect(invalidFieldError!.code).toBe('undefined-property');
+    });
+
+    it('should detect invalid field on Table implicit Rec', () => {
+      const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        }
+    { 2   ;   ;Name                ;Text50        }
+  }
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      Rec."InvalidField" := 'test';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      customerFields.set('Name', 'Text50');
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      const invalidFieldError = diagnostics.find(d => d.message.includes('InvalidField'));
+      expect(invalidFieldError).toBeDefined();
+      expect(invalidFieldError!.code).toBe('undefined-property');
+    });
+
+    it('should use correct message format', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer."BadField" := 'test';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      const badFieldError = diagnostics.find(d => d.message.includes('BadField'));
+      expect(badFieldError).toBeDefined();
+      expect(badFieldError!.message).toMatch(/Unknown field or property: 'BadField' on record variable 'Customer'/);
+    });
+  });
+
+  describe('Suppression: Valid field from field registry', () => {
+    it('should not flag valid field from field registry', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer."No." := '10000';
+      Customer.Name := 'Test Customer';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      customerFields.set('Name', 'Text50');
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      expect(diagnostics).toHaveLength(0);
+    });
+
+    it('should handle case-insensitive field names', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.name := 'Test';
+      Customer.NAME := 'Test';
+      Customer.Name := 'Test';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('Name', 'Text50');
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      expect(diagnostics).toHaveLength(0);
+    });
+  });
+
+  describe('Suppression: Record method calls', () => {
+    it('should not flag record method calls', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.MODIFY;
+      Customer.FIND('-');
+      Customer.INSERT(TRUE);
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      expect(diagnostics).toHaveLength(0);
+    });
+
+    it('should check record methods BEFORE field registry', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.FIND := 'value';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('FIND', 'Text50');  // Field named FIND
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      // FIND should be recognized as a method, not a field
+      // This test verifies method check happens BEFORE field check
+      expect(diagnostics).toHaveLength(0);
+    });
+  });
+
+  describe('Graceful degradation: No field registry data', () => {
+    it('should not flag member properties when no field registry data for table', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer."UnknownField" := 'test';
+      Customer.AnotherField := 'test';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      // No field registry provided
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry);
+
+      // Without field registry, properties should not be validated
+      expect(diagnostics).toHaveLength(0);
+    });
+
+    it('should not flag when field registry exists but table not in it', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer."UnknownField" := 'test';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      // Table 18 not in fieldRegistry
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      expect(diagnostics).toHaveLength(0);
+    });
+  });
+
+  describe('Graceful degradation: Object has no resolved type', () => {
+    it('should not flag properties when object type is unresolved', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      UndefinedVar."SomeField" := 'test';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      // UndefinedVar should be flagged, but not SomeField
+      const undefinedVarError = diagnostics.find(d => d.message.includes('UndefinedVar'));
+      expect(undefinedVarError).toBeDefined();
+
+      const someFieldError = diagnostics.find(d => d.message.includes('SomeField'));
+      expect(someFieldError).toBeUndefined();
+    });
+  });
+
+  describe('Graceful degradation: Page implicit Rec with bare Record type', () => {
+    it('should not flag Rec properties when Page has no SourceTable', () => {
+      const code = `OBJECT Page 50000 "Test Page"
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      Rec."SomeField" := 'test';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      // Rec is implicit with bare "Record" type, properties should not be validated
+      expect(diagnostics).toHaveLength(0);
+    });
+  });
+
+  describe('Phase 1 limitations: Non-Identifier objects', () => {
+    it('should not validate properties on chained member expressions', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      SalesHeader : Record 36;
+    BEGIN
+      SalesHeader.Customer."InvalidField" := 'test';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[36, 'Sales Header']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const salesFields = new Map<string, string>();
+      salesFields.set('Customer', 'Record 18');
+      fieldRegistry.set(36, salesFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      // Phase 1: only validate first-level properties (Customer is valid)
+      // Chained properties not validated in Phase 1
+      expect(diagnostics).toHaveLength(0);
+    });
+  });
+
+  describe('Position-aware: Local variable shadows global', () => {
+    it('should use correct type when local variable shadows global', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Customer : Record 18;
+
+    PROCEDURE GlobalProc();
+    BEGIN
+      Customer."No." := '10000';  // Global: Record 18
+    END;
+
+    PROCEDURE LocalProc();
+    VAR
+      Customer : Record 36;  // Local: Record 36
+    BEGIN
+      Customer."Document Type" := 'Order';  // Local: Record 36
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([
+        [18, 'Customer'],
+        [36, 'Sales Header']
+      ]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      customerFields.set('Name', 'Text50');
+      fieldRegistry.set(18, customerFields);
+
+      const salesFields = new Map<string, string>();
+      salesFields.set('Document Type', 'Option');
+      salesFields.set('No.', 'Code20');
+      fieldRegistry.set(36, salesFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      // Both should be valid - using correct types based on scope
+      expect(diagnostics).toHaveLength(0);
+    });
+
+    it('should detect invalid field using shadowed variable type', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Customer : Record 18;
+
+    PROCEDURE LocalProc();
+    VAR
+      Customer : Record 36;
+    BEGIN
+      Customer."No." := '10000';  // Valid: Both tables have No.
+      Customer.Name := 'Test';  // Invalid: Record 36 has no Name field
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([
+        [18, 'Customer'],
+        [36, 'Sales Header']
+      ]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      customerFields.set('Name', 'Text50');
+      fieldRegistry.set(18, customerFields);
+
+      const salesFields = new Map<string, string>();
+      salesFields.set('No.', 'Code20');
+      // No Name field
+      fieldRegistry.set(36, salesFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      // Name should be flagged - using local Customer (Record 36) type
+      const nameError = diagnostics.find(d => d.message.includes('Name'));
+      expect(nameError).toBeDefined();
+      expect(nameError!.message).toContain('Sales Header');
+    });
+  });
+
+  describe('Multiple errors in same procedure', () => {
+    it('should detect multiple invalid fields in same procedure', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer."InvalidField1" := 'test';
+      Customer.InvalidField2 := 'test';
+      Customer."No." := '10000';  // Valid
+      Customer."InvalidField3" := 'test';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      const invalid1 = diagnostics.find(d => d.message.includes('InvalidField1'));
+      const invalid2 = diagnostics.find(d => d.message.includes('InvalidField2'));
+      const invalid3 = diagnostics.find(d => d.message.includes('InvalidField3'));
+
+      expect(invalid1).toBeDefined();
+      expect(invalid2).toBeDefined();
+      expect(invalid3).toBeDefined();
+      expect(diagnostics).toHaveLength(3);
+    });
+  });
+
+  describe('Mixed scenarios', () => {
+    it('should handle mix of valid fields, invalid fields, and method calls', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.INIT;
+      Customer."No." := '10000';
+      Customer.InvalidField := 'test';
+      Customer.MODIFY;
+      Customer.Name := 'Test';
+      Customer.AnotherInvalid := 'test';
+      Customer.INSERT(TRUE);
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      customerFields.set('Name', 'Text50');
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      const invalidField = diagnostics.find(d => d.message.includes('InvalidField'));
+      const anotherInvalid = diagnostics.find(d => d.message.includes('AnotherInvalid'));
+
+      expect(invalidField).toBeDefined();
+      expect(anotherInvalid).toBeDefined();
+      expect(diagnostics).toHaveLength(2);
+    });
+  });
+
+  describe('TEMPORARY keyword handling', () => {
+    it.skip('should validate fields on TEMPORARY record variables', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      TEMPORARY TempCustomer : Record 18;
+    BEGIN
+      TempCustomer."No." := '10000';
+      TempCustomer.InvalidField := 'test';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      fieldRegistry.set(18, customerFields);
+
+      // Parse and check AST structure
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      const invalidField = diagnostics.find(d => d.message.includes('InvalidField'));
+      expect(invalidField).toBeDefined();
+    });
+  });
+
+  describe('Diagnostic properties', () => {
+    it('should have correct diagnostic code', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.InvalidField := 'test';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      const invalidField = diagnostics.find(d => d.message.includes('InvalidField'));
+      expect(invalidField).toBeDefined();
+      expect(invalidField!.code).toBe('undefined-property');
+    });
+
+    it('should have Warning severity', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.InvalidField := 'test';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      const invalidField = diagnostics.find(d => d.message.includes('InvalidField'));
+      expect(invalidField).toBeDefined();
+      expect(invalidField!.severity).toBe(DiagnosticSeverity.Warning);
+    });
+
+    it('should have cal source', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.InvalidField := 'test';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      const invalidField = diagnostics.find(d => d.message.includes('InvalidField'));
+      expect(invalidField).toBeDefined();
+      expect(invalidField!.source).toBe('cal');
+    });
+
+    it('should have valid range', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.InvalidField := 'test';
+    END;
+  }
+}`;
+
+      const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+      const fieldRegistry = new Map<number, Map<string, string>>();
+      const customerFields = new Map<string, string>();
+      customerFields.set('No.', 'Code20');
+      fieldRegistry.set(18, customerFields);
+
+      const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+      const invalidField = diagnostics.find(d => d.message.includes('InvalidField'));
+      expect(invalidField).toBeDefined();
+      expect(invalidField!.range).toBeDefined();
+      expect(invalidField!.range.start.line).toBeGreaterThanOrEqual(0);
+      expect(invalidField!.range.start.character).toBeGreaterThanOrEqual(0);
+      expect(invalidField!.range.end.character).toBeGreaterThan(invalidField!.range.start.character);
+    });
   });
 });

@@ -32,6 +32,12 @@ export interface ValidationContext {
 
   /** Whether table registry has been populated (used for conditional validation) */
   hasTableRegistry?: boolean;
+
+  /** Table registry mapping table numbers to table names (optional) */
+  tableRegistry?: ReadonlyMap<number, string>;
+
+  /** Field registry mapping table numbers to field names (optional, used for member property validation) */
+  fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>;
 }
 
 /**
