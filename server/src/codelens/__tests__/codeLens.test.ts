@@ -160,6 +160,32 @@ describe('CodeLensProvider', () => {
       expect(lenses.length).toBe(1);
       expect(lenses[0].command?.title).toMatch(/\d+ references?/);
     });
+
+    it('should show CodeLens for table with multiple fields', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1   ;   ;No              ;Code20        }
+    { 2   ;   ;Name            ;Text50        }
+    { 10  ;   ;Balance         ;Decimal       }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      const lenses = provider.getCodeLenses(doc, ast);
+
+      expect(lenses.length).toBe(3);
+      // Verify each lens has the reference command
+      lenses.forEach(lens => {
+        expect(lens.command?.title).toMatch(/\d+ references?/);
+      });
+    });
   });
 
   describe('Reference Counting', () => {
