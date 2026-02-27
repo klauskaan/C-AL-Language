@@ -32,6 +32,9 @@ export interface ValidationContext {
 
   /** Whether table registry has been populated (used for conditional validation) */
   hasTableRegistry?: boolean;
+
+  /** Field registry providing cross-file field information for Record types */
+  fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>;
 }
 
 /**

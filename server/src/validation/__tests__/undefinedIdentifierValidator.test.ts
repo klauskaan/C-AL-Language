@@ -2162,6 +2162,330 @@ describe('UndefinedIdentifierValidator - XMLport ELEMENTS validation with table 
   });
 });
 
+describe('UndefinedIdentifierValidator - Page Trigger Implicit Parameter Validation', () => {
+  describe('OnFindRecord trigger (Which : Text)', () => {
+    it('should not flag Which when used in OnFindRecord trigger body', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnFindRecord=BEGIN
+                   IF Which = '-' THEN
+                     EXIT(FALSE);
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('Which'))).toHaveLength(0);
+    });
+
+    it('should flag Which typo (Wich) in OnFindRecord trigger', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnFindRecord=BEGIN
+                   IF Wich = '-' THEN
+                     EXIT(FALSE);
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      const whichError = diagnostics.find(d => d.message.includes('Wich'));
+      expect(whichError).toBeDefined();
+      expect(whichError!.message).toBe("Undefined identifier: 'Wich'");
+    });
+
+    it('should handle Which case-insensitively in OnFindRecord', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnFindRecord=BEGIN
+                   IF WHICH = '-' THEN
+                     EXIT(FALSE);
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('WHICH'))).toHaveLength(0);
+    });
+  });
+
+  describe('OnNextRecord trigger (Steps : Integer)', () => {
+    it('should not flag Steps when used in OnNextRecord trigger body', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnNextRecord=BEGIN
+                   Steps := 1;
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('Steps'))).toHaveLength(0);
+    });
+
+    it('should flag Steps typo (Step) in OnNextRecord trigger', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnNextRecord=BEGIN
+                   Step := 1;
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      const stepError = diagnostics.find(d => d.message.includes('Step'));
+      expect(stepError).toBeDefined();
+      expect(stepError!.message).toBe("Undefined identifier: 'Step'");
+    });
+
+    it('should handle Steps case-insensitively in OnNextRecord', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnNextRecord=BEGIN
+                   steps := 1;
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('steps'))).toHaveLength(0);
+    });
+  });
+
+  describe('OnNewRecord trigger (BelowxRec : Boolean)', () => {
+    it('should not flag BelowxRec when used in OnNewRecord trigger body', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnNewRecord=BEGIN
+                  IF BelowxRec THEN
+                    MESSAGE('Below');
+                END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('BelowxRec'))).toHaveLength(0);
+    });
+
+    it('should flag BelowxRec typo (BelowRec) in OnNewRecord trigger', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnNewRecord=BEGIN
+                  IF BelowRec THEN
+                    MESSAGE('Below');
+                END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      const belowError = diagnostics.find(d => d.message.includes('BelowRec'));
+      expect(belowError).toBeDefined();
+      expect(belowError!.message).toBe("Undefined identifier: 'BelowRec'");
+    });
+  });
+
+  describe('OnInsertRecord trigger (BelowxRec : Boolean)', () => {
+    it('should not flag BelowxRec when used in OnInsertRecord trigger body', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnInsertRecord=BEGIN
+                     IF BelowxRec THEN
+                       EXIT(TRUE);
+                   END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('BelowxRec'))).toHaveLength(0);
+    });
+  });
+
+  describe('OnQueryClosePage trigger (CloseAction : Action)', () => {
+    it('should not flag CloseAction when used in OnQueryClosePage trigger body', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnQueryClosePage=BEGIN
+                       IF CloseAction = ACTION::OK THEN
+                         EXIT(TRUE);
+                     END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('CloseAction'))).toHaveLength(0);
+    });
+
+    it('should flag CloseAction typo (ClosAction) in OnQueryClosePage trigger', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnQueryClosePage=BEGIN
+                       IF ClosAction = ACTION::OK THEN
+                         EXIT(TRUE);
+                     END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      const closeError = diagnostics.find(d => d.message.includes('ClosAction'));
+      expect(closeError).toBeDefined();
+      expect(closeError!.message).toBe("Undefined identifier: 'ClosAction'");
+    });
+  });
+
+  describe('Cross-cutting scenarios', () => {
+    it('should flag Which in wrong object type (Codeunit OnRun)', () => {
+      const code = `OBJECT Codeunit 50000 TestCodeunit
+{
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            IF Which = '-' THEN
+              EXIT;
+          END;
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      const whichError = diagnostics.find(d => d.message.includes('Which'));
+      expect(whichError).toBeDefined();
+      expect(whichError!.message).toBe("Undefined identifier: 'Which'");
+    });
+
+    it('should flag Which in non-parameterized trigger (OnOpenPage)', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnOpenPage=BEGIN
+                 IF Which = '-' THEN
+                   EXIT;
+               END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      const whichError = diagnostics.find(d => d.message.includes('Which'));
+      expect(whichError).toBeDefined();
+      expect(whichError!.message).toBe("Undefined identifier: 'Which'");
+    });
+
+    it('should not flag both local VAR and Which in OnFindRecord', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnFindRecord=VAR
+                   localVar@1000 : Integer;
+                 BEGIN
+                   IF Which = '-' THEN
+                     localVar := 1;
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('Which'))).toHaveLength(0);
+      expect(diagnostics.filter(d => d.message.includes('localVar'))).toHaveLength(0);
+    });
+
+    it('should not flag global symbols (Rec/xRec) with Which in OnFindRecord', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    SourceTable=Table18;
+    OnFindRecord=BEGIN
+                   Rec.SETRANGE("No.");
+                   IF Which = '-' THEN
+                     EXIT(xRec.FINDFIRST);
+                 END;
+  }
+  CONTROLS
+  {
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes('Rec'))).toHaveLength(0);
+      expect(diagnostics.filter(d => d.message.includes('xRec'))).toHaveLength(0);
+      expect(diagnostics.filter(d => d.message.includes('Which'))).toHaveLength(0);
+    });
+
+    it('should flag Which in CODE section procedure (not in trigger scope)', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+  }
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    BEGIN
+      IF Which = '-' THEN
+        EXIT;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      const whichError = diagnostics.find(d => d.message.includes('Which'));
+      expect(whichError).toBeDefined();
+      expect(whichError!.message).toBe("Undefined identifier: 'Which'");
+    });
+  });
+});
+
 describe('UndefinedIdentifierValidator - Page SourceTable Field Integration', () => {
   /**
    * Helper to validate with both table registry and field registry.
@@ -2407,5 +2731,578 @@ describe('UndefinedIdentifierValidator - Page SourceTable Field Integration', ()
     // Name should be flagged as undefined (not a page)
     const nameError = diagnostics.find(d => d.message.includes('Name'));
     expect(nameError).toBeDefined();
+  });
+});
+
+describe('UndefinedIdentifierValidator - cross-file field validation via field registry', () => {
+  /**
+   * Helper to validate with field registry.
+   * The field registry provides cross-file field information for Record variables.
+   */
+  function validateWithFieldRegistry(
+    code: string,
+    tableRegistry?: ReadonlyMap<number, string>,
+    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>
+  ): Diagnostic[] {
+    const lexer = new Lexer(code);
+    const tokens = lexer.tokenize();
+    const parser = new Parser(tokens);
+    const ast = parser.parse();
+
+    const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast, tableRegistry, fieldRegistry);
+
+    const builtins = new BuiltinRegistry();
+
+    const context: ValidationContext = {
+      ast,
+      symbolTable,
+      builtins,
+      documentUri: 'file:///test.cal',
+      hasTableRegistry: symbolTable.hadTableRegistry,
+      fieldRegistry
+    };
+
+    const validator = new UndefinedIdentifierValidator();
+    return validator.validate(context);
+  }
+
+  it('should not report diagnostic for valid field in SETRANGE when table IS in registry', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.SETRANGE("No.", '10000', '20000');
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('No.', 'Code20');
+    customerFields.set('Name', 'Text50');
+    customerFields.set('Status', 'Option');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // No diagnostic - field is valid
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should report diagnostic for invalid/typo field in SETRANGE when table IS in registry', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.SETRANGE(InvalidField, '10000', '20000');
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('No.', 'Code20');
+    customerFields.set('Name', 'Text50');
+    customerFields.set('Status', 'Option');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    const invalidFieldError = diagnostics.find(d => d.message.includes('InvalidField'));
+    expect(invalidFieldError).toBeDefined();
+    expect(invalidFieldError!.message).toContain('Undefined field');
+    expect(invalidFieldError!.severity).toBe(DiagnosticSeverity.Warning);
+  });
+
+  it('should NOT report diagnostic when table is NOT in field registry (graceful degradation)', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.SETRANGE(UnknownField, '10000');
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    // Table 18 NOT in field registry
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // No diagnostic - graceful degradation when table not in registry
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should NOT report diagnostic for case mismatch (no. vs No.)', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.SETRANGE("no.", '10000');
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('No.', 'Code20');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // Case-insensitive match - no diagnostic
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should NOT report diagnostic for CALCFIELDS with all valid fields', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.CALCFIELDS(Balance, "Balance (LCY)", "Net Change");
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('Balance', 'Decimal');
+    customerFields.set('Balance (LCY)', 'Decimal');
+    customerFields.set('Net Change', 'Decimal');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should report diagnostic for one invalid field in CALCFIELDS (valid fields OK)', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.CALCFIELDS(Balance, InvalidField, "Net Change");
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('Balance', 'Decimal');
+    customerFields.set('Net Change', 'Decimal');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // Only InvalidField should be flagged
+    const invalidError = diagnostics.find(d => d.message.includes('InvalidField'));
+    expect(invalidError).toBeDefined();
+
+    const balanceError = diagnostics.find(d => d.message.includes('Balance'));
+    expect(balanceError).toBeUndefined();
+
+    const netChangeError = diagnostics.find(d => d.message.includes('Net Change'));
+    expect(netChangeError).toBeUndefined();
+  });
+
+  it('should NOT report diagnostic for receiver with no resolvedType (implicit Rec in Page)', () => {
+    const code = `OBJECT Page 21 "Customer Card"
+{
+  PROPERTIES
+  {
+    SourceTable=Table18;
+  }
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      SETRANGE(UnknownField, '10000');
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('No.', 'Code20');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // Receiver is implicit Rec - skip field validation but normal undefined identifier check still applies
+    // UnknownField is not defined as a local variable, so it's flagged as undefined
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].message).toContain('UnknownField');
+  });
+
+  it('should skip validation for non-Record receiver (Codeunit variable)', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      MyCodeunit : Codeunit 80;
+    BEGIN
+      MyCodeunit.SETRANGE(SomeField, '10000');
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('No.', 'Code20');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // Non-Record receiver - skip field validation
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should NOT flag field in VALIDATE but SHOULD flag undefined value arg', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.VALIDATE(Status, UndefinedValue);
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('Status', 'Option');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // Field should NOT be flagged
+    const statusError = diagnostics.find(d => d.message.includes('Status'));
+    expect(statusError).toBeUndefined();
+
+    // Value arg should be flagged
+    const valueError = diagnostics.find(d => d.message.includes('UndefinedValue'));
+    expect(valueError).toBeDefined();
+    expect(valueError!.message).toBe("Undefined identifier: 'UndefinedValue'");
+  });
+
+  it('should validate field in SETRANGE on Record parameter (procedure param VAR Rec : Record 36)', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE ProcessSales(VAR SalesHeader : Record 36);
+    BEGIN
+      SalesHeader.SETRANGE("Document Type", 1);
+      SalesHeader.SETRANGE(InvalidField, 'X');
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[36, 'Sales Header']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const salesFields = new Map<string, string>();
+    salesFields.set('Document Type', 'Option');
+    salesFields.set('No.', 'Code20');
+    fieldRegistry.set(36, salesFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // Valid field should not be flagged
+    const docTypeError = diagnostics.find(d => d.message.includes('Document Type'));
+    expect(docTypeError).toBeUndefined();
+
+    // Invalid field should be flagged
+    const invalidError = diagnostics.find(d => d.message.includes('InvalidField'));
+    expect(invalidError).toBeDefined();
+    expect(invalidError!.message).toContain('Undefined field');
+  });
+
+  it('should validate all field args in SETCURRENTKEY', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.SETCURRENTKEY("No.", Name, InvalidField);
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('No.', 'Code20');
+    customerFields.set('Name', 'Text50');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // Valid fields should not be flagged
+    const noError = diagnostics.find(d => d.message.includes('No.'));
+    expect(noError).toBeUndefined();
+
+    const nameError = diagnostics.find(d => d.message.includes('Name') && d.message.includes('Undefined'));
+    expect(nameError).toBeUndefined();
+
+    // Invalid field should be flagged
+    const invalidError = diagnostics.find(d => d.message.includes('InvalidField'));
+    expect(invalidError).toBeDefined();
+  });
+
+  it('should validate fields in TESTFIELD with mixed validity', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.TESTFIELD("No.");
+      Customer.TESTFIELD(InvalidField);
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('No.', 'Code20');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // Valid field should not be flagged
+    const noError = diagnostics.find(d => d.message.includes('No.'));
+    expect(noError).toBeUndefined();
+
+    // Invalid field should be flagged
+    const invalidError = diagnostics.find(d => d.message.includes('InvalidField'));
+    expect(invalidError).toBeDefined();
+  });
+
+  it('should handle TEMPORARY record variables with field validation', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : TEMPORARY Record 18;
+    BEGIN
+      Customer.SETRANGE("No.", '10000');
+      Customer.SETRANGE(InvalidField, 'X');
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('No.', 'Code20');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // Valid field should not be flagged
+    const noError = diagnostics.find(d => d.message.includes('No.'));
+    expect(noError).toBeUndefined();
+
+    // Invalid field should be flagged
+    const invalidError = diagnostics.find(d => d.message.includes('InvalidField'));
+    expect(invalidError).toBeDefined();
+  });
+
+  it('should validate field args in COPYFILTER (all args are field references)', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.COPYFILTER("No.", Name);
+      Customer.COPYFILTER(InvalidFieldA, InvalidFieldB);
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('No.', 'Code20');
+    customerFields.set('Name', 'Text50');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // Valid fields should not be flagged
+    expect(diagnostics).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ message: expect.stringContaining('No.') })
+    ]));
+    expect(diagnostics).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ message: expect.stringContaining('Name') })
+    ]));
+
+    // Invalid fields should be flagged
+    const invalidAError = diagnostics.find(d => d.message.includes('InvalidFieldA'));
+    expect(invalidAError).toBeDefined();
+
+    const invalidBError = diagnostics.find(d => d.message.includes('InvalidFieldB'));
+    expect(invalidBError).toBeDefined();
+  });
+
+  it('should validate field in MODIFYALL (first arg only)', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+      NewStatus : Option;
+    BEGIN
+      Customer.MODIFYALL(Status, NewStatus);
+      Customer.MODIFYALL(InvalidField, NewStatus);
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('Status', 'Option');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // Valid field should not be flagged
+    const statusError = diagnostics.find(d => d.message.includes('Status'));
+    expect(statusError).toBeUndefined();
+
+    // Value arg (NewStatus) should not be flagged
+    const newStatusError = diagnostics.find(d => d.message.includes('NewStatus'));
+    expect(newStatusError).toBeUndefined();
+
+    // Invalid field should be flagged
+    const invalidError = diagnostics.find(d => d.message.includes('InvalidField'));
+    expect(invalidError).toBeDefined();
+  });
+
+  it('should handle multiple Record variables with different table IDs', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+      Vendor : Record 23;
+    BEGIN
+      Customer.SETRANGE("No.", '10000');
+      Vendor.SETRANGE("No.", 'V001');
+      Customer.SETRANGE(VendorField, 'X');
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([
+      [18, 'Customer'],
+      [23, 'Vendor']
+    ]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+
+    const customerFields = new Map<string, string>();
+    customerFields.set('No.', 'Code20');
+    customerFields.set('Name', 'Text50');
+    fieldRegistry.set(18, customerFields);
+
+    const vendorFields = new Map<string, string>();
+    vendorFields.set('No.', 'Code20');
+    vendorFields.set('Name', 'Text50');
+    fieldRegistry.set(23, vendorFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // Valid fields should not be flagged
+    const customerNoError = diagnostics.find(d => d.message.includes('No.'));
+    expect(customerNoError).toBeUndefined();
+
+    // VendorField invalid for Customer (Table 18)
+    const vendorFieldError = diagnostics.find(d => d.message.includes('VendorField'));
+    expect(vendorFieldError).toBeDefined();
+  });
+
+  it('should handle quoted field names with special characters', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.SETRANGE("E-Mail", 'test@example.com');
+      Customer.SETRANGE("Balance (LCY)", 0, 1000);
+      Customer.SETRANGE("Gen. Bus. Posting Group", 'DOMESTIC');
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, string>>();
+    const customerFields = new Map<string, string>();
+    customerFields.set('E-Mail', 'Text80');
+    customerFields.set('Balance (LCY)', 'Decimal');
+    customerFields.set('Gen. Bus. Posting Group', 'Code10');
+    fieldRegistry.set(18, customerFields);
+
+    const diagnostics = validateWithFieldRegistry(code, tableRegistry, fieldRegistry);
+
+    // All fields are valid
+    expect(diagnostics).toHaveLength(0);
   });
 });

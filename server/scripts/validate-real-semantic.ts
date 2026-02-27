@@ -123,7 +123,8 @@ function validateAllRealFiles(): SemanticValidationResult[] {
     const ast = parser.parse();
     const symbolTable = new SymbolTable();
     symbolTable.buildFromAST(ast, tableRegistry, fieldRegistry);
-    const diagnostics = analyzer.analyze(ast, symbolTable, `file://${filePath}`, defaultSettings);
+    const hasTableRegistry = symbolTable.hadTableRegistry;
+    const diagnostics = analyzer.analyze(ast, symbolTable, `file://${filePath}`, defaultSettings, hasTableRegistry, fieldRegistry);
     const analyzeTime = Date.now() - startTime;
 
     results.push({
