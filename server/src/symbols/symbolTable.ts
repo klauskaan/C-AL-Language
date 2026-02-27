@@ -556,7 +556,11 @@ export class SymbolTable {
    * - Root scope: fields, global variables, procedure/trigger names
    * - Child scopes: procedure parameters and local variables, trigger local variables
    */
-  public buildFromAST(ast: CALDocument, tableRegistry?: ReadonlyMap<number, string>): void {
+  public buildFromAST(
+    ast: CALDocument,
+    tableRegistry?: ReadonlyMap<number, string>,
+    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>
+  ): void {
     // Create fresh root scope
     this.rootScope = new Scope(null);
 
@@ -569,6 +573,31 @@ export class SymbolTable {
 
     // Pre-populate implicit variables based on object kind
     this.injectImplicitVariables(ast.object);
+
+    // Inject SourceTable fields for pages BEFORE the AST walk
+    if (ast.object.objectKind === ObjectKind.Page && fieldRegistry) {
+      const sourceTableProp = findProperty(ast.object, 'sourcetable');
+      if (sourceTableProp?.value) {
+        // Parse SourceTable property: "Table18" or "Table 18"
+        const match = sourceTableProp.value.match(/^Table\s*(\d+)$/i);
+        if (match) {
+          const tableId = parseInt(match[1], 10);
+          const tableFields = fieldRegistry.get(tableId);
+
+          if (tableFields) {
+            // Inject each field into root scope with kind='field'
+            for (const [fieldName, fieldType] of tableFields) {
+              this.rootScope.addSymbol({
+                name: fieldName,
+                kind: 'field',
+                token: makeSyntheticToken(fieldName, ast.object.startToken),
+                type: fieldType
+              });
+            }
+          }
+        }
+      }
+    }
 
     const walker = new ASTWalker();
     const visitor = new SymbolCollectorVisitor(this.rootScope, ast.object.objectKind, tableRegistry);
