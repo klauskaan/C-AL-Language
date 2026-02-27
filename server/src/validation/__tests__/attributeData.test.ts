@@ -32,6 +32,10 @@ describe('attributeData - isKnownAttribute', () => {
       expect(isKnownAttribute('Integration')).toBe(true);
     });
 
+    it('should return true for [Business]', () => {
+      expect(isKnownAttribute('Business')).toBe(true);
+    });
+
     it('should return true for [EventSubscriber]', () => {
       expect(isKnownAttribute('EventSubscriber')).toBe(true);
     });
@@ -88,6 +92,14 @@ describe('attributeData - isKnownAttribute', () => {
 
     it('should return true for uppercase "INTEGRATION"', () => {
       expect(isKnownAttribute('INTEGRATION')).toBe(true);
+    });
+
+    it('should return true for lowercase "business"', () => {
+      expect(isKnownAttribute('business')).toBe(true);
+    });
+
+    it('should return true for uppercase "BUSINESS"', () => {
+      expect(isKnownAttribute('BUSINESS')).toBe(true);
     });
 
     it('should return true for lowercase "eventsubscriber"', () => {

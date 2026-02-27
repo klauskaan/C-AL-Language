@@ -8,7 +8,7 @@
  * - AL-only attributes (e.g., [Scope], [IntegrationEvent])
  * - Typos in valid C/AL attributes
  *
- * Valid C/AL attributes (9 total):
+ * Valid C/AL attributes (10 total):
  * - [External] - NAV 2016+
  * - [TryFunction] - All C/AL versions
  * - [Integration(Include)] - NAV 2016+
@@ -18,9 +18,9 @@
  * - [TableSyncSetup] - NAV 2016+
  * - [Internal] - NAV 2017+
  * - [ServiceEnabled] - NAV 2017+
+ * - [Business] - NAV 2016+
  *
  * AL-only attributes (not valid in C/AL):
- * - [Business] - AL-only
  * - [InternalEvent] - AL-only
  * - [Scope] - AL-only
  * - [BusinessEvent] - AL-only
@@ -215,6 +215,22 @@ describe('UnknownAttributeValidator - Valid C/AL Attributes', () => {
     expect(diagnostics).toHaveLength(0);
   });
 
+  it('should not flag [Business] attribute', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [Business]
+    PROCEDURE DoBusinessLogic();
+    BEGIN
+    END;
+  }
+}`;
+
+    const diagnostics = validateUnknownAttributes(code);
+    expect(diagnostics).toHaveLength(0);
+  });
+
 });
 
 describe('UnknownAttributeValidator - Case Insensitivity', () => {
@@ -354,6 +370,38 @@ describe('UnknownAttributeValidator - Case Insensitivity', () => {
   {
     [SERVICEENABLED]
     PROCEDURE DoSomething();
+    BEGIN
+    END;
+  }
+}`;
+
+    const diagnostics = validateUnknownAttributes(code);
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should not flag [business] in lowercase', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [business]
+    PROCEDURE DoBusinessLogic();
+    BEGIN
+    END;
+  }
+}`;
+
+    const diagnostics = validateUnknownAttributes(code);
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should not flag [BUSINESS] in uppercase', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    [BUSINESS]
+    PROCEDURE DoBusinessLogic();
     BEGIN
     END;
   }
@@ -533,27 +581,6 @@ describe('UnknownAttributeValidator - AL-Only Attributes', () => {
     const diagnostics = validateUnknownAttributes(code);
 
     expect(diagnostics).toHaveLength(0);
-  });
-
-  it('should flag [Business] as unknown attribute', () => {
-    const code = `OBJECT Codeunit 50000 Test
-{
-  CODE
-  {
-    [Business]
-    PROCEDURE DoBusinessLogic();
-    BEGIN
-    END;
-  }
-}`;
-
-    const diagnostics = validateUnknownAttributes(code);
-
-    expect(diagnostics).toHaveLength(1);
-    const diag = diagnostics[0];
-    expect(diag.message).toBe("Unknown attribute '[Business]'");
-    expect(diag.severity).toBe(DiagnosticSeverity.Warning);
-    expect(diag.source).toBe('cal');
   });
 
   it('should flag [InternalEvent] as AL-only attribute', () => {
