@@ -687,7 +687,9 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
       try {
         // Run semantic validations with current settings
         const hasTableRegistry = symbolTable.hadTableRegistry;
-        const semanticDiagnostics = semanticAnalyzer.analyze(ast, symbolTable, uri, currentSettings, hasTableRegistry);
+        const fieldRegistry = workspaceIndex.getFieldRegistry();
+        const tableRegistry = workspaceIndex.getTableRegistry();
+        const semanticDiagnostics = semanticAnalyzer.analyze(ast, symbolTable, uri, currentSettings, hasTableRegistry, fieldRegistry, tableRegistry);
 
         // Check for excessive nesting depth (DoS protection - Issue #220)
         depthLimitedWalker.resetDiagnostics();
