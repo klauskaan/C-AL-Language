@@ -55,7 +55,7 @@ function validateUndefinedIdentifiers(
     symbolTable,
     builtins,
     documentUri: 'file:///test.cal',
-    hasTableRegistry: symbolTable.hadTableRegistry,
+    tableRegistryPopulated: symbolTable.hadTableRegistry,
     fieldRegistry,
     tableRegistry
   };
@@ -2515,7 +2515,7 @@ describe('UndefinedIdentifierValidator - Page SourceTable Field Integration', ()
       symbolTable,
       builtins,
       documentUri: 'file:///test.cal',
-      hasTableRegistry: symbolTable.hadTableRegistry,
+      tableRegistryPopulated: symbolTable.hadTableRegistry,
       fieldRegistry,
       tableRegistry
     };

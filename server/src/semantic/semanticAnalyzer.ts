@@ -29,7 +29,7 @@ export interface AnalyzeOptions {
   settings?: CALSettings;
 
   /** Whether table registry has been populated (used for conditional validation) */
-  hasTableRegistry?: boolean;
+  tableRegistryPopulated?: boolean;
 
   /** Table registry mapping table numbers to table names (optional) */
   tableRegistry?: ReadonlyMap<number, string>;
@@ -102,7 +102,7 @@ export class SemanticAnalyzer {
     options?: AnalyzeOptions
   ): Diagnostic[] {
     // Destructure options with defaults
-    const { settings, hasTableRegistry, tableRegistry, fieldRegistry } = options ?? {};
+    const { settings, tableRegistryPopulated, tableRegistry, fieldRegistry } = options ?? {};
 
     // Assemble validation context
     const context: ValidationContext = {
@@ -111,7 +111,7 @@ export class SemanticAnalyzer {
       builtins: this.builtins,
       documentUri,
       settings,
-      hasTableRegistry,
+      tableRegistryPopulated,
       tableRegistry,
       fieldRegistry
     };

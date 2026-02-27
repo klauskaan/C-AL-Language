@@ -32,7 +32,7 @@ export interface ValidationContext {
   settings?: CALSettings;
 
   /** Whether table registry has been populated (used for conditional validation) */
-  hasTableRegistry?: boolean;
+  tableRegistryPopulated?: boolean;
 
   /** Table registry mapping table numbers to table names (optional) */
   tableRegistry?: ReadonlyMap<number, string>;
