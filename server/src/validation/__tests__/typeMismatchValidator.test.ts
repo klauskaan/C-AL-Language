@@ -481,7 +481,7 @@ describe('TypeMismatchValidator - Compatible Assignments', () => {
         CODE {
           PROCEDURE TestProc();
           VAR
-            TEMPORARY TempCustomer : Record 18;
+            TempCustomer : TEMPORARY Record 18;
             Customer : Record 18;
           BEGIN
             Customer := TempCustomer;
