@@ -3298,6 +3298,7 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
 
       const invalidField = diagnostics.find(d => d.message.includes('InvalidField'));
       expect(invalidField).toBeDefined();
+      expect(diagnostics).toHaveLength(1);
     });
   });
 
