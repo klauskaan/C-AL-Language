@@ -12,6 +12,7 @@
  * - External: Public API marker (NAV 2016+)
  * - TryFunction: Error-handling function (all C/AL versions)
  * - Integration: Integration event publisher (NAV 2016+)
+ * - Business: Business event publisher (NAV 2016+)
  * - EventSubscriber: Event subscriber registration (NAV 2016+)
  * - Test: Test function marker (NAV 2016+)
  * - CheckPrecondition: Precondition check for upgrade codeunits (NAV 2016+)
@@ -29,6 +30,7 @@ export const KNOWN_CAL_ATTRIBUTES: ReadonlySet<string> = new Set([
   'external',
   'tryfunction',
   'integration',
+  'business',
   'eventsubscriber',
   'test',
   'checkprecondition',
@@ -45,6 +47,7 @@ export const KNOWN_CAL_ATTRIBUTES_CASED: readonly string[] = [
   'External',
   'TryFunction',
   'Integration',
+  'Business',
   'EventSubscriber',
   'Test',
   'CheckPrecondition',

@@ -2,7 +2,7 @@
  * Unknown Attribute Validator
  *
  * Detects unknown procedure attributes in C/AL code.
- * Valid C/AL attributes: External, TryFunction, Integration, EventSubscriber, Test, CheckPrecondition, TableSyncSetup, Internal, ServiceEnabled.
+ * Valid C/AL attributes: External, TryFunction, Integration, Business, EventSubscriber, Test, CheckPrecondition, TableSyncSetup, Internal, ServiceEnabled.
  *
  * Uses Levenshtein distance to suggest corrections for typos.
  */
