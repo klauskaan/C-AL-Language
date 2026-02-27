@@ -56,6 +56,9 @@ const FIELD_REFERENCE_METHODS: Map<string, 'first' | 'all'> = new Map([
   ['CALCFIELDS', 'all'],
   ['CALCSUMS', 'all'],
   ['COPYFILTER', 'all'],
+  ['SETAUTOCALCFIELDS', 'all'],
+  ['SETASCENDING', 'first'],
+  ['GETASCENDING', 'first'],
 ]);
 
 /**

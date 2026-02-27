@@ -143,9 +143,9 @@ describe('Builtins Module', () => {
   });
 
   describe('Data Integrity - RECORD_METHODS', () => {
-    it('should have exactly 56 record method entries', () => {
-      // 53 existing + RENAME (added as dual-purpose) + FIELDACTIVE + COPYFILTER
-      expect(RECORD_METHODS).toHaveLength(56);
+    it('should have exactly 71 record method entries', () => {
+      // 53 existing + RENAME (added as dual-purpose) + FIELDACTIVE + COPYFILTER + 15 new methods from #604
+      expect(RECORD_METHODS).toHaveLength(71);
     });
 
     it('should have all required fields for each entry', () => {
@@ -202,6 +202,32 @@ describe('Builtins Module', () => {
       const fieldactive = RECORD_METHODS.find((fn) => fn.name === 'FIELDACTIVE');
       expect(fieldactive).toBeDefined();
       expect(fieldactive?.signature).toContain('Field');
+    });
+
+    it('should include all 15 new Record methods added for issue #604', () => {
+      const expectedMethods = [
+        'READPERMISSION',
+        'WRITEPERMISSION',
+        'SETVIEW',
+        'GETVIEW',
+        'ISTEMPORARY',
+        'SETAUTOCALCFIELDS',
+        'SETASCENDING',
+        'GETASCENDING',
+        'HASLINKS',
+        'ADDLINK',
+        'DELETELINKS',
+        'DELETELINK',
+        'COPYLINKS',
+        'SETPERMISSIONFILTER',
+        'SECURITYFILTERING'
+      ];
+
+      expectedMethods.forEach((methodName) => {
+        const method = RECORD_METHODS.find((fn) => fn.name === methodName);
+        expect(method).toBeDefined();
+        expect(method?.category).toBe('record');
+      });
     });
   });
 
@@ -616,6 +642,113 @@ describe('Builtins Module', () => {
         // Verify they are distinct entries
         expect(isnull?.name).toBe('ISNULL');
         expect(isnullguid?.name).toBe('ISNULLGUID');
+      });
+
+      it('should have both DELETELINK and DELETELINKS as distinct record methods', () => {
+        const deletelink = registry.getRecordMethod('DELETELINK');
+        const deletelinks = registry.getRecordMethod('DELETELINKS');
+
+        expect(deletelink).toBeDefined();
+        expect(deletelinks).toBeDefined();
+        expect(deletelink?.category).toBe('record');
+        expect(deletelinks?.category).toBe('record');
+
+        // Verify they are distinct entries
+        expect(deletelink?.name).toBe('DELETELINK');
+        expect(deletelinks?.name).toBe('DELETELINKS');
+
+        // Verify signatures
+        expect(deletelinks?.signature).toBe('()');
+        expect(deletelink?.signature).toContain('ID');
+      });
+    });
+  });
+
+  describe('Issue #604 - New Record Methods', () => {
+    let registry: BuiltinRegistry;
+
+    beforeEach(() => {
+      registry = new BuiltinRegistry();
+    });
+
+    describe('Signature Tests', () => {
+      it('should have READPERMISSION signature that returns Boolean with no parameters', () => {
+        const method = registry.getRecordMethod('READPERMISSION');
+        expect(method).toBeDefined();
+        expect(method?.signature).toContain('Boolean');
+        expect(method?.signature).toBe('(): Boolean');
+      });
+
+      it('should have SETVIEW signature that contains String parameter', () => {
+        const method = registry.getRecordMethod('SETVIEW');
+        expect(method).toBeDefined();
+        expect(method?.signature).toContain('String');
+      });
+
+      it('should have GETVIEW signature that contains UseNames optional parameter and Text return', () => {
+        const method = registry.getRecordMethod('GETVIEW');
+        expect(method).toBeDefined();
+        expect(method?.signature).toContain('UseNames');
+        expect(method?.signature).toContain('Text');
+      });
+
+      it('should have SETAUTOCALCFIELDS signature that contains Field1 variadic parameter', () => {
+        const method = registry.getRecordMethod('SETAUTOCALCFIELDS');
+        expect(method).toBeDefined();
+        expect(method?.signature).toContain('Field1');
+      });
+
+      it('should have SETASCENDING signature that contains Field and Value parameters', () => {
+        const method = registry.getRecordMethod('SETASCENDING');
+        expect(method).toBeDefined();
+        expect(method?.signature).toContain('Field');
+        expect(method?.signature).toContain('Value');
+      });
+
+      it('should have GETASCENDING signature that contains Field parameter and Boolean return', () => {
+        const method = registry.getRecordMethod('GETASCENDING');
+        expect(method).toBeDefined();
+        expect(method?.signature).toContain('Field');
+        expect(method?.signature).toContain('Boolean');
+      });
+
+      it('should have ADDLINK signature that contains URL and Description parameters', () => {
+        const method = registry.getRecordMethod('ADDLINK');
+        expect(method).toBeDefined();
+        expect(method?.signature).toContain('URL');
+        expect(method?.signature).toContain('Description');
+      });
+
+      it('should have SECURITYFILTERING signature that contains SecurityFilter parameter', () => {
+        const method = registry.getRecordMethod('SECURITYFILTERING');
+        expect(method).toBeDefined();
+        expect(method?.signature).toContain('SecurityFilter');
+      });
+    });
+
+    describe('Registry Recognition Tests', () => {
+      it('should recognize all 15 new methods via isRecordMethod', () => {
+        const methods = [
+          'READPERMISSION',
+          'WRITEPERMISSION',
+          'SETVIEW',
+          'GETVIEW',
+          'ISTEMPORARY',
+          'SETAUTOCALCFIELDS',
+          'SETASCENDING',
+          'GETASCENDING',
+          'HASLINKS',
+          'ADDLINK',
+          'DELETELINKS',
+          'DELETELINK',
+          'COPYLINKS',
+          'SETPERMISSIONFILTER',
+          'SECURITYFILTERING'
+        ];
+
+        methods.forEach((methodName) => {
+          expect(registry.isRecordMethod(methodName)).toBe(true);
+        });
       });
     });
   });
