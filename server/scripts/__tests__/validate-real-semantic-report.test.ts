@@ -613,7 +613,7 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        hadTableRegistry: false
+        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -663,7 +663,7 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        hadTableRegistry: false
+        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -705,7 +705,7 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        hadTableRegistry: false
+        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -757,7 +757,7 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        hadTableRegistry: false
+        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -792,10 +792,10 @@ describe('validateAllRealFiles', () => {
       const mockParser = { parse: jest.fn().mockReturnValue({ object: null }) };
       (Parser as unknown as jest.Mock).mockImplementation(() => mockParser);
 
-      // Test with hadTableRegistry = true
+      // Test with tableRegistryPopulated = true
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        hadTableRegistry: true // Set to true
+        tableRegistryPopulated: true // Set to true
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -830,7 +830,7 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        hadTableRegistry: false
+        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -868,7 +868,7 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        hadTableRegistry: false
+        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -922,7 +922,7 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        hadTableRegistry: false
+        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -953,7 +953,7 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        hadTableRegistry: false
+        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -985,7 +985,7 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        hadTableRegistry: false
+        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -1026,7 +1026,7 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        hadTableRegistry: false
+        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -1070,7 +1070,7 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        hadTableRegistry: false
+        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -1127,7 +1127,7 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        hadTableRegistry: false
+        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 

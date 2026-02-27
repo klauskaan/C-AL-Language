@@ -501,7 +501,7 @@ export class SymbolTable {
   private rootScope: Scope = new Scope(null);
 
   /** Captures whether a table registry was available when the symbol table was built */
-  private _hadTableRegistry: boolean = false;
+  private _tableRegistryPopulated: boolean = false;
 
   /**
    * Inject implicit system variables into the root scope based on object kind.
@@ -566,7 +566,7 @@ export class SymbolTable {
     this.rootScope = new Scope(null);
 
     // Capture whether a table registry was available at build time
-    this._hadTableRegistry = tableRegistry !== undefined && tableRegistry.size > 0;
+    this._tableRegistryPopulated = tableRegistry !== undefined && tableRegistry.size > 0;
 
     if (!ast.object) {
       return;
@@ -635,8 +635,8 @@ export class SymbolTable {
    * Check whether a table registry was available when this symbol table was built.
    * Used by validation to determine if "ELEMENTS name not found" warnings should be shown.
    */
-  public get hadTableRegistry(): boolean {
-    return this._hadTableRegistry;
+  public get tableRegistryPopulated(): boolean {
+    return this._tableRegistryPopulated;
   }
 
   /**

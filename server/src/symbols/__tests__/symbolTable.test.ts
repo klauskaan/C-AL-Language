@@ -2429,7 +2429,7 @@ describe('defineGlobal', () => {
   });
 });
 
-describe('hadTableRegistry property (Issue #560)', () => {
+describe('tableRegistryPopulated property (Issue #560)', () => {
   it('should be false when no registry provided', () => {
     const code = `OBJECT Table 18 Customer
 {
@@ -2440,7 +2440,7 @@ describe('hadTableRegistry property (Issue #560)', () => {
 }`;
     const symbolTable = buildSymbolTable(code);
 
-    expect(symbolTable.hadTableRegistry).toBe(false);
+    expect(symbolTable.tableRegistryPopulated).toBe(false);
   });
 
   it('should be false when registry is provided but empty', () => {
@@ -2457,7 +2457,7 @@ describe('hadTableRegistry property (Issue #560)', () => {
 
     symbolTable.buildFromAST(ast, emptyRegistry);
 
-    expect(symbolTable.hadTableRegistry).toBe(false);
+    expect(symbolTable.tableRegistryPopulated).toBe(false);
   });
 
   it('should be true when registry has entries', () => {
@@ -2474,7 +2474,7 @@ describe('hadTableRegistry property (Issue #560)', () => {
 
     symbolTable.buildFromAST(ast, registry);
 
-    expect(symbolTable.hadTableRegistry).toBe(true);
+    expect(symbolTable.tableRegistryPopulated).toBe(true);
   });
 
   it('should reflect most recent buildFromAST call', () => {
@@ -2491,10 +2491,10 @@ describe('hadTableRegistry property (Issue #560)', () => {
 
     // First call: buildFromAST with populated registry
     symbolTable.buildFromAST(ast, registry);
-    expect(symbolTable.hadTableRegistry).toBe(true);
+    expect(symbolTable.tableRegistryPopulated).toBe(true);
 
     // Second call: buildFromAST with no registry
     symbolTable.buildFromAST(ast);
-    expect(symbolTable.hadTableRegistry).toBe(false);
+    expect(symbolTable.tableRegistryPopulated).toBe(false);
   });
 });
