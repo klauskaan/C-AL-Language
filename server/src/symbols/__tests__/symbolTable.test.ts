@@ -1871,6 +1871,7 @@ describe('Implicit System Variables', () => {
     expect(symbolTable.hasSymbol('CurrReport')).toBe(false);
     expect(symbolTable.hasSymbol('currXMLport')).toBe(false);
     expect(symbolTable.hasSymbol('CurrFieldNo')).toBe(false);
+    expect(symbolTable.hasSymbol('RequestOptionsPage')).toBe(false);
   });
 
   it('should not pre-populate any implicit variables for Codeunit objects', () => {
@@ -1889,6 +1890,7 @@ describe('Implicit System Variables', () => {
     expect(symbolTable.hasSymbol('currXMLport')).toBe(false);
     expect(symbolTable.hasSymbol('currQuery')).toBe(false);
     expect(symbolTable.hasSymbol('CurrFieldNo')).toBe(false);
+    expect(symbolTable.hasSymbol('RequestOptionsPage')).toBe(false);
   });
 
   it('should look up implicit Table variables case-insensitively', () => {
