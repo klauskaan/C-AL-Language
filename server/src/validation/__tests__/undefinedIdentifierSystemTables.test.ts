@@ -17,7 +17,7 @@ import { Diagnostic } from 'vscode-languageserver';
 import { SymbolTable } from '../../symbols/symbolTable';
 import { BuiltinRegistry } from '../../semantic/builtinRegistry';
 import { ValidationContext } from '../../semantic/types';
-import { WorkspaceIndex } from '../../workspaceSymbol/workspaceIndex';
+import { WorkspaceIndex, FieldInfo } from '../../workspaceSymbol/workspaceIndex';
 
 /**
  * Helper that uses WorkspaceIndex registries (the real seeded registries) to validate.
@@ -183,6 +183,62 @@ describe('UndefinedIdentifierValidator - System Table Integration', () => {
         d.message.includes('Number') && d.code === 'undefined-identifier'
       );
       expect(numberError).toBeUndefined();
+    });
+
+    it('should not inject fields when codeunit has TableNo=0 (no source table)', () => {
+      // Seed a fake field at key 0 in a custom registry to verify the guard
+      // tableId > 0 in symbolTable.ts:653 prevents injection — not just absence
+      // of table 0 in the real registry
+      const fakeFields = new Map<string, FieldInfo>([
+        ['NUMBER', { originalName: 'Number', typeName: 'Integer' }]
+      ]);
+      const customFieldRegistry = new Map<number, ReadonlyMap<string, FieldInfo>>([
+        [0, fakeFields]
+      ]);
+
+      const code = `OBJECT Codeunit 50001 "Test No Table Codeunit"
+{
+  PROPERTIES
+  {
+    TableNo=0;
+    OnRun=BEGIN
+            IF Number = 0 THEN
+              EXIT;
+          END;
+
+  }
+  CODE
+  {
+  }
+}`;
+
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+
+      const symbolTable = new SymbolTable();
+      symbolTable.buildFromAST(ast, undefined, customFieldRegistry);
+
+      const builtins = new BuiltinRegistry();
+
+      const context: ValidationContext = {
+        ast,
+        symbolTable,
+        builtins,
+        documentUri: 'file:///test.cal',
+        userTablesIndexed: false,
+        fieldRegistry: customFieldRegistry,
+        tableRegistry: undefined
+      };
+
+      const validator = new UndefinedIdentifierValidator();
+      const diagnostics = validator.validate(context);
+
+      const numberError = diagnostics.find(d =>
+        d.message.includes('Number') && d.code === 'undefined-identifier'
+      );
+      expect(numberError).toBeDefined();
     });
 
   });
