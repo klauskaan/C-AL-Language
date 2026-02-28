@@ -48,17 +48,16 @@ npm run validate:semantic
 - Increases in `undefined-identifier` or `undefined-property` on standard NAV objects (symbol table regressions)
 - New diagnostic codes appearing unexpectedly
 
-**Typical baseline (7,677 files, as of 2026-02-28):**
+**Typical baseline (7,677 files, as of 2026-02-28, post-#608):**
 
 | Code | Severity | Count | Files |
 |------|----------|-------|-------|
-| `undefined-property` | Warning | ~8,611 | ~1,750 |
 | `undefined-identifier` | Warning | ~7,349 | ~1,633 |
 | `unused-variable` | Warning | ~1,285 | ~314 |
 | `deprecated-function` | Hint | ~6 | ~6 |
 | `type-mismatch` | Warning | ~1 | ~1 |
 
-`undefined-property` and `undefined-identifier` warnings largely come from cross-object references — fields, procedures, and properties on record variables whose definitions live in other objects. Most are expected and not fixable without broader cross-file analysis. `type-mismatch` and `deprecated-function` counts should be stable.
+`undefined-identifier` warnings largely come from cross-object references — fields and identifiers in codeunits and pages referencing symbols defined in other objects. Most are expected and not fixable without broader cross-file analysis. `type-mismatch` and `deprecated-function` counts should be stable. `undefined-property` should be 0 — any reappearance indicates a procedure registry regression.
 
 ---
 
@@ -245,7 +244,7 @@ Total wall time: ~70 seconds.
 | `validate:real` failures appear | Parser regression — check recent parser/lexer changes |
 | `type-mismatch` count increases in semantic report | New semantic rule firing on false positives, or real code regression |
 | `undefined-identifier` spikes on standard NAV objects | Symbol table regression — builtins or table registry broken |
-| `undefined-property` spikes on standard NAV objects | Field registry regression — table fields not being indexed |
+| `undefined-property` count > 0 | Procedure registry regression — registry not built or passed to analyzer |
 | Lexer health position errors | Token position tracking bug — off-by-one in line/column |
 | Lexer clean exit failures | State machine bug — a context or flag is not being unwound |
 | `perf:compare` regression | Performance regression — profile with `perf:stress` to narrow down |
