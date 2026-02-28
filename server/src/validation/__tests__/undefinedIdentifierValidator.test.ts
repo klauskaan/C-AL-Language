@@ -4073,3 +4073,88 @@ describe('UndefinedIdentifierValidator - Codeunit TableNo Field Integration', ()
     expect(bareFieldError).toBeDefined();
   });
 });
+
+describe('UndefinedIdentifierValidator - Codeunit TableNo=0 guard', () => {
+  it('should flag Rec as undefined when codeunit has TableNo=0 (no source table)', () => {
+    const code = `OBJECT Codeunit 50001 "No Source Table Codeunit"
+{
+  PROPERTIES
+  {
+    TableNo=0;
+    OnRun=BEGIN
+            Rec.INIT;
+          END;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>();
+
+    const diagnostics = validateUndefinedIdentifiers(code, tableRegistry);
+
+    // TableNo=0 means no source table — Rec should not be injected
+    const recError = diagnostics.find(d => d.message.includes("'Rec'"));
+    expect(recError).toBeDefined();
+  });
+
+  it('should not inject source table fields when codeunit has TableNo=0', () => {
+    const code = `OBJECT Codeunit 50001 "No Source Table Codeunit"
+{
+  PROPERTIES
+  {
+    TableNo=0;
+    OnRun=BEGIN
+            Rec.INIT;
+          END;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    // Even if someone registers table 0, the guard should prevent injection
+    const tableRegistry = new Map<number, string>([[0, 'Phantom Table']]);
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const phantomFields = new Map<string, FieldInfo>();
+    phantomFields.set('PHANTOMFIELD', { originalName: 'PhantomField', typeName: 'Text50' });
+    fieldRegistry.set(0, phantomFields);
+
+    const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+    // Rec should still be undefined — table 0 is the sentinel "no source table" value
+    const recError = diagnostics.find(d => d.message.includes("'Rec'"));
+    expect(recError).toBeDefined();
+  });
+
+  it('should still inject Rec when codeunit has TableNo=5900 (positive tableId)', () => {
+    const code = `OBJECT Codeunit 5900 "Service Release"
+{
+  PROPERTIES
+  {
+    TableNo=5900;
+    OnRun=BEGIN
+            Rec.INIT;
+          END;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[5900, 'Service Header']]);
+
+    const diagnostics = validateUndefinedIdentifiers(code, tableRegistry);
+
+    // TableNo=5900 is a real source table — Rec must be injected and must not be flagged
+    const recError = diagnostics.find(d => d.message.includes("'Rec'"));
+    expect(recError).toBeUndefined();
+  });
+});

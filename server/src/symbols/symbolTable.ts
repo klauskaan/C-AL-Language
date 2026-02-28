@@ -568,7 +568,7 @@ export class SymbolTable {
         const tableNoProp = findProperty(objectDecl, 'tableno');
         if (tableNoProp?.value) {
           const tableId = parseInt(tableNoProp.value, 10);
-          if (!isNaN(tableId)) {
+          if (!isNaN(tableId) && tableId > 0) { // 0 = no source table
             inject('Rec', `Record ${tableId}`);
           }
         }
@@ -649,7 +649,7 @@ export class SymbolTable {
       const tableNoProp = findProperty(ast.object, 'tableno');
       if (tableNoProp?.value) {
         const tableId = parseInt(tableNoProp.value, 10);
-        if (!isNaN(tableId)) {
+        if (!isNaN(tableId) && tableId > 0) { // 0 = no source table
           const tableFields = fieldRegistry.get(tableId);
 
           if (tableFields) {
