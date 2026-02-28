@@ -523,7 +523,7 @@ export class SymbolTable {
    *
    * - Table:    Rec, xRec, CurrFieldNo
    * - Page:     Rec, xRec, CurrPage
-   * - Report:   Rec, CurrReport
+   * - Report:   Rec, CurrReport, RequestOptionsPage
    * - XMLport:  currXMLport
    * - Query:    currQuery
    * - Codeunit: Rec (only when TableNo property is set)
@@ -554,6 +554,7 @@ export class SymbolTable {
       case ObjectKind.Report:
         inject('Rec', 'Record');
         inject('CurrReport', 'Report');
+        inject('RequestOptionsPage', 'Page');
         break;
       case ObjectKind.XMLport:
         inject('currXMLport', 'XMLport');
