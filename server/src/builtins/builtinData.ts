@@ -149,7 +149,13 @@ const STRING_FUNCTIONS: BuiltinFunction[] = [
     signature: '(String): Integer',
     documentation: 'Returns the maximum length that can be stored in a Text or Code variable.',
     category: 'string'
-  }
+  },
+  {
+    name: 'STRCHECKSUM',
+    signature: '(String [, WeightString] [, Modulus]): Integer',
+    documentation: 'Calculates a checksum for a numeric string using optional weight factors and modulus. NAV 2013+.',
+    category: 'string'
+  },
 ];
 
 /**
@@ -562,6 +568,165 @@ const SYSTEM_FUNCTIONS: BuiltinFunction[] = [
     category: 'system'
   },
 
+  // ── Missing from #623 ────────────────────────────────────────────────────
+
+  {
+    name: 'GETDOTNETTYPE',
+    signature: '(DotNetVariable): DotNet "System.Type"',
+    documentation: 'Returns the .NET System.Type object for a DotNet variable. Used for reflection and CreateInstance calls. NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'CREATE',
+    signature: '(Automation [, RunOnClient] [, WithEvents])',
+    documentation: 'Creates an Automation (COM) object instance. Must be called before using an Automation variable. NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'ISCLEAR',
+    signature: '(Variable): Boolean',
+    documentation: 'Returns TRUE if an Automation or DotNet variable has not yet been instantiated. NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'CANLOADTYPE',
+    signature: '(DotNetVariable): Boolean',
+    documentation: 'Returns TRUE if the .NET type of the DotNet variable can be loaded on the server. NAV 2015+.',
+    category: 'system'
+  },
+  {
+    name: 'ENCRYPTIONENABLED',
+    signature: '(): Boolean',
+    documentation: 'Returns TRUE if data encryption is enabled on the server. NAV 2015+.',
+    category: 'system'
+  },
+  {
+    name: 'CREATEENCRYPTIONKEY',
+    signature: '()',
+    documentation: 'Creates a new server encryption key. Throws an error if a key already exists. NAV 2015+.',
+    category: 'system'
+  },
+  {
+    name: 'DELETEENCRYPTIONKEY',
+    signature: '()',
+    documentation: 'Deletes the server encryption key. NAV 2015+.',
+    category: 'system'
+  },
+  {
+    name: 'APPLICATIONPATH',
+    signature: '(): Text',
+    documentation: 'Returns the path to the client application folder (used for add-ins and client-side resources). NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'SERVICEINSTANCEID',
+    signature: '(): Integer',
+    documentation: 'Returns the ID of the current NST (NAV Service Tier) service instance. NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'ENVIRON',
+    signature: '(Name: Text): Text',
+    documentation: 'Returns the value of the specified OS environment variable. Returns an empty string if the variable does not exist. NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'TENANTID',
+    signature: '(): Text',
+    documentation: 'Returns the tenant ID for the current session. Used in multitenant deployments. NAV 2015+.',
+    category: 'system'
+  },
+  {
+    name: 'STARTSESSION',
+    signature: '(var SessionID: Integer, CodeunitID: Integer [, CompanyName] [, Record]): Boolean',
+    documentation: 'Starts a new server-side session running the specified codeunit. Returns the session ID via the var parameter. NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'ISSESSIONACTIVE',
+    signature: '(SessionID: Integer): Boolean',
+    documentation: 'Returns TRUE if the specified session ID is still active. NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'SID',
+    signature: '(UserName: Text): Text',
+    documentation: 'Returns the Windows Security Identifier (SID) for the specified user name. NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'APPLICATIONIDENTIFIER',
+    signature: '(): Text',
+    documentation: 'Returns the application identifier string (version info). NAV 2015+.',
+    category: 'system'
+  },
+  {
+    name: 'CODECOVERAGELOG',
+    signature: '(Enable: Boolean [, MultiSession: Boolean])',
+    documentation: 'Starts or stops code coverage logging. Pass TRUE to start, FALSE to stop. NAV 2015+.',
+    category: 'system'
+  },
+  {
+    name: 'CODECOVERAGEREFRESH',
+    signature: '()',
+    documentation: 'Refreshes the code coverage data from the server. NAV 2015+.',
+    category: 'system'
+  },
+  {
+    name: 'CODECOVERAGELOAD',
+    signature: '()',
+    documentation: 'Loads the stored code coverage data. NAV 2015+.',
+    category: 'system'
+  },
+  {
+    name: 'CODECOVERAGEINCLUDE',
+    signature: '(Object: Record)',
+    documentation: 'Specifies which objects to include in code coverage tracking. NAV 2015+.',
+    category: 'system'
+  },
+  {
+    name: 'CAPTIONCLASSTRANSLATE',
+    signature: '(CaptionClassExpression: Text): Text',
+    documentation: 'Translates a caption class expression into the display string for the current language. NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'CHANGEUSERPASSWORD',
+    signature: '(OldPassword: Text, NewPassword: Text)',
+    documentation: 'Changes the password for the current NAV user. NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'SETUSERPASSWORD',
+    signature: '(UserSecurityID: GUID, Password: Text)',
+    documentation: 'Sets the password for the specified user (identified by security ID). NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'IMPORTDATA',
+    signature: '(ShowDialog: Boolean, var FileName: Text [, IncludeApplicationData] [, IncludeGlobalData] [, CompanyName]): Boolean',
+    documentation: 'Imports database data from a NAV data file. Returns TRUE if successful. NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'EXPORTDATA',
+    signature: '(ShowDialog: Boolean, var FileName: Text [, IncludeApplicationData] [, IncludeGlobalData] [, CompanyName]): Boolean',
+    documentation: 'Exports database data to a NAV data file. Returns TRUE if successful. NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'DATAFILEINFORMATION',
+    signature: '(ShowDialog: Boolean, var FileName: Text, var Description: Text, var HasApplication: Boolean, var HasApplicationData: Boolean, var HasGlobalData: Boolean, var TenantName: Text): Boolean',
+    documentation: 'Reads metadata from a NAV data file without importing it. Returns TRUE if the file was read successfully. NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'VARIANT2DATE',
+    signature: '(Variant): Date',
+    documentation: 'Converts a Variant value to a Date. NAV 2013+.',
+    category: 'system'
+  },
+
   // ── System object namespaces (used as OBJECT.METHOD() receivers) ──────────
 
   {
@@ -592,6 +757,12 @@ const SYSTEM_FUNCTIONS: BuiltinFunction[] = [
     name: 'NAVAPP',
     signature: '',
     documentation: 'Built-in system object for NAV/BC app metadata. Used as a receiver: NAVAPP.GETARCHIVERECORD(), NAVAPP.ISINSTALLED(), NAVAPP.GETID(). Introduced in NAV 2016.',
+    category: 'system'
+  },
+  {
+    name: 'COMPANYPROPERTY',
+    signature: '',
+    documentation: 'Built-in system object for company properties. Used as a receiver: COMPANYPROPERTY.DISPLAYNAME(). Introduced in BC14.',
     category: 'system'
   }
 ];
@@ -1197,6 +1368,11 @@ export const SYSTEM_TYPE_KEYWORDS: Set<string> = new Set([
   'SECURITYFILTER',      // Enum for security filtering: SECURITYFILTER::Filtered, SECURITYFILTER::Validated, etc.
   'REPORTFORMAT',        // Enum for report output format: REPORTFORMAT::Rdlc, REPORTFORMAT::Word, REPORTFORMAT::Excel
   'TRANSACTIONTYPE',     // Enum for transaction types: TRANSACTIONTYPE::Browse, TRANSACTIONTYPE::UpdateNoLocks, etc.
+
+  // ── Missing from #623 ────────────────────────────────────────────────────
+
+  'DATASCOPE',       // Enum for ISOLATEDSTORAGE scope: DATASCOPE::Company, DATASCOPE::CompanyAndUser, DATASCOPE::User (BC13+)
+  'DEFAULTLAYOUT',   // Enum for report default layout: DEFAULTLAYOUT::None, DEFAULTLAYOUT::RDLC, DEFAULTLAYOUT::Word (NAV 2016+)
 ]);
 
 /**
