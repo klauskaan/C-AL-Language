@@ -168,7 +168,7 @@ export class Scope {
 }
 
 /**
- * Implicit parameters for page property triggers.
+ * Implicit parameters for page property triggers and page control triggers.
  * These parameters are provided by the C/AL runtime and are always
  * available inside the trigger body, but never declared in source code.
  * Map key is the lowercase trigger name for case-insensitive lookup.
@@ -179,6 +179,8 @@ const PAGE_TRIGGER_IMPLICIT_PARAMS = new Map<string, { name: string; type: strin
   ['onnewrecord',      { name: 'BelowxRec', type: 'Boolean' }],
   ['oninsertrecord',   { name: 'BelowxRec', type: 'Boolean' }],
   ['onqueryclosepage', { name: 'CloseAction', type: 'Action' }],
+  ['onlookup',         { name: 'Text', type: 'Text' }],
+  ['ondrilldown',      { name: 'Text', type: 'Text' }],
 ]);
 
 /**
@@ -302,6 +304,20 @@ class SymbolCollectorVisitor implements Partial<ASTVisitor> {
     // Switch to trigger scope, handle variables, then restore
     const prevScope = this.currentScope;
     this.currentScope = triggerScope;
+
+    // Inject implicit parameter for page control triggers (e.g., OnLookup and OnDrillDown get 'Text')
+    // Graceful degradation: if objectKind is undefined, no parameters are injected
+    if (this.objectKind === ObjectKind.Page) {
+      const implicitParam = PAGE_TRIGGER_IMPLICIT_PARAMS.get(node.name.toLowerCase());
+      if (implicitParam) {
+        triggerScope.addSymbol({
+          name: implicitParam.name,
+          kind: 'parameter',
+          token: makeSyntheticToken(implicitParam.name, node.startToken),
+          type: implicitParam.type
+        });
+      }
+    }
 
     // Add local variables to trigger scope
     for (const variable of node.variables) {
