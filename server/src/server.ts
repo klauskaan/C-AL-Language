@@ -201,16 +201,20 @@ async function indexWorkspace(): Promise<void> {
 
   const includeTxtFiles = currentSettings.workspaceIndexing.includeTxtFiles;
 
+  let anySucceeded = false;
   for (const folder of workspaceFolders) {
     try {
       await workspaceIndex.indexDirectory(folder, { includeTxtFiles });
       connection.console.log(`Indexed ${folder}: ${workspaceIndex.fileCount} files, ${workspaceIndex.symbolCount} symbols`);
+      anySucceeded = true;
     } catch (error) {
       connection.console.error(`Failed to index ${folder}: ${formatError(error)}`);
     }
   }
 
-  workspaceIndex.markIndexingComplete();
+  if (anySucceeded) {
+    workspaceIndex.markIndexingComplete();
+  }
   connection.console.log(`Workspace indexing complete: ${workspaceIndex.fileCount} files, ${workspaceIndex.symbolCount} symbols`);
 }
 
