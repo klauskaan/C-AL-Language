@@ -348,9 +348,12 @@ export class Parser {
    * The lexer appends suffixes to the token value (e.g. '10000L' for BigInteger).
    * JavaScript's parseInt tolerates trailing non-numeric characters by design,
    * but making the strip explicit prevents silent breakage if parseInt is ever
-   * replaced with a stricter parser (Number(), parseFloat strict mode, etc.).
+   * replaced with a stricter parser (Number(), strict-mode parseInt, etc.).
    *
-   * Known suffixes: L/l (BigInteger), D (Date), T (Time), DT (DateTime)
+   * Currently live: L/l (BigInteger — lexer emits as TokenType.Integer with suffix).
+   * Forward-looking: D (Date), T (Time), DT (DateTime) — currently emitted as
+   * separate token types by the lexer and never reach this call site, but included
+   * for completeness in case token routing changes.
    */
   private stripNumericSuffix(value: string): string {
     return value.replace(/(?:DT|[LlDT])$/, '');
