@@ -48,7 +48,7 @@ export class WorkspaceIndex {
   private tableFieldRegistry = new Map<number, ReadonlyMap<string, FieldInfo>>();
   private fieldOwner = new Map<number, string>();
   private fileFieldContributions = new Map<string, number>();
-  private tableProcedureRegistry = new Map<number, Map<string, string>>();
+  private tableProcedureRegistry = new Map<number, ReadonlyMap<string, string>>();
   private procedureOwner = new Map<number, string>();
   private fileProcedureContributions = new Map<string, number>();
   private _userTablesIndexed: boolean = false;
