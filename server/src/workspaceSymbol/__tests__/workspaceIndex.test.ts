@@ -1153,4 +1153,263 @@ describe('WorkspaceIndex', () => {
       expect(itemFields!.get('UNIT PRICE')).toEqual({ originalName: 'Unit Price', typeName: 'Decimal' });
     });
   });
+
+  describe('Procedure Registry', () => {
+    it('should populate procedure registry with procedure names when indexing a Table object with CODE section', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+  CODE
+  {
+    PROCEDURE MyPublicProc@1();
+    BEGIN
+    END;
+
+    PROCEDURE AnotherProc@2();
+    BEGIN
+    END;
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+
+      const procedureRegistry = workspaceIndex.getProcedureRegistry();
+      expect(procedureRegistry).toBeDefined();
+
+      const customerProcs = procedureRegistry.get(18);
+      expect(customerProcs).toBeDefined();
+      expect(customerProcs!.has('MYPUBLICPROC')).toBe(true);
+      expect(customerProcs!.has('ANOTHERPROC')).toBe(true);
+    });
+
+    it('should not populate procedure registry when indexing a non-Table object', async () => {
+      const codeunitFile = path.join(tempDir, 'Codeunit50000.cal');
+      fs.writeFileSync(codeunitFile, `OBJECT Codeunit 50000 Utils
+{
+  CODE
+  {
+    PROCEDURE SomeProc@1();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`);
+
+      await workspaceIndex.add(codeunitFile);
+
+      const procedureRegistry = workspaceIndex.getProcedureRegistry();
+      expect(procedureRegistry.size).toBe(0);
+    });
+
+    it('should not crash when indexing a Table object with no CODE section', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+
+      const procedureRegistry = workspaceIndex.getProcedureRegistry();
+      const customerProcs = procedureRegistry.get(18);
+      // Either undefined or an empty set — both are acceptable
+      if (customerProcs !== undefined) {
+        expect(customerProcs.size).toBe(0);
+      }
+    });
+
+    it('should result in empty or absent entry for a Table with CODE section but zero procedures', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+
+      const procedureRegistry = workspaceIndex.getProcedureRegistry();
+      const customerProcs = procedureRegistry.get(18);
+      // Either undefined or an empty set — both are acceptable
+      if (customerProcs !== undefined) {
+        expect(customerProcs.size).toBe(0);
+      }
+    });
+
+    it('should include LOCAL procedures in the procedure registry', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+  CODE
+  {
+    PROCEDURE PublicProc@1();
+    BEGIN
+    END;
+
+    LOCAL PROCEDURE LocalProc@2();
+    BEGIN
+    END;
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+
+      const procedureRegistry = workspaceIndex.getProcedureRegistry();
+      const customerProcs = procedureRegistry.get(18);
+      expect(customerProcs).toBeDefined();
+      expect(customerProcs!.has('PUBLICPROC')).toBe(true);
+      expect(customerProcs!.has('LOCALPROC')).toBe(true);
+    });
+
+    it('should clear procedure registry entry for a table when remove() is called', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+  CODE
+  {
+    PROCEDURE MyProc@1();
+    BEGIN
+    END;
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+
+      const registryBefore = workspaceIndex.getProcedureRegistry();
+      expect(registryBefore.get(18)).toBeDefined();
+
+      workspaceIndex.remove(tableFile);
+
+      const registryAfter = workspaceIndex.getProcedureRegistry();
+      expect(registryAfter.get(18)).toBeUndefined();
+    });
+
+    it('should clear the entire procedure registry when clear() is called', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+  CODE
+  {
+    PROCEDURE MyProc@1();
+    BEGIN
+    END;
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+      expect(workspaceIndex.getProcedureRegistry().size).toBeGreaterThan(0);
+
+      workspaceIndex.clear();
+
+      expect(workspaceIndex.getProcedureRegistry().size).toBe(0);
+    });
+
+    it('should maintain independent procedure sets for multiple tables', async () => {
+      const customerFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(customerFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+  CODE
+  {
+    PROCEDURE CustomerProc@1();
+    BEGIN
+    END;
+  }
+}`);
+
+      const itemFile = path.join(tempDir, 'Table27.cal');
+      fs.writeFileSync(itemFile, `OBJECT Table 27 Item
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+  CODE
+  {
+    PROCEDURE ItemProc@1();
+    BEGIN
+    END;
+
+    PROCEDURE AnotherItemProc@2();
+    BEGIN
+    END;
+  }
+}`);
+
+      await workspaceIndex.add(customerFile);
+      await workspaceIndex.add(itemFile);
+
+      const procedureRegistry = workspaceIndex.getProcedureRegistry();
+
+      const customerProcs = procedureRegistry.get(18);
+      expect(customerProcs).toBeDefined();
+      expect(customerProcs!.has('CUSTOMERPROC')).toBe(true);
+      expect(customerProcs!.has('ITEMPROC')).toBe(false);
+
+      const itemProcs = procedureRegistry.get(27);
+      expect(itemProcs).toBeDefined();
+      expect(itemProcs!.has('ITEMPROC')).toBe(true);
+      expect(itemProcs!.has('ANOTHERITEMPROC')).toBe(true);
+      expect(itemProcs!.has('CUSTOMERPROC')).toBe(false);
+    });
+
+    it('should store procedure names in uppercase for case-insensitive lookup', async () => {
+      const tableFile = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+  CODE
+  {
+    PROCEDURE MixedCaseProc@1();
+    BEGIN
+    END;
+  }
+}`);
+
+      await workspaceIndex.add(tableFile);
+
+      const procedureRegistry = workspaceIndex.getProcedureRegistry();
+      const customerProcs = procedureRegistry.get(18);
+      expect(customerProcs).toBeDefined();
+      // Stored uppercase — matches regardless of original casing
+      expect(customerProcs!.has('MIXEDCASEPROC')).toBe(true);
+      // Lowercase or mixed-case lookups can be done by caller by uppercasing the key
+      expect(customerProcs!.has('mixedcaseproc')).toBe(false);
+      expect(customerProcs!.has('MixedCaseProc')).toBe(false);
+    });
+  });
 });

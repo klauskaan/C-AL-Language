@@ -86,7 +86,8 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
     private readonly walker: ASTWalker,
     tableRegistryPopulated: boolean,
     private readonly fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>,
-    private readonly tableRegistry?: ReadonlyMap<number, string>
+    private readonly tableRegistry?: ReadonlyMap<number, string>,
+    private readonly procedureRegistry?: ReadonlyMap<number, ReadonlySet<string>>
   ) {
     this.tableRegistryPopulated = tableRegistryPopulated;
   }
@@ -381,6 +382,14 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
 
     // If field doesn't exist, add diagnostic
     if (!fieldExists) {
+      // Check if property is a user-defined procedure on this table.
+      // Suppresses false-positive undefined-property warnings for legitimate table procedure calls.
+      if (this.procedureRegistry) {
+        const tableProcedures = this.procedureRegistry.get(tableId);
+        if (tableProcedures?.has(propertyName.toUpperCase())) {
+          return;
+        }
+      }
       this.addPropertyDiagnostic(node, propertyName, objectName, tableId);
     }
   }
@@ -439,7 +448,8 @@ export class UndefinedIdentifierValidator implements Validator {
       walker,  // Pass walker reference for manual traversal
       context.tableRegistryPopulated ?? false,
       context.fieldRegistry,
-      context.tableRegistry
+      context.tableRegistry,
+      context.procedureRegistry
     );
 
     walker.walk(context.ast, visitor);

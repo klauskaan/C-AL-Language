@@ -47,6 +47,9 @@ export class WorkspaceIndex {
   private tableFieldRegistry = new Map<number, Map<string, FieldInfo>>();
   private fieldOwner = new Map<number, string>();
   private fileFieldContributions = new Map<string, number>();
+  private tableProcedureRegistry = new Map<number, Set<string>>();
+  private procedureOwner = new Map<number, string>();
+  private fileProcedureContributions = new Map<string, number>();
 
   /**
    * Index a single file and add it to the index
@@ -57,7 +60,7 @@ export class WorkspaceIndex {
    */
   async add(filePath: string): Promise<void> {
     const indexedAt = Date.now();
-    const { symbols, tableInfo, fieldInfo } = await this.extractSymbols(filePath);
+    const { symbols, tableInfo, fieldInfo, procedureInfo } = await this.extractSymbols(filePath);
 
     // Remove old table contribution for this file (if any)
     const oldId = this.fileTableContributions.get(filePath);
@@ -91,6 +94,22 @@ export class WorkspaceIndex {
       this.tableFieldRegistry.set(fieldInfo.id, fieldInfo.fields);
       this.fieldOwner.set(fieldInfo.id, filePath);
       this.fileFieldContributions.set(filePath, fieldInfo.id);
+    }
+
+    // Remove old procedure contribution for this file (if any)
+    const oldProcId = this.fileProcedureContributions.get(filePath);
+    if (oldProcId !== undefined) {
+      if (this.procedureOwner.get(oldProcId) === filePath) {
+        this.tableProcedureRegistry.delete(oldProcId);
+        this.procedureOwner.delete(oldProcId);
+      }
+      this.fileProcedureContributions.delete(filePath);
+    }
+    // Add new procedure contribution
+    if (procedureInfo) {
+      this.tableProcedureRegistry.set(procedureInfo.id, procedureInfo.procedures);
+      this.procedureOwner.set(procedureInfo.id, filePath);
+      this.fileProcedureContributions.set(filePath, procedureInfo.id);
     }
 
     this.index.set(filePath, {
@@ -166,6 +185,21 @@ export class WorkspaceIndex {
       }
     }
 
+    const oldProcId = this.fileProcedureContributions.get(filePath);
+    if (oldProcId !== undefined) {
+      if (this.procedureOwner.get(oldProcId) === filePath) {
+        this.tableProcedureRegistry.delete(oldProcId);
+        this.procedureOwner.delete(oldProcId);
+        for (const [contributorPath, id] of this.fileProcedureContributions) {
+          if (id === oldProcId) {
+            this.fileProcedureContributions.delete(contributorPath);
+          }
+        }
+      } else {
+        this.fileProcedureContributions.delete(filePath);
+      }
+    }
+
     this.index.delete(filePath);
   }
 
@@ -180,6 +214,9 @@ export class WorkspaceIndex {
     this.tableFieldRegistry.clear();
     this.fieldOwner.clear();
     this.fileFieldContributions.clear();
+    this.tableProcedureRegistry.clear();
+    this.procedureOwner.clear();
+    this.fileProcedureContributions.clear();
   }
 
   /**
@@ -232,6 +269,17 @@ export class WorkspaceIndex {
    */
   getFieldRegistry(): ReadonlyMap<number, ReadonlyMap<string, FieldInfo>> {
     return this.tableFieldRegistry;
+  }
+
+  /**
+   * Get the procedure registry mapping table IDs to procedure name sets.
+   * Used by validateMemberProperty() to suppress false-positive undefined-property warnings
+   * for user-defined table procedure calls.
+   *
+   * @returns ReadonlyMap of tableId → ReadonlySet of uppercase procedure names
+   */
+  getProcedureRegistry(): ReadonlyMap<number, ReadonlySet<string>> {
+    return this.tableProcedureRegistry;
   }
 
   /**
@@ -298,13 +346,14 @@ export class WorkspaceIndex {
    * Extract symbols from a file
    *
    * @param filePath - Absolute file path
-   * @returns Promise<SymbolInformation[]> - Extracted symbols
+   * @returns Promise with extracted symbols, table info, field info, and procedure info
    * @throws Error if file cannot be read or parsed
    */
   private async extractSymbols(filePath: string): Promise<{
     symbols: SymbolInformation[];
     tableInfo?: { id: number; name: string };
     fieldInfo?: { id: number; fields: Map<string, FieldInfo> };
+    procedureInfo?: { id: number; procedures: Set<string> };
   }> {
     // Read file with encoding detection
     const { content } = await readFileWithEncodingAsync(filePath);
@@ -334,6 +383,7 @@ export class WorkspaceIndex {
     // Extract table info for the table registry
     let tableInfo: { id: number; name: string } | undefined;
     let fieldInfo: { id: number; fields: Map<string, FieldInfo> } | undefined;
+    let procedureInfo: { id: number; procedures: Set<string> } | undefined;
 
     if (ast.object?.objectKind === ObjectKind.Table && ast.object.objectName) {
       tableInfo = { id: ast.object.objectId, name: ast.object.objectName };
@@ -352,8 +402,21 @@ export class WorkspaceIndex {
       }
 
       fieldInfo = { id: ast.object.objectId, fields };
+
+      // Extract procedure names (uppercase for case-insensitive lookup)
+      // LOCAL procedures are included — false negatives preferred over false positives;
+      // cross-object LOCAL procedure calls are a separate diagnostic concern.
+      const procedures = new Set<string>();
+      if (ast.object.code?.procedures) {
+        for (const proc of ast.object.code.procedures) {
+          if (proc.name) {
+            procedures.add(proc.name.toUpperCase());
+          }
+        }
+      }
+      procedureInfo = { id: ast.object.objectId, procedures };
     }
 
-    return { symbols, tableInfo, fieldInfo };
+    return { symbols, tableInfo, fieldInfo, procedureInfo };
   }
 }

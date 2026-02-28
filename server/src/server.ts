@@ -689,11 +689,13 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
         const tableRegistryPopulated = symbolTable.tableRegistryPopulated;
         const fieldRegistry = workspaceIndex.getFieldRegistry();
         const tableRegistry = workspaceIndex.getTableRegistry();
+        const procedureRegistry = workspaceIndex.getProcedureRegistry();
         const semanticDiagnostics = semanticAnalyzer.analyze(ast, symbolTable, uri, {
           settings: currentSettings,
           tableRegistryPopulated,
           tableRegistry,
-          fieldRegistry
+          fieldRegistry,
+          procedureRegistry
         });
 
         // Check for excessive nesting depth (DoS protection - Issue #220)
