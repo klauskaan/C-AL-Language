@@ -310,11 +310,12 @@ describe('Page SourceTable Procedure Injection', () => {
       const symbolTable = buildSymbolTableWithProcedureRegistry(code, undefined, procedureRegistry);
       const rootScope = symbolTable.getRootScope();
 
-      // CalcFields should still be present in root scope
+      // CalcFields should still be present in root scope, and the page-declared version should have won
       expect(rootScope.hasOwnSymbol('CalcFields')).toBe(true);
       const calcFieldsSymbol = rootScope.getOwnSymbol('CalcFields');
       expect(calcFieldsSymbol).toBeDefined();
       expect(calcFieldsSymbol!.kind).toBe('procedure');
+      expect(calcFieldsSymbol!.name).toBe('CalcFields');
 
       // The page's own declaration should have won (AST walk runs after injection and overwrites).
       // Verify this by checking that a child scope was created for CalcFields containing the
@@ -332,6 +333,57 @@ describe('Page SourceTable Procedure Injection', () => {
       // Other injected procedures not declared by the page should still be present
       expect(rootScope.hasOwnSymbol('INIT')).toBe(true);
       expect(rootScope.getOwnSymbol('INIT')!.kind).toBe('procedure');
+    });
+
+    it('should allow page-declared procedure with different casing to overwrite injected source-table procedure', () => {
+      // Registry has 'CALCFIELDS' -> 'CalcFields'; page declares 'calcfields' (all lowercase).
+      // normalizeIdentifier lowercases both, so the AST-walked declaration should still overwrite
+      // the pre-injected symbol regardless of casing differences.
+      const code = `OBJECT Page 21 "Customer Card"
+{
+  PROPERTIES
+  {
+    SourceTable=Table18;
+  }
+  CODE
+  {
+    PROCEDURE calcfields();
+    VAR
+      LocalVar : Integer;
+    BEGIN
+    END;
+  }
+}`;
+
+      const procedureRegistry = new Map<number, Map<string, string>>();
+      procedureRegistry.set(18, new Map([['CALCFIELDS', 'CalcFields'], ['INIT', 'INIT']]));
+
+      const symbolTable = buildSymbolTableWithProcedureRegistry(code, undefined, procedureRegistry);
+      const rootScope = symbolTable.getRootScope();
+
+      // The calcfields symbol should be present under its normalized key
+      expect(rootScope.hasOwnSymbol('calcfields')).toBe(true);
+
+      // The page's own declaration should have won — its symbol.name is 'calcfields' (page casing),
+      // not 'CalcFields' (registry casing). This catches the case where the injected version
+      // incorrectly overwrote the page-declared one.
+      const calcFieldsSymbol = rootScope.getOwnSymbol('calcfields');
+      expect(calcFieldsSymbol).toBeDefined();
+      expect(calcFieldsSymbol!.name).toBe('calcfields');
+
+      // Additionally verify via child scope containing LocalVar: injection does not create child
+      // scopes, so LocalVar's presence proves the AST-walked version is the one that survived.
+      const calcFieldsScope = rootScope.children.find(scope =>
+        scope.getOwnSymbol('LocalVar') !== undefined
+      );
+      expect(calcFieldsScope).toBeDefined();
+      const localVar = calcFieldsScope!.getOwnSymbol('LocalVar');
+      expect(localVar).toBeDefined();
+      expect(localVar!.kind).toBe('variable');
+      expect(localVar!.type).toBe('Integer');
+
+      // Other injected procedures not declared by the page should still be present
+      expect(rootScope.hasOwnSymbol('INIT')).toBe(true);
     });
   });
 
