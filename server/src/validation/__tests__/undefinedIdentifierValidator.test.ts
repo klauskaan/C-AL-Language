@@ -3476,3 +3476,306 @@ describe('UndefinedIdentifierValidator - Member Property Validation', () => {
     });
   });
 });
+
+describe('UndefinedIdentifierValidator - Member Property Validation: Suppression: User-defined table procedures', () => {
+  function validateWithProcedureRegistry(
+    code: string,
+    tableRegistry?: ReadonlyMap<number, string>,
+    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>,
+    procedureRegistry?: ReadonlyMap<number, ReadonlySet<string>>
+  ): Diagnostic[] {
+    const lexer = new Lexer(code);
+    const tokens = lexer.tokenize();
+    const parser = new Parser(tokens);
+    const ast = parser.parse();
+
+    const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast, tableRegistry, fieldRegistry);
+
+    const builtins = new BuiltinRegistry();
+
+    const context: ValidationContext = {
+      ast,
+      symbolTable,
+      builtins,
+      documentUri: 'file:///test.cal',
+      tableRegistryPopulated: symbolTable.tableRegistryPopulated,
+      fieldRegistry,
+      tableRegistry,
+      procedureRegistry
+    };
+
+    const validator = new UndefinedIdentifierValidator();
+    return validator.validate(context);
+  }
+
+  it('should not flag Rec.MyCustomProc() when procedureRegistry contains the procedure for the table', () => {
+    const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      Rec.MyCustomProc();
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const customerFields = new Map<string, FieldInfo>();
+    customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+    fieldRegistry.set(18, customerFields);
+
+    const procedureRegistry = new Map<number, Set<string>>();
+    procedureRegistry.set(18, new Set(['MYCUSTOMPROC']));
+
+    const diagnostics = validateWithProcedureRegistry(
+      code,
+      tableRegistry,
+      fieldRegistry,
+      procedureRegistry
+    );
+
+    const procError = diagnostics.find(d =>
+      d.message.includes('MyCustomProc') && d.code === 'undefined-property'
+    );
+    expect(procError).toBeUndefined();
+  });
+
+  it('should not flag procedure call when case differs from stored uppercase name', () => {
+    const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      Rec.mycustomproc();
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const customerFields = new Map<string, FieldInfo>();
+    customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+    fieldRegistry.set(18, customerFields);
+
+    const procedureRegistry = new Map<number, Set<string>>();
+    procedureRegistry.set(18, new Set(['MYCUSTOMPROC']));
+
+    const diagnostics = validateWithProcedureRegistry(
+      code,
+      tableRegistry,
+      fieldRegistry,
+      procedureRegistry
+    );
+
+    const procError = diagnostics.find(d =>
+      d.message.toLowerCase().includes('mycustomproc') && d.code === 'undefined-property'
+    );
+    expect(procError).toBeUndefined();
+  });
+
+  it('should still flag a property that is not in field registry OR procedure registry', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer.TrulyInvalidProperty := 'test';
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const customerFields = new Map<string, FieldInfo>();
+    customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+    fieldRegistry.set(18, customerFields);
+
+    const procedureRegistry = new Map<number, Set<string>>();
+    procedureRegistry.set(18, new Set(['MYCUSTOMPROC']));
+
+    const diagnostics = validateWithProcedureRegistry(
+      code,
+      tableRegistry,
+      fieldRegistry,
+      procedureRegistry
+    );
+
+    const invalidError = diagnostics.find(d =>
+      d.message.includes('TrulyInvalidProperty') && d.code === 'undefined-property'
+    );
+    expect(invalidError).toBeDefined();
+  });
+
+  it('should not crash and still validate normally when table not in procedure registry', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer."No." := '10000';
+      Customer.InvalidField := 'test';
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const customerFields = new Map<string, FieldInfo>();
+    customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+    fieldRegistry.set(18, customerFields);
+
+    // Table 18 is NOT in the procedureRegistry
+    const procedureRegistry = new Map<number, Set<string>>();
+    procedureRegistry.set(99, new Set(['SOMEPROC']));
+
+    const diagnostics = validateWithProcedureRegistry(
+      code,
+      tableRegistry,
+      fieldRegistry,
+      procedureRegistry
+    );
+
+    // InvalidField should still be flagged
+    const invalidError = diagnostics.find(d =>
+      d.message.includes('InvalidField') && d.code === 'undefined-property'
+    );
+    expect(invalidError).toBeDefined();
+
+    // No. should not be flagged
+    const noError = diagnostics.find(d => d.message.includes('"No."'));
+    expect(noError).toBeUndefined();
+  });
+
+  it('should not crash when procedureRegistry is undefined (backward compatibility)', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer."No." := '10000';
+      Customer.InvalidField := 'test';
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const customerFields = new Map<string, FieldInfo>();
+    customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+    fieldRegistry.set(18, customerFields);
+
+    // No procedureRegistry passed — should behave as before
+    const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+    const invalidError = diagnostics.find(d =>
+      d.message.includes('InvalidField') && d.code === 'undefined-property'
+    );
+    expect(invalidError).toBeDefined();
+  });
+
+  it('should suppress valid field access and valid procedure call while flagging truly invalid property', () => {
+    const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    VAR
+      Customer : Record 18;
+    BEGIN
+      Customer."No." := '10000';
+      Customer.MyCustomProc();
+      Customer.TrulyInvalid := 'test';
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const customerFields = new Map<string, FieldInfo>();
+    customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+    fieldRegistry.set(18, customerFields);
+
+    const procedureRegistry = new Map<number, Set<string>>();
+    procedureRegistry.set(18, new Set(['MYCUSTOMPROC']));
+
+    const diagnostics = validateWithProcedureRegistry(
+      code,
+      tableRegistry,
+      fieldRegistry,
+      procedureRegistry
+    );
+
+    const noError = diagnostics.find(d => d.message.includes('"No."'));
+    expect(noError).toBeUndefined();
+
+    const procError = diagnostics.find(d =>
+      d.message.includes('MyCustomProc') && d.code === 'undefined-property'
+    );
+    expect(procError).toBeUndefined();
+
+    const invalidError = diagnostics.find(d =>
+      d.message.includes('TrulyInvalid') && d.code === 'undefined-property'
+    );
+    expect(invalidError).toBeDefined();
+  });
+
+  it('should not flag LOCAL procedure when it is in procedure registry', () => {
+    const code = `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+  CODE
+  {
+    PROCEDURE CallerProc();
+    BEGIN
+      Rec.LocalHelperProc();
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[18, 'Customer']]);
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const customerFields = new Map<string, FieldInfo>();
+    customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+    fieldRegistry.set(18, customerFields);
+
+    // LOCAL procedure included in registry (design decision: no distinction between LOCAL and public)
+    const procedureRegistry = new Map<number, Set<string>>();
+    procedureRegistry.set(18, new Set(['CALLERPROC', 'LOCALHELPERPROC']));
+
+    const diagnostics = validateWithProcedureRegistry(
+      code,
+      tableRegistry,
+      fieldRegistry,
+      procedureRegistry
+    );
+
+    const localProcError = diagnostics.find(d =>
+      d.message.includes('LocalHelperProc') && d.code === 'undefined-property'
+    );
+    expect(localProcError).toBeUndefined();
+  });
+});

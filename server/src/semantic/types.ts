@@ -39,6 +39,9 @@ export interface ValidationContext {
 
   /** Field registry mapping table numbers to field info (optional, used for member property validation) */
   fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>;
+
+  /** Procedure registry mapping table numbers to procedure name sets (used for member property validation) */
+  procedureRegistry?: ReadonlyMap<number, ReadonlySet<string>>;
 }
 
 /**
