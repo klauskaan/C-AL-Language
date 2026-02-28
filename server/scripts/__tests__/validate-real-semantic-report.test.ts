@@ -882,7 +882,7 @@ describe('buildAllRegistries', () => {
     const mockParser = {
       parse: jest.fn().mockReturnValue({
         object: {
-          objectKind: 'Table',
+          objectKind: ObjectKind.Table,
           objectId: 99,
           objectName: '',
           fields: {
@@ -914,7 +914,7 @@ describe('buildAllRegistries', () => {
     const mockParser = {
       parse: jest.fn().mockReturnValue({
         object: {
-          objectKind: 'Table',
+          objectKind: ObjectKind.Table,
           objectId: 99,
           objectName: undefined,
           fields: {
