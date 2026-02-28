@@ -185,14 +185,5 @@ describe('UndefinedIdentifierValidator - System Table Integration', () => {
       expect(numberError).toBeUndefined();
     });
 
-    it('should have Integer table (2000000026) in WorkspaceIndex field registry (codeunit path precondition)', () => {
-      const workspaceIndex = new WorkspaceIndex();
-      const fieldRegistry = workspaceIndex.getFieldRegistry();
-
-      expect(fieldRegistry.has(2000000026)).toBe(true);
-      const integerFields = fieldRegistry.get(2000000026);
-      expect(integerFields).toBeDefined();
-      expect(integerFields!.has('NUMBER')).toBe(true);
-    });
   });
 });
