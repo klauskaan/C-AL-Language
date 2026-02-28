@@ -12,6 +12,7 @@
 
 import { DiagnosticSeverity } from 'vscode-languageserver';
 
+import { ObjectKind } from '../../src/parser/ast';
 import {
   severityLabel,
   objectType,
@@ -608,7 +609,7 @@ describe('buildAllRegistries', () => {
     const mockParser = {
       parse: jest.fn().mockReturnValue({
         object: {
-          objectKind: 'Table',
+          objectKind: ObjectKind.Table,
           objectId: 18,
           objectName: 'Customer',
           fields: null,
@@ -639,7 +640,7 @@ describe('buildAllRegistries', () => {
     const mockParser = {
       parse: jest.fn().mockReturnValue({
         object: {
-          objectKind: 'Codeunit',
+          objectKind: ObjectKind.Codeunit,
           objectId: 50000,
           objectName: 'Test',
           fields: null,
@@ -669,7 +670,7 @@ describe('buildAllRegistries', () => {
     const mockParser = {
       parse: jest.fn().mockReturnValue({
         object: {
-          objectKind: 'Table',
+          objectKind: ObjectKind.Table,
           objectId: 18,
           objectName: 'Customer',
           fields: null,
@@ -699,7 +700,7 @@ describe('buildAllRegistries', () => {
     const mockParser = {
       parse: jest.fn().mockReturnValue({
         object: {
-          objectKind: 'Table',
+          objectKind: ObjectKind.Table,
           objectId: 18,
           objectName: 'Customer',
           fields: null,
@@ -725,7 +726,7 @@ describe('buildAllRegistries', () => {
     const mockParser = {
       parse: jest.fn().mockReturnValue({
         object: {
-          objectKind: 'Table',
+          objectKind: ObjectKind.Table,
           objectId: 18,
           objectName: 'Customer',
           fields: null,
@@ -753,7 +754,7 @@ describe('buildAllRegistries', () => {
     const mockParser = {
       parse: jest.fn().mockReturnValue({
         object: {
-          objectKind: 'Table',
+          objectKind: ObjectKind.Table,
           objectId: 18,
           objectName: 'Customer',
           fields: {
@@ -787,7 +788,7 @@ describe('buildAllRegistries', () => {
     const mockParser = {
       parse: jest.fn().mockReturnValue({
         object: {
-          objectKind: 'Table',
+          objectKind: ObjectKind.Table,
           objectId: 18,
           objectName: 'Customer',
           fields: null,
@@ -813,7 +814,7 @@ describe('buildAllRegistries', () => {
     const mockParser = {
       parse: jest.fn().mockReturnValue({
         object: {
-          objectKind: 'Table',
+          objectKind: ObjectKind.Table,
           objectId: 18,
           objectName: 'Customer',
           fields: {
@@ -843,7 +844,7 @@ describe('buildAllRegistries', () => {
     const mockParser = {
       parse: jest.fn().mockReturnValue({
         object: {
-          objectKind: 'Table',
+          objectKind: ObjectKind.Table,
           objectId: 37,
           objectName: 'Sales Line',
           fields: {
@@ -938,7 +939,7 @@ describe('validateAllRealFiles', () => {
       const mockParser = {
         parse: jest.fn().mockReturnValue({
           object: {
-            objectKind: 'Table', // ObjectKind.Table (string enum)
+            objectKind: ObjectKind.Table,
             objectId: 18,
             objectName: 'Customer',
             fields: {
@@ -986,7 +987,7 @@ describe('validateAllRealFiles', () => {
       const mockParser = {
         parse: jest.fn().mockReturnValue({
           object: {
-            objectKind: 'Table', // ObjectKind.Table (string enum)
+            objectKind: ObjectKind.Table,
             objectId: 18,
             objectName: 'Customer',
             fields: null // No fields section
@@ -1033,7 +1034,7 @@ describe('validateAllRealFiles', () => {
       const mockParser = {
         parse: jest.fn().mockReturnValue({
           object: {
-            objectKind: 'Table', // ObjectKind.Table (string enum)
+            objectKind: ObjectKind.Table,
             objectId: 18,
             objectName: 'Customer',
             fields: {
@@ -1083,7 +1084,7 @@ describe('validateAllRealFiles', () => {
       const mockParser = {
         parse: jest.fn().mockReturnValue({
           object: {
-            objectKind: 'Table', // ObjectKind.Table (string enum)
+            objectKind: ObjectKind.Table,
             objectId: 18,
             objectName: 'Test',
             fields: { fields: [] },
@@ -1411,7 +1412,7 @@ describe('validateAllRealFiles', () => {
       const mockParser = {
         parse: jest.fn().mockReturnValue({
           object: {
-            objectKind: 'Codeunit', // ObjectKind.Codeunit (string enum)
+            objectKind: ObjectKind.Codeunit,
             objectId: 50000,
             objectName: 'Test'
           }
