@@ -560,7 +560,8 @@ export class SymbolTable {
   public buildFromAST(
     ast: CALDocument,
     tableRegistry?: ReadonlyMap<number, string>,
-    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>
+    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>,
+    procedureRegistry?: ReadonlyMap<number, ReadonlySet<string>>
   ): void {
     // Create fresh root scope
     this.rootScope = new Scope(null);
@@ -594,6 +595,28 @@ export class SymbolTable {
                 kind: 'field',
                 token: makeSyntheticToken(fieldInfo.originalName, ast.object.startToken),
                 type: fieldInfo.typeName
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Inject SourceTable procedures for pages BEFORE the AST walk
+    if (ast.object.objectKind === ObjectKind.Page && procedureRegistry) {
+      const sourceTableProp = findProperty(ast.object, 'sourcetable');
+      if (sourceTableProp?.value) {
+        const match = sourceTableProp.value.match(/^Table\s*(\d+)$/i);
+        if (match) {
+          const tableId = parseInt(match[1], 10);
+          const tableProcedures = procedureRegistry.get(tableId);
+
+          if (tableProcedures) {
+            for (const procName of tableProcedures) {
+              this.rootScope.addSymbol({
+                name: procName,
+                kind: 'procedure',
+                token: makeSyntheticToken(procName, ast.object.startToken),
               });
             }
           }
