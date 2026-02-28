@@ -2190,6 +2190,83 @@ describe('Page trigger implicit parameters', () => {
     expect(whichViaChain).toBeDefined();
     expect(whichViaChain?.type).toBe('Text');
   });
+
+  it('should inject Text parameter into OnLookup control trigger scope', () => {
+    // control-level trigger in CONTROLS section
+    const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;1   ;Field     ;
+                SourceExpr=SomeField;
+                OnLookup=BEGIN
+                           Text := 'test';
+                         END;
+                          }
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    // Find the trigger scope (child that contains 'Text' parameter, once fix is applied)
+    // With current bug: Text is not injected → getOwnSymbol returns undefined
+    // After fix: Text should be injected as a parameter
+    const triggerScope = rootScope.children[0];
+    const textSymbol = triggerScope.getOwnSymbol('Text');
+    expect(textSymbol).toBeDefined();
+    expect(textSymbol?.kind).toBe('parameter');
+    expect(textSymbol?.type).toBe('Text');
+  });
+
+  it('should inject Text parameter into OnDrillDown control trigger scope', () => {
+    // control-level trigger in CONTROLS section
+    const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;1   ;Field     ;
+                SourceExpr=SomeField;
+                OnDrillDown=BEGIN
+                              Text := 'test';
+                            END;
+                             }
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    const triggerScope = rootScope.children[0];
+    const textSymbol = triggerScope.getOwnSymbol('Text');
+    expect(textSymbol).toBeDefined();
+    expect(textSymbol?.kind).toBe('parameter');
+    expect(textSymbol?.type).toBe('Text');
+  });
+
+  it('should not inject Text into table field OnLookup trigger scope', () => {
+    // Table field OnLookup does NOT have an implicit Text parameter
+    const code = `OBJECT Table 50000 TestTable
+{
+  FIELDS
+  {
+    { 1   ;   ;SomeField ;Text50    ;
+               OnLookup=BEGIN
+                          END; }
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    // The trigger scope should NOT have a Text parameter
+    if (rootScope.children.length > 0) {
+      const triggerScope = rootScope.children[0];
+      expect(triggerScope.getOwnSymbol('Text')).toBeUndefined();
+    }
+  });
 });
 
 describe('XMLport element symbols', () => {

@@ -2139,6 +2139,75 @@ describe('UndefinedIdentifierValidator - Page Trigger Implicit Parameter Validat
     });
   });
 
+  describe('OnLookup control trigger (Text : Text)', () => {
+    it('should not flag Text when used in OnLookup control trigger body', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;1   ;Field     ;
+                SourceExpr=SomeField;
+                OnLookup=BEGIN
+                           IF Text = '' THEN
+                             EXIT;
+                         END;
+                          }
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes("'Text'"))).toHaveLength(0);
+    });
+
+    it('should flag typo Tex (not Text) in OnLookup control trigger', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;1   ;Field     ;
+                SourceExpr=SomeField;
+                OnLookup=BEGIN
+                           IF Tex = '' THEN
+                             EXIT;
+                         END;
+                          }
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      const texError = diagnostics.find(d => d.message.includes("'Tex'"));
+      expect(texError).toBeDefined();
+      expect(texError!.message).toBe("Undefined identifier: 'Tex'");
+    });
+  });
+
+  describe('OnDrillDown control trigger (Text : Text)', () => {
+    it('should not flag Text when used in OnDrillDown control trigger body', () => {
+      const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;1   ;Field     ;
+                SourceExpr=SomeField;
+                OnDrillDown=BEGIN
+                              IF Text = '' THEN
+                                EXIT;
+                            END;
+                             }
+  }
+}`;
+      const diagnostics = validateUndefinedIdentifiers(code);
+      expect(diagnostics.filter(d => d.message.includes("'Text'"))).toHaveLength(0);
+    });
+  });
+
   describe('Cross-cutting scenarios', () => {
     it('should flag Which in wrong object type (Codeunit OnRun)', () => {
       const code = `OBJECT Codeunit 50000 TestCodeunit
