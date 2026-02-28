@@ -600,50 +600,46 @@ export class SymbolTable {
     // Pre-populate implicit variables based on object kind
     this.injectImplicitVariables(ast.object);
 
-    // Inject SourceTable fields for pages BEFORE the AST walk
-    if (ast.object.objectKind === ObjectKind.Page && fieldRegistry) {
+    // Extract shared SourceTable lookup for pages (used by both field and procedure injection)
+    let pageSourceTableId: number | undefined;
+    if (ast.object.objectKind === ObjectKind.Page) {
       const sourceTableProp = findProperty(ast.object, 'sourcetable');
       if (sourceTableProp?.value) {
         // Parse SourceTable property: "Table18" or "Table 18"
         const match = sourceTableProp.value.match(/^Table\s*(\d+)$/i);
         if (match) {
-          const tableId = parseInt(match[1], 10);
-          const tableFields = fieldRegistry.get(tableId);
+          pageSourceTableId = parseInt(match[1], 10);
+        }
+      }
+    }
 
-          if (tableFields) {
-            // Inject each field into root scope with kind='field'
-            // Note: keys are uppercase, use fieldInfo.originalName to preserve casing
-            for (const [_uppercaseKey, fieldInfo] of tableFields) {
-              this.rootScope.addSymbol({
-                name: fieldInfo.originalName,
-                kind: 'field',
-                token: makeSyntheticToken(fieldInfo.originalName, ast.object.startToken),
-                type: fieldInfo.typeName
-              });
-            }
-          }
+    // Inject SourceTable fields for pages BEFORE the AST walk
+    if (pageSourceTableId !== undefined && fieldRegistry) {
+      const tableFields = fieldRegistry.get(pageSourceTableId);
+      if (tableFields) {
+        // Inject each field into root scope with kind='field'
+        // Note: keys are uppercase, use fieldInfo.originalName to preserve casing
+        for (const [_uppercaseKey, fieldInfo] of tableFields) {
+          this.rootScope.addSymbol({
+            name: fieldInfo.originalName,
+            kind: 'field',
+            token: makeSyntheticToken(fieldInfo.originalName, ast.object.startToken),
+            type: fieldInfo.typeName
+          });
         }
       }
     }
 
     // Inject SourceTable procedures for pages BEFORE the AST walk
-    if (ast.object.objectKind === ObjectKind.Page && procedureRegistry) {
-      const sourceTableProp = findProperty(ast.object, 'sourcetable');
-      if (sourceTableProp?.value) {
-        const match = sourceTableProp.value.match(/^Table\s*(\d+)$/i);
-        if (match) {
-          const tableId = parseInt(match[1], 10);
-          const tableProcedures = procedureRegistry.get(tableId);
-
-          if (tableProcedures) {
-            for (const procName of tableProcedures) {
-              this.rootScope.addSymbol({
-                name: procName,
-                kind: 'procedure',
-                token: makeSyntheticToken(procName, ast.object.startToken),
-              });
-            }
-          }
+    if (pageSourceTableId !== undefined && procedureRegistry) {
+      const tableProcedures = procedureRegistry.get(pageSourceTableId);
+      if (tableProcedures) {
+        for (const procName of tableProcedures) {
+          this.rootScope.addSymbol({
+            name: procName,
+            kind: 'procedure',
+            token: makeSyntheticToken(procName, ast.object.startToken),
+          });
         }
       }
     }
