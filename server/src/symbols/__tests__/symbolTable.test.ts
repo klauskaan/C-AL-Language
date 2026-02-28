@@ -1789,6 +1789,42 @@ describe('Implicit System Variables', () => {
     expect(symbolTable.hasSymbol('CurrFieldNo')).toBe(false);
   });
 
+  it('should inject RequestOptionsPage as implicit variable for Report objects', () => {
+    const code = `OBJECT Report 111 "Customer List"
+{
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    expect(symbolTable.hasSymbol('RequestOptionsPage')).toBe(true);
+    expect(symbolTable.getSymbol('RequestOptionsPage')?.kind).toBe('variable');
+    expect(symbolTable.getSymbol('RequestOptionsPage')?.type).toBe('Page');
+  });
+
+  it('should allow RequestOptionsPage to be used in report trigger code', () => {
+    const code = `OBJECT Report 111 "Customer List"
+{
+  PROPERTIES
+  {
+    OnInitReport=BEGIN
+                   RequestOptionsPage.EDITABLE := FALSE;
+                 END;
+  }
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    // RequestOptionsPage should be available as an implicit variable
+    const requestOptionsPage = symbolTable.getSymbol('RequestOptionsPage');
+    expect(requestOptionsPage).toBeDefined();
+    expect(requestOptionsPage?.kind).toBe('variable');
+    expect(requestOptionsPage?.type).toBe('Page');
+  });
+
   it('should pre-populate currXMLport for XMLport objects', () => {
     const code = `OBJECT XMLport 50000 "Test Export"
 {
