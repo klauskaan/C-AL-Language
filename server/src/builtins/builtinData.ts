@@ -641,7 +641,7 @@ export const RECORD_METHODS: BuiltinFunction[] = [
   },
   {
     name: 'RENAME',
-    signature: '(Value1 [, Value2, ...])',
+    signature: '(Value1 [, Value2, ...]): Boolean',
     documentation: 'Renames the record by changing the primary key values.',
     category: 'record'
   },
@@ -912,7 +912,7 @@ export const RECORD_METHODS: BuiltinFunction[] = [
   },
   {
     name: 'CHANGECOMPANY',
-    signature: '(CompanyName)',
+    signature: '(CompanyName): Boolean',
     documentation: 'Changes the company for this record variable.',
     category: 'record'
   },
@@ -969,7 +969,7 @@ export const RECORD_METHODS: BuiltinFunction[] = [
   // BLOB handling
   {
     name: 'CALCFIELDS',
-    signature: '(Field1 [, Field2, ...])',
+    signature: '(Field1 [, Field2, ...]): Boolean',
     documentation: 'Calculates FlowFields and loads BLOB fields.',
     category: 'record'
   },
@@ -1004,7 +1004,7 @@ export const RECORD_METHODS: BuiltinFunction[] = [
   },
   {
     name: 'ADDLINK',
-    signature: '(URL [, Description])',
+    signature: '(URL [, Description]): Integer',
     documentation: 'Adds a link (URL or path) to the record.',
     category: 'record'
   },

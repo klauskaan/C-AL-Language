@@ -719,6 +719,30 @@ describe('Builtins Module', () => {
         expect(method?.signature).toContain('Description');
       });
 
+      it('should have ADDLINK signature that returns Integer', () => {
+        const method = registry.getRecordMethod('ADDLINK');
+        expect(method).toBeDefined();
+        expect(method?.signature).toContain('Integer');
+      });
+
+      it('should have CALCFIELDS signature that returns Boolean', () => {
+        const method = registry.getRecordMethod('CALCFIELDS');
+        expect(method).toBeDefined();
+        expect(method?.signature).toContain('Boolean');
+      });
+
+      it('should have CHANGECOMPANY signature that returns Boolean', () => {
+        const method = registry.getRecordMethod('CHANGECOMPANY');
+        expect(method).toBeDefined();
+        expect(method?.signature).toContain('Boolean');
+      });
+
+      it('should have RENAME record method signature that returns Boolean', () => {
+        const rename = registry.getRecordMethod('RENAME');
+        expect(rename).toBeDefined();
+        expect(rename?.signature).toContain('Boolean');
+      });
+
       it('should have SECURITYFILTERING signature that contains SecurityFilter parameter', () => {
         const method = registry.getRecordMethod('SECURITYFILTERING');
         expect(method).toBeDefined();
