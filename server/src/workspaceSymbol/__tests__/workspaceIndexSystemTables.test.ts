@@ -3,7 +3,7 @@
  *
  * These tests validate:
  * 1. WorkspaceIndex pre-seeds system/virtual table definitions on construction
- * 2. userTablesIndexed flag lifecycle (false on construction, true after indexDirectory, false after clear)
+ * 2. userTablesIndexed flag lifecycle (false on construction, true after markIndexingComplete, false after clear)
  * 3. System table seeding is preserved across clear() calls
  *
  * These tests FAIL before implementation because:
@@ -86,12 +86,12 @@ describe('WorkspaceIndex - userTablesIndexed flag', () => {
     expect(workspaceIndex.userTablesIndexed).toBe(false);
   });
 
-  it('should have userTablesIndexed as true after indexDirectory completes on empty directory', async () => {
+  it('should have userTablesIndexed as false after indexDirectory (markIndexingComplete not called)', async () => {
     await workspaceIndex.indexDirectory(tempDir);
-    expect(workspaceIndex.userTablesIndexed).toBe(true);
+    expect(workspaceIndex.userTablesIndexed).toBe(false);
   });
 
-  it('should have userTablesIndexed as true after indexDirectory completes with files', async () => {
+  it('should have userTablesIndexed as true only after markIndexingComplete is called', async () => {
     const tableFile = path.join(tempDir, 'Table18.cal');
     fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
 {
@@ -102,15 +102,24 @@ describe('WorkspaceIndex - userTablesIndexed flag', () => {
 }`);
 
     await workspaceIndex.indexDirectory(tempDir);
+    expect(workspaceIndex.userTablesIndexed).toBe(false);
+
+    workspaceIndex.markIndexingComplete();
     expect(workspaceIndex.userTablesIndexed).toBe(true);
   });
 
   it('should have userTablesIndexed as false after clear() is called', async () => {
     await workspaceIndex.indexDirectory(tempDir);
+    workspaceIndex.markIndexingComplete();
     expect(workspaceIndex.userTablesIndexed).toBe(true);
 
     workspaceIndex.clear();
     expect(workspaceIndex.userTablesIndexed).toBe(false);
+  });
+
+  it('should have userTablesIndexed as true after markIndexingComplete without indexDirectory', () => {
+    workspaceIndex.markIndexingComplete();
+    expect(workspaceIndex.userTablesIndexed).toBe(true);
   });
 
   it('should re-seed system tables after clear() so Integer table is still present', () => {

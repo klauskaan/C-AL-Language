@@ -210,6 +210,7 @@ async function indexWorkspace(): Promise<void> {
     }
   }
 
+  workspaceIndex.markIndexingComplete();
   connection.console.log(`Workspace indexing complete: ${workspaceIndex.fileCount} files, ${workspaceIndex.symbolCount} symbols`);
 }
 

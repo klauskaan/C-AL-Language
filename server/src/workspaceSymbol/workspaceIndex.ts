@@ -327,6 +327,16 @@ export class WorkspaceIndex {
   }
 
   /**
+   * Signal that all workspace folders have been indexed.
+   * Call this once after all indexDirectory() calls complete.
+   * Kept separate from indexDirectory() so the flag is not set prematurely
+   * when multiple workspace folders are indexed in a loop.
+   */
+  markIndexingComplete(): void {
+    this._userTablesIndexed = true;
+  }
+
+  /**
    * Index all .cal files (and optionally .txt files) in a directory (recursively)
    *
    * @param directory - Root directory to index
@@ -373,7 +383,6 @@ export class WorkspaceIndex {
         continue;
       }
     }
-    this._userTablesIndexed = true;
   }
 
   /**
