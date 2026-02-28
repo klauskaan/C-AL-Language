@@ -615,7 +615,7 @@ export class SymbolTable {
     }
 
     // Inject SourceTable fields for pages BEFORE the AST walk
-    if (pageSourceTableId !== undefined && fieldRegistry) {
+    if (pageSourceTableId !== undefined && pageSourceTableId > 0 && fieldRegistry) {
       const tableFields = fieldRegistry.get(pageSourceTableId);
       if (tableFields) {
         // Inject each field into root scope with kind='field'
@@ -632,7 +632,7 @@ export class SymbolTable {
     }
 
     // Inject SourceTable procedures for pages BEFORE the AST walk
-    if (pageSourceTableId !== undefined && procedureRegistry) {
+    if (pageSourceTableId !== undefined && pageSourceTableId > 0 && procedureRegistry) {
       const tableProcedures = procedureRegistry.get(pageSourceTableId);
       if (tableProcedures) {
         for (const [_uppercaseKey, originalName] of tableProcedures) {
