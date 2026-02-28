@@ -45,7 +45,7 @@ export class WorkspaceIndex {
   private tableRegistry = new Map<number, string>();
   private tableOwner = new Map<number, string>();
   private fileTableContributions = new Map<string, number>();
-  private tableFieldRegistry = new Map<number, Map<string, FieldInfo>>();
+  private tableFieldRegistry = new Map<number, ReadonlyMap<string, FieldInfo>>();
   private fieldOwner = new Map<number, string>();
   private fileFieldContributions = new Map<string, number>();
   private tableProcedureRegistry = new Map<number, Map<string, string>>();
@@ -70,7 +70,7 @@ export class WorkspaceIndex {
       this.tableRegistry.set(id, name);
     }
     for (const [id, fields] of SYSTEM_TABLE_FIELDS) {
-      this.tableFieldRegistry.set(id, fields as Map<string, FieldInfo>);
+      this.tableFieldRegistry.set(id, fields);
     }
   }
 
