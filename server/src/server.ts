@@ -739,7 +739,7 @@ function parseDocument(document: TextDocument): ParsedDocument {
 
   // Build symbol table
   const symbolTable = new SymbolTable();
-  symbolTable.buildFromAST(ast, workspaceIndex.getTableRegistry(), workspaceIndex.getFieldRegistry());
+  symbolTable.buildFromAST(ast, workspaceIndex.getTableRegistry(), workspaceIndex.getFieldRegistry(), workspaceIndex.getProcedureRegistry());
 
   // Cache result including errors
   const result: ParsedDocument = { ast, lexer, symbolTable, errors };
