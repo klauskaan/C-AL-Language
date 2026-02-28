@@ -1955,3 +1955,33 @@ describe('Parser - Multi-line Expressions', () => {
     });
   });
 });
+
+describe('BigInteger L-suffix literal parsing', () => {
+  it('should parse BigInteger literal 10000L as numeric value 10000', () => {
+    const code = `OBJECT Codeunit 1 Test
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      x@1 : BigInteger;
+    BEGIN
+      x := 10000L;
+    END;
+  }
+}`;
+    const { ast, errors } = parseCode(code);
+    expect(errors).toHaveLength(0);
+
+    // Navigate to the assignment statement's right-hand side literal
+    const proc = ast.object?.code?.procedures[0];
+    expect(proc).toBeDefined();
+    const stmt = proc!.body[0] as any;
+    expect(stmt).toBeDefined();
+    const literal = stmt.value as any;
+    expect(literal.type).toBe('Literal');
+    expect(literal.literalType).toBe('integer');
+    // Core assertion: value must be numeric 10000, not NaN or a string
+    expect(literal.value).toBe(10000);
+  });
+});
