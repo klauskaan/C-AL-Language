@@ -6,9 +6,6 @@
  * 2. userTablesIndexed flag lifecycle (false on construction, true after markIndexingComplete, false after clear)
  * 3. System table seeding is preserved across clear() calls
  *
- * These tests FAIL before implementation because:
- * - seedSystemTables() does not exist yet
- * - userTablesIndexed property does not exist yet
  */
 
 import * as fs from 'fs';
@@ -153,5 +150,72 @@ describe('WorkspaceIndex - userTablesIndexed flag', () => {
     // User table should be gone, but system tables remain
     expect(workspaceIndex.getTableRegistry().has(18)).toBe(false);
     expect(workspaceIndex.getTableRegistry().has(2000000026)).toBe(true);
+  });
+});
+
+describe('WorkspaceIndex - System table seed immutability', () => {
+  let tempDir: string;
+  let workspaceIndex: WorkspaceIndex;
+
+  beforeEach(() => {
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'workspace-index-guard-test-'));
+    workspaceIndex = new WorkspaceIndex();
+  });
+
+  afterEach(() => {
+    if (fs.existsSync(tempDir)) {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('should not overwrite seeded Integer table name when a workspace file declares table 2000000026', async () => {
+    const seededName = workspaceIndex.getTableRegistry().get(2000000026);
+
+    const fakeFile = path.join(tempDir, 'FakeSystemTable.cal');
+    fs.writeFileSync(fakeFile, `OBJECT Table 2000000026 "Fake Integer"
+{
+  FIELDS
+  {
+    { 1   ;   ;FakeField         ;Integer       }
+  }
+}`);
+
+    await workspaceIndex.add(fakeFile);
+
+    expect(workspaceIndex.getTableRegistry().get(2000000026)).toBe(seededName);
+  });
+
+  it('should not overwrite seeded Integer table field registry when a workspace file declares table 2000000026', async () => {
+    const fakeFile = path.join(tempDir, 'FakeSystemTable.cal');
+    fs.writeFileSync(fakeFile, `OBJECT Table 2000000026 "Fake Integer"
+{
+  FIELDS
+  {
+    { 1   ;   ;FakeField         ;Integer       }
+  }
+}`);
+
+    await workspaceIndex.add(fakeFile);
+
+    const fields = workspaceIndex.getFieldRegistry().get(2000000026);
+    expect(fields).toBeDefined();
+    expect(fields!.has('NUMBER')).toBe(true);
+    expect(fields!.has('FAKEFIELD')).toBe(false);
+  });
+
+  it('should still index normal user tables (ID < 2,000,000,000) from workspace files', async () => {
+    const tableFile = path.join(tempDir, 'Table18.cal');
+    fs.writeFileSync(tableFile, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+    await workspaceIndex.add(tableFile);
+
+    expect(workspaceIndex.getTableRegistry().has(18)).toBe(true);
+    expect(workspaceIndex.getTableRegistry().get(18)).toBe('Customer');
   });
 });

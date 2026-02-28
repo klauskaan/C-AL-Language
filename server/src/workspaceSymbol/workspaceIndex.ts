@@ -95,8 +95,8 @@ export class WorkspaceIndex {
       this.fileTableContributions.delete(filePath);
     }
 
-    // Add new table contribution
-    if (tableInfo) {
+    // Add new table contribution (skip system table ID range — reserved for seeded entries)
+    if (tableInfo && tableInfo.id < 2_000_000_000) {
       this.tableRegistry.set(tableInfo.id, tableInfo.name);
       this.tableOwner.set(tableInfo.id, filePath);
       this.fileTableContributions.set(filePath, tableInfo.id);
@@ -112,8 +112,8 @@ export class WorkspaceIndex {
       this.fileFieldContributions.delete(filePath);
     }
 
-    // Add new field contribution
-    if (fieldInfo) {
+    // Add new field contribution (skip system table ID range — reserved for seeded entries)
+    if (fieldInfo && fieldInfo.id < 2_000_000_000) {
       this.tableFieldRegistry.set(fieldInfo.id, fieldInfo.fields);
       this.fieldOwner.set(fieldInfo.id, filePath);
       this.fileFieldContributions.set(filePath, fieldInfo.id);
