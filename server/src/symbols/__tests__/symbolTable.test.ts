@@ -1728,6 +1728,8 @@ describe('Implicit System Variables', () => {
     expect(symbolTable.hasSymbol('xRec')).toBe(true);
     expect(symbolTable.getSymbol('xRec')?.kind).toBe('variable');
     expect(symbolTable.getSymbol('xRec')?.type).toBe('Record 18');
+    // RequestOptionsPage is Report-specific, not available for Tables
+    expect(symbolTable.hasSymbol('RequestOptionsPage')).toBe(false);
   });
 
   it('should inject CurrFieldNo as implicit variable for Table objects', () => {
@@ -1767,6 +1769,8 @@ describe('Implicit System Variables', () => {
 
     // CurrFieldNo is Table-specific, not available for Pages
     expect(symbolTable.hasSymbol('CurrFieldNo')).toBe(false);
+    // RequestOptionsPage is Report-specific, not available for Pages
+    expect(symbolTable.hasSymbol('RequestOptionsPage')).toBe(false);
   });
 
   it('should pre-populate Rec and CurrReport for Report objects', () => {
@@ -1836,6 +1840,8 @@ describe('Implicit System Variables', () => {
 
     // CurrFieldNo is Table-specific, not available for XMLports
     expect(symbolTable.hasSymbol('CurrFieldNo')).toBe(false);
+    // RequestOptionsPage is Report-specific, not available for XMLports
+    expect(symbolTable.hasSymbol('RequestOptionsPage')).toBe(false);
 
     expect(symbolTable.hasSymbol('currXMLport')).toBe(true);
     expect(symbolTable.getSymbol('currXMLport')?.kind).toBe('variable');
