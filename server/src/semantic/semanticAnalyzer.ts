@@ -37,8 +37,8 @@ export interface AnalyzeOptions {
   /** Field registry mapping table numbers to field info (optional, used for member property validation) */
   fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>;
 
-  /** Procedure registry mapping table numbers to procedure name sets (optional, used for member property validation) */
-  procedureRegistry?: ReadonlyMap<number, ReadonlySet<string>>;
+  /** Procedure registry mapping table numbers to procedure name maps (uppercaseName → originalName) (optional, used for member property validation) */
+  procedureRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>;
 }
 
 export class SemanticAnalyzer {

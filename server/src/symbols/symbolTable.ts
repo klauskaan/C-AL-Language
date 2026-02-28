@@ -588,7 +588,7 @@ export class SymbolTable {
     ast: CALDocument,
     tableRegistry?: ReadonlyMap<number, string>,
     fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>,
-    procedureRegistry?: ReadonlyMap<number, ReadonlySet<string>>
+    procedureRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>
   ): void {
     // Create fresh root scope
     this.rootScope = new Scope(null);
@@ -634,11 +634,11 @@ export class SymbolTable {
     if (pageSourceTableId !== undefined && procedureRegistry) {
       const tableProcedures = procedureRegistry.get(pageSourceTableId);
       if (tableProcedures) {
-        for (const procName of tableProcedures) {
+        for (const [_uppercaseKey, originalName] of tableProcedures) {
           this.rootScope.addSymbol({
-            name: procName,
+            name: originalName,
             kind: 'procedure',
-            token: makeSyntheticToken(procName, ast.object.startToken),
+            token: makeSyntheticToken(originalName, ast.object.startToken),
           });
         }
       }

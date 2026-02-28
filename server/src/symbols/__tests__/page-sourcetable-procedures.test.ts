@@ -4,6 +4,10 @@
  * Tests for Issue #611: Pages with SourceTable property should have all procedures
  * from that table available as symbols in the page's root scope.
  *
+ * Tests for Issue #617: symbol.name should preserve original casing (e.g. 'CalcFields',
+ * not 'CALCFIELDS') when procedures are injected from a Map<string, string> registry
+ * where keys are uppercase and values are original-cased names.
+ *
  * These tests verify that:
  * - Procedures from SourceTable are injected into root scope with kind='procedure'
  * - Procedure lookup is case-insensitive
@@ -11,6 +15,7 @@
  * - Non-page objects don't get procedure injection
  * - Graceful handling of missing/empty procedure registry
  * - Field injection and procedure injection coexist correctly
+ * - symbol.name preserves original casing from the registry (Issue #617)
  */
 
 import { Lexer } from '../../lexer/lexer';
@@ -30,12 +35,14 @@ function parseCode(code: string): CALDocument {
 }
 
 /**
- * Helper to build symbol table with optional field registry and procedure registry
+ * Helper to build symbol table with optional field registry and procedure registry.
+ * The procedure registry uses Map<string, string> per table where key=UPPERCASE and
+ * value=original-cased name (e.g. 'CALCFIELDS' -> 'CalcFields').
  */
 function buildSymbolTableWithProcedureRegistry(
   code: string,
   fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>,
-  procedureRegistry?: ReadonlyMap<number, ReadonlySet<string>>
+  procedureRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>
 ): SymbolTable {
   const ast = parseCode(code);
   const symbolTable = new SymbolTable();
@@ -65,8 +72,8 @@ describe('Page SourceTable Procedure Injection', () => {
   }
 }`;
 
-      const procedureRegistry = new Map<number, Set<string>>();
-      procedureRegistry.set(18, new Set(['CalcFields', 'INIT', 'GET']));
+      const procedureRegistry = new Map<number, Map<string, string>>();
+      procedureRegistry.set(18, new Map([['CALCFIELDS', 'CalcFields'], ['INIT', 'INIT'], ['GET', 'GET']]));
 
       const symbolTable = buildSymbolTableWithProcedureRegistry(code, undefined, procedureRegistry);
       const rootScope = symbolTable.getRootScope();
@@ -93,8 +100,8 @@ describe('Page SourceTable Procedure Injection', () => {
   }
 }`;
 
-      const procedureRegistry = new Map<number, Set<string>>();
-      procedureRegistry.set(18, new Set(['CalcFields', 'INIT']));
+      const procedureRegistry = new Map<number, Map<string, string>>();
+      procedureRegistry.set(18, new Map([['CALCFIELDS', 'CalcFields'], ['INIT', 'INIT']]));
 
       const symbolTable = buildSymbolTableWithProcedureRegistry(code, undefined, procedureRegistry);
       const rootScope = symbolTable.getRootScope();
@@ -117,16 +124,16 @@ describe('Page SourceTable Procedure Injection', () => {
   }
 }`;
 
-      const procedureRegistry = new Map<number, Set<string>>();
-      procedureRegistry.set(18, new Set([
-        'CalcFields',
-        'INIT',
-        'GET',
-        'VALIDATE',
-        'MODIFY',
-        'INSERT',
-        'DELETE',
-        'FIND'
+      const procedureRegistry = new Map<number, Map<string, string>>();
+      procedureRegistry.set(18, new Map([
+        ['CALCFIELDS', 'CalcFields'],
+        ['INIT', 'INIT'],
+        ['GET', 'GET'],
+        ['VALIDATE', 'VALIDATE'],
+        ['MODIFY', 'MODIFY'],
+        ['INSERT', 'INSERT'],
+        ['DELETE', 'DELETE'],
+        ['FIND', 'FIND']
       ]));
 
       const symbolTable = buildSymbolTableWithProcedureRegistry(code, undefined, procedureRegistry);
@@ -164,8 +171,8 @@ describe('Page SourceTable Procedure Injection', () => {
   }
 }`;
 
-      const procedureRegistry = new Map<number, Set<string>>();
-      procedureRegistry.set(18, new Set(['CalcFields', 'INIT']));
+      const procedureRegistry = new Map<number, Map<string, string>>();
+      procedureRegistry.set(18, new Map([['CALCFIELDS', 'CalcFields'], ['INIT', 'INIT']]));
 
       const symbolTable = buildSymbolTableWithProcedureRegistry(code, undefined, procedureRegistry);
       const rootScope = symbolTable.getRootScope();
@@ -184,8 +191,8 @@ describe('Page SourceTable Procedure Injection', () => {
 }`;
 
       // Procedure registry exists but only contains table 27, not 18
-      const procedureRegistry = new Map<number, Set<string>>();
-      procedureRegistry.set(27, new Set(['CalcFields', 'INIT']));
+      const procedureRegistry = new Map<number, Map<string, string>>();
+      procedureRegistry.set(27, new Map([['CALCFIELDS', 'CalcFields'], ['INIT', 'INIT']]));
 
       // Should not crash - graceful degradation
       const symbolTable = buildSymbolTableWithProcedureRegistry(code, undefined, procedureRegistry);
@@ -204,8 +211,8 @@ describe('Page SourceTable Procedure Injection', () => {
   }
 }`;
 
-      const procedureRegistry = new Map<number, Set<string>>();
-      procedureRegistry.set(18, new Set<string>());
+      const procedureRegistry = new Map<number, Map<string, string>>();
+      procedureRegistry.set(18, new Map<string, string>());
 
       const symbolTable = buildSymbolTableWithProcedureRegistry(code, undefined, procedureRegistry);
       const rootScope = symbolTable.getRootScope();
@@ -244,8 +251,8 @@ describe('Page SourceTable Procedure Injection', () => {
   }
 }`;
 
-      const procedureRegistry = new Map<number, Set<string>>();
-      procedureRegistry.set(18, new Set(['CalcFields', 'INIT']));
+      const procedureRegistry = new Map<number, Map<string, string>>();
+      procedureRegistry.set(18, new Map([['CALCFIELDS', 'CalcFields'], ['INIT', 'INIT']]));
 
       const symbolTable = buildSymbolTableWithProcedureRegistry(code, undefined, procedureRegistry);
       const rootScope = symbolTable.getRootScope();
@@ -263,8 +270,8 @@ describe('Page SourceTable Procedure Injection', () => {
   }
 }`;
 
-      const procedureRegistry = new Map<number, Set<string>>();
-      procedureRegistry.set(18, new Set(['CalcFields', 'INIT']));
+      const procedureRegistry = new Map<number, Map<string, string>>();
+      procedureRegistry.set(18, new Map([['CALCFIELDS', 'CalcFields'], ['INIT', 'INIT']]));
 
       const symbolTable = buildSymbolTableWithProcedureRegistry(code, undefined, procedureRegistry);
       const rootScope = symbolTable.getRootScope();
@@ -297,8 +304,8 @@ describe('Page SourceTable Procedure Injection', () => {
       customerFields.set('NAME', { originalName: 'Name', typeName: 'Text50' });
       fieldRegistry.set(18, customerFields);
 
-      const procedureRegistry = new Map<number, Set<string>>();
-      procedureRegistry.set(18, new Set(['CalcFields', 'INIT']));
+      const procedureRegistry = new Map<number, Map<string, string>>();
+      procedureRegistry.set(18, new Map([['CALCFIELDS', 'CalcFields'], ['INIT', 'INIT']]));
 
       const symbolTable = buildSymbolTableWithProcedureRegistry(code, fieldRegistry, procedureRegistry);
       const rootScope = symbolTable.getRootScope();
@@ -322,6 +329,157 @@ describe('Page SourceTable Procedure Injection', () => {
       const procedureSymbols = rootScope.getOwnSymbols().filter(s => s.kind === 'procedure');
       expect(fieldSymbols.length).toBeGreaterThanOrEqual(2);
       expect(procedureSymbols.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+});
+
+describe('Page SourceTable Procedure Injection - Original Casing Preservation (Issue #617)', () => {
+  describe('symbol.name preserves original casing from procedure map', () => {
+    it('should store CalcFields with original mixed-case name, not uppercase CALCFIELDS', () => {
+      const code = `OBJECT Page 21 "Customer Card"
+{
+  PROPERTIES
+  {
+    SourceTable=Table18;
+  }
+}`;
+
+      const procedureMap = new Map<number, Map<string, string>>();
+      procedureMap.set(18, new Map([
+        ['CALCFIELDS', 'CalcFields'],
+        ['INIT', 'Init'],
+        ['GET', 'Get']
+      ]));
+
+      const symbolTable = buildSymbolTableWithProcedureRegistry(code, undefined, procedureMap);
+      const rootScope = symbolTable.getRootScope();
+
+      const calcFieldsSymbol = rootScope.getOwnSymbol('CalcFields');
+      expect(calcFieldsSymbol).toBeDefined();
+      expect(calcFieldsSymbol!.name).toBe('CalcFields');
+
+      const initSymbol = rootScope.getOwnSymbol('Init');
+      expect(initSymbol).toBeDefined();
+      expect(initSymbol!.name).toBe('Init');
+
+      const getSymbol = rootScope.getOwnSymbol('Get');
+      expect(getSymbol).toBeDefined();
+      expect(getSymbol!.name).toBe('Get');
+    });
+
+    it('should not store procedure name in uppercase when original casing is mixed', () => {
+      const code = `OBJECT Page 21 "Customer Card"
+{
+  PROPERTIES
+  {
+    SourceTable=Table18;
+  }
+}`;
+
+      const procedureMap = new Map<number, Map<string, string>>();
+      procedureMap.set(18, new Map([
+        ['CALCFIELDS', 'CalcFields']
+      ]));
+
+      const symbolTable = buildSymbolTableWithProcedureRegistry(code, undefined, procedureMap);
+      const rootScope = symbolTable.getRootScope();
+
+      const symbol = rootScope.getOwnSymbol('calcfields');
+      expect(symbol).toBeDefined();
+      expect(symbol!.name).not.toBe('CALCFIELDS');
+      expect(symbol!.name).toBe('CalcFields');
+    });
+
+    it('should preserve original casing for all procedures in the map', () => {
+      const code = `OBJECT Page 21 "Customer Card"
+{
+  PROPERTIES
+  {
+    SourceTable=Table18;
+  }
+}`;
+
+      const procedureMap = new Map<number, Map<string, string>>();
+      procedureMap.set(18, new Map([
+        ['CALCFIELDS',  'CalcFields'],
+        ['INIT',        'Init'],
+        ['GET',         'Get'],
+        ['VALIDATE',    'Validate'],
+        ['MODIFY',      'Modify'],
+        ['INSERT',      'Insert'],
+        ['DELETE',      'Delete'],
+        ['FIND',        'Find']
+      ]));
+
+      const symbolTable = buildSymbolTableWithProcedureRegistry(code, undefined, procedureMap);
+      const rootScope = symbolTable.getRootScope();
+
+      const expected = ['CalcFields', 'Init', 'Get', 'Validate', 'Modify', 'Insert', 'Delete', 'Find'];
+      for (const name of expected) {
+        const sym = rootScope.getOwnSymbol(name);
+        expect(sym).toBeDefined();
+        expect(sym!.name).toBe(name);
+      }
+    });
+  });
+
+  describe('case-insensitive lookup still works after original casing is preserved', () => {
+    it('should find CalcFields via hasSymbol regardless of input casing', () => {
+      const code = `OBJECT Page 21 "Customer Card"
+{
+  PROPERTIES
+  {
+    SourceTable=Table18;
+  }
+}`;
+
+      const procedureMap = new Map<number, Map<string, string>>();
+      procedureMap.set(18, new Map([
+        ['CALCFIELDS', 'CalcFields'],
+        ['INIT', 'Init']
+      ]));
+
+      const symbolTable = buildSymbolTableWithProcedureRegistry(code, undefined, procedureMap);
+      const rootScope = symbolTable.getRootScope();
+
+      expect(rootScope.hasSymbol('calcfields')).toBe(true);
+      expect(rootScope.hasSymbol('CALCFIELDS')).toBe(true);
+      expect(rootScope.hasSymbol('CalcFields')).toBe(true);
+      expect(rootScope.hasSymbol('CalcFIELDS')).toBe(true);
+
+      expect(rootScope.hasSymbol('init')).toBe(true);
+      expect(rootScope.hasSymbol('INIT')).toBe(true);
+      expect(rootScope.hasSymbol('Init')).toBe(true);
+    });
+
+    it('should return original-cased name regardless of which casing was used to look it up', () => {
+      const code = `OBJECT Page 21 "Customer Card"
+{
+  PROPERTIES
+  {
+    SourceTable=Table18;
+  }
+}`;
+
+      const procedureMap = new Map<number, Map<string, string>>();
+      procedureMap.set(18, new Map([
+        ['CALCFIELDS', 'CalcFields']
+      ]));
+
+      const symbolTable = buildSymbolTableWithProcedureRegistry(code, undefined, procedureMap);
+      const rootScope = symbolTable.getRootScope();
+
+      const viaLower = rootScope.getOwnSymbol('calcfields');
+      expect(viaLower).toBeDefined();
+      expect(viaLower!.name).toBe('CalcFields');
+
+      const viaUpper = rootScope.getOwnSymbol('CALCFIELDS');
+      expect(viaUpper).toBeDefined();
+      expect(viaUpper!.name).toBe('CalcFields');
+
+      const viaMixed = rootScope.getOwnSymbol('CalcFields');
+      expect(viaMixed).toBeDefined();
+      expect(viaMixed!.name).toBe('CalcFields');
     });
   });
 });
