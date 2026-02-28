@@ -18,8 +18,8 @@ import { BuiltinRegistry } from '../builtinRegistry';
 
 describe('Builtins Module', () => {
   describe('Data Integrity - BUILTIN_FUNCTIONS', () => {
-    it('should have exactly 107 global function entries', () => {
-      expect(BUILTIN_FUNCTIONS).toHaveLength(107);
+    it('should have exactly 135 global function entries', () => {
+      expect(BUILTIN_FUNCTIONS).toHaveLength(135);
     });
 
     it('should have all required fields for each entry', () => {
@@ -412,8 +412,8 @@ describe('Builtins Module', () => {
       registry = new BuiltinRegistry();
     });
 
-    it('should have exactly 18 system type keyword entries', () => {
-      expect(SYSTEM_TYPE_KEYWORDS.size).toBe(18);
+    it('should have exactly 20 system type keyword entries', () => {
+      expect(SYSTEM_TYPE_KEYWORDS.size).toBe(20);
     });
 
     it('should recognize DATABASE as a known builtin', () => {
@@ -904,18 +904,122 @@ describe('Builtins Module', () => {
     });
 
     describe('Count validation', () => {
-      it('BUILTIN_FUNCTIONS should have 107 entries after additions', () => {
-        expect(BUILTIN_FUNCTIONS).toHaveLength(107);
+      it('BUILTIN_FUNCTIONS should have 135 entries after additions', () => {
+        expect(BUILTIN_FUNCTIONS).toHaveLength(135);
       });
 
-      it('SYSTEM_TYPE_KEYWORDS should have 18 entries after additions', () => {
-        expect(SYSTEM_TYPE_KEYWORDS.size).toBe(18);
+      it('SYSTEM_TYPE_KEYWORDS should have 20 entries after additions', () => {
+        expect(SYSTEM_TYPE_KEYWORDS.size).toBe(20);
       });
 
       it('should have no duplicate names in BUILTIN_FUNCTIONS', () => {
         const names = BUILTIN_FUNCTIONS.map((fn) => fn.name.toUpperCase());
         const uniqueNames = new Set(names);
         expect(uniqueNames.size).toBe(names.length);
+      });
+    });
+  });
+
+  describe('Issue #623 - Missing Builtins', () => {
+    let registry: BuiltinRegistry;
+
+    beforeEach(() => {
+      registry = new BuiltinRegistry();
+    });
+
+    describe('New global system functions', () => {
+      const newSystemFunctions = [
+        'GETDOTNETTYPE',
+        'CREATE',
+        'ISCLEAR',
+        'CANLOADTYPE',
+        'ENCRYPTIONENABLED',
+        'CREATEENCRYPTIONKEY',
+        'DELETEENCRYPTIONKEY',
+        'APPLICATIONPATH',
+        'SERVICEINSTANCEID',
+        'ENVIRON',
+        'TENANTID',
+        'STARTSESSION',
+        'ISSESSIONACTIVE',
+        'SID',
+        'APPLICATIONIDENTIFIER',
+        'CODECOVERAGELOG',
+        'CODECOVERAGEREFRESH',
+        'CODECOVERAGELOAD',
+        'CODECOVERAGEINCLUDE',
+        'CAPTIONCLASSTRANSLATE',
+        'CHANGEUSERPASSWORD',
+        'SETUSERPASSWORD',
+        'IMPORTDATA',
+        'EXPORTDATA',
+        'DATAFILEINFORMATION',
+        'VARIANT2DATE',
+      ];
+
+      newSystemFunctions.forEach((name) => {
+        it(`should recognize ${name} as a global function with system category`, () => {
+          expect(registry.isGlobalFunction(name)).toBe(true);
+          const fn = registry.getGlobalFunction(name);
+          expect(fn).toBeDefined();
+          expect(fn?.category).toBe('system');
+        });
+      });
+    });
+
+    describe('STRCHECKSUM category', () => {
+      it('should recognize STRCHECKSUM as a global function with string category', () => {
+        expect(registry.isGlobalFunction('STRCHECKSUM')).toBe(true);
+        const fn = registry.getGlobalFunction('STRCHECKSUM');
+        expect(fn).toBeDefined();
+        expect(fn?.category).toBe('string');
+      });
+    });
+
+    describe('COMPANYPROPERTY system object namespace', () => {
+      it('should recognize COMPANYPROPERTY as a global function with system category', () => {
+        expect(registry.isGlobalFunction('COMPANYPROPERTY')).toBe(true);
+        const fn = registry.getGlobalFunction('COMPANYPROPERTY');
+        expect(fn).toBeDefined();
+        expect(fn?.category).toBe('system');
+      });
+
+      it('should have COMPANYPROPERTY with empty signature (system object namespace)', () => {
+        const fn = registry.getGlobalFunction('COMPANYPROPERTY');
+        expect(fn).toBeDefined();
+        expect(fn?.signature).toBe('');
+      });
+    });
+
+    describe('New system type keywords', () => {
+      it('should recognize DATASCOPE as a system type keyword', () => {
+        expect(registry.isSystemTypeKeyword('DATASCOPE')).toBe(true);
+        expect(registry.isKnownBuiltin('DATASCOPE')).toBe(true);
+      });
+
+      it('should recognize DATASCOPE case-insensitively', () => {
+        expect(registry.isSystemTypeKeyword('datascope')).toBe(true);
+        expect(registry.isKnownBuiltin('datascope')).toBe(true);
+      });
+
+      it('should recognize DEFAULTLAYOUT as a system type keyword', () => {
+        expect(registry.isSystemTypeKeyword('DEFAULTLAYOUT')).toBe(true);
+        expect(registry.isKnownBuiltin('DEFAULTLAYOUT')).toBe(true);
+      });
+
+      it('should recognize DEFAULTLAYOUT case-insensitively', () => {
+        expect(registry.isSystemTypeKeyword('defaultlayout')).toBe(true);
+        expect(registry.isKnownBuiltin('defaultlayout')).toBe(true);
+      });
+    });
+
+    describe('Count validation', () => {
+      it('BUILTIN_FUNCTIONS.length should equal 135 after issue #623 additions', () => {
+        expect(BUILTIN_FUNCTIONS.length).toBe(135);
+      });
+
+      it('SYSTEM_TYPE_KEYWORDS.size should equal 20 after issue #623 additions', () => {
+        expect(SYSTEM_TYPE_KEYWORDS.size).toBe(20);
       });
     });
   });
