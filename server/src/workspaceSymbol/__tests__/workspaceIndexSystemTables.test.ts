@@ -218,4 +218,46 @@ describe('WorkspaceIndex - System table seed immutability', () => {
     expect(workspaceIndex.getTableRegistry().has(18)).toBe(true);
     expect(workspaceIndex.getTableRegistry().get(18)).toBe('Customer');
   });
+
+  it('should leave seeded registries unchanged when add() is called twice on a system-table-ID file', async () => {
+    const seededName = workspaceIndex.getTableRegistry().get(2000000026);
+    const seededFields = workspaceIndex.getFieldRegistry().get(2000000026);
+
+    const fakeFile = path.join(tempDir, 'FakeSystemTable.cal');
+    fs.writeFileSync(fakeFile, `OBJECT Table 2000000026 "Fake Integer"
+{
+  FIELDS
+  {
+    { 1   ;   ;FakeField         ;Integer       }
+  }
+}`);
+
+    await workspaceIndex.add(fakeFile);
+    await workspaceIndex.add(fakeFile);
+
+    expect(workspaceIndex.getTableRegistry().get(2000000026)).toBe(seededName);
+    const fields = workspaceIndex.getFieldRegistry().get(2000000026);
+    expect(fields).toBe(seededFields);
+    expect(fields!.has('NUMBER')).toBe(true);
+    expect(fields!.has('FAKEFIELD')).toBe(false);
+  });
+
+  it('should not delete seeded registry entries when remove() is called on a system-table-ID file', async () => {
+    const fakeFile = path.join(tempDir, 'FakeSystemTable.cal');
+    fs.writeFileSync(fakeFile, `OBJECT Table 2000000026 "Fake Integer"
+{
+  FIELDS
+  {
+    { 1   ;   ;FakeField         ;Integer       }
+  }
+}`);
+
+    await workspaceIndex.add(fakeFile);
+    workspaceIndex.remove(fakeFile);
+
+    expect(workspaceIndex.getTableRegistry().get(2000000026)).toBeDefined();
+    const fields = workspaceIndex.getFieldRegistry().get(2000000026);
+    expect(fields).toBeDefined();
+    expect(fields!.has('NUMBER')).toBe(true);
+  });
 });
