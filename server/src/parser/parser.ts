@@ -4879,7 +4879,7 @@ export class Parser {
       this.advance();
       return {
         type: 'Literal',
-        value: parseFloat(token.value),
+        value: parseFloat(this.stripNumericSuffix(token.value)),
         literalType: 'decimal',
         startToken: token,
         endToken: token
