@@ -870,6 +870,70 @@ describe('buildAllRegistries', () => {
     expect(result.procedureRegistry.get(37)).toEqual(new Map([['INITRECORD', 'InitRecord']]));
     expect(readFileWithEncoding).toHaveBeenCalledTimes(1);
   });
+
+  it('should populate fieldRegistry and procedureRegistry but NOT tableRegistry when objectName is empty string', () => {
+    (readFileWithEncoding as unknown as jest.Mock).mockReturnValue({
+      content: 'OBJECT Table 99 \n{}\n'
+    });
+
+    const mockLexer = { tokenize: jest.fn().mockReturnValue([]) };
+    (Lexer as unknown as jest.Mock).mockImplementation(() => mockLexer);
+
+    const mockParser = {
+      parse: jest.fn().mockReturnValue({
+        object: {
+          objectKind: 'Table',
+          objectId: 99,
+          objectName: '',
+          fields: {
+            fields: [{ fieldName: 'Amount', dataType: { typeName: 'Decimal' } }]
+          },
+          code: {
+            procedures: [{ name: 'TestProc' }]
+          }
+        }
+      })
+    };
+    (Parser as unknown as jest.Mock).mockImplementation(() => mockParser);
+
+    const result = buildAllRegistries('/some/dir', ['table.txt']);
+
+    expect(result.tableRegistry.has(99)).toBe(false);
+    expect(result.fieldRegistry.get(99)?.get('AMOUNT')).toEqual({ originalName: 'Amount', typeName: 'Decimal' });
+    expect(result.procedureRegistry.get(99)).toEqual(new Map([['TESTPROC', 'TestProc']]));
+  });
+
+  it('should populate fieldRegistry and procedureRegistry but NOT tableRegistry when objectName is undefined', () => {
+    (readFileWithEncoding as unknown as jest.Mock).mockReturnValue({
+      content: 'OBJECT Table 99 \n{}\n'
+    });
+
+    const mockLexer = { tokenize: jest.fn().mockReturnValue([]) };
+    (Lexer as unknown as jest.Mock).mockImplementation(() => mockLexer);
+
+    const mockParser = {
+      parse: jest.fn().mockReturnValue({
+        object: {
+          objectKind: 'Table',
+          objectId: 99,
+          objectName: undefined,
+          fields: {
+            fields: [{ fieldName: 'Amount', dataType: { typeName: 'Decimal' } }]
+          },
+          code: {
+            procedures: [{ name: 'TestProc' }]
+          }
+        }
+      })
+    };
+    (Parser as unknown as jest.Mock).mockImplementation(() => mockParser);
+
+    const result = buildAllRegistries('/some/dir', ['table.txt']);
+
+    expect(result.tableRegistry.has(99)).toBe(false);
+    expect(result.fieldRegistry.get(99)?.get('AMOUNT')).toEqual({ originalName: 'Amount', typeName: 'Decimal' });
+    expect(result.procedureRegistry.get(99)).toEqual(new Map([['TESTPROC', 'TestProc']]));
+  });
 });
 
 describe('validateAllRealFiles', () => {
