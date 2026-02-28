@@ -87,7 +87,7 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
     userTablesIndexed: boolean,
     private readonly fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>,
     private readonly tableRegistry?: ReadonlyMap<number, string>,
-    private readonly procedureRegistry?: ReadonlyMap<number, ReadonlySet<string>>
+    private readonly procedureRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>
   ) {
     this.userTablesIndexed = userTablesIndexed;
   }

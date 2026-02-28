@@ -48,11 +48,11 @@ export function objectType(filename: string): string {
 export function buildAllRegistries(realDir: string, files: string[]): {
   tableRegistry: Map<number, string>;
   fieldRegistry: Map<number, Map<string, FieldInfo>>;
-  procedureRegistry: Map<number, Set<string>>;
+  procedureRegistry: Map<number, Map<string, string>>;
 } {
   const tableRegistry = new Map<number, string>();
   const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
-  const procedureRegistry = new Map<number, Set<string>>();
+  const procedureRegistry = new Map<number, Map<string, string>>();
 
   for (const file of files) {
     const filePath = join(realDir, file);
@@ -85,11 +85,11 @@ export function buildAllRegistries(realDir: string, files: string[]): {
       }
 
       // Procedure registry
-      const procedures = new Set<string>();
+      const procedures = new Map<string, string>();
       if (ast.object.code?.procedures) {
         for (const proc of ast.object.code.procedures) {
           if (proc.name) {
-            procedures.add(proc.name.toUpperCase());
+            procedures.set(proc.name.toUpperCase(), proc.name);
           }
         }
       }

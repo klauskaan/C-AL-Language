@@ -48,7 +48,7 @@ export class WorkspaceIndex {
   private tableFieldRegistry = new Map<number, Map<string, FieldInfo>>();
   private fieldOwner = new Map<number, string>();
   private fileFieldContributions = new Map<string, number>();
-  private tableProcedureRegistry = new Map<number, Set<string>>();
+  private tableProcedureRegistry = new Map<number, Map<string, string>>();
   private procedureOwner = new Map<number, string>();
   private fileProcedureContributions = new Map<string, number>();
   private _userTablesIndexed: boolean = false;
@@ -297,13 +297,13 @@ export class WorkspaceIndex {
   }
 
   /**
-   * Get the procedure registry mapping table IDs to procedure name sets.
+   * Get the procedure registry mapping table IDs to procedure name maps.
    * Used by validateMemberProperty() to suppress false-positive undefined-property warnings
    * for user-defined table procedure calls.
    *
-   * @returns ReadonlyMap of tableId → ReadonlySet of uppercase procedure names
+   * @returns ReadonlyMap of tableId → ReadonlyMap of (uppercaseName → originalName)
    */
-  getProcedureRegistry(): ReadonlyMap<number, ReadonlySet<string>> {
+  getProcedureRegistry(): ReadonlyMap<number, ReadonlyMap<string, string>> {
     return this.tableProcedureRegistry;
   }
 
@@ -387,7 +387,7 @@ export class WorkspaceIndex {
     symbols: SymbolInformation[];
     tableInfo?: { id: number; name: string };
     fieldInfo?: { id: number; fields: Map<string, FieldInfo> };
-    procedureInfo?: { id: number; procedures: Set<string> };
+    procedureInfo?: { id: number; procedures: Map<string, string> };
   }> {
     // Read file with encoding detection
     const { content } = await readFileWithEncodingAsync(filePath);
@@ -417,7 +417,7 @@ export class WorkspaceIndex {
     // Extract table info for the table registry
     let tableInfo: { id: number; name: string } | undefined;
     let fieldInfo: { id: number; fields: Map<string, FieldInfo> } | undefined;
-    let procedureInfo: { id: number; procedures: Set<string> } | undefined;
+    let procedureInfo: { id: number; procedures: Map<string, string> } | undefined;
 
     if (ast.object?.objectKind === ObjectKind.Table && ast.object.objectName) {
       tableInfo = { id: ast.object.objectId, name: ast.object.objectName };
@@ -437,14 +437,14 @@ export class WorkspaceIndex {
 
       fieldInfo = { id: ast.object.objectId, fields };
 
-      // Extract procedure names (uppercase for case-insensitive lookup)
+      // Extract procedure names: uppercase key for case-insensitive lookup, original value for display.
       // LOCAL procedures are included — false negatives preferred over false positives;
       // cross-object LOCAL procedure calls are a separate diagnostic concern.
-      const procedures = new Set<string>();
+      const procedures = new Map<string, string>();
       if (ast.object.code?.procedures) {
         for (const proc of ast.object.code.procedures) {
           if (proc.name) {
-            procedures.add(proc.name.toUpperCase());
+            procedures.set(proc.name.toUpperCase(), proc.name);
           }
         }
       }

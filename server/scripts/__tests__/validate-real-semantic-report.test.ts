@@ -625,7 +625,7 @@ describe('buildAllRegistries', () => {
 
     const result = buildAllRegistries('/some/dir', ['table.txt']);
 
-    expect(result.procedureRegistry.get(18)).toEqual(new Set(['MYPROC', 'ANOTHERPROC']));
+    expect(result.procedureRegistry.get(18)).toEqual(new Map([['MYPROC', 'MyProc'], ['ANOTHERPROC', 'AnotherProc']]));
   });
 
   it('should skip non-table objects (codeunits) from all registries', () => {
@@ -866,7 +866,7 @@ describe('buildAllRegistries', () => {
       originalName: 'Document No.',
       typeName: 'Code20'
     });
-    expect(result.procedureRegistry.get(37)).toEqual(new Set(['INITRECORD']));
+    expect(result.procedureRegistry.get(37)).toEqual(new Map([['INITRECORD', 'InitRecord']]));
     expect(readFileWithEncoding).toHaveBeenCalledTimes(1);
   });
 });

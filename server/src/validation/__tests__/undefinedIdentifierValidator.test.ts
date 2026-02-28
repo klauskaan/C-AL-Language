@@ -3551,7 +3551,7 @@ describe('UndefinedIdentifierValidator - Member Property Validation: Suppression
     code: string,
     tableRegistry?: ReadonlyMap<number, string>,
     fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>,
-    procedureRegistry?: ReadonlyMap<number, ReadonlySet<string>>
+    procedureRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>
   ): Diagnostic[] {
     const lexer = new Lexer(code);
     const tokens = lexer.tokenize();
@@ -3600,8 +3600,8 @@ describe('UndefinedIdentifierValidator - Member Property Validation: Suppression
     customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
     fieldRegistry.set(18, customerFields);
 
-    const procedureRegistry = new Map<number, Set<string>>();
-    procedureRegistry.set(18, new Set(['MYCUSTOMPROC']));
+    const procedureRegistry = new Map<number, Map<string, string>>();
+    procedureRegistry.set(18, new Map([['MYCUSTOMPROC', 'MyCustomProc']]));
 
     const diagnostics = validateWithProcedureRegistry(
       code,
@@ -3638,8 +3638,8 @@ describe('UndefinedIdentifierValidator - Member Property Validation: Suppression
     customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
     fieldRegistry.set(18, customerFields);
 
-    const procedureRegistry = new Map<number, Set<string>>();
-    procedureRegistry.set(18, new Set(['MYCUSTOMPROC']));
+    const procedureRegistry = new Map<number, Map<string, string>>();
+    procedureRegistry.set(18, new Map([['MYCUSTOMPROC', 'MyCustomProc']]));
 
     const diagnostics = validateWithProcedureRegistry(
       code,
@@ -3674,8 +3674,8 @@ describe('UndefinedIdentifierValidator - Member Property Validation: Suppression
     customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
     fieldRegistry.set(18, customerFields);
 
-    const procedureRegistry = new Map<number, Set<string>>();
-    procedureRegistry.set(18, new Set(['MYCUSTOMPROC']));
+    const procedureRegistry = new Map<number, Map<string, string>>();
+    procedureRegistry.set(18, new Map([['MYCUSTOMPROC', 'MyCustomProc']]));
 
     const diagnostics = validateWithProcedureRegistry(
       code,
@@ -3712,8 +3712,8 @@ describe('UndefinedIdentifierValidator - Member Property Validation: Suppression
     fieldRegistry.set(18, customerFields);
 
     // Table 18 is NOT in the procedureRegistry
-    const procedureRegistry = new Map<number, Set<string>>();
-    procedureRegistry.set(99, new Set(['SOMEPROC']));
+    const procedureRegistry = new Map<number, Map<string, string>>();
+    procedureRegistry.set(99, new Map([['SOMEPROC', 'SomeProc']]));
 
     const diagnostics = validateWithProcedureRegistry(
       code,
@@ -3785,8 +3785,8 @@ describe('UndefinedIdentifierValidator - Member Property Validation: Suppression
     customerFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
     fieldRegistry.set(18, customerFields);
 
-    const procedureRegistry = new Map<number, Set<string>>();
-    procedureRegistry.set(18, new Set(['MYCUSTOMPROC']));
+    const procedureRegistry = new Map<number, Map<string, string>>();
+    procedureRegistry.set(18, new Map([['MYCUSTOMPROC', 'MyCustomProc']]));
 
     const diagnostics = validateWithProcedureRegistry(
       code,
@@ -3832,8 +3832,8 @@ describe('UndefinedIdentifierValidator - Member Property Validation: Suppression
     fieldRegistry.set(18, customerFields);
 
     // LOCAL procedure included in registry (design decision: no distinction between LOCAL and public)
-    const procedureRegistry = new Map<number, Set<string>>();
-    procedureRegistry.set(18, new Set(['CALLERPROC', 'LOCALHELPERPROC']));
+    const procedureRegistry = new Map<number, Map<string, string>>();
+    procedureRegistry.set(18, new Map([['CALLERPROC', 'CallerProc'], ['LOCALHELPERPROC', 'LocalHelperProc']]));
 
     const diagnostics = validateWithProcedureRegistry(
       code,
