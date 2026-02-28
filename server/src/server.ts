@@ -686,13 +686,13 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     }, () => {
       try {
         // Run semantic validations with current settings
-        const tableRegistryPopulated = symbolTable.tableRegistryPopulated;
+        const userTablesIndexed = workspaceIndex.userTablesIndexed;
         const fieldRegistry = workspaceIndex.getFieldRegistry();
         const tableRegistry = workspaceIndex.getTableRegistry();
         const procedureRegistry = workspaceIndex.getProcedureRegistry();
         const semanticDiagnostics = semanticAnalyzer.analyze(ast, symbolTable, uri, {
           settings: currentSettings,
-          tableRegistryPopulated,
+          userTablesIndexed,
           tableRegistry,
           fieldRegistry,
           procedureRegistry

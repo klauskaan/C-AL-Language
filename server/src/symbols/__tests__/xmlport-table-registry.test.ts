@@ -63,7 +63,7 @@ function validateUndefinedIdentifiers(
     symbolTable,
     builtins,
     documentUri: 'file:///test.cal',
-    tableRegistryPopulated: symbolTable.tableRegistryPopulated
+    userTablesIndexed: tableRegistry !== undefined && tableRegistry.size > 0
   };
 
   const validator = new UndefinedIdentifierValidator();
@@ -466,16 +466,14 @@ describe('UndefinedIdentifierValidator - XMLport ELEMENTS with table registry', 
     const symbolTable = new SymbolTable();
     symbolTable.buildFromAST(ast);
 
-    // Step 2: Create ValidationContext with tableRegistryPopulated derived from symbolTable.tableRegistryPopulated
-    // This is the fix: validation should check whether the symbol table HAD a registry at build time,
-    // not whether a registry exists NOW
+    // Step 2: Create ValidationContext with userTablesIndexed = false (no registry was passed)
     const builtins = new BuiltinRegistry();
     const context: ValidationContext = {
       ast,
       symbolTable,
       builtins,
       documentUri: 'file:///test.cal',
-      tableRegistryPopulated: symbolTable.tableRegistryPopulated
+      userTablesIndexed: false
     };
 
     // Step 3: Run UndefinedIdentifierValidator
@@ -483,8 +481,8 @@ describe('UndefinedIdentifierValidator - XMLport ELEMENTS with table registry', 
     const diagnostics = validator.validate(context);
 
     // Step 4: Assert NO diagnostics
-    // Validation should not traverse ELEMENTS because tableRegistryPopulated is false
-    // (symbol table was built without registry, so validation correctly suppresses ELEMENTS checks)
+    // Validation should not traverse ELEMENTS because userTablesIndexed is false
+    // (no registry was provided, so validation correctly suppresses ELEMENTS checks)
     const dataExchDefDiagnostic = diagnostics.find(d => d.message.includes('Data Exch. Def'));
     expect(dataExchDefDiagnostic).toBeUndefined();
   });

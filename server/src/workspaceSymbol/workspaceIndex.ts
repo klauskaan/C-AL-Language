@@ -17,6 +17,7 @@ import { discoverFiles } from '../utils/fileDiscovery';
 import { hasCalExtension, hasTxtExtension } from '../utils/fileExtensions';
 import { isCalContent } from '../utils/calDetection';
 import { flattenDocumentSymbols } from './flattenSymbols';
+import { SYSTEM_TABLE_NAMES, SYSTEM_TABLE_FIELDS } from '../builtins/systemTableData';
 
 /**
  * Field information with original casing preserved
@@ -50,6 +51,28 @@ export class WorkspaceIndex {
   private tableProcedureRegistry = new Map<number, Set<string>>();
   private procedureOwner = new Map<number, string>();
   private fileProcedureContributions = new Map<string, number>();
+  private _userTablesIndexed: boolean = false;
+
+  constructor() {
+    this.seedSystemTables();
+  }
+
+  /**
+   * Pre-seed registries with known system table definitions.
+   * System table IDs (>= 2,000,000,000) are runtime-only NAV tables not
+   * exported as workspace files. Pre-seed the registry with known field
+   * definitions. Safe from add()/remove() ownership model: user table IDs
+   * cannot reach 2,000,000,000 — NAV reserves this range exclusively for
+   * runtime system/virtual tables.
+   */
+  private seedSystemTables(): void {
+    for (const [id, name] of SYSTEM_TABLE_NAMES) {
+      this.tableRegistry.set(id, name);
+    }
+    for (const [id, fields] of SYSTEM_TABLE_FIELDS) {
+      this.tableFieldRegistry.set(id, fields as Map<string, FieldInfo>);
+    }
+  }
 
   /**
    * Index a single file and add it to the index
@@ -207,6 +230,7 @@ export class WorkspaceIndex {
    * Clear all entries from the index
    */
   clear(): void {
+    this._userTablesIndexed = false;
     this.index.clear();
     this.tableRegistry.clear();
     this.tableOwner.clear();
@@ -217,6 +241,7 @@ export class WorkspaceIndex {
     this.tableProcedureRegistry.clear();
     this.procedureOwner.clear();
     this.fileProcedureContributions.clear();
+    this.seedSystemTables();
   }
 
   /**
@@ -294,6 +319,14 @@ export class WorkspaceIndex {
   }
 
   /**
+   * Get whether user tables have been indexed (i.e., indexDirectory() has completed).
+   * Used to determine if undefined-identifier validation should be enabled for elements sections.
+   */
+  get userTablesIndexed(): boolean {
+    return this._userTablesIndexed;
+  }
+
+  /**
    * Index all .cal files (and optionally .txt files) in a directory (recursively)
    *
    * @param directory - Root directory to index
@@ -340,6 +373,7 @@ export class WorkspaceIndex {
         continue;
       }
     }
+    this._userTablesIndexed = true;
   }
 
   /**
