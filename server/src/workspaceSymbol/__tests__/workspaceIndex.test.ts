@@ -1187,7 +1187,9 @@ describe('WorkspaceIndex', () => {
       const customerProcs = procedureRegistry.get(18);
       expect(customerProcs).toBeDefined();
       expect(customerProcs!.has('MYPUBLICPROC')).toBe(true);
+      expect(customerProcs!.get('MYPUBLICPROC')).toBe('MyPublicProc');
       expect(customerProcs!.has('ANOTHERPROC')).toBe(true);
+      expect(customerProcs!.get('ANOTHERPROC')).toBe('AnotherProc');
     });
 
     it('should not populate procedure registry when indexing a non-Table object', async () => {
@@ -1225,7 +1227,7 @@ describe('WorkspaceIndex', () => {
 
       const procedureRegistry = workspaceIndex.getProcedureRegistry();
       const customerProcs = procedureRegistry.get(18);
-      // Either undefined or an empty set — both are acceptable
+      // Either undefined or an empty map — both are acceptable
       if (customerProcs !== undefined) {
         expect(customerProcs.size).toBe(0);
       }
@@ -1250,7 +1252,7 @@ describe('WorkspaceIndex', () => {
 
       const procedureRegistry = workspaceIndex.getProcedureRegistry();
       const customerProcs = procedureRegistry.get(18);
-      // Either undefined or an empty set — both are acceptable
+      // Either undefined or an empty map — both are acceptable
       if (customerProcs !== undefined) {
         expect(customerProcs.size).toBe(0);
       }
@@ -1282,7 +1284,9 @@ describe('WorkspaceIndex', () => {
       const customerProcs = procedureRegistry.get(18);
       expect(customerProcs).toBeDefined();
       expect(customerProcs!.has('PUBLICPROC')).toBe(true);
+      expect(customerProcs!.get('PUBLICPROC')).toBe('PublicProc');
       expect(customerProcs!.has('LOCALPROC')).toBe(true);
+      expect(customerProcs!.get('LOCALPROC')).toBe('LocalProc');
     });
 
     it('should clear procedure registry entry for a table when remove() is called', async () => {
@@ -1379,12 +1383,15 @@ describe('WorkspaceIndex', () => {
       const customerProcs = procedureRegistry.get(18);
       expect(customerProcs).toBeDefined();
       expect(customerProcs!.has('CUSTOMERPROC')).toBe(true);
+      expect(customerProcs!.get('CUSTOMERPROC')).toBe('CustomerProc');
       expect(customerProcs!.has('ITEMPROC')).toBe(false);
 
       const itemProcs = procedureRegistry.get(27);
       expect(itemProcs).toBeDefined();
       expect(itemProcs!.has('ITEMPROC')).toBe(true);
+      expect(itemProcs!.get('ITEMPROC')).toBe('ItemProc');
       expect(itemProcs!.has('ANOTHERITEMPROC')).toBe(true);
+      expect(itemProcs!.get('ANOTHERITEMPROC')).toBe('AnotherItemProc');
       expect(itemProcs!.has('CUSTOMERPROC')).toBe(false);
     });
 
@@ -1411,6 +1418,8 @@ describe('WorkspaceIndex', () => {
       expect(customerProcs).toBeDefined();
       // Stored uppercase — matches regardless of original casing
       expect(customerProcs!.has('MIXEDCASEPROC')).toBe(true);
+      // Value preserves original casing for display
+      expect(customerProcs!.get('MIXEDCASEPROC')).toBe('MixedCaseProc');
       // Lowercase or mixed-case lookups can be done by caller by uppercasing the key
       expect(customerProcs!.has('mixedcaseproc')).toBe(false);
       expect(customerProcs!.has('MixedCaseProc')).toBe(false);
