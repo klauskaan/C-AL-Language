@@ -409,3 +409,88 @@ END;`;
     });
   });
 });
+
+describe('Lexer - BigInteger literals (L suffix)', () => {
+  describe('Basic L-suffix recognition', () => {
+    it('should tokenize uppercase L-suffix integer as single INTEGER token', () => {
+      const code = '10000L';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens).toHaveLength(2); // INTEGER + EOF
+      expect(tokens[0].type).toBe(TokenType.Integer);
+      expect(tokens[0].value).toBe('10000L');
+    });
+
+    it('should tokenize lowercase l-suffix integer as single INTEGER token', () => {
+      const code = '10000l';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens).toHaveLength(2); // INTEGER + EOF
+      expect(tokens[0].type).toBe(TokenType.Integer);
+      expect(tokens[0].value).toBe('10000l');
+    });
+
+    it('should tokenize large BigInteger literal', () => {
+      const code = '1000000000000L';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens).toHaveLength(2);
+      expect(tokens[0].type).toBe(TokenType.Integer);
+      expect(tokens[0].value).toBe('1000000000000L');
+    });
+
+    it('should tokenize 0L as single INTEGER token', () => {
+      const code = '0L';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens).toHaveLength(2);
+      expect(tokens[0].type).toBe(TokenType.Integer);
+      expect(tokens[0].value).toBe('0L');
+    });
+  });
+
+  describe('L-suffix in context', () => {
+    it('should tokenize L-suffix integer in assignment', () => {
+      const code = 'BigNum := 10000L;';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // BigNum, :=, 10000L, ;, EOF
+      expect(tokens[0].type).toBe(TokenType.Identifier);
+      expect(tokens[1].type).toBe(TokenType.Assign);
+      expect(tokens[2].type).toBe(TokenType.Integer);
+      expect(tokens[2].value).toBe('10000L');
+      expect(tokens[3].type).toBe(TokenType.Semicolon);
+    });
+
+    it('should tokenize L-suffix integer in comparison', () => {
+      const code = 'IF Amount > 50000L THEN';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      expect(tokens[0].type).toBe(TokenType.If);
+      expect(tokens[2].type).toBe(TokenType.Greater);
+      expect(tokens[3].type).toBe(TokenType.Integer);
+      expect(tokens[3].value).toBe('50000L');
+      expect(tokens[4].type).toBe(TokenType.Then);
+    });
+  });
+
+  describe('L-suffix guards', () => {
+    it('should NOT consume L after a decimal number', () => {
+      const code = '3.14L';
+      const lexer = new Lexer(code);
+      const tokens = lexer.tokenize();
+
+      // Decimal guard: 3.14 is decimal, L should not be consumed as suffix
+      expect(tokens[0].type).toBe(TokenType.Decimal);
+      expect(tokens[0].value).toBe('3.14');
+      expect(tokens[1].type).toBe(TokenType.Identifier);
+      expect(tokens[1].value).toBe('L');
+    });
+  });
+});

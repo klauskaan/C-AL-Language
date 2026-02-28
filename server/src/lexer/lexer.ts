@@ -1074,6 +1074,12 @@ export class Lexer {
         this.addToken(TokenType.Time, value, startPos, this.position, startLine, startColumn);
         return;
       }
+    } else if (!isDecimal && (this.currentChar() === 'L' || this.currentChar() === 'l')) {
+      // BigInteger literal: integer + L/l suffix (e.g., 10000L)
+      value += this.currentChar();
+      this.advance();
+      this.addToken(TokenType.Integer, value, startPos, this.position, startLine, startColumn);
+      return;
     }
 
     const tokenType = isDecimal ? TokenType.Decimal : TokenType.Integer;
