@@ -2333,6 +2333,10 @@ describe('Page trigger implicit parameters', () => {
     }
   });
 
+  // NOTE: OnLookup, OnDrillDown, and OnAssistEdit are control-level triggers in valid C/AL
+  // (they appear on controls in the CONTROLS section, not in the page-level PROPERTIES section).
+  // The following three tests exercise the visitProperty code path using parser-permissive input:
+  // the parser accepts these triggers in PROPERTIES, but NAV would not.
   it('should inject Text parameter into OnLookup page-level PROPERTIES trigger scope', () => {
     // page-level trigger in PROPERTIES section (visitProperty path)
     const code = `OBJECT Page 50000 TestPage
