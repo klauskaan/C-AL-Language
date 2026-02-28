@@ -67,7 +67,7 @@ const FIELD_REFERENCE_METHODS: Map<string, 'first' | 'all'> = new Map([
  */
 class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
   public readonly diagnostics: Diagnostic[] = [];
-  private readonly tableRegistryPopulated: boolean;
+  private readonly userTablesIndexed: boolean;
 
   /**
    * Constructor
@@ -75,7 +75,7 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
    * @param symbolTable - Symbol table for identifier resolution
    * @param builtins - Registry of builtin functions
    * @param walker - ASTWalker instance for manual child traversal
-   * @param tableRegistryPopulated - Whether table registry has been populated
+   * @param userTablesIndexed - Whether user tables have been indexed
    * @param fieldRegistry - Optional field registry mapping table numbers to field info
    * @param tableRegistry - Optional table registry mapping table numbers to table names
    */
@@ -84,12 +84,12 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
     private readonly symbolTable: SymbolTable,
     private readonly builtins: BuiltinRegistry,
     private readonly walker: ASTWalker,
-    tableRegistryPopulated: boolean,
+    userTablesIndexed: boolean,
     private readonly fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>,
     private readonly tableRegistry?: ReadonlyMap<number, string>,
     private readonly procedureRegistry?: ReadonlyMap<number, ReadonlySet<string>>
   ) {
-    this.tableRegistryPopulated = tableRegistryPopulated;
+    this.userTablesIndexed = userTablesIndexed;
   }
 
   /**
@@ -263,7 +263,7 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
    * from SourceTable properties, enabling proper validation.
    */
   visitElementsSection(_node: ElementsSection): false | void {
-    if (!this.tableRegistryPopulated) {
+    if (!this.userTablesIndexed) {
       return false; // Skip traversal - suppresses false positives
     }
     // Otherwise, allow traversal (return void/undefined)
@@ -446,7 +446,7 @@ export class UndefinedIdentifierValidator implements Validator {
       context.symbolTable,
       context.builtins,
       walker,  // Pass walker reference for manual traversal
-      context.tableRegistryPopulated ?? false,
+      context.userTablesIndexed ?? false,
       context.fieldRegistry,
       context.tableRegistry,
       context.procedureRegistry

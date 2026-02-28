@@ -31,8 +31,8 @@ export interface ValidationContext {
   /** User settings (optional) */
   settings?: CALSettings;
 
-  /** Whether table registry has been populated (used for conditional validation) */
-  tableRegistryPopulated?: boolean;
+  /** Whether user tables have been indexed (used for conditional validation) */
+  userTablesIndexed?: boolean;
 
   /** Table registry mapping table numbers to table names (optional) */
   tableRegistry?: ReadonlyMap<number, string>;

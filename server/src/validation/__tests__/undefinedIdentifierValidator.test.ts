@@ -55,7 +55,7 @@ function validateUndefinedIdentifiers(
     symbolTable,
     builtins,
     documentUri: 'file:///test.cal',
-    tableRegistryPopulated: symbolTable.tableRegistryPopulated,
+    userTablesIndexed: tableRegistry !== undefined && tableRegistry.size > 0,
     fieldRegistry,
     tableRegistry
   };
@@ -2645,7 +2645,7 @@ describe('UndefinedIdentifierValidator - Page SourceTable Field Integration', ()
       symbolTable,
       builtins,
       documentUri: 'file:///test.cal',
-      tableRegistryPopulated: symbolTable.tableRegistryPopulated,
+      userTablesIndexed: tableRegistry !== undefined && tableRegistry.size > 0,
       fieldRegistry,
       tableRegistry
     };
@@ -3568,7 +3568,7 @@ describe('UndefinedIdentifierValidator - Member Property Validation: Suppression
       symbolTable,
       builtins,
       documentUri: 'file:///test.cal',
-      tableRegistryPopulated: symbolTable.tableRegistryPopulated,
+      userTablesIndexed: tableRegistry !== undefined && tableRegistry.size > 0,
       fieldRegistry,
       tableRegistry,
       procedureRegistry

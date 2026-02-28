@@ -14,11 +14,15 @@ import { SymbolKind, SymbolInformation } from 'vscode-languageserver';
 describe('WorkspaceIndex', () => {
   let tempDir: string;
   let workspaceIndex: WorkspaceIndex;
+  let systemTableCount: number;
+  let systemFieldRegistryCount: number;
 
   beforeEach(() => {
     // Create temporary directory for test files
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'workspace-index-test-'));
     workspaceIndex = new WorkspaceIndex();
+    systemTableCount = workspaceIndex.getTableRegistry().size;
+    systemFieldRegistryCount = workspaceIndex.getFieldRegistry().size;
   });
 
   afterEach(() => {
@@ -581,7 +585,7 @@ describe('WorkspaceIndex', () => {
       await workspaceIndex.add(codeunitFile);
 
       const registry = workspaceIndex.getTableRegistry();
-      expect(registry.size).toBe(0);
+      expect(registry.size).toBe(systemTableCount);
     });
 
     it('should replace old table entry when same file is re-indexed with a different table ID', async () => {
@@ -612,7 +616,7 @@ describe('WorkspaceIndex', () => {
       expect(registry.has(19)).toBe(true);
       expect(registry.get(19)).toBe('Item');
       expect(registry.has(18)).toBe(false);
-      expect(registry.size).toBe(1);
+      expect(registry.size).toBe(1 + systemTableCount);
     });
 
     it('should remove table entry from registry when file is removed', async () => {
@@ -631,7 +635,7 @@ describe('WorkspaceIndex', () => {
       workspaceIndex.remove(tableFile);
 
       expect(workspaceIndex.getTableRegistry().has(18)).toBe(false);
-      expect(workspaceIndex.getTableRegistry().size).toBe(0);
+      expect(workspaceIndex.getTableRegistry().size).toBe(systemTableCount);
     });
 
     it('should leave registry unchanged when removing a non-Table file', async () => {
@@ -662,7 +666,7 @@ describe('WorkspaceIndex', () => {
       const registry = workspaceIndex.getTableRegistry();
       expect(registry.has(18)).toBe(true);
       expect(registry.get(18)).toBe('Customer');
-      expect(registry.size).toBe(1);
+      expect(registry.size).toBe(1 + systemTableCount);
     });
 
     it('should empty the registry when clear() is called', async () => {
@@ -676,11 +680,11 @@ describe('WorkspaceIndex', () => {
 }`);
 
       await workspaceIndex.add(tableFile);
-      expect(workspaceIndex.getTableRegistry().size).toBe(1);
+      expect(workspaceIndex.getTableRegistry().size).toBe(1 + systemTableCount);
 
       workspaceIndex.clear();
 
-      expect(workspaceIndex.getTableRegistry().size).toBe(0);
+      expect(workspaceIndex.getTableRegistry().size).toBe(systemTableCount);
     });
 
     it('should contain all table entries when multiple Table files are indexed', async () => {
@@ -716,7 +720,7 @@ describe('WorkspaceIndex', () => {
       await workspaceIndex.add(tableFile36);
 
       const registry = workspaceIndex.getTableRegistry();
-      expect(registry.size).toBe(3);
+      expect(registry.size).toBe(3 + systemTableCount);
       expect(registry.get(18)).toBe('Customer');
       expect(registry.get(27)).toBe('Item');
       expect(registry.get(36)).toBe('Sales Header');
@@ -754,7 +758,7 @@ describe('WorkspaceIndex', () => {
       await workspaceIndex.indexDirectory(tempDir);
 
       const registry = workspaceIndex.getTableRegistry();
-      expect(registry.size).toBe(2);
+      expect(registry.size).toBe(2 + systemTableCount);
       expect(registry.get(18)).toBe('Customer');
       expect(registry.get(27)).toBe('Item');
     });
@@ -1092,7 +1096,7 @@ describe('WorkspaceIndex', () => {
       await workspaceIndex.add(codeunitFile);
 
       const fieldRegistry = workspaceIndex.getFieldRegistry();
-      expect(fieldRegistry.size).toBe(0);
+      expect(fieldRegistry.size).toBe(systemFieldRegistryCount);
     });
 
     it('should handle table with no fields', async () => {

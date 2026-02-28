@@ -5,7 +5,7 @@
  * - severityLabel() function (all 5 cases)
  * - objectType() function (extracts first 3 chars uppercased)
  * - generateMarkdownReport() function (all sections, markdown escaping)
- * - validateAllRealFiles() orchestration (mocking, timers, tableRegistryPopulated)
+ * - validateAllRealFiles() orchestration (mocking, timers, userTablesIndexed)
  *
  * These tests require the exported functions from validate-real-semantic.ts.
  */
@@ -904,7 +904,6 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -957,7 +956,6 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -999,7 +997,6 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -1051,7 +1048,6 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -1073,7 +1069,7 @@ describe('validateAllRealFiles', () => {
       expect(tableFields?.get('NO.')).toEqual({ originalName: 'No.', typeName: 'Code20' });
     });
 
-    it('should propagate tableRegistryPopulated flag from symbolTable to analyzer', () => {
+    it('should propagate userTablesIndexed flag from tableRegistry to analyzer', () => {
       const mockFiles = ['test.txt'];
       (readdirSync as unknown as jest.Mock).mockReturnValue(mockFiles);
       (readFileWithEncoding as unknown as jest.Mock).mockReturnValue({
@@ -1083,13 +1079,22 @@ describe('validateAllRealFiles', () => {
       const mockLexer = { tokenize: jest.fn().mockReturnValue([]) };
       (Lexer as unknown as jest.Mock).mockImplementation(() => mockLexer);
 
-      const mockParser = { parse: jest.fn().mockReturnValue({ object: null }) };
+      // Return a table AST so buildAllRegistries produces a non-empty tableRegistry
+      const mockParser = {
+        parse: jest.fn().mockReturnValue({
+          object: {
+            objectKind: 'Table', // ObjectKind.Table (string enum)
+            objectId: 18,
+            objectName: 'Test',
+            fields: { fields: [] },
+            code: { procedures: [] }
+          }
+        })
+      };
       (Parser as unknown as jest.Mock).mockImplementation(() => mockParser);
 
-      // Test with tableRegistryPopulated = true
       const mockSymbolTable = {
-        buildFromAST: jest.fn(),
-        tableRegistryPopulated: true // Set to true
+        buildFromAST: jest.fn()
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -1102,11 +1107,12 @@ describe('validateAllRealFiles', () => {
 
       validateAllRealFiles();
 
-      // Verify analyzer.analyze was called with tableRegistryPopulated = true
+      // Verify analyzer.analyze was called with userTablesIndexed = true
+      // because tableRegistry.size > 0 (the table AST was parsed successfully)
       expect(mockAnalyzer.analyze).toHaveBeenCalled();
       const analyzeCall = mockAnalyzer.analyze.mock.calls[0];
       const options = analyzeCall[3]; // 4th argument (options object)
-      expect(options.tableRegistryPopulated).toBe(true);
+      expect(options.userTablesIndexed).toBe(true);
     });
 
     it('should pass fieldRegistry, tableRegistry, and procedureRegistry to analyzer.analyze', () => {
@@ -1124,7 +1130,6 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -1163,7 +1168,6 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -1217,7 +1221,6 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -1248,7 +1251,6 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -1280,7 +1282,6 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -1321,7 +1322,6 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -1365,7 +1365,6 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 
@@ -1422,7 +1421,6 @@ describe('validateAllRealFiles', () => {
 
       const mockSymbolTable = {
         buildFromAST: jest.fn(),
-        tableRegistryPopulated: false
       };
       (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
 

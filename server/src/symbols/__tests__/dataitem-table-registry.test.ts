@@ -61,7 +61,7 @@ function validateUndefinedIdentifiers(
     symbolTable,
     builtins,
     documentUri: 'file:///test.cal',
-    tableRegistryPopulated: symbolTable.tableRegistryPopulated
+    userTablesIndexed: tableRegistry !== undefined && tableRegistry.size > 0
   };
 
   const validator = new UndefinedIdentifierValidator();

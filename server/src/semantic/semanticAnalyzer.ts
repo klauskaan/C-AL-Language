@@ -28,8 +28,8 @@ export interface AnalyzeOptions {
   /** User settings (optional) */
   settings?: CALSettings;
 
-  /** Whether table registry has been populated (used for conditional validation) */
-  tableRegistryPopulated?: boolean;
+  /** Whether user tables have been indexed (used for conditional validation) */
+  userTablesIndexed?: boolean;
 
   /** Table registry mapping table numbers to table names (optional) */
   tableRegistry?: ReadonlyMap<number, string>;
@@ -105,7 +105,7 @@ export class SemanticAnalyzer {
     options?: AnalyzeOptions
   ): Diagnostic[] {
     // Destructure options with defaults
-    const { settings, tableRegistryPopulated, tableRegistry, fieldRegistry, procedureRegistry } = options ?? {};
+    const { settings, userTablesIndexed, tableRegistry, fieldRegistry, procedureRegistry } = options ?? {};
 
     // Assemble validation context
     const context: ValidationContext = {
@@ -114,7 +114,7 @@ export class SemanticAnalyzer {
       builtins: this.builtins,
       documentUri,
       settings,
-      tableRegistryPopulated,
+      userTablesIndexed,
       tableRegistry,
       fieldRegistry,
       procedureRegistry
