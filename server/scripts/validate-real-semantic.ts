@@ -97,6 +97,36 @@ export function buildFieldRegistry(realDir: string, files: string[]): Map<number
 }
 
 // Exported for testing only
+export function buildProcedureRegistry(realDir: string, files: string[]): Map<number, Set<string>> {
+  const registry = new Map<number, Set<string>>();
+  for (const file of files) {
+    const filePath = join(realDir, file);
+    const { content } = readFileWithEncoding(filePath);
+    const lexer = new Lexer(content);
+    const tokens = lexer.tokenize();
+    const parser = new Parser(tokens);
+    const ast = parser.parse();
+
+    if (ast.object?.objectKind === ObjectKind.Table) {
+      const procedures = new Set<string>();
+
+      if (ast.object.code?.procedures) {
+        for (const proc of ast.object.code.procedures) {
+          if (proc.name) {
+            procedures.add(proc.name.toUpperCase());
+          }
+        }
+      }
+
+      if (procedures.size > 0) {
+        registry.set(ast.object.objectId, procedures);
+      }
+    }
+  }
+  return registry;
+}
+
+// Exported for testing only
 export function validateAllRealFiles(): SemanticValidationResult[] {
   const realDir = join(__dirname, '../../test/REAL');
   const files = readdirSync(realDir)
@@ -114,6 +144,11 @@ export function validateAllRealFiles(): SemanticValidationResult[] {
   console.log('Building field registry...');
   const fieldRegistry = buildFieldRegistry(realDir, files);
   console.log(`Field registry: ${fieldRegistry.size} tables with fields indexed\n`);
+
+  // Pre-scan: build procedure registry for cross-object procedure call resolution (#605)
+  console.log('Building procedure registry...');
+  const procedureRegistry = buildProcedureRegistry(realDir, files);
+  console.log(`Procedure registry: ${procedureRegistry.size} tables with procedures indexed\n`);
 
   const builtins = new BuiltinRegistry();
   const analyzer = new SemanticAnalyzer(builtins);
@@ -136,7 +171,8 @@ export function validateAllRealFiles(): SemanticValidationResult[] {
       settings: defaultSettings,
       tableRegistryPopulated,
       tableRegistry,
-      fieldRegistry
+      fieldRegistry,
+      procedureRegistry
     });
     const analyzeTime = Date.now() - startTime;
 
