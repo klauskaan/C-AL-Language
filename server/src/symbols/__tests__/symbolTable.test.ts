@@ -2332,6 +2332,81 @@ describe('Page trigger implicit parameters', () => {
       expect(triggerScope.getOwnSymbol('Text')).toBeUndefined();
     }
   });
+
+  it('should inject Text parameter into OnLookup page-level PROPERTIES trigger scope', () => {
+    // page-level trigger in PROPERTIES section (visitProperty path)
+    const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnLookup=BEGIN
+               Text := 'test';
+             END;
+
+  }
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    const triggerScope = rootScope.children[0];
+    const textSymbol = triggerScope.getOwnSymbol('Text');
+    expect(textSymbol).toBeDefined();
+    expect(textSymbol?.kind).toBe('parameter');
+    expect(textSymbol?.type).toBe('Text');
+  });
+
+  it('should inject Text parameter into OnDrillDown page-level PROPERTIES trigger scope', () => {
+    // page-level trigger in PROPERTIES section (visitProperty path)
+    const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnDrillDown=BEGIN
+                  Text := 'test';
+                END;
+
+  }
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    const triggerScope = rootScope.children[0];
+    const textSymbol = triggerScope.getOwnSymbol('Text');
+    expect(textSymbol).toBeDefined();
+    expect(textSymbol?.kind).toBe('parameter');
+    expect(textSymbol?.type).toBe('Text');
+  });
+
+  it('should inject Text parameter into OnAssistEdit page-level PROPERTIES trigger scope', () => {
+    // page-level trigger in PROPERTIES section (visitProperty path)
+    const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+    OnAssistEdit=BEGIN
+                   Text := 'test';
+                 END;
+
+  }
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    const triggerScope = rootScope.children[0];
+    const textSymbol = triggerScope.getOwnSymbol('Text');
+    expect(textSymbol).toBeDefined();
+    expect(textSymbol?.kind).toBe('parameter');
+    expect(textSymbol?.type).toBe('Text');
+  });
 });
 
 describe('XMLport element symbols', () => {
