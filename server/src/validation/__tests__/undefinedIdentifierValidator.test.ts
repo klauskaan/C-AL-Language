@@ -4132,6 +4132,39 @@ describe('UndefinedIdentifierValidator - Codeunit TableNo=0 guard', () => {
     expect(recError).toBeDefined();
   });
 
+  it('should flag bare PhantomField as undefined when codeunit has TableNo=0 (independently tests field injection guard)', () => {
+    // This test specifically exercises the field injection guard in buildFromAST().
+    // Unlike the sibling test (which uses Rec.INIT and would pass even if the guard were removed
+    // because Rec itself is undefined), this test references a bare field name directly.
+    // If the guard were absent, PhantomField would be injected from table 0 and would NOT be flagged.
+    const code = `OBJECT Codeunit 50002 "No Source Table Codeunit"
+{
+  PROPERTIES
+  {
+    TableNo=0;
+    OnRun=BEGIN
+            PhantomField := 42;
+          END;
+
+  }
+  CODE
+  {
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[0, 'Phantom Table']]);
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const phantomFields = new Map<string, FieldInfo>();
+    phantomFields.set('PHANTOMFIELD', { originalName: 'PhantomField', typeName: 'Integer' });
+    fieldRegistry.set(0, phantomFields);
+
+    const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+    // PhantomField must be flagged — the guard prevented injection from table 0
+    const phantomError = diagnostics.find(d => d.message.includes("'PhantomField'") && d.code === 'undefined-identifier');
+    expect(phantomError).toBeDefined();
+  });
+
   it('should still inject Rec when codeunit has TableNo=5900 (positive tableId)', () => {
     const code = `OBJECT Codeunit 5900 "Service Release"
 {
