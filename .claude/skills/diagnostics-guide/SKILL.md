@@ -39,25 +39,26 @@ Runs the full semantic analysis pipeline (lex → parse → symbol table → sem
 npm run validate:semantic
 ```
 
-**What it checks:** `undefined-identifier`, `unused-variable`, `type-mismatch`, `deprecated-function` diagnostics across all real C/AL objects. Pre-scans all tables to build a cross-object registry before analyzing.
+**What it checks:** `undefined-property`, `undefined-identifier`, `unused-variable`, `type-mismatch`, `deprecated-function` diagnostics across all real C/AL objects. Pre-scans all tables to build a cross-object registry before analyzing.
 
-**Output:** `semantic-report.md` (written to project root, ~32s)
+**Output:** `semantic-report.md` (written to project root, ~60s)
 
 **Healthy state:** The diagnostic counts are a known baseline from real client code — not all are fixable. Watch for:
 - Increases in `type-mismatch` count (real semantic bugs)
-- Increases in `undefined-identifier` on standard NAV objects (symbol table regressions)
+- Increases in `undefined-identifier` or `undefined-property` on standard NAV objects (symbol table regressions)
 - New diagnostic codes appearing unexpectedly
 
-**Typical baseline (7,677 files):**
+**Typical baseline (7,677 files, as of 2026-02-28):**
 
 | Code | Severity | Count | Files |
 |------|----------|-------|-------|
-| `undefined-identifier` | Warning | ~29,900 | ~3,069 |
-| `unused-variable` | Warning | ~944 | ~269 |
-| `type-mismatch` | Warning | ~10 | ~5 |
-| `deprecated-function` | Hint | ~5 | ~5 |
+| `undefined-property` | Warning | ~8,611 | ~1,750 |
+| `undefined-identifier` | Warning | ~7,349 | ~1,633 |
+| `unused-variable` | Warning | ~1,285 | ~314 |
+| `deprecated-function` | Hint | ~6 | ~6 |
+| `type-mismatch` | Warning | ~1 | ~1 |
 
-Most `undefined-identifier` warnings come from cross-object references that single-file analysis can't resolve — this is expected. `type-mismatch` and `deprecated-function` counts should be stable.
+`undefined-property` and `undefined-identifier` warnings largely come from cross-object references — fields, procedures, and properties on record variables whose definitions live in other objects. Most are expected and not fixable without broader cross-file analysis. `type-mismatch` and `deprecated-function` counts should be stable.
 
 ---
 
@@ -244,6 +245,7 @@ Total wall time: ~70 seconds.
 | `validate:real` failures appear | Parser regression — check recent parser/lexer changes |
 | `type-mismatch` count increases in semantic report | New semantic rule firing on false positives, or real code regression |
 | `undefined-identifier` spikes on standard NAV objects | Symbol table regression — builtins or table registry broken |
+| `undefined-property` spikes on standard NAV objects | Field registry regression — table fields not being indexed |
 | Lexer health position errors | Token position tracking bug — off-by-one in line/column |
 | Lexer clean exit failures | State machine bug — a context or flag is not being unwound |
 | `perf:compare` regression | Performance regression — profile with `perf:stress` to narrow down |
