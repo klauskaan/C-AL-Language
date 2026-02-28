@@ -128,8 +128,9 @@ export class WorkspaceIndex {
       }
       this.fileProcedureContributions.delete(filePath);
     }
-    // Add new procedure contribution
-    if (procedureInfo) {
+
+    // Add new procedure contribution (skip system table ID range — reserved for seeded entries)
+    if (procedureInfo && procedureInfo.id < 2_000_000_000) {
       this.tableProcedureRegistry.set(procedureInfo.id, procedureInfo.procedures);
       this.procedureOwner.set(procedureInfo.id, filePath);
       this.fileProcedureContributions.set(filePath, procedureInfo.id);
