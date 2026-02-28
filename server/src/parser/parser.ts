@@ -344,10 +344,23 @@ export class Parser {
   }
 
   /**
+   * Strip known C/AL numeric suffixes before passing to parseInt/parseFloat.
+   * The lexer appends suffixes to the token value (e.g. '10000L' for BigInteger).
+   * JavaScript's parseInt tolerates trailing non-numeric characters by design,
+   * but making the strip explicit prevents silent breakage if parseInt is ever
+   * replaced with a stricter parser (Number(), parseFloat strict mode, etc.).
+   *
+   * Known suffixes: L/l (BigInteger), D (Date), T (Time), DT (DateTime)
+   */
+  private stripNumericSuffix(value: string): string {
+    return value.replace(/(?:DT|[LlDT])$/, '');
+  }
+
+  /**
    * Safely parse an integer from a token, recording an error if invalid
    */
   private parseInteger(token: Token, context?: string): number {
-    const value = parseInt(token.value, 10);
+    const value = parseInt(this.stripNumericSuffix(token.value), 10);
     if (isNaN(value)) {
       const contextMsg = context ? ` (expected ${context})` : '';
       this.recordError(`Invalid integer value: ${sanitizeContent(token.value)}${contextMsg}`, token);
@@ -4851,7 +4864,7 @@ export class Parser {
       this.advance();
       return {
         type: 'Literal',
-        value: parseInt(token.value, 10),
+        value: parseInt(this.stripNumericSuffix(token.value), 10),
         literalType: 'integer',
         startToken: token,
         endToken: token
