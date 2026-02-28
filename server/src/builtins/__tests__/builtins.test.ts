@@ -18,8 +18,8 @@ import { BuiltinRegistry } from '../builtinRegistry';
 
 describe('Builtins Module', () => {
   describe('Data Integrity - BUILTIN_FUNCTIONS', () => {
-    it('should have exactly 85 global function entries', () => {
-      expect(BUILTIN_FUNCTIONS).toHaveLength(85);
+    it('should have exactly 107 global function entries', () => {
+      expect(BUILTIN_FUNCTIONS).toHaveLength(107);
     });
 
     it('should have all required fields for each entry', () => {
@@ -412,8 +412,8 @@ describe('Builtins Module', () => {
       registry = new BuiltinRegistry();
     });
 
-    it('should have exactly 13 system type keyword entries', () => {
-      expect(SYSTEM_TYPE_KEYWORDS.size).toBe(13);
+    it('should have exactly 18 system type keyword entries', () => {
+      expect(SYSTEM_TYPE_KEYWORDS.size).toBe(18);
     });
 
     it('should recognize DATABASE as a known builtin', () => {
@@ -773,6 +773,149 @@ describe('Builtins Module', () => {
         methods.forEach((methodName) => {
           expect(registry.isRecordMethod(methodName)).toBe(true);
         });
+      });
+    });
+  });
+
+  describe('Issue #613 - Missing Builtins', () => {
+    let registry: BuiltinRegistry;
+
+    beforeEach(() => {
+      registry = new BuiltinRegistry();
+    });
+
+    describe('Missing global functions — high frequency', () => {
+      it('should recognize PRODUCTNAME as a global function with system category', () => {
+        expect(registry.isGlobalFunction('PRODUCTNAME')).toBe(true);
+        const fn = registry.getGlobalFunction('PRODUCTNAME');
+        expect(fn).toBeDefined();
+        expect(fn?.category).toBe('system');
+      });
+
+      it('should recognize COPYSTREAM as a global function with file category', () => {
+        expect(registry.isGlobalFunction('COPYSTREAM')).toBe(true);
+        const fn = registry.getGlobalFunction('COPYSTREAM');
+        expect(fn).toBeDefined();
+        expect(fn?.category).toBe('file');
+      });
+
+      it('should recognize GETURL as a global function with system category', () => {
+        expect(registry.isGlobalFunction('GETURL')).toBe(true);
+        const fn = registry.getGlobalFunction('GETURL');
+        expect(fn).toBeDefined();
+        expect(fn?.category).toBe('system');
+      });
+
+      it('should recognize CLEARLASTERROR as a global function with system category', () => {
+        expect(registry.isGlobalFunction('CLEARLASTERROR')).toBe(true);
+        const fn = registry.getGlobalFunction('CLEARLASTERROR');
+        expect(fn).toBeDefined();
+        expect(fn?.category).toBe('system');
+      });
+
+      it('should recognize SESSIONID as a global function with system category', () => {
+        expect(registry.isGlobalFunction('SESSIONID')).toBe(true);
+        const fn = registry.getGlobalFunction('SESSIONID');
+        expect(fn).toBeDefined();
+        expect(fn?.category).toBe('system');
+      });
+
+      it('should recognize ROUNDDATETIME as a global function with date category', () => {
+        expect(registry.isGlobalFunction('ROUNDDATETIME')).toBe(true);
+        const fn = registry.getGlobalFunction('ROUNDDATETIME');
+        expect(fn).toBeDefined();
+        expect(fn?.category).toBe('date');
+      });
+
+      it('should recognize ISSERVICETIER as a global function with system category', () => {
+        expect(registry.isGlobalFunction('ISSERVICETIER')).toBe(true);
+        const fn = registry.getGlobalFunction('ISSERVICETIER');
+        expect(fn).toBeDefined();
+        expect(fn?.category).toBe('system');
+      });
+    });
+
+    describe('Missing global functions — additional', () => {
+      const additionalSystemFunctions = [
+        'CURRENTCLIENTTYPE',
+        'DEFAULTCLIENTTYPE',
+        'GETLASTERRORCODE',
+        'GETLASTERROROBJECT',
+        'GETLASTERRORCALLSTACK',
+        'ENCRYPT',
+        'DECRYPT',
+        'ENCRYPTIONKEYEXISTS',
+        'IMPORTENCRYPTIONKEY',
+        'EXPORTENCRYPTIONKEY',
+      ];
+
+      additionalSystemFunctions.forEach((name) => {
+        it(`should recognize ${name} as a global function with system category`, () => {
+          expect(registry.isGlobalFunction(name)).toBe(true);
+          const fn = registry.getGlobalFunction(name);
+          expect(fn).toBeDefined();
+          expect(fn?.category).toBe('system');
+        });
+      });
+    });
+
+    describe('System object namespaces', () => {
+      const systemObjects = ['TASKSCHEDULER', 'DEBUGGER', 'FILE', 'ISOLATEDSTORAGE', 'NAVAPP'];
+
+      systemObjects.forEach((name) => {
+        it(`should recognize ${name} as a global function with system category`, () => {
+          expect(registry.isGlobalFunction(name)).toBe(true);
+          const fn = registry.getGlobalFunction(name);
+          expect(fn).toBeDefined();
+          expect(fn?.category).toBe('system');
+        });
+
+        it(`should have ${name} with empty signature (system object namespace)`, () => {
+          const fn = registry.getGlobalFunction(name);
+          expect(fn).toBeDefined();
+          expect(fn?.signature).toBe('');
+        });
+
+        it(`should NOT recognize ${name} as a record method`, () => {
+          expect(registry.isRecordMethod(name)).toBe(false);
+        });
+      });
+    });
+
+    describe('Missing type keywords', () => {
+      const missingKeywords = [
+        'NOTIFICATIONSCOPE',
+        'OBJECTTYPE',
+        'SECURITYFILTER',
+        'REPORTFORMAT',
+        'TRANSACTIONTYPE',
+      ];
+
+      missingKeywords.forEach((keyword) => {
+        it(`should recognize ${keyword} as a system type keyword`, () => {
+          expect(registry.isSystemTypeKeyword(keyword)).toBe(true);
+          expect(registry.isKnownBuiltin(keyword)).toBe(true);
+        });
+
+        it(`should recognize ${keyword} case-insensitively`, () => {
+          expect(registry.isSystemTypeKeyword(keyword.toLowerCase())).toBe(true);
+        });
+      });
+    });
+
+    describe('Count validation', () => {
+      it('BUILTIN_FUNCTIONS should have 107 entries after additions', () => {
+        expect(BUILTIN_FUNCTIONS).toHaveLength(107);
+      });
+
+      it('SYSTEM_TYPE_KEYWORDS should have 18 entries after additions', () => {
+        expect(SYSTEM_TYPE_KEYWORDS.size).toBe(18);
+      });
+
+      it('should have no duplicate names in BUILTIN_FUNCTIONS', () => {
+        const names = BUILTIN_FUNCTIONS.map((fn) => fn.name.toUpperCase());
+        const uniqueNames = new Set(names);
+        expect(uniqueNames.size).toBe(names.length);
       });
     });
   });

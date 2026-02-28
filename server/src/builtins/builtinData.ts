@@ -275,6 +275,12 @@ const DATE_FUNCTIONS: BuiltinFunction[] = [
     signature: '(): DateTime',
     documentation: 'Returns the current DateTime.',
     category: 'date'
+  },
+  {
+    name: 'ROUNDDATETIME',
+    signature: '(DateTime [, Precision] [, Direction]): DateTime',
+    documentation: 'Rounds a DateTime value to the nearest unit of precision.',
+    category: 'date'
   }
 ];
 
@@ -461,6 +467,132 @@ const SYSTEM_FUNCTIONS: BuiltinFunction[] = [
     signature: '(DotNetObject): Boolean',
     documentation: 'Returns TRUE if the DotNet variable has been set to null.',
     category: 'system'
+  },
+
+  // ── Missing from #613 ────────────────────────────────────────────────────
+
+  {
+    name: 'PRODUCTNAME',
+    signature: '(): Text',
+    documentation: 'Returns the full product name of the application (e.g. "Microsoft Dynamics 365 Business Central").',
+    category: 'system'
+  },
+  {
+    name: 'GETURL',
+    signature: '(ClientType [, CompanyName] [, ObjectType] [, ObjectID] [, ObjectRecord] [, IsExternalNavApp]): Text',
+    documentation: 'Returns a URL for the specified object or page. Introduced in NAV 2017.',
+    category: 'system'
+  },
+  {
+    name: 'CLEARLASTERROR',
+    signature: '()',
+    documentation: 'Clears the last error message, allowing subsequent GETLASTERRORTEXT calls to return an empty string.',
+    category: 'system'
+  },
+  {
+    name: 'SESSIONID',
+    signature: '(): Integer',
+    documentation: 'Returns the ID of the current session.',
+    category: 'system'
+  },
+  {
+    name: 'ISSERVICETIER',
+    signature: '(): Boolean',
+    documentation: 'Returns TRUE if the current code is executing on the server (service tier), FALSE on the client.',
+    category: 'system'
+  },
+  {
+    name: 'CURRENTCLIENTTYPE',
+    signature: '(): ClientType',
+    documentation: 'Returns the client type for the current session (e.g. CLIENTTYPE::Windows, CLIENTTYPE::Web). Introduced in NAV 2013.',
+    category: 'system'
+  },
+  {
+    name: 'DEFAULTCLIENTTYPE',
+    signature: '(): ClientType',
+    documentation: 'Returns the default client type configured for the server. Introduced in NAV 2013.',
+    category: 'system'
+  },
+  {
+    name: 'GETLASTERRORCODE',
+    signature: '(): Text',
+    documentation: 'Returns the error code of the last error that occurred. Introduced in NAV 2015.',
+    category: 'system'
+  },
+  {
+    name: 'GETLASTERROROBJECT',
+    signature: '(): DotNet',
+    documentation: 'Returns the .NET exception object for the last error. Introduced in NAV 2015.',
+    category: 'system'
+  },
+  {
+    name: 'GETLASTERRORCALLSTACK',
+    signature: '(): Text',
+    documentation: 'Returns the call stack of the last error as a text string. Introduced in NAV 2016.',
+    category: 'system'
+  },
+  {
+    name: 'ENCRYPT',
+    signature: '(PlainText: Text): Text',
+    documentation: 'Encrypts a string using the server encryption key. Introduced in NAV 2015.',
+    category: 'system'
+  },
+  {
+    name: 'DECRYPT',
+    signature: '(CipherText: Text): Text',
+    documentation: 'Decrypts an encrypted string using the server encryption key. Introduced in NAV 2015.',
+    category: 'system'
+  },
+  {
+    name: 'ENCRYPTIONKEYEXISTS',
+    signature: '(): Boolean',
+    documentation: 'Returns TRUE if a server encryption key exists. Introduced in NAV 2015.',
+    category: 'system'
+  },
+  {
+    name: 'IMPORTENCRYPTIONKEY',
+    signature: '(FilePath: Text)',
+    documentation: 'Imports an encryption key file. Introduced in NAV 2015.',
+    category: 'system'
+  },
+  {
+    name: 'EXPORTENCRYPTIONKEY',
+    signature: '(FilePath: Text)',
+    documentation: 'Exports the current encryption key to a file. Introduced in NAV 2015.',
+    category: 'system'
+  },
+
+  // ── System object namespaces (used as OBJECT.METHOD() receivers) ──────────
+
+  {
+    name: 'TASKSCHEDULER',
+    signature: '',
+    documentation: 'Built-in system object for task scheduling. Used as a receiver: TASKSCHEDULER.CREATETASK(), TASKSCHEDULER.CANCELTASK(), TASKSCHEDULER.TASKEXISTS().',
+    category: 'system'
+  },
+  {
+    name: 'DEBUGGER',
+    signature: '',
+    documentation: 'Built-in system object for debugger control. Used as a receiver: DEBUGGER.ACTIVATE(), DEBUGGER.DEACTIVATE(), DEBUGGER.ISACTIVE().',
+    category: 'system'
+  },
+  {
+    name: 'FILE',
+    signature: '',
+    documentation: 'Built-in system object for static file operations. Used as a receiver: FILE.COPY(), FILE.EXISTS(), FILE.ERASE(). Also a variable type for file handles.',
+    category: 'system'
+  },
+  {
+    name: 'ISOLATEDSTORAGE',
+    signature: '',
+    documentation: 'Built-in system object for isolated key-value storage. Used as a receiver: ISOLATEDSTORAGE.SET(), ISOLATEDSTORAGE.GET(), ISOLATEDSTORAGE.CONTAINS(). Introduced in BC13.',
+    category: 'system'
+  },
+  {
+    name: 'NAVAPP',
+    signature: '',
+    documentation: 'Built-in system object for NAV/BC app metadata. Used as a receiver: NAVAPP.GETARCHIVERECORD(), NAVAPP.ISINSTALLED(), NAVAPP.GETID(). Introduced in NAV 2016.',
+    category: 'system'
   }
 ];
 
@@ -520,6 +652,12 @@ const FILE_FUNCTIONS: BuiltinFunction[] = [
     name: 'TEMPORARYPATH',
     signature: '(): Text',
     documentation: 'Returns the path to the temporary files directory.',
+    category: 'file'
+  },
+  {
+    name: 'COPYSTREAM',
+    signature: '(InStream, OutStream)',
+    documentation: 'Copies the content of an InStream to an OutStream.',
     category: 'file'
   }
 ];
@@ -1051,6 +1189,14 @@ export const SYSTEM_TYPE_KEYWORDS: Set<string> = new Set([
   'VERBOSITY',           // Enum for SENDTRACETAG: Verbosity::Normal, Verbosity::Warning, etc. (BC14)
   'CLIENTTYPE',          // Enum for CURRENTCLIENTTYPE: CLIENTTYPE::Windows, CLIENTTYPE::Web, etc.
   'TEXTENCODING',        // Enum for file I/O encoding: TEXTENCODING::MSDos, TEXTENCODING::UTF8, etc.
+
+  // ── Missing from #613 ────────────────────────────────────────────────────
+
+  'NOTIFICATIONSCOPE',   // Enum for notification scope: NOTIFICATIONSCOPE::LocalScope, NOTIFICATIONSCOPE::Global
+  'OBJECTTYPE',          // Enum for object types: OBJECTTYPE::Table, OBJECTTYPE::Page, OBJECTTYPE::Codeunit, etc.
+  'SECURITYFILTER',      // Enum for security filtering: SECURITYFILTER::Filtered, SECURITYFILTER::Validated, etc.
+  'REPORTFORMAT',        // Enum for report output format: REPORTFORMAT::Rdlc, REPORTFORMAT::Word, REPORTFORMAT::Excel
+  'TRANSACTIONTYPE',     // Enum for transaction types: TRANSACTIONTYPE::Browse, TRANSACTIONTYPE::UpdateNoLocks, etc.
 ]);
 
 /**
