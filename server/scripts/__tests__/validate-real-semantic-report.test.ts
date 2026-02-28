@@ -17,6 +17,7 @@ import {
   objectType,
   generateMarkdownReport,
   validateAllRealFiles,
+  buildProcedureRegistry,
   SemanticValidationResult
 } from '../validate-real-semantic';
 
@@ -580,6 +581,157 @@ describe('generateMarkdownReport (semantic)', () => {
   });
 });
 
+describe('buildProcedureRegistry', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return an empty map when given no files', () => {
+    const registry = buildProcedureRegistry('/some/dir', []);
+
+    expect(registry).toBeInstanceOf(Map);
+    expect(registry.size).toBe(0);
+  });
+
+  it('should extract procedures from table objects', () => {
+    (readFileWithEncoding as unknown as jest.Mock).mockReturnValue({
+      content: 'OBJECT Table 18 Customer\n{}\n'
+    });
+
+    const mockLexer = { tokenize: jest.fn().mockReturnValue([]) };
+    (Lexer as unknown as jest.Mock).mockImplementation(() => mockLexer);
+
+    const mockParser = {
+      parse: jest.fn().mockReturnValue({
+        object: {
+          objectKind: 'Table',
+          objectId: 18,
+          objectName: 'Customer',
+          code: {
+            procedures: [
+              { name: 'MyProc' },
+              { name: 'AnotherProc' }
+            ]
+          }
+        }
+      })
+    };
+    (Parser as unknown as jest.Mock).mockImplementation(() => mockParser);
+
+    const registry = buildProcedureRegistry('/some/dir', ['table.txt']);
+
+    expect(registry.get(18)).toEqual(new Set(['MYPROC', 'ANOTHERPROC']));
+  });
+
+  it('should skip non-table objects (codeunits)', () => {
+    (readFileWithEncoding as unknown as jest.Mock).mockReturnValue({
+      content: 'OBJECT Codeunit 50000 Test\n{}\n'
+    });
+
+    const mockLexer = { tokenize: jest.fn().mockReturnValue([]) };
+    (Lexer as unknown as jest.Mock).mockImplementation(() => mockLexer);
+
+    const mockParser = {
+      parse: jest.fn().mockReturnValue({
+        object: {
+          objectKind: 'Codeunit',
+          objectId: 50000,
+          objectName: 'Test',
+          code: {
+            procedures: [{ name: 'DoSomething' }]
+          }
+        }
+      })
+    };
+    (Parser as unknown as jest.Mock).mockImplementation(() => mockParser);
+
+    const registry = buildProcedureRegistry('/some/dir', ['codeunit.txt']);
+
+    expect(registry.size).toBe(0);
+  });
+
+  it('should store procedure names in uppercase', () => {
+    (readFileWithEncoding as unknown as jest.Mock).mockReturnValue({
+      content: 'OBJECT Table 18 Customer\n{}\n'
+    });
+
+    const mockLexer = { tokenize: jest.fn().mockReturnValue([]) };
+    (Lexer as unknown as jest.Mock).mockImplementation(() => mockLexer);
+
+    const mockParser = {
+      parse: jest.fn().mockReturnValue({
+        object: {
+          objectKind: 'Table',
+          objectId: 18,
+          objectName: 'Customer',
+          code: {
+            procedures: [{ name: 'myProc' }]
+          }
+        }
+      })
+    };
+    (Parser as unknown as jest.Mock).mockImplementation(() => mockParser);
+
+    const registry = buildProcedureRegistry('/some/dir', ['table.txt']);
+
+    const procedures = registry.get(18);
+    expect(procedures?.has('MYPROC')).toBe(true);
+    expect(procedures?.has('myProc')).toBe(false);
+  });
+
+  it('should skip tables with no code section', () => {
+    (readFileWithEncoding as unknown as jest.Mock).mockReturnValue({
+      content: 'OBJECT Table 18 Customer\n{}\n'
+    });
+
+    const mockLexer = { tokenize: jest.fn().mockReturnValue([]) };
+    (Lexer as unknown as jest.Mock).mockImplementation(() => mockLexer);
+
+    const mockParser = {
+      parse: jest.fn().mockReturnValue({
+        object: {
+          objectKind: 'Table',
+          objectId: 18,
+          objectName: 'Customer',
+          code: undefined
+        }
+      })
+    };
+    (Parser as unknown as jest.Mock).mockImplementation(() => mockParser);
+
+    const registry = buildProcedureRegistry('/some/dir', ['table.txt']);
+
+    expect(registry.size).toBe(0);
+  });
+
+  it('should skip tables with zero procedures', () => {
+    (readFileWithEncoding as unknown as jest.Mock).mockReturnValue({
+      content: 'OBJECT Table 18 Customer\n{}\n'
+    });
+
+    const mockLexer = { tokenize: jest.fn().mockReturnValue([]) };
+    (Lexer as unknown as jest.Mock).mockImplementation(() => mockLexer);
+
+    const mockParser = {
+      parse: jest.fn().mockReturnValue({
+        object: {
+          objectKind: 'Table',
+          objectId: 18,
+          objectName: 'Customer',
+          code: {
+            procedures: []
+          }
+        }
+      })
+    };
+    (Parser as unknown as jest.Mock).mockImplementation(() => mockParser);
+
+    const registry = buildProcedureRegistry('/some/dir', ['table.txt']);
+
+    expect(registry.size).toBe(0);
+  });
+});
+
 describe('validateAllRealFiles', () => {
   // Suppress console.log output during tests
   let consoleLogSpy: jest.SpyInstance;
@@ -632,11 +784,11 @@ describe('validateAllRealFiles', () => {
       expect(results[1].file).toBe('file3.TXT');
     });
 
-    it('should call readFileWithEncoding 3N times (table registry + field registry + validation)', () => {
+    it('should call readFileWithEncoding 4N times (table registry + field registry + procedure registry + validation)', () => {
       const mockFiles = ['table1.txt', 'table2.txt'];
       (readdirSync as unknown as jest.Mock).mockReturnValue(mockFiles);
 
-      // Use mockReturnValue to return same content for all 3 phases
+      // Use mockReturnValue to return same content for all 4 phases
       (readFileWithEncoding as unknown as jest.Mock).mockReturnValue({
         content: 'OBJECT Table 18 Customer\n{\n  FIELDS { { 1 ; ; No. ; Code20 } }\n}\n'
       });
@@ -655,6 +807,9 @@ describe('validateAllRealFiles', () => {
               fields: [
                 { fieldName: 'No.', dataType: { type: 'Code20' } }
               ]
+            },
+            code: {
+              procedures: []
             }
           }
         })
@@ -676,9 +831,9 @@ describe('validateAllRealFiles', () => {
 
       validateAllRealFiles();
 
-      // N files × 3 phases (table registry + field registry + validation loop)
-      // = 2 files × 3 = 6 calls
-      expect(readFileWithEncoding).toHaveBeenCalledTimes(6);
+      // N files × 4 phases (table registry + field registry + procedure registry + validation loop)
+      // = 2 files × 4 = 8 calls
+      expect(readFileWithEncoding).toHaveBeenCalledTimes(8);
     });
 
     it('should build table registry from all files', () => {
@@ -815,7 +970,7 @@ describe('validateAllRealFiles', () => {
       expect(options.tableRegistryPopulated).toBe(true);
     });
 
-    it('should pass fieldRegistry and tableRegistry to analyzer.analyze', () => {
+    it('should pass fieldRegistry, tableRegistry, and procedureRegistry to analyzer.analyze', () => {
       const mockFiles = ['test.txt'];
       (readdirSync as unknown as jest.Mock).mockReturnValue(mockFiles);
       (readFileWithEncoding as unknown as jest.Mock).mockReturnValue({
@@ -843,12 +998,13 @@ describe('validateAllRealFiles', () => {
 
       validateAllRealFiles();
 
-      // Verify analyzer.analyze received both registries
+      // Verify analyzer.analyze received all three registries
       const analyzeCall = mockAnalyzer.analyze.mock.calls[0];
       const options = analyzeCall[3]; // 4th argument (options object)
 
       expect(options.fieldRegistry).toBeInstanceOf(Map);
       expect(options.tableRegistry).toBeInstanceOf(Map);
+      expect(options.procedureRegistry).toBeInstanceOf(Map);
     });
   });
 
