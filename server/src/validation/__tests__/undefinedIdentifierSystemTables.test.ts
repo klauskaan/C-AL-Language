@@ -157,4 +157,42 @@ describe('UndefinedIdentifierValidator - System Table Integration', () => {
       expect(dateFields!.has('PERIOD END')).toBe(true);
     });
   });
+
+  describe('Codeunit TableNo field injection (Integer table 2000000026)', () => {
+    it('should not produce undefined-identifier for Number field in codeunit with TableNo=2000000026', () => {
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 "Test Integer Codeunit"
+{
+  PROPERTIES
+  {
+    TableNo=2000000026;
+    OnRun=BEGIN
+            IF Number = 0 THEN
+              EXIT;
+          END;
+
+  }
+  CODE
+  {
+  }
+}`;
+
+      const diagnostics = validateWithWorkspaceIndex(code);
+
+      const numberError = diagnostics.find(d =>
+        d.message.includes('Number') && d.code === 'undefined-identifier'
+      );
+      expect(numberError).toBeUndefined();
+    });
+
+    it('should have Integer table (2000000026) in WorkspaceIndex field registry (codeunit path precondition)', () => {
+      const workspaceIndex = new WorkspaceIndex();
+      const fieldRegistry = workspaceIndex.getFieldRegistry();
+
+      expect(fieldRegistry.has(2000000026)).toBe(true);
+      const integerFields = fieldRegistry.get(2000000026);
+      expect(integerFields).toBeDefined();
+      expect(integerFields!.has('NUMBER')).toBe(true);
+    });
+  });
 });
