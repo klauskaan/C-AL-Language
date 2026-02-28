@@ -3779,3 +3779,228 @@ describe('UndefinedIdentifierValidator - Member Property Validation: Suppression
     expect(localProcError).toBeUndefined();
   });
 });
+
+describe('UndefinedIdentifierValidator - Codeunit TableNo Implicit Rec', () => {
+  it('should not flag Rec when codeunit has TableNo property', () => {
+    const code = `OBJECT Codeunit 416 "Release Service Document"
+{
+  PROPERTIES
+  {
+    TableNo=5900;
+    OnRun=BEGIN
+            TESTFIELD(Status);
+          END;
+  }
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      Rec.INIT;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[5900, 'Service Header']]);
+
+    const diagnostics = validateUndefinedIdentifiers(code, tableRegistry);
+
+    const recError = diagnostics.find(d => d.message.includes("'Rec'"));
+    expect(recError).toBeUndefined();
+  });
+
+  it('should flag xRec as undefined when codeunit has TableNo property', () => {
+    const code = `OBJECT Codeunit 416 "Release Service Document"
+{
+  PROPERTIES
+  {
+    TableNo=5900;
+    OnRun=BEGIN
+            xRec.INIT;
+          END;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[5900, 'Service Header']]);
+
+    const diagnostics = validateUndefinedIdentifiers(code, tableRegistry);
+
+    const xRecError = diagnostics.find(d => d.message.includes("'xRec'"));
+    expect(xRecError).toBeDefined();
+  });
+
+  it('should flag Rec as undefined when codeunit has no TableNo property', () => {
+    const code = `OBJECT Codeunit 50000 "Utility Codeunit"
+{
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      Rec.INIT;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const recError = diagnostics.find(d => d.message.includes("'Rec'"));
+    expect(recError).toBeDefined();
+  });
+
+  it('should not flag Rec used in OnRun trigger when codeunit has TableNo', () => {
+    const code = `OBJECT Codeunit 416 "Release Service Document"
+{
+  PROPERTIES
+  {
+    TableNo=5900;
+    OnRun=BEGIN
+            Rec.TESTFIELD(Status);
+          END;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[5900, 'Service Header']]);
+
+    const diagnostics = validateUndefinedIdentifiers(code, tableRegistry);
+
+    const recError = diagnostics.find(d => d.message.includes("'Rec'"));
+    expect(recError).toBeUndefined();
+  });
+});
+
+describe('UndefinedIdentifierValidator - Codeunit TableNo Field Integration', () => {
+  it('should not flag bare field name from source table when codeunit has TableNo and field registry is provided', () => {
+    const code = `OBJECT Codeunit 416 "Release Service Document"
+{
+  PROPERTIES
+  {
+    TableNo=5900;
+    OnRun=BEGIN
+            TESTFIELD(Status);
+          END;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[5900, 'Service Header']]);
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const serviceHeaderFields = new Map<string, FieldInfo>();
+    serviceHeaderFields.set('STATUS', { originalName: 'Status', typeName: 'Option' });
+    serviceHeaderFields.set('NO.', { originalName: 'No.', typeName: 'Code20' });
+    fieldRegistry.set(5900, serviceHeaderFields);
+
+    const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+    const statusError = diagnostics.find(d => d.message.includes("'Status'"));
+    expect(statusError).toBeUndefined();
+  });
+
+  it('should flag bare field name that is NOT in the source table', () => {
+    const code = `OBJECT Codeunit 416 "Release Service Document"
+{
+  PROPERTIES
+  {
+    TableNo=5900;
+    OnRun=BEGIN
+            NonExistentField := 'test';
+          END;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[5900, 'Service Header']]);
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const serviceHeaderFields = new Map<string, FieldInfo>();
+    serviceHeaderFields.set('STATUS', { originalName: 'Status', typeName: 'Option' });
+    fieldRegistry.set(5900, serviceHeaderFields);
+
+    const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+    const fieldError = diagnostics.find(d => d.message.includes("'NonExistentField'"));
+    expect(fieldError).toBeDefined();
+  });
+
+  it('should not crash and should not inject fields when TableNo table is not in field registry', () => {
+    const code = `OBJECT Codeunit 416 "Release Service Document"
+{
+  PROPERTIES
+  {
+    TableNo=5900;
+    OnRun=BEGIN
+            TESTFIELD(Status);
+          END;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[5900, 'Service Header']]);
+    // Table 5900 deliberately absent from fieldRegistry
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+
+    // Should not throw
+    const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+    // Status is unknown (not in field registry) so should be flagged
+    const statusError = diagnostics.find(d => d.message.includes("'Status'"));
+    expect(statusError).toBeDefined();
+  });
+
+  it('should inject Rec but not inject fields when no field registry is provided', () => {
+    const code = `OBJECT Codeunit 416 "Release Service Document"
+{
+  PROPERTIES
+  {
+    TableNo=5900;
+    OnRun=BEGIN
+            Rec.INIT;
+            BareFieldName := 'test';
+          END;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[5900, 'Service Header']]);
+    // No field registry provided
+
+    const diagnostics = validateUndefinedIdentifiers(code, tableRegistry);
+
+    // Rec should be injected — no warning for it
+    const recError = diagnostics.find(d => d.message.includes("'Rec'"));
+    expect(recError).toBeUndefined();
+
+    // Bare field name should warn since no field registry is available
+    const bareFieldError = diagnostics.find(d => d.message.includes("'BareFieldName'"));
+    expect(bareFieldError).toBeDefined();
+  });
+});

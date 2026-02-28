@@ -508,11 +508,12 @@ export class SymbolTable {
    * These variables are always available in specific object types but are never
    * explicitly declared in C/AL source code.
    *
-   * - Table:   Rec, xRec, CurrFieldNo
-   * - Page:    Rec, xRec, CurrPage
-   * - Report:  Rec, CurrReport
-   * - XMLport: currXMLport
-   * - Query:   currQuery
+   * - Table:    Rec, xRec, CurrFieldNo
+   * - Page:     Rec, xRec, CurrPage
+   * - Report:   Rec, CurrReport
+   * - XMLport:  currXMLport
+   * - Query:    currQuery
+   * - Codeunit: Rec (only when TableNo property is set)
    */
   private injectImplicitVariables(objectDecl: ObjectDeclaration): void {
     const { objectKind, objectId, startToken } = objectDecl;
@@ -547,7 +548,19 @@ export class SymbolTable {
       case ObjectKind.Query:
         inject('currQuery', 'Query');
         break;
-      // Codeunit, MenuSuite: no implicit variables
+      case ObjectKind.Codeunit: {
+        // Codeunits with TableNo get an implicit Rec variable typed as Record <tableId>
+        // xRec is NOT injected for codeunits (only available in table/page contexts)
+        const tableNoProp = findProperty(objectDecl, 'tableno');
+        if (tableNoProp?.value) {
+          const tableId = parseInt(tableNoProp.value, 10);
+          if (!isNaN(tableId)) {
+            inject('Rec', `Record ${tableId}`);
+          }
+        }
+        break;
+      }
+      // MenuSuite: no implicit variables
     }
   }
 
@@ -617,6 +630,30 @@ export class SymbolTable {
                 name: procName,
                 kind: 'procedure',
                 token: makeSyntheticToken(procName, ast.object.startToken),
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Inject TableNo fields for codeunits BEFORE the AST walk
+    if (ast.object.objectKind === ObjectKind.Codeunit && fieldRegistry) {
+      const tableNoProp = findProperty(ast.object, 'tableno');
+      if (tableNoProp?.value) {
+        const tableId = parseInt(tableNoProp.value, 10);
+        if (!isNaN(tableId)) {
+          const tableFields = fieldRegistry.get(tableId);
+
+          if (tableFields) {
+            // Inject each field into root scope with kind='field'
+            // Note: keys are uppercase, use fieldInfo.originalName to preserve casing
+            for (const [_uppercaseKey, fieldInfo] of tableFields) {
+              this.rootScope.addSymbol({
+                name: fieldInfo.originalName,
+                kind: 'field',
+                token: makeSyntheticToken(fieldInfo.originalName, ast.object.startToken),
+                type: fieldInfo.typeName
               });
             }
           }
