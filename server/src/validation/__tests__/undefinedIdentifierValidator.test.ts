@@ -4191,3 +4191,38 @@ describe('UndefinedIdentifierValidator - Codeunit TableNo=0 guard', () => {
     expect(recError).toBeUndefined();
   });
 });
+
+describe('UndefinedIdentifierValidator - Page SourceTable=0 guard', () => {
+  it('should flag bare PhantomField as undefined when page has SourceTable=Table0 (independently tests field injection guard)', () => {
+    // This test independently exercises the pageSourceTableId > 0 guard in buildFromAST().
+    // Without the guard, PhantomField would be injected from table 0 and would NOT be flagged.
+    // SourceTable=Table0 is not a real-world pattern, but the guard provides defense-in-depth
+    // symmetric with the codeunit TableNo=0 guard.
+    const code = `OBJECT Page 50000 "No Source Table Page"
+{
+  PROPERTIES
+  {
+    SourceTable=Table0;
+  }
+  CODE
+  {
+    PROCEDURE TestProc();
+    BEGIN
+      PhantomField := 42;
+    END;
+  }
+}`;
+
+    const tableRegistry = new Map<number, string>([[0, 'Phantom Table']]);
+    const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+    const phantomFields = new Map<string, FieldInfo>();
+    phantomFields.set('PHANTOMFIELD', { originalName: 'PhantomField', typeName: 'Integer' });
+    fieldRegistry.set(0, phantomFields);
+
+    const diagnostics = validateUndefinedIdentifiers(code, tableRegistry, fieldRegistry);
+
+    // PhantomField must be flagged — the guard prevented injection from table 0
+    const phantomError = diagnostics.find(d => d.message.includes("'PhantomField'") && d.code === 'undefined-identifier');
+    expect(phantomError).toBeDefined();
+  });
+});
