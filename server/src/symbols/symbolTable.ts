@@ -181,6 +181,7 @@ const PAGE_TRIGGER_IMPLICIT_PARAMS = new Map<string, { name: string; type: strin
   ['onqueryclosepage', { name: 'CloseAction', type: 'Action' }],
   ['onlookup',         { name: 'Text', type: 'Text' }],
   ['ondrilldown',      { name: 'Text', type: 'Text' }],
+  ['onassistedit',     { name: 'Text', type: 'Text' }],
 ]);
 
 /**

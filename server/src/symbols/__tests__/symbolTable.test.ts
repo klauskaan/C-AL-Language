@@ -2284,6 +2284,33 @@ describe('Page trigger implicit parameters', () => {
     expect(textSymbol?.type).toBe('Text');
   });
 
+  it('should inject Text parameter into OnAssistEdit control trigger scope', () => {
+    // control-level trigger in CONTROLS section
+    const code = `OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  CONTROLS
+  {
+    { 1   ;1   ;Field     ;
+                SourceExpr=SomeField;
+                OnAssistEdit=BEGIN
+                               Text := 'test';
+                             END;
+                              }
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+    const rootScope = symbolTable.getRootScope();
+    expect(rootScope.children.length).toBeGreaterThan(0);
+    const triggerScope = rootScope.children[0];
+    const textSymbol = triggerScope.getOwnSymbol('Text');
+    expect(textSymbol).toBeDefined();
+    expect(textSymbol?.kind).toBe('parameter');
+    expect(textSymbol?.type).toBe('Text');
+  });
+
   it('should not inject Text into table field OnLookup trigger scope', () => {
     // Table field OnLookup does NOT have an implicit Text parameter
     const code = `OBJECT Table 50000 TestTable
