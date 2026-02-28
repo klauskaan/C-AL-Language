@@ -38,7 +38,8 @@ import { FieldInfo } from '../../workspaceSymbol/workspaceIndex';
 function validateUndefinedIdentifiers(
   code: string,
   tableRegistry?: ReadonlyMap<number, string>,
-  fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>
+  fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>,
+  procedureRegistry?: ReadonlyMap<number, ReadonlyMap<string, string>>
 ): Diagnostic[] {
   const lexer = new Lexer(code);
   const tokens = lexer.tokenize();
@@ -46,7 +47,7 @@ function validateUndefinedIdentifiers(
   const ast = parser.parse();
 
   const symbolTable = new SymbolTable();
-  symbolTable.buildFromAST(ast, tableRegistry, fieldRegistry);
+  symbolTable.buildFromAST(ast, tableRegistry, fieldRegistry, procedureRegistry);
 
   const builtins = new BuiltinRegistry();
 
@@ -57,7 +58,8 @@ function validateUndefinedIdentifiers(
     documentUri: 'file:///test.cal',
     userTablesIndexed: tableRegistry !== undefined && tableRegistry.size > 0,
     fieldRegistry,
-    tableRegistry
+    tableRegistry,
+    procedureRegistry
   };
 
   const validator = new UndefinedIdentifierValidator();
