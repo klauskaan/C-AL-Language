@@ -557,13 +557,13 @@ const SYSTEM_FUNCTIONS: BuiltinFunction[] = [
   },
   {
     name: 'IMPORTENCRYPTIONKEY',
-    signature: '(FilePath: Text)',
+    signature: '(FileName: Text, Password: Text)',
     documentation: 'Imports an encryption key file. Introduced in NAV 2015.',
     category: 'system'
   },
   {
     name: 'EXPORTENCRYPTIONKEY',
-    signature: '(FilePath: Text)',
+    signature: '(FileName: Text, Password: Text)',
     documentation: 'Exports the current encryption key to a file. Introduced in NAV 2015.',
     category: 'system'
   },
