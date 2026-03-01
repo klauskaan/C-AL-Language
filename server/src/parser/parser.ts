@@ -6499,7 +6499,9 @@ export class Parser {
         } else if (state === 'name') {
           nameTokens.push(token);
         } else if (state === 'rest') {
-          restTokens.push(token);
+          if (token.type !== TokenType.RightBrace) {
+            restTokens.push(token);
+          }
         }
       }
 
@@ -6603,7 +6605,9 @@ export class Parser {
         } else if (state === 'name') {
           nameTokens.push(token);
         } else if (state === 'rest') {
-          restTokens.push(token);
+          if (token.type !== TokenType.RightBrace) {
+            restTokens.push(token);
+          }
         }
       }
 
@@ -6689,10 +6693,6 @@ export class Parser {
         // Collect value tokens from i+2 until next property (identifier followed by =) or end
         const valueTokens: Token[] = [];
         for (let j = i + 2; j < tokens.length; j++) {
-          // Stop at closing brace (end of element row, leaked in at rowDepth)
-          if (tokens[j].value === '}') {
-            break;
-          }
           // Stop if this token is followed by '=' (start of next property)
           if (j + 1 < tokens.length && tokens[j + 1].value === '=') {
             break;
