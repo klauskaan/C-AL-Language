@@ -59,6 +59,7 @@ export const SYSTEM_TABLE_NAMES: ReadonlyMap<number, string> = new Map([
   [2000000120, 'User'],
   [2000000136, 'Table Metadata'],
   [2000000138, 'Page Metadata'],
+  [2000000146, 'Intelligent Cloud'],
   [2000000150, 'Report Layout'],
   [2000000151, 'NAV App Tenant App'],
   [2000000153, 'NAV App Installed App'],
@@ -71,6 +72,11 @@ export const SYSTEM_TABLE_NAMES: ReadonlyMap<number, string> = new Map([
   [2000000167, 'Membership Entitlement'],
   [2000000168, 'Tenant Web Service'],
   [2000000178, 'All Profile'],
+  // Both 2000000167 and 2000000195 are legitimately named 'Membership Entitlement' in BC14 (confirmed
+  // via COD9002 and related codeunits). 2000000167 is the tenant permission set variant (Role ID, Scope,
+  // App fields); 2000000195 is the SaaS entitlement check table (used with ISEMPTY/COUNT only).
+  // The duplicate name is cosmetic only — all lookups are by numeric ID.
+  [2000000195, 'Membership Entitlement'],
   [2000000196, 'Object Options'],
   [2000000200, 'NAV App Tenant Operation'],
   [2000000204, 'Page Info And Fields'],
@@ -409,6 +415,7 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
   [2000000004, new Map<string, FieldInfo>([
     ['ROLE ID', { originalName: 'Role ID', typeName: 'Code20' }],
     ['NAME', { originalName: 'Name', typeName: 'Text30' }],
+    ['HASH', { originalName: 'Hash', typeName: 'Text250' }],
   ])],
   [2000000049, new Map<string, FieldInfo>([
     ['LINE TYPE', { originalName: 'Line Type', typeName: 'Option' }],
@@ -432,5 +439,8 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
     ['DATE', { originalName: 'Date', typeName: 'Date' }],
     ['TIME', { originalName: 'Time', typeName: 'Time' }],
     ['PAGE METADATA DELTA', { originalName: 'Page Metadata Delta', typeName: 'BLOB' }],
+  ])],
+  [2000000146, new Map<string, FieldInfo>([
+    ['ENABLED', { originalName: 'Enabled', typeName: 'Boolean' }],
   ])],
 ]);
