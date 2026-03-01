@@ -591,7 +591,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have correct field count', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000004);
       expect(fields).toBeDefined();
-      expect(fields!.size).toBe(2);
+      expect(fields!.size).toBe(3);
     });
     it('should have Role ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000004);
@@ -600,6 +600,10 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Name field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000004);
       expect(fields!.get('NAME')).toEqual({ originalName: 'Name', typeName: 'Text30' });
+    });
+    it('should have Hash field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000004);
+      expect(fields!.get('HASH')).toEqual({ originalName: 'Hash', typeName: 'Text250' });
     });
   });
 

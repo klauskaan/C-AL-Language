@@ -409,6 +409,7 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
   [2000000004, new Map<string, FieldInfo>([
     ['ROLE ID', { originalName: 'Role ID', typeName: 'Code20' }],
     ['NAME', { originalName: 'Name', typeName: 'Text30' }],
+    ['HASH', { originalName: 'Hash', typeName: 'Text250' }],
   ])],
   [2000000049, new Map<string, FieldInfo>([
     ['LINE TYPE', { originalName: 'Line Type', typeName: 'Option' }],
