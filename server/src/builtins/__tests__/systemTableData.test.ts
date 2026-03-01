@@ -101,6 +101,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have a Number field with uppercase key', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000026);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(1);
       expect(fields!.has('NUMBER')).toBe(true);
     });
 
@@ -120,6 +121,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have a Period Start field with uppercase key', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000007);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(5);
       expect(fields!.has('PERIOD START')).toBe(true);
     });
 
@@ -148,6 +150,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Field Caption field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000041);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(17);
       expect(fields!.get('FIELD CAPTION')).toEqual({ originalName: 'Field Caption', typeName: 'Text80' });
     });
   });
@@ -156,6 +159,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Contact Email field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000120);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(12);
       expect(fields!.get('CONTACT EMAIL')).toEqual({ originalName: 'Contact Email', typeName: 'Text250' });
     });
 
@@ -170,6 +174,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have TableType field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000136);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(12);
       expect(fields!.get('TABLETYPE')).toEqual({ originalName: 'TableType', typeName: 'Option' });
     });
 
@@ -184,6 +189,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Role Name field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000005);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(11);
       expect(fields!.get('ROLE NAME')).toEqual({ originalName: 'Role Name', typeName: 'Text30' });
     });
 
@@ -198,6 +204,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have App Package ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000038);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(4);
       expect(fields!.get('APP PACKAGE ID')).toEqual({ originalName: 'App Package ID', typeName: 'GUID' });
     });
   });
@@ -206,6 +213,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have CardPageID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000138);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(7);
       expect(fields!.get('CARDPAGEID')).toEqual({ originalName: 'CardPageID', typeName: 'Integer' });
     });
 
@@ -226,6 +234,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Business Profile Id field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000006);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(5);
       expect(fields!.get('BUSINESS PROFILE ID')).toEqual({ originalName: 'Business Profile Id', typeName: 'Text250' });
     });
 
@@ -240,6 +249,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Caption field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000001);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(14);
       expect(fields!.get('CAPTION')).toEqual({ originalName: 'Caption', typeName: 'Text250' });
     });
   });
@@ -248,6 +258,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have App Package ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000058);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(6);
       expect(fields!.get('APP PACKAGE ID')).toEqual({ originalName: 'App Package ID', typeName: 'GUID' });
     });
   });
@@ -300,6 +311,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Language ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000045);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(5);
       expect(fields!.get('LANGUAGE ID')).toEqual({ originalName: 'Language ID', typeName: 'Integer' });
     });
     it('should have Localization Exist field', () => {
@@ -312,6 +324,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have User Security ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000053);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(7);
       expect(fields!.get('USER SECURITY ID')).toEqual({ originalName: 'User Security ID', typeName: 'GUID' });
     });
     it('should have App Name field', () => {
@@ -324,6 +337,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have User SID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000073);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(13);
       expect(fields!.get('USER SID')).toEqual({ originalName: 'User SID', typeName: 'GUID' });
     });
     it('should have License Type field', () => {
@@ -336,6 +350,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have User SID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000075);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(6);
       expect(fields!.get('USER SID')).toEqual({ originalName: 'User SID', typeName: 'GUID' });
     });
     it('should have User ID field', () => {
@@ -348,6 +363,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have App Package ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000150);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(5);
       expect(fields!.get('APP PACKAGE ID')).toEqual({ originalName: 'App Package ID', typeName: 'GUID' });
     });
     it('should have Object Subtype field', () => {
@@ -360,6 +376,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Package ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000153);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(6);
       expect(fields!.get('PACKAGE ID')).toEqual({ originalName: 'Package ID', typeName: 'GUID' });
     });
     it('should have Version Build field', () => {
@@ -372,6 +389,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Package ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000160);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(20);
       expect(fields!.get('PACKAGE ID')).toEqual({ originalName: 'Package ID', typeName: 'GUID' });
     });
     it('should have Tenant ID field', () => {
@@ -388,6 +406,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have App ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000165);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(3);
       expect(fields!.get('APP ID')).toEqual({ originalName: 'App ID', typeName: 'GUID' });
     });
     it('should have Role ID field', () => {
@@ -400,6 +419,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have App ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000166);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(11);
       expect(fields!.get('APP ID')).toEqual({ originalName: 'App ID', typeName: 'GUID' });
     });
     it('should have Security Filter field', () => {
@@ -412,6 +432,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Role ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000167);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(5);
       expect(fields!.get('ROLE ID')).toEqual({ originalName: 'Role ID', typeName: 'Code20' });
     });
     it('should have Scope field', () => {
@@ -424,6 +445,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Object Type field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000168);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(4);
       expect(fields!.get('OBJECT TYPE')).toEqual({ originalName: 'Object Type', typeName: 'Option' });
     });
     it('should have Published field', () => {
@@ -436,6 +458,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Profile ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000178);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(12);
       expect(fields!.get('PROFILE ID')).toEqual({ originalName: 'Profile ID', typeName: 'Code30' });
     });
     it('should have Page Notebook field', () => {
@@ -448,6 +471,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Parameter Name field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000196);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(8);
       expect(fields!.get('PARAMETER NAME')).toEqual({ originalName: 'Parameter Name', typeName: 'Text250' });
     });
     it('should have Option Data field', () => {
@@ -460,6 +484,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Operation ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000200);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(6);
       expect(fields!.get('OPERATION ID')).toEqual({ originalName: 'Operation ID', typeName: 'GUID' });
     });
     it('should have Details field', () => {
@@ -472,11 +497,28 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Page ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000204);
       expect(fields).toBeDefined();
+      expect(fields!.size).toBe(12);
       expect(fields!.get('PAGE ID')).toEqual({ originalName: 'Page ID', typeName: 'Integer' });
     });
     it('should have Field Filter Type field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000204);
       expect(fields!.get('FIELD FILTER TYPE')).toEqual({ originalName: 'Field Filter Type', typeName: 'Text80' });
+    });
+  });
+
+  describe('Key table (2000000063)', () => {
+    it('should have correct field count', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000063);
+      expect(fields).toBeDefined();
+      expect(fields!.size).toBe(11);
+    });
+  });
+
+  describe('Session table (2000000009)', () => {
+    it('should have correct field count', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000009);
+      expect(fields).toBeDefined();
+      expect(fields!.size).toBe(10);
     });
   });
 
