@@ -243,4 +243,20 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
       expect(fields!.get('CAPTION')).toEqual({ originalName: 'Caption', typeName: 'Text250' });
     });
   });
+
+  describe('AllObjWithCaption table (2000000058) - missing fields', () => {
+    it('should have App Package ID field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000058);
+      expect(fields).toBeDefined();
+      expect(fields!.get('APP PACKAGE ID')).toEqual({ originalName: 'App Package ID', typeName: 'GUID' });
+    });
+  });
+
+  describe('User table (2000000120) - missing fields', () => {
+    it('should have Exchange Identifier field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000120);
+      expect(fields).toBeDefined();
+      expect(fields!.get('EXCHANGE IDENTIFIER')).toEqual({ originalName: 'Exchange Identifier', typeName: 'Text250' });
+    });
+  });
 });

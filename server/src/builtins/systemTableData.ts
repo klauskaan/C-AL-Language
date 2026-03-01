@@ -108,6 +108,7 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
     ['OBJECT NAME', { originalName: 'Object Name', typeName: 'Text30' }],
     ['OBJECT CAPTION', { originalName: 'Object Caption', typeName: 'Text250' }],
     ['OBJECT SUBTYPE', { originalName: 'Object Subtype', typeName: 'Text30' }],
+    ['APP PACKAGE ID', { originalName: 'App Package ID', typeName: 'GUID' }],
   ])],
 
   [2000000120, new Map<string, FieldInfo>([
@@ -122,6 +123,7 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
     ['AUTHENTICATION EMAIL', { originalName: 'Authentication Email', typeName: 'Text250' }],
     ['CONTACT EMAIL', { originalName: 'Contact Email', typeName: 'Text250' }],
     ['APPLICATION ID', { originalName: 'Application ID', typeName: 'GUID' }],
+    ['EXCHANGE IDENTIFIER', { originalName: 'Exchange Identifier', typeName: 'Text250' }],
   ])],
 
   [2000000038, new Map<string, FieldInfo>([
