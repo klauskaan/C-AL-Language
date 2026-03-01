@@ -290,6 +290,9 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Code Coverage for table 2000000049', () => {
       expect(SYSTEM_TABLE_NAMES.get(2000000049)).toBe('Code Coverage');
     });
+    it('should have Object Metadata for table 2000000071', () => {
+      expect(SYSTEM_TABLE_NAMES.get(2000000071)).toBe('Object Metadata');
+    });
     it('should have Profile Metadata for table 2000000074', () => {
       expect(SYSTEM_TABLE_NAMES.get(2000000074)).toBe('Profile Metadata');
     });
