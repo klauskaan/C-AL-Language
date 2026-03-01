@@ -1044,6 +1044,7 @@ describe('Builtins Module', () => {
         const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'IMPORTSTREAMWITHURLACCESS');
         expect(fn).toBeDefined();
         expect(fn?.name).toBe('IMPORTSTREAMWITHURLACCESS');
+        expect(fn?.category).toBe('system');
         expect(registry.isGlobalFunction('IMPORTSTREAMWITHURLACCESS')).toBe(true);
       });
 
@@ -1051,6 +1052,7 @@ describe('Builtins Module', () => {
         const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'GETDOCUMENTURL');
         expect(fn).toBeDefined();
         expect(fn?.name).toBe('GETDOCUMENTURL');
+        expect(fn?.category).toBe('system');
         expect(registry.isGlobalFunction('GETDOCUMENTURL')).toBe(true);
       });
 
@@ -1058,6 +1060,7 @@ describe('Builtins Module', () => {
         const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'CURRENTEXECUTIONMODE');
         expect(fn).toBeDefined();
         expect(fn?.name).toBe('CURRENTEXECUTIONMODE');
+        expect(fn?.category).toBe('system');
         expect(registry.isGlobalFunction('CURRENTEXECUTIONMODE')).toBe(true);
       });
 
@@ -1065,6 +1068,7 @@ describe('Builtins Module', () => {
         const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'CONTEXTURL');
         expect(fn).toBeDefined();
         expect(fn?.name).toBe('CONTEXTURL');
+        expect(fn?.category).toBe('system');
         expect(registry.isGlobalFunction('CONTEXTURL')).toBe(true);
       });
     });
