@@ -41,7 +41,7 @@ export const SYSTEM_TABLE_NAMES: ReadonlyMap<number, string> = new Map([
   [2000000053, 'Access Control'],
   [2000000058, 'AllObjWithCaption'],
   [2000000063, 'Key'],
-  [2000000071, 'Code Coverage'],
+  [2000000071, 'Object Metadata'],
   [2000000072, 'Profile'],
   [2000000073, 'User Personalization'],
   [2000000074, 'Profile Metadata'],
