@@ -683,3 +683,13 @@ describe('Intelligent Cloud table (2000000146) - new fields from #680', () => {
     expect(fields!.size).toBe(1);
   });
 });
+
+// Table 2000000195 is intentionally name-only — no SYSTEM_TABLE_FIELDS entry.
+// Field access (Type, ID) was found in COD458 but requires type research.
+// When #681 adds field definitions, this test should be replaced with
+// positive field assertions (like the Membership Entitlement 2000000167 tests above).
+describe('Membership Entitlement table (2000000195) - name-only from #680', () => {
+  it('should NOT have field entries for table 2000000195 (name-only; field access found in COD458, tracked separately)', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000195)).toBe(false);
+  });
+});
