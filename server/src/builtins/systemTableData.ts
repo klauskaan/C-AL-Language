@@ -51,6 +51,10 @@ export const SYSTEM_TABLE_NAMES: ReadonlyMap<number, string> = new Map([
   [2000000112, 'Profile Metadata'],
   [2000000115, 'Tenant Permission'],
   [2000000116, 'Tenant Permission Set'],
+  // Both 2000000119 and 2000000160 are legitimately named 'NAV App' in BC14 (verified via
+  // field analysis and external documentation). 2000000119 is an earlier variant with no known
+  // field definitions; 2000000160 is the primary extension metadata table (Package ID, Scope,
+  // Tenant ID, etc.). The duplicate name is cosmetic only — all lookups are by numeric ID.
   [2000000119, 'NAV App'],
   [2000000120, 'User'],
   [2000000136, 'Table Metadata'],
