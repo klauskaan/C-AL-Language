@@ -6339,10 +6339,11 @@ export class Parser {
    * - COL_1: Element ID number
    * - COL_2: Parent element ID (empty or number)
    * - COL_3: Row type: "DataItem" | "Column" | "Filter"
-   * - COL_4: Element name (identifier used in code; blank means it cannot be referenced)
+   * - COL_4: Element name (identifier used in code; blank triggers DataSource fallback)
    *
-   * Only Column and Filter rows with non-empty names are registered.
-   * DataItem rows and blank-named rows are silently skipped.
+   * Only Column and Filter rows are registered. DataItem rows are skipped.
+   * Blank-named Column/Filter rows attempt a DataSource property fallback (spaces → underscores)
+   * before being discarded.
    *
    * This method consumes all tokens in the section (same as skipUnsupportedSection)
    * but additionally returns VariableDeclaration nodes for named Column/Filter rows.
@@ -6397,6 +6398,7 @@ export class Parser {
 
     const typeTokens: Token[] = [];
     const nameTokens: Token[] = [];
+    const restTokens: Token[] = [];
 
     while (!this.isAtEnd()) {
       // Row ends when braceDepth drops below rowDepth (after consuming '}')
@@ -6419,12 +6421,14 @@ export class Parser {
         continue;
       }
 
-      // Collect tokens for type (COL_3) and name (COL_4) at rowDepth only
+      // Collect tokens for type (COL_3), name (COL_4), and rest at rowDepth only
       if (this.braceDepth === rowDepth) {
         if (state === 'type') {
           typeTokens.push(token);
         } else if (state === 'name') {
           nameTokens.push(token);
+        } else if (state === 'rest') {
+          restTokens.push(token);
         }
       }
 
@@ -6440,8 +6444,24 @@ export class Parser {
     // Build name string from tokens
     const nameStr = this.buildNameFromTokens(nameTokens).trim();
     if (!nameStr) {
-      // Blank name — cannot be referenced in code, silently skip
-      return null;
+      // Blank name — try to derive implicit name from DataSource property (spaces → underscores)
+      const derived = this.extractDataSourceName(restTokens);
+      if (!derived) {
+        return null;
+      }
+      const refToken = derived.token;
+      return {
+        type: 'VariableDeclaration',
+        startToken: refToken,
+        endToken: refToken,
+        name: derived.name,
+        dataType: {
+          type: 'DataType',
+          startToken: refToken,
+          endToken: refToken,
+          typeName: typeStr === 'column' ? 'QueryColumn' : 'QueryFilter',
+        },
+      };
     }
 
     const startToken = nameTokens[0];
@@ -6579,6 +6599,40 @@ export class Parser {
             return parseInt(match[1], 10);
           }
         }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Extract an implicit element name from the DataSource property in rest tokens.
+   * C/AL derives implicit names for blank-named Query elements by taking the
+   * DataSource value and replacing spaces with underscores.
+   *
+   * @returns Object with derived name and a representative token, or null if DataSource not found.
+   */
+  private extractDataSourceName(tokens: Token[]): { name: string; token: Token } | null {
+    for (let i = 0; i < tokens.length; i++) {
+      if (tokens[i].value.toLowerCase() === 'datasource' &&
+          i + 1 < tokens.length && tokens[i + 1].value === '=') {
+        // Collect value tokens from i+2 until next property (identifier followed by =) or end
+        const valueTokens: Token[] = [];
+        for (let j = i + 2; j < tokens.length; j++) {
+          // Stop at closing brace (end of element row, leaked in at rowDepth)
+          if (tokens[j].value === '}') {
+            break;
+          }
+          // Stop if this token is followed by '=' (start of next property)
+          if (j + 1 < tokens.length && tokens[j + 1].value === '=') {
+            break;
+          }
+          valueTokens.push(tokens[j]);
+        }
+        if (valueTokens.length === 0) return null;
+        const rawName = this.buildNameFromTokens(valueTokens).trim();
+        if (!rawName) return null;
+        const derivedName = rawName.replace(/ /g, '_');
+        return { name: derivedName, token: valueTokens[0] };
       }
     }
     return null;

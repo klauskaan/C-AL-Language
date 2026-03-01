@@ -130,7 +130,7 @@ describe('Parser - Column/Filter name extraction from Query ELEMENTS section', (
     expect(names).toContain('DocumentNo');
   });
 
-  it('should NOT extract a blank-named Column (COL_4 empty)', () => {
+  it('should derive implicit name from DataSource when COL_4 is blank', () => {
     const code = `OBJECT Query 50001 "My Query"
 {
   ELEMENTS
@@ -149,7 +149,103 @@ describe('Parser - Column/Filter name extraction from Query ELEMENTS section', (
     const { ast } = parseCode(code);
 
     const variables = ast.object?.code?.variables ?? [];
-    // Blank-named Column must not produce an entry
+    expect(variables).toHaveLength(1);
+    expect(variables[0].name).toBe('Count');
+    expect(variables[0].dataType.typeName).toBe('QueryColumn');
+  });
+
+  it('should derive implicit name with space-to-underscore from DataSource', () => {
+    const code = `OBJECT Query 50001 "My Query"
+{
+  ELEMENTS
+  {
+    { 1   ;    ;DataItem;                    ;
+               DataItemTable=Table17 }
+
+    { 3   ;1   ;Filter  ;                    ;
+               DataSource=Due Date }
+  }
+  CODE
+  {
+  }
+}`;
+
+    const { ast } = parseCode(code);
+
+    const variables = ast.object?.code?.variables ?? [];
+    const entry = variables.find(v => v.name === 'Due_Date');
+    expect(entry).toBeDefined();
+    expect(entry!.dataType.typeName).toBe('QueryFilter');
+  });
+
+  it('should derive implicit name from multi-word DataSource with trailing properties', () => {
+    const code = `OBJECT Query 50001 "My Query"
+{
+  ELEMENTS
+  {
+    { 1   ;    ;DataItem;                    ;
+               DataItemTable=Table17 }
+
+    { 4   ;1   ;Column  ;                    ;
+               DataSource=Remaining Quantity;
+               MethodType=Totals;
+               Method=Sum }
+  }
+  CODE
+  {
+  }
+}`;
+
+    const { ast } = parseCode(code);
+
+    const variables = ast.object?.code?.variables ?? [];
+    const entry = variables.find(v => v.name === 'Remaining_Quantity');
+    expect(entry).toBeDefined();
+    expect(entry!.dataType.typeName).toBe('QueryColumn');
+  });
+
+  it('should use explicit name when COL_4 is not blank, ignoring DataSource for naming', () => {
+    const code = `OBJECT Query 50001 "My Query"
+{
+  ELEMENTS
+  {
+    { 1   ;    ;DataItem;                    ;
+               DataItemTable=Table17 }
+
+    { 7   ;1   ;Filter  ;GLAccount           ;
+               DataSource=G/L Account No. }
+  }
+  CODE
+  {
+  }
+}`;
+
+    const { ast } = parseCode(code);
+
+    const variables = ast.object?.code?.variables ?? [];
+    const entry = variables.find(v => v.name === 'GLAccount');
+    expect(entry).toBeDefined();
+    expect(entry!.dataType.typeName).toBe('QueryFilter');
+  });
+
+  it('should return null for blank-named Column with no DataSource property', () => {
+    const code = `OBJECT Query 50001 "My Query"
+{
+  ELEMENTS
+  {
+    { 1   ;    ;DataItem;                    ;
+               DataItemTable=Table17 }
+
+    { 4   ;1   ;Column  ;                    ; }
+  }
+  CODE
+  {
+  }
+}`;
+
+    const { ast } = parseCode(code);
+
+    const variables = ast.object?.code?.variables ?? [];
     expect(variables).toHaveLength(0);
   });
 
