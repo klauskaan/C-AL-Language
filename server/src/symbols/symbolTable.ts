@@ -669,6 +669,26 @@ export class SymbolTable {
       }
     }
 
+    // Inject TableNo procedures for codeunits BEFORE the AST walk
+    if (ast.object.objectKind === ObjectKind.Codeunit && procedureRegistry) {
+      const tableNoProp = findProperty(ast.object, 'tableno');
+      if (tableNoProp?.value) {
+        const tableId = parseInt(tableNoProp.value, 10);
+        if (!isNaN(tableId) && tableId > 0) { // 0 = no source table
+          const tableProcedures = procedureRegistry.get(tableId);
+          if (tableProcedures) {
+            for (const [_uppercaseKey, originalName] of tableProcedures) {
+              this.rootScope.addSymbol({
+                name: originalName,
+                kind: 'procedure',
+                token: makeSyntheticToken(originalName, ast.object.startToken),
+              });
+            }
+          }
+        }
+      }
+    }
+
     const walker = new ASTWalker();
     const visitor = new SymbolCollectorVisitor(this.rootScope, ast.object.objectKind, tableRegistry);
 
