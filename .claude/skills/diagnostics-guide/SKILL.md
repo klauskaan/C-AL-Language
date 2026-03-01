@@ -52,12 +52,12 @@ npm run validate:semantic
 
 | Code | Severity | Count | Files |
 |------|----------|-------|-------|
-| `undefined-identifier` | Warning | ~3,605 | ~896 |
+| `undefined-identifier` | Warning | ~629 | ~77 |
 | `unused-variable` | Warning | ~1,285 | ~314 |
 | `deprecated-function` | Hint | ~6 | ~6 |
 | `type-mismatch` | Warning | ~1 | ~1 |
 
-`undefined-identifier` warnings largely come from cross-object references — fields and identifiers in codeunits and pages referencing symbols defined in other objects. Most are expected and not fixable without broader cross-file analysis. `type-mismatch` and `deprecated-function` counts should be stable. `undefined-property` should be 0 — any reappearance indicates a procedure registry regression.
+`undefined-identifier` warnings come from cross-object references — identifiers in codeunits and pages referencing symbols defined in other objects not yet resolved by the workspace index. The count dropped from ~3,605 to ~629 as procedure and field injection matured (issues #611, #654, etc.). `type-mismatch` and `deprecated-function` counts should be stable. `undefined-property` should be 0 — any reappearance indicates a procedure registry regression.
 
 ---
 
