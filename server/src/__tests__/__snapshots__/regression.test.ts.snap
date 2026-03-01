@@ -68133,6 +68133,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
       },
       "type": "PropertySection",
     },
+    "requestPageSourceTableId": undefined,
     "startToken": {
       "column": 1,
       "endOffset": 6,
@@ -69782,6 +69783,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
       },
       "type": "PropertySection",
     },
+    "requestPageSourceTableId": undefined,
     "startToken": {
       "column": 1,
       "endOffset": 6,
@@ -76762,6 +76764,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
       },
       "type": "PropertySection",
     },
+    "requestPageSourceTableId": undefined,
     "startToken": {
       "column": 1,
       "endOffset": 6,
@@ -78141,6 +78144,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-343-check-credit-limit
       },
       "type": "PropertySection",
     },
+    "requestPageSourceTableId": undefined,
     "startToken": {
       "column": 1,
       "endOffset": 6,
@@ -84710,6 +84714,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
       },
       "type": "PropertySection",
     },
+    "requestPageSourceTableId": undefined,
     "startToken": {
       "column": 1,
       "endOffset": 6,
@@ -103017,6 +103022,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
       },
       "type": "PropertySection",
     },
+    "requestPageSourceTableId": undefined,
     "startToken": {
       "column": 1,
       "endOffset": 6,
@@ -104926,6 +104932,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
       },
       "type": "PropertySection",
     },
+    "requestPageSourceTableId": undefined,
     "startToken": {
       "column": 1,
       "endOffset": 6,
@@ -117293,6 +117300,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
       },
       "type": "PropertySection",
     },
+    "requestPageSourceTableId": undefined,
     "startToken": {
       "column": 1,
       "endOffset": 6,
@@ -118778,6 +118786,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-5342-option-initvalue
       },
       "type": "PropertySection",
     },
+    "requestPageSourceTableId": undefined,
     "startToken": {
       "column": 1,
       "endOffset": 6,
@@ -131627,6 +131636,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
       },
       "type": "PropertySection",
     },
+    "requestPageSourceTableId": undefined,
     "startToken": {
       "column": 1,
       "endOffset": 6,
@@ -132050,6 +132060,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-apostrophe-in-descrip
     "objectKind": "Table",
     "objectName": "Test",
     "properties": null,
+    "requestPageSourceTableId": undefined,
     "startToken": {
       "column": 1,
       "endOffset": 6,
@@ -158497,6 +158508,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: xmlport-1225-data-exch-def-
       },
       "type": "PropertySection",
     },
+    "requestPageSourceTableId": undefined,
     "startToken": {
       "column": 1,
       "endOffset": 6,
