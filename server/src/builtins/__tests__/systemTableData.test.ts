@@ -684,12 +684,26 @@ describe('Intelligent Cloud table (2000000146) - new fields from #680', () => {
   });
 });
 
-// Table 2000000195 is intentionally name-only — no SYSTEM_TABLE_FIELDS entry.
-// Field access (Type, ID) was found in COD458 but requires type research.
-// When #681 adds field definitions, this test should be replaced with
-// positive field assertions (like the Membership Entitlement 2000000167 tests above).
-describe('Membership Entitlement table (2000000195) - name-only from #680', () => {
-  it('should NOT have field entries for table 2000000195 (name-only; field access found in COD458, tracked separately)', () => {
-    expect(SYSTEM_TABLE_FIELDS.has(2000000195)).toBe(false);
+describe('Membership Entitlement table (2000000195) - new fields from #681', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000195)).toBe(true);
+  });
+
+  it('should have Type field with Option type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000195);
+    expect(fields).toBeDefined();
+    expect(fields!.get('TYPE')).toEqual({ originalName: 'Type', typeName: 'Option' });
+  });
+
+  it('should have ID field with Text250 type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000195);
+    expect(fields).toBeDefined();
+    expect(fields!.get('ID')).toEqual({ originalName: 'ID', typeName: 'Text250' });
+  });
+
+  it('should have correct field count of 2', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000195);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBe(2);
   });
 });
