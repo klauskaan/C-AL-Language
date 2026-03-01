@@ -289,6 +289,9 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Profile (not Signal) for table 2000000072', () => {
       expect(SYSTEM_TABLE_NAMES.get(2000000072)).toBe('Profile');
     });
+    it('should have NAV App Tenant App (not Object Metadata) for table 2000000151', () => {
+      expect(SYSTEM_TABLE_NAMES.get(2000000151)).toBe('NAV App Tenant App');
+    });
   });
 
   describe('SYSTEM_TABLE_NAMES new entries', () => {
