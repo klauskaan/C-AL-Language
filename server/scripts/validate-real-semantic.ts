@@ -12,6 +12,7 @@ import { defaultSettings } from '../src/settings';
 import { DiagnosticSeverity } from 'vscode-languageserver';
 import { ObjectKind } from '../src/parser/ast';
 import { FieldInfo } from '../src/workspaceSymbol/workspaceIndex';
+import { SYSTEM_TABLE_NAMES, SYSTEM_TABLE_FIELDS } from '../src/builtins/systemTableData';
 
 export interface DiagnosticResult {
   code: string;
@@ -47,11 +48,11 @@ export function objectType(filename: string): string {
 // Exported for testing only
 export function buildAllRegistries(realDir: string, files: string[]): {
   tableRegistry: Map<number, string>;
-  fieldRegistry: Map<number, Map<string, FieldInfo>>;
+  fieldRegistry: Map<number, ReadonlyMap<string, FieldInfo>>;
   procedureRegistry: Map<number, Map<string, string>>;
 } {
   const tableRegistry = new Map<number, string>();
-  const fieldRegistry = new Map<number, Map<string, FieldInfo>>();
+  const fieldRegistry = new Map<number, ReadonlyMap<string, FieldInfo>>();
   const procedureRegistry = new Map<number, Map<string, string>>();
 
   for (const file of files) {
@@ -98,6 +99,9 @@ export function buildAllRegistries(realDir: string, files: string[]): {
       }
     }
   }
+
+  for (const [id, name] of SYSTEM_TABLE_NAMES) tableRegistry.set(id, name);
+  for (const [id, fields] of SYSTEM_TABLE_FIELDS) fieldRegistry.set(id, fields);
 
   return { tableRegistry, fieldRegistry, procedureRegistry };
 }

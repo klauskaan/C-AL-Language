@@ -591,11 +591,18 @@ describe('buildAllRegistries', () => {
     const result = buildAllRegistries('/some/dir', []);
 
     expect(result.tableRegistry).toBeInstanceOf(Map);
-    expect(result.tableRegistry.size).toBe(0);
     expect(result.fieldRegistry).toBeInstanceOf(Map);
-    expect(result.fieldRegistry.size).toBe(0);
     expect(result.procedureRegistry).toBeInstanceOf(Map);
+    // procedureRegistry is not seeded with system tables
     expect(result.procedureRegistry.size).toBe(0);
+    // tableRegistry and fieldRegistry are seeded with system tables (id >= 2,000,000,000)
+    // — no user-table IDs (< 2,000,000,000) should be present
+    for (const id of result.tableRegistry.keys()) {
+      expect(id).toBeGreaterThanOrEqual(2000000000);
+    }
+    for (const id of result.fieldRegistry.keys()) {
+      expect(id).toBeGreaterThanOrEqual(2000000000);
+    }
   });
 
   it('should extract procedures from table objects into procedureRegistry', () => {
@@ -654,8 +661,11 @@ describe('buildAllRegistries', () => {
 
     const result = buildAllRegistries('/some/dir', ['codeunit.txt']);
 
-    expect(result.tableRegistry.size).toBe(0);
-    expect(result.fieldRegistry.size).toBe(0);
+    // The codeunit object contributes nothing to any registry
+    expect(result.tableRegistry.has(50000)).toBe(false);
+    expect(result.fieldRegistry.has(50000)).toBe(false);
+    expect(result.procedureRegistry.has(50000)).toBe(false);
+    // procedureRegistry is never seeded, so it stays empty
     expect(result.procedureRegistry.size).toBe(0);
   });
 
@@ -933,6 +943,73 @@ describe('buildAllRegistries', () => {
     expect(result.tableRegistry.has(99)).toBe(false);
     expect(result.fieldRegistry.get(99)?.get('AMOUNT')).toEqual({ originalName: 'Amount', typeName: 'Decimal' });
     expect(result.procedureRegistry.get(99)).toEqual(new Map([['TESTPROC', 'TestProc']]));
+  });
+
+  describe('System table seeding', () => {
+    it('should seed SYSTEM_TABLE_NAMES into tableRegistry', () => {
+      const { SYSTEM_TABLE_NAMES } = jest.requireActual('../../src/builtins/systemTableData') as typeof import('../../src/builtins/systemTableData');
+
+      const result = buildAllRegistries('/some/dir', []);
+
+      for (const [id, name] of SYSTEM_TABLE_NAMES) {
+        expect(result.tableRegistry.get(id)).toBe(name);
+      }
+    });
+
+    it('should seed SYSTEM_TABLE_FIELDS into fieldRegistry', () => {
+      // Integer table (2000000026) has field NUMBER -> { originalName: 'Number', typeName: 'Integer' }
+      const INTEGER_TABLE_ID = 2000000026;
+
+      const result = buildAllRegistries('/some/dir', []);
+
+      const integerFields = result.fieldRegistry.get(INTEGER_TABLE_ID);
+      expect(integerFields).toBeDefined();
+      expect(integerFields?.get('NUMBER')).toEqual({ originalName: 'Number', typeName: 'Integer' });
+    });
+
+    it('should seed all tables from SYSTEM_TABLE_FIELDS into fieldRegistry', () => {
+      const { SYSTEM_TABLE_FIELDS } = jest.requireActual('../../src/builtins/systemTableData') as typeof import('../../src/builtins/systemTableData');
+
+      const result = buildAllRegistries('/some/dir', []);
+
+      for (const [id, fields] of SYSTEM_TABLE_FIELDS) {
+        const resultFields = result.fieldRegistry.get(id);
+        expect(resultFields).toBeDefined();
+        for (const [key, fieldInfo] of fields) {
+          expect(resultFields?.get(key)).toEqual(fieldInfo);
+        }
+      }
+    });
+
+    it('should seed system tables in addition to user tables from parsed files', () => {
+      (readFileWithEncoding as unknown as jest.Mock).mockReturnValue({
+        content: 'OBJECT Table 18 Customer\n{}\n'
+      });
+
+      const mockLexer = { tokenize: jest.fn().mockReturnValue([]) };
+      (Lexer as unknown as jest.Mock).mockImplementation(() => mockLexer);
+
+      const mockParser = {
+        parse: jest.fn().mockReturnValue({
+          object: {
+            objectKind: ObjectKind.Table,
+            objectId: 18,
+            objectName: 'Customer',
+            fields: null,
+            code: null
+          }
+        })
+      };
+      (Parser as unknown as jest.Mock).mockImplementation(() => mockParser);
+
+      const result = buildAllRegistries('/some/dir', ['TAB18.txt']);
+
+      // User table is present
+      expect(result.tableRegistry.get(18)).toBe('Customer');
+
+      // System table Integer (2000000026) is also present
+      expect(result.tableRegistry.get(2000000026)).toBe('Integer');
+    });
   });
 });
 
