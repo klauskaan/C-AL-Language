@@ -479,4 +479,46 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
       expect(fields!.get('FIELD FILTER TYPE')).toEqual({ originalName: 'Field Filter Type', typeName: 'Text80' });
     });
   });
+
+  describe('Windows Language table (2000000045) - missing fields from #673', () => {
+    it('should have Abbreviated Name field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000045);
+      expect(fields).toBeDefined();
+      expect(fields!.get('ABBREVIATED NAME')).toEqual({ originalName: 'Abbreviated Name', typeName: 'Text3' });
+    });
+  });
+
+  describe('User Personalization table (2000000073) - missing fields from #673', () => {
+    it('should have Debugger Break On Error field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000073);
+      expect(fields).toBeDefined();
+      expect(fields!.get('DEBUGGER BREAK ON ERROR')).toEqual({ originalName: 'Debugger Break On Error', typeName: 'Boolean' });
+    });
+    it('should have Debugger Break On Rec Changes field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000073);
+      expect(fields).toBeDefined();
+      expect(fields!.get('DEBUGGER BREAK ON REC CHANGES')).toEqual({ originalName: 'Debugger Break On Rec Changes', typeName: 'Boolean' });
+    });
+    it('should have Debugger Skip System Triggers field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000073);
+      expect(fields).toBeDefined();
+      expect(fields!.get('DEBUGGER SKIP SYSTEM TRIGGERS')).toEqual({ originalName: 'Debugger Skip System Triggers', typeName: 'Boolean' });
+    });
+  });
+
+  describe('Report Layout table (2000000150) - missing fields from #673', () => {
+    it('should have User AL Code field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000150);
+      expect(fields).toBeDefined();
+      expect(fields!.get('USER AL CODE')).toEqual({ originalName: 'User AL Code', typeName: 'BLOB' });
+    });
+  });
+
+  describe('Tenant Permission Set Rel. table (2000000165) - missing fields from #673', () => {
+    it('should have Name field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000165);
+      expect(fields).toBeDefined();
+      expect(fields!.get('NAME')).toEqual({ originalName: 'Name', typeName: 'Text30' });
+    });
+  });
 });

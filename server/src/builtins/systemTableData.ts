@@ -237,6 +237,7 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
     ['NAME', { originalName: 'Name', typeName: 'Text80' }],
     ['GLOBALLY ENABLED', { originalName: 'Globally Enabled', typeName: 'Boolean' }],
     ['LOCALIZATION EXIST', { originalName: 'Localization Exist', typeName: 'Boolean' }],
+    ['ABBREVIATED NAME', { originalName: 'Abbreviated Name', typeName: 'Text3' }],
   ])],
 
   [2000000053, new Map<string, FieldInfo>([
@@ -260,6 +261,9 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
     ['SCOPE', { originalName: 'Scope', typeName: 'Option' }],
     ['APP ID', { originalName: 'App ID', typeName: 'GUID' }],
     ['LICENSE TYPE', { originalName: 'License Type', typeName: 'Option' }],
+    ['DEBUGGER BREAK ON ERROR', { originalName: 'Debugger Break On Error', typeName: 'Boolean' }],
+    ['DEBUGGER BREAK ON REC CHANGES', { originalName: 'Debugger Break On Rec Changes', typeName: 'Boolean' }],
+    ['DEBUGGER SKIP SYSTEM TRIGGERS', { originalName: 'Debugger Skip System Triggers', typeName: 'Boolean' }],
   ])],
 
   [2000000075, new Map<string, FieldInfo>([
@@ -276,6 +280,7 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
     ['OBJECT TYPE', { originalName: 'Object Type', typeName: 'Option' }],
     ['OBJECT ID', { originalName: 'Object ID', typeName: 'Integer' }],
     ['OBJECT SUBTYPE', { originalName: 'Object Subtype', typeName: 'Text30' }],
+    ['USER AL CODE', { originalName: 'User AL Code', typeName: 'BLOB' }],
   ])],
 
   [2000000153, new Map<string, FieldInfo>([
@@ -313,6 +318,7 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
   [2000000165, new Map<string, FieldInfo>([
     ['APP ID', { originalName: 'App ID', typeName: 'GUID' }],
     ['ROLE ID', { originalName: 'Role ID', typeName: 'Code20' }],
+    ['NAME', { originalName: 'Name', typeName: 'Text30' }],
   ])],
 
   [2000000166, new Map<string, FieldInfo>([
