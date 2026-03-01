@@ -18,8 +18,8 @@ import { BuiltinRegistry } from '../builtinRegistry';
 
 describe('Builtins Module', () => {
   describe('Data Integrity - BUILTIN_FUNCTIONS', () => {
-    it('should have exactly 135 global function entries', () => {
-      expect(BUILTIN_FUNCTIONS).toHaveLength(135);
+    it('should have exactly 140 global function entries', () => {
+      expect(BUILTIN_FUNCTIONS).toHaveLength(140);
     });
 
     it('should have all required fields for each entry', () => {
@@ -904,8 +904,8 @@ describe('Builtins Module', () => {
     });
 
     describe('Count validation', () => {
-      it('BUILTIN_FUNCTIONS should have 135 entries after additions', () => {
-        expect(BUILTIN_FUNCTIONS).toHaveLength(135);
+      it('BUILTIN_FUNCTIONS should have 140 entries after additions', () => {
+        expect(BUILTIN_FUNCTIONS).toHaveLength(140);
       });
 
       it('SYSTEM_TYPE_KEYWORDS should have 20 entries after additions', () => {
@@ -1014,11 +1014,74 @@ describe('Builtins Module', () => {
     });
 
     describe('Count validation', () => {
-      it('BUILTIN_FUNCTIONS.length should equal 135 after issue #623 additions', () => {
-        expect(BUILTIN_FUNCTIONS.length).toBe(135);
+      it('BUILTIN_FUNCTIONS.length should equal 140 after issue #623 additions', () => {
+        expect(BUILTIN_FUNCTIONS.length).toBe(140);
       });
 
       it('SYSTEM_TYPE_KEYWORDS.size should equal 20 after issue #623 additions', () => {
+        expect(SYSTEM_TYPE_KEYWORDS.size).toBe(20);
+      });
+    });
+  });
+
+  describe('Issue #653 - Missing Builtins', () => {
+    let registry: BuiltinRegistry;
+
+    beforeEach(() => {
+      registry = new BuiltinRegistry();
+    });
+
+    describe('New global system functions', () => {
+      it('should recognize APPLICATIONAREA as a global function with system category', () => {
+        const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'APPLICATIONAREA');
+        expect(fn).toBeDefined();
+        expect(fn?.name).toBe('APPLICATIONAREA');
+        expect(registry.isGlobalFunction('APPLICATIONAREA')).toBe(true);
+        expect(fn?.category).toBe('system');
+      });
+
+      it('should recognize IMPORTSTREAMWITHURLACCESS as a global function', () => {
+        const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'IMPORTSTREAMWITHURLACCESS');
+        expect(fn).toBeDefined();
+        expect(fn?.name).toBe('IMPORTSTREAMWITHURLACCESS');
+        expect(registry.isGlobalFunction('IMPORTSTREAMWITHURLACCESS')).toBe(true);
+      });
+
+      it('should recognize GETDOCUMENTURL as a global function', () => {
+        const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'GETDOCUMENTURL');
+        expect(fn).toBeDefined();
+        expect(fn?.name).toBe('GETDOCUMENTURL');
+        expect(registry.isGlobalFunction('GETDOCUMENTURL')).toBe(true);
+      });
+
+      it('should recognize CURRENTEXECUTIONMODE as a global function', () => {
+        const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'CURRENTEXECUTIONMODE');
+        expect(fn).toBeDefined();
+        expect(fn?.name).toBe('CURRENTEXECUTIONMODE');
+        expect(registry.isGlobalFunction('CURRENTEXECUTIONMODE')).toBe(true);
+      });
+
+      it('should recognize CONTEXTURL as a global function', () => {
+        const fn = BUILTIN_FUNCTIONS.find((f) => f.name === 'CONTEXTURL');
+        expect(fn).toBeDefined();
+        expect(fn?.name).toBe('CONTEXTURL');
+        expect(registry.isGlobalFunction('CONTEXTURL')).toBe(true);
+      });
+    });
+
+    describe('AL-only exclusion guard', () => {
+      it('should NOT include EXECUTIONMODE in SYSTEM_TYPE_KEYWORDS (AL-only)', () => {
+        expect(SYSTEM_TYPE_KEYWORDS.has('EXECUTIONMODE')).toBe(false);
+        expect(registry.isSystemTypeKeyword('EXECUTIONMODE')).toBe(false);
+      });
+    });
+
+    describe('Count validation', () => {
+      it('BUILTIN_FUNCTIONS.length should equal 140 after issue #653 additions', () => {
+        expect(BUILTIN_FUNCTIONS.length).toBe(140);
+      });
+
+      it('SYSTEM_TYPE_KEYWORDS.size should remain at 20 after issue #653 additions', () => {
         expect(SYSTEM_TYPE_KEYWORDS.size).toBe(20);
       });
     });
