@@ -48,11 +48,11 @@ npm run validate:semantic
 - Increases in `undefined-identifier` or `undefined-property` on standard NAV objects (symbol table regressions)
 - New diagnostic codes appearing unexpectedly
 
-**Typical baseline (7,677 files, as of 2026-02-28, post-#608):**
+**Typical baseline (7,677 files, as of 2026-03-01):**
 
 | Code | Severity | Count | Files |
 |------|----------|-------|-------|
-| `undefined-identifier` | Warning | ~7,349 | ~1,633 |
+| `undefined-identifier` | Warning | ~3,605 | ~896 |
 | `unused-variable` | Warning | ~1,285 | ~314 |
 | `deprecated-function` | Hint | ~6 | ~6 |
 | `type-mismatch` | Warning | ~1 | ~1 |
