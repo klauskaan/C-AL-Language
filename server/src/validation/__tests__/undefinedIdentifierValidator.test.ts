@@ -4228,3 +4228,61 @@ describe('UndefinedIdentifierValidator - Page SourceTable=0 guard', () => {
     expect(phantomError).toBeDefined();
   });
 });
+
+describe('UndefinedIdentifierValidator - Query ELEMENTS DataSource-derived implicit column names', () => {
+  it('should not flag DataSource-derived implicit column name used in procedure body', () => {
+    const code = `OBJECT Query 1 TestQuery
+{
+  ELEMENTS
+  {
+    { 1   ;    ;DataItem;                    ;
+               DataItemTable=Table18 }
+
+    { 2   ;1   ;Column  ;                    ;
+               DataSource=Due Date }
+  }
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      x@1000 : Integer;
+    BEGIN
+      x := Due_Date;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+    const warnings = validateUndefinedIdentifiers(code);
+    expect(warnings.filter(w => w.message.includes('Due_Date'))).toHaveLength(0);
+  });
+
+  it('should not flag explicit Query column name used in procedure body', () => {
+    const code = `OBJECT Query 1 TestQuery
+{
+  ELEMENTS
+  {
+    { 1   ;    ;DataItem;                    ;
+               DataItemTable=Table18 }
+
+    { 2   ;1   ;Column  ;Amount              ;
+               DataSource=Amount }
+  }
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      x@1000 : Integer;
+    BEGIN
+      x := Amount;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+    const warnings = validateUndefinedIdentifiers(code);
+    expect(warnings.filter(w => w.message.includes('Amount'))).toHaveLength(0);
+  });
+});

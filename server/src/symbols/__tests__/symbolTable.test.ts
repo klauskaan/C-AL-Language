@@ -1880,6 +1880,48 @@ describe('Implicit System Variables', () => {
     expect(symbolTable.hasSymbol('RequestOptionsPage')).toBe(false);
   });
 
+  it('should register DataSource-derived implicit name as variable for blank-named Query column', () => {
+    const code = `OBJECT Query 1 TestQuery
+{
+  ELEMENTS
+  {
+    { 1   ;    ;DataItem;                    ;
+               DataItemTable=Table18 }
+
+    { 2   ;1   ;Column  ;                    ;
+               DataSource=Due Date }
+  }
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    expect(symbolTable.hasSymbol('Due_Date')).toBe(true);
+    expect(symbolTable.getSymbol('Due_Date')?.kind).toBe('variable');
+  });
+
+  it('should register explicit Query column name as variable', () => {
+    const code = `OBJECT Query 1 TestQuery
+{
+  ELEMENTS
+  {
+    { 1   ;    ;DataItem;                    ;
+               DataItemTable=Table18 }
+
+    { 2   ;1   ;Column  ;Amount              ;
+               DataSource=Amount }
+  }
+  CODE
+  {
+  }
+}`;
+    const symbolTable = buildSymbolTable(code);
+
+    expect(symbolTable.hasSymbol('Amount')).toBe(true);
+    expect(symbolTable.getSymbol('Amount')?.kind).toBe('variable');
+  });
+
   it('should not pre-populate any implicit variables for Codeunit objects', () => {
     const code = `OBJECT Codeunit 50000 "My Codeunit"
 {
