@@ -197,6 +197,93 @@ describe('Lexer - Date/Time/DateTime Literals', () => {
       expect(tokens[2].type).toBe(TokenType.Time);
       expect(tokens[2].value).toBe('235959T');
     });
+
+    describe('decimal-millisecond time literals (HHMMSSsssT)', () => {
+      it('should tokenize real-world decimal-millisecond time literal 235959.995T', () => {
+        const code = '235959.995T';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens).toHaveLength(2); // Time literal + EOF
+        expect(tokens[0].type).toBe(TokenType.Time);
+        expect(tokens[0].value).toBe('235959.995T');
+      });
+
+      it('should tokenize decimal-millisecond time literal 120000.000T', () => {
+        const code = '120000.000T';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens).toHaveLength(2);
+        expect(tokens[0].type).toBe(TokenType.Time);
+        expect(tokens[0].value).toBe('120000.000T');
+      });
+
+      it('should tokenize decimal-millisecond time literal 000000.500T', () => {
+        const code = '000000.500T';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens).toHaveLength(2);
+        expect(tokens[0].type).toBe(TokenType.Time);
+        expect(tokens[0].value).toBe('000000.500T');
+      });
+
+      it('should tokenize decimal-millisecond time literal in assignment context', () => {
+        const code = 'MyTime := 235959.995T;';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        // MyTime, :=, time, ;, EOF
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[1].type).toBe(TokenType.Assign);
+        expect(tokens[2].type).toBe(TokenType.Time);
+        expect(tokens[2].value).toBe('235959.995T');
+        expect(tokens[3].type).toBe(TokenType.Semicolon);
+      });
+
+      it('should NOT tokenize 5-digit integer + decimal + T as time (too few integer digits)', () => {
+        const code = '12345.6T';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        // 5 integer digits is one short of the 6-digit minimum — not a time literal
+        const timeToken = tokens.find(t => t.type === TokenType.Time);
+        expect(timeToken).toBeUndefined();
+        expect(tokens[0].type).toBe(TokenType.Decimal);
+        expect(tokens[0].value).toBe('12345.6');
+        expect(tokens[1].type).toBe(TokenType.Identifier);
+        expect(tokens[1].value).toBe('T');
+      });
+
+      it('should NOT tokenize single-digit integer + decimal + T as time', () => {
+        const code = '0.5T';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        // 1 integer digit matches UNDEFINED_DATE_DIGITS but decimal part disqualifies it
+        const timeToken = tokens.find(t => t.type === TokenType.Time);
+        expect(timeToken).toBeUndefined();
+        expect(tokens[0].type).toBe(TokenType.Decimal);
+        expect(tokens[0].value).toBe('0.5');
+        expect(tokens[1].type).toBe(TokenType.Identifier);
+        expect(tokens[1].value).toBe('T');
+      });
+
+      it('should NOT tokenize decimal-millisecond time with lowercase t suffix', () => {
+        const code = '235959.995t';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        // C/AL time literals require uppercase T
+        const timeToken = tokens.find(t => t.type === TokenType.Time);
+        expect(timeToken).toBeUndefined();
+        expect(tokens[0].type).toBe(TokenType.Decimal);
+        expect(tokens[0].value).toBe('235959.995');
+        expect(tokens[1].type).toBe(TokenType.Identifier);
+        expect(tokens[1].value).toBe('t');
+      });
+    });
   });
 
   describe('DateTime literals (MMDDYY[YY]DHHMMSS[ms]T)', () => {

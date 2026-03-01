@@ -1016,6 +1016,7 @@ export class Lexer {
       value += this.currentChar();
       this.advance();
     }
+    const integerPartLength = value.length;
 
     // Check for decimal point
     if (this.currentChar() === '.' && this.isDigit(this.peek())) {
@@ -1080,6 +1081,14 @@ export class Lexer {
       this.advance();
       this.addToken(TokenType.Integer, value, startPos, this.position, startLine, startColumn);
       return;
+    } else if (isDecimal && this.currentChar() === 'T') {
+      // Time literal with decimal milliseconds: HHMMSS.mmmT
+      if (integerPartLength >= Lexer.MIN_TIME_DIGITS) {
+        value += this.currentChar();
+        this.advance();
+        this.addToken(TokenType.Time, value, startPos, this.position, startLine, startColumn);
+        return;
+      }
     }
 
     const tokenType = isDecimal ? TokenType.Decimal : TokenType.Integer;
