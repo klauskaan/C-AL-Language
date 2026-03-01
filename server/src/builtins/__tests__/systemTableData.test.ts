@@ -55,6 +55,14 @@ describe('systemTableData - SYSTEM_TABLE_NAMES', () => {
       expect(SYSTEM_TABLE_NAMES.has(id)).toBe(true);
     }
   });
+
+  it('should name table 2000000119 as NAV App (intentional duplicate — both are correct BC14 names)', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000119)).toBe('NAV App');
+  });
+
+  it('should name table 2000000160 as NAV App (primary extension metadata table, confirmed by field analysis)', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000160)).toBe('NAV App');
+  });
 });
 
 describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
