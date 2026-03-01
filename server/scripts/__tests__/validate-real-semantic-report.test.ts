@@ -587,12 +587,13 @@ describe('buildAllRegistries', () => {
     jest.clearAllMocks();
   });
 
-  it('should return all three empty maps when given no files', () => {
+  it('should return three empty maps and zero userTableCount when given no files', () => {
     const result = buildAllRegistries('/some/dir', []);
 
     expect(result.tableRegistry).toBeInstanceOf(Map);
     expect(result.fieldRegistry).toBeInstanceOf(Map);
     expect(result.procedureRegistry).toBeInstanceOf(Map);
+    expect(result.userTableCount).toBe(0);
     // procedureRegistry is not seeded with system tables
     expect(result.procedureRegistry.size).toBe(0);
     // tableRegistry and fieldRegistry are seeded with system tables (id >= 2,000,000,000)

@@ -121,6 +121,7 @@ export function validateAllRealFiles(): SemanticValidationResult[] {
   // Single pre-scan: build all registries simultaneously (#609)
   console.log('Building registries (single pass)...');
   const { tableRegistry, fieldRegistry, procedureRegistry, userTableCount } = buildAllRegistries(realDir, files);
+  const userTablesIndexed = userTableCount > 0;
   console.log(`Table registry: ${tableRegistry.size} tables indexed`);
   console.log(`Field registry: ${fieldRegistry.size} tables with fields indexed`);
   console.log(`Procedure registry: ${procedureRegistry.size} tables with procedures indexed\n`);
@@ -141,7 +142,6 @@ export function validateAllRealFiles(): SemanticValidationResult[] {
     const ast = parser.parse();
     const symbolTable = new SymbolTable();
     symbolTable.buildFromAST(ast, tableRegistry, fieldRegistry, procedureRegistry);
-    const userTablesIndexed = userTableCount > 0;
     const diagnostics = analyzer.analyze(ast, symbolTable, `file://${filePath}`, {
       settings: defaultSettings,
       userTablesIndexed,
