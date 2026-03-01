@@ -1259,6 +1259,9 @@ describe('validateAllRealFiles', () => {
       const buildCall = mockSymbolTable.buildFromAST.mock.calls[0];
       const procedureRegistry = buildCall[3];
       expect(procedureRegistry).toBeInstanceOf(Map);
+      const tableProcs = procedureRegistry.get(18);
+      expect(tableProcs).toBeInstanceOf(Map);
+      expect(tableProcs?.get('FINDFIRST')).toBe('FindFirst');
     });
 
     it('should propagate userTablesIndexed flag from tableRegistry to analyzer', () => {
