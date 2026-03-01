@@ -50,10 +50,12 @@ export function buildAllRegistries(realDir: string, files: string[]): {
   tableRegistry: Map<number, string>;
   fieldRegistry: Map<number, ReadonlyMap<string, FieldInfo>>;
   procedureRegistry: Map<number, Map<string, string>>;
+  userTableCount: number;
 } {
   const tableRegistry = new Map<number, string>();
   const fieldRegistry = new Map<number, ReadonlyMap<string, FieldInfo>>();
   const procedureRegistry = new Map<number, Map<string, string>>();
+  let userTableCount = 0;
 
   for (const file of files) {
     const filePath = join(realDir, file);
@@ -64,6 +66,7 @@ export function buildAllRegistries(realDir: string, files: string[]): {
     const ast = parser.parse();
 
     if (ast.object?.objectKind === ObjectKind.Table) {
+      userTableCount++;
       // Table registry (only when objectName present — matches original buildTableRegistry)
       if (ast.object.objectName) {
         tableRegistry.set(ast.object.objectId, ast.object.objectName);
@@ -103,7 +106,7 @@ export function buildAllRegistries(realDir: string, files: string[]): {
   for (const [id, name] of SYSTEM_TABLE_NAMES) tableRegistry.set(id, name);
   for (const [id, fields] of SYSTEM_TABLE_FIELDS) fieldRegistry.set(id, fields);
 
-  return { tableRegistry, fieldRegistry, procedureRegistry };
+  return { tableRegistry, fieldRegistry, procedureRegistry, userTableCount };
 }
 
 // Exported for testing only
@@ -117,7 +120,7 @@ export function validateAllRealFiles(): SemanticValidationResult[] {
 
   // Single pre-scan: build all registries simultaneously (#609)
   console.log('Building registries (single pass)...');
-  const { tableRegistry, fieldRegistry, procedureRegistry } = buildAllRegistries(realDir, files);
+  const { tableRegistry, fieldRegistry, procedureRegistry, userTableCount } = buildAllRegistries(realDir, files);
   console.log(`Table registry: ${tableRegistry.size} tables indexed`);
   console.log(`Field registry: ${fieldRegistry.size} tables with fields indexed`);
   console.log(`Procedure registry: ${procedureRegistry.size} tables with procedures indexed\n`);
@@ -138,7 +141,7 @@ export function validateAllRealFiles(): SemanticValidationResult[] {
     const ast = parser.parse();
     const symbolTable = new SymbolTable();
     symbolTable.buildFromAST(ast, tableRegistry, fieldRegistry, procedureRegistry);
-    const userTablesIndexed = tableRegistry.size > 0;
+    const userTablesIndexed = userTableCount > 0;
     const diagnostics = analyzer.analyze(ast, symbolTable, `file://${filePath}`, {
       settings: defaultSettings,
       userTablesIndexed,
