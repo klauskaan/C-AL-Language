@@ -333,4 +333,105 @@ describe('Codeunit TableNo Procedure Injection', () => {
       expect(procedureSymbols.length).toBeGreaterThanOrEqual(2);
     });
   });
+
+  describe('Shadowing', () => {
+    it('should allow codeunit-declared procedure to overwrite injected TableNo procedure', () => {
+      const code = `OBJECT Codeunit 50000 CustomerMgt
+{
+  PROPERTIES
+  {
+    TableNo=18;
+  }
+  CODE
+  {
+    PROCEDURE CalcFields();
+    VAR
+      LocalVar : Integer;
+    BEGIN
+    END;
+  }
+}`;
+
+      const procedureRegistry = new Map<number, Map<string, string>>();
+      procedureRegistry.set(18, new Map([['CALCFIELDS', 'CalcFields'], ['INIT', 'INIT']]));
+
+      const symbolTable = buildSymbolTable(code, undefined, procedureRegistry);
+      const rootScope = symbolTable.getRootScope();
+
+      // CalcFields should still be present in root scope, and the codeunit-declared version should have won
+      expect(rootScope.hasOwnSymbol('CalcFields')).toBe(true);
+      const calcFieldsSymbol = rootScope.getOwnSymbol('CalcFields');
+      expect(calcFieldsSymbol).toBeDefined();
+      expect(calcFieldsSymbol!.kind).toBe('procedure');
+      expect(calcFieldsSymbol!.name).toBe('CalcFields');
+
+      // The codeunit's own declaration should have won (AST walk runs after injection and overwrites).
+      // Verify this by checking that a child scope was created for CalcFields containing the
+      // local variable from the codeunit's own declaration. Injection does not create child scopes,
+      // so the presence of LocalVar proves the AST-walked version is the one that survived.
+      const calcFieldsScope = rootScope.children.find(scope =>
+        scope.getOwnSymbol('LocalVar') !== undefined
+      );
+      expect(calcFieldsScope).toBeDefined();
+      const localVar = calcFieldsScope!.getOwnSymbol('LocalVar');
+      expect(localVar).toBeDefined();
+      expect(localVar!.kind).toBe('variable');
+      expect(localVar!.type).toBe('Integer');
+
+      // Other injected procedures not declared by the codeunit should still be present
+      expect(rootScope.hasOwnSymbol('INIT')).toBe(true);
+      expect(rootScope.getOwnSymbol('INIT')!.kind).toBe('procedure');
+    });
+
+    it('should allow codeunit-declared procedure with different casing to overwrite injected TableNo procedure', () => {
+      // Registry has 'CALCFIELDS' -> 'CalcFields'; codeunit declares 'calcfields' (all lowercase).
+      // normalizeIdentifier lowercases both, so the AST-walked declaration should still overwrite
+      // the pre-injected symbol regardless of casing differences.
+      const code = `OBJECT Codeunit 50000 CustomerMgt
+{
+  PROPERTIES
+  {
+    TableNo=18;
+  }
+  CODE
+  {
+    PROCEDURE calcfields();
+    VAR
+      LocalVar : Integer;
+    BEGIN
+    END;
+  }
+}`;
+
+      const procedureRegistry = new Map<number, Map<string, string>>();
+      procedureRegistry.set(18, new Map([['CALCFIELDS', 'CalcFields'], ['INIT', 'INIT']]));
+
+      const symbolTable = buildSymbolTable(code, undefined, procedureRegistry);
+      const rootScope = symbolTable.getRootScope();
+
+      // The calcfields symbol should be present under its normalized key
+      expect(rootScope.hasOwnSymbol('calcfields')).toBe(true);
+
+      // The codeunit's own declaration should have won — its symbol.name is 'calcfields' (codeunit casing),
+      // not 'CalcFields' (registry casing). This catches the case where the injected version
+      // incorrectly overwrote the codeunit-declared one.
+      const calcFieldsSymbol = rootScope.getOwnSymbol('calcfields');
+      expect(calcFieldsSymbol).toBeDefined();
+      expect(calcFieldsSymbol!.name).toBe('calcfields');
+
+      // Additionally verify via child scope containing LocalVar: injection does not create child
+      // scopes, so LocalVar's presence proves the AST-walked version is the one that survived.
+      const calcFieldsScope = rootScope.children.find(scope =>
+        scope.getOwnSymbol('LocalVar') !== undefined
+      );
+      expect(calcFieldsScope).toBeDefined();
+      const localVar = calcFieldsScope!.getOwnSymbol('LocalVar');
+      expect(localVar).toBeDefined();
+      expect(localVar!.kind).toBe('variable');
+      expect(localVar!.type).toBe('Integer');
+
+      // Other injected procedures not declared by the codeunit should still be present
+      expect(rootScope.hasOwnSymbol('INIT')).toBe(true);
+    });
+  });
 });
