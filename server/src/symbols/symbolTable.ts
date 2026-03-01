@@ -645,46 +645,45 @@ export class SymbolTable {
       }
     }
 
-    // Inject TableNo fields for codeunits BEFORE the AST walk
-    if (ast.object.objectKind === ObjectKind.Codeunit && fieldRegistry) {
+    // Extract shared TableNo lookup for codeunits (used by both field and procedure injection)
+    let codeunitTableId: number | undefined;
+    if (ast.object.objectKind === ObjectKind.Codeunit) {
       const tableNoProp = findProperty(ast.object, 'tableno');
       if (tableNoProp?.value) {
         const tableId = parseInt(tableNoProp.value, 10);
         if (!isNaN(tableId) && tableId > 0) { // 0 = no source table
-          const tableFields = fieldRegistry.get(tableId);
+          codeunitTableId = tableId;
+        }
+      }
+    }
 
-          if (tableFields) {
-            // Inject each field into root scope with kind='field'
-            // Note: keys are uppercase, use fieldInfo.originalName to preserve casing
-            for (const [_uppercaseKey, fieldInfo] of tableFields) {
-              this.rootScope.addSymbol({
-                name: fieldInfo.originalName,
-                kind: 'field',
-                token: makeSyntheticToken(fieldInfo.originalName, ast.object.startToken),
-                type: fieldInfo.typeName
-              });
-            }
-          }
+    // Inject TableNo fields for codeunits BEFORE the AST walk
+    if (codeunitTableId !== undefined && fieldRegistry) {
+      const tableFields = fieldRegistry.get(codeunitTableId);
+      if (tableFields) {
+        // Inject each field into root scope with kind='field'
+        // Note: keys are uppercase, use fieldInfo.originalName to preserve casing
+        for (const [_uppercaseKey, fieldInfo] of tableFields) {
+          this.rootScope.addSymbol({
+            name: fieldInfo.originalName,
+            kind: 'field',
+            token: makeSyntheticToken(fieldInfo.originalName, ast.object.startToken),
+            type: fieldInfo.typeName
+          });
         }
       }
     }
 
     // Inject TableNo procedures for codeunits BEFORE the AST walk
-    if (ast.object.objectKind === ObjectKind.Codeunit && procedureRegistry) {
-      const tableNoProp = findProperty(ast.object, 'tableno');
-      if (tableNoProp?.value) {
-        const tableId = parseInt(tableNoProp.value, 10);
-        if (!isNaN(tableId) && tableId > 0) { // 0 = no source table
-          const tableProcedures = procedureRegistry.get(tableId);
-          if (tableProcedures) {
-            for (const [_uppercaseKey, originalName] of tableProcedures) {
-              this.rootScope.addSymbol({
-                name: originalName,
-                kind: 'procedure',
-                token: makeSyntheticToken(originalName, ast.object.startToken),
-              });
-            }
-          }
+    if (codeunitTableId !== undefined && procedureRegistry) {
+      const tableProcedures = procedureRegistry.get(codeunitTableId);
+      if (tableProcedures) {
+        for (const [_uppercaseKey, originalName] of tableProcedures) {
+          this.rootScope.addSymbol({
+            name: originalName,
+            kind: 'procedure',
+            token: makeSyntheticToken(originalName, ast.object.startToken),
+          });
         }
       }
     }
