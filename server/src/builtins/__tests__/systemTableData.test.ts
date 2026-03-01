@@ -278,11 +278,20 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Tenant Web Service (not NAV App Object Metadata) for table 2000000168', () => {
       expect(SYSTEM_TABLE_NAMES.get(2000000168)).toBe('Tenant Web Service');
     });
+    it('should have Profile (not Signal) for table 2000000072', () => {
+      expect(SYSTEM_TABLE_NAMES.get(2000000072)).toBe('Profile');
+    });
   });
 
   describe('SYSTEM_TABLE_NAMES new entries', () => {
     it('should have User Personalization for table 2000000073', () => {
       expect(SYSTEM_TABLE_NAMES.get(2000000073)).toBe('User Personalization');
+    });
+    it('should have Code Coverage for table 2000000049', () => {
+      expect(SYSTEM_TABLE_NAMES.get(2000000049)).toBe('Code Coverage');
+    });
+    it('should have Profile Metadata for table 2000000074', () => {
+      expect(SYSTEM_TABLE_NAMES.get(2000000074)).toBe('Profile Metadata');
     });
     it('should have User Metadata for table 2000000075', () => {
       expect(SYSTEM_TABLE_NAMES.get(2000000075)).toBe('User Metadata');
@@ -561,6 +570,70 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000165);
       expect(fields).toBeDefined();
       expect(fields!.get('NAME')).toEqual({ originalName: 'Name', typeName: 'Text30' });
+    });
+  });
+
+  describe('Permission Set table (2000000004) - new fields', () => {
+    it('should have correct field count', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000004);
+      expect(fields).toBeDefined();
+      expect(fields!.size).toBe(2);
+    });
+    it('should have Role ID field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000004);
+      expect(fields!.get('ROLE ID')).toEqual({ originalName: 'Role ID', typeName: 'Code20' });
+    });
+    it('should have Name field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000004);
+      expect(fields!.get('NAME')).toEqual({ originalName: 'Name', typeName: 'Text30' });
+    });
+  });
+
+  describe('Code Coverage table (2000000049) - new fields', () => {
+    it('should have correct field count', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000049);
+      expect(fields).toBeDefined();
+      expect(fields!.size).toBe(6);
+    });
+    it('should have Line Type field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000049);
+      expect(fields!.get('LINE TYPE')).toEqual({ originalName: 'Line Type', typeName: 'Option' });
+    });
+    it('should have Line field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000049);
+      expect(fields!.get('LINE')).toEqual({ originalName: 'Line', typeName: 'Text1024' });
+    });
+  });
+
+  describe('Profile table (2000000072) - new fields', () => {
+    it('should have correct field count', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000072);
+      expect(fields).toBeDefined();
+      expect(fields!.size).toBe(4);
+    });
+    it('should have Profile ID field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000072);
+      expect(fields!.get('PROFILE ID')).toEqual({ originalName: 'Profile ID', typeName: 'Code30' });
+    });
+    it('should have Default Role Center field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000072);
+      expect(fields!.get('DEFAULT ROLE CENTER')).toEqual({ originalName: 'Default Role Center', typeName: 'Boolean' });
+    });
+  });
+
+  describe('Profile Metadata table (2000000074) - new fields', () => {
+    it('should have correct field count', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000074);
+      expect(fields).toBeDefined();
+      expect(fields!.size).toBe(7);
+    });
+    it('should have Profile ID field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000074);
+      expect(fields!.get('PROFILE ID')).toEqual({ originalName: 'Profile ID', typeName: 'Code30' });
+    });
+    it('should have Page Metadata Delta field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000074);
+      expect(fields!.get('PAGE METADATA DELTA')).toEqual({ originalName: 'Page Metadata Delta', typeName: 'BLOB' });
     });
   });
 });
