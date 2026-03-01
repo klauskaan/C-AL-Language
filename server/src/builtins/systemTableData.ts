@@ -74,7 +74,7 @@ export const SYSTEM_TABLE_NAMES: ReadonlyMap<number, string> = new Map([
   [2000000178, 'All Profile'],
   // Both 2000000167 and 2000000195 are legitimately named 'Membership Entitlement' in BC14 (confirmed
   // via COD9002 and related codeunits). 2000000167 is the tenant permission set variant (Role ID, Scope,
-  // App fields); 2000000195 is the SaaS entitlement check table (used with ISEMPTY/COUNT only).
+  // App fields); 2000000195 is the SaaS entitlement check table (Type, ID fields from COD458).
   // The duplicate name is cosmetic only — all lookups are by numeric ID.
   [2000000195, 'Membership Entitlement'],
   [2000000196, 'Object Options'],
@@ -442,5 +442,9 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
   ])],
   [2000000146, new Map<string, FieldInfo>([
     ['ENABLED', { originalName: 'Enabled', typeName: 'Boolean' }],
+  ])],
+  [2000000195, new Map<string, FieldInfo>([
+    ['TYPE', { originalName: 'Type', typeName: 'Option' }],
+    ['ID', { originalName: 'ID', typeName: 'Text250' }],
   ])],
 ]);
