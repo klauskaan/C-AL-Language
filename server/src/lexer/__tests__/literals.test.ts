@@ -417,6 +417,36 @@ describe('Lexer - Date/Time/DateTime Literals', () => {
         const dateTimeToken = tokens.find(t => t.type === TokenType.DateTime);
         expect(dateTimeToken).toBeUndefined();
       });
+
+      it('should NOT produce DateTime for datetime with bare trailing dot and no decimal digits (060120D120000.T)', () => {
+        const code = '060120D120000.T';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        // '.' is not followed by a digit, so isDigit(peek()) guard prevents decimal scanning
+        // The time portion never reaches 'T' cleanly → no DateTime token
+        const dateTimeToken = tokens.find(t => t.type === TokenType.DateTime);
+        expect(dateTimeToken).toBeUndefined();
+      });
+
+      it('should tokenize datetime with 9 time integer digits and decimal milliseconds (060120D120000999.1T)', () => {
+        const code = '060120D120000999.1T';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        // timeIntegerDigits = 9 >= 6 = MIN_TIME_DIGITS, so decimal scanning proceeds
+        expect(tokens).toHaveLength(2); // DateTime + EOF
+        expect(tokens[0].type).toBe(TokenType.DateTime);
+        expect(tokens[0].value).toBe('060120D120000999.1T');
+      });
+
+      it('should NOT produce DateTime for datetime with trailing dot and no T (060120D120000.)', () => {
+        const code = '060120D120000.';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+        // '.' followed by end-of-input (not a digit), so decimal scanning doesn't trigger
+        // No 'T' at end → no DateTime token
+        const dateTimeToken = tokens.find(t => t.type === TokenType.DateTime);
+        expect(dateTimeToken).toBeUndefined();
+      });
     });
   });
 
