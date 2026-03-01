@@ -60,7 +60,7 @@ export const SYSTEM_TABLE_NAMES: ReadonlyMap<number, string> = new Map([
   [2000000136, 'Table Metadata'],
   [2000000138, 'Page Metadata'],
   [2000000150, 'Report Layout'],
-  [2000000151, 'Object Metadata'],
+  [2000000151, 'NAV App Tenant App'],
   [2000000153, 'NAV App Installed App'],
   [2000000160, 'NAV App'],
   [2000000161, 'Media Set'],
