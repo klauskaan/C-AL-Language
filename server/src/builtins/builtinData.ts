@@ -764,7 +764,40 @@ const SYSTEM_FUNCTIONS: BuiltinFunction[] = [
     signature: '',
     documentation: 'Built-in system object for company properties. Used as a receiver: COMPANYPROPERTY.DISPLAYNAME(). Introduced in BC14.',
     category: 'system'
-  }
+  },
+
+  // ── Missing from #653 ────────────────────────────────────────────────────
+
+  {
+    name: 'APPLICATIONAREA',
+    signature: '([Value: Text]): Text',
+    documentation: 'Gets or sets the application area filter for the current session. When called with no argument, returns the current application area. NAV 2017+.',
+    category: 'system'
+  },
+  {
+    name: 'IMPORTSTREAMWITHURLACCESS',
+    signature: '(InStream: InStream, FileName: Text): GUID',
+    documentation: 'Imports a stream into tenant media storage with public URL access. Returns the GUID of the created media object. NAV 2017+.',
+    category: 'system'
+  },
+  {
+    name: 'GETDOCUMENTURL',
+    signature: '(MediaID: GUID): Text',
+    documentation: 'Returns the URL for a media document stored via IMPORTSTREAMWITHURLACCESS. NAV 2017+.',
+    category: 'system'
+  },
+  {
+    name: 'CURRENTEXECUTIONMODE',
+    signature: '(): Option',
+    documentation: 'Returns the current execution mode of the session (Normal or Debug). NAV 2013+.',
+    category: 'system'
+  },
+  {
+    name: 'CONTEXTURL',
+    signature: '(): Text',
+    documentation: 'Returns the URL of the current NAV client context. NAV 2013+.',
+    category: 'system'
+  },
 ];
 
 /**
