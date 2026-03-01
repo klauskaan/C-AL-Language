@@ -368,7 +368,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     });
   });
 
-  describe('Media (NAV App) table (2000000160) - new fields', () => {
+  describe('NAV App table (2000000160) - new fields', () => {
     it('should have Package ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000160);
       expect(fields).toBeDefined();
