@@ -609,13 +609,16 @@ export class SymbolTable {
         // Parse SourceTable property: "Table18" or "Table 18"
         const match = sourceTableProp.value.match(/^Table\s*(\d+)$/i);
         if (match) {
-          pageSourceTableId = parseInt(match[1], 10);
+          const tableId = parseInt(match[1], 10);
+          if (!isNaN(tableId) && tableId > 0) {
+            pageSourceTableId = tableId;
+          }
         }
       }
     }
 
     // Inject SourceTable fields for pages BEFORE the AST walk
-    if (pageSourceTableId !== undefined && pageSourceTableId > 0 && fieldRegistry) {
+    if (pageSourceTableId !== undefined && fieldRegistry) {
       const tableFields = fieldRegistry.get(pageSourceTableId);
       if (tableFields) {
         // Inject each field into root scope with kind='field'
@@ -632,7 +635,7 @@ export class SymbolTable {
     }
 
     // Inject SourceTable procedures for pages BEFORE the AST walk
-    if (pageSourceTableId !== undefined && pageSourceTableId > 0 && procedureRegistry) {
+    if (pageSourceTableId !== undefined && procedureRegistry) {
       const tableProcedures = procedureRegistry.get(pageSourceTableId);
       if (tableProcedures) {
         for (const [_uppercaseKey, originalName] of tableProcedures) {

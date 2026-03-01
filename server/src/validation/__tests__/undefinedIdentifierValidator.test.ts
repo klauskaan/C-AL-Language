@@ -4196,10 +4196,10 @@ describe('UndefinedIdentifierValidator - Codeunit TableNo=0 guard', () => {
 
 describe('UndefinedIdentifierValidator - Page SourceTable=0 guard', () => {
   it('should flag bare PhantomField as undefined when page has SourceTable=Table0 (independently tests field injection guard)', () => {
-    // This test independently exercises the pageSourceTableId > 0 guard in buildFromAST().
-    // Without the guard, PhantomField would be injected from table 0 and would NOT be flagged.
-    // SourceTable=Table0 is not a real-world pattern, but the guard provides defense-in-depth
-    // symmetric with the codeunit TableNo=0 guard.
+    // This test independently exercises the tableId > 0 guard in the page SourceTable extraction
+    // (buildFromAST). Without the guard, PhantomField would be injected from table 0 and would
+    // NOT be flagged. SourceTable=Table0 is not a real-world pattern, but the guard provides
+    // defense-in-depth symmetric with the codeunit TableNo=0 guard.
     const code = `OBJECT Page 50000 "No Source Table Page"
 {
   PROPERTIES
