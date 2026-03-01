@@ -449,6 +449,7 @@ export class Parser {
     let code: CodeSection | null = null;
     let objectLevelVariables: VariableDeclaration[] = [];
     let objectLevelUnresolved: UnresolvedDataItem[] = [];
+    let requestPageSourceTableId: number | undefined;
 
     while (!this.isAtEnd()) {
       // Check for AL-only tokens at section level
@@ -517,8 +518,10 @@ export class Parser {
             const { variables: dataItemVars, unresolvedDataItems: dataItemUnresolved } = this.scanDatasetSection();
             objectLevelVariables.push(...dataItemVars);
             objectLevelUnresolved.push(...dataItemUnresolved);
+          } else if (token.type === TokenType.RequestPage) {
+            requestPageSourceTableId = this.scanRequestPageSection();
           } else {
-            // Skip other unsupported sections (EVENTS, REQUESTPAGE, LABELS, REQUESTFORM, MENUNODES, SECTIONS)
+            // Skip other unsupported sections (EVENTS, LABELS, REQUESTFORM, MENUNODES, SECTIONS)
             this.skipUnsupportedSection(token.type);
           }
         } else {
@@ -547,6 +550,7 @@ export class Parser {
       controls,
       elements,
       code,
+      requestPageSourceTableId,
       startToken,
       endToken: this.previous()
     };
@@ -6281,6 +6285,73 @@ export class Parser {
 
     // Note: We don't record an error here because these sections are intentionally skipped
     // Full parsing support for these sections would be a future enhancement
+  }
+
+  /**
+   * Scan a REQUESTPAGE section to extract the SourceTable property value.
+   * The REQUESTPAGE section has a nested PROPERTIES sub-section which may contain
+   * a SourceTable=TableN property. This method extracts the table ID if present.
+   *
+   * Consumes all tokens in the REQUESTPAGE section (same as skipUnsupportedSection)
+   * but additionally returns the SourceTable table ID if found.
+   *
+   * Only looks for SourceTable at braceDepth === sectionDepth + 2
+   * (directly inside REQUESTPAGE { PROPERTIES { ... } }) to avoid false positives
+   * from trigger code bodies that appear within the same section.
+   *
+   * @returns The extracted table ID number, or undefined if not present.
+   */
+  private scanRequestPageSection(): number | undefined {
+    const sectionDepth = this.braceDepth;
+    let result: number | undefined;
+
+    // Consume the REQUESTPAGE keyword
+    this.advance();
+
+    while (!this.isAtEnd()) {
+      const token = this.peek();
+
+      // Break when we reach another section keyword at the same depth
+      if (this.braceDepth === sectionDepth && this.isSectionKeyword(token.type)) {
+        break;
+      }
+
+      // Look for SourceTable only at braceDepth === sectionDepth + 2
+      // (directly inside REQUESTPAGE { PROPERTIES { ... } })
+      if (this.braceDepth === sectionDepth + 2 && token.type === TokenType.Identifier &&
+          token.value.toLowerCase() === 'sourcetable') {
+        // Consume 'sourcetable' identifier
+        this.advance();
+        // Expect '=' sign
+        if (!this.isAtEnd() && this.peek().type === TokenType.Equal) {
+          this.advance(); // consume '='
+          // Next token should be the value, e.g. 'Table18' or 'Table' followed by '18'
+          if (!this.isAtEnd()) {
+            const valueToken = this.peek();
+            const valueStr = valueToken.value;
+            const match = valueStr.match(/^Table\s*(\d+)$/i);
+            if (match) {
+              result = parseInt(match[1], 10);
+            } else if (valueStr.toLowerCase() === 'table') {
+              // Handle "Table 18" split across two tokens
+              this.advance(); // consume 'Table'
+              if (!this.isAtEnd()) {
+                const numToken = this.peek();
+                const numMatch = numToken.value.match(/^(\d+)$/);
+                if (numMatch) {
+                  result = parseInt(numMatch[1], 10);
+                }
+              }
+            }
+          }
+        }
+        continue;
+      }
+
+      this.advance();
+    }
+
+    return result;
   }
 
   /**

@@ -691,6 +691,36 @@ export class SymbolTable {
       }
     }
 
+    // Inject REQUESTPAGE SourceTable fields for Reports BEFORE the AST walk
+    if (ast.object.objectKind === ObjectKind.Report && ast.object.requestPageSourceTableId !== undefined) {
+      const reportSourceTableId = ast.object.requestPageSourceTableId;
+      if (fieldRegistry) {
+        const tableFields = fieldRegistry.get(reportSourceTableId);
+        if (tableFields) {
+          for (const [_uppercaseKey, fieldInfo] of tableFields) {
+            this.rootScope.addSymbol({
+              name: fieldInfo.originalName,
+              kind: 'field',
+              token: makeSyntheticToken(fieldInfo.originalName, ast.object.startToken),
+              type: fieldInfo.typeName
+            });
+          }
+        }
+      }
+      if (procedureRegistry) {
+        const tableProcs = procedureRegistry.get(reportSourceTableId);
+        if (tableProcs) {
+          for (const [_uppercaseKey, originalName] of tableProcs) {
+            this.rootScope.addSymbol({
+              name: originalName,
+              kind: 'procedure',
+              token: makeSyntheticToken(originalName, ast.object.startToken),
+            });
+          }
+        }
+      }
+    }
+
     const walker = new ASTWalker();
     const visitor = new SymbolCollectorVisitor(this.rootScope, ast.object.objectKind, tableRegistry);
 

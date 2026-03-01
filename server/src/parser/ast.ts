@@ -41,6 +41,8 @@ export interface ObjectDeclaration {
   controls: ControlSection | null;
   elements: ElementsSection | null;
   code: CodeSection | null;
+  /** Table ID extracted from REQUESTPAGE PROPERTIES { SourceTable=TableN; } — Reports only */
+  requestPageSourceTableId?: number;
 }
 
 /**
