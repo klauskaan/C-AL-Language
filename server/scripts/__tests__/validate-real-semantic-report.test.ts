@@ -1303,11 +1303,51 @@ describe('validateAllRealFiles', () => {
       validateAllRealFiles();
 
       // Verify analyzer.analyze was called with userTablesIndexed = true
-      // because tableRegistry.size > 0 (the table AST was parsed successfully)
+      // because userTableCount > 0 (the table AST was parsed successfully)
       expect(mockAnalyzer.analyze).toHaveBeenCalled();
       const analyzeCall = mockAnalyzer.analyze.mock.calls[0];
       const options = analyzeCall[3]; // 4th argument (options object)
       expect(options.userTablesIndexed).toBe(true);
+    });
+
+    it('should set userTablesIndexed = false when no user table files exist', () => {
+      // Only a codeunit file — no Table objects, so userTableCount stays 0
+      const mockFiles = ['codeunit.txt'];
+      (readdirSync as unknown as jest.Mock).mockReturnValue(mockFiles);
+      (readFileWithEncoding as unknown as jest.Mock).mockReturnValue({
+        content: 'OBJECT Codeunit 1 ApplicationManagement\n{}\n'
+      });
+
+      const mockLexer = { tokenize: jest.fn().mockReturnValue([]) };
+      (Lexer as unknown as jest.Mock).mockImplementation(() => mockLexer);
+
+      const mockParser = {
+        parse: jest.fn().mockReturnValue({
+          object: {
+            objectKind: ObjectKind.Codeunit,
+            objectId: 1,
+            objectName: 'ApplicationManagement'
+          }
+        })
+      };
+      (Parser as unknown as jest.Mock).mockImplementation(() => mockParser);
+
+      const mockSymbolTable = { buildFromAST: jest.fn() };
+      (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
+
+      const mockAnalyzer = { analyze: jest.fn().mockReturnValue([]) };
+      (SemanticAnalyzer as unknown as jest.Mock).mockImplementation(() => mockAnalyzer);
+
+      (BuiltinRegistry as unknown as jest.Mock).mockImplementation(() => ({}));
+
+      validateAllRealFiles();
+
+      // userTablesIndexed must be false — no user Table objects were parsed,
+      // only system tables (seeded into tableRegistry) exist
+      expect(mockAnalyzer.analyze).toHaveBeenCalled();
+      const analyzeCall = mockAnalyzer.analyze.mock.calls[0];
+      const options = analyzeCall[3];
+      expect(options.userTablesIndexed).toBe(false);
     });
 
     it('should pass fieldRegistry, tableRegistry, and procedureRegistry to analyzer.analyze', () => {
