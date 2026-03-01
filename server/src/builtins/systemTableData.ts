@@ -99,6 +99,7 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
     ['SQLDATATYPE', { originalName: 'SQLDataType', typeName: 'Option' }],
     ['OPTIONSTRING', { originalName: 'OptionString', typeName: 'Text250' }],
     ['DATACLASSIFICATION', { originalName: 'DataClassification', typeName: 'Option' }],
+    ['FIELD CAPTION', { originalName: 'Field Caption', typeName: 'Text80' }],
   ])],
 
   [2000000058, new Map<string, FieldInfo>([
@@ -119,12 +120,15 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
     ['CHANGE PASSWORD', { originalName: 'Change Password', typeName: 'Boolean' }],
     ['LICENSE TYPE', { originalName: 'License Type', typeName: 'Option' }],
     ['AUTHENTICATION EMAIL', { originalName: 'Authentication Email', typeName: 'Text250' }],
+    ['CONTACT EMAIL', { originalName: 'Contact Email', typeName: 'Text250' }],
+    ['APPLICATION ID', { originalName: 'Application ID', typeName: 'GUID' }],
   ])],
 
   [2000000038, new Map<string, FieldInfo>([
     ['OBJECT TYPE', { originalName: 'Object Type', typeName: 'Option' }],
     ['OBJECT ID', { originalName: 'Object ID', typeName: 'Integer' }],
     ['OBJECT NAME', { originalName: 'Object Name', typeName: 'Text30' }],
+    ['APP PACKAGE ID', { originalName: 'App Package ID', typeName: 'GUID' }],
   ])],
 
   [2000000063, new Map<string, FieldInfo>([
@@ -155,12 +159,15 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
     ['LOCKED BY', { originalName: 'Locked By', typeName: 'Text119' }],
     ['BLOB REFERENCE', { originalName: 'BLOB Reference', typeName: 'BigInteger' }],
     ['BLOB SIZE', { originalName: 'BLOB Size', typeName: 'Integer' }],
+    ['CAPTION', { originalName: 'Caption', typeName: 'Text250' }],
   ])],
 
   [2000000006, new Map<string, FieldInfo>([
     ['NAME', { originalName: 'Name', typeName: 'Text30' }],
     ['EVALUATION COMPANY', { originalName: 'Evaluation Company', typeName: 'Boolean' }],
     ['DISPLAY NAME', { originalName: 'Display Name', typeName: 'Text250' }],
+    ['BUSINESS PROFILE ID', { originalName: 'Business Profile Id', typeName: 'Text250' }],
+    ['ID', { originalName: 'Id', typeName: 'GUID' }],
   ])],
 
   [2000000009, new Map<string, FieldInfo>([
@@ -186,6 +193,8 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
     ['DELETE PERMISSION', { originalName: 'Delete Permission', typeName: 'Option' }],
     ['EXECUTE PERMISSION', { originalName: 'Execute Permission', typeName: 'Option' }],
     ['SECURITY FILTER', { originalName: 'Security Filter', typeName: 'TableFilter' }],
+    ['ROLE NAME', { originalName: 'Role Name', typeName: 'Text30' }],
+    ['OBJECT NAME', { originalName: 'Object Name', typeName: 'Text249' }],
   ])],
 
   [2000000136, new Map<string, FieldInfo>([
@@ -199,6 +208,8 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
     ['OBSOLETESTATE', { originalName: 'ObsoleteState', typeName: 'Option' }],
     ['OBSOLETEREASON', { originalName: 'ObsoleteReason', typeName: 'Text250' }],
     ['EXTERNALNAME', { originalName: 'ExternalName', typeName: 'Text128' }],
+    ['TABLETYPE', { originalName: 'TableType', typeName: 'Option' }],
+    ['DATAISEXTERNAL', { originalName: 'DataIsExternal', typeName: 'Boolean' }],
   ])],
 
   [2000000138, new Map<string, FieldInfo>([
@@ -206,5 +217,8 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
     ['NAME', { originalName: 'Name', typeName: 'Text30' }],
     ['CAPTION', { originalName: 'Caption', typeName: 'Text250' }],
     ['ENTITYNAME', { originalName: 'EntityName', typeName: 'Text250' }],
+    ['CARDPAGEID', { originalName: 'CardPageID', typeName: 'Integer' }],
+    ['SOURCETABLE', { originalName: 'SourceTable', typeName: 'Integer' }],
+    ['SOURCETABLETEMPORARY', { originalName: 'SourceTableTemporary', typeName: 'Boolean' }],
   ])],
 ]);
