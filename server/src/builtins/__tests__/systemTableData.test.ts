@@ -655,3 +655,31 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     });
   });
 });
+
+describe('SYSTEM_TABLE_NAMES new entries from #680', () => {
+  it('should have Intelligent Cloud for table 2000000146', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000146)).toBe('Intelligent Cloud');
+  });
+
+  it('should have Membership Entitlement for table 2000000195', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000195)).toBe('Membership Entitlement');
+  });
+});
+
+describe('Intelligent Cloud table (2000000146) - new fields from #680', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000146)).toBe(true);
+  });
+
+  it('should have Enabled field with Boolean type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000146);
+    expect(fields).toBeDefined();
+    expect(fields!.get('ENABLED')).toEqual({ originalName: 'Enabled', typeName: 'Boolean' });
+  });
+
+  it('should have correct field count of 1', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000146);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBe(1);
+  });
+});
