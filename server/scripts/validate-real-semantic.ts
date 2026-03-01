@@ -133,7 +133,7 @@ export function validateAllRealFiles(): SemanticValidationResult[] {
     const parser = new Parser(tokens);
     const ast = parser.parse();
     const symbolTable = new SymbolTable();
-    symbolTable.buildFromAST(ast, tableRegistry, fieldRegistry);
+    symbolTable.buildFromAST(ast, tableRegistry, fieldRegistry, procedureRegistry);
     const userTablesIndexed = tableRegistry.size > 0;
     const diagnostics = analyzer.analyze(ast, symbolTable, `file://${filePath}`, {
       settings: defaultSettings,

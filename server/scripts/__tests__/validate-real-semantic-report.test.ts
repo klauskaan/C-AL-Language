@@ -1134,6 +1134,56 @@ describe('validateAllRealFiles', () => {
       expect(tableFields?.get('NO.')).toEqual({ originalName: 'No.', typeName: 'Code20' });
     });
 
+    it('should pass procedureRegistry as 4th argument to buildFromAST', () => {
+      const mockFiles = ['table1.txt'];
+      (readdirSync as unknown as jest.Mock).mockReturnValue(mockFiles);
+
+      (readFileWithEncoding as unknown as jest.Mock).mockReturnValue({
+        content: 'OBJECT Table 18 Customer\n{\n  CODE { { FindFirst();;; } }\n}\n'
+      });
+
+      const mockLexer = { tokenize: jest.fn().mockReturnValue([]) };
+      (Lexer as unknown as jest.Mock).mockImplementation(() => mockLexer);
+
+      // Parser returns a table AST with one procedure, so procedureRegistry is populated
+      const mockParser = {
+        parse: jest.fn().mockReturnValue({
+          object: {
+            objectKind: ObjectKind.Table,
+            objectId: 18,
+            objectName: 'Customer',
+            fields: null,
+            code: {
+              procedures: [
+                { name: 'FindFirst' }
+              ]
+            }
+          }
+        })
+      };
+      (Parser as unknown as jest.Mock).mockImplementation(() => mockParser);
+
+      const mockSymbolTable = {
+        buildFromAST: jest.fn(),
+      };
+      (SymbolTable as unknown as jest.Mock).mockImplementation(() => mockSymbolTable);
+
+      const mockAnalyzer = {
+        analyze: jest.fn().mockReturnValue([])
+      };
+      (SemanticAnalyzer as unknown as jest.Mock).mockImplementation(() => mockAnalyzer);
+
+      (BuiltinRegistry as unknown as jest.Mock).mockImplementation(() => ({}));
+
+      validateAllRealFiles();
+
+      // Verify symbolTable.buildFromAST was called with procedureRegistry as 4th argument
+      expect(mockSymbolTable.buildFromAST).toHaveBeenCalled();
+      const buildCall = mockSymbolTable.buildFromAST.mock.calls[0];
+      const procedureRegistry = buildCall[3];
+      expect(procedureRegistry).toBeInstanceOf(Map);
+    });
+
     it('should propagate userTablesIndexed flag from tableRegistry to analyzer', () => {
       const mockFiles = ['test.txt'];
       (readdirSync as unknown as jest.Mock).mockReturnValue(mockFiles);
