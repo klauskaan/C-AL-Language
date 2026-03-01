@@ -1048,10 +1048,23 @@ export class Lexer {
         // Check if followed by time (DT format) or undefined datetime (0DT)
         const isUndefinedDateTime = value === Lexer.UNDEFINED_DATE && this.currentChar() === 'T';
         if (this.isDigit(this.currentChar()) || isUndefinedDateTime) {
-          // Scan time part
+          // Scan time part (integer digits)
+          let timeIntegerDigits = 0;
           while (this.isDigit(this.currentChar())) {
             value += this.currentChar();
             this.advance();
+            timeIntegerDigits++;
+          }
+          // Optionally scan decimal milliseconds (e.g., 120000.000T)
+          // Only consume if time integer part meets the minimum digit count
+          if (this.currentChar() === '.' && this.isDigit(this.peek()) &&
+              timeIntegerDigits >= Lexer.MIN_TIME_DIGITS) {
+            value += this.currentChar();
+            this.advance();
+            while (this.isDigit(this.currentChar())) {
+              value += this.currentChar();
+              this.advance();
+            }
           }
           if (this.currentChar() === 'T') {
             value += this.currentChar();

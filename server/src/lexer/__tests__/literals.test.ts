@@ -373,6 +373,51 @@ describe('Lexer - Date/Time/DateTime Literals', () => {
       expect(tokens[1].type).toBe(TokenType.Integer);
       expect(tokens[1].value).toBe('123');
     });
+
+    describe('decimal-millisecond DateTime literals', () => {
+      it('should tokenize datetime with decimal milliseconds in time part (060120D120000.000T)', () => {
+        const code = '060120D120000.000T';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens).toHaveLength(2); // DateTime literal + EOF
+        expect(tokens[0].type).toBe(TokenType.DateTime);
+        expect(tokens[0].value).toBe('060120D120000.000T');
+      });
+
+      it('should tokenize datetime with 8-digit date and decimal milliseconds (06012020D235959.995T)', () => {
+        const code = '06012020D235959.995T';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        expect(tokens).toHaveLength(2);
+        expect(tokens[0].type).toBe(TokenType.DateTime);
+        expect(tokens[0].value).toBe('06012020D235959.995T');
+      });
+
+      it('should tokenize datetime literal with decimal milliseconds in assignment context', () => {
+        const code = 'MyDateTime := 060120D120000.500T;';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        // MyDateTime, :=, datetime, ;, EOF
+        expect(tokens[0].type).toBe(TokenType.Identifier);
+        expect(tokens[1].type).toBe(TokenType.Assign);
+        expect(tokens[2].type).toBe(TokenType.DateTime);
+        expect(tokens[2].value).toBe('060120D120000.500T');
+        expect(tokens[3].type).toBe(TokenType.Semicolon);
+      });
+
+      it('should NOT tokenize datetime with decimal time where time integer part has fewer than 6 digits (060120D12345.6T)', () => {
+        const code = '060120D12345.6T';
+        const lexer = new Lexer(code);
+        const tokens = lexer.tokenize();
+
+        // 5 time-integer digits is one short of the 6-digit minimum — not a datetime literal
+        const dateTimeToken = tokens.find(t => t.type === TokenType.DateTime);
+        expect(dateTimeToken).toBeUndefined();
+      });
+    });
   });
 
   describe('Edge cases and validation', () => {
