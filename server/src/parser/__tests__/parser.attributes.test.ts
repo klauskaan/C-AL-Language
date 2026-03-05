@@ -432,8 +432,8 @@ describe('Parser - Procedure Attributes', () => {
           }
         }`;
         const { errors } = parseCode(code);
-        // Expect 2 errors: parse error + attribute discard warning
-        expect(errors.length).toBe(2);
+        // Expect 3 errors: parse error + attribute discard warning + parse-error-recovery (from recordSkippedRegion)
+        expect(errors.length).toBe(3);
 
         // Find the attribute discard warning
         const attrWarning = errors.find(e => e.message.includes('1 attribute discarded'));
@@ -449,8 +449,8 @@ describe('Parser - Procedure Attributes', () => {
           }
         }`;
         const { errors } = parseCode(code);
-        // Expect 2 errors: parse error + attribute discard warning
-        expect(errors.length).toBe(2);
+        // Expect 3 errors: parse error + attribute discard warning + parse-error-recovery (from recordSkippedRegion)
+        expect(errors.length).toBe(3);
 
         // Find the attribute discard warning
         const attrWarning = errors.find(e => e.message.includes('2 attributes discarded'));
@@ -465,8 +465,8 @@ describe('Parser - Procedure Attributes', () => {
           }
         }`;
         const { errors } = parseCode(code);
-        // Expect only 1 error: parse error, NO attribute warning
-        expect(errors.length).toBe(1);
+        // Expect 2 errors: parse error + parse-error-recovery (from recordSkippedRegion), NO attribute warning
+        expect(errors.length).toBe(2);
 
         // Verify no attribute discard warning
         const attrWarning = errors.find(e => e.message.includes('attribute'));
