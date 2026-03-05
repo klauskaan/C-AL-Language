@@ -2596,14 +2596,35 @@ export class Parser {
           if (firstLeftBracket !== null) {
             this.warnIgnoredAttributes(attributeAttempts, firstLeftBracket);
           }
+          if (isLocal) {
+            this.recordError(
+              "'LOCAL' keyword is not valid before TRIGGER declarations",
+              localToken!,
+              'parse-unexpected-token'
+            );
+          }
           triggers.push(this.parseTrigger());
         } else if (this.check(TokenType.Event)) {
           if (firstLeftBracket !== null) {
             this.warnIgnoredAttributes(attributeAttempts, firstLeftBracket);
           }
+          if (isLocal) {
+            this.recordError(
+              "'LOCAL' keyword is not valid before EVENT declarations",
+              localToken!,
+              'parse-unexpected-token'
+            );
+          }
           events.push(this.parseEvent());
         } else if (this.check(TokenType.Begin)) {
           // Main code block (documentation trigger) - skip for now
+          if (isLocal) {
+            this.recordError(
+              "'LOCAL' keyword not followed by a PROCEDURE or FUNCTION declaration",
+              localToken!,
+              'parse-unexpected-token'
+            );
+          }
           break;
         } else if (this.peek().type === TokenType.Unknown && this.peek().value !== '}') {
           // Unrecognized token mid-section: record error, skip to next procedure boundary, continue.
