@@ -3212,7 +3212,7 @@ export class Parser {
 
   /**
    * Parse optional return type for procedure/function declarations
-   * Supports named return values: "Name : Type" or "Name@N : Type"
+   * Supports: "Name : Type", "Name@N : Type", "@N : Type" (anonymous with decorator), ": Type"
    */
   private parseProcedureReturnType(): { returnType: DataType | null; returnValueName?: string; returnValueToken?: Token } {
     let returnType: DataType | null = null;
@@ -3252,6 +3252,20 @@ export class Parser {
           this.advance(); // consume :
           returnType = this.parseDataType();
         }
+      }
+    }
+
+    // Pattern: @N : Type — anonymous return value with decorator (no name before @)
+    // e.g. PROCEDURE Foo@1() @2 : Integer;  — the @2 belongs to the return slot, not the procedure
+    if (!returnType && this.check(TokenType.Unknown) && this.peek().value === '@') {
+      const next1 = this.peekNextMeaningfulToken(1);
+      const next2 = this.peekNextMeaningfulToken(2);
+      if (next1 && next1.type === TokenType.Integer && next2 && next2.type === TokenType.Colon) {
+        this.advance(); // consume @
+        this.advance(); // consume integer (decorator ID)
+        this.advance(); // consume :
+        returnType = this.parseDataType();
+        // returnValueName remains undefined — this is an anonymous return value
       }
     }
 

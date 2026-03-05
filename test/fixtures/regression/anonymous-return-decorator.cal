@@ -1,0 +1,26 @@
+OBJECT Codeunit 50685 AnonymousReturnDecorator
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01-01-20;
+    Time=12:00:00;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  CODE
+  {
+    PROCEDURE Before@1() : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE WithAnonymousDecorator@2() @3 : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE After@4();
+    BEGIN
+    END;
+  }
+}
