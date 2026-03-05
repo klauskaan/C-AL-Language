@@ -38,11 +38,12 @@ Every piece of work starts with a GitHub issue. Worktrees are named after issue 
                     then: github-issues posts comment
 4. TEST FIRST   -  test-writer writes tests, then test-runner verifies they fail
 5. IMPLEMENT    -  senior-developer executes the plan
-6. REVIEW       -  adversarial-verifier (always), adversarial-reviewer (always),
+6. TEST SUITE   -  test-runner runs the full suite; any failures block review
+7. REVIEW       -  adversarial-verifier (always), adversarial-reviewer (always),
                     plus typescript-reviewer and/or cal-expert when relevant
                     then: github-issues posts comment
-7. COMMIT       -  file-ops commits with "Fixes #X", pushes to feature branch
-8. MERGE & PUSH -  merge-agent merges to main, push, cleans up worktree
+8. COMMIT       -  file-ops commits with "Fixes #X", pushes to feature branch
+9. MERGE & PUSH -  merge-agent merges to main, push, cleans up worktree
 ```
 
 ### Worktrees
@@ -104,6 +105,10 @@ Test-first doesn't apply when there's no new behavior to verify: refactoring, pu
 
 Implementation happens in a dedicated agent to preserve orchestrator context. The workflow doesn't prescribe how the agent works internally — model and instructions can be tuned independently without changing the workflow.
 
+### Test Suite
+
+After implementation, test-runner runs the full test suite — not just the new tests. Issue-specific tests passing is necessary but not sufficient: regressions live in tests that weren't written for this change. Any failure blocks review. The fix for a failing test follows the same triage as "Tests fail after implementation" in When Things Go Wrong.
+
 ### Review
 
 Review is the final quality gate. This is where scope drift is caught, implementation hallucinations are surfaced, and the final output is sanitized before it touches main. It has proven its value consistently and is non-negotiable.
@@ -128,7 +133,7 @@ This part of the workflow sees more variance than earlier steps and is the least
 
 ### When Things Go Wrong
 
-- Tests fail after implementation? Small fix → just fix it. Design flaw → re-plan. Wrong root cause → re-investigate.
+- Full suite fails at TEST SUITE? Small fix → just fix it, re-run suite. Design flaw → re-plan. Wrong root cause → re-investigate.
 - **Senior-developer returns REJECTED?** Back to PLAN with the rejection feedback.
 - Reviewer finds issues? Fix them, get re-reviewed. Design flaw → back to plan.
 - Going in circles? Stop after 2-3 iterations and escalate to Klaus.
