@@ -176,6 +176,12 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
       expect(fields).toBeDefined();
       expect(fields!.get('APPLICATION ID')).toEqual({ originalName: 'Application ID', typeName: 'GUID' });
     });
+
+    it('should have Exchange Identifier field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000120);
+      expect(fields).toBeDefined();
+      expect(fields!.get('EXCHANGE IDENTIFIER')).toEqual({ originalName: 'Exchange Identifier', typeName: 'Text250' });
+    });
   });
 
   describe('Table Metadata table (2000000136) - missing fields', () => {
@@ -268,14 +274,6 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
       expect(fields).toBeDefined();
       expect(fields!.size).toBe(6);
       expect(fields!.get('APP PACKAGE ID')).toEqual({ originalName: 'App Package ID', typeName: 'GUID' });
-    });
-  });
-
-  describe('User table (2000000120) - missing fields', () => {
-    it('should have Exchange Identifier field', () => {
-      const fields = SYSTEM_TABLE_FIELDS.get(2000000120);
-      expect(fields).toBeDefined();
-      expect(fields!.get('EXCHANGE IDENTIFIER')).toEqual({ originalName: 'Exchange Identifier', typeName: 'Text250' });
     });
   });
 
