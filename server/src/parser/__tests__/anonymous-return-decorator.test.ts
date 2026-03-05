@@ -55,6 +55,7 @@ describe('Parser - Anonymous Return Value with Decorator (@N : Type)', () => {
       // Before the fix, After@4 is silently dropped because the @ token from
       // the anonymous return is left unconsumed, corrupting the parse position.
       expect(ast.object!.code!.procedures).toHaveLength(3);
+      expect(errors).toHaveLength(0);
 
       const before = ast.object!.code!.procedures.find(
         (p) => (p as ProcedureDeclaration).name === 'Before'
@@ -87,10 +88,11 @@ describe('Parser - Anonymous Return Value with Decorator (@N : Type)', () => {
     END;
   }
 }`;
-      const { ast } = parseCode(code);
+      const { ast, errors } = parseCode(code);
 
       expect(ast.object).toBeDefined();
       expect(ast.object!.code).toBeDefined();
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.procedures).toHaveLength(2);
 
       const second = ast.object!.code!.procedures.find(
@@ -116,6 +118,7 @@ describe('Parser - Anonymous Return Value with Decorator (@N : Type)', () => {
       expect(ast.object).toBeDefined();
       expect(ast.object!.code).toBeDefined();
       expect(ast.object!.code!.procedures).toHaveLength(1);
+      expect(errors).toHaveLength(0);
 
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
       expect(proc.name).toBe('GetValue');
@@ -136,6 +139,7 @@ describe('Parser - Anonymous Return Value with Decorator (@N : Type)', () => {
 }`;
       const { ast, errors } = parseCode(code);
 
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.procedures).toHaveLength(1);
 
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
@@ -155,8 +159,9 @@ describe('Parser - Anonymous Return Value with Decorator (@N : Type)', () => {
     END;
   }
 }`;
-      const { ast } = parseCode(code);
+      const { ast, errors } = parseCode(code);
 
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.procedures).toHaveLength(1);
 
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
@@ -175,8 +180,9 @@ describe('Parser - Anonymous Return Value with Decorator (@N : Type)', () => {
     END;
   }
 }`;
-      const { ast } = parseCode(code);
+      const { ast, errors } = parseCode(code);
 
+      expect(errors).toHaveLength(0);
       expect(ast.object!.code!.procedures).toHaveLength(1);
 
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
@@ -198,6 +204,7 @@ describe('Parser - Anonymous Return Value with Decorator (@N : Type)', () => {
       const { ast, errors } = parseCode(code);
 
       expect(ast.object!.code!.procedures).toHaveLength(1);
+      expect(errors).toHaveLength(0);
 
       const proc = ast.object!.code!.procedures[0] as ProcedureDeclaration;
       expect(proc.name).toBe('Sum');
@@ -263,6 +270,7 @@ describe('Parser - Anonymous Return Value with Decorator (@N : Type)', () => {
       const code = fs.readFileSync(fixturePath, 'utf-8');
       const { ast, errors } = parseCode(code);
 
+      expect(errors).toHaveLength(0);
       expect(ast.object).toBeDefined();
       expect(ast.object!.code).toBeDefined();
 
