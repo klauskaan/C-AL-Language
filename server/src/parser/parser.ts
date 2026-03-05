@@ -2609,6 +2609,7 @@ export class Parser {
           // serve as legitimate CODE-section terminators, so we recover and keep parsing.
           // Guard: UNKNOWN-typed '}' is a closing brace in a confused lexer context — treat as
           // a normal section exit rather than an unexpected token.
+          const skipStartToken = this.peek();
           this.recordError(
             `Unexpected token '${sanitizeContent(this.peek().value)}' in CODE section, skipping to next procedure`,
             this.peek(),
@@ -2616,12 +2617,17 @@ export class Parser {
           );
           // Always advance at least once to avoid infinite loop on the triggering token
           this.advance();
+          let skipCount = 1;
           while (!PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type) &&
                  !this.check(TokenType.Local) &&
                  this.peek().value !== '}' &&
                  !SECTION_KEYWORDS.has(this.peek().type) &&
                  !this.isAtEnd()) {
             this.advance();
+            skipCount++;
+          }
+          if (skipCount > 0) {
+            this.recordSkippedRegion(skipStartToken, this.previous(), skipCount, 'Error recovery');
           }
           continue;
         } else {
@@ -2648,12 +2654,18 @@ export class Parser {
           // the BEGIN to find the next real procedure declaration.
           // Stop at '}' by value (not just RightBrace type) because lexer context
           // confusion from malformed input can tokenize '}' as UNKNOWN.
+          const skipStartToken = this.peek();
+          let skipCount = 0;
           while (!PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type) &&
                  !this.check(TokenType.Local) &&
                  !SECTION_KEYWORDS.has(this.peek().type) &&
                  this.peek().value !== '}' &&
                  !this.isAtEnd()) {
             this.advance();
+            skipCount++;
+          }
+          if (skipCount > 0) {
+            this.recordSkippedRegion(skipStartToken, this.previous(), skipCount, 'Error recovery');
           }
         } else {
           throw error;
