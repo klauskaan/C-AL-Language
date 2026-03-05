@@ -37,9 +37,10 @@ describe('Issue #693 - parseCodeSection records error for LOCAL without PROCEDUR
     expect(codeSection.procedures.length).toBe(1);
     expect(codeSection.procedures[0].name).toBe('TestProc');
     // DIAGNOSTIC: error must be recorded for the orphaned LOCAL — fails before fix
-    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.length).toBe(1);
     const localError = errors.find(e => e.message.includes('LOCAL'));
     expect(localError).toBeDefined();
+    expect(localError!.code).toBe('parse-unexpected-token');
   });
 
   it('no error for LOCAL followed by PROCEDURE (regression)', () => {
