@@ -2628,6 +2628,8 @@ export class Parser {
             this.advance();
             skipCount++;
           }
+          // Guard is always true (skipCount starts at 1), but kept defensively:
+          // if the unconditional advance is ever moved into the loop body, this becomes load-bearing.
           if (skipCount > 0) {
             this.recordSkippedRegion(skipStartToken, this.previous(), skipCount, 'Error recovery');
           }
