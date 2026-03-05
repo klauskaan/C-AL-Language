@@ -16,6 +16,7 @@
  */
 
 import { parseCode } from './parserTestHelpers';
+import { ParseError } from '../parser';
 
 describe('Issue #689 - Documentation trigger depth tracking', () => {
   it('should correctly skip documentation trigger with nested BEGIN...END', () => {
@@ -141,7 +142,7 @@ describe('Issue #689 - Documentation trigger depth tracking', () => {
     const codeSection = ast.object!.code!;
     expect(codeSection).toBeDefined();
     // The CODE section closing brace must be found correctly — no unclosed-block error
-    const unclosedErrors = errors.filter(e => e.code === 'parse-unclosed-block');
+    const unclosedErrors = errors.filter((e: ParseError) => e.code === 'parse-unclosed-block');
     expect(unclosedErrors.length).toBe(0);
     // The CODE section endToken must be the closing '}'
     expect(codeSection.endToken.value).toBe('}');
