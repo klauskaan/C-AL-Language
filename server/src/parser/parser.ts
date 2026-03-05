@@ -2580,8 +2580,10 @@ export class Parser {
 
         // Check for LOCAL keyword before PROCEDURE/FUNCTION
         let isLocal = false;
+        let localToken: Token | null = null;
         if (this.check(TokenType.Local)) {
           isLocal = true;
+          localToken = this.peek();
           this.advance(); // consume LOCAL
 
           // Check for AL-only tokens after LOCAL (e.g., "LOCAL internal PROCEDURE")
@@ -2633,6 +2635,13 @@ export class Parser {
         } else {
           // Any other token (END, section keywords, identifiers, etc.) signals the end of
           // the CODE section's procedure/trigger/event list — exit cleanly.
+          if (isLocal) {
+            this.recordError(
+              "'LOCAL' keyword not followed by a PROCEDURE or FUNCTION declaration",
+              localToken!,
+              'parse-unexpected-token'
+            );
+          }
           break;
         }
       } catch (error) {
