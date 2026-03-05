@@ -2637,16 +2637,46 @@ export class Parser {
     }
 
     // Skip documentation trigger if present (BEGIN...END.)
+    // Use dual-depth tracking to handle nested BEGIN...END and CASE...END blocks correctly.
+    // This mirrors the recoverToTokensDepthAware() pattern.
     if (this.check(TokenType.Begin)) {
       this.advance(); // consume BEGIN
 
-      // Skip tokens until END is found
-      while (!this.check(TokenType.End) && !this.isAtEnd()) {
-        this.advance();
-      }
+      // Track BEGIN/END nesting (starts at 1 — we're inside the outer BEGIN)
+      let beginEndDepth = 1;
+      // Track CASE/END nesting (CASE...END uses END without paired BEGIN)
+      let caseDepth = 0;
 
-      if (this.check(TokenType.End)) {
-        this.advance(); // consume END
+      while (!this.isAtEnd()) {
+        const current = this.peek();
+
+        // Safety bound: stop at CODE section boundary or section keywords to prevent
+        // cascading misparse when END is missing from malformed input.
+        if (current.type === TokenType.RightBrace ||
+            current.value === '}' ||
+            SECTION_KEYWORDS.has(current.type)) {
+          break;
+        }
+
+        if (current.type === TokenType.Begin) {
+          beginEndDepth++;
+        } else if (current.type === TokenType.Case) {
+          caseDepth++;
+        } else if (current.type === TokenType.End) {
+          if (caseDepth > 0) {
+            // This END closes a CASE statement
+            caseDepth--;
+          } else if (beginEndDepth > 1) {
+            // This END closes a nested BEGIN block
+            beginEndDepth--;
+          } else {
+            // beginEndDepth === 1 and caseDepth === 0: this is the outer END
+            this.advance(); // consume END
+            break;
+          }
+        }
+
+        this.advance();
       }
 
       // Consume trailing dot if present
