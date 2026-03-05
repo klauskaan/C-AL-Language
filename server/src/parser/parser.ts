@@ -2650,6 +2650,7 @@ export class Parser {
           // confusion from malformed input can tokenize '}' as UNKNOWN.
           while (!PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type) &&
                  !this.check(TokenType.Local) &&
+                 !SECTION_KEYWORDS.has(this.peek().type) &&
                  this.peek().value !== '}' &&
                  !this.isAtEnd()) {
             this.advance();
