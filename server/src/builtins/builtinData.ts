@@ -1406,6 +1406,10 @@ export const SYSTEM_TYPE_KEYWORDS: Set<string> = new Set([
 
   'DATASCOPE',       // Enum for ISOLATEDSTORAGE scope: DATASCOPE::Company, DATASCOPE::CompanyAndUser, DATASCOPE::User (BC13+)
   'DEFAULTLAYOUT',   // Enum for report default layout: DEFAULTLAYOUT::None, DEFAULTLAYOUT::RDLC, DEFAULTLAYOUT::Word (NAV 2016+)
+
+  // ── Missing from #653 / corrected in #687 ─────────────────────────────────
+
+  'EXECUTIONMODE',   // Enum for CURRENTEXECUTIONMODE: EXECUTIONMODE::Debug, EXECUTIONMODE::Normal (BC14)
 ]);
 
 /**

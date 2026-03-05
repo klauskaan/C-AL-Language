@@ -412,8 +412,8 @@ describe('Builtins Module', () => {
       registry = new BuiltinRegistry();
     });
 
-    it('should have exactly 20 system type keyword entries', () => {
-      expect(SYSTEM_TYPE_KEYWORDS.size).toBe(20);
+    it('should have exactly 21 system type keyword entries', () => {
+      expect(SYSTEM_TYPE_KEYWORDS.size).toBe(21);
     });
 
     it('should recognize DATABASE as a known builtin', () => {
@@ -908,8 +908,8 @@ describe('Builtins Module', () => {
         expect(BUILTIN_FUNCTIONS).toHaveLength(140);
       });
 
-      it('SYSTEM_TYPE_KEYWORDS should have 20 entries after additions', () => {
-        expect(SYSTEM_TYPE_KEYWORDS.size).toBe(20);
+      it('SYSTEM_TYPE_KEYWORDS should have 21 entries after additions', () => {
+        expect(SYSTEM_TYPE_KEYWORDS.size).toBe(21);
       });
 
       it('should have no duplicate names in BUILTIN_FUNCTIONS', () => {
@@ -1018,8 +1018,8 @@ describe('Builtins Module', () => {
         expect(BUILTIN_FUNCTIONS.length).toBe(140);
       });
 
-      it('SYSTEM_TYPE_KEYWORDS.size should equal 20 after issue #623 additions', () => {
-        expect(SYSTEM_TYPE_KEYWORDS.size).toBe(20);
+      it('SYSTEM_TYPE_KEYWORDS.size should equal 21 after issue #623 additions (updated by #687)', () => {
+        expect(SYSTEM_TYPE_KEYWORDS.size).toBe(21);
       });
     });
   });
@@ -1073,10 +1073,10 @@ describe('Builtins Module', () => {
       });
     });
 
-    describe('AL-only exclusion guard', () => {
-      it('should NOT include EXECUTIONMODE in SYSTEM_TYPE_KEYWORDS (AL-only)', () => {
-        expect(SYSTEM_TYPE_KEYWORDS.has('EXECUTIONMODE')).toBe(false);
-        expect(registry.isSystemTypeKeyword('EXECUTIONMODE')).toBe(false);
+    describe('AL-only exclusion corrections', () => {
+      it('should include EXECUTIONMODE in SYSTEM_TYPE_KEYWORDS (valid C/AL BC14)', () => {
+        expect(SYSTEM_TYPE_KEYWORDS.has('EXECUTIONMODE')).toBe(true);
+        expect(registry.isSystemTypeKeyword('EXECUTIONMODE')).toBe(true);
       });
     });
 
@@ -1085,8 +1085,8 @@ describe('Builtins Module', () => {
         expect(BUILTIN_FUNCTIONS.length).toBe(140);
       });
 
-      it('SYSTEM_TYPE_KEYWORDS.size should remain at 20 after issue #653 additions', () => {
-        expect(SYSTEM_TYPE_KEYWORDS.size).toBe(20);
+      it('SYSTEM_TYPE_KEYWORDS.size should be 21 after issue #687 addition of EXECUTIONMODE', () => {
+        expect(SYSTEM_TYPE_KEYWORDS.size).toBe(21);
       });
     });
   });
