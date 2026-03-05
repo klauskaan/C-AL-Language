@@ -290,6 +290,12 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have NAV App Tenant App (not Object Metadata) for table 2000000151', () => {
       expect(SYSTEM_TABLE_NAMES.get(2000000151)).toBe('NAV App Tenant App');
     });
+    it('should have Tenant Permission Set (not Tenant Permission Set Rel.) for table 2000000165', () => {
+      expect(SYSTEM_TABLE_NAMES.get(2000000165)).toBe('Tenant Permission Set');
+    });
+    it('should have Aggregate Permission Set (not Membership Entitlement) for table 2000000167', () => {
+      expect(SYSTEM_TABLE_NAMES.get(2000000167)).toBe('Aggregate Permission Set');
+    });
   });
 
   describe('SYSTEM_TABLE_NAMES new entries', () => {
@@ -423,7 +429,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     });
   });
 
-  describe('Tenant Permission Set Rel. table (2000000165) - new fields', () => {
+  describe('Tenant Permission Set table (2000000165) - new fields', () => {
     it('should have App ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000165);
       expect(fields).toBeDefined();
@@ -449,7 +455,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     });
   });
 
-  describe('Membership Entitlement table (2000000167) - new fields', () => {
+  describe('Aggregate Permission Set table (2000000167) - new fields', () => {
     it('should have Role ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000167);
       expect(fields).toBeDefined();
@@ -577,7 +583,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     });
   });
 
-  describe('Tenant Permission Set Rel. table (2000000165) - missing fields from #673', () => {
+  describe('Tenant Permission Set table (2000000165) - missing fields from #673', () => {
     it('should have Name field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000165);
       expect(fields).toBeDefined();

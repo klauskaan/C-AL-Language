@@ -85,9 +85,9 @@ export const SYSTEM_TABLE_NAMES: ReadonlyMap<number, string> = new Map([
   [2000000161, 'Media Set'],
   [2000000162, 'Tenant Media'],
   [2000000163, 'Tenant Media Set'],
-  [2000000165, 'Tenant Permission Set Rel.'],
+  [2000000165, 'Tenant Permission Set'],
   [2000000166, 'Tenant Permission'],
-  [2000000167, 'Membership Entitlement'],
+  [2000000167, 'Aggregate Permission Set'],
   [2000000168, 'Tenant Web Service'],
   [2000000170, 'Application Language'],
   [2000000171, 'Designer Page Action'],
@@ -95,10 +95,6 @@ export const SYSTEM_TABLE_NAMES: ReadonlyMap<number, string> = new Map([
   [2000000178, 'All Profile'],
   [2000000179, 'OData Edm Type'],
   [2000000194, 'API Webhook Notification'],
-  // Both 2000000167 and 2000000195 are legitimately named 'Membership Entitlement' in BC14 (confirmed
-  // via COD9002 and related codeunits). 2000000167 is the tenant permission set variant (Role ID, Scope,
-  // App fields); 2000000195 is the SaaS entitlement check table (Type, ID fields from COD458).
-  // The duplicate name is cosmetic only — all lookups are by numeric ID.
   [2000000195, 'Membership Entitlement'],
   [2000000196, 'Object Options'],
   [2000000200, 'NAV App Tenant Operation'],
