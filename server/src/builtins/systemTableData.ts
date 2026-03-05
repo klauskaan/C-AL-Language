@@ -33,6 +33,10 @@ export const SYSTEM_TABLE_NAMES: ReadonlyMap<number, string> = new Map([
   [2000000026, 'Integer'],
   [2000000028, 'Virtual Table'],
   [2000000038, 'AllObj'],
+  // Both 2000000038 and 2000000039 are legitimately named 'AllObj' in BC14 (verified via source file
+  // analysis). 2000000038 is the primary AllObj table; 2000000039 is a variant used for printer
+  // name lookup. The duplicate name is cosmetic only — all lookups are by numeric ID.
+  [2000000039, 'AllObj'],
   [2000000041, 'Field'],
   [2000000043, 'License Information'],
   [2000000044, 'License Permission'],
@@ -41,14 +45,22 @@ export const SYSTEM_TABLE_NAMES: ReadonlyMap<number, string> = new Map([
   [2000000053, 'Access Control'],
   [2000000058, 'AllObjWithCaption'],
   [2000000063, 'Key'],
+  [2000000065, 'Send-To Program'],
+  [2000000066, 'Style Sheet'],
+  [2000000069, 'Control Add-in'],
   [2000000071, 'Object Metadata'],
   [2000000072, 'Profile'],
   [2000000073, 'User Personalization'],
   [2000000074, 'Profile Metadata'],
   [2000000075, 'User Metadata'],
+  [2000000078, 'Chart'],
+  [2000000100, 'Debugger Breakpoint'],
+  [2000000101, 'Debugger Call Stack'],
   [2000000102, 'Active Directory Group Member'],
+  [2000000110, 'Active Session'],
   [2000000111, 'Profile'],
   [2000000112, 'Profile Metadata'],
+  [2000000114, 'Server Instance'],
   [2000000115, 'Tenant Permission'],
   [2000000116, 'Tenant Permission Set'],
   // Both 2000000119 and 2000000160 are legitimately named 'NAV App' in BC14 (verified via
@@ -58,11 +70,17 @@ export const SYSTEM_TABLE_NAMES: ReadonlyMap<number, string> = new Map([
   [2000000119, 'NAV App'],
   [2000000120, 'User'],
   [2000000136, 'Table Metadata'],
+  // Both 2000000071 and 2000000137 are legitimately named 'Object Metadata' in BC14 (verified via
+  // source file analysis). 2000000071 is the older variant; 2000000137 is the newer table used for
+  // codeunit metadata and user AL code. The duplicate name is cosmetic only — all lookups are by numeric ID.
+  [2000000137, 'Object Metadata'],
   [2000000138, 'Page Metadata'],
+  [2000000140, 'Event Subscription'],
   [2000000146, 'Intelligent Cloud'],
   [2000000150, 'Report Layout'],
   [2000000151, 'NAV App Tenant App'],
   [2000000153, 'NAV App Installed App'],
+  [2000000159, 'Data Sensitivity'],
   [2000000160, 'NAV App'],
   [2000000161, 'Media Set'],
   [2000000162, 'Tenant Media'],
@@ -71,7 +89,12 @@ export const SYSTEM_TABLE_NAMES: ReadonlyMap<number, string> = new Map([
   [2000000166, 'Tenant Permission'],
   [2000000167, 'Membership Entitlement'],
   [2000000168, 'Tenant Web Service'],
+  [2000000170, 'Application Language'],
+  [2000000171, 'Designer Page Action'],
+  [2000000172, 'Designer Field Group'],
   [2000000178, 'All Profile'],
+  [2000000179, 'OData Edm Type'],
+  [2000000194, 'API Webhook Notification'],
   // Both 2000000167 and 2000000195 are legitimately named 'Membership Entitlement' in BC14 (confirmed
   // via COD9002 and related codeunits). 2000000167 is the tenant permission set variant (Role ID, Scope,
   // App fields); 2000000195 is the SaaS entitlement check table (Type, ID fields from COD458).
@@ -79,6 +102,7 @@ export const SYSTEM_TABLE_NAMES: ReadonlyMap<number, string> = new Map([
   [2000000195, 'Membership Entitlement'],
   [2000000196, 'Object Options'],
   [2000000200, 'NAV App Tenant Operation'],
+  [2000000201, 'Extension Deployment Status'],
   [2000000204, 'Page Info And Fields'],
 ]);
 
@@ -446,5 +470,150 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
   [2000000195, new Map<string, FieldInfo>([
     ['TYPE', { originalName: 'Type', typeName: 'Option' }],
     ['ID', { originalName: 'ID', typeName: 'Text250' }],
+  ])],
+
+  [2000000039, new Map<string, FieldInfo>([
+    ['ID', { originalName: 'ID', typeName: 'Text250' }],
+  ])],
+
+  [2000000065, new Map<string, FieldInfo>([
+    ['PROGRAM ID', { originalName: 'Program ID', typeName: 'GUID' }],
+    ['EXECUTABLE', { originalName: 'Executable', typeName: 'Text250' }],
+    ['NAME', { originalName: 'Name', typeName: 'Text250' }],
+    ['PARAMETER', { originalName: 'Parameter', typeName: 'Text250' }],
+  ])],
+
+  [2000000066, new Map<string, FieldInfo>([
+    ['OBJECT TYPE', { originalName: 'Object Type', typeName: 'Option' }],
+    ['OBJECT ID', { originalName: 'Object ID', typeName: 'Integer' }],
+    ['PROGRAM ID', { originalName: 'Program ID', typeName: 'GUID' }],
+    ['NAME', { originalName: 'Name', typeName: 'Text250' }],
+    ['STYLE SHEET', { originalName: 'Style Sheet', typeName: 'BLOB' }],
+    ['DATE', { originalName: 'Date', typeName: 'Date' }],
+  ])],
+
+  [2000000069, new Map<string, FieldInfo>([
+    ['ADD-IN NAME', { originalName: 'Add-in Name', typeName: 'Text220' }],
+    ['PUBLIC KEY TOKEN', { originalName: 'Public Key Token', typeName: 'Text20' }],
+    ['VERSION', { originalName: 'Version', typeName: 'Text25' }],
+    ['CATEGORY', { originalName: 'Category', typeName: 'Option' }],
+    ['DESCRIPTION', { originalName: 'Description', typeName: 'Text250' }],
+    ['RESOURCE', { originalName: 'Resource', typeName: 'BLOB' }],
+  ])],
+
+  [2000000078, new Map<string, FieldInfo>([
+    ['ID', { originalName: 'ID', typeName: 'Code20' }],
+    ['NAME', { originalName: 'Name', typeName: 'Text30' }],
+    ['BLOB', { originalName: 'BLOB', typeName: 'BLOB' }],
+  ])],
+
+  [2000000100, new Map<string, FieldInfo>([
+    ['OBJECT TYPE', { originalName: 'Object Type', typeName: 'Option' }],
+    ['OBJECT ID', { originalName: 'Object ID', typeName: 'Integer' }],
+    ['LINE NO.', { originalName: 'Line No.', typeName: 'Integer' }],
+    ['COLUMN NO.', { originalName: 'Column No.', typeName: 'Integer' }],
+    ['CONDITION', { originalName: 'Condition', typeName: 'Text250' }],
+    ['ENABLED', { originalName: 'Enabled', typeName: 'Boolean' }],
+    ['OBJECT NAME', { originalName: 'Object Name', typeName: 'Text30' }],
+  ])],
+
+  [2000000101, new Map<string, FieldInfo>([
+    ['ID', { originalName: 'ID', typeName: 'Integer' }],
+    ['OBJECT TYPE', { originalName: 'Object Type', typeName: 'Option' }],
+    ['OBJECT ID', { originalName: 'Object ID', typeName: 'Integer' }],
+    ['OBJECT NAME', { originalName: 'Object Name', typeName: 'Text30' }],
+    ['FUNCTION NAME', { originalName: 'Function Name', typeName: 'Text128' }],
+    ['LINE NO.', { originalName: 'Line No.', typeName: 'Integer' }],
+  ])],
+
+  [2000000110, new Map<string, FieldInfo>([
+    ['SESSION ID', { originalName: 'Session ID', typeName: 'Integer' }],
+    ['USER ID', { originalName: 'User ID', typeName: 'Code132' }],
+    ['CLIENT TYPE', { originalName: 'Client Type', typeName: 'Option' }],
+    ['CLIENT COMPUTER NAME', { originalName: 'Client Computer Name', typeName: 'Text250' }],
+    ['SERVER INSTANCE ID', { originalName: 'Server Instance ID', typeName: 'Integer' }],
+    ['LOGIN DATETIME', { originalName: 'Login Datetime', typeName: 'DateTime' }],
+    ['SERVER COMPUTER NAME', { originalName: 'Server Computer Name', typeName: 'Text250' }],
+    ['SERVER INSTANCE NAME', { originalName: 'Server Instance Name', typeName: 'Text250' }],
+  ])],
+
+  [2000000114, new Map<string, FieldInfo>([
+    ['SERVICE ID', { originalName: 'Service ID', typeName: 'Text80' }],
+    ['DESCRIPTION', { originalName: 'Description', typeName: 'Text250' }],
+    ['LOCATION', { originalName: 'Location', typeName: 'Text250' }],
+    ['FOLDER', { originalName: 'Folder', typeName: 'Text250' }],
+    ['DOCUMENT REPOSITORY', { originalName: 'Document Repository', typeName: 'Text250' }],
+    ['USER NAME', { originalName: 'User Name', typeName: 'Text250' }],
+  ])],
+
+  [2000000137, new Map<string, FieldInfo>([
+    ['ID', { originalName: 'ID', typeName: 'Integer' }],
+    ['NAME', { originalName: 'Name', typeName: 'Text30' }],
+    ['USER AL CODE', { originalName: 'User AL Code', typeName: 'BLOB' }],
+  ])],
+
+  [2000000140, new Map<string, FieldInfo>([
+    ['SUBSCRIBER CODEUNIT ID', { originalName: 'Subscriber Codeunit ID', typeName: 'Integer' }],
+    ['SUBSCRIBER FUNCTION', { originalName: 'Subscriber Function', typeName: 'Text128' }],
+    ['EVENT TYPE', { originalName: 'Event Type', typeName: 'Option' }],
+    ['PUBLISHER OBJECT TYPE', { originalName: 'Publisher Object Type', typeName: 'Option' }],
+    ['PUBLISHER OBJECT ID', { originalName: 'Publisher Object ID', typeName: 'Integer' }],
+    ['PUBLISHED FUNCTION', { originalName: 'Published Function', typeName: 'Text128' }],
+    ['ACTIVE', { originalName: 'Active', typeName: 'Boolean' }],
+    ['NUMBER OF CALLS', { originalName: 'Number of Calls', typeName: 'Integer' }],
+    ['SUBSCRIBER INSTANCE', { originalName: 'Subscriber Instance', typeName: 'Text250' }],
+    ['ACTIVE MANUAL INSTANCES', { originalName: 'Active Manual Instances', typeName: 'Integer' }],
+    ['ORIGINATING APP NAME', { originalName: 'Originating App Name', typeName: 'Text250' }],
+    ['ERROR INFORMATION', { originalName: 'Error Information', typeName: 'Text250' }],
+  ])],
+
+  [2000000159, new Map<string, FieldInfo>([
+    ['TABLE NO', { originalName: 'Table No', typeName: 'Integer' }],
+    ['FIELD NO', { originalName: 'Field No', typeName: 'Integer' }],
+    ['FIELD CAPTION', { originalName: 'Field Caption', typeName: 'Text250' }],
+    ['DATA SENSITIVITY', { originalName: 'Data Sensitivity', typeName: 'Option' }],
+    ['COMPANY NAME', { originalName: 'Company Name', typeName: 'Text30' }],
+    ['TABLE CAPTION', { originalName: 'Table Caption', typeName: 'Text250' }],
+    ['FIELD TYPE', { originalName: 'Field Type', typeName: 'Option' }],
+    ['DATA CLASSIFICATION', { originalName: 'Data Classification', typeName: 'Option' }],
+    ['LAST MODIFIED BY', { originalName: 'Last Modified By', typeName: 'GUID' }],
+    ['LAST MODIFIED', { originalName: 'Last Modified', typeName: 'DateTime' }],
+  ])],
+
+  [2000000170, new Map<string, FieldInfo>([
+    ['LANGUAGE ID', { originalName: 'Language ID', typeName: 'Integer' }],
+    ['CODE', { originalName: 'Code', typeName: 'Code10' }],
+  ])],
+
+  [2000000171, new Map<string, FieldInfo>([
+    ['PAGE ID', { originalName: 'Page ID', typeName: 'Integer' }],
+    ['FIELD ID', { originalName: 'Field ID', typeName: 'Integer' }],
+    ['TYPE', { originalName: 'Type', typeName: 'Option' }],
+    ['LENGTH', { originalName: 'Length', typeName: 'Integer' }],
+    ['CAPTION', { originalName: 'Caption', typeName: 'Text250' }],
+    ['STATUS', { originalName: 'Status', typeName: 'Option' }],
+  ])],
+
+  [2000000172, new Map<string, FieldInfo>([
+    ['DISPLAY NAME', { originalName: 'Display Name', typeName: 'Text250' }],
+    ['DESCRIPTION', { originalName: 'Description', typeName: 'Text250' }],
+  ])],
+
+  [2000000179, new Map<string, FieldInfo>([
+    ['KEY', { originalName: 'Key', typeName: 'Text50' }],
+    ['DESCRIPTION', { originalName: 'Description', typeName: 'Text250' }],
+    ['EDM XML', { originalName: 'Edm Xml', typeName: 'BLOB' }],
+  ])],
+
+  [2000000194, new Map<string, FieldInfo>([
+    ['SUBSCRIPTION ID', { originalName: 'Subscription ID', typeName: 'Text150' }],
+    ['CHANGE TYPE', { originalName: 'Change Type', typeName: 'Text50' }],
+    ['RESOURCE ID', { originalName: 'Resource ID', typeName: 'Text250' }],
+    ['NOTIFICATION', { originalName: 'Notification', typeName: 'BLOB' }],
+  ])],
+
+  [2000000201, new Map<string, FieldInfo>([
+    ['APP ID', { originalName: 'App ID', typeName: 'GUID' }],
+    ['ALLOW HTTPCLIENT REQUESTS', { originalName: 'Allow HttpClient Requests', typeName: 'Boolean' }],
   ])],
 ]);

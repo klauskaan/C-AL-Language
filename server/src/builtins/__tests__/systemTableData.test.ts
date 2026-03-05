@@ -705,3 +705,808 @@ describe('Membership Entitlement table (2000000195) - new fields from #681', () 
     expect(fields!.size).toBe(2);
   });
 });
+
+// ─── Tests for 18 missing system tables (issue #684) ─────────────────────────
+
+describe('SYSTEM_TABLE_NAMES new entries from #684', () => {
+  it('should contain AllObj variant table (2000000039)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000039)).toBe(true);
+  });
+
+  it('should name table 2000000039 as AllObj', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000039)).toBe('AllObj');
+  });
+
+  it('should contain Send-To Program table (2000000065)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000065)).toBe(true);
+  });
+
+  it('should name table 2000000065 as Send-To Program', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000065)).toBe('Send-To Program');
+  });
+
+  it('should contain Style Sheet table (2000000066)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000066)).toBe(true);
+  });
+
+  it('should name table 2000000066 as Style Sheet', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000066)).toBe('Style Sheet');
+  });
+
+  it('should contain Control Add-in table (2000000069)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000069)).toBe(true);
+  });
+
+  it('should name table 2000000069 as Control Add-in', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000069)).toBe('Control Add-in');
+  });
+
+  it('should contain Chart table (2000000078)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000078)).toBe(true);
+  });
+
+  it('should name table 2000000078 as Chart', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000078)).toBe('Chart');
+  });
+
+  it('should contain Debugger Breakpoint table (2000000100)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000100)).toBe(true);
+  });
+
+  it('should name table 2000000100 as Debugger Breakpoint', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000100)).toBe('Debugger Breakpoint');
+  });
+
+  it('should contain Debugger Call Stack table (2000000101)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000101)).toBe(true);
+  });
+
+  it('should name table 2000000101 as Debugger Call Stack', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000101)).toBe('Debugger Call Stack');
+  });
+
+  it('should contain Active Session table (2000000110)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000110)).toBe(true);
+  });
+
+  it('should name table 2000000110 as Active Session', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000110)).toBe('Active Session');
+  });
+
+  it('should contain Server Instance table (2000000114)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000114)).toBe(true);
+  });
+
+  it('should name table 2000000114 as Server Instance', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000114)).toBe('Server Instance');
+  });
+
+  it('should contain Object Metadata table (2000000137)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000137)).toBe(true);
+  });
+
+  it('should name table 2000000137 as Object Metadata', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000137)).toBe('Object Metadata');
+  });
+
+  it('should contain Event Subscription table (2000000140)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000140)).toBe(true);
+  });
+
+  it('should name table 2000000140 as Event Subscription', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000140)).toBe('Event Subscription');
+  });
+
+  it('should contain Data Sensitivity table (2000000159)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000159)).toBe(true);
+  });
+
+  it('should name table 2000000159 as Data Sensitivity', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000159)).toBe('Data Sensitivity');
+  });
+
+  it('should contain Application Language table (2000000170)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000170)).toBe(true);
+  });
+
+  it('should name table 2000000170 as Application Language', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000170)).toBe('Application Language');
+  });
+
+  it('should contain Designer Page Action table (2000000171)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000171)).toBe(true);
+  });
+
+  it('should name table 2000000171 as Designer Page Action', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000171)).toBe('Designer Page Action');
+  });
+
+  it('should contain Designer Field Group table (2000000172)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000172)).toBe(true);
+  });
+
+  it('should name table 2000000172 as Designer Field Group', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000172)).toBe('Designer Field Group');
+  });
+
+  it('should contain OData Edm Type table (2000000179)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000179)).toBe(true);
+  });
+
+  it('should name table 2000000179 as OData Edm Type', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000179)).toBe('OData Edm Type');
+  });
+
+  it('should contain API Webhook Notification table (2000000194)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000194)).toBe(true);
+  });
+
+  it('should name table 2000000194 as API Webhook Notification', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000194)).toBe('API Webhook Notification');
+  });
+
+  it('should contain Extension Deployment Status table (2000000201)', () => {
+    expect(SYSTEM_TABLE_NAMES.has(2000000201)).toBe(true);
+  });
+
+  it('should name table 2000000201 as Extension Deployment Status', () => {
+    expect(SYSTEM_TABLE_NAMES.get(2000000201)).toBe('Extension Deployment Status');
+  });
+});
+
+describe('AllObj variant table (2000000039) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000039)).toBe(true);
+  });
+
+  it('should have ID field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000039);
+    expect(fields).toBeDefined();
+    expect(fields!.get('ID')).toEqual({ originalName: 'ID', typeName: 'Text250' });
+  });
+
+  it('should have correct field count of 1', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000039);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBe(1);
+  });
+});
+
+describe('Send-To Program table (2000000065) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000065)).toBe(true);
+  });
+
+  it('should have Program ID field with GUID type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000065);
+    expect(fields).toBeDefined();
+    expect(fields!.get('PROGRAM ID')).toEqual({ originalName: 'Program ID', typeName: 'GUID' });
+  });
+
+  it('should have Executable field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000065);
+    expect(fields).toBeDefined();
+    expect(fields!.get('EXECUTABLE')).toEqual({ originalName: 'Executable', typeName: 'Text250' });
+  });
+
+  it('should have Name field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000065);
+    expect(fields).toBeDefined();
+    expect(fields!.get('NAME')).toEqual({ originalName: 'Name', typeName: 'Text250' });
+  });
+
+  it('should have Parameter field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000065);
+    expect(fields).toBeDefined();
+    expect(fields!.get('PARAMETER')).toEqual({ originalName: 'Parameter', typeName: 'Text250' });
+  });
+
+  it('should have correct field count of 4', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000065);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBe(4);
+  });
+});
+
+describe('Style Sheet table (2000000066) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000066)).toBe(true);
+  });
+
+  it('should have Object Type field with Option type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000066);
+    expect(fields).toBeDefined();
+    expect(fields!.get('OBJECT TYPE')).toEqual({ originalName: 'Object Type', typeName: 'Option' });
+  });
+
+  it('should have Object ID field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000066);
+    expect(fields).toBeDefined();
+    expect(fields!.get('OBJECT ID')).toEqual({ originalName: 'Object ID', typeName: 'Integer' });
+  });
+
+  it('should have Program ID field with GUID type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000066);
+    expect(fields).toBeDefined();
+    expect(fields!.get('PROGRAM ID')).toEqual({ originalName: 'Program ID', typeName: 'GUID' });
+  });
+
+  it('should have Name field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000066);
+    expect(fields).toBeDefined();
+    expect(fields!.get('NAME')).toEqual({ originalName: 'Name', typeName: 'Text250' });
+  });
+
+  it('should have Style Sheet field with BLOB type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000066);
+    expect(fields).toBeDefined();
+    expect(fields!.get('STYLE SHEET')).toEqual({ originalName: 'Style Sheet', typeName: 'BLOB' });
+  });
+
+  it('should have Date field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000066);
+    expect(fields).toBeDefined();
+    expect(fields!.get('DATE')).toEqual({ originalName: 'Date', typeName: 'Date' });
+  });
+
+  it('should have correct field count of 6', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000066);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBe(6);
+  });
+});
+
+describe('Control Add-in table (2000000069) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000069)).toBe(true);
+  });
+
+  it('should have Add-in Name field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000069);
+    expect(fields).toBeDefined();
+    expect(fields!.get('ADD-IN NAME')).toBeDefined();
+    expect(fields!.get('ADD-IN NAME')!.originalName).toBe('Add-in Name');
+  });
+
+  it('should have Public Key Token field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000069);
+    expect(fields).toBeDefined();
+    expect(fields!.get('PUBLIC KEY TOKEN')).toBeDefined();
+    expect(fields!.get('PUBLIC KEY TOKEN')!.originalName).toBe('Public Key Token');
+  });
+
+  it('should have Version field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000069);
+    expect(fields).toBeDefined();
+    expect(fields!.get('VERSION')).toBeDefined();
+    expect(fields!.get('VERSION')!.originalName).toBe('Version');
+  });
+
+  it('should have Category field with Option type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000069);
+    expect(fields).toBeDefined();
+    expect(fields!.get('CATEGORY')).toEqual({ originalName: 'Category', typeName: 'Option' });
+  });
+
+  it('should have Description field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000069);
+    expect(fields).toBeDefined();
+    expect(fields!.get('DESCRIPTION')).toEqual({ originalName: 'Description', typeName: 'Text250' });
+  });
+
+  it('should have Resource field with BLOB type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000069);
+    expect(fields).toBeDefined();
+    expect(fields!.get('RESOURCE')).toEqual({ originalName: 'Resource', typeName: 'BLOB' });
+  });
+
+  it('should have correct field count of 6', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000069);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBe(6);
+  });
+});
+
+describe('Chart table (2000000078) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000078)).toBe(true);
+  });
+
+  it('should have ID field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000078);
+    expect(fields).toBeDefined();
+    expect(fields!.get('ID')).toEqual({ originalName: 'ID', typeName: 'Code20' });
+  });
+
+  it('should have Name field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000078);
+    expect(fields).toBeDefined();
+    expect(fields!.get('NAME')).toEqual({ originalName: 'Name', typeName: 'Text30' });
+  });
+
+  it('should have BLOB field with BLOB type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000078);
+    expect(fields).toBeDefined();
+    expect(fields!.get('BLOB')).toEqual({ originalName: 'BLOB', typeName: 'BLOB' });
+  });
+
+  it('should have at least 3 fields', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000078);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('Debugger Breakpoint table (2000000100) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000100)).toBe(true);
+  });
+
+  it('should have Object Type field with Option type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000100);
+    expect(fields).toBeDefined();
+    expect(fields!.get('OBJECT TYPE')).toEqual({ originalName: 'Object Type', typeName: 'Option' });
+  });
+
+  it('should have Object ID field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000100);
+    expect(fields).toBeDefined();
+    expect(fields!.get('OBJECT ID')).toEqual({ originalName: 'Object ID', typeName: 'Integer' });
+  });
+
+  it('should have Line No. field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000100);
+    expect(fields).toBeDefined();
+    expect(fields!.get('LINE NO.')).toEqual({ originalName: 'Line No.', typeName: 'Integer' });
+  });
+
+  it('should have Condition field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000100);
+    expect(fields).toBeDefined();
+    expect(fields!.get('CONDITION')).toEqual({ originalName: 'Condition', typeName: 'Text250' });
+  });
+
+  it('should have Enabled field with Boolean type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000100);
+    expect(fields).toBeDefined();
+    expect(fields!.get('ENABLED')).toEqual({ originalName: 'Enabled', typeName: 'Boolean' });
+  });
+
+  it('should have at least 5 fields', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000100);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe('Debugger Call Stack table (2000000101) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000101)).toBe(true);
+  });
+
+  it('should have ID field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000101);
+    expect(fields).toBeDefined();
+    expect(fields!.get('ID')).toEqual({ originalName: 'ID', typeName: 'Integer' });
+  });
+
+  it('should have Object Type field with Option type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000101);
+    expect(fields).toBeDefined();
+    expect(fields!.get('OBJECT TYPE')).toEqual({ originalName: 'Object Type', typeName: 'Option' });
+  });
+
+  it('should have Object ID field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000101);
+    expect(fields).toBeDefined();
+    expect(fields!.get('OBJECT ID')).toEqual({ originalName: 'Object ID', typeName: 'Integer' });
+  });
+
+  it('should have Function Name field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000101);
+    expect(fields).toBeDefined();
+    expect(fields!.get('FUNCTION NAME')).toBeDefined();
+    expect(fields!.get('FUNCTION NAME')!.originalName).toBe('Function Name');
+  });
+
+  it('should have Line No. field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000101);
+    expect(fields).toBeDefined();
+    expect(fields!.get('LINE NO.')).toEqual({ originalName: 'Line No.', typeName: 'Integer' });
+  });
+
+  it('should have at least 5 fields', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000101);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe('Active Session table (2000000110) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000110)).toBe(true);
+  });
+
+  it('should have Session ID field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000110);
+    expect(fields).toBeDefined();
+    expect(fields!.get('SESSION ID')).toEqual({ originalName: 'Session ID', typeName: 'Integer' });
+  });
+
+  it('should have User ID field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000110);
+    expect(fields).toBeDefined();
+    expect(fields!.get('USER ID')).toBeDefined();
+    expect(fields!.get('USER ID')!.originalName).toBe('User ID');
+  });
+
+  it('should have Client Type field with Option type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000110);
+    expect(fields).toBeDefined();
+    expect(fields!.get('CLIENT TYPE')).toEqual({ originalName: 'Client Type', typeName: 'Option' });
+  });
+
+  it('should have Server Instance ID field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000110);
+    expect(fields).toBeDefined();
+    expect(fields!.get('SERVER INSTANCE ID')).toEqual({ originalName: 'Server Instance ID', typeName: 'Integer' });
+  });
+
+  it('should have Login Datetime field with DateTime type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000110);
+    expect(fields).toBeDefined();
+    expect(fields!.get('LOGIN DATETIME')).toEqual({ originalName: 'Login Datetime', typeName: 'DateTime' });
+  });
+
+  it('should have at least 5 fields', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000110);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe('Server Instance table (2000000114) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000114)).toBe(true);
+  });
+
+  it('should have Service ID field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000114);
+    expect(fields).toBeDefined();
+    expect(fields!.get('SERVICE ID')).toBeDefined();
+    expect(fields!.get('SERVICE ID')!.originalName).toBe('Service ID');
+  });
+
+  it('should have Description field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000114);
+    expect(fields).toBeDefined();
+    expect(fields!.get('DESCRIPTION')).toEqual({ originalName: 'Description', typeName: 'Text250' });
+  });
+
+  it('should have Location field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000114);
+    expect(fields).toBeDefined();
+    expect(fields!.get('LOCATION')).toEqual({ originalName: 'Location', typeName: 'Text250' });
+  });
+
+  it('should have Folder field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000114);
+    expect(fields).toBeDefined();
+    expect(fields!.get('FOLDER')).toEqual({ originalName: 'Folder', typeName: 'Text250' });
+  });
+
+  it('should have at least 4 fields', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000114);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe('Object Metadata table (2000000137) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000137)).toBe(true);
+  });
+
+  it('should have Name field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000137);
+    expect(fields).toBeDefined();
+    expect(fields!.get('NAME')).toEqual({ originalName: 'Name', typeName: 'Text30' });
+  });
+
+  it('should have ID field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000137);
+    expect(fields).toBeDefined();
+    expect(fields!.get('ID')).toEqual({ originalName: 'ID', typeName: 'Integer' });
+  });
+
+  it('should have User AL Code field with BLOB type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000137);
+    expect(fields).toBeDefined();
+    expect(fields!.get('USER AL CODE')).toEqual({ originalName: 'User AL Code', typeName: 'BLOB' });
+  });
+
+  it('should have at least 3 fields', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000137);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('Event Subscription table (2000000140) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000140)).toBe(true);
+  });
+
+  it('should have Subscriber Codeunit ID field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000140);
+    expect(fields).toBeDefined();
+    expect(fields!.get('SUBSCRIBER CODEUNIT ID')).toEqual({ originalName: 'Subscriber Codeunit ID', typeName: 'Integer' });
+  });
+
+  it('should have Subscriber Function field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000140);
+    expect(fields).toBeDefined();
+    expect(fields!.get('SUBSCRIBER FUNCTION')).toBeDefined();
+    expect(fields!.get('SUBSCRIBER FUNCTION')!.originalName).toBe('Subscriber Function');
+  });
+
+  it('should have Event Type field with Option type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000140);
+    expect(fields).toBeDefined();
+    expect(fields!.get('EVENT TYPE')).toEqual({ originalName: 'Event Type', typeName: 'Option' });
+  });
+
+  it('should have Publisher Object Type field with Option type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000140);
+    expect(fields).toBeDefined();
+    expect(fields!.get('PUBLISHER OBJECT TYPE')).toEqual({ originalName: 'Publisher Object Type', typeName: 'Option' });
+  });
+
+  it('should have Publisher Object ID field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000140);
+    expect(fields).toBeDefined();
+    expect(fields!.get('PUBLISHER OBJECT ID')).toEqual({ originalName: 'Publisher Object ID', typeName: 'Integer' });
+  });
+
+  it('should have Published Function field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000140);
+    expect(fields).toBeDefined();
+    expect(fields!.get('PUBLISHED FUNCTION')).toBeDefined();
+    expect(fields!.get('PUBLISHED FUNCTION')!.originalName).toBe('Published Function');
+  });
+
+  it('should have Active field with Boolean type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000140);
+    expect(fields).toBeDefined();
+    expect(fields!.get('ACTIVE')).toEqual({ originalName: 'Active', typeName: 'Boolean' });
+  });
+
+  it('should have Number of Calls field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000140);
+    expect(fields).toBeDefined();
+    expect(fields!.get('NUMBER OF CALLS')).toEqual({ originalName: 'Number of Calls', typeName: 'Integer' });
+  });
+
+  it('should have at least 8 fields', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000140);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBeGreaterThanOrEqual(8);
+  });
+});
+
+describe('Data Sensitivity table (2000000159) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000159)).toBe(true);
+  });
+
+  it('should have Table No field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000159);
+    expect(fields).toBeDefined();
+    expect(fields!.get('TABLE NO')).toEqual({ originalName: 'Table No', typeName: 'Integer' });
+  });
+
+  it('should have Field No field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000159);
+    expect(fields).toBeDefined();
+    expect(fields!.get('FIELD NO')).toEqual({ originalName: 'Field No', typeName: 'Integer' });
+  });
+
+  it('should have Field Caption field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000159);
+    expect(fields).toBeDefined();
+    expect(fields!.get('FIELD CAPTION')).toEqual({ originalName: 'Field Caption', typeName: 'Text250' });
+  });
+
+  it('should have Data Sensitivity field with Option type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000159);
+    expect(fields).toBeDefined();
+    expect(fields!.get('DATA SENSITIVITY')).toEqual({ originalName: 'Data Sensitivity', typeName: 'Option' });
+  });
+
+  it('should have Company Name field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000159);
+    expect(fields).toBeDefined();
+    expect(fields!.get('COMPANY NAME')).toEqual({ originalName: 'Company Name', typeName: 'Text30' });
+  });
+
+  it('should have at least 5 fields', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000159);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe('Application Language table (2000000170) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000170)).toBe(true);
+  });
+
+  it('should have Language ID field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000170);
+    expect(fields).toBeDefined();
+    expect(fields!.get('LANGUAGE ID')).toEqual({ originalName: 'Language ID', typeName: 'Integer' });
+  });
+
+  it('should have at least 1 field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000170);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('Designer Page Action table (2000000171) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000171)).toBe(true);
+  });
+
+  it('should have Page ID field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000171);
+    expect(fields).toBeDefined();
+    expect(fields!.get('PAGE ID')).toEqual({ originalName: 'Page ID', typeName: 'Integer' });
+  });
+
+  it('should have Field ID field with Integer type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000171);
+    expect(fields).toBeDefined();
+    expect(fields!.get('FIELD ID')).toEqual({ originalName: 'Field ID', typeName: 'Integer' });
+  });
+
+  it('should have Type field with Option type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000171);
+    expect(fields).toBeDefined();
+    expect(fields!.get('TYPE')).toEqual({ originalName: 'Type', typeName: 'Option' });
+  });
+
+  it('should have Caption field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000171);
+    expect(fields).toBeDefined();
+    expect(fields!.get('CAPTION')).toEqual({ originalName: 'Caption', typeName: 'Text250' });
+  });
+
+  it('should have Status field with Option type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000171);
+    expect(fields).toBeDefined();
+    expect(fields!.get('STATUS')).toEqual({ originalName: 'Status', typeName: 'Option' });
+  });
+
+  it('should have at least 5 fields', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000171);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe('Designer Field Group table (2000000172) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000172)).toBe(true);
+  });
+
+  it('should have Display Name field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000172);
+    expect(fields).toBeDefined();
+    expect(fields!.get('DISPLAY NAME')).toEqual({ originalName: 'Display Name', typeName: 'Text250' });
+  });
+
+  it('should have Description field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000172);
+    expect(fields).toBeDefined();
+    expect(fields!.get('DESCRIPTION')).toEqual({ originalName: 'Description', typeName: 'Text250' });
+  });
+
+  it('should have at least 2 fields', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000172);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('OData Edm Type table (2000000179) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000179)).toBe(true);
+  });
+
+  it('should have Key field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000179);
+    expect(fields).toBeDefined();
+    expect(fields!.get('KEY')).toBeDefined();
+    expect(fields!.get('KEY')!.originalName).toBe('Key');
+  });
+
+  it('should have Description field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000179);
+    expect(fields).toBeDefined();
+    expect(fields!.get('DESCRIPTION')).toEqual({ originalName: 'Description', typeName: 'Text250' });
+  });
+
+  it('should have Edm Xml field with BLOB type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000179);
+    expect(fields).toBeDefined();
+    expect(fields!.get('EDM XML')).toEqual({ originalName: 'Edm Xml', typeName: 'BLOB' });
+  });
+
+  it('should have correct field count of 3', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000179);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBe(3);
+  });
+});
+
+describe('API Webhook Notification table (2000000194) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000194)).toBe(true);
+  });
+
+  it('should have Subscription ID field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000194);
+    expect(fields).toBeDefined();
+    expect(fields!.get('SUBSCRIPTION ID')).toEqual({ originalName: 'Subscription ID', typeName: 'Text150' });
+  });
+
+  it('should have Change Type field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000194);
+    expect(fields).toBeDefined();
+    expect(fields!.get('CHANGE TYPE')).toEqual({ originalName: 'Change Type', typeName: 'Text50' });
+  });
+
+  it('should have Resource ID field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000194);
+    expect(fields).toBeDefined();
+    expect(fields!.get('RESOURCE ID')).toEqual({ originalName: 'Resource ID', typeName: 'Text250' });
+  });
+
+  it('should have Notification field with BLOB type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000194);
+    expect(fields).toBeDefined();
+    expect(fields!.get('NOTIFICATION')).toEqual({ originalName: 'Notification', typeName: 'BLOB' });
+  });
+
+  it('should have at least 4 fields', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000194);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe('Extension Deployment Status table (2000000201) - new fields from #684', () => {
+  it('should be present in SYSTEM_TABLE_FIELDS', () => {
+    expect(SYSTEM_TABLE_FIELDS.has(2000000201)).toBe(true);
+  });
+
+  it('should have App ID field with GUID type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000201);
+    expect(fields).toBeDefined();
+    expect(fields!.get('APP ID')).toEqual({ originalName: 'App ID', typeName: 'GUID' });
+  });
+
+  it('should have Allow HttpClient Requests field with Boolean type', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000201);
+    expect(fields).toBeDefined();
+    expect(fields!.get('ALLOW HTTPCLIENT REQUESTS')).toEqual({ originalName: 'Allow HttpClient Requests', typeName: 'Boolean' });
+  });
+
+  it('should have at least 2 fields', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000201);
+    expect(fields).toBeDefined();
+    expect(fields!.size).toBeGreaterThanOrEqual(2);
+  });
+});
