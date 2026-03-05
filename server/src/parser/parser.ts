@@ -2603,7 +2603,30 @@ export class Parser {
         } else if (this.check(TokenType.Begin)) {
           // Main code block (documentation trigger) - skip for now
           break;
+        } else if (this.peek().type === TokenType.Unknown && this.peek().value !== '}') {
+          // Unrecognized token mid-section: record error, skip to next procedure boundary, continue.
+          // Unknown-type tokens are lexer errors (e.g. stray '@', unclosed strings) that cannot
+          // serve as legitimate CODE-section terminators, so we recover and keep parsing.
+          // Guard: UNKNOWN-typed '}' is a closing brace in a confused lexer context — treat as
+          // a normal section exit rather than an unexpected token.
+          this.recordError(
+            `Unexpected token '${sanitizeContent(this.peek().value)}' in CODE section, skipping to next procedure`,
+            this.peek(),
+            'parse-unexpected-token'
+          );
+          // Always advance at least once to avoid infinite loop on the triggering token
+          this.advance();
+          while (!PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type) &&
+                 !this.check(TokenType.Local) &&
+                 this.peek().value !== '}' &&
+                 !SECTION_KEYWORDS.has(this.peek().type) &&
+                 !this.isAtEnd()) {
+            this.advance();
+          }
+          continue;
         } else {
+          // Any other token (END, section keywords, identifiers, etc.) signals the end of
+          // the CODE section's procedure/trigger/event list — exit cleanly.
           break;
         }
       } catch (error) {
@@ -2626,6 +2649,7 @@ export class Parser {
           // Stop at '}' by value (not just RightBrace type) because lexer context
           // confusion from malformed input can tokenize '}' as UNKNOWN.
           while (!PROCEDURE_BOUNDARY_TOKENS.has(this.peek().type) &&
+                 !this.check(TokenType.Local) &&
                  this.peek().value !== '}' &&
                  !this.isAtEnd()) {
             this.advance();
