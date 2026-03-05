@@ -4,10 +4,11 @@
  * Validates the NAV system/virtual table definitions pre-seeded into WorkspaceIndex
  * to eliminate false-positive undefined-identifier warnings on system table references.
  *
- * These tests FAIL before implementation because the module does not exist yet.
  */
 
 import { SYSTEM_TABLE_FIELDS, SYSTEM_TABLE_NAMES } from '../systemTableData';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 describe('systemTableData - SYSTEM_TABLE_NAMES', () => {
   it('should export SYSTEM_TABLE_NAMES as a Map', () => {
@@ -20,10 +21,12 @@ describe('systemTableData - SYSTEM_TABLE_NAMES', () => {
     }
   });
 
-  it('should have no duplicate table IDs in SYSTEM_TABLE_NAMES', () => {
-    const ids = Array.from(SYSTEM_TABLE_NAMES.keys());
-    const uniqueIds = new Set(ids);
-    expect(uniqueIds.size).toBe(ids.length);
+  it('should have no duplicate table IDs in SYSTEM_TABLE_NAMES (source-level check)', () => {
+    // Map construction silently deduplicates — check the raw source before construction
+    const src = readFileSync(join(__dirname, '../systemTableData.ts'), 'utf8');
+    const ids = [...src.matchAll(/^\s+\[(\d+),\s*'[^']+'/gm)].map(m => Number(m[1]));
+    const unique = new Set(ids);
+    expect(unique.size).toBe(ids.length);
   });
 
   it('should contain Integer table (2000000026)', () => {
@@ -76,10 +79,12 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     }
   });
 
-  it('should have no duplicate table IDs in SYSTEM_TABLE_FIELDS', () => {
-    const ids = Array.from(SYSTEM_TABLE_FIELDS.keys());
-    const uniqueIds = new Set(ids);
-    expect(uniqueIds.size).toBe(ids.length);
+  it('should have no duplicate table IDs in SYSTEM_TABLE_FIELDS (source-level check)', () => {
+    // Map construction silently deduplicates — check the raw source before construction
+    const src = readFileSync(join(__dirname, '../systemTableData.ts'), 'utf8');
+    const ids = [...src.matchAll(/^\s+\[(\d+),\s*new Map/gm)].map(m => Number(m[1]));
+    const unique = new Set(ids);
+    expect(unique.size).toBe(ids.length);
   });
 
   it('should have inner Maps with uppercase field keys (matching workspaceIndex convention)', () => {
