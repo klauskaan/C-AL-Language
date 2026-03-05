@@ -2744,9 +2744,24 @@ export class Parser {
     } else {
       // Skip past unconsumed tokens to find closing brace
       // Safety bound: stop at section keywords to avoid consuming into the next section (#499)
+      const skipStartToken = this.peek();
+      let skipCount = 0;
       while (!this.isAtEnd() && !this.check(TokenType.RightBrace) && this.peek().value !== '}' &&
              !SECTION_KEYWORDS.has(this.peek().type)) {
         this.advance();
+        skipCount++;
+      }
+      if (skipCount > 0) {
+        // NOTE: Use direct push (not recordSkippedRegion) to avoid recording a hard error.
+        // This cleanup loop fires for valid C/AL (e.g. empty control flow leaving END unconsumed),
+        // so adding a ParseError here would produce false positives. Skipped-region tracking
+        // for diagnostic consumers is still valuable; error diagnostics are not.
+        this.skippedRegions.push({
+          startToken: skipStartToken,
+          endToken: this.previous(),
+          tokenCount: skipCount,
+          reason: 'Cleanup - unconsumed tokens before closing brace'
+        });
       }
       if (!this.isAtEnd() && (this.check(TokenType.RightBrace) || this.peek().value === '}')) {
         endToken = this.advance();
