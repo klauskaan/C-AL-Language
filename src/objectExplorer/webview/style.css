@@ -173,6 +173,11 @@ body {
   opacity: 0.85;
 }
 
+#btn-clear-filters.filters-inactive {
+  opacity: 0.4;
+  cursor: default;
+}
+
 /* ── Table Wrapper ── */
 
 #table-wrapper {
