@@ -31,7 +31,6 @@ let filteredObjects = [];
 let ROW_HEIGHT = 40;
 let activeTypeFilter = /** @type {string|null} */ (null);
 let searchText = '';
-let selectedIndex = -1;
 let renderedStart = -1;
 let renderedEnd = -1;
 /** @type {Set<string>} */
@@ -63,6 +62,25 @@ const stateManager = /** @type {any} */ (/** @type {any} */ (window).stateManage
   validateColumnWidths: (_incoming, current, _defaults, _minWidth) => Object.assign({}, current),
   buildSaveStateMessage: (state) => Object.assign({ type: 'saveState' }, state, { columnWidths: Object.assign({}, state.columnWidths) })
 };
+
+// ── Selection model ─────────────────────────────────────────────────────────
+// @ts-ignore -- injected by selectionModel.js <script> tag
+const selection = /** @type {any} */ (/** @type {any} */ (window).selectionModel) || (function() {
+  // Fallback stub (should never be reached in production)
+  let _idx = -1, _anchor = -1, _set = new Set();
+  return {
+    get selectedIndex() { return _idx; },
+    get anchorIndex() { return _anchor; },
+    get selectedSet() { return _set; },
+    clickRow(i) { _idx = i; _anchor = i; _set = new Set([i]); },
+    shiftClickRow(i) { _idx = i; _anchor = i; _set = new Set([i]); },
+    ctrlClickRow(i) { if(_set.has(i)) _set.delete(i); else _set.add(i); _idx = i; _anchor = i; },
+    moveToRow(i) { _idx = i; _anchor = i; _set = new Set([i]); },
+    reset() { _idx = -1; _anchor = -1; _set = new Set(); },
+    isSelected(i) { return _set.has(i); },
+    isCursor(i) { return i === _idx; }
+  };
+})();
 
 /** @type {Object.<string, number>} Current column widths (content-box px) */
 let columnWidths = Object.assign({}, stateManager.DEFAULT_COLUMN_WIDTHS);
@@ -376,6 +394,16 @@ function updateMarkAllState() {
   }
 }
 
+function updateSelectionClasses() {
+  const rows = tbody.querySelectorAll('tr:not(.virtual-spacer)');
+  rows.forEach(function(tr) {
+    const idx = parseInt(/** @type {HTMLElement} */ (tr).dataset.index || '', 10);
+    if (isNaN(idx)) return;
+    tr.classList.toggle('selected', selection.isSelected(idx));
+    tr.classList.toggle('cursor', selection.isCursor(idx));
+  });
+}
+
 /**
  * @param {ObjectMetadata} obj
  * @param {number} index
@@ -384,7 +412,8 @@ function updateMarkAllState() {
 function makeRow(obj, index) {
   const tr = /** @type {HTMLTableRowElement} */ (document.createElement('tr'));
   tr.dataset.index = String(index);
-  if (index === selectedIndex) tr.classList.add('selected');
+  if (selection.isSelected(index)) tr.classList.add('selected');
+  if (selection.isCursor(index)) tr.classList.add('cursor');
 
   // Cursor cell
   const tdCursor = document.createElement('td');
@@ -481,7 +510,7 @@ function applyFilters() {
   }
 
   sortObjects(filteredObjects);
-  selectedIndex = -1;
+  selection.reset();
   renderedStart = -1;
   renderedEnd = -1;
   tableWrapper.scrollTop = 0;
@@ -526,9 +555,9 @@ function getHeaderHeight() {
 }
 
 function scrollToSelectedRow() {
-  if (selectedIndex < 0) return;
+  if (selection.selectedIndex < 0) return;
   const headerH = getHeaderHeight();
-  const rowTop = selectedIndex * ROW_HEIGHT;
+  const rowTop = selection.selectedIndex * ROW_HEIGHT;
   const rowBottom = rowTop + ROW_HEIGHT;
   const visTop = tableWrapper.scrollTop + headerH;
   const visBottom = tableWrapper.scrollTop + tableWrapper.clientHeight;
@@ -559,36 +588,40 @@ document.addEventListener('keydown', (e) => {
   const total = filteredObjects.length;
   if (e.key === 'ArrowDown') {
     e.preventDefault();
-    if (selectedIndex < total - 1) {
-      selectedIndex++;
+    if (selection.selectedIndex < total - 1) {
+      selection.moveToRow(selection.selectedIndex + 1);
       scrollToSelectedRow();
       scheduleRender();
+      updateSelectionClasses();
     }
   } else if (e.key === 'ArrowUp') {
     e.preventDefault();
-    if (selectedIndex > 0) {
-      selectedIndex--;
+    if (selection.selectedIndex > 0) {
+      selection.moveToRow(selection.selectedIndex - 1);
       scrollToSelectedRow();
       scheduleRender();
+      updateSelectionClasses();
     }
   } else if (e.key === 'Enter') {
-    if (selectedIndex >= 0 && filteredObjects[selectedIndex]) {
-      const obj = filteredObjects[selectedIndex];
+    if (selection.selectedIndex >= 0 && filteredObjects[selection.selectedIndex]) {
+      const obj = filteredObjects[selection.selectedIndex];
       vscode.postMessage({ type: 'navigate', uri: obj.uri, line: obj.line });
     }
   } else if (e.key === 'Home' && e.ctrlKey) {
     e.preventDefault();
     if (total > 0) {
-      selectedIndex = 0;
+      selection.moveToRow(0);
       tableWrapper.scrollTop = 0;
       scheduleRender();
+      updateSelectionClasses();
     }
   } else if (e.key === 'End' && e.ctrlKey) {
     e.preventDefault();
     if (total > 0) {
-      selectedIndex = total - 1;
+      selection.moveToRow(total - 1);
       scrollToSelectedRow();
       scheduleRender();
+      updateSelectionClasses();
     }
   }
 });
@@ -599,8 +632,15 @@ tbody.addEventListener('click', (e) => {
   if (!tr || tr.classList.contains('virtual-spacer')) return;
   const idx = parseInt(tr.dataset.index || '', 10);
   if (isNaN(idx)) return;
-  selectedIndex = idx;
-  scheduleRender();
+  const me = /** @type {MouseEvent} */ (e);
+  if (me.shiftKey) {
+    selection.shiftClickRow(idx);
+  } else if (me.ctrlKey || me.metaKey) {
+    selection.ctrlClickRow(idx);
+  } else {
+    selection.clickRow(idx);
+  }
+  updateSelectionClasses();
 });
 
 tbody.addEventListener('dblclick', (e) => {

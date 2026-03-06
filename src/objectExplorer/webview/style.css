@@ -323,8 +323,8 @@ tbody td {
   border: none;
 }
 
-/* Cursor column: show arrow for selected row */
-tbody tr.selected td.col-cursor::before {
+/* Cursor column: show arrow for focused (cursor) row */
+tbody tr.cursor td.col-cursor::before {
   content: '\25B6';
 }
 
