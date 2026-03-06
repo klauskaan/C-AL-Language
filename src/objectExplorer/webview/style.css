@@ -91,15 +91,33 @@ body {
   font-family: var(--vscode-font-family);
   font-size: var(--vscode-font-size);
   box-sizing: border-box;
+  opacity: 0.7;
 }
 
 .type-btn:hover {
   background-color: var(--vscode-list-hoverBackground);
+  opacity: 0.9;
 }
 
 .type-btn.active {
   background-color: var(--vscode-list-activeSelectionBackground);
   color: var(--vscode-list-activeSelectionForeground);
+  opacity: 1;
+}
+
+.type-btn.active .type-icon {
+  opacity: 1;
+}
+
+.type-btn.active:hover {
+  opacity: 1;
+}
+
+.type-icon {
+  display: inline-block;
+  width: 1.2em;
+  text-align: center;
+  opacity: 0.7;
 }
 
 /* ── Right: Content Panel ── */
@@ -181,6 +199,11 @@ table {
 .col-time   { width: 70px; }
 .col-mod    { width: 50px; }
 .col-version { width: 120px; }
+
+/* Type column auto-hide: toggled by JS when a specific type is active */
+table.type-hidden .col-type {
+  display: none;
+}
 
 /* ── Header row ── */
 
