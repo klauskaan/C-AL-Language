@@ -332,7 +332,7 @@ function appendCell(tr, cls, text) {
 
 // ── Filtering ──────────────────────────────────────────────────────────────
 function applyFilters() {
-  filteredObjects = allObjects;
+  filteredObjects = allObjects.slice();
 
   if (!markedOnly && activeTypeFilter) {
     filteredObjects = filteredObjects.filter(obj => obj.type === activeTypeFilter);
