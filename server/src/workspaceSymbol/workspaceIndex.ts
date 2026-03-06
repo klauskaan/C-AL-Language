@@ -28,6 +28,21 @@ export interface FieldInfo {
 }
 
 /**
+ * Metadata for a single C/AL object, used by the Object Explorer
+ */
+export interface ObjectMetadata {
+  type: string;          // "Table", "Page", "Report", "Codeunit", "XMLport", "Query", "MenuSuite"
+  id: number;
+  name: string;
+  uri: string;           // file:// URI (absolute path)
+  line: number;          // 0-based line of the OBJECT declaration
+  date?: string;
+  time?: string;
+  modified?: boolean;
+  versionList?: string;
+}
+
+/**
  * Index entry for a single file
  */
 interface IndexEntry {
@@ -51,6 +66,7 @@ export class WorkspaceIndex {
   private tableProcedureRegistry = new Map<number, ReadonlyMap<string, string>>();
   private procedureOwner = new Map<number, string>();
   private fileProcedureContributions = new Map<string, number>();
+  private fileObjectMetadata = new Map<string, ObjectMetadata[]>();
   private _userTablesIndexed: boolean = false;
 
   constructor() {
@@ -83,7 +99,7 @@ export class WorkspaceIndex {
    */
   async add(filePath: string): Promise<void> {
     const indexedAt = Date.now();
-    const { symbols, tableInfo, fieldInfo, procedureInfo } = await this.extractSymbols(filePath);
+    const { symbols, tableInfo, fieldInfo, procedureInfo, objectMetadata } = await this.extractSymbols(filePath);
 
     // Remove old table contribution for this file (if any)
     const oldId = this.fileTableContributions.get(filePath);
@@ -135,6 +151,8 @@ export class WorkspaceIndex {
       this.procedureOwner.set(procedureInfo.id, filePath);
       this.fileProcedureContributions.set(filePath, procedureInfo.id);
     }
+
+    this.fileObjectMetadata.set(filePath, objectMetadata);
 
     this.index.set(filePath, {
       symbols,
@@ -225,6 +243,7 @@ export class WorkspaceIndex {
     }
 
     this.index.delete(filePath);
+    this.fileObjectMetadata.delete(filePath);
   }
 
   /**
@@ -242,6 +261,7 @@ export class WorkspaceIndex {
     this.tableProcedureRegistry.clear();
     this.procedureOwner.clear();
     this.fileProcedureContributions.clear();
+    this.fileObjectMetadata.clear();
     this.seedSystemTables();
   }
 
@@ -268,6 +288,21 @@ export class WorkspaceIndex {
     }
 
     return allSymbols;
+  }
+
+  /**
+   * Get metadata for all indexed objects across all files.
+   * Returns one entry per object — a file with multiple OBJECT blocks produces multiple entries.
+   * Used by the Object Explorer to populate its table.
+   *
+   * @returns Array of ObjectMetadata, in no particular order
+   */
+  getObjectList(): ObjectMetadata[] {
+    const result: ObjectMetadata[] = [];
+    for (const entries of this.fileObjectMetadata.values()) {
+      result.push(...entries);
+    }
+    return result;
   }
 
   /**
@@ -398,12 +433,28 @@ export class WorkspaceIndex {
     tableInfo?: { id: number; name: string };
     fieldInfo?: { id: number; fields: Map<string, FieldInfo> };
     procedureInfo?: { id: number; procedures: Map<string, string> };
+    objectMetadata: ObjectMetadata[];
   }> {
     // Read file with encoding detection
     const { content } = await readFileWithEncodingAsync(filePath);
 
     // Convert to file:// URI
     const uri = pathToFileURL(filePath).href;
+
+    // Scan content for all OBJECT declarations (handles multi-object files)
+    const objectMetadata: ObjectMetadata[] = [];
+    const objectPattern = /^OBJECT\s+(Table|Page|Report|Codeunit|XMLport|Query|MenuSuite)\s+(\d+)\s+(.*?)\s*$/gm;
+    let match: RegExpExecArray | null;
+    while ((match = objectPattern.exec(content)) !== null) {
+      const lineNumber = content.substring(0, match.index).split('\n').length - 1;
+      objectMetadata.push({
+        type: match[1],
+        id: parseInt(match[2], 10),
+        name: match[3],
+        uri,
+        line: lineNumber
+      });
+    }
 
     // Create TextDocument
     const textDocument = TextDocument.create(uri, 'cal', 1, content);
@@ -461,6 +512,6 @@ export class WorkspaceIndex {
       procedureInfo = { id: ast.object.objectId, procedures };
     }
 
-    return { symbols, tableInfo, fieldInfo, procedureInfo };
+    return { symbols, tableInfo, fieldInfo, procedureInfo, objectMetadata };
   }
 }
