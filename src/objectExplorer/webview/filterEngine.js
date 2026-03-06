@@ -166,6 +166,7 @@
    * @returns {boolean}
    */
   function matchesFilter(fieldValue, expression) {
+    expression = String(expression || '');
     // 1. Trim the expression
     var expr = expression.trim();
 

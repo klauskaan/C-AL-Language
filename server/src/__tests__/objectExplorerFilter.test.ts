@@ -30,6 +30,20 @@ describe('Object Explorer Filter Engine', () => {
     });
   });
 
+  describe('Null/undefined expression (defensive guard)', () => {
+    it('should match any string value when expression is null', () => {
+      expect(matchesFilter('Customer', null as unknown as string)).toBe(true);
+    });
+
+    it('should match any numeric value when expression is undefined', () => {
+      expect(matchesFilter(50000, undefined as unknown as string)).toBe(true);
+    });
+
+    it('should match any boolean value when expression is null', () => {
+      expect(matchesFilter(true, null as unknown as string)).toBe(true);
+    });
+  });
+
   describe('Exact match', () => {
     describe('Numeric', () => {
       it('should match when number equals expression', () => {
