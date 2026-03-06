@@ -367,9 +367,12 @@ function updateMarkAllState() {
   if (markedCount === total) {
     markAllGlyph.textContent = '\u25A0';
     markAllGlyph.setAttribute('aria-checked', 'true');
+  } else if (markedCount > 0) {
+    markAllGlyph.textContent = '\u25AA';  // ▪ small filled square — mixed/partial state
+    markAllGlyph.setAttribute('aria-checked', 'mixed');
   } else {
-    markAllGlyph.textContent = '\u25A1';
-    markAllGlyph.setAttribute('aria-checked', markedCount > 0 ? 'mixed' : 'false');
+    markAllGlyph.textContent = '\u25A1';  // □ unchecked — none marked
+    markAllGlyph.setAttribute('aria-checked', 'false');
   }
 }
 
