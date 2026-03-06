@@ -176,6 +176,7 @@ body {
 #btn-clear-filters.filters-inactive {
   opacity: 0.4;
   cursor: default;
+  pointer-events: none;
 }
 
 /* ── Table Wrapper ── */
