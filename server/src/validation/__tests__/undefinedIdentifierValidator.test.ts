@@ -1846,6 +1846,115 @@ describe('UndefinedIdentifierValidator - field-reference arguments in record met
   });
 });
 
+describe('UndefinedIdentifierValidator - bare calls to field-reference methods (no dot notation)', () => {
+  it('should not flag field arg in bare SETRANGE call (first mode)', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        BEGIN
+          SETRANGE(Status, 'Active', 'Inactive');
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const statusError = diagnostics.find(d => d.message.includes("'Status'"));
+    expect(statusError).toBeUndefined();
+  });
+
+  it('should not flag any field args in bare CALCFIELDS call (all mode)', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        BEGIN
+          CALCFIELDS(Balance, Amount);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const balanceError = diagnostics.find(d => d.message.includes("'Balance'"));
+    expect(balanceError).toBeUndefined();
+
+    const amountError = diagnostics.find(d => d.message.includes("'Amount'"));
+    expect(amountError).toBeUndefined();
+  });
+
+  it('should not flag field arg in bare TESTFIELD call (first mode)', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        BEGIN
+          TESTFIELD(Name);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const nameError = diagnostics.find(d => d.message.includes("'Name'"));
+    expect(nameError).toBeUndefined();
+  });
+
+  it('should not flag first arg (field) in bare SETRANGE but still flag undefined second arg', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        BEGIN
+          SETRANGE(FieldName, UndefinedVar);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const fieldNameError = diagnostics.find(d => d.message.includes("'FieldName'"));
+    expect(fieldNameError).toBeUndefined();
+
+    const undefinedError = diagnostics.find(d => d.message.includes('UndefinedVar'));
+    expect(undefinedError).toBeDefined();
+    expect(undefinedError!.message).toBe("Undefined identifier: 'UndefinedVar'");
+  });
+
+  it('should not flag first arg (field) in bare VALIDATE but still flag undefined second arg', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        BEGIN
+          VALIDATE(Status, UndefinedValue);
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const statusError = diagnostics.find(d => d.message.includes("'Status'"));
+    expect(statusError).toBeUndefined();
+
+    const undefinedError = diagnostics.find(d => d.message.includes('UndefinedValue'));
+    expect(undefinedError).toBeDefined();
+    expect(undefinedError!.message).toBe("Undefined identifier: 'UndefinedValue'");
+  });
+
+  it('should not flag field arg in bare setrange call regardless of method name casing', () => {
+    const code = `OBJECT Codeunit 1 Test {
+      CODE {
+        PROCEDURE TestProc();
+        BEGIN
+          setrange(Status, 'A');
+        END;
+      }
+    }`;
+
+    const diagnostics = validateUndefinedIdentifiers(code);
+
+    const statusError = diagnostics.find(d => d.message.includes("'Status'"));
+    expect(statusError).toBeUndefined();
+  });
+});
+
 describe('UndefinedIdentifierValidator - Property Trigger Scoping', () => {
   it('should not flag property trigger local variable as undefined within the trigger body', () => {
     const code = `OBJECT Codeunit 1 Test
@@ -4015,13 +4124,16 @@ describe('UndefinedIdentifierValidator - Codeunit TableNo Field Integration', ()
   });
 
   it('should not crash and should not inject fields when TableNo table is not in field registry', () => {
+    // Table 5900 is in tableRegistry but NOT in fieldRegistry — no fields injected.
+    // Access Status as a bare identifier (not via TESTFIELD, which suppresses field-ref args)
+    // to confirm the field was not silently injected as a known symbol.
     const code = `OBJECT Codeunit 416 "Release Service Document"
 {
   PROPERTIES
   {
     TableNo=5900;
     OnRun=BEGIN
-            TESTFIELD(Status);
+            Status := 0;
           END;
   }
   CODE

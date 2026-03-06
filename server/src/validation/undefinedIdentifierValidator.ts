@@ -161,12 +161,16 @@ class UndefinedIdentifierVisitor implements Partial<ASTVisitor> {
    * Returns the field-reference mode ('first', 'all') or undefined if not applicable.
    */
   private getFieldReferenceMode(node: CallExpression): 'first' | 'all' | undefined {
-    if (node.callee.type !== 'MemberExpression') {
-      return undefined;
+    if (node.callee.type === 'MemberExpression') {
+      const memberExpr = node.callee as MemberExpression;
+      const methodName = memberExpr.property.name.toUpperCase();
+      return FIELD_REFERENCE_METHODS.get(methodName);
     }
-    const memberExpr = node.callee as MemberExpression;
-    const methodName = memberExpr.property.name.toUpperCase();
-    return FIELD_REFERENCE_METHODS.get(methodName);
+    if (node.callee.type === 'Identifier') {
+      const methodName = (node.callee as Identifier).name.toUpperCase();
+      return FIELD_REFERENCE_METHODS.get(methodName);
+    }
+    return undefined;
   }
 
   /**
