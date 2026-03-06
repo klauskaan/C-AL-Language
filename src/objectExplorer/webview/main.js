@@ -41,6 +41,12 @@ let markedOnly = false;
 let sortColumn = null; // null = default sort (Type asc, then ID asc)
 /** @type {'asc'|'desc'} */
 let sortDir = 'asc';
+/** @type {Object.<string, number>} Default column widths matching CSS class defaults */
+const DEFAULT_COLUMN_WIDTHS = { type: 90, id: 60, name: 250, date: 80, time: 80, mod: 80, version: 200 };
+/** @type {number} Minimum column width in pixels */
+const MIN_COLUMN_WIDTH = 20;
+/** @type {Object.<string, number>} Current column widths (content-box px) */
+let columnWidths = Object.assign({}, DEFAULT_COLUMN_WIDTHS);
 
 // ── DOM refs ───────────────────────────────────────────────────────────────
 const tableWrapper = /** @type {HTMLElement} */ (document.getElementById('table-wrapper'));
@@ -147,6 +153,98 @@ function updateSortIndicators() {
   activeTh.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
   const indicator = activeTh.querySelector('.sort-indicator');
   if (indicator) indicator.textContent = sortDir === 'asc' ? '\u2191' : '\u2193';
+}
+
+/**
+ * Apply current columnWidths to the header <th> elements.
+ * With table-layout: fixed, setting width on <th> controls the entire column.
+ */
+function applyColumnWidths() {
+  const headerRow = document.querySelector('thead tr:first-child');
+  if (!headerRow) return;
+  headerRow.querySelectorAll('th').forEach(th => {
+    const colClass = Array.from(th.classList).find(c => c.startsWith('col-'));
+    if (!colClass) return;
+    const key = colClass.replace('col-', '');
+    if (columnWidths[key] !== undefined) {
+      th.style.width = columnWidths[key] + 'px';
+    }
+  });
+}
+
+/**
+ * Send current UI state to the extension for persistence (#729).
+ * Called after resize end and after reset layout.
+ */
+function sendSaveState() {
+  vscode.postMessage({
+    type: 'saveState',
+    typeFilter: activeTypeFilter,
+    sortColumn: sortColumn,
+    sortDir: sortDir,
+    columnWidths: Object.assign({}, columnWidths)
+  });
+}
+
+// ── Column resize handles ─────────────────────────────────────────────────
+
+/**
+ * Create resize handles on resizable column headers.
+ * Cursor and mark columns are not resizable.
+ */
+function initResizeHandles() {
+  const headerRow = document.querySelector('thead tr:first-child');
+  if (!headerRow) return;
+  headerRow.querySelectorAll('th').forEach(th => {
+    const colClass = Array.from(th.classList).find(c => c.startsWith('col-'));
+    if (!colClass) return;
+    const key = colClass.replace('col-', '');
+    if (key === 'cursor' || key === 'mark') return;
+    const handle = document.createElement('div');
+    handle.className = 'resize-handle';
+    handle.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      startResize(e, th, key);
+    });
+    // Prevent click on handle from bubbling to <th> sort handler
+    handle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+    });
+    th.appendChild(handle);
+  });
+}
+
+/**
+ * @param {MouseEvent} startEvent
+ * @param {HTMLElement} th
+ * @param {string} key - column key matching DEFAULT_COLUMN_WIDTHS
+ */
+function startResize(startEvent, th, key) {
+  const startX = startEvent.clientX;
+  const startWidth = columnWidths[key]; // Use stored state (content-box px), not DOM measurement
+
+  /** @param {MouseEvent} e */
+  function onMouseMove(e) {
+    const delta = e.clientX - startX;
+    const newWidth = Math.max(MIN_COLUMN_WIDTH, startWidth + delta);
+    columnWidths[key] = newWidth;
+    th.style.width = newWidth + 'px';
+  }
+
+  function onMouseUp() {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    sendSaveState();
+  }
+
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
 }
 
 /**
@@ -618,6 +716,24 @@ if (btnRefresh) {
   });
 }
 
+// ── Event: reset layout button ────────────────────────────────────────────
+const btnResetLayout = document.getElementById('btn-reset-layout');
+if (btnResetLayout) {
+  btnResetLayout.addEventListener('click', () => {
+    columnWidths = Object.assign({}, DEFAULT_COLUMN_WIDTHS);
+    applyColumnWidths();
+    sortColumn = null;
+    sortDir = 'asc';
+    if (allObjects.length > 0) {
+      applyFilters();
+    } else {
+      updateSortIndicators();
+    }
+    vscode.postMessage({ type: 'resetLayout' });
+    sendSaveState();
+  });
+}
+
 // ── Message handler ────────────────────────────────────────────────────────
 window.addEventListener('message', (event) => {
   const message = event.data;
@@ -645,11 +761,21 @@ window.addEventListener('message', (event) => {
         sortColumn = message.sortColumn;
         sortDir = message.sortDir === 'desc' ? 'desc' : 'asc';
       }
+      if (message.columnWidths && typeof message.columnWidths === 'object') {
+        for (const key of Object.keys(DEFAULT_COLUMN_WIDTHS)) {
+          if (typeof message.columnWidths[key] === 'number' && message.columnWidths[key] >= MIN_COLUMN_WIDTH) {
+            columnWidths[key] = message.columnWidths[key];
+          }
+        }
+        applyColumnWidths();
+      }
       if (allObjects.length > 0) {
         applyFilters();
       }
       break;
     case 'resetLayout':
+      columnWidths = Object.assign({}, DEFAULT_COLUMN_WIDTHS);
+      applyColumnWidths();
       sortColumn = null;
       sortDir = 'asc';
       if (allObjects.length > 0) {
@@ -662,5 +788,7 @@ window.addEventListener('message', (event) => {
 });
 
 // ── Initial ────────────────────────────────────────────────────────────────
+initResizeHandles();
+applyColumnWidths();
 vscode.postMessage({ type: 'ready' });
 updateClearButton();

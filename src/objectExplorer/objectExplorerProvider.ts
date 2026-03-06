@@ -56,7 +56,7 @@ export class ObjectExplorerProvider {
     this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
 
     this._panel.webview.onDidReceiveMessage(
-      (message: { type: string; uri?: string; line?: number }) => {
+      (message: { type: string; uri?: string; line?: number; typeFilter?: string; sortColumn?: string | null; sortDir?: string; columnWidths?: Record<string, number> }) => {
         this._handleMessage(message);
       },
       null,
@@ -81,7 +81,7 @@ export class ObjectExplorerProvider {
     }
   }
 
-  private _handleMessage(message: { type: string; uri?: string; line?: number }): void {
+  private _handleMessage(message: { type: string; uri?: string; line?: number; typeFilter?: string; sortColumn?: string | null; sortDir?: string; columnWidths?: Record<string, number> }): void {
     switch (message.type) {
       case 'ready':
         this._loadObjectList();
@@ -93,6 +93,12 @@ export class ObjectExplorerProvider {
         break;
       case 'refresh':
         this._loadObjectList();
+        break;
+      case 'saveState':
+        // Stub: state persistence implemented in #729
+        break;
+      case 'resetLayout':
+        // Stub: clear persisted state implemented in #729
         break;
     }
   }
