@@ -41,12 +41,6 @@ let markedOnly = false;
 let sortColumn = null; // null = default sort (Type asc, then ID asc)
 /** @type {'asc'|'desc'} */
 let sortDir = 'asc';
-/** @type {Object.<string, number>} Default column widths matching CSS class defaults */
-const DEFAULT_COLUMN_WIDTHS = { type: 90, id: 60, name: 250, date: 80, time: 80, mod: 80, version: 200 };
-/** @type {number} Minimum column width in pixels */
-const MIN_COLUMN_WIDTH = 20;
-/** @type {Object.<string, number>} Current column widths (content-box px) */
-let columnWidths = Object.assign({}, DEFAULT_COLUMN_WIDTHS);
 
 // ── DOM refs ───────────────────────────────────────────────────────────────
 const tableWrapper = /** @type {HTMLElement} */ (document.getElementById('table-wrapper'));
@@ -60,6 +54,18 @@ const searchInput = /** @type {HTMLInputElement} */ (document.getElementById('se
 // @ts-ignore -- injected by filterEngine.js <script> tag
 const filterEngine = /** @type {any} */ (/** @type {any} */ (window).filterEngine) || { matchesFilter: () => true };
 const matchesFilter = filterEngine.matchesFilter.bind(filterEngine);
+
+// ── State manager ──────────────────────────────────────────────────────────
+// @ts-ignore -- injected by stateManager.js <script> tag
+const stateManager = /** @type {any} */ (/** @type {any} */ (window).stateManager) || {
+  DEFAULT_COLUMN_WIDTHS: { type: 90, id: 60, name: 250, date: 80, time: 80, mod: 80, version: 200 },
+  MIN_COLUMN_WIDTH: 20,
+  validateColumnWidths: (_incoming, current, _defaults, _minWidth) => Object.assign({}, current),
+  buildSaveStateMessage: (state) => Object.assign({ type: 'saveState' }, state, { columnWidths: Object.assign({}, state.columnWidths) })
+};
+
+/** @type {Object.<string, number>} Current column widths (content-box px) */
+let columnWidths = Object.assign({}, stateManager.DEFAULT_COLUMN_WIDTHS);
 
 // ── Column filter state ─────────────────────────────────────────────────────
 
@@ -177,13 +183,12 @@ function applyColumnWidths() {
  * Called after resize end and after reset layout.
  */
 function sendSaveState() {
-  vscode.postMessage({
-    type: 'saveState',
+  vscode.postMessage(stateManager.buildSaveStateMessage({
     typeFilter: activeTypeFilter,
     sortColumn: sortColumn,
     sortDir: sortDir,
-    columnWidths: Object.assign({}, columnWidths)
-  });
+    columnWidths: columnWidths
+  }));
 }
 
 // ── Column resize handles ─────────────────────────────────────────────────
@@ -228,7 +233,7 @@ function startResize(startEvent, th, key) {
   /** @param {MouseEvent} e */
   function onMouseMove(e) {
     const delta = e.clientX - startX;
-    const newWidth = Math.max(MIN_COLUMN_WIDTH, startWidth + delta);
+    const newWidth = Math.max(stateManager.MIN_COLUMN_WIDTH, startWidth + delta);
     columnWidths[key] = newWidth;
     th.style.width = newWidth + 'px';
   }
@@ -724,7 +729,7 @@ if (btnRefresh) {
 const btnResetLayout = document.getElementById('btn-reset-layout');
 if (btnResetLayout) {
   btnResetLayout.addEventListener('click', () => {
-    columnWidths = Object.assign({}, DEFAULT_COLUMN_WIDTHS);
+    columnWidths = Object.assign({}, stateManager.DEFAULT_COLUMN_WIDTHS);
     applyColumnWidths();
     sortColumn = null;
     sortDir = 'asc';
@@ -766,11 +771,9 @@ window.addEventListener('message', (event) => {
         sortDir = message.sortDir === 'desc' ? 'desc' : 'asc';
       }
       if (message.columnWidths && typeof message.columnWidths === 'object') {
-        for (const key of Object.keys(DEFAULT_COLUMN_WIDTHS)) {
-          if (typeof message.columnWidths[key] === 'number' && message.columnWidths[key] >= MIN_COLUMN_WIDTH) {
-            columnWidths[key] = message.columnWidths[key];
-          }
-        }
+        columnWidths = stateManager.validateColumnWidths(
+          message.columnWidths, columnWidths, stateManager.DEFAULT_COLUMN_WIDTHS, stateManager.MIN_COLUMN_WIDTH
+        );
         applyColumnWidths();
       }
       if (allObjects.length > 0) {
@@ -778,7 +781,7 @@ window.addEventListener('message', (event) => {
       }
       break;
     case 'resetLayout':
-      columnWidths = Object.assign({}, DEFAULT_COLUMN_WIDTHS);
+      columnWidths = Object.assign({}, stateManager.DEFAULT_COLUMN_WIDTHS);
       applyColumnWidths();
       sortColumn = null;
       sortDir = 'asc';
