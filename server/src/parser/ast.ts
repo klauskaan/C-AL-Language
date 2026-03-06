@@ -43,6 +43,18 @@ export interface ObjectDeclaration {
   code: CodeSection | null;
   /** Table ID extracted from REQUESTPAGE PROPERTIES { SourceTable=TableN; } — Reports only */
   requestPageSourceTableId?: number;
+  /** Parsed OBJECT-PROPERTIES section metadata (date, time, modified, version list) */
+  objectProperties?: ObjectProperties;
+}
+
+/**
+ * OBJECT-PROPERTIES section (metadata: date, time, modified, version list)
+ */
+export interface ObjectProperties {
+  date?: string;        // raw value of Date key, e.g. "24-03-19"
+  time?: string;        // raw value of Time key, e.g. "12:00:00"
+  modified?: boolean;   // true if Modified=Yes, false otherwise
+  versionList?: string; // raw value of Version List key; empty string if key present but blank
 }
 
 /**

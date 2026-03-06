@@ -201,6 +201,11 @@ exports[`Regression Suite - Real C/AL Files Fixture: anonymous-return-decorator.
     "objectId": 50685,
     "objectKind": "Codeunit",
     "objectName": "AnonymousReturnDecorator",
+    "objectProperties": {
+      "date": "01-01-20",
+      "time": "12:00:00",
+      "versionList": "",
+    },
     "properties": {
       "endToken": {
         "column": 3,
@@ -68302,6 +68307,11 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-9-acc-sched-kpi-di
     "objectId": 9,
     "objectKind": "Codeunit",
     "objectName": "Acc. Sched. KPI Dimensions",
+    "objectProperties": {
+      "date": "19-09-18",
+      "time": "12:00:00",
+      "versionList": "NAVW113.00",
+    },
     "properties": {
       "endToken": {
         "column": 3,
@@ -68904,6 +68914,11 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-93-purch-quote-to-
     "objectId": 93,
     "objectKind": "Codeunit",
     "objectName": "Purch.-Quote to Order (Yes/No)",
+    "objectProperties": {
+      "date": "24-03-19",
+      "time": "12:00:00",
+      "versionList": "NAVW114.00",
+    },
     "properties": {
       "endToken": {
         "column": 3,
@@ -76709,6 +76724,11 @@ exports[`Regression Suite - Real C/AL Files Fixture: codeunit-416-release-servic
     "objectId": 416,
     "objectKind": "Codeunit",
     "objectName": "Release Service Document",
+    "objectProperties": {
+      "date": "19-09-18",
+      "time": "12:00:00",
+      "versionList": "NAVW113.00",
+    },
     "properties": {
       "endToken": {
         "column": 3,
@@ -77713,6 +77733,11 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-343-check-credit-limit
     "objectId": 343,
     "objectKind": "Page",
     "objectName": "Check Credit Limit",
+    "objectProperties": {
+      "date": "",
+      "time": "",
+      "versionList": "",
+    },
     "properties": {
       "endToken": {
         "column": 3,
@@ -84163,6 +84188,11 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1216-data-exch-col-def
     "objectId": 1216,
     "objectKind": "Page",
     "objectName": "Data Exch Col Def Part",
+    "objectProperties": {
+      "date": "",
+      "time": "",
+      "versionList": "",
+    },
     "properties": {
       "endToken": {
         "column": 3,
@@ -97879,6 +97909,11 @@ exports[`Regression Suite - Real C/AL Files Fixture: page-1799-data-migration-ov
     "objectId": 1799,
     "objectKind": "Page",
     "objectName": "Data Migration Overview",
+    "objectProperties": {
+      "date": "",
+      "time": "",
+      "versionList": "",
+    },
     "properties": {
       "endToken": {
         "column": 3,
@@ -105069,6 +105104,11 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-18-customer.cal shoul
     "objectId": 18,
     "objectKind": "Table",
     "objectName": "Customer",
+    "objectProperties": {
+      "date": "01/01/20",
+      "modified": true,
+      "time": "12:00:00",
+    },
     "properties": {
       "endToken": {
         "column": 3,
@@ -116346,6 +116386,11 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-1223-data-exch-column
     "objectId": 1223,
     "objectKind": "Table",
     "objectName": "Data Exch. Column Def",
+    "objectProperties": {
+      "date": "",
+      "time": "",
+      "versionList": "",
+    },
     "properties": {
       "endToken": {
         "column": 3,
@@ -118836,6 +118881,11 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-5342-option-initvalue
     "objectId": 5342,
     "objectKind": "Table",
     "objectName": "CRM Contact",
+    "objectProperties": {
+      "date": "22-11-17",
+      "time": "12:00:00",
+      "versionList": "NAVW111.00",
+    },
     "properties": {
       "endToken": {
         "column": 3,
@@ -131591,6 +131641,12 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-50000-customer-extend
     "objectId": 50000,
     "objectKind": "Table",
     "objectName": "Customer Extended",
+    "objectProperties": {
+      "date": "05-11-25",
+      "modified": true,
+      "time": "12:00:00",
+      "versionList": "NAVW19.00.00.43402",
+    },
     "properties": {
       "endToken": {
         "column": 3,
@@ -132303,6 +132359,7 @@ exports[`Regression Suite - Real C/AL Files Fixture: table-apostrophe-in-descrip
     "objectId": 5342,
     "objectKind": "Table",
     "objectName": "Test",
+    "objectProperties": undefined,
     "properties": null,
     "requestPageSourceTableId": undefined,
     "startToken": {
@@ -158645,6 +158702,11 @@ exports[`Regression Suite - Real C/AL Files Fixture: xmlport-1225-data-exch-def-
     "objectId": 1225,
     "objectKind": "XMLport",
     "objectName": "Imp / Exp Data Exch Def & Map",
+    "objectProperties": {
+      "date": "",
+      "time": "",
+      "versionList": "",
+    },
     "properties": {
       "endToken": {
         "column": 3,
