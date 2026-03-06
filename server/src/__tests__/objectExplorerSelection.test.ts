@@ -15,6 +15,7 @@ const selection = require('../../../src/objectExplorer/webview/selectionModel') 
   shiftClickRow(idx: number): void;
   ctrlClickRow(idx: number): void;
   moveToRow(idx: number): void;
+  selectAll(total: number): void;
   reset(): void;
   isSelected(idx: number): boolean;
   isCursor(idx: number): boolean;
@@ -331,6 +332,88 @@ describe('Object Explorer Selection Model', () => {
     it('should expose anchorIndex === 5 after clickRow(5)', () => {
       selection.clickRow(5);
       expect(selection.anchorIndex).toBe(5);
+    });
+  });
+
+  // ── selectAll ──────────────────────────────────────────────────────────────
+
+  describe('selectAll', () => {
+    beforeEach(() => selection.reset());
+
+    it('should set selectedSet.size to 5 and mark all rows 0..4 as selected after selectAll(5)', () => {
+      selection.selectAll(5);
+      expect(selection.selectedSet.size).toBe(5);
+      expect(selection.isSelected(0)).toBe(true);
+      expect(selection.isSelected(1)).toBe(true);
+      expect(selection.isSelected(2)).toBe(true);
+      expect(selection.isSelected(3)).toBe(true);
+      expect(selection.isSelected(4)).toBe(true);
+    });
+
+    it('should set selectedIndex to 4 (last row) after selectAll(5)', () => {
+      selection.selectAll(5);
+      expect(selection.selectedIndex).toBe(4);
+    });
+
+    it('should set anchorIndex to 0 (first row) after selectAll(5)', () => {
+      selection.selectAll(5);
+      expect(selection.anchorIndex).toBe(0);
+    });
+
+    it('should set isCursor(4) to true after selectAll(5)', () => {
+      selection.selectAll(5);
+      expect(selection.isCursor(4)).toBe(true);
+    });
+
+    it('should set selectedSet.size to 1 and isSelected(0) true after selectAll(1)', () => {
+      selection.selectAll(1);
+      expect(selection.selectedSet.size).toBe(1);
+      expect(selection.isSelected(0)).toBe(true);
+    });
+
+    it('should set selectedIndex to 0 after selectAll(1)', () => {
+      selection.selectAll(1);
+      expect(selection.selectedIndex).toBe(0);
+    });
+
+    it('should reset to empty state when selectAll(0) is called', () => {
+      selection.clickRow(2);
+      selection.selectAll(0);
+      expect(selection.selectedSet.size).toBe(0);
+      expect(selection.selectedIndex).toBe(-1);
+    });
+
+    it('should reset to empty state when selectAll(-1) is called', () => {
+      selection.clickRow(2);
+      selection.selectAll(-1);
+      expect(selection.selectedSet.size).toBe(0);
+      expect(selection.selectedIndex).toBe(-1);
+    });
+
+    it('should reset to empty state when selectAll(NaN) is called', () => {
+      selection.clickRow(2);
+      selection.selectAll(NaN);
+      expect(selection.selectedSet.size).toBe(0);
+      expect(selection.selectedIndex).toBe(-1);
+    });
+
+    it('should replace any prior single-row selection (clickRow(1), then selectAll(3))', () => {
+      selection.clickRow(1);
+      selection.selectAll(3);
+      expect(selection.isSelected(0)).toBe(true);
+      expect(selection.isSelected(1)).toBe(true);
+      expect(selection.isSelected(2)).toBe(true);
+      expect(selection.selectedSet.size).toBe(3);
+    });
+
+    it('should allow subsequent clickRow(2) to replace the selectAll selection normally', () => {
+      selection.selectAll(5);
+      selection.clickRow(2);
+      expect(selection.selectedSet.size).toBe(1);
+      expect(selection.isSelected(2)).toBe(true);
+      expect(selection.isSelected(0)).toBe(false);
+      expect(selection.isSelected(4)).toBe(false);
+      expect(selection.selectedIndex).toBe(2);
     });
   });
 

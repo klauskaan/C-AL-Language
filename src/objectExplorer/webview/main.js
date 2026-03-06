@@ -77,6 +77,7 @@ const selection = /** @type {any} */ (/** @type {any} */ (window).selectionModel
     ctrlClickRow(i) { if(_set.has(i)) _set.delete(i); else _set.add(i); _idx = i; _anchor = i; },
     moveToRow(i) { _idx = i; _anchor = i; _set = new Set([i]); },
     reset() { _idx = -1; _anchor = -1; _set = new Set(); },
+    selectAll(n) { _idx = n > 0 ? n - 1 : -1; _anchor = n > 0 ? 0 : -1; _set = new Set(Array.from({length: Math.max(0, n)}, (_, i) => i)); },
     isSelected(i) { return _set.has(i); },
     isCursor(i) { return i === _idx; }
   };
@@ -569,6 +570,29 @@ function scrollToSelectedRow() {
   }
 }
 
+/**
+ * Toggle the mark state on all currently selected rows, independently per row.
+ * If row is marked → unmark it. If unmarked → mark it.
+ * Called by Ctrl+F1 and the "Toggle Mark" context menu item.
+ */
+function toggleMarkOnSelection() {
+  if (selection.selectedSet.size === 0) return;
+  selection.selectedSet.forEach(function(idx) {
+    const obj = filteredObjects[idx];
+    if (!obj) return;
+    const key = objectKey(obj);
+    if (markedObjects.has(key)) {
+      markedObjects.delete(key);
+    } else {
+      markedObjects.add(key);
+    }
+  });
+  renderedStart = -1;
+  renderedEnd = -1;
+  scheduleRender();
+  updateMarkAllState();
+}
+
 document.addEventListener('keydown', (e) => {
   // Global shortcut: Shift+Ctrl+F7 = Clear filters (C/SIDE muscle memory)
   if (e.shiftKey && e.ctrlKey && e.key === 'F7') {
@@ -623,6 +647,16 @@ document.addEventListener('keydown', (e) => {
       scheduleRender();
       updateSelectionClasses();
     }
+  } else if (e.key === 'a' && e.ctrlKey && !e.shiftKey && !e.metaKey) {
+    e.preventDefault();
+    if (total > 0) {
+      selection.selectAll(total);
+      scheduleRender();
+      updateSelectionClasses();
+    }
+  } else if (e.key === 'F1' && e.ctrlKey) {
+    e.preventDefault();
+    toggleMarkOnSelection();
   }
 });
 
@@ -768,6 +802,59 @@ if (markedOnlyCb) {
     applyFilters();
   });
 }
+
+// ── Context menu ─────────────────────────────────────────────────────────
+const contextMenu = document.createElement('div');
+contextMenu.id = 'context-menu';
+contextMenu.setAttribute('role', 'menu');
+const contextMenuToggleMark = document.createElement('div');
+contextMenuToggleMark.className = 'menu-item';
+contextMenuToggleMark.setAttribute('role', 'menuitem');
+contextMenuToggleMark.setAttribute('tabindex', '-1');
+contextMenuToggleMark.textContent = 'Toggle Mark';
+contextMenu.appendChild(contextMenuToggleMark);
+document.body.appendChild(contextMenu);
+
+function showContextMenu(x, y) {
+  contextMenu.style.left = x + 'px';
+  contextMenu.style.top = y + 'px';
+  contextMenu.style.display = 'block';
+}
+
+function hideContextMenu() {
+  contextMenu.style.display = 'none';
+}
+
+contextMenuToggleMark.addEventListener('click', function() {
+  hideContextMenu();
+  toggleMarkOnSelection();
+});
+
+tbody.addEventListener('contextmenu', function(e) {
+  const tr = /** @type {HTMLElement} */ (e.target instanceof HTMLElement ? e.target.closest('tr') : null);
+  if (!tr || tr.classList.contains('virtual-spacer') || tr.closest('thead')) return;
+  const idx = parseInt(tr.dataset.index || '', 10);
+  if (isNaN(idx)) return;
+
+  // If right-clicked row is not in current selection, select it first
+  if (!selection.isSelected(idx)) {
+    selection.clickRow(idx);
+    updateSelectionClasses();
+  }
+
+  e.preventDefault();
+  showContextMenu(e.clientX, e.clientY);
+});
+
+document.addEventListener('click', function() {
+  hideContextMenu();
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    hideContextMenu();
+  }
+}, true); // capture phase so it fires before other keydown handlers
 
 // ── Event: refresh button ──────────────────────────────────────────────────
 const btnRefresh = document.getElementById('btn-refresh');
