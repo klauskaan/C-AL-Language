@@ -97,6 +97,26 @@
   }
 
   /**
+   * Select all rows in a list of `total` items.
+   * If total <= 0 or invalid, resets the selection.
+   * Sets cursor (selectedIndex) to the last row, anchor to the first.
+   * @param {number} total
+   */
+  function selectAll(total) {
+    if (!Number.isFinite(total) || total <= 0) {
+      reset();
+      return;
+    }
+    total = Math.floor(total);
+    selectedSet.clear();
+    for (var i = 0; i < total; i++) {
+      selectedSet.add(i);
+    }
+    selectedIndex = total - 1;
+    anchorIndex = 0;
+  }
+
+  /**
    * @param {number} idx
    * @returns {boolean}
    */
@@ -121,6 +141,7 @@
     ctrlClickRow: ctrlClickRow,
     moveToRow: moveToRow,
     reset: reset,
+    selectAll: selectAll,
     isSelected: isSelected,
     isCursor: isCursor
   };
