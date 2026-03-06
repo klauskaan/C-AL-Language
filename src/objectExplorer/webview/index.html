@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{STYLE_URI_CSP}}; script-src 'nonce-{{NONCE}}';">
+  <link href="{{STYLE_URI}}" rel="stylesheet">
+  <title>Object Explorer</title>
+</head>
+<body>
+  <div id="header">
+    <span id="header-icon">&#x25C8;</span>
+    <span id="header-title">Object Explorer</span>
+    <button id="btn-refresh" title="Refresh">&#x21BA;</button>
+    <button id="btn-reset-layout" title="Reset Layout">&#x229E;</button>
+  </div>
+
+  <div id="main">
+    <div id="type-panel">
+      <button class="type-btn" data-type="Table">Table</button>
+      <button class="type-btn" data-type="Page">Page</button>
+      <button class="type-btn" data-type="Report">Report</button>
+      <button class="type-btn" data-type="Codeunit">Codeunit</button>
+      <button class="type-btn" data-type="XMLport">XMLport</button>
+      <button class="type-btn" data-type="Query">Query</button>
+      <button class="type-btn" data-type="MenuSuite">MenuSuite</button>
+      <hr>
+      <button class="type-btn type-btn-all" data-type="All">All</button>
+    </div>
+
+    <div id="content-panel">
+      <div id="search-bar">
+        <label for="search-input">Search:</label>
+        <input type="text" id="search-input" placeholder="Type to filter...">
+        <button id="btn-clear-filters">Clear filters</button>
+      </div>
+
+      <div id="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-cursor">&#x25B6;</th>
+              <th class="col-mark">
+                <input type="checkbox" id="mark-all">
+                <label for="mark-all" class="visually-hidden">Mark all</label>
+              </th>
+              <th class="col-type">Type <span class="sort-indicator">&#x2191;</span></th>
+              <th class="col-id">ID <span class="sort-indicator">&#x2191;</span></th>
+              <th class="col-name">Name <span class="sort-indicator">&#x2191;</span></th>
+              <th class="col-date">Date <span class="sort-indicator">&#x2191;</span></th>
+              <th class="col-time">Time <span class="sort-indicator">&#x2191;</span></th>
+              <th class="col-mod">Mod <span class="sort-indicator">&#x2191;</span></th>
+              <th class="col-version">Version List <span class="sort-indicator">&#x2191;</span></th>
+            </tr>
+            <tr class="filter-row">
+              <td class="col-cursor"></td>
+              <td class="col-mark"></td>
+              <td class="col-type"><input type="text" placeholder=""></td>
+              <td class="col-id"><input type="text" placeholder=""></td>
+              <td class="col-name"><input type="text" placeholder=""></td>
+              <td class="col-date"><input type="text" placeholder=""></td>
+              <td class="col-time"><input type="text" placeholder=""></td>
+              <td class="col-mod"><input type="text" placeholder=""></td>
+              <td class="col-version"><input type="text" placeholder=""></td>
+            </tr>
+          </thead>
+          <tbody id="object-list">
+          </tbody>
+        </table>
+      </div>
+
+      <div id="footer">
+        <span id="row-count">No objects loaded</span>
+        <label class="marked-only-label">
+          <input type="checkbox" id="marked-only"> Marked only
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <script nonce="{{NONCE}}" src="{{SCRIPT_URI}}"></script>
+</body>
+</html>
