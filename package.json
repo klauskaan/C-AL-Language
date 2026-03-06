@@ -100,6 +100,19 @@
         }
       }
     ],
+    "commands": [
+      {
+        "command": "cal.objectExplorer",
+        "title": "C/AL: Object Explorer"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "cal.objectExplorer",
+        "key": "ctrl+shift+f12",
+        "mac": "cmd+shift+f12"
+      }
+    ],
     "configuration": {
       "title": "C/AL Language Support",
       "properties": {

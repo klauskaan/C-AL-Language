@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { workspace, ExtensionContext, Uri, Position, Location, Range } from 'vscode';
+import { workspace, commands, ExtensionContext, Uri, Position, Location, Range } from 'vscode';
 
 import {
   LanguageClient,
@@ -7,6 +7,7 @@ import {
   ServerOptions,
   TransportKind
 } from 'vscode-languageclient/node';
+import { ObjectExplorerProvider } from './objectExplorer/objectExplorerProvider';
 
 let client: LanguageClient | undefined;
 
@@ -20,6 +21,11 @@ export async function activate(context: ExtensionContext): Promise<void> {
   const includeTxtFiles = config.get<boolean>('workspaceIndexing.includeTxtFiles', true);
 
   console.log(`C/AL Settings: languageServer.enabled=${lsEnabled}, semanticHighlighting.enabled=${semanticEnabled}, workspaceIndexing.includeTxtFiles=${includeTxtFiles}`);
+
+  const objectExplorerDisposable = commands.registerCommand('cal.objectExplorer', () => {
+    ObjectExplorerProvider.createOrShow(context, client);
+  });
+  context.subscriptions.push(objectExplorerDisposable);
 
   if (!lsEnabled) {
     console.log('C/AL Language Server is disabled by user settings');
