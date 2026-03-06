@@ -632,6 +632,7 @@ document.querySelectorAll('.type-btn').forEach(btn => {
       btn.classList.add('active');
     }
     applyFilters();
+    sendSaveState();
   });
 });
 
@@ -651,6 +652,7 @@ document.querySelectorAll('thead th[data-sort]').forEach(th => {
       sortDir = 'asc';
     }
     applyFilters();
+    sendSaveState();
   });
 });
 
