@@ -1,0 +1,13 @@
+body {
+  margin: 0;
+  padding: 16px;
+  color: var(--vscode-editor-foreground);
+  background-color: var(--vscode-editor-background);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+.loading {
+  color: var(--vscode-descriptionForeground);
+  font-style: italic;
+}
