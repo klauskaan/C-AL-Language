@@ -322,7 +322,7 @@ function scheduleRender() {
 
 function updateVirtualList() {
   const scrollTop = tableWrapper.scrollTop;
-  const viewportH = (tableWrapper.clientHeight || 600) - getHeaderHeight();
+  const viewportH = Math.max((tableWrapper.clientHeight || 600) - getHeaderHeight(), ROW_HEIGHT);
   const total = filteredObjects.length;
 
   const visStart = Math.floor(scrollTop / ROW_HEIGHT);
