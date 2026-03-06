@@ -421,7 +421,7 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Package ID field', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000160);
       expect(fields).toBeDefined();
-      expect(fields!.size).toBe(20);
+      expect(fields!.size).toBe(21);
       expect(fields!.get('PACKAGE ID')).toEqual({ originalName: 'Package ID', typeName: 'GUID' });
     });
     it('should have Tenant ID field', () => {
@@ -431,6 +431,11 @@ describe('systemTableData - SYSTEM_TABLE_FIELDS', () => {
     it('should have Scope field as Option', () => {
       const fields = SYSTEM_TABLE_FIELDS.get(2000000160);
       expect(fields!.get('SCOPE')).toEqual({ originalName: 'Scope', typeName: 'Option' });
+    });
+    it('should have responseUrl field', () => {
+      const fields = SYSTEM_TABLE_FIELDS.get(2000000160);
+      expect(fields).toBeDefined();
+      expect(fields!.get('RESPONSEURL')).toEqual({ originalName: 'responseUrl', typeName: 'Text' });
     });
   });
 
@@ -1424,10 +1429,16 @@ describe('Designer Field Group table (2000000172) - new fields from #684', () =>
     expect(fields!.get('DESCRIPTION')).toEqual({ originalName: 'Description', typeName: 'Text250' });
   });
 
-  it('should have at least 2 fields', () => {
+  it('should have at least 3 fields', () => {
     const fields = SYSTEM_TABLE_FIELDS.get(2000000172);
     expect(fields).toBeDefined();
-    expect(fields!.size).toBeGreaterThanOrEqual(2);
+    expect(fields!.size).toBeGreaterThanOrEqual(3);
+  });
+
+  it('should have FieldTypeGroup field', () => {
+    const fields = SYSTEM_TABLE_FIELDS.get(2000000172);
+    expect(fields).toBeDefined();
+    expect(fields!.get('FIELDTYPEGROUP')).toEqual({ originalName: 'FieldTypeGroup', typeName: 'Option' });
   });
 });
 

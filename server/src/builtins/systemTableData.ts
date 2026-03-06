@@ -345,6 +345,7 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
     ['PACKAGE TYPE', { originalName: 'Package Type', typeName: 'Option' }],
     ['SHOW MY CODE', { originalName: 'Show My Code', typeName: 'Boolean' }],
     ['TENANT ID', { originalName: 'Tenant ID', typeName: 'Text128' }],
+    ['RESPONSEURL', { originalName: 'responseUrl', typeName: 'Text' }],
   ])],
 
   [2000000165, new Map<string, FieldInfo>([
@@ -593,6 +594,7 @@ export const SYSTEM_TABLE_FIELDS: ReadonlyMap<number, ReadonlyMap<string, FieldI
   [2000000172, new Map<string, FieldInfo>([
     ['DISPLAY NAME', { originalName: 'Display Name', typeName: 'Text250' }],
     ['DESCRIPTION', { originalName: 'Description', typeName: 'Text250' }],
+    ['FIELDTYPEGROUP', { originalName: 'FieldTypeGroup', typeName: 'Option' }],
   ])],
 
   [2000000179, new Map<string, FieldInfo>([
