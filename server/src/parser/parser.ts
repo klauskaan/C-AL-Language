@@ -59,7 +59,8 @@ import {
   ArrayAccessExpression,
   SetLiteral,
   RangeExpression,
-  UnresolvedDataItem
+  UnresolvedDataItem,
+  ObjectProperties
 } from './ast';
 
 /**
@@ -429,13 +430,15 @@ export class Parser {
   private parseObject(): ObjectDeclaration {
     const { startToken, objectKind, objectId, objectName } = this.parseObjectHeader();
 
+    let objectProperties: ObjectProperties | undefined;
+
     // Consume opening brace of object body (if present)
     // Note: Tests may have partial objects without braces
     if (this.check(TokenType.LeftBrace)) {
       this.advance(); // Consume {
 
-      // Skip OBJECT-PROPERTIES section if present (it's metadata, not code)
-      this.skipObjectPropertiesSection();
+      // Parse OBJECT-PROPERTIES section if present (it's metadata, not code)
+      objectProperties = this.parseObjectPropertiesSection();
     }
 
     // Parse sections
@@ -551,6 +554,7 @@ export class Parser {
       elements,
       code,
       requestPageSourceTableId,
+      objectProperties,
       startToken,
       endToken: this.previous()
     };
@@ -591,23 +595,89 @@ export class Parser {
   }
 
   /**
-   * Skip OBJECT-PROPERTIES section if present (it's metadata, not code)
+   * Parse OBJECT-PROPERTIES section if present, returning structured metadata.
+   * Returns undefined if the section is not present.
    */
-  private skipObjectPropertiesSection(): void {
-    if (this.check(TokenType.ObjectProperties)) {
-      // Skip OBJECT-PROPERTIES { ... }
-      this.advance(); // OBJECT-PROPERTIES
-      if (this.check(TokenType.LeftBrace)) {
-        this.advance(); // {
-        // Skip until matching }
-        let depth = 1;
-        while (depth > 0 && !this.isAtEnd()) {
-          if (this.check(TokenType.LeftBrace)) depth++;
-          else if (this.check(TokenType.RightBrace)) depth--;
+  private parseObjectPropertiesSection(): ObjectProperties | undefined {
+    if (!this.check(TokenType.ObjectProperties)) {
+      return undefined;
+    }
+
+    this.advance(); // consume OBJECT-PROPERTIES
+
+    if (!this.check(TokenType.LeftBrace)) {
+      return undefined;
+    }
+    this.advance(); // consume {
+
+    const result: ObjectProperties = {};
+
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      // Read key name — handle "Version List" as two tokens
+      const firstKeyToken = this.advance();
+      let key: string;
+
+      if (firstKeyToken.value.toLowerCase() === 'version' &&
+          !this.isAtEnd() &&
+          !this.check(TokenType.Equal) &&
+          this.peek().value.toLowerCase() === 'list') {
+        this.advance(); // consume "list"
+        key = 'version list';
+      } else {
+        key = firstKeyToken.value;
+      }
+
+      // Expect =
+      if (!this.check(TokenType.Equal)) {
+        // Skip to next semicolon for error recovery
+        while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
           this.advance();
         }
+        if (this.check(TokenType.Semicolon)) {
+          this.advance();
+        }
+        continue;
+      }
+      this.advance(); // consume =
+
+      // Read value tokens until ; or } or end
+      const valueParts: string[] = [];
+      while (!this.check(TokenType.Semicolon) && !this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+        valueParts.push(this.advance().value);
+      }
+      const value = valueParts.join('');
+
+      // Consume ;
+      if (this.check(TokenType.Semicolon)) {
+        this.advance();
+      }
+
+      // Store value by key (case-insensitive matching)
+      switch (key.toLowerCase()) {
+        case 'date':
+          result.date = value;
+          break;
+        case 'time':
+          result.time = value;
+          break;
+        case 'modified':
+          result.modified = value.toLowerCase() === 'yes';
+          break;
+        case 'version list':
+          result.versionList = value;
+          break;
+        default:
+          // Unknown key — ignore
+          break;
       }
     }
+
+    // Consume }
+    if (this.check(TokenType.RightBrace)) {
+      this.advance();
+    }
+
+    return result;
   }
 
   /**
