@@ -252,17 +252,22 @@ thead th .sort-indicator {
 
 /* ── Body rows ── */
 
-tbody tr {
-  height: 22px;
+tbody tr:not(.virtual-spacer) {
+  height: 40px;
 }
 
-tbody tr:hover {
+tbody tr:not(.virtual-spacer):hover {
   background-color: var(--vscode-list-hoverBackground);
 }
 
 tbody tr.selected {
   background-color: var(--vscode-list-activeSelectionBackground);
   color: var(--vscode-list-activeSelectionForeground);
+}
+
+tbody tr.virtual-spacer {
+  background: none;
+  pointer-events: none;
 }
 
 tbody td {

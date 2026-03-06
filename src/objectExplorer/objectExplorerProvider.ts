@@ -91,6 +91,9 @@ export class ObjectExplorerProvider {
           this._navigate(message.uri, message.line);
         }
         break;
+      case 'refresh':
+        this._loadObjectList();
+        break;
     }
   }
 
