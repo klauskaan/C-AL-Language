@@ -174,6 +174,9 @@ export class ObjectExplorerProvider {
     const stateManagerUri = webview.asWebviewUri(
       vscode.Uri.joinPath(webviewUri, 'stateManager.js')
     );
+    const selectionModelUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(webviewUri, 'selectionModel.js')
+    );
     const styleUri = webview.asWebviewUri(
       vscode.Uri.joinPath(webviewUri, 'style.css')
     );
@@ -189,6 +192,7 @@ export class ObjectExplorerProvider {
       .replace(/\{\{STYLE_URI_CSP\}\}/g, webview.cspSource)
       .replace(/\{\{FILTER_ENGINE_URI\}\}/g, filterEngineUri.toString())
       .replace(/\{\{STATE_MANAGER_URI\}\}/g, stateManagerUri.toString())
+      .replace(/\{\{SELECTION_MODEL_URI\}\}/g, selectionModelUri.toString())
       .replace(/\{\{SCRIPT_URI\}\}/g, scriptUri.toString());
   }
 }
