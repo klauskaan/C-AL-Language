@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/node';
 
@@ -132,22 +133,14 @@ export class ObjectExplorerProvider {
 
     const nonce = getNonce();
 
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
-  <link href="${styleUri}" rel="stylesheet">
-  <title>Object Explorer</title>
-</head>
-<body>
-  <div id="root">
-    <p class="loading">Object Explorer loading...</p>
-  </div>
-  <script nonce="${nonce}" src="${scriptUri}"></script>
-</body>
-</html>`;
+    const templatePath = vscode.Uri.joinPath(webviewUri, 'index.html').fsPath;
+    const template = fs.readFileSync(templatePath, 'utf8');
+
+    return template
+      .replace(/\{\{NONCE\}\}/g, nonce)
+      .replace(/\{\{STYLE_URI\}\}/g, styleUri.toString())
+      .replace(/\{\{STYLE_URI_CSP\}\}/g, webview.cspSource)
+      .replace(/\{\{SCRIPT_URI\}\}/g, scriptUri.toString());
   }
 }
 
