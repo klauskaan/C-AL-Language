@@ -350,26 +350,21 @@ function updateVirtualList() {
 }
 
 function updateMarkAllState() {
-  const markAllCb = /** @type {HTMLInputElement|null} */ (document.getElementById('mark-all'));
-  if (!markAllCb) return;
+  const markAllGlyph = document.getElementById('mark-all-glyph');
+  if (!markAllGlyph) return;
   const total = filteredObjects.length;
   if (total === 0) {
-    markAllCb.checked = false;
-    markAllCb.indeterminate = false;
+    markAllGlyph.textContent = '\u25A1';
+    markAllGlyph.setAttribute('aria-checked', 'false');
     return;
   }
-  let markedCount = 0;
-  for (const obj of filteredObjects) {
-    if (markedObjects.has(objectKey(obj))) markedCount++;
-  }
-  if (markedCount === 0) {
-    markAllCb.checked = false;
-    markAllCb.indeterminate = false;
-  } else if (markedCount === total) {
-    markAllCb.checked = true;
-    markAllCb.indeterminate = false;
+  const markedCount = filteredObjects.filter(obj => markedObjects.has(objectKey(obj))).length;
+  if (markedCount === total) {
+    markAllGlyph.textContent = '\u25A0';
+    markAllGlyph.setAttribute('aria-checked', 'true');
   } else {
-    markAllCb.indeterminate = true;
+    markAllGlyph.textContent = '\u25A1';
+    markAllGlyph.setAttribute('aria-checked', markedCount > 0 ? 'mixed' : 'false');
   }
 }
 
@@ -391,18 +386,24 @@ function makeRow(obj, index) {
   // Mark cell
   const tdMark = document.createElement('td');
   tdMark.className = 'col-mark';
-  const cb = document.createElement('input');
-  cb.type = 'checkbox';
-  cb.checked = markedObjects.has(objectKey(obj));
-  cb.addEventListener('change', function () {
-    if (cb.checked) {
-      markedObjects.add(objectKey(obj));
+  const glyph = document.createElement('span');
+  glyph.textContent = markedObjects.has(objectKey(obj)) ? '\u25A0' : '\u25A1';
+  tdMark.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const key = objectKey(obj);
+    if (markedObjects.has(key)) {
+      markedObjects.delete(key);
+      glyph.textContent = '\u25A1';
     } else {
-      markedObjects.delete(objectKey(obj));
+      markedObjects.add(key);
+      glyph.textContent = '\u25A0';
     }
     updateMarkAllState();
   });
-  tdMark.appendChild(cb);
+  tdMark.addEventListener('dblclick', function(e) {
+    e.stopPropagation();
+  });
+  tdMark.appendChild(glyph);
   tr.appendChild(tdMark);
 
   appendCell(tr, 'col-type', obj.type || '');
@@ -684,12 +685,15 @@ if (btnClearFilters) {
   });
 }
 
-// ── Event: mark-all checkbox ───────────────────────────────────────────────
-const markAllCb = /** @type {HTMLInputElement|null} */ (document.getElementById('mark-all'));
-if (markAllCb) {
-  markAllCb.addEventListener('change', function () {
+// ── Event: mark-all glyph ─────────────────────────────────────────────────
+const markAllGlyph = document.getElementById('mark-all-glyph');
+if (markAllGlyph) {
+  markAllGlyph.addEventListener('click', function() {
+    const total = filteredObjects.length;
+    const markedCount = filteredObjects.filter(obj => markedObjects.has(objectKey(obj))).length;
+    const shouldMark = markedCount < total;
     filteredObjects.forEach(obj => {
-      if (markAllCb.checked) {
+      if (shouldMark) {
         markedObjects.add(objectKey(obj));
       } else {
         markedObjects.delete(objectKey(obj));

@@ -198,6 +198,11 @@ table {
 
 .col-cursor { width: 12px; text-align: center; }
 .col-mark   { width: 20px; text-align: center; }
+.col-mark span,
+thead th.col-mark span {
+  cursor: pointer;
+  user-select: none;
+}
 .col-type   { width: 90px; }
 .col-id     { width: 60px; text-align: right; }
 .col-name   { width: 250px; }
