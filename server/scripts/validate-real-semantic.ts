@@ -45,6 +45,12 @@ export function objectType(filename: string): string {
   return filename.substring(0, 3).toUpperCase();
 }
 
+// Registry coverage note: this function indexes only tables present in test/REAL/ plus
+// system tables from systemTableData.ts. Five standard NAV tables (manufacturing tables
+// 99000754/99000756/99000758/99000788 and automation API 99008535) are absent from both sources, causing
+// ~12 false-positive undefined-identifier warnings for pages that use them as SourceTable.
+// This is a test-infrastructure limitation, not a user-facing issue — see issue #703.
+
 // Exported for testing only
 export function buildAllRegistries(realDir: string, files: string[]): {
   tableRegistry: Map<number, string>;

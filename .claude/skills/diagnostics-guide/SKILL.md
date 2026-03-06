@@ -59,6 +59,18 @@ npm run validate:semantic
 
 `undefined-identifier` warnings come from cross-object references — identifiers in codeunits and pages referencing symbols defined in other objects not yet resolved by the workspace index. The count dropped from ~3,605 to ~629 as procedure and field injection matured (issues #611, #654, etc.). `type-mismatch` and `deprecated-function` counts should be stable. `undefined-property` should be 0 — any reappearance indicates a procedure registry regression.
 
+**Known false positives from corpus gaps (~12 of ~629 `undefined-identifier` warnings):** The registry only covers tables present in `test/REAL/` plus system tables. Five standard NAV tables absent from the corpus generate ~12 unavoidable false positives:
+
+| Table ID | Standard NAV area | Affected pages |
+|----------|------------------|----------------|
+| 99000754 | Work Center (Manufacturing) | PAG9291 |
+| 99000756 | Work Center Group (Manufacturing) | PAG9295 |
+| 99000758 | Machine Center (Manufacturing) | PAG9293 |
+| 99000788 | Production BOM Line (Manufacturing) | PAG9287 |
+| 99008535 | Automation API (system table) | PAG5447 |
+
+These are test-infrastructure limitations — in real LSP usage the workspace indexer discovers tables from the user's workspace. Adding the missing TABs to the corpus is not feasible (standard NAV objects, not in the confidential client set). These ~12 warnings are already included in the ~629 baseline above. If the count rises significantly above ~629, investigate for a new regression. (Tracked: #703. Related: #701 bare-call skipping, #702 missing system table fields.)
+
 ---
 
 ### 3. Lexer Health (`lexer:health`)
