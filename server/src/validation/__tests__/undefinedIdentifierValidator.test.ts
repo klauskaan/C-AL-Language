@@ -4071,7 +4071,7 @@ describe('UndefinedIdentifierValidator - Codeunit TableNo Field Integration', ()
   {
     TableNo=5900;
     OnRun=BEGIN
-            TESTFIELD(Status);
+            Status := 0;
           END;
   }
   CODE
