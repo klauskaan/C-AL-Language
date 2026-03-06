@@ -42,6 +42,43 @@ const table = /** @type {HTMLTableElement} */ (tbody.closest('table'));
 const rowCountEl = /** @type {HTMLElement} */ (document.getElementById('row-count'));
 const searchInput = /** @type {HTMLInputElement} */ (document.getElementById('search-input'));
 
+// ── Filter engine ──────────────────────────────────────────────────────────
+/** @type {{ matchesFilter: function(string|number|boolean, string): boolean }} */
+// @ts-ignore -- injected by filterEngine.js <script> tag
+const filterEngine = /** @type {any} */ (/** @type {any} */ (window).filterEngine) || { matchesFilter: () => true };
+const matchesFilter = filterEngine.matchesFilter.bind(filterEngine);
+
+// ── Column filter state ─────────────────────────────────────────────────────
+
+/**
+ * Maps filter-row td CSS class to ObjectMetadata field and type metadata.
+ * @type {Object.<string, {field: string, isBoolean: boolean, isNumeric: boolean}>}
+ */
+const CLASS_TO_FIELD = {
+  'col-type':    { field: 'type',        isBoolean: false, isNumeric: false },
+  'col-id':      { field: 'id',          isBoolean: false, isNumeric: true  },
+  'col-name':    { field: 'name',        isBoolean: false, isNumeric: false },
+  'col-date':    { field: 'date',        isBoolean: false, isNumeric: false },
+  'col-time':    { field: 'time',        isBoolean: false, isNumeric: false },
+  'col-mod':     { field: 'modified',    isBoolean: true,  isNumeric: false },
+  'col-version': { field: 'versionList', isBoolean: false, isNumeric: false }
+};
+
+/**
+ * @typedef {{ input: HTMLInputElement, td: HTMLElement, field: string, isBoolean: boolean, isNumeric: boolean }} FilterInput
+ */
+
+/** @type {FilterInput[]} */
+const filterInputs = [];
+document.querySelectorAll('.filter-row td input').forEach(input => {
+  const td = /** @type {HTMLElement} */ (/** @type {HTMLElement} */ (input).parentElement);
+  if (!td) return;
+  const colClass = Array.from(td.classList).find(c => Object.prototype.hasOwnProperty.call(CLASS_TO_FIELD, c));
+  if (!colClass) return;
+  const meta = CLASS_TO_FIELD[colClass];
+  filterInputs.push({ input: /** @type {HTMLInputElement} */ (input), td, ...meta });
+});
+
 // ── Helpers ──
 
 /**
@@ -179,6 +216,29 @@ function applyFilters() {
     filteredObjects = filteredObjects.filter(obj => {
       const name = (obj.name || '').toLowerCase();
       return words.every(w => name.includes(w));
+    });
+  }
+
+  // Column filters (filter row) — each active cell ANDs with the others
+  const activeColumnFilters = filterInputs.filter(f => f.input.value.trim() !== '');
+  if (activeColumnFilters.length > 0) {
+    filteredObjects = filteredObjects.filter(obj => {
+      return activeColumnFilters.every(f => {
+        /** @type {string|number|boolean} */
+        let fieldVal;
+        if (f.isBoolean) {
+          // Pass raw boolean; engine normalizes true→"Yes", false→"No".
+          // undefined coerced to false: objects without OBJECT-PROPERTIES
+          // display blank and match filter "No" — consistent with display.
+          fieldVal = !!(/** @type {any} */ (obj)[f.field] ?? false);
+        } else if (f.isNumeric) {
+          // Pass raw number so engine uses numeric (not lexicographic) comparisons
+          fieldVal = /** @type {any} */ (obj)[f.field];
+        } else {
+          fieldVal = /** @type {any} */ (obj)[f.field] || '';
+        }
+        return matchesFilter(fieldVal, f.input.value.trim());
+      });
     });
   }
 
@@ -329,12 +389,28 @@ searchInput.addEventListener('input', () => {
   }, 300)));
 });
 
+// ── Event: filter row inputs ────────────────────────────────────────────────
+let filterRowTimer = 0;
+filterInputs.forEach(f => {
+  f.input.addEventListener('input', () => {
+    // Update visual highlight immediately
+    f.td.classList.toggle('has-filter', f.input.value.trim() !== '');
+    // Debounce the actual filtering (150ms — faster than search bar)
+    clearTimeout(filterRowTimer);
+    filterRowTimer = /** @type {number} */ (/** @type {unknown} */ (setTimeout(applyFilters, 150)));
+  });
+});
+
 // ── Event: clear filters ───────────────────────────────────────────────────
 const btnClearFilters = document.getElementById('btn-clear-filters');
 if (btnClearFilters) {
   btnClearFilters.addEventListener('click', () => {
     searchInput.value = '';
     searchText = '';
+    filterInputs.forEach(f => {
+      f.input.value = '';
+      f.td.classList.remove('has-filter');
+    });
     applyFilters();
   });
 }
