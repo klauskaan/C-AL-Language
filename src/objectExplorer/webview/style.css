@@ -203,6 +203,9 @@ thead th.col-mark span {
   cursor: pointer;
   user-select: none;
 }
+#mark-all-glyph:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+}
 .col-type   { width: 90px; }
 .col-id     { width: 60px; text-align: right; }
 .col-name   { width: 250px; }

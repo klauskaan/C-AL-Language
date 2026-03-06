@@ -635,6 +635,7 @@ document.querySelectorAll('.type-btn').forEach(btn => {
       btn.classList.add('active');
     }
     applyFilters();
+    sendSaveState();
   });
 });
 
@@ -654,6 +655,7 @@ document.querySelectorAll('thead th[data-sort]').forEach(th => {
       sortDir = 'asc';
     }
     applyFilters();
+    sendSaveState();
   });
 });
 
@@ -708,6 +710,13 @@ if (markAllGlyph) {
       }
     });
     applyFilters();
+  });
+  markAllGlyph.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      markAllGlyph.click();
+    }
   });
 }
 
