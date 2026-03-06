@@ -303,13 +303,15 @@ function applyFilters() {
 }
 
 function hasActiveFilters() {
-  if (searchText.trim() !== '') return true;
+  if (searchInput.value.trim() !== '') return true;
   return filterInputs.some(f => f.input.value.trim() !== '');
 }
 
 function updateClearButton() {
   if (btnClearFilters) {
-    btnClearFilters.classList.toggle('filters-inactive', !hasActiveFilters());
+    const hasActive = hasActiveFilters();
+    btnClearFilters.classList.toggle('filters-inactive', !hasActive);
+    btnClearFilters.setAttribute('aria-disabled', hasActive ? 'false' : 'true');
   }
 }
 
