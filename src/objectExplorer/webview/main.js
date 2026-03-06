@@ -34,6 +34,10 @@ let searchText = '';
 let selectedIndex = -1;
 let renderedStart = -1;
 let renderedEnd = -1;
+/** @type {string|null} */
+let sortColumn = null; // null = default sort (Type asc, then ID asc)
+/** @type {'asc'|'desc'} */
+let sortDir = 'asc';
 
 // ── DOM refs ───────────────────────────────────────────────────────────────
 const tableWrapper = /** @type {HTMLElement} */ (document.getElementById('table-wrapper'));
@@ -63,6 +67,84 @@ const CLASS_TO_FIELD = {
   'col-mod':     { field: 'modified',    isBoolean: true,  isNumeric: false },
   'col-version': { field: 'versionList', isBoolean: false, isNumeric: false }
 };
+
+/**
+ * Sort configuration for each column key.
+ * type: 'string-ci' = case-insensitive string, 'numeric', 'boolean', 'string-raw'
+ * @type {Object.<string, {field: string, type: string}>}
+ */
+const SORT_CONFIG = {
+  'type':        { field: 'type',        type: 'string-ci'  },
+  'id':          { field: 'id',          type: 'numeric'    },
+  'name':        { field: 'name',        type: 'string-ci'  },
+  'date':        { field: 'date',        type: 'string-raw' },
+  'time':        { field: 'time',        type: 'string-raw' },
+  'modified':    { field: 'modified',    type: 'boolean'    },
+  'versionList': { field: 'versionList', type: 'string-ci'  }
+};
+
+/**
+ * Compare two ObjectMetadata values by the given sort config entry.
+ * @param {ObjectMetadata} a
+ * @param {ObjectMetadata} b
+ * @param {{field: string, type: string}} cfg
+ * @returns {number}
+ */
+function compareByConfig(a, b, cfg) {
+  const av = /** @type {any} */ (a)[cfg.field];
+  const bv = /** @type {any} */ (b)[cfg.field];
+  if (cfg.type === 'numeric') {
+    return (av || 0) - (bv || 0);
+  }
+  if (cfg.type === 'boolean') {
+    // false (unmodified) before true (modified)
+    return (av ? 1 : 0) - (bv ? 1 : 0);
+  }
+  if (cfg.type === 'string-ci') {
+    return (av || '').toLowerCase().localeCompare((bv || '').toLowerCase());
+  }
+  // string-raw
+  return (av || '') < (bv || '') ? -1 : (av || '') > (bv || '') ? 1 : 0;
+}
+
+/**
+ * Sort an array of ObjectMetadata in-place using current sort state.
+ * @param {ObjectMetadata[]} arr
+ */
+function sortObjects(arr) {
+  if (sortColumn === null) {
+    // Default: Type ascending, then ID ascending
+    arr.sort((a, b) => {
+      const typeDiff = compareByConfig(a, b, SORT_CONFIG['type']);
+      if (typeDiff !== 0) return typeDiff;
+      return compareByConfig(a, b, SORT_CONFIG['id']);
+    });
+  } else {
+    const cfg = SORT_CONFIG[sortColumn];
+    if (!cfg) return;
+    const mul = sortDir === 'asc' ? 1 : -1;
+    arr.sort((a, b) => compareByConfig(a, b, cfg) * mul);
+  }
+}
+
+/**
+ * Update sort arrow indicators on column header elements.
+ */
+function updateSortIndicators() {
+  document.querySelectorAll('thead th[data-sort]').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    const indicator = th.querySelector('.sort-indicator');
+    if (indicator) indicator.textContent = '';
+  });
+
+  if (sortColumn === null) return;
+
+  const activeTh = document.querySelector(`thead th[data-sort="${sortColumn}"]`);
+  if (!activeTh) return;
+  activeTh.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+  const indicator = activeTh.querySelector('.sort-indicator');
+  if (indicator) indicator.textContent = sortDir === 'asc' ? '\u2191' : '\u2193';
+}
 
 /**
  * @typedef {{ input: HTMLInputElement, td: HTMLElement, field: string, isBoolean: boolean, isNumeric: boolean }} FilterInput
@@ -242,6 +324,7 @@ function applyFilters() {
     });
   }
 
+  sortObjects(filteredObjects);
   selectedIndex = -1;
   renderedStart = -1;
   renderedEnd = -1;
@@ -249,6 +332,7 @@ function applyFilters() {
   scheduleRender();
   updateRowCount();
   updateClearButton();
+  updateSortIndicators();
   table.classList.toggle('type-hidden', activeTypeFilter !== null);
 }
 
@@ -399,6 +483,21 @@ document.querySelectorAll('.type-btn').forEach(btn => {
 const allTypeBtn = document.querySelector('.type-btn-all');
 if (allTypeBtn) allTypeBtn.classList.add('active');
 
+// ── Event: column header sort ───────────────────────────────────────────────
+document.querySelectorAll('thead th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = /** @type {HTMLElement} */ (th).dataset.sort || '';
+    if (!col || !SORT_CONFIG[col]) return;
+    if (sortColumn === col) {
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortColumn = col;
+      sortDir = 'asc';
+    }
+    applyFilters();
+  });
+});
+
 // ── Event: search bar ──────────────────────────────────────────────────────
 let searchTimer = 0;
 searchInput.addEventListener('input', () => {
@@ -466,8 +565,21 @@ window.addEventListener('message', (event) => {
         const btn = document.querySelector(`.type-btn[data-type="${message.typeFilter}"]`);
         if (btn) btn.classList.add('active');
       }
+      if (message.sortColumn && SORT_CONFIG[message.sortColumn]) {
+        sortColumn = message.sortColumn;
+        sortDir = message.sortDir === 'desc' ? 'desc' : 'asc';
+      }
       if (allObjects.length > 0) {
         applyFilters();
+      }
+      break;
+    case 'resetLayout':
+      sortColumn = null;
+      sortDir = 'asc';
+      if (allObjects.length > 0) {
+        applyFilters();
+      } else {
+        updateSortIndicators();
       }
       break;
   }
