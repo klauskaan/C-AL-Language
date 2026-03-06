@@ -248,18 +248,31 @@ function applyFilters() {
   tableWrapper.scrollTop = 0;
   scheduleRender();
   updateRowCount();
+  updateClearButton();
   table.classList.toggle('type-hidden', activeTypeFilter !== null);
+}
+
+function hasActiveFilters() {
+  if (searchText.trim() !== '') return true;
+  return filterInputs.some(f => f.input.value.trim() !== '');
+}
+
+function updateClearButton() {
+  if (btnClearFilters) {
+    btnClearFilters.classList.toggle('filters-inactive', !hasActiveFilters());
+  }
 }
 
 function updateRowCount() {
   const total = allObjects.length;
   const shown = filteredObjects.length;
+  const filterSuffix = hasActiveFilters() ? ' \u2014 filtered' : '';
   if (total === 0) {
     rowCountEl.textContent = 'No objects loaded';
   } else if (shown === total) {
-    rowCountEl.textContent = shown.toLocaleString() + ' objects';
+    rowCountEl.textContent = shown.toLocaleString() + ' objects' + filterSuffix;
   } else {
-    rowCountEl.textContent = 'Showing ' + shown.toLocaleString() + ' of ' + total.toLocaleString() + ' objects \u2014 filtered';
+    rowCountEl.textContent = 'Showing ' + shown.toLocaleString() + ' of ' + total.toLocaleString() + ' objects' + filterSuffix;
   }
 }
 
@@ -285,6 +298,13 @@ function scrollToSelectedRow() {
 }
 
 document.addEventListener('keydown', (e) => {
+  // Global shortcut: Shift+Ctrl+F7 = Clear filters (C/SIDE muscle memory)
+  if (e.shiftKey && e.ctrlKey && e.key === 'F7') {
+    e.preventDefault();
+    if (btnClearFilters) btnClearFilters.click();
+    return;
+  }
+
   if (e.target instanceof HTMLInputElement) {
     if (e.key === 'Escape') {
       /** @type {HTMLInputElement} */ (e.target).value = '';
@@ -455,3 +475,4 @@ window.addEventListener('message', (event) => {
 
 // ── Initial ────────────────────────────────────────────────────────────────
 vscode.postMessage({ type: 'ready' });
+updateClearButton();
