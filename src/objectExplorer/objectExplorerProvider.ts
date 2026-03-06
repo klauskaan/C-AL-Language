@@ -14,11 +14,20 @@ interface ObjectMetadata {
   versionList?: string;
 }
 
+interface ObjectExplorerState {
+  typeFilter?: string | null;
+  sortColumn?: string | null;
+  sortDir?: 'asc' | 'desc';
+  columnWidths?: Record<string, number>;
+}
+
 export class ObjectExplorerProvider {
   public static readonly viewType = 'calObjectExplorer';
 
   private static currentPanel: ObjectExplorerProvider | undefined;
 
+  private static readonly STATE_KEY = 'calObjectExplorer.state';
+  private readonly _globalState: vscode.Memento;
   private readonly _panel: vscode.WebviewPanel;
   private readonly _extensionUri: vscode.Uri;
   private readonly _client: LanguageClient | undefined;
@@ -45,13 +54,14 @@ export class ObjectExplorerProvider {
       }
     );
 
-    ObjectExplorerProvider.currentPanel = new ObjectExplorerProvider(panel, context.extensionUri, client);
+    ObjectExplorerProvider.currentPanel = new ObjectExplorerProvider(panel, context.extensionUri, client, context.globalState);
   }
 
-  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, client: LanguageClient | undefined) {
+  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, client: LanguageClient | undefined, globalState: vscode.Memento) {
     this._panel = panel;
     this._extensionUri = extensionUri;
     this._client = client;
+    this._globalState = globalState;
 
     this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
 
@@ -83,9 +93,20 @@ export class ObjectExplorerProvider {
 
   private _handleMessage(message: { type: string; uri?: string; line?: number; typeFilter?: string; sortColumn?: string | null; sortDir?: string; columnWidths?: Record<string, number> }): void {
     switch (message.type) {
-      case 'ready':
+      case 'ready': {
+        const saved = this._globalState.get<ObjectExplorerState>(ObjectExplorerProvider.STATE_KEY);
+        if (saved) {
+          this._panel.webview.postMessage({
+            type: 'restoreState',
+            typeFilter: saved.typeFilter,
+            sortColumn: saved.sortColumn,
+            sortDir: saved.sortDir,
+            columnWidths: saved.columnWidths
+          });
+        }
         this._loadObjectList();
         break;
+      }
       case 'navigate':
         if (message.uri !== undefined && message.line !== undefined) {
           this._navigate(message.uri, message.line);
@@ -94,12 +115,23 @@ export class ObjectExplorerProvider {
       case 'refresh':
         this._loadObjectList();
         break;
-      case 'saveState':
-        // Stub: state persistence implemented in #729
+      case 'saveState': {
+        const state: ObjectExplorerState = {
+          typeFilter: message.typeFilter ?? null,
+          sortColumn: message.sortColumn ?? null,
+          sortDir: message.sortDir === 'desc' ? 'desc' : 'asc',
+          columnWidths: message.columnWidths
+        };
+        this._globalState.update(ObjectExplorerProvider.STATE_KEY, state);
         break;
-      case 'resetLayout':
-        // Stub: clear persisted state implemented in #729
+      }
+      case 'resetLayout': {
+        const current = this._globalState.get<ObjectExplorerState>(ObjectExplorerProvider.STATE_KEY);
+        this._globalState.update(ObjectExplorerProvider.STATE_KEY, {
+          typeFilter: current?.typeFilter ?? null
+        });
         break;
+      }
     }
   }
 
