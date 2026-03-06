@@ -490,6 +490,113 @@ OBJECT Codeunit 50000 Utils
     });
   });
 
+  describe('OBJECT-PROPERTIES fields', () => {
+    it('should populate all four fields from a complete OBJECT-PROPERTIES section', async () => {
+      const filePath = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(filePath, `OBJECT Table 18 Customer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=24-03-19;
+    Time=12:00:00;
+    Modified=Yes;
+    Version List=NAVW114.00,NAVDK14.00;
+  }
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(filePath);
+
+      const result = workspaceIndex.getObjectList();
+      expect(result).toHaveLength(1);
+      const entry = result[0];
+      expect(entry.date).toBe('24-03-19');
+      expect(entry.time).toBe('12:00:00');
+      expect(entry.modified).toBe(true);
+      expect(entry.versionList).toBe('NAVW114.00,NAVDK14.00');
+    });
+
+    it('should populate only present fields from a partial OBJECT-PROPERTIES section', async () => {
+      const filePath = path.join(tempDir, 'Codeunit50000.cal');
+      fs.writeFileSync(filePath, `OBJECT Codeunit 50000 Utils
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01-01-20;
+    Modified=No;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`);
+
+      await workspaceIndex.add(filePath);
+
+      const result = workspaceIndex.getObjectList();
+      expect(result).toHaveLength(1);
+      const entry = result[0];
+      expect(entry.date).toBe('01-01-20');
+      expect(entry.modified).toBe(false);
+      expect(entry.time).toBeUndefined();
+      expect(entry.versionList).toBeUndefined();
+    });
+
+    it('should set modified=false when Modified=No in OBJECT-PROPERTIES', async () => {
+      const filePath = path.join(tempDir, 'Page21.cal');
+      fs.writeFileSync(filePath, `OBJECT Page 21 Customer Card
+{
+  OBJECT-PROPERTIES
+  {
+    Modified=No;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table18;
+  }
+  CONTROLS
+  {
+  }
+}`);
+
+      await workspaceIndex.add(filePath);
+
+      const result = workspaceIndex.getObjectList();
+      const entry = result.find(e => e.type === 'Page');
+      expect(entry).toBeDefined();
+      expect(entry!.modified).toBe(false);
+      expect(entry!.date).toBeUndefined();
+      expect(entry!.time).toBeUndefined();
+      expect(entry!.versionList).toBeUndefined();
+    });
+
+    it('should set versionList to empty string when Version List= has an empty value', async () => {
+      const filePath = path.join(tempDir, 'Table19.cal');
+      fs.writeFileSync(filePath, `OBJECT Table 19 Item
+{
+  OBJECT-PROPERTIES
+  {
+    Version List=;
+  }
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(filePath);
+
+      const result = workspaceIndex.getObjectList();
+      const entry = result.find(e => e.id === 19);
+      expect(entry).toBeDefined();
+      expect(entry!.versionList).toBe('');
+    });
+  });
+
   describe('re-indexing replaces previous entries', () => {
     it('should not append entries when the same file is re-indexed', async () => {
       const filePath = path.join(tempDir, 'Table18.cal');

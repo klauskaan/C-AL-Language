@@ -465,6 +465,17 @@ export class WorkspaceIndex {
     const parser = new Parser(tokens);
     const ast = parser.parse();
 
+    // Populate optional objectProperties fields from the parsed AST
+    if (ast.object?.objectProperties) {
+      const matchingEntry = objectMetadata.find(m => m.id === ast.object!.objectId);
+      if (matchingEntry) {
+        matchingEntry.date = ast.object.objectProperties.date;
+        matchingEntry.time = ast.object.objectProperties.time;
+        matchingEntry.modified = ast.object.objectProperties.modified;
+        matchingEntry.versionList = ast.object.objectProperties.versionList;
+      }
+    }
+
     // Extract document symbols
     const documentSymbols = this.documentSymbolProvider.getDocumentSymbols(textDocument, ast);
 
