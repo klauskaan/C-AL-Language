@@ -1,6 +1,18 @@
 import * as vscode from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/node';
 
+interface ObjectMetadata {
+  type: string;
+  id: number;
+  name: string;
+  uri: string;
+  line: number;
+  date?: string;
+  time?: string;
+  modified?: boolean;
+  versionList?: string;
+}
+
 export class ObjectExplorerProvider {
   public static readonly viewType = 'calObjectExplorer';
 
@@ -8,6 +20,7 @@ export class ObjectExplorerProvider {
 
   private readonly _panel: vscode.WebviewPanel;
   private readonly _extensionUri: vscode.Uri;
+  private readonly _client: LanguageClient | undefined;
   private _disposables: vscode.Disposable[] = [];
 
   public static createOrShow(
@@ -31,17 +44,18 @@ export class ObjectExplorerProvider {
       }
     );
 
-    ObjectExplorerProvider.currentPanel = new ObjectExplorerProvider(panel, context.extensionUri);
+    ObjectExplorerProvider.currentPanel = new ObjectExplorerProvider(panel, context.extensionUri, client);
   }
 
-  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
+  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, client: LanguageClient | undefined) {
     this._panel = panel;
     this._extensionUri = extensionUri;
+    this._client = client;
 
     this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
 
     this._panel.webview.onDidReceiveMessage(
-      (message: { type: string }) => {
+      (message: { type: string; uri?: string; line?: number }) => {
         this._handleMessage(message);
       },
       null,
@@ -66,18 +80,42 @@ export class ObjectExplorerProvider {
     }
   }
 
-  private _handleMessage(message: { type: string }): void {
+  private _handleMessage(message: { type: string; uri?: string; line?: number }): void {
     switch (message.type) {
       case 'ready':
-        // WebView loaded — will send data in future issues
+        this._loadObjectList();
         break;
       case 'navigate':
-        // Will handle file navigation in future issues
-        break;
-      case 'saveState':
-        // Will handle state persistence in future issues
+        if (message.uri !== undefined && message.line !== undefined) {
+          this._navigate(message.uri, message.line);
+        }
         break;
     }
+  }
+
+  private _loadObjectList(): void {
+    if (!this._client) {
+      return;
+    }
+    this._panel.webview.postMessage({ type: 'loading', loading: true });
+    this._client.sendRequest<ObjectMetadata[]>('cal/getObjectList').then(
+      (objects) => {
+        this._panel.webview.postMessage({ type: 'data', objects });
+        this._panel.webview.postMessage({ type: 'loading', loading: false });
+      },
+      () => {
+        this._panel.webview.postMessage({ type: 'loading', loading: false });
+      }
+    );
+  }
+
+  private _navigate(uri: string, line: number): void {
+    const fileUri = vscode.Uri.parse(uri);
+    const pos = new vscode.Position(line, 0);
+    vscode.window.showTextDocument(fileUri, {
+      selection: new vscode.Range(pos, pos),
+      viewColumn: vscode.ViewColumn.Beside
+    });
   }
 
   private _getHtmlForWebview(webview: vscode.Webview): string {

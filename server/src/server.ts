@@ -789,6 +789,10 @@ documents.onDidClose(async (event) => {
   }
 });
 
+connection.onRequest('cal/getObjectList', () => {
+  return workspaceIndex.getObjectList();
+});
+
 // Make the text document manager listen on the connection
 documents.listen(connection);
 
