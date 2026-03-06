@@ -34,6 +34,9 @@ let searchText = '';
 let selectedIndex = -1;
 let renderedStart = -1;
 let renderedEnd = -1;
+/** @type {Set<string>} */
+const markedObjects = new Set();
+let markedOnly = false;
 
 // ── DOM refs ───────────────────────────────────────────────────────────────
 const tableWrapper = /** @type {HTMLElement} */ (document.getElementById('table-wrapper'));
@@ -92,6 +95,15 @@ function esc(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/**
+ * Unique key for an object, used as the mark state identifier.
+ * @param {ObjectMetadata} obj
+ * @returns {string}
+ */
+function objectKey(obj) {
+  return obj.type + '-' + obj.id;
 }
 
 // ── Virtual scroll spacers ─────────────────────────────────────────────────
@@ -157,6 +169,30 @@ function updateVirtualList() {
   renderedEnd = end;
 }
 
+function updateMarkAllState() {
+  const markAllCb = /** @type {HTMLInputElement|null} */ (document.getElementById('mark-all'));
+  if (!markAllCb) return;
+  const total = filteredObjects.length;
+  if (total === 0) {
+    markAllCb.checked = false;
+    markAllCb.indeterminate = false;
+    return;
+  }
+  let markedCount = 0;
+  for (const obj of filteredObjects) {
+    if (markedObjects.has(objectKey(obj))) markedCount++;
+  }
+  if (markedCount === 0) {
+    markAllCb.checked = false;
+    markAllCb.indeterminate = false;
+  } else if (markedCount === total) {
+    markAllCb.checked = true;
+    markAllCb.indeterminate = false;
+  } else {
+    markAllCb.indeterminate = true;
+  }
+}
+
 /**
  * @param {ObjectMetadata} obj
  * @param {number} index
@@ -177,6 +213,15 @@ function makeRow(obj, index) {
   tdMark.className = 'col-mark';
   const cb = document.createElement('input');
   cb.type = 'checkbox';
+  cb.checked = markedObjects.has(objectKey(obj));
+  cb.addEventListener('change', function () {
+    if (cb.checked) {
+      markedObjects.add(objectKey(obj));
+    } else {
+      markedObjects.delete(objectKey(obj));
+    }
+    updateMarkAllState();
+  });
   tdMark.appendChild(cb);
   tr.appendChild(tdMark);
 
@@ -207,7 +252,7 @@ function appendCell(tr, cls, text) {
 function applyFilters() {
   filteredObjects = allObjects;
 
-  if (activeTypeFilter) {
+  if (!markedOnly && activeTypeFilter) {
     filteredObjects = filteredObjects.filter(obj => obj.type === activeTypeFilter);
   }
 
@@ -242,6 +287,10 @@ function applyFilters() {
     });
   }
 
+  if (markedOnly) {
+    filteredObjects = filteredObjects.filter(obj => markedObjects.has(objectKey(obj)));
+  }
+
   selectedIndex = -1;
   renderedStart = -1;
   renderedEnd = -1;
@@ -249,7 +298,8 @@ function applyFilters() {
   scheduleRender();
   updateRowCount();
   updateClearButton();
-  table.classList.toggle('type-hidden', activeTypeFilter !== null);
+  table.classList.toggle('type-hidden', activeTypeFilter !== null && !markedOnly);
+  updateMarkAllState();
 }
 
 function hasActiveFilters() {
@@ -431,6 +481,30 @@ if (btnClearFilters) {
       f.input.value = '';
       f.td.classList.remove('has-filter');
     });
+    applyFilters();
+  });
+}
+
+// ── Event: mark-all checkbox ───────────────────────────────────────────────
+const markAllCb = /** @type {HTMLInputElement|null} */ (document.getElementById('mark-all'));
+if (markAllCb) {
+  markAllCb.addEventListener('change', function () {
+    filteredObjects.forEach(obj => {
+      if (markAllCb.checked) {
+        markedObjects.add(objectKey(obj));
+      } else {
+        markedObjects.delete(objectKey(obj));
+      }
+    });
+    applyFilters();
+  });
+}
+
+// ── Event: marked-only toggle ──────────────────────────────────────────────
+const markedOnlyCb = /** @type {HTMLInputElement|null} */ (document.getElementById('marked-only'));
+if (markedOnlyCb) {
+  markedOnlyCb.addEventListener('change', function () {
+    markedOnly = markedOnlyCb.checked;
     applyFilters();
   });
 }
