@@ -196,15 +196,15 @@ table {
 
 /* ── Column widths ── */
 
-.col-cursor { width: 20px; text-align: center; }
-.col-mark   { width: 30px; text-align: center; }
-.col-type   { width: 80px; }
-.col-id     { width: 60px; }
-.col-name   { min-width: 150px; }
+.col-cursor { width: 12px; text-align: center; }
+.col-mark   { width: 20px; text-align: center; }
+.col-type   { width: 90px; }
+.col-id     { width: 60px; text-align: right; }
+.col-name   { width: 250px; }
 .col-date   { width: 80px; }
-.col-time   { width: 70px; }
-.col-mod    { width: 50px; }
-.col-version { width: 120px; }
+.col-time   { width: 80px; }
+.col-mod    { width: 80px; }
+.col-version { width: 200px; }
 
 /* Type column auto-hide: toggled by JS when a specific type is active */
 table.type-hidden .col-type {
@@ -225,8 +225,23 @@ thead th {
 }
 
 thead th .sort-indicator {
-  opacity: 0.5;
+  display: none;
   font-size: 0.8em;
+  margin-left: 2px;
+}
+
+thead th.sort-asc .sort-indicator,
+thead th.sort-desc .sort-indicator {
+  display: inline;
+}
+
+thead th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+thead th.sortable:hover {
+  opacity: 0.85;
 }
 
 /* ── Filter row ── */
