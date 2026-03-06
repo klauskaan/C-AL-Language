@@ -706,6 +706,13 @@ if (markAllGlyph) {
     });
     applyFilters();
   });
+  markAllGlyph.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      markAllGlyph.click();
+    }
+  });
 }
 
 // ── Event: marked-only toggle ──────────────────────────────────────────────
