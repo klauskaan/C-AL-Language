@@ -790,6 +790,8 @@ window.addEventListener('message', (event) => {
       }
       if (allObjects.length > 0) {
         applyFilters();
+      } else {
+        updateSortIndicators();
       }
       break;
     case 'resetLayout':
