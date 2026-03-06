@@ -348,6 +348,72 @@ describe('Object Explorer Filter Engine', () => {
     });
   });
 
+  describe('@ case-insensitive with comparison operators and ranges', () => {
+    describe('@<> (not equal, case-insensitive)', () => {
+      it('should return true when value differs from operand case-insensitively', () => {
+        expect(matchesFilter('Customer', '@<>vendor')).toBe(true);
+      });
+
+      it('should return false when value equals operand case-insensitively', () => {
+        expect(matchesFilter('Customer', '@<>customer')).toBe(false);
+      });
+    });
+
+    describe('@>= (case-insensitive)', () => {
+      it('should return true when value equals operand case-insensitively (equal satisfies >=)', () => {
+        expect(matchesFilter('customer', '@>=Customer')).toBe(true);
+      });
+
+      it('should return false when value is less than operand case-insensitively', () => {
+        expect(matchesFilter('apple', '@>=Customer')).toBe(false);
+      });
+    });
+
+    describe('@<= (case-insensitive)', () => {
+      it('should return true when value equals operand case-insensitively (equal satisfies <=)', () => {
+        expect(matchesFilter('Customer', '@<=customer')).toBe(true);
+      });
+
+      it('should return false when value is greater than operand case-insensitively', () => {
+        expect(matchesFilter('Vendor', '@<=customer')).toBe(false);
+      });
+    });
+
+    describe('@> (case-insensitive)', () => {
+      it('should return true when value is greater than operand case-insensitively', () => {
+        expect(matchesFilter('Vendor', '@>customer')).toBe(true);
+      });
+
+      it('should return false when value is less than operand case-insensitively', () => {
+        expect(matchesFilter('apple', '@>customer')).toBe(false);
+      });
+    });
+
+    describe('@< (case-insensitive)', () => {
+      it('should return true when value is less than operand case-insensitively', () => {
+        expect(matchesFilter('apple', '@<Customer')).toBe(true);
+      });
+
+      it('should return false when value is greater than operand case-insensitively', () => {
+        expect(matchesFilter('Vendor', '@<Customer')).toBe(false);
+      });
+    });
+
+    describe('@.. range (case-insensitive)', () => {
+      it('should return true when value falls within range case-insensitively (uppercase value, uppercase bounds)', () => {
+        expect(matchesFilter('Customer', '@A..M')).toBe(true);
+      });
+
+      it('should return false when value falls outside range case-insensitively (uppercase value, uppercase bounds)', () => {
+        expect(matchesFilter('Vendor', '@A..M')).toBe(false);
+      });
+
+      it('should return true when value falls within range case-insensitively (uppercase value, lowercase bounds)', () => {
+        expect(matchesFilter('APPLE', '@a..m')).toBe(true);
+      });
+    });
+  });
+
   describe('Regex special characters in filter values (must be treated as literals)', () => {
     it('should treat dot in exact match expression as a literal character', () => {
       expect(matchesFilter('NAVW114.00', 'NAVW114.00')).toBe(true);

@@ -39,9 +39,10 @@
    * @param {string|number} a
    * @param {string|number} b
    * @param {boolean} isNumeric
+   * @param {boolean} caseInsensitive
    * @returns {number} negative if a < b, 0 if equal, positive if a > b
    */
-  function compareValues(a, b, isNumeric) {
+  function compareValues(a, b, isNumeric, caseInsensitive) {
     if (isNumeric) {
       var na = parseFloat(String(a));
       var nb = parseFloat(String(b));
@@ -51,6 +52,10 @@
     }
     var sa = String(a);
     var sb = String(b);
+    if (caseInsensitive) {
+      sa = sa.toLowerCase();
+      sb = sb.toLowerCase();
+    }
     return sa < sb ? -1 : sa > sb ? 1 : 0;
   }
 
@@ -81,23 +86,23 @@
         // <> alone: matches any non-empty value (NAV convention)
         return String(fieldValue) !== '';
       }
-      return compareValues(fieldValue, cmpVal, isNumeric) !== 0;
+      return compareValues(fieldValue, cmpVal, isNumeric, caseInsensitive) !== 0;
     }
     if (condition.indexOf('>=') === 0) {
       var cmpVal = condition.slice(2);
-      return compareValues(fieldValue, cmpVal, isNumeric) >= 0;
+      return compareValues(fieldValue, cmpVal, isNumeric, caseInsensitive) >= 0;
     }
     if (condition.indexOf('<=') === 0) {
       var cmpVal = condition.slice(2);
-      return compareValues(fieldValue, cmpVal, isNumeric) <= 0;
+      return compareValues(fieldValue, cmpVal, isNumeric, caseInsensitive) <= 0;
     }
     if (condition.indexOf('>') === 0) {
       var cmpVal = condition.slice(1);
-      return compareValues(fieldValue, cmpVal, isNumeric) > 0;
+      return compareValues(fieldValue, cmpVal, isNumeric, caseInsensitive) > 0;
     }
     if (condition.indexOf('<') === 0) {
       var cmpVal = condition.slice(1);
-      return compareValues(fieldValue, cmpVal, isNumeric) < 0;
+      return compareValues(fieldValue, cmpVal, isNumeric, caseInsensitive) < 0;
     }
 
     // 3. Range: contains ..
@@ -109,10 +114,10 @@
       if (left === '' && right === '') {
         return true;
       }
-      if (left !== '' && compareValues(fieldValue, left, isNumeric) < 0) {
+      if (left !== '' && compareValues(fieldValue, left, isNumeric, caseInsensitive) < 0) {
         return false;
       }
-      if (right !== '' && compareValues(fieldValue, right, isNumeric) > 0) {
+      if (right !== '' && compareValues(fieldValue, right, isNumeric, caseInsensitive) > 0) {
         return false;
       }
       return true;
