@@ -5,8 +5,7 @@
  * WebView. This module is a client-side WebView file tested via Node.js.
  *
  * The module is located at src/objectExplorer/webview/stateManager.js
- * (project root) and does not exist yet — these tests drive the TDD
- * implementation.
+ * (project root).
  */
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -210,10 +209,9 @@ describe('Object Explorer State Manager', () => {
       expect(result.sortDir).toBe('desc');
     });
 
-    it('should pass through an arbitrary sortDir value correctly', () => {
-      const state = { ...baseState, sortDir: 'asc' };
-      const result = buildSaveStateMessage({ ...state, sortDir: 'asc' });
-      expect(result.sortDir).toBe('asc');
+    it('should pass through an unexpected sortDir value correctly', () => {
+      const result = buildSaveStateMessage({ ...baseState, sortDir: 'random' });
+      expect(result.sortDir).toBe('random');
     });
   });
 
