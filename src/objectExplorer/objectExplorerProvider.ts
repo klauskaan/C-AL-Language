@@ -91,6 +91,10 @@ export class ObjectExplorerProvider {
     }
   }
 
+  public static refresh(): void {
+    ObjectExplorerProvider.currentPanel?._loadObjectList();
+  }
+
   private _handleMessage(message: { type: string; uri?: string; line?: number; typeFilter?: string; sortColumn?: string | null; sortDir?: string; columnWidths?: Record<string, number> }): void {
     switch (message.type) {
       case 'ready': {

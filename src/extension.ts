@@ -139,6 +139,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
   try {
     await client.start();
     console.log('C/AL Language Server started successfully!');
+    const indexChangedDisposable = client!.onNotification('cal/workspaceIndexChanged', () => {
+      ObjectExplorerProvider.refresh();
+    });
+    context.subscriptions.push(indexChangedDisposable);
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error(`Failed to start C/AL Language Server: ${msg}`);
