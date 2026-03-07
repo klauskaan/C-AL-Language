@@ -157,10 +157,12 @@ export class ObjectExplorerProvider {
     this._panel.webview.postMessage({ type: 'loading', loading: true });
     this._client.sendRequest<ObjectMetadata[]>('cal/getObjectList').then(
       (objects) => {
+        if (this._disposed) return;
         this._panel.webview.postMessage({ type: 'data', objects });
         this._panel.webview.postMessage({ type: 'loading', loading: false });
       },
       () => {
+        if (this._disposed) return;
         this._panel.webview.postMessage({ type: 'loading', loading: false });
       }
     );
