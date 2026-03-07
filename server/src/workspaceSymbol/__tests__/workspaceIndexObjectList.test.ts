@@ -675,6 +675,71 @@ OBJECT Codeunit 50000 Utils
       expect(codeunitEntry!.modified).toBe(false);
       expect(codeunitEntry!.versionList).toBe('NAVDK14.00');
     });
+
+    it('should populate objectProperties for the middle object and leave the last undefined when three objects are present', async () => {
+      const filePath = path.join(tempDir, 'ThreeObjects.cal');
+      fs.writeFileSync(filePath, `OBJECT Table 18 Customer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=24-03-19;
+    Version List=NAVW114.00;
+  }
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}
+OBJECT Page 21 Customer Card
+{
+  OBJECT-PROPERTIES
+  {
+    Date=15-06-21;
+    Version List=NAVDK14.00;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table18;
+  }
+  CONTROLS
+  {
+  }
+}
+OBJECT Codeunit 50000 Utils
+{
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`);
+
+      await workspaceIndex.add(filePath);
+
+      const result = workspaceIndex.getObjectList();
+      expect(result).toHaveLength(3);
+
+      const tableEntry = result.find(e => e.type === 'Table');
+      const pageEntry = result.find(e => e.type === 'Page');
+      const codeunitEntry = result.find(e => e.type === 'Codeunit');
+
+      // First object: properties from its own OBJECT-PROPERTIES section
+      expect(tableEntry).toBeDefined();
+      expect(tableEntry!.date).toBe('24-03-19');
+      expect(tableEntry!.versionList).toBe('NAVW114.00');
+
+      // Middle object (i=1): uses objectPositions[i+1] (non-null path)
+      expect(pageEntry).toBeDefined();
+      expect(pageEntry!.date).toBe('15-06-21');
+      expect(pageEntry!.versionList).toBe('NAVDK14.00');
+
+      // Last object (i=2): no OBJECT-PROPERTIES — uses content.length fallback
+      expect(codeunitEntry).toBeDefined();
+      expect(codeunitEntry!.date).toBeUndefined();
+      expect(codeunitEntry!.time).toBeUndefined();
+      expect(codeunitEntry!.modified).toBeUndefined();
+      expect(codeunitEntry!.versionList).toBeUndefined();
+    });
   });
 
   describe('objectPattern regex boundary behaviour', () => {
