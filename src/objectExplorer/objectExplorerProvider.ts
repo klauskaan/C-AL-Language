@@ -175,6 +175,7 @@ export class ObjectExplorerProvider {
       selection: new vscode.Range(pos, pos),
       viewColumn: vscode.ViewColumn.Beside
     }).then(undefined, (err: unknown) => {
+      if (this._disposed) return;
       vscode.window.showErrorMessage(`Cannot open file: ${err instanceof Error ? err.message : String(err)}`);
     });
   }
