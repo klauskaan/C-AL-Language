@@ -594,6 +594,12 @@ function toggleMarkOnSelection() {
   updateMarkAllState();
 }
 
+function getVisibleInputs() {
+  return /** @type {HTMLInputElement[]} */ ([searchInput].concat(
+    filterInputs.filter(function(f) { return f.input.offsetParent !== null; }).map(function(f) { return f.input; })
+  ));
+}
+
 document.addEventListener('keydown', (e) => {
   // Global shortcut: Shift+Ctrl+F7 = Clear filters (C/SIDE muscle memory)
   if (e.shiftKey && e.ctrlKey && e.key === 'F7') {
@@ -608,9 +614,7 @@ document.addEventListener('keydown', (e) => {
       e.target.dispatchEvent(new Event('input'));
     }
     if (e.key === 'Tab') {
-      const visibleInputs = /** @type {HTMLInputElement[]} */ ([searchInput].concat(
-        filterInputs.filter(function(f) { return f.input.offsetParent !== null; }).map(function(f) { return f.input; })
-      ));
+      const visibleInputs = getVisibleInputs();
       const idx = visibleInputs.indexOf(/** @type {HTMLInputElement} */ (e.target));
       e.preventDefault();
       if (e.shiftKey) {
@@ -631,9 +635,7 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (e.key === 'Tab' && tableWrapper.contains(document.activeElement)) {
-    const visibleInputs = /** @type {HTMLInputElement[]} */ ([searchInput].concat(
-      filterInputs.filter(function(f) { return f.input.offsetParent !== null; }).map(function(f) { return f.input; })
-    ));
+    const visibleInputs = getVisibleInputs();
     e.preventDefault();
     if (e.shiftKey) {
       if (visibleInputs.length > 0) {
