@@ -471,7 +471,11 @@ export class WorkspaceIndex {
 
     // Populate optional objectProperties fields from the parsed AST
     if (ast.object?.objectProperties) {
-      const matchingEntry = objectMetadata.find(m => m.id === ast.object!.objectId);
+      // Match by both id and type: the type check is currently redundant (parser produces
+      // one object per file), but becomes load-bearing when the parser supports multi-object files.
+      const matchingEntry = objectMetadata.find(
+        m => m.id === ast.object!.objectId && m.type === ast.object!.objectKind
+      );
       if (matchingEntry) {
         matchingEntry.date = ast.object.objectProperties.date;
         matchingEntry.time = ast.object.objectProperties.time;

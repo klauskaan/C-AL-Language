@@ -595,6 +595,33 @@ OBJECT Codeunit 50000 Utils
       expect(entry).toBeDefined();
       expect(entry!.versionList).toBe('');
     });
+
+    it('should match objectProperties to the correct type when both type and id are checked', async () => {
+      // The find() predicate uses both id and type (m.id === objectId && m.type === objectKind).
+      // This guards against a future multi-object parser where two objects with the same id
+      // but different types could coexist. This test exercises the type===objectKind branch
+      // for a non-Table object (Codeunit 50000).
+      const filePath = path.join(tempDir, 'Codeunit50000.cal');
+      fs.writeFileSync(filePath, `OBJECT Codeunit 50000 TypeIdMatch
+{
+  OBJECT-PROPERTIES
+  {
+    Date=15-06-21;
+    Version List=TEST;
+  }
+  CODE
+  {
+  }
+}`);
+
+      await workspaceIndex.add(filePath);
+
+      const result = workspaceIndex.getObjectList();
+      const entry = result.find(e => e.type === 'Codeunit' && e.id === 50000);
+      expect(entry).toBeDefined();
+      expect(entry!.date).toBe('15-06-21');
+      expect(entry!.versionList).toBe('TEST');
+    });
   });
 
   describe('objectPattern regex boundary behaviour', () => {
