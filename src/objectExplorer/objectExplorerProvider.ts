@@ -151,7 +151,9 @@ export class ObjectExplorerProvider {
   }
 
   private _loadObjectList(): void {
+    if (this._disposed) return;
     if (!this._client) {
+      this._panel.webview.postMessage({ type: 'error', message: 'Language server not available' });
       return;
     }
     this._panel.webview.postMessage({ type: 'loading', loading: true });

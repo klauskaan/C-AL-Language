@@ -420,6 +420,11 @@ tbody tr.cursor td.col-cursor::before {
   display: flex;
 }
 
+#loading-indicator.error {
+  color: var(--vscode-errorForeground, var(--vscode-foreground));
+  font-style: normal;
+}
+
 #loading-indicator.active ~ #table-wrapper {
   display: none;
 }

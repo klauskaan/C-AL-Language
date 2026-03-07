@@ -991,6 +991,10 @@ window.addEventListener('message', (event) => {
     case 'loading': {
       isLoading = !!message.loading;
       if (loadingIndicatorEl) {
+        if (isLoading) {
+          loadingIndicatorEl.textContent = 'Loading\u2026';
+          loadingIndicatorEl.classList.remove('error');
+        }
         loadingIndicatorEl.classList.toggle('active', isLoading);
       }
       updateRowCount();
@@ -1033,6 +1037,14 @@ window.addEventListener('message', (event) => {
       } else {
         updateSortIndicators();
       }
+      break;
+    case 'error':
+      isLoading = false;
+      if (loadingIndicatorEl) {
+        loadingIndicatorEl.textContent = message.message || 'An error occurred';
+        loadingIndicatorEl.classList.add('active', 'error');
+      }
+      updateRowCount();
       break;
   }
 });
