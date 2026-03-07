@@ -274,7 +274,7 @@ thead th.sortable:hover {
   padding: 0;
   background-color: var(--vscode-editor-background);
   position: sticky;
-  top: 28px; /* height of header row */
+  top: var(--col-header-height, 28px);
   z-index: 1;
 }
 

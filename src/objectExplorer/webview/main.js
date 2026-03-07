@@ -559,6 +559,13 @@ function getHeaderHeight() {
   return thead ? thead.offsetHeight : 56;
 }
 
+function updateFilterRowTop() {
+  const headerTr = document.querySelector('thead tr:first-child');
+  if (headerTr) {
+    document.documentElement.style.setProperty('--col-header-height', headerTr.offsetHeight + 'px');
+  }
+}
+
 function scrollToSelectedRow() {
   if (selection.selectedIndex < 0) return;
   const headerH = getHeaderHeight();
@@ -736,6 +743,13 @@ tableWrapper.addEventListener('scroll', scheduleRender, { passive: true });
 
 // ── Event: resize ──────────────────────────────────────────────────────────
 new ResizeObserver(scheduleRender).observe(tableWrapper);
+
+// ── Sync filter row offset to actual header height ─────────────────────────
+const colHeaderTr = document.querySelector('thead tr:first-child');
+if (colHeaderTr) {
+  updateFilterRowTop();
+  new ResizeObserver(updateFilterRowTop).observe(colHeaderTr);
+}
 
 // ── Event: type filter buttons ─────────────────────────────────────────────
 document.querySelectorAll('.type-btn').forEach(btn => {
