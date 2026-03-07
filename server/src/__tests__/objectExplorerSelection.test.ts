@@ -462,4 +462,24 @@ describe('Object Explorer Selection Model', () => {
     });
   });
 
+  // ── selectedSet defensive copy ─────────────────────────────────────────────
+
+  describe('selectedSet returns a defensive copy', () => {
+    beforeEach(() => selection.reset());
+
+    it('should return a copy — mutating it does not affect internal selection state', () => {
+      selection.clickRow(3);
+      const copy = selection.selectedSet;
+      copy.add(999); // mutate the returned set
+      expect(selection.isSelected(999)).toBe(false); // internal state must be unaffected
+    });
+
+    it('should return a different object each time (not the same reference)', () => {
+      selection.clickRow(3);
+      const first = selection.selectedSet;
+      const second = selection.selectedSet;
+      expect(first).not.toBe(second);
+    });
+  });
+
 });
