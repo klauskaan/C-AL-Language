@@ -30,6 +30,10 @@ export interface FieldInfo {
 /**
  * Metadata for a single C/AL object, used by the Object Explorer
  */
+// NOTE: ObjectMetadata is duplicated in src/objectExplorer/objectExplorerProvider.ts
+// (separate TypeScript compilation units cannot share imports across the LSP boundary).
+// If you modify this interface, you MUST update both copies and the sync test:
+// server/src/workspaceSymbol/__tests__/objectMetadataShape.test.ts
 export interface ObjectMetadata {
   type: string;          // "Table", "Page", "Report", "Codeunit", "XMLport", "Query", "MenuSuite"
   id: number;
