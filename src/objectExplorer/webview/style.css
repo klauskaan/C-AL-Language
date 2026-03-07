@@ -387,3 +387,9 @@ tbody tr.cursor td.col-cursor::before {
   background-color: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground));
   color: var(--vscode-menu-selectionForeground, var(--vscode-editor-foreground));
 }
+
+#context-menu .menu-separator {
+  height: 1px;
+  background-color: var(--vscode-menu-separatorBackground, var(--vscode-panelSection-border, rgba(127,127,127,0.4)));
+  margin: 2px 0;
+}
