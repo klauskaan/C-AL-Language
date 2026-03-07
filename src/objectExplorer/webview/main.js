@@ -813,6 +813,26 @@ contextMenuToggleMark.setAttribute('role', 'menuitem');
 contextMenuToggleMark.setAttribute('tabindex', '-1');
 contextMenuToggleMark.textContent = 'Toggle Mark';
 contextMenu.appendChild(contextMenuToggleMark);
+
+const contextMenuSeparator = document.createElement('div');
+contextMenuSeparator.className = 'menu-separator';
+contextMenuSeparator.setAttribute('role', 'separator');
+contextMenu.appendChild(contextMenuSeparator);
+
+const contextMenuMarkedOnly = document.createElement('div');
+contextMenuMarkedOnly.className = 'menu-item';
+contextMenuMarkedOnly.setAttribute('role', 'menuitemcheckbox');
+contextMenuMarkedOnly.setAttribute('aria-checked', 'false');
+contextMenuMarkedOnly.setAttribute('tabindex', '-1');
+contextMenu.appendChild(contextMenuMarkedOnly);
+
+const contextMenuShowAll = document.createElement('div');
+contextMenuShowAll.className = 'menu-item';
+contextMenuShowAll.setAttribute('role', 'menuitem');
+contextMenuShowAll.setAttribute('tabindex', '-1');
+contextMenuShowAll.textContent = 'Show All';
+contextMenu.appendChild(contextMenuShowAll);
+
 document.body.appendChild(contextMenu);
 
 function showContextMenu(x, y) {
@@ -830,6 +850,20 @@ contextMenuToggleMark.addEventListener('click', function() {
   toggleMarkOnSelection();
 });
 
+contextMenuMarkedOnly.addEventListener('click', function() {
+  hideContextMenu();
+  markedOnly = true;
+  if (markedOnlyCb) markedOnlyCb.checked = true;
+  applyFilters();
+});
+
+contextMenuShowAll.addEventListener('click', function() {
+  hideContextMenu();
+  markedOnly = false;
+  if (markedOnlyCb) markedOnlyCb.checked = false;
+  applyFilters();
+});
+
 tbody.addEventListener('contextmenu', function(e) {
   const tr = /** @type {HTMLElement} */ (e.target instanceof HTMLElement ? e.target.closest('tr') : null);
   if (!tr || tr.classList.contains('virtual-spacer') || tr.closest('thead')) return;
@@ -843,6 +877,10 @@ tbody.addEventListener('contextmenu', function(e) {
   }
 
   e.preventDefault();
+  // Update view menu items to reflect current state
+  contextMenuMarkedOnly.textContent = (markedOnly ? '\u2713 ' : '') + 'Marked Only';
+  contextMenuMarkedOnly.setAttribute('aria-checked', String(markedOnly));
+  contextMenuShowAll.style.display = markedOnly ? '' : 'none';
   showContextMenu(e.clientX, e.clientY);
 });
 
