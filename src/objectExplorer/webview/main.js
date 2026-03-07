@@ -576,8 +576,9 @@ function scrollToSelectedRow() {
  * Called by Ctrl+F1 and the "Toggle Mark" context menu item.
  */
 function toggleMarkOnSelection() {
-  if (selection.selectedSet.size === 0) return;
-  selection.selectedSet.forEach(function(idx) {
+  const sel = selection.selectedSet;
+  if (sel.size === 0) return;
+  sel.forEach(function(idx) {
     const obj = filteredObjects[idx];
     if (!obj) return;
     const key = objectKey(obj);
