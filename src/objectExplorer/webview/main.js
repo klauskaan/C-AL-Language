@@ -36,6 +36,7 @@ let renderedEnd = -1;
 /** @type {Set<string>} */
 const markedObjects = new Set();
 let markedOnly = false;
+let isLoading = false;
 /** @type {string|null} */
 let sortColumn = null; // null = default sort (Type asc, then ID asc)
 /** @type {'asc'|'desc'} */
@@ -47,6 +48,7 @@ const tbody = /** @type {HTMLElement} */ (document.getElementById('object-list')
 const table = /** @type {HTMLTableElement} */ (tbody.closest('table'));
 const rowCountEl = /** @type {HTMLElement} */ (document.getElementById('row-count'));
 const searchInput = /** @type {HTMLInputElement} */ (document.getElementById('search-input'));
+const loadingIndicatorEl = /** @type {HTMLElement|null} */ (document.getElementById('loading-indicator'));
 
 // ── Filter engine ──────────────────────────────────────────────────────────
 /** @type {{ matchesFilter: function(string|number|boolean, string): boolean }} */
@@ -540,7 +542,9 @@ function updateRowCount() {
   const total = allObjects.length;
   const shown = filteredObjects.length;
   const filterSuffix = hasActiveFilters() ? ' \u2014 filtered' : '';
-  if (total === 0) {
+  if (total === 0 && isLoading) {
+    rowCountEl.textContent = 'Loading\u2026';
+  } else if (total === 0) {
     rowCountEl.textContent = 'No objects loaded';
   } else if (shown === total) {
     rowCountEl.textContent = shown.toLocaleString() + ' objects' + filterSuffix;
@@ -969,11 +973,14 @@ window.addEventListener('message', (event) => {
       allObjects = message.objects || [];
       applyFilters();
       break;
-    case 'loading':
-      if (message.loading && allObjects.length === 0) {
-        rowCountEl.textContent = 'Loading\u2026';
+    case 'loading': {
+      isLoading = !!message.loading;
+      if (loadingIndicatorEl) {
+        loadingIndicatorEl.classList.toggle('active', isLoading);
       }
+      updateRowCount();
       break;
+    }
     case 'restoreState':
       if (message.rowHeight && typeof message.rowHeight === 'number') {
         ROW_HEIGHT = message.rowHeight;

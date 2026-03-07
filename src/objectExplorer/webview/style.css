@@ -398,3 +398,23 @@ tbody tr.cursor td.col-cursor::before {
   background-color: var(--vscode-menu-separatorBackground, var(--vscode-panelSection-border, rgba(127,127,127,0.4)));
   margin: 2px 0;
 }
+
+/* ── Loading indicator ── */
+
+#loading-indicator {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--vscode-descriptionForeground, var(--vscode-foreground));
+  font-style: italic;
+  padding: 24px;
+}
+
+#loading-indicator.active {
+  display: flex;
+}
+
+#loading-indicator.active ~ #table-wrapper {
+  display: none;
+}
