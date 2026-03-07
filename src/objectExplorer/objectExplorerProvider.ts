@@ -2,6 +2,10 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/node';
 
+// NOTE: ObjectMetadata is duplicated from server/src/workspaceSymbol/workspaceIndex.ts
+// (separate TypeScript compilation units cannot share imports across the LSP boundary).
+// If you modify this interface, you MUST update both copies and the sync test:
+// server/src/workspaceSymbol/__tests__/objectMetadataShape.test.ts
 interface ObjectMetadata {
   type: string;
   id: number;
