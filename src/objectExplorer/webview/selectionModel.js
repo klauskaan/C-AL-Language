@@ -135,7 +135,7 @@
   return {
     get selectedIndex() { return selectedIndex; },
     get anchorIndex() { return anchorIndex; },
-    get selectedSet() { return selectedSet; },
+    get selectedSet() { return new Set(selectedSet); },
     clickRow: clickRow,
     shiftClickRow: shiftClickRow,
     ctrlClickRow: ctrlClickRow,
