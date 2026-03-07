@@ -728,4 +728,23 @@ OBJECT Codeunit 50000 Utils
       expect(tableEntry).toBeUndefined();
     });
   });
+
+  describe('clear()', () => {
+    it('should wipe all object metadata so getObjectList() returns empty', async () => {
+      const filePath = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(filePath, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+      await workspaceIndex.add(filePath);
+      expect(workspaceIndex.getObjectList()).toHaveLength(1);
+
+      workspaceIndex.clear();
+
+      expect(workspaceIndex.getObjectList()).toHaveLength(0);
+    });
+  });
 });
