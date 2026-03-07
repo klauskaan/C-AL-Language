@@ -742,6 +742,73 @@ OBJECT Codeunit 50000 Utils
     });
   });
 
+  describe('objectProperties chunk parse error handling', () => {
+    it('should preserve first object indexing when chunk parse throws for second object', async () => {
+      const filePath = path.join(tempDir, 'MultiObjectChunkError.cal');
+      fs.writeFileSync(filePath, `OBJECT Table 18 Customer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=24-03-19;
+    Version List=NAVW114.00;
+  }
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}
+OBJECT Codeunit 50000 Utils
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01-06-21;
+    Version List=NAVDK14.00;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`);
+
+      // Import Parser to spy on it
+      const { Parser } = await import('../../parser/parser');
+      const originalParse = Parser.prototype.parse;
+      let callCount = 0;
+      const parseSpy = jest.spyOn(Parser.prototype, 'parse').mockImplementation(function (this: InstanceType<typeof Parser>) {
+        callCount++;
+        if (callCount === 2) {
+          throw new Error('Simulated chunk parse failure');
+        }
+        return originalParse.call(this);
+      });
+
+      try {
+        await workspaceIndex.add(filePath);
+      } finally {
+        parseSpy.mockRestore();
+      }
+
+      const result = workspaceIndex.getObjectList();
+
+      // Both entries must be present (regex scan is unaffected by parse failure)
+      expect(result).toHaveLength(2);
+
+      const tableEntry = result.find(e => e.type === 'Table');
+      const codeunitEntry = result.find(e => e.type === 'Codeunit');
+
+      // First object: fully indexed
+      expect(tableEntry).toBeDefined();
+      expect(tableEntry!.date).toBe('24-03-19');
+      expect(tableEntry!.versionList).toBe('NAVW114.00');
+
+      // Second object: entry exists but objectProperties skipped due to parse failure
+      expect(codeunitEntry).toBeDefined();
+      expect(codeunitEntry!.date).toBeUndefined();
+      expect(codeunitEntry!.versionList).toBeUndefined();
+    });
+  });
+
   describe('objectPattern regex boundary behaviour', () => {
     it('should parse a normal OBJECT declaration correctly (regression guard)', async () => {
       const filePath = path.join(tempDir, 'Table18.cal');
