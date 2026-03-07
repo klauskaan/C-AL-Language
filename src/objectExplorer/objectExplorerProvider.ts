@@ -32,6 +32,7 @@ export class ObjectExplorerProvider {
   private readonly _extensionUri: vscode.Uri;
   private readonly _client: LanguageClient | undefined;
   private _disposables: vscode.Disposable[] = [];
+  private _disposed = false;
 
   public static createOrShow(
     context: vscode.ExtensionContext,
@@ -81,6 +82,10 @@ export class ObjectExplorerProvider {
   }
 
   public dispose(): void {
+    if (this._disposed) {
+      return;
+    }
+    this._disposed = true;
     ObjectExplorerProvider.currentPanel = undefined;
     this._panel.dispose();
     while (this._disposables.length) {
