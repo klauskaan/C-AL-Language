@@ -95,15 +95,17 @@ export class ObjectExplorerProvider {
     switch (message.type) {
       case 'ready': {
         const saved = this._globalState.get<ObjectExplorerState>(ObjectExplorerProvider.STATE_KEY);
-        if (saved) {
-          this._panel.webview.postMessage({
-            type: 'restoreState',
-            typeFilter: saved.typeFilter,
-            sortColumn: saved.sortColumn,
-            sortDir: saved.sortDir,
-            columnWidths: saved.columnWidths
-          });
-        }
+        const rowHeightSetting = vscode.workspace.getConfiguration('cal.objectExplorer').get<string>('rowHeight', 'comfortable');
+        const rowHeightMap: Record<string, number> = { comfortable: 40, compact: 28, dense: 20 };
+        const rowHeight = rowHeightMap[rowHeightSetting] ?? 40;
+        this._panel.webview.postMessage({
+          type: 'restoreState',
+          rowHeight,
+          typeFilter: saved?.typeFilter,
+          sortColumn: saved?.sortColumn,
+          sortDir: saved?.sortDir,
+          columnWidths: saved?.columnWidths
+        });
         this._loadObjectList();
         break;
       }

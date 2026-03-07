@@ -976,6 +976,7 @@ window.addEventListener('message', (event) => {
     case 'restoreState':
       if (message.rowHeight && typeof message.rowHeight === 'number') {
         ROW_HEIGHT = message.rowHeight;
+        document.documentElement.style.setProperty('--row-height', ROW_HEIGHT + 'px');
       }
       if (message.typeFilter && message.typeFilter !== 'All') {
         activeTypeFilter = message.typeFilter;
