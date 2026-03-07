@@ -310,6 +310,11 @@ tbody tr.selected {
   color: var(--vscode-list-activeSelectionForeground);
 }
 
+tbody tr.selected:hover {
+  background-color: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+}
+
 tbody tr.virtual-spacer {
   background: none;
   pointer-events: none;
