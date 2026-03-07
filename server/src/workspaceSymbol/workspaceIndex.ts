@@ -447,10 +447,12 @@ export class WorkspaceIndex {
 
     // Scan content for all OBJECT declarations (handles multi-object files)
     const objectMetadata: ObjectMetadata[] = [];
+    const objectPositions: number[] = [];
     const objectPattern = /^OBJECT\s+(Table|Page|Report|Codeunit|XMLport|Query|MenuSuite)\s+(\d+)\s+([^\r\n]*?)\s*$/gm;
     let match: RegExpExecArray | null;
     while ((match = objectPattern.exec(content)) !== null) {
       const lineNumber = content.substring(0, match.index).split('\n').length - 1;
+      objectPositions.push(match.index);
       objectMetadata.push({
         type: match[1],
         id: parseInt(match[2], 10),
@@ -469,18 +471,27 @@ export class WorkspaceIndex {
     const parser = new Parser(tokens);
     const ast = parser.parse();
 
-    // Populate optional objectProperties fields from the parsed AST
-    if (ast.object?.objectProperties) {
-      // Match by both id and type: the type check is currently redundant (parser produces
-      // one object per file), but becomes load-bearing when the parser supports multi-object files.
-      const matchingEntry = objectMetadata.find(
-        m => m.id === ast.object!.objectId && m.type === ast.object!.objectKind
-      );
-      if (matchingEntry) {
-        matchingEntry.date = ast.object.objectProperties.date;
-        matchingEntry.time = ast.object.objectProperties.time;
-        matchingEntry.modified = ast.object.objectProperties.modified;
-        matchingEntry.versionList = ast.object.objectProperties.versionList;
+    // Populate optional objectProperties fields from the parsed AST for each object
+    for (let i = 0; i < objectMetadata.length; i++) {
+      let chunkAst: ReturnType<Parser['parse']>;
+      if (i === 0) {
+        // Reuse the already-parsed AST for the first object
+        chunkAst = ast;
+      } else {
+        // Extract this object's chunk and parse it independently
+        const chunkStart = objectPositions[i];
+        const chunkEnd = objectPositions[i + 1] ?? content.length;
+        const chunk = content.substring(chunkStart, chunkEnd);
+        const chunkLexer = new Lexer(chunk);
+        const chunkTokens = chunkLexer.tokenize();
+        const chunkParser = new Parser(chunkTokens);
+        chunkAst = chunkParser.parse();
+      }
+      if (chunkAst.object?.objectProperties) {
+        objectMetadata[i].date = chunkAst.object.objectProperties.date;
+        objectMetadata[i].time = chunkAst.object.objectProperties.time;
+        objectMetadata[i].modified = chunkAst.object.objectProperties.modified;
+        objectMetadata[i].versionList = chunkAst.object.objectProperties.versionList;
       }
     }
 

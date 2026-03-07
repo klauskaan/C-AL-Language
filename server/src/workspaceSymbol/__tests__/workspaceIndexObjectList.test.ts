@@ -622,6 +622,59 @@ OBJECT Codeunit 50000 Utils
       expect(entry!.date).toBe('15-06-21');
       expect(entry!.versionList).toBe('TEST');
     });
+
+    it('should populate objectProperties for the second object in a multi-object file', async () => {
+      const filePath = path.join(tempDir, 'MultiObjectWithProps.cal');
+      fs.writeFileSync(filePath, `OBJECT Table 18 Customer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=24-03-19;
+    Time=12:00:00;
+    Modified=Yes;
+    Version List=NAVW114.00;
+  }
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}
+OBJECT Codeunit 50000 Utils
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01-06-21;
+    Time=09:30:00;
+    Modified=No;
+    Version List=NAVDK14.00;
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`);
+
+      await workspaceIndex.add(filePath);
+
+      const result = workspaceIndex.getObjectList();
+      expect(result).toHaveLength(2);
+
+      const tableEntry = result.find(e => e.type === 'Table');
+      const codeunitEntry = result.find(e => e.type === 'Codeunit');
+
+      expect(tableEntry).toBeDefined();
+      expect(tableEntry!.date).toBe('24-03-19');
+      expect(tableEntry!.time).toBe('12:00:00');
+      expect(tableEntry!.modified).toBe(true);
+      expect(tableEntry!.versionList).toBe('NAVW114.00');
+
+      expect(codeunitEntry).toBeDefined();
+      expect(codeunitEntry!.date).toBe('01-06-21');
+      expect(codeunitEntry!.time).toBe('09:30:00');
+      expect(codeunitEntry!.modified).toBe(false);
+      expect(codeunitEntry!.versionList).toBe('NAVDK14.00');
+    });
   });
 
   describe('objectPattern regex boundary behaviour', () => {
