@@ -456,10 +456,10 @@ The extension holds the data and passes it to the WebView via `panel.webview.pos
 | Extension → WebView | `loading` | `{ loading: boolean }` | Show/hide loading indicator |
 | Extension → WebView | `restoreState` | `{ typeFilter, sortColumn, sortDir, columnWidths }` | Restore persisted state on load |
 | Extension → WebView | `refresh` | — | Trigger data reload (on file change) |
+| Extension → WebView | `error` | `{ message: string }` | Language server unavailable |
 | WebView → Extension | `ready` | — | WebView loaded, request data |
 | WebView → Extension | `navigate` | `{ uri: string, line: number }` | User opened an object |
 | WebView → Extension | `saveState` | `{ typeFilter, sortColumn, sortDir, columnWidths }` | Persist UI state |
-| WebView → Extension | `resetLayout` | — | User triggered reset layout |
 
 ---
 
