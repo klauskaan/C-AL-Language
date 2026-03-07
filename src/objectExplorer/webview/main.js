@@ -804,6 +804,7 @@ filterInputs.forEach(f => {
 const btnClearFilters = document.getElementById('btn-clear-filters');
 if (btnClearFilters) {
   btnClearFilters.addEventListener('click', () => {
+    if (btnClearFilters.getAttribute('aria-disabled') === 'true') return;
     searchInput.value = '';
     searchText = '';
     filterInputs.forEach(f => {
