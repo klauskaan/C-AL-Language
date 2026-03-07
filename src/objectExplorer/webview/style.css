@@ -323,6 +323,11 @@ tbody td {
   border: none;
 }
 
+tbody:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
 /* Cursor column: show arrow for focused (cursor) row */
 tbody tr.cursor td.col-cursor::before {
   content: '\25B6';
