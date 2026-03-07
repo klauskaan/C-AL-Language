@@ -607,6 +607,43 @@ document.addEventListener('keydown', (e) => {
       /** @type {HTMLInputElement} */ (e.target).value = '';
       e.target.dispatchEvent(new Event('input'));
     }
+    if (e.key === 'Tab') {
+      const visibleInputs = /** @type {HTMLInputElement[]} */ ([searchInput].concat(
+        filterInputs.filter(function(f) { return f.input.offsetParent !== null; }).map(function(f) { return f.input; })
+      ));
+      const idx = visibleInputs.indexOf(/** @type {HTMLInputElement} */ (e.target));
+      e.preventDefault();
+      if (e.shiftKey) {
+        if (idx <= 0) {
+          tbody.focus();
+        } else {
+          visibleInputs[idx - 1].focus();
+        }
+      } else {
+        if (idx >= visibleInputs.length - 1) {
+          tbody.focus();
+        } else {
+          visibleInputs[idx + 1].focus();
+        }
+      }
+    }
+    return;
+  }
+
+  if (e.key === 'Tab' && tableWrapper.contains(document.activeElement)) {
+    const visibleInputs = /** @type {HTMLInputElement[]} */ ([searchInput].concat(
+      filterInputs.filter(function(f) { return f.input.offsetParent !== null; }).map(function(f) { return f.input; })
+    ));
+    e.preventDefault();
+    if (e.shiftKey) {
+      if (visibleInputs.length > 0) {
+        visibleInputs[visibleInputs.length - 1].focus();
+      } else {
+        searchInput.focus();
+      }
+    } else {
+      searchInput.focus();
+    }
     return;
   }
 
