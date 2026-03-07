@@ -576,8 +576,9 @@ function scrollToSelectedRow() {
  * Called by Ctrl+F1 and the "Toggle Mark" context menu item.
  */
 function toggleMarkOnSelection() {
-  if (selection.selectedSet.size === 0) return;
-  selection.selectedSet.forEach(function(idx) {
+  const sel = selection.selectedSet;
+  if (sel.size === 0) return;
+  sel.forEach(function(idx) {
     const obj = filteredObjects[idx];
     if (!obj) return;
     const key = objectKey(obj);
@@ -605,6 +606,43 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       /** @type {HTMLInputElement} */ (e.target).value = '';
       e.target.dispatchEvent(new Event('input'));
+    }
+    if (e.key === 'Tab') {
+      const visibleInputs = /** @type {HTMLInputElement[]} */ ([searchInput].concat(
+        filterInputs.filter(function(f) { return f.input.offsetParent !== null; }).map(function(f) { return f.input; })
+      ));
+      const idx = visibleInputs.indexOf(/** @type {HTMLInputElement} */ (e.target));
+      e.preventDefault();
+      if (e.shiftKey) {
+        if (idx <= 0) {
+          tbody.focus();
+        } else {
+          visibleInputs[idx - 1].focus();
+        }
+      } else {
+        if (idx >= visibleInputs.length - 1) {
+          tbody.focus();
+        } else {
+          visibleInputs[idx + 1].focus();
+        }
+      }
+    }
+    return;
+  }
+
+  if (e.key === 'Tab' && tableWrapper.contains(document.activeElement)) {
+    const visibleInputs = /** @type {HTMLInputElement[]} */ ([searchInput].concat(
+      filterInputs.filter(function(f) { return f.input.offsetParent !== null; }).map(function(f) { return f.input; })
+    ));
+    e.preventDefault();
+    if (e.shiftKey) {
+      if (visibleInputs.length > 0) {
+        visibleInputs[visibleInputs.length - 1].focus();
+      } else {
+        searchInput.focus();
+      }
+    } else {
+      searchInput.focus();
     }
     return;
   }
