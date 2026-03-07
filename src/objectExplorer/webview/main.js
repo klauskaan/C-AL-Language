@@ -993,6 +993,7 @@ window.addEventListener('message', (event) => {
       if (loadingIndicatorEl) {
         if (isLoading) {
           loadingIndicatorEl.textContent = 'Loading\u2026';
+          loadingIndicatorEl.setAttribute('aria-label', 'Loading objects');
           loadingIndicatorEl.classList.remove('error');
         }
         loadingIndicatorEl.classList.toggle('active', isLoading);
@@ -1041,7 +1042,9 @@ window.addEventListener('message', (event) => {
     case 'error':
       isLoading = false;
       if (loadingIndicatorEl) {
-        loadingIndicatorEl.textContent = message.message || 'An error occurred';
+        const errorText = message.message || 'An error occurred';
+        loadingIndicatorEl.textContent = errorText;
+        loadingIndicatorEl.setAttribute('aria-label', errorText);
         loadingIndicatorEl.classList.add('active', 'error');
       }
       updateRowCount();
