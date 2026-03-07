@@ -975,7 +975,6 @@ if (btnResetLayout) {
     } else {
       updateSortIndicators();
     }
-    vscode.postMessage({ type: 'resetLayout' });
     sendSaveState();
   });
 }
@@ -1022,17 +1021,6 @@ window.addEventListener('message', (event) => {
         );
         applyColumnWidths();
       }
-      if (allObjects.length > 0) {
-        applyFilters();
-      } else {
-        updateSortIndicators();
-      }
-      break;
-    case 'resetLayout':
-      columnWidths = Object.assign({}, stateManager.DEFAULT_COLUMN_WIDTHS);
-      applyColumnWidths();
-      sortColumn = null;
-      sortDir = 'asc';
       if (allObjects.length > 0) {
         applyFilters();
       } else {

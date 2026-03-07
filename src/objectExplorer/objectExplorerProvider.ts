@@ -140,13 +140,6 @@ export class ObjectExplorerProvider {
         this._globalState.update(ObjectExplorerProvider.STATE_KEY, state);
         break;
       }
-      case 'resetLayout': {
-        const current = this._globalState.get<ObjectExplorerState>(ObjectExplorerProvider.STATE_KEY);
-        this._globalState.update(ObjectExplorerProvider.STATE_KEY, {
-          typeFilter: current?.typeFilter ?? null
-        });
-        break;
-      }
     }
   }
 
