@@ -71,7 +71,7 @@ const selection = /** @type {any} */ (/** @type {any} */ (window).selectionModel
   return {
     get selectedIndex() { return _idx; },
     get anchorIndex() { return _anchor; },
-    get selectedSet() { return _set; },
+    get selectedSet() { return new Set(_set); },
     clickRow(i) { _idx = i; _anchor = i; _set = new Set([i]); },
     shiftClickRow(i) { _idx = i; _anchor = i; _set = new Set([i]); },
     ctrlClickRow(i) { if(_set.has(i)) _set.delete(i); else _set.add(i); _idx = i; _anchor = i; },
