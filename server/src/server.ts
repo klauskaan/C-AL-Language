@@ -235,6 +235,7 @@ connection.onDidChangeConfiguration(() => {
 
 // Handle file system changes (create, update, delete)
 connection.onDidChangeWatchedFiles(async (params) => {
+  let indexChanged = false;
   for (const change of params.changes) {
     try {
       const filePath = fileURLToPath(change.uri);
@@ -256,8 +257,12 @@ connection.onDidChangeWatchedFiles(async (params) => {
       // FileChangeType: Created = 1, Changed = 2, Deleted = 3
       if (change.type === 3) {
         // File deleted
+        const wasTracked = workspaceIndex.has(filePath);
         workspaceIndex.remove(filePath);
         connection.console.log(`Removed from index: ${filePath}`);
+        if (wasTracked) {
+          indexChanged = true;
+        }
       } else {
         // File created or changed
         // For .txt files, run heuristic check first
@@ -273,11 +278,15 @@ connection.onDidChangeWatchedFiles(async (params) => {
         const wasUpdated = await workspaceIndex.updateIfNotFresher(filePath, timestamp);
         if (wasUpdated) {
           connection.console.log(`Updated in index: ${filePath}`);
+          indexChanged = true;
         }
       }
     } catch (error) {
       connection.console.warn(`Failed to handle file change for ${change.uri}: ${formatError(error)}`);
     }
+  }
+  if (indexChanged) {
+    connection.sendNotification('cal/workspaceIndexChanged');
   }
 });
 
