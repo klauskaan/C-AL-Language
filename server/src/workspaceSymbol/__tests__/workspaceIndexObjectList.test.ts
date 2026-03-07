@@ -597,6 +597,54 @@ OBJECT Codeunit 50000 Utils
     });
   });
 
+  describe('objectPattern regex boundary behaviour', () => {
+    it('should parse a normal OBJECT declaration correctly (regression guard)', async () => {
+      const filePath = path.join(tempDir, 'Table18.cal');
+      fs.writeFileSync(filePath, `OBJECT Table 18 Customer
+{
+  FIELDS
+  {
+    { 1   ;   ;"No."             ;Code20        }
+  }
+}`);
+
+      await workspaceIndex.add(filePath);
+
+      const result = workspaceIndex.getObjectList();
+      expect(result).toHaveLength(1);
+      expect(result[0].type).toBe('Table');
+      expect(result[0].id).toBe(18);
+      expect(result[0].name).toBe('Customer');
+    });
+
+    it('should correctly parse an OBJECT declaration from a file with CRLF line endings', async () => {
+      // NAV exports use Windows OEM codepages and CRLF line endings.
+      // In JavaScript, . does not match \r (CR is a LineTerminator per ECMAScript spec),
+      // so (.*?) also never captures \r. The [^\r\n]*? change is explicit defense-in-depth
+      // that makes the intent visible to future readers, not a fix for an active bug.
+      // This test confirms CRLF files are indexed correctly.
+      const filePath = path.join(tempDir, 'Table18Crlf.cal');
+      // Build the content with explicit CRLF line endings
+      const content = [
+        'OBJECT Table 18 Customer',
+        '{',
+        '  FIELDS',
+        '  {',
+        '    { 1   ;   ;"No."             ;Code20        }',
+        '  }',
+        '}',
+      ].join('\r\n');
+      fs.writeFileSync(filePath, content);
+
+      await workspaceIndex.add(filePath);
+
+      const result = workspaceIndex.getObjectList();
+      expect(result).toHaveLength(1);
+      // Name must be exactly 'Customer' — no trailing \r
+      expect(result[0].name).toBe('Customer');
+    });
+  });
+
   describe('re-indexing replaces previous entries', () => {
     it('should not append entries when the same file is re-indexed', async () => {
       const filePath = path.join(tempDir, 'Table18.cal');

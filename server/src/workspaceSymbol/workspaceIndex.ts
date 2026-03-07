@@ -447,7 +447,7 @@ export class WorkspaceIndex {
 
     // Scan content for all OBJECT declarations (handles multi-object files)
     const objectMetadata: ObjectMetadata[] = [];
-    const objectPattern = /^OBJECT\s+(Table|Page|Report|Codeunit|XMLport|Query|MenuSuite)\s+(\d+)\s+(.*?)\s*$/gm;
+    const objectPattern = /^OBJECT\s+(Table|Page|Report|Codeunit|XMLport|Query|MenuSuite)\s+(\d+)\s+([^\r\n]*?)\s*$/gm;
     let match: RegExpExecArray | null;
     while ((match = objectPattern.exec(content)) !== null) {
       const lineNumber = content.substring(0, match.index).split('\n').length - 1;
