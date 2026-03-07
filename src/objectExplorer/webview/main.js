@@ -616,6 +616,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Tab') {
       const visibleInputs = getVisibleInputs();
       const idx = visibleInputs.indexOf(/** @type {HTMLInputElement} */ (e.target));
+      if (idx === -1) return; // not a filter input — let browser Tab order proceed
       e.preventDefault();
       if (e.shiftKey) {
         if (idx <= 0) {
