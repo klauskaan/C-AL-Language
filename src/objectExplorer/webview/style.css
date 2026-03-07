@@ -298,7 +298,7 @@ thead th.sortable:hover {
 /* ── Body rows ── */
 
 tbody tr:not(.virtual-spacer) {
-  height: 40px;
+  height: var(--row-height, 40px);
 }
 
 tbody tr:not(.virtual-spacer):hover {

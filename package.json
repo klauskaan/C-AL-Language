@@ -151,6 +151,17 @@
           "default": true,
           "description": "Include .txt files in workspace symbol indexing (Ctrl+T). NAV commonly exports C/AL objects as .txt files. Files are verified to contain C/AL content before indexing.",
           "scope": "window"
+        },
+        "cal.objectExplorer.rowHeight": {
+          "type": "string",
+          "enum": ["comfortable", "compact", "dense"],
+          "default": "comfortable",
+          "description": "Row height for the Object Explorer panel.",
+          "enumDescriptions": [
+            "40px — default, easy to click",
+            "28px — more rows visible",
+            "20px — maximum density"
+          ]
         }
       }
     }
