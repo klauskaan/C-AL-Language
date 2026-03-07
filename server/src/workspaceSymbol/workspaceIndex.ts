@@ -482,10 +482,15 @@ export class WorkspaceIndex {
         const chunkStart = objectPositions[i];
         const chunkEnd = objectPositions[i + 1] ?? content.length;
         const chunk = content.substring(chunkStart, chunkEnd);
-        const chunkLexer = new Lexer(chunk);
-        const chunkTokens = chunkLexer.tokenize();
-        const chunkParser = new Parser(chunkTokens);
-        chunkAst = chunkParser.parse();
+        try {
+          const chunkLexer = new Lexer(chunk);
+          const chunkTokens = chunkLexer.tokenize();
+          const chunkParser = new Parser(chunkTokens);
+          chunkAst = chunkParser.parse();
+        } catch {
+          // Malformed object chunk — skip objectProperties for this entry, continue indexing
+          continue;
+        }
       }
       if (chunkAst.object?.objectProperties) {
         objectMetadata[i].date = chunkAst.object.objectProperties.date;
