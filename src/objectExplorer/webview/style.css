@@ -229,7 +229,8 @@ thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  border-bottom: none;
+  border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panelSection-border, rgba(127,127,127,0.35)));
+  border-right: 1px solid var(--vscode-widget-border, var(--vscode-panelSection-border, rgba(127,127,127,0.35)));
 }
 
 thead th .sort-indicator {
@@ -276,6 +277,8 @@ thead th.sortable:hover {
   position: sticky;
   top: var(--col-header-height, 28px);
   z-index: 1;
+  border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panelSection-border, rgba(127,127,127,0.35)));
+  border-right: 1px solid var(--vscode-widget-border, var(--vscode-panelSection-border, rgba(127,127,127,0.35)));
 }
 
 .filter-row td input {
@@ -320,12 +323,20 @@ tbody tr.virtual-spacer {
   pointer-events: none;
 }
 
-tbody td {
+tbody tr:not(.virtual-spacer) td {
   padding: 0 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  border: none;
+  border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panelSection-border, rgba(127,127,127,0.35)));
+  border-right: 1px solid var(--vscode-widget-border, var(--vscode-panelSection-border, rgba(127,127,127,0.35)));
+}
+
+/* Remove trailing right border on last column — inner separators only */
+thead th:last-child,
+.filter-row td:last-child,
+tbody tr:not(.virtual-spacer) td:last-child {
+  border-right: none;
 }
 
 tbody:focus-visible {
