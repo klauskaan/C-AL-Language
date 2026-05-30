@@ -194,11 +194,11 @@ Reviewers read investigation, plan, and skip-decision comments directly from Git
 
 ## Agents
 
-The workflow structure itself compensates for model characteristics. Opus is creative and finds non-obvious problems. Sonnet follows directions precisely and is underrated for execution quality. The handoff between planning (Opus) and implementation (Sonnet) is structural — it's how you get both creative quality and faithful execution.
+Models are assigned by task *shape* and *blast radius*, not by a fixed capability ranking (which goes stale every release). The orchestrator runs on Opus. The full reasoning — and the standing triggers for revisiting — live in `docs/decisions/model-assignments-4.8-era.md`.
 
-- **Opus** — used where creative reasoning and judgment matter most: investigation, planning, review. Finds non-obvious problems, makes good decisions under ambiguity.
-- **Sonnet** — used for execution: implementation, git operations, test writing, specialized review. Follows directions precisely.
-- **Haiku** — used where speed is preferred and neither deep reasoning nor precise instruction-following is critical: running tests, creating issues.
+- **Opus** — open-ended judgment where the failure mode is "plausible but wrong": investigation, planning, design review, complex merge resolution.
+- **Sonnet** — bounded/checkable work with a right answer: faithful execution of a plan, git mechanics, test writing/running, specialized domain review.
+- **Haiku** — templated, low-blast-radius work: creating issues. (Used sparingly; the first such role promotes to Sonnet if Haiku quality slips.)
 
 | Agent | Model | Purpose |
 |-------|-------|---------|
@@ -208,7 +208,7 @@ The workflow structure itself compensates for model characteristics. Opus is cre
 | **adversarial-verifier** | Sonnet | Factual verification: assumptions, file existence, implementation-plan alignment |
 | **senior-developer** | Sonnet | All implementation: features, fixes, refactoring, trivial changes |
 | **test-writer** | Sonnet | Write tests (TDD workflow) |
-| **test-runner** | Haiku | Run tests, analyze failures |
+| **test-runner** | Sonnet | Run tests, analyze failures |
 | **typescript-reviewer** | Sonnet | Type safety, TS best practices |
 | **cal-expert** | Sonnet | C/AL correctness, AL prevention |
 | **file-ops** | Sonnet | Git operations: commits, branches, worktrees |
@@ -216,7 +216,7 @@ The workflow structure itself compensates for model characteristics. Opus is cre
 | **senior-merge-engineer** | Opus | Complex merge conflict resolution |
 | **github-issues** | Haiku | Create/update GitHub issues |
 
-The two-reviewer design separates concerns: adversarial-reviewer (Opus) handles design quality — is the plan sound, what could go wrong, are there gaps? adversarial-verifier (Sonnet) handles factual verification — do the described files exist, do functions have the described signatures, does the plan address the actual issue? Both run at both gates. Verifier runs first.
+The two-reviewer design separates concerns: adversarial-reviewer (Opus) handles design quality — is the plan sound, what could go wrong, are there gaps? adversarial-verifier (Sonnet) handles factual verification — do the described files exist, do functions have the described signatures, does the plan address the actual issue? Both run at both gates. Verifier runs first. The split is justified first by that separation of concerns (it holds on any model); running the verifier on a *different* model from the Opus orchestrator/architect/reviewer chain currently amplifies it with an independent perspective — a high-value default under the present lineup, not a permanent rule. See `docs/decisions/model-assignments-4.8-era.md`.
 
 ---
 
