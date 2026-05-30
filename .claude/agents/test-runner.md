@@ -2,7 +2,7 @@
 name: test-runner
 description: Runs tests, analyzes failures, and reports results concisely. Use after code changes to verify functionality.
 tools: Bash(npm test*), Bash(npm run*), Read, Grep, Glob
-model: haiku
+model: sonnet
 color: green
 permissionMode: acceptEdits
 ---
