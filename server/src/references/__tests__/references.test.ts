@@ -1721,15 +1721,11 @@ describe('ReferenceProvider', () => {
       expect(procBResults.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('documents #791 limitation: member property of another record over-counts a same-named local', () => {
-      // INTENTIONALLY ASSERTS CURRENT KNOWN-WRONG BEHAVIOR.
-      // Issue #791 tracks the over-count. This test is the oracle for that fix:
-      // when #791 is resolved, this test should be updated to assert the correct count.
-      //
-      // Scenario: ProcA has a local Employee (unused) AND SomeRec.Employee (member access).
-      // Currently the member property "Employee" resolves to the local and is included.
-      // The correct behavior (after #791) would be to exclude the member property from
-      // the local's reference set, but that is out of scope for #786.
+    it('#791: member property of another record is NOT counted as a same-named local', () => {
+      // Asserts the corrected behavior after #791.
+      // Scenario: ProcA has an unused local Employee (Record 18) AND SomeRec.Employee is a
+      // member-property access on a different record. The member-property must NOT be counted
+      // as a reference to the local variable.
       const code = `OBJECT Codeunit 50000 Residual791Test
 {
   CODE
@@ -1756,18 +1752,614 @@ describe('ReferenceProvider', () => {
       expect(declLine).toBeGreaterThan(-1);
       const col = lines[declLine].indexOf('Employee');
 
-      // includeDeclaration=true so declaration is counted
+      // includeDeclaration=true so the declaration itself is counted
       const result = provider.getReferences(
         doc, Position.create(declLine, col + 3), ast, true, symbolTable, tokens
       );
 
-      // The member property "SomeRec.Employee" currently over-counts: it is included.
-      // This assertion pins the current (wrong) behavior for #791 to fix later.
+      // Anti-vacuous: the declaration line must be in the result (proves getReferences
+      // isn't returning [] due to an unrelated failure)
+      const declResults = result.filter(loc => loc.range.start.line === declLine);
+      expect(declResults.length).toBeGreaterThanOrEqual(1);
+
+      // The member-property "SomeRec.Employee" must NOT be counted as a reference to the local
       const memberLine = lines.findIndex(l => l.includes('SomeRec.Employee'));
       expect(memberLine).toBeGreaterThan(-1);
       const memberResults = result.filter(loc => loc.range.start.line === memberLine);
-      // Currently the member is included (over-count) — assert this known limitation
+      expect(memberResults.length).toBe(0);
+    });
+  });
+
+  describe('#791 member-property scope-awareness', () => {
+    // B1: VARIABLE origin (canonical) — standalone version of the oracle
+    it('B1: variable origin: SomeRec.Employee member-property is NOT counted for a same-named local', () => {
+      const code = `OBJECT Codeunit 50000 B1Test
+{
+  CODE
+  {
+    VAR
+      SomeRec@1000 : Record 50000;
+
+    PROCEDURE ProcA@1();
+    VAR
+      Employee@1000 : Record 18;
+    BEGIN
+      SomeRec.Employee := 0;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lines = code.split('\n');
+
+      const declLine = lines.findIndex(l => l.includes('Employee@1000 : Record 18'));
+      expect(declLine).toBeGreaterThan(-1);
+      const col = lines[declLine].indexOf('Employee');
+
+      const result = provider.getReferences(
+        doc, Position.create(declLine, col + 3), ast, true, symbolTable, tokens
+      );
+
+      // Declaration line must be present (anti-vacuous)
+      const declResults = result.filter(loc => loc.range.start.line === declLine);
+      expect(declResults.length).toBeGreaterThanOrEqual(1);
+
+      // Member-property line must NOT be counted
+      const memberLine = lines.findIndex(l => l.includes('SomeRec.Employee'));
+      expect(memberLine).toBeGreaterThan(-1);
+      const memberResults = result.filter(loc => loc.range.start.line === memberLine);
+      expect(memberResults.length).toBe(0);
+    });
+
+    // B2: PARAMETER origin
+    it('B2: parameter origin: SomeRec.Employee member-property is NOT counted for a same-named parameter', () => {
+      const code = `OBJECT Codeunit 50000 B2Test
+{
+  CODE
+  {
+    VAR
+      SomeRec@1000 : Record 50000;
+
+    PROCEDURE ProcA@1(Employee@1000 : Record 18);
+    BEGIN
+      SomeRec.Employee := 0;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lines = code.split('\n');
+
+      const paramLine = lines.findIndex(l => l.includes('PROCEDURE ProcA@1(Employee@1000'));
+      expect(paramLine).toBeGreaterThan(-1);
+      const col = lines[paramLine].indexOf('Employee@1000');
+      // Position cursor on 'Employee' inside the parameter list
+      const result = provider.getReferences(
+        doc, Position.create(paramLine, col + 3), ast, true, symbolTable, tokens
+      );
+
+      // Anti-vacuous: parameter declaration must be counted
+      const paramResults = result.filter(loc => loc.range.start.line === paramLine);
+      expect(paramResults.length).toBeGreaterThanOrEqual(1);
+
+      // Member-property line must NOT be counted
+      const memberLine = lines.findIndex(l => l.includes('SomeRec.Employee'));
+      expect(memberLine).toBeGreaterThan(-1);
+      const memberResults = result.filter(loc => loc.range.start.line === memberLine);
+      expect(memberResults.length).toBe(0);
+    });
+
+    // B3: FIELD/MEMBER origin (unresolved branch — highest-risk regression)
+    // When the origin is itself a member-property (field), the permissive keepUnresolved:true
+    // path keeps all member-property occurrences of the same name. This must NOT be broken.
+    it('B3: field/member origin: member-property uses are KEPT (permissive unresolved path)', () => {
+      const code = `OBJECT Codeunit 50000 B3Test
+{
+  CODE
+  {
+    VAR
+      Rec@1000 : Record 18;
+
+    PROCEDURE ProcA@1();
+    BEGIN
+      Rec.Amount := 1;
+      Rec.Amount := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lines = code.split('\n');
+
+      // Position cursor on 'Amount' in the first Rec.Amount occurrence
+      const firstAmountLine = lines.findIndex(l => l.includes('Rec.Amount := 1'));
+      expect(firstAmountLine).toBeGreaterThan(-1);
+      const lineText = lines[firstAmountLine];
+      const dotIdx = lineText.indexOf('Rec.Amount');
+      const amountCol = dotIdx + 'Rec.'.length; // column of 'Amount'
+
+      const result = provider.getReferences(
+        doc, Position.create(firstAmountLine, amountCol + 2), ast, true, symbolTable, tokens
+      );
+
+      // Both Amount member uses should be counted (field/member origin keeps all)
+      const secondAmountLine = lines.findIndex(l => l.includes('Rec.Amount := 2'));
+      expect(secondAmountLine).toBeGreaterThan(-1);
+      const secondAmountResults = result.filter(loc => loc.range.start.line === secondAmountLine);
+      expect(secondAmountResults.length).toBeGreaterThanOrEqual(1);
+    });
+
+    // B4: PROCEDURE origin (load-bearing inverse — member-call on object must be KEPT)
+    it('B4: procedure origin: member-call occurrences are KEPT (not dropped by member-property filter)', () => {
+      // SomeCdu.DoIt — the property 'DoIt' shares the name with the procedure declaration.
+      // If the property does not resolve to the procedure (single-file), the permissive
+      // keepUnresolved:true path keeps it. Either way, it must be counted.
+      const code = `OBJECT Codeunit 50000 B4Test
+{
+  CODE
+  {
+    VAR
+      SomeCdu@1000 : Codeunit 50001;
+
+    PROCEDURE DoIt@1();
+    BEGIN
+    END;
+
+    PROCEDURE Main@2();
+    BEGIN
+      SomeCdu.DoIt;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lines = code.split('\n');
+
+      const declLine = lines.findIndex(l => l.includes('PROCEDURE DoIt@1'));
+      expect(declLine).toBeGreaterThan(-1);
+      const col = lines[declLine].indexOf('DoIt');
+
+      const result = provider.getReferences(
+        doc, Position.create(declLine, col + 2), ast, true, symbolTable, tokens
+      );
+
+      // The member-call SomeCdu.DoIt must be counted for the procedure origin.
+      // (Resolution path: either resolves to procedure → counted, or unresolved → kept by permissive path.)
+      const memberCallLine = lines.findIndex(l => l.includes('SomeCdu.DoIt'));
+      expect(memberCallLine).toBeGreaterThan(-1);
+      const memberCallResults = result.filter(loc => loc.range.start.line === memberCallLine);
+      expect(memberCallResults.length).toBeGreaterThanOrEqual(1);
+    });
+
+    // B5: Object side of member expression — real use of local, must be KEPT
+    it('B5: object-side of member expression IS counted for a local variable origin', () => {
+      // Employee.Name := 'x' — here Employee is the OBJECT side of the member access.
+      // This is a genuine use of the local variable and must NOT be dropped.
+      const code = `OBJECT Codeunit 50000 B5Test
+{
+  CODE
+  {
+    PROCEDURE ProcA@1();
+    VAR
+      Employee@1000 : Record 18;
+    BEGIN
+      Employee.Name := 'x';
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lines = code.split('\n');
+
+      const declLine = lines.findIndex(l => l.includes('Employee@1000 : Record 18'));
+      expect(declLine).toBeGreaterThan(-1);
+      const col = lines[declLine].indexOf('Employee');
+
+      const result = provider.getReferences(
+        doc, Position.create(declLine, col + 3), ast, true, symbolTable, tokens
+      );
+
+      // Employee.Name line: Employee is the object, must be counted
+      const useLine = lines.findIndex(l => l.includes("Employee.Name := 'x'"));
+      expect(useLine).toBeGreaterThan(-1);
+      const useResults = result.filter(loc => loc.range.start.line === useLine);
+      expect(useResults.length).toBeGreaterThanOrEqual(1);
+    });
+
+    // B6: Nested A.B.C — local B must not be counted at its property position
+    it('B6: nested A.B.C — local B is NOT counted at the property position, but IS counted at its real use', () => {
+      // A is a global Record. Body: A.B.C := 0 (B is a member-property of A) and B := 1 (real local use).
+      // Origin = local B (Integer). The A.B.C line should not count B at the property position.
+      const code = `OBJECT Codeunit 50000 B6Test
+{
+  CODE
+  {
+    VAR
+      A@1000 : Record 50000;
+
+    PROCEDURE ProcA@1();
+    VAR
+      B@1000 : Integer;
+    BEGIN
+      A.B.C := 0;
+      B := 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lines = code.split('\n');
+
+      const declLine = lines.findIndex(l => l.includes('B@1000 : Integer'));
+      expect(declLine).toBeGreaterThan(-1);
+      const col = lines[declLine].indexOf('B');
+
+      const result = provider.getReferences(
+        doc, Position.create(declLine, col + 1), ast, true, symbolTable, tokens
+      );
+
+      // Real local use B := 1 must be counted
+      const realUseLine = lines.findIndex(l => l.trim() === 'B := 1;');
+      expect(realUseLine).toBeGreaterThan(-1);
+      const realUseResults = result.filter(loc => loc.range.start.line === realUseLine);
+      expect(realUseResults.length).toBeGreaterThanOrEqual(1);
+
+      // A.B.C line: B at the member-property position must NOT be counted for the local B origin
+      const nestedLine = lines.findIndex(l => l.includes('A.B.C := 0'));
+      expect(nestedLine).toBeGreaterThan(-1);
+      const nestedResults = result.filter(loc => loc.range.start.line === nestedLine);
+      expect(nestedResults.length).toBe(0);
+    });
+
+    // B7: includeDeclaration=false — unused local + member: total must be 0
+    it('B7: includeDeclaration=false — unused local + member-only line yields 0 total results', () => {
+      const code = `OBJECT Codeunit 50000 B7Test
+{
+  CODE
+  {
+    VAR
+      SomeRec@1000 : Record 50000;
+
+    PROCEDURE ProcA@1();
+    VAR
+      Employee@1000 : Record 18;
+    BEGIN
+      SomeRec.Employee := 0;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lines = code.split('\n');
+
+      const declLine = lines.findIndex(l => l.includes('Employee@1000 : Record 18'));
+      expect(declLine).toBeGreaterThan(-1);
+      const col = lines[declLine].indexOf('Employee');
+
+      const result = provider.getReferences(
+        doc, Position.create(declLine, col + 3), ast, false, symbolTable, tokens
+      );
+
+      // No declaration + no member = genuinely unused
+      expect(result.length).toBe(0);
+    });
+
+    // B8: Cursor ON member-property — must be counted (dual-bug guard)
+    it('B8: cursor on member-property: the clicked occurrence IS counted (dual-bug guard)', () => {
+      // Both a global SomeRec : Record 50000 and a local Employee : Record 18 exist.
+      // Body: SomeRec.Employee := 0.
+      // When cursor is ON the "Employee" inside SomeRec.Employee, the result must
+      // include that line (clicking a member-property must not return empty).
+      const code = `OBJECT Codeunit 50000 B8Test
+{
+  CODE
+  {
+    VAR
+      SomeRec@1000 : Record 50000;
+
+    PROCEDURE ProcA@1();
+    VAR
+      Employee@1000 : Record 18;
+    BEGIN
+      SomeRec.Employee := 0;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lines = code.split('\n');
+
+      const memberLine = lines.findIndex(l => l.includes('SomeRec.Employee'));
+      expect(memberLine).toBeGreaterThan(-1);
+      const lineText = lines[memberLine];
+      const dotIdx = lineText.indexOf('SomeRec.Employee');
+      const employeeCol = dotIdx + 'SomeRec.'.length; // cursor on 'Employee' property
+
+      const result = provider.getReferences(
+        doc, Position.create(memberLine, employeeCol + 3), ast, true, symbolTable, tokens
+      );
+
+      // The clicked member-property occurrence must be in the result
+      const memberResults = result.filter(loc => loc.range.start.line === memberLine);
       expect(memberResults.length).toBeGreaterThanOrEqual(1);
+    });
+
+    // B9: local-shadows-field collision — local Amount, SomeRec.Amount member
+    it('B9: local Amount with SomeRec.Amount member — local real use counted, member-property NOT counted', () => {
+      const code = `OBJECT Codeunit 50000 B9Test
+{
+  CODE
+  {
+    VAR
+      SomeRec@1000 : Record 18;
+
+    PROCEDURE ProcA@1();
+    VAR
+      Amount@1000 : Decimal;
+    BEGIN
+      Amount := 1;
+      SomeRec.Amount := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lines = code.split('\n');
+
+      const declLine = lines.findIndex(l => l.includes('Amount@1000 : Decimal'));
+      expect(declLine).toBeGreaterThan(-1);
+      const col = lines[declLine].indexOf('Amount');
+
+      const result = provider.getReferences(
+        doc, Position.create(declLine, col + 3), ast, true, symbolTable, tokens
+      );
+
+      // Real local use must be counted
+      const realUseLine = lines.findIndex(l => l.trim() === 'Amount := 1;');
+      expect(realUseLine).toBeGreaterThan(-1);
+      const realUseResults = result.filter(loc => loc.range.start.line === realUseLine);
+      expect(realUseResults.length).toBeGreaterThanOrEqual(1);
+
+      // Member-property use must NOT be counted for the local origin
+      const memberLine = lines.findIndex(l => l.includes('SomeRec.Amount := 2'));
+      expect(memberLine).toBeGreaterThan(-1);
+      const memberResults = result.filter(loc => loc.range.start.line === memberLine);
+      expect(memberResults.length).toBe(0);
+    });
+
+    // B10: Option value collision — local Open, Status::Open option value
+    it('B10: local Open with Status::Open option value — real local use counted, option member NOT counted', () => {
+      // Status::Open — "Open" is a member-property of the option set literal (MemberExpression.property).
+      // The local variable Open must not be counted at the Status::Open position.
+      const code = `OBJECT Codeunit 50000 B10Test
+{
+  CODE
+  {
+    VAR
+      Status@1000 : Option;
+
+    PROCEDURE ProcA@1();
+    VAR
+      Open@1000 : Boolean;
+    BEGIN
+      Open := TRUE;
+      Status := Status::Open;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lines = code.split('\n');
+
+      const declLine = lines.findIndex(l => l.includes('Open@1000 : Boolean'));
+      expect(declLine).toBeGreaterThan(-1);
+      const col = lines[declLine].indexOf('Open');
+
+      const result = provider.getReferences(
+        doc, Position.create(declLine, col + 2), ast, true, symbolTable, tokens
+      );
+
+      // Real local use must be counted
+      const realUseLine = lines.findIndex(l => l.trim() === 'Open := TRUE;');
+      expect(realUseLine).toBeGreaterThan(-1);
+      const realUseResults = result.filter(loc => loc.range.start.line === realUseLine);
+      expect(realUseResults.length).toBeGreaterThanOrEqual(1);
+
+      // Status::Open option value must NOT be counted for the local Open origin
+      const optionLine = lines.findIndex(l => l.includes('Status::Open'));
+      expect(optionLine).toBeGreaterThan(-1);
+      const optionResults = result.filter(loc => loc.range.start.line === optionLine);
+      expect(optionResults.length).toBe(0);
+    });
+
+    // B11: Quoted member property for FIELD origin — must be counted
+    it('B11: quoted member property Rec."No." is counted when origin is the member-property itself', () => {
+      const code = `OBJECT Codeunit 50000 B11Test
+{
+  CODE
+  {
+    VAR
+      Rec@1000 : Record 18;
+
+    PROCEDURE ProcA@1();
+    BEGIN
+      Rec."No." := 'x';
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lines = code.split('\n');
+
+      // Position cursor ON the "No." member-property (inside the quotes)
+      const memberLine = lines.findIndex(l => l.includes('Rec."No."'));
+      expect(memberLine).toBeGreaterThan(-1);
+      const lineText = lines[memberLine];
+      const dotIdx = lineText.indexOf('Rec."No."');
+      const quoteStart = dotIdx + 'Rec.'.length; // start of '"No."'
+      const insideQuoteCol = quoteStart + 1; // cursor inside the quotes on 'N'
+
+      const result = provider.getReferences(
+        doc, Position.create(memberLine, insideQuoteCol), ast, true, symbolTable, tokens
+      );
+
+      // The member-property must be counted (field/member origin)
+      const memberResults = result.filter(loc => loc.range.start.line === memberLine);
+      expect(memberResults.length).toBeGreaterThanOrEqual(1);
+    });
+
+    // B12: Quoted clicked-property fail-safe pin
+    it('B12: quoted cursor on Rec."No." (no same-named local) — occurrence is counted (pin)', () => {
+      // Pins quoted-cursor member-property behavior; see #791 follow-up on
+      // getWordAtPosition offset alignment.
+      const code = `OBJECT Codeunit 50000 B12Test
+{
+  CODE
+  {
+    VAR
+      Rec@1000 : Record 18;
+
+    PROCEDURE ProcA@1();
+    BEGIN
+      Rec."No." := 'ABC';
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lines = code.split('\n');
+
+      const memberLine = lines.findIndex(l => l.includes('Rec."No."'));
+      expect(memberLine).toBeGreaterThan(-1);
+      const lineText = lines[memberLine];
+      const dotIdx = lineText.indexOf('"No."');
+      const insideQuoteCol = dotIdx + 1; // cursor inside the quotes
+
+      const result = provider.getReferences(
+        doc, Position.create(memberLine, insideQuoteCol), ast, true, symbolTable, tokens
+      );
+
+      // The occurrence must be returned (not dropped)
+      expect(result.length).toBeGreaterThanOrEqual(1);
+    });
+
+    // B13: Global variable collision — same as B1 but with a global variable
+    it('B13: global variable origin: SomeRec.Employee member-property is NOT counted for a same-named global', () => {
+      // The drop is keyed on kind='variable', not local vs global scope distinction.
+      const code = `OBJECT Codeunit 50000 B13Test
+{
+  CODE
+  {
+    VAR
+      Employee@1000 : Record 18;
+      SomeRec@1001 : Record 50000;
+
+    PROCEDURE ProcA@1();
+    BEGIN
+      SomeRec.Employee := 0;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lines = code.split('\n');
+
+      const declLine = lines.findIndex(l => l.includes('Employee@1000 : Record 18'));
+      expect(declLine).toBeGreaterThan(-1);
+      const col = lines[declLine].indexOf('Employee');
+
+      const result = provider.getReferences(
+        doc, Position.create(declLine, col + 3), ast, true, symbolTable, tokens
+      );
+
+      // Declaration must be present (anti-vacuous)
+      const declResults = result.filter(loc => loc.range.start.line === declLine);
+      expect(declResults.length).toBeGreaterThanOrEqual(1);
+
+      // Member-property must NOT be counted
+      const memberLine = lines.findIndex(l => l.includes('SomeRec.Employee'));
+      expect(memberLine).toBeGreaterThan(-1);
+      const memberResults = result.filter(loc => loc.range.start.line === memberLine);
+      expect(memberResults.length).toBe(0);
+    });
+
+    // B14: Error recovery — malformed trailing-dot must not throw
+    it('B14: malformed trailing dot does not throw and returns an array', () => {
+      const code = `OBJECT Codeunit 50000 B14Test
+{
+  CODE
+  {
+    VAR
+      SomeRec@1000 : Record 50000;
+
+    PROCEDURE ProcA@1();
+    VAR
+      Employee@1000 : Record 18;
+    BEGIN
+      SomeRec.
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lines = code.split('\n');
+
+      const declLine = lines.findIndex(l => l.includes('Employee@1000 : Record 18'));
+      expect(declLine).toBeGreaterThan(-1);
+      const col = lines[declLine].indexOf('Employee');
+
+      expect(() => {
+        provider.getReferences(
+          doc, Position.create(declLine, col + 3), ast, true, symbolTable, tokens
+        );
+      }).not.toThrow();
+
+      const result = provider.getReferences(
+        doc, Position.create(declLine, col + 3), ast, true, symbolTable, tokens
+      );
+      expect(Array.isArray(result)).toBe(true);
     });
   });
 });

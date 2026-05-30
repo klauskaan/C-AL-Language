@@ -1191,4 +1191,95 @@ describe('CodeLensProvider', () => {
       expect(crossScopeInGlobal.length).toBe(0);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // #791: member-property scope-awareness for CodeLens
+  // ---------------------------------------------------------------------------
+  describe('#791 CodeLens member-property parity', () => {
+    it('C-scoped: unused local Employee with SomeRec.Employee member shows "0 references" (4-arg path)', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 C791Test
+{
+  CODE
+  {
+    VAR
+      SomeRec@1000 : Record 50000;
+
+    PROCEDURE ProcA@1();
+    VAR
+      Employee@1000 : Record 18;
+    BEGIN
+      SomeRec.Employee := 0;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      // ALL FOUR args: exercises the scope-aware path
+      const lenses = provider.getCodeLenses(doc, ast, symbolTable, tokens);
+
+      const lines = code.split('\n');
+      const employeeDeclLine = lines.findIndex(l => l.includes('Employee@1000 : Record 18'));
+      expect(employeeDeclLine).toBeGreaterThan(-1);
+
+      // Find the CodeLens for the local Employee variable
+      const employeeLens = lenses.find(
+        lens => lens.command?.arguments?.[1]?.line === employeeDeclLine
+      );
+      expect(employeeLens).toBeDefined();
+
+      // After #791 fix: SomeRec.Employee must NOT count as a reference to the local.
+      // The local is unused, so the count should be 0.
+      expect(employeeLens!.command!.title).toBe('0 references');
+    });
+
+    it('C-legacy: unused local Employee with SomeRec.Employee member shows legacy count (2-arg path)', () => {
+      // The 2-arg path (no symbolTable/tokens) must be unchanged by the #791 fix.
+      // Currently it returns 1 reference (the member-property over-count).
+      // This test pins the legacy behavior so we can verify it stays intact.
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 C791LegacyTest
+{
+  CODE
+  {
+    VAR
+      SomeRec@1000 : Record 50000;
+
+    PROCEDURE ProcA@1();
+    VAR
+      Employee@1000 : Record 18;
+    BEGIN
+      SomeRec.Employee := 0;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+      // TWO args only: legacy name-only path
+      const lenses = provider.getCodeLenses(doc, ast);
+
+      const lines = code.split('\n');
+      const employeeDeclLine = lines.findIndex(l => l.includes('Employee@1000 : Record 18'));
+      expect(employeeDeclLine).toBeGreaterThan(-1);
+
+      const employeeLens = lenses.find(
+        lens => lens.command?.arguments?.[1]?.line === employeeDeclLine
+      );
+      expect(employeeLens).toBeDefined();
+
+      // Legacy path: name-only match includes the member-property.
+      // This currently counts SomeRec.Employee as 1 reference.
+      // Pin: the legacy count must remain ≥ 1 (the member over-count is preserved on legacy path).
+      const legacyCount = parseInt(employeeLens!.command!.title!, 10);
+      expect(legacyCount).toBeGreaterThanOrEqual(1);
+    });
+  });
 });

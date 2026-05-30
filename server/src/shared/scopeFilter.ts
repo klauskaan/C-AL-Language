@@ -1,5 +1,5 @@
 import { Token } from '../lexer/tokens';
-import { SymbolTable } from '../symbols/symbolTable';
+import { Symbol, SymbolTable } from '../symbols/symbolTable';
 import { findTokenAtOffset } from './tokenSearch';
 
 export interface ScopeFilterOptions {
@@ -14,6 +14,23 @@ export interface ScopeFilterOptions {
 }
 
 /**
+ * Resolve the origin symbol's identity and kind.
+ * Returns undefined when there is no symbol table or no symbol resolves
+ * (caller then applies its permissive/fail-closed fallback).
+ * Identity basis matches rename (renameProvider.ts:362-374).
+ */
+export function resolveOrigin(
+  symbolTable: SymbolTable | undefined,
+  originName: string,
+  originOffset: number
+): { identity: number; kind: Symbol['kind'] } | undefined {
+  if (!symbolTable) return undefined;
+  const sym = symbolTable.getSymbolAtOffset(originName, originOffset);
+  if (!sym) return undefined;
+  return { identity: sym.token.startOffset, kind: sym.kind };
+}
+
+/**
  * Resolve the origin symbol's identity = its declaration-token offset.
  * Returns undefined when there is no symbol table or no symbol resolves
  * (caller then applies its permissive/fail-closed fallback).
@@ -24,8 +41,7 @@ export function resolveOriginIdentity(
   originName: string,
   originOffset: number
 ): number | undefined {
-  if (!symbolTable) return undefined;
-  return symbolTable.getSymbolAtOffset(originName, originOffset)?.token.startOffset;
+  return resolveOrigin(symbolTable, originName, originOffset)?.identity;
 }
 
 /**
