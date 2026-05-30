@@ -12,6 +12,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import {
   CALDocument,
   Identifier,
+  MemberExpression,
   ProcedureDeclaration,
   VariableDeclaration,
   ParameterDeclaration,
@@ -22,7 +23,7 @@ import { ProviderBase } from '../providers/providerBase';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { ASTWalker } from '../visitor/astWalker';
 import { SymbolTable } from '../symbols/symbolTable';
-import { resolveOriginIdentity, keepCandidate } from '../shared/scopeFilter';
+import { resolveOrigin, keepCandidate } from '../shared/scopeFilter';
 
 /**
  * Represents a reference to a symbol
@@ -32,6 +33,7 @@ interface SymbolReference {
   token: Token;
   isDefinition: boolean;
   nameLength?: number;  // Actual length of the name (for multi-token or quoted identifiers)
+  isMemberProperty?: boolean;  // True when collected as a MemberExpression property (#791)
 }
 
 /**
@@ -49,6 +51,9 @@ interface SymbolReference {
 class ReferenceCollectorVisitor implements Partial<ASTVisitor> {
   /** Collected symbol references */
   public readonly refs: SymbolReference[] = [];
+
+  /** Own walker for recursing into MemberExpression.object (#791) */
+  private readonly walker = new ASTWalker();
 
   /**
    * Visit an Identifier node - collect as a reference (not definition)
@@ -68,11 +73,30 @@ class ReferenceCollectorVisitor implements Partial<ASTVisitor> {
     });
   }
 
-  // Note: MemberExpression, ForStatement, and ForEachStatement don't need explicit visitor methods.
-  // The walker visits all children automatically:
-  // - MemberExpression.property (Identifier) is collected by visitIdentifier
-  // - ForStatement.variable (Identifier or MemberExpression) is collected by visitIdentifier
-  // - ForEachStatement.variable and .collection are collected by visitIdentifier
+  // Note: ForStatement and ForEachStatement don't need explicit visitor methods.
+  // The walker visits all children automatically.
+
+  /**
+   * Visit a MemberExpression node - walk the object side and flag the property (#791).
+   * Returns false to prevent the walker from auto-walking object+property (avoids double-collect).
+   */
+  visitMemberExpression(node: MemberExpression): false {
+    // Walk the object side so a real use like `Employee.Name` still collects `Employee`.
+    this.walker.walk(node.object, this);
+    // Collect the property, flagged so the scope gate can drop it for a local/parameter origin (#791).
+    const prop = node.property;
+    if (prop && prop.startToken) {
+      const nameLength = prop.isQuoted ? prop.name.length + 2 : prop.name.length;
+      this.refs.push({
+        name: prop.name,
+        token: prop.startToken,
+        isDefinition: false,
+        nameLength,
+        isMemberProperty: true
+      });
+    }
+    return false; // The walker honors `false` (astWalker.ts:850-860) to skip auto-walking object+property.
+  }
 
   /**
    * Visit a VariableDeclaration node - collect as a definition
@@ -261,15 +285,24 @@ export class ReferenceProvider extends ProviderBase {
 
     let scopedRefs = matchingRefs;
     if (symbolTable && tokens) {
-      const originIdentity = resolveOriginIdentity(symbolTable, wordInfo.word, wordInfo.start);
-      if (originIdentity !== undefined) {
-        scopedRefs = matchingRefs.filter(ref =>
-          keepCandidate(ref.token.startOffset, originIdentity, symbolTable, tokens, { keepUnresolved: true }));
+      const origin = resolveOrigin(symbolTable, wordInfo.word, wordInfo.start);
+      if (origin !== undefined) {
+        // Is the user's cursor itself ON a member-property occurrence? Then do NOT apply the
+        // local-drop (the clicked occurrence and its siblings must survive). (#791 dual case)
+        const originIsMemberProperty = matchingRefs.some(
+          ref => ref.token.startOffset === wordInfo.start && ref.isMemberProperty === true
+        );
+        const originIsLocal =
+          (origin.kind === 'variable' || origin.kind === 'parameter') && !originIsMemberProperty;
+        scopedRefs = matchingRefs.filter(ref => {
+          // A member-property is never a reference to a variable/parameter (#791).
+          if (originIsLocal && ref.isMemberProperty) return false;
+          return keepCandidate(ref.token.startOffset, origin.identity, symbolTable, tokens, { keepUnresolved: true });
+        });
       }
-      // else: the origin did not resolve to an in-scope symbol (e.g. a member-accessed
-      // field or cross-object name). Permissive by design: keep all name matches.
+      // else: origin did not resolve — permissive by design (#786). Do NOT harden this branch.
       // Failing closed here would DROP legitimate references and be a WORSE regression
-      // than the residual over-count. Do NOT "harden" this branch. (#786)
+      // than the residual over-count.
     }
 
     // Convert to locations
