@@ -5,9 +5,10 @@
 
 import { CompletionProvider } from '../completionProvider';
 import { BUILTIN_FUNCTIONS, RECORD_METHODS } from '../builtins';
+import { ACTION_TYPES } from '../actionCompletions';
 import { SymbolTable } from '../../symbols/symbolTable';
 import { CompletionItemKind, CompletionItemTag, Position } from 'vscode-languageserver';
-import { createMockToken, createDocument } from '../../__tests__/testUtils';
+import { createMockToken, createDocument, parseAndBuildSymbols } from '../../__tests__/testUtils';
 
 describe('CompletionProvider', () => {
   let provider: CompletionProvider;
@@ -163,7 +164,7 @@ describe('CompletionProvider', () => {
 
       const procItem = items.find(i => i.label === 'MyProcedure');
       expect(procItem).toBeDefined();
-      expect(procItem?.kind).toBe(CompletionItemKind.Function);
+      expect(procItem?.kind).toBe(CompletionItemKind.Method);
     });
 
     it('should include action symbols with Event kind', () => {
@@ -576,6 +577,494 @@ describe('CompletionProvider', () => {
 
       // 100 completions should take less than 500ms
       expect(elapsed).toBeLessThan(500);
+    });
+  });
+
+  describe('Visual Polish — Icons (Issue #783)', () => {
+    it('should use Method kind for procedure symbols', () => {
+      const doc = createDocument('My');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'MyProcedure', kind: 'procedure', token: createMockToken() });
+
+      const items = provider.getCompletions(doc, Position.create(0, 2), undefined, symbolTable);
+
+      const procItem = items.find(i => i.label === 'MyProcedure');
+      expect(procItem).toBeDefined();
+      expect(procItem?.kind).toBe(CompletionItemKind.Method);
+    });
+
+    it('should use Function kind for MESSAGE builtin (regression guard)', () => {
+      const doc = createDocument('MES');
+      const items = provider.getCompletions(doc, Position.create(0, 3));
+
+      const messageItem = items.find(i => i.label === 'MESSAGE');
+      expect(messageItem).toBeDefined();
+      expect(messageItem?.kind).toBe(CompletionItemKind.Function);
+    });
+
+    it('should use Method kind for dot-completion record method GET', () => {
+      const doc = createDocument('Rec.');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const items = provider.getCompletions(doc, Position.create(0, 4), undefined, symbolTable, '.');
+
+      const getItem = items.find(i => i.label === 'GET');
+      expect(getItem).toBeDefined();
+      expect(getItem?.kind).toBe(CompletionItemKind.Method);
+    });
+  });
+
+  describe('Visual Polish — Rich Detail from resolvedType (Issue #783)', () => {
+    it('should show Code[20] in detail and labelDetails.detail for a parsed Code[20] variable', () => {
+      // parseAndBuildSymbols populates resolvedType for variables declared in real C/AL source.
+      // Cursor is placed inside the BEGIN...END of the procedure so DocNo is in scope.
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 TestCU
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      DocNo@1000 : Code[20];
+    BEGIN
+
+    END;
+  }
+}`;
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+
+      // Line 8 = blank line inside BEGIN...END
+      const items = provider.getCompletions(doc, Position.create(8, 0), ast, symbolTable);
+
+      const docNoItem = items.find(i => i.label === 'DocNo');
+      expect(docNoItem).toBeDefined();
+      expect(docNoItem?.detail).toBe('Code[20]');
+      expect(docNoItem?.labelDetails?.detail).toBe(': Code[20]');
+    });
+
+    it('should show Option in detail for a parsed Option variable (resolvedType populated)', () => {
+      // In C/AL, Option local variables are declared as: Status@1000 : Option;
+      // resolvedType is populated as OptionType { kind: 'option', values: [] }
+      // The completion provider intentionally calls typeToString NON-verbose so an
+      // Option renders as a clean 'Option' inline (C#-style: show the type, not its
+      // members), rather than a long 'Option (A, B, C, ...)' value list that would
+      // clutter the completion row.
+      // Cursor is placed inside the BEGIN...END so Status is in scope.
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 TestCU
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Status@1000 : Option;
+    BEGIN
+
+    END;
+  }
+}`;
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+
+      // Line 8 = blank line inside BEGIN...END
+      const items = provider.getCompletions(doc, Position.create(8, 0), ast, symbolTable);
+
+      const statusItem = items.find(i => i.label === 'Status');
+      expect(statusItem).toBeDefined();
+      // resolvedType is set → detail comes from typeToString (not symbol.type)
+      // For an Option type, typeToString returns 'Option' (no values = no parens)
+      expect(statusItem?.detail).toBeDefined();
+      expect(statusItem?.labelDetails?.detail).toBe(': Option');
+    });
+
+    it('should show Record 18 in labelDetails.detail for a parsed Record variable', () => {
+      // Cursor is placed inside the BEGIN...END so Customer is in scope.
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 TestCU
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Customer@1000 : Record 18;
+    BEGIN
+
+    END;
+  }
+}`;
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+
+      // Line 8 = blank line inside BEGIN...END
+      const items = provider.getCompletions(doc, Position.create(8, 0), ast, symbolTable);
+
+      const custItem = items.find(i => i.label === 'Customer');
+      expect(custItem).toBeDefined();
+      expect(custItem?.labelDetails?.detail).toBe(': Record 18');
+    });
+
+    it('should fall back to symbol.type when resolvedType is absent (hand-built symbol)', () => {
+      // Hand-built symbol: no resolvedType, only type string
+      const doc = createDocument('');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'MyVar', kind: 'variable', token: createMockToken(), type: 'Integer' });
+
+      const items = provider.getCompletions(doc, Position.create(0, 0), undefined, symbolTable);
+
+      const varItem = items.find(i => i.label === 'MyVar');
+      expect(varItem?.detail).toBe('Integer');
+    });
+
+    it('should show "procedure" in detail for a user procedure symbol (no labelDetails — no double-kind)', () => {
+      const doc = createDocument('');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'CalcAmount', kind: 'procedure', token: createMockToken() });
+
+      const items = provider.getCompletions(doc, Position.create(0, 0), undefined, symbolTable);
+
+      const procItem = items.find(i => i.label === 'CalcAmount');
+      expect(procItem).toBeDefined();
+      expect(procItem?.detail).toBe('procedure');
+      expect(procItem?.labelDetails).toBeUndefined();
+    });
+  });
+
+  describe('Visual Polish — sortText Ordering (Issue #783)', () => {
+    it('should prefix local variable sortText with "0", builtin with "2", keyword with "3"', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 TestCU
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      MyVar@1000 : Integer;
+    BEGIN
+
+    END;
+  }
+}`;
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+
+      // Position inside the BEGIN...END body so MyVar is in scope (line 8 = blank line)
+      const items = provider.getCompletions(doc, Position.create(8, 0), ast, symbolTable);
+
+      const varItem = items.find(i => i.label === 'MyVar');
+      const messageItem = items.find(i => i.label === 'MESSAGE');
+      const ifItem = items.find(i => i.label === 'IF');
+
+      expect(varItem?.sortText).toBeDefined();
+      expect(messageItem?.sortText).toBeDefined();
+      expect(ifItem?.sortText).toBeDefined();
+
+      // String comparison: '0...' < '2...' < '3...'
+      expect(varItem!.sortText!.startsWith('0')).toBe(true);
+      expect(messageItem!.sortText!.startsWith('2')).toBe(true);
+      expect(ifItem!.sortText!.startsWith('3')).toBe(true);
+      expect(varItem!.sortText! < messageItem!.sortText!).toBe(true);
+      expect(messageItem!.sortText! < ifItem!.sortText!).toBe(true);
+    });
+
+    it('should sort builtins case-insensitively within bucket (ERROR < MESSAGE)', () => {
+      const doc = createDocument('');
+      const items = provider.getCompletions(doc, Position.create(0, 0));
+
+      const errorItem = items.find(i => i.label === 'ERROR');
+      const messageItem = items.find(i => i.label === 'MESSAGE');
+
+      expect(errorItem?.sortText).toBeDefined();
+      expect(messageItem?.sortText).toBeDefined();
+      // Both in bucket 2; lowercase 'error' < 'message'
+      expect(errorItem!.sortText).toBe('2error');
+      expect(messageItem!.sortText).toBe('2message');
+      expect(errorItem!.sortText! < messageItem!.sortText!).toBe(true);
+    });
+
+    it('should assign bucket "1" to both dot field and dot GET, sorted alphabetically together', () => {
+      const doc = createDocument('Rec.');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const ast = {
+        object: {
+          fields: {
+            fields: [
+              { fieldName: 'Description', dataType: { typeName: 'Text50' } }
+            ]
+          }
+        }
+      };
+
+      const items = provider.getCompletions(doc, Position.create(0, 4), ast as any, symbolTable, '.');
+
+      const descItem = items.find(i => i.label === 'Description');
+      const getItem = items.find(i => i.label === 'GET');
+
+      expect(descItem?.sortText).toBeDefined();
+      expect(getItem?.sortText).toBeDefined();
+      expect(descItem!.sortText!.startsWith('1')).toBe(true);
+      expect(getItem!.sortText!.startsWith('1')).toBe(true);
+      // Alphabetical within bucket: 'description' < 'get'
+      expect(descItem!.sortText! < getItem!.sortText!).toBe(true);
+    });
+
+    it('should use unquoted lowercase field name for spaced-field sortText', () => {
+      const doc = createDocument('Rec.');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const ast = {
+        object: {
+          fields: {
+            fields: [
+              { fieldName: 'Description', dataType: { typeName: 'Text50' } },
+              { fieldName: 'Document Type', dataType: { typeName: 'Option' } }
+            ]
+          }
+        }
+      };
+
+      const items = provider.getCompletions(doc, Position.create(0, 4), ast as any, symbolTable, '.');
+
+      const docTypeItem = items.find(i => i.label === 'Document Type');
+      const descItem = items.find(i => i.label === 'Description');
+
+      expect(docTypeItem?.sortText).toBe('1document type');
+      expect(descItem?.sortText).toBe('1description');
+      // Alphabetical: 'description' < 'document type'
+      expect(descItem!.sortText! < docTypeItem!.sortText!).toBe(true);
+    });
+
+    it('should sort local variable before procedure before MESSAGE end-to-end', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 TestCU
+{
+  CODE
+  {
+    PROCEDURE MyProc@1();
+    VAR
+      LocalVar@1000 : Integer;
+    BEGIN
+
+    END;
+  }
+}`;
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+
+      // Position the cursor inside the BEGIN...END of MyProc so that
+      // LocalVar is in scope (line 8 = the blank line between BEGIN and END)
+      const items = provider.getCompletions(doc, Position.create(8, 0), ast, symbolTable);
+
+      const localVarItem = items.find(i => i.label === 'LocalVar');
+      const myProcItem = items.find(i => i.label === 'MyProc');
+      const messageItem = items.find(i => i.label === 'MESSAGE');
+
+      expect(localVarItem?.sortText).toBeDefined();
+      expect(myProcItem?.sortText).toBeDefined();
+      expect(messageItem?.sortText).toBeDefined();
+
+      // Sort the three items by sortText and assert ordering
+      const sorted = [localVarItem!, myProcItem!, messageItem!]
+        .sort((a, b) => a.sortText!.localeCompare(b.sortText!));
+
+      expect(sorted[0].label).toBe('LocalVar');
+      expect(sorted[1].label).toBe('MyProc');
+      expect(sorted[2].label).toBe('MESSAGE');
+    });
+  });
+
+  describe('Visual Polish — labelDetails (Issue #783)', () => {
+    it('should add labelDetails.description with category for keyword IF', () => {
+      const doc = createDocument('');
+      const items = provider.getCompletions(doc, Position.create(0, 0));
+
+      const ifItem = items.find(i => i.label === 'IF');
+      expect(ifItem).toBeDefined();
+      // IF is Control Flow — category is 'Control Flow'
+      expect(ifItem?.labelDetails?.description).toBe('Control Flow');
+    });
+
+    it('should add labelDetails.detail and description for MESSAGE builtin', () => {
+      const doc = createDocument('MES');
+      const items = provider.getCompletions(doc, Position.create(0, 3));
+
+      const messageItem = items.find(i => i.label === 'MESSAGE');
+      expect(messageItem).toBeDefined();
+      // Signature is param-only, assigned directly from func.signature
+      expect(messageItem?.labelDetails?.detail).toBe('(String [, Value1, ...])');
+      expect(messageItem?.labelDetails?.description).toBe('builtin');
+    });
+
+    it('should add labelDetails.detail and description for dot GET record method', () => {
+      const doc = createDocument('Rec.');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const items = provider.getCompletions(doc, Position.create(0, 4), undefined, symbolTable, '.');
+
+      const getItem = items.find(i => i.label === 'GET');
+      expect(getItem).toBeDefined();
+      expect(getItem?.labelDetails?.detail).toBe('([Value1, Value2, ...]): Boolean');
+      expect(getItem?.labelDetails?.description).toBe('record method');
+    });
+
+    it('should not throw and should set labelDetails.detail to empty string for DIALOG (empty signature)', () => {
+      const doc = createDocument('DIAL');
+      expect(() => {
+        provider.getCompletions(doc, Position.create(0, 4));
+      }).not.toThrow();
+
+      const items = provider.getCompletions(doc, Position.create(0, 4));
+      const dialogItem = items.find(i => i.label === 'DIALOG');
+      expect(dialogItem).toBeDefined();
+      expect(dialogItem?.labelDetails?.detail).toBe('');
+      expect(dialogItem?.labelDetails?.description).toBe('builtin');
+    });
+  });
+
+  describe('Visual Polish — sortText Completeness (Issue #783)', () => {
+    it('should set sortText on every item for a populated top-level document', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 TestCU
+{
+  CODE
+  {
+    PROCEDURE TestProc@1();
+    VAR
+      Amt@1000 : Decimal;
+    BEGIN
+
+    END;
+  }
+}`;
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const doc = createDocument(code);
+
+      // Line 8 = blank line inside BEGIN...END (Amt in scope; TestProc at root)
+      const items = provider.getCompletions(doc, Position.create(8, 0), ast, symbolTable);
+
+      expect(items.length).toBeGreaterThan(0);
+      const missingSort = items.filter(i => i.sortText === undefined);
+      expect(missingSort).toHaveLength(0);
+    });
+
+    it('should set sortText on every item in a dot completion context', () => {
+      const doc = createDocument('Rec.');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const ast = {
+        object: {
+          fields: {
+            fields: [
+              { fieldName: 'No.', dataType: { typeName: 'Code20' } }
+            ]
+          }
+        }
+      };
+
+      const items = provider.getCompletions(doc, Position.create(0, 4), ast as any, symbolTable, '.');
+
+      expect(items.length).toBeGreaterThan(0);
+      const missingSort = items.filter(i => i.sortText === undefined);
+      expect(missingSort).toHaveLength(0);
+    });
+  });
+
+  describe('Visual Polish — Mutation Hazard Guard (Issue #783)', () => {
+    it('should not mutate ACTION_TYPES length and should produce stable keyword sortText across two calls', () => {
+      const initialLength = ACTION_TYPES.length;
+
+      const { ast } = parseAndBuildSymbols(`OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  ACTIONS
+  {
+
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`);
+      const doc = createDocument('');
+
+      // First call (result unused — exercises mutation hazard only)
+      provider.getCompletions(doc, Position.create(0, 0), ast);
+      // Second call
+      const items2 = provider.getCompletions(doc, Position.create(0, 0), ast);
+
+      // ACTION_TYPES length must be unchanged after completions are served
+      expect(ACTION_TYPES.length).toBe(initialLength);
+
+      // Keyword IF sortText must be exactly '3if' after both calls
+      const ifItem = items2.find(i => i.label === 'IF');
+      expect(ifItem?.sortText).toBe('3if');
+    });
+  });
+
+  describe('Visual Polish — insertText Regression Guard (Issue #783)', () => {
+    it('should preserve quoted insertText for spaced field names', () => {
+      const doc = createDocument('Rec.');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const ast = {
+        object: {
+          fields: {
+            fields: [
+              { fieldName: 'Line No.', dataType: { typeName: 'Integer' } }
+            ]
+          }
+        }
+      };
+
+      const items = provider.getCompletions(doc, Position.create(0, 4), ast as any, symbolTable, '.');
+
+      const lineNoItem = items.find(i => i.label === 'Line No.');
+      expect(lineNoItem?.insertText).toBe('"Line No."');
+    });
+
+    it('should use bare name (no parens) as insertText for a procedure symbol', () => {
+      const doc = createDocument('');
+
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'CalcAmount', kind: 'procedure', token: createMockToken() });
+
+      const items = provider.getCompletions(doc, Position.create(0, 0), undefined, symbolTable);
+
+      const procItem = items.find(i => i.label === 'CalcAmount');
+      expect(procItem?.insertText).toBe('CalcAmount');
+    });
+
+    it('should use bare name (no parens) as insertText for MESSAGE builtin', () => {
+      const doc = createDocument('MES');
+      const items = provider.getCompletions(doc, Position.create(0, 3));
+
+      const messageItem = items.find(i => i.label === 'MESSAGE');
+      expect(messageItem?.insertText).toBe('MESSAGE');
     });
   });
 });

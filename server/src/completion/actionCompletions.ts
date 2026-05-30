@@ -7,6 +7,7 @@
  */
 
 import { CompletionItem, CompletionItemKind } from 'vscode-languageserver';
+import { makeSortText, SortBucket } from './sortText';
 
 /**
  * Action type completion items
@@ -329,3 +330,20 @@ export const ACTION_PROPERTY_VALUES = new Map<string, CompletionItem[]>([
     }
   ]]
 ]);
+
+/**
+ * Stamp a bucketed sortText onto every static action completion item once at module
+ * load, so action completions never sort by bare label and interleave unpredictably
+ * with bucketed items. Idempotent (same label → same value), so re-stamping the
+ * shared BOOLEAN_VALUES array via multiple map keys is safe.
+ */
+function stampActionSortText(items: CompletionItem[]): void {
+  for (const item of items) {
+    item.sortText = makeSortText(SortBucket.Action, item.label);
+  }
+}
+stampActionSortText(ACTION_TYPES);
+stampActionSortText(ACTION_PROPERTIES);
+for (const values of ACTION_PROPERTY_VALUES.values()) {
+  stampActionSortText(values);
+}
