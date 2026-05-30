@@ -8,6 +8,7 @@ import { CompletionItemKind, Position } from 'vscode-languageserver';
 import { createDocument } from '../../__tests__/testUtils';
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../../parser/parser';
+import { ACTION_TYPES } from '../actionCompletions';
 
 describe('Phase 5: Action Completion', () => {
   let provider: CompletionProvider;
@@ -629,6 +630,91 @@ describe('Phase 5: Action Completion', () => {
       expect(() => {
         provider.getCompletions(doc, Position.create(0, 0), ast);
       }).not.toThrow();
+    });
+  });
+
+  describe('Visual Polish — Action sortText Completeness (Issue #783)', () => {
+    it('should set sortText on every action completion item', () => {
+      const { doc, ast } = parseText(`OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  ACTIONS
+  {
+
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`);
+
+      // Cursor inside ACTIONS section
+      const items = provider.getCompletions(doc, Position.create(7, 4), ast);
+
+      // Filter to items that would come from action completions
+      const actionItems = items.filter(i =>
+        i.label === 'ActionContainer' || i.label === 'ActionGroup' ||
+        i.label === 'Action' || i.label === 'Separator' ||
+        i.label === 'CaptionML' || i.label === 'Image' || i.label === 'Promoted'
+      );
+      expect(actionItems.length).toBeGreaterThan(0);
+      const missingSort = actionItems.filter(i => i.sortText === undefined);
+      expect(missingSort).toHaveLength(0);
+    });
+
+    it('should assign action items a sortText starting with "4"', () => {
+      const { doc, ast } = parseText(`OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  ACTIONS
+  {
+
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`);
+
+      const items = provider.getCompletions(doc, Position.create(7, 4), ast);
+
+      const actionContainerItem = items.find(i => i.label === 'ActionContainer');
+      expect(actionContainerItem).toBeDefined();
+      expect(actionContainerItem?.sortText).toBeDefined();
+      expect(actionContainerItem?.sortText?.startsWith('4')).toBe(true);
+    });
+
+    it('should not mutate ACTION_TYPES across multiple getCompletions calls', () => {
+      const initialLength = ACTION_TYPES.length;
+
+      const { doc, ast } = parseText(`OBJECT Page 50000 TestPage
+{
+  PROPERTIES
+  {
+  }
+  ACTIONS
+  {
+
+  }
+  CODE
+  {
+    BEGIN
+    END.
+  }
+}`);
+
+      // Call getCompletions multiple times
+      provider.getCompletions(doc, Position.create(7, 4), ast);
+      provider.getCompletions(doc, Position.create(7, 4), ast);
+      provider.getCompletions(doc, Position.create(7, 4), ast);
+
+      expect(ACTION_TYPES.length).toBe(initialLength);
     });
   });
 });

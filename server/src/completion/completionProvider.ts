@@ -22,6 +22,8 @@ import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from './builtins';
 import { ProviderBase } from '../providers/providerBase';
 import { getMetadataByTokenType } from '../shared/keywordMetadata';
 import { ACTION_TYPES, ACTION_PROPERTIES, ACTION_PROPERTY_VALUES } from './actionCompletions';
+import { typeToString } from '../types/typeUtils';
+import { makeSortText, SortBucket } from './sortText';
 
 /**
  * Map symbol kind to completion item kind
@@ -35,9 +37,9 @@ function mapSymbolKind(kind: Symbol['kind']): CompletionItemKind {
     case 'field':
       return CompletionItemKind.Field;
     case 'procedure':
-      return CompletionItemKind.Function;
+      return CompletionItemKind.Method;
     case 'function':
-      return CompletionItemKind.Function;
+      return CompletionItemKind.Method; // union allows it; no site emits it (harmless)
     case 'action':
       return CompletionItemKind.Event;
     default: {
@@ -50,13 +52,24 @@ function mapSymbolKind(kind: Symbol['kind']): CompletionItemKind {
 /**
  * Build completion item from builtin function
  */
-function buildBuiltinItem(func: BuiltinFunction): CompletionItem {
+function buildBuiltinItem(
+  func: BuiltinFunction,
+  kind: CompletionItemKind,
+  sortText: string,
+): CompletionItem {
   const item: CompletionItem = {
     label: func.name,
-    kind: CompletionItemKind.Function,
-    detail: func.signature,
+    kind,
+    detail: func.signature,           // UNCHANGED — param-only string, shown in the panel
     documentation: func.documentation,
-    insertText: func.name
+    insertText: func.name,            // UNCHANGED — no parens/snippet
+    sortText,
+    labelDetails: {
+      // Signatures are param-only ("(String [, Value1, ...])"), so assign directly.
+      // The label is the name, so the row reads "MESSAGE(String [, Value1, ...])".
+      detail: func.signature,
+      description: kind === CompletionItemKind.Method ? 'record method' : 'builtin',
+    },
   };
 
   // Add deprecation indicator if the function is deprecated
@@ -127,7 +140,9 @@ export class CompletionProvider extends ProviderBase {
         kind: metadata?.completionKind || CompletionItemKind.Keyword,
         insertText: displayName,
         detail: metadata?.category,
-        documentation
+        documentation,
+        sortText: makeSortText(SortBucket.Keyword, displayName),
+        ...(metadata?.category ? { labelDetails: { description: metadata.category } } : {}),
       });
     }
 
@@ -139,7 +154,9 @@ export class CompletionProvider extends ProviderBase {
         kind: CompletionItemKind.TypeParameter,
         insertText: 'CODE',
         detail: codeTypeMetadata.category,
-        documentation: 'CODE data type for alphanumeric strings with fixed or variable length'
+        documentation: 'CODE data type for alphanumeric strings with fixed or variable length',
+        sortText: makeSortText(SortBucket.Keyword, 'CODE'),
+        labelDetails: { description: codeTypeMetadata.category },
       });
     }
   }
@@ -202,12 +219,26 @@ export class CompletionProvider extends ProviderBase {
 
       for (const symbol of visibleSymbols) {
         if (!prefix || symbol.name.toLowerCase().startsWith(prefix)) {
-          items.push({
+          const typeStr = symbol.resolvedType
+            ? typeToString(symbol.resolvedType)
+            : symbol.type;
+          const bucket = (symbol.kind === 'variable' || symbol.kind === 'parameter')
+            ? SortBucket.Local
+            : SortBucket.Member; // procedure, field, action
+          const item: CompletionItem = {
             label: symbol.name,
             kind: mapSymbolKind(symbol.kind),
-            detail: symbol.type || symbol.kind,
-            insertText: symbol.name
-          });
+            insertText: symbol.name,                      // UNCHANGED
+            sortText: makeSortText(bucket, symbol.name),
+          };
+          if (typeStr) {
+            item.labelDetails = { detail: ': ' + typeStr }; // C#-like inline greyed type
+            item.detail = typeStr;                           // panel
+          } else {
+            item.detail = symbol.kind;                       // procedures/actions: panel only; icon conveys kind
+            // NO labelDetails → kind word never appears twice, never on the row
+          }
+          items.push(item);
         }
       }
     }
@@ -215,7 +246,7 @@ export class CompletionProvider extends ProviderBase {
     // Phase 3: Built-in functions
     for (const func of BUILTIN_FUNCTIONS) {
       if (!prefix || func.name.toLowerCase().startsWith(prefix)) {
-        items.push(buildBuiltinItem(func));
+        items.push(buildBuiltinItem(func, CompletionItemKind.Function, makeSortText(SortBucket.Builtin, func.name)));
       }
     }
 
@@ -280,7 +311,7 @@ export class CompletionProvider extends ProviderBase {
           // It's a Record type - show Record methods
           for (const method of RECORD_METHODS) {
             if (!prefix || method.name.toLowerCase().startsWith(prefix)) {
-              items.push(buildBuiltinItem(method));
+              items.push(buildBuiltinItem(method, CompletionItemKind.Method, makeSortText(SortBucket.Member, method.name)));
             }
           }
 
@@ -295,7 +326,9 @@ export class CompletionProvider extends ProviderBase {
                   label: fieldName,
                   kind: CompletionItemKind.Field,
                   detail: field.dataType.typeName,
-                  insertText: insertText
+                  insertText: insertText,
+                  sortText: makeSortText(SortBucket.Member, fieldName),
+                  labelDetails: { detail: ': ' + field.dataType.typeName },
                 });
               }
             }
@@ -313,7 +346,7 @@ export class CompletionProvider extends ProviderBase {
     if (varName) {
       for (const method of RECORD_METHODS) {
         if (!prefix || method.name.toLowerCase().startsWith(prefix)) {
-          items.push(buildBuiltinItem(method));
+          items.push(buildBuiltinItem(method, CompletionItemKind.Method, makeSortText(SortBucket.Member, method.name)));
         }
       }
     }
