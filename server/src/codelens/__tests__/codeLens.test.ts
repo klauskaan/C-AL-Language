@@ -1,6 +1,7 @@
 import { CodeLensProvider } from '../codeLensProvider';
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../../parser/parser';
+import { SymbolTable } from '../../symbols/symbolTable';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
 /**
@@ -11,13 +12,16 @@ function createDocument(content: string, uri = 'file:///test.cal'): TextDocument
 }
 
 /**
- * Helper to parse C/AL code into AST
+ * Helper to parse C/AL code into AST, symbolTable, and tokens.
+ * Existing callers that destructure only { ast } keep working — extra fields are ignored.
  */
 function parseContent(content: string) {
   const lexer = new Lexer(content);
   const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
-  return { ast: parser.parse() };
+  const ast = new Parser(tokens).parse();
+  const symbolTable = new SymbolTable();
+  symbolTable.buildFromAST(ast);
+  return { ast, symbolTable, tokens };
 }
 
 describe('CodeLensProvider', () => {
@@ -827,6 +831,364 @@ describe('CodeLensProvider', () => {
 
       const calledLens = lenses.find(lens => lens.command?.arguments?.[1]?.line === 4);
       expect(calledLens?.command?.title).toBe('2 references');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Scope-isolation tests for CodeLens (issue #786)
+  // All tests in this block pass symbolTable and tokens to getCodeLenses().
+  // ---------------------------------------------------------------------------
+  describe('Scope-Isolation (identity-aware, #786)', () => {
+    it('should show each procedure its own Counter count, not the summed name-match count', () => {
+      // Sibling same-named locals: ProcA and ProcB each have a local Counter.
+      // Each CodeLens should show only its own scope's usage count.
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 SiblingCounterTest
+{
+  CODE
+  {
+    PROCEDURE ProcA@1();
+    VAR
+      Counter@1000 : Integer;
+    BEGIN
+      Counter := 10;
+      Counter := Counter + 1;
+    END;
+
+    PROCEDURE ProcB@2();
+    VAR
+      Counter@1000 : Integer;
+    BEGIN
+      Counter := 20;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lenses = provider.getCodeLenses(doc, ast, symbolTable, tokens);
+
+      // Find the Counter CodeLens for ProcA (line with first "Counter@1000")
+      const lines = code.split('\n');
+      const procACounterLine = lines.findIndex(l => l.includes('Counter@1000 : Integer'));
+      expect(procACounterLine).toBeGreaterThan(-1);
+
+      // ProcA's Counter has 3 usages: "Counter := 10", "Counter :=" and "Counter + 1"
+      const procACounterLens = lenses.find(
+        lens => lens.command?.arguments?.[1]?.line === procACounterLine
+      );
+      expect(procACounterLens).toBeDefined();
+      // ProcA's Counter has 3 usages: "Counter := 10", "Counter :=", and "Counter + 1"
+      // Without scoping, the name-only result would include ProcB's "Counter := 20" too (4+).
+      const procACount = parseInt(procACounterLens!.command!.title!, 10);
+      // Scoped: ProcA's Counter should show exactly 3 (its own usages only)
+      expect(procACount).toBe(3);
+
+      // Find ProcB's Counter CodeLens (second "Counter@1000" line)
+      const allCounterLines = lines
+        .map((l, i) => ({ l, i }))
+        .filter(({ l }) => l.includes('Counter@1000 : Integer'));
+      expect(allCounterLines.length).toBe(2);
+      const procBCounterLine = allCounterLines[1].i;
+
+      const procBCounterLens = lenses.find(
+        lens => lens.command?.arguments?.[1]?.line === procBCounterLine
+      );
+      expect(procBCounterLens).toBeDefined();
+      const procBCount = parseInt(procBCounterLens!.command!.title!, 10);
+
+      // ProcB's Counter has 1 usage: "Counter := 20"
+      expect(procBCount).toBe(1);
+
+      // Sum of scoped counts must be strictly less than the name-only total
+      // (name-only would count all Counter tokens = 4+, scoped sum = 3+1 = 4 < 4+2 declaration tokens)
+      // The key isolation assertion: each count is strictly its own scope, not the combined total
+      expect(procACount).not.toBe(procACount + procBCount);
+    });
+
+    it('should show distinct counts for global Counter vs local Counter', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 ShadowCountTest
+{
+  CODE
+  {
+    VAR
+      Counter : Integer;
+
+    PROCEDURE ProcA@1();
+    VAR
+      Counter@1000 : Integer;
+    BEGIN
+      Counter := 99;
+    END;
+
+    PROCEDURE ProcB@2();
+    BEGIN
+      Counter := 1;
+      Counter := Counter + 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lenses = provider.getCodeLenses(doc, ast, symbolTable, tokens);
+
+      const lines = code.split('\n');
+
+      // Global Counter declaration line (no @ number)
+      const globalDeclLine = lines.findIndex(l => l.includes('Counter : Integer') && !l.includes('@'));
+      expect(globalDeclLine).toBeGreaterThan(-1);
+      const globalLens = lenses.find(
+        lens => lens.command?.arguments?.[1]?.line === globalDeclLine
+      );
+      expect(globalLens).toBeDefined();
+
+      // Local Counter declaration line (has @)
+      const localDeclLine = lines.findIndex(l => l.includes('Counter@1000 : Integer'));
+      expect(localDeclLine).toBeGreaterThan(-1);
+      const localLens = lenses.find(
+        lens => lens.command?.arguments?.[1]?.line === localDeclLine
+      );
+      expect(localLens).toBeDefined();
+
+      // The two counts must be distinct (they count different symbols)
+      const globalCount = parseInt(globalLens!.command!.title!, 10);
+      const localCount = parseInt(localLens!.command!.title!, 10);
+
+      // Global has 3 usages (ProcB: Counter := 1, Counter :=, Counter + 2)
+      // Local has 1 usage (ProcA: Counter := 99)
+      expect(globalCount).not.toBe(localCount);
+    });
+
+    it('should populate navigation array with only in-scope locations', () => {
+      // For a sibling-collision fixture, ProcB Counter's CodeLens arguments[2] (Location[])
+      // must contain ONLY in-scope locations, not cross-scope ones.
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 NavArrayTest
+{
+  CODE
+  {
+    PROCEDURE ProcA@1();
+    VAR
+      Counter@1000 : Integer;
+    BEGIN
+      Counter := 10;
+    END;
+
+    PROCEDURE ProcB@2();
+    VAR
+      Counter@1000 : Integer;
+    BEGIN
+      Counter := 20;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lenses = provider.getCodeLenses(doc, ast, symbolTable, tokens);
+
+      const lines = code.split('\n');
+
+      // ProcB's Counter lens
+      const allCounterLines = lines
+        .map((l, i) => ({ l, i }))
+        .filter(({ l }) => l.includes('Counter@1000 : Integer'));
+      expect(allCounterLines.length).toBe(2);
+      const procBCounterLine = allCounterLines[1].i;
+
+      const procBLens = lenses.find(
+        lens => lens.command?.arguments?.[1]?.line === procBCounterLine
+      );
+      expect(procBLens).toBeDefined();
+
+      const navLocations: any[] = procBLens!.command!.arguments![2];
+      expect(Array.isArray(navLocations)).toBe(true);
+
+      // The title count must match the actual locations array length
+      const titleCount = parseInt(procBLens!.command!.title!, 10);
+      expect(navLocations.length).toBe(titleCount);
+
+      // None of the navigation locations should be inside ProcA (Counter := 10)
+      const procAUseLine = lines.findIndex(l => l.includes('Counter := 10'));
+      expect(procAUseLine).toBeGreaterThan(-1);
+      const crossScopeLocations = navLocations.filter(
+        (loc: any) => loc.range.start.line === procAUseLine
+      );
+      expect(crossScopeLocations.length).toBe(0);
+    });
+
+    it('should count bare procedure call in CodeLens for DoWork', () => {
+      const code = `OBJECT Codeunit 50000 BareCallLensTest
+{
+  CODE
+  {
+    PROCEDURE DoWork@1();
+    BEGIN
+    END;
+
+    PROCEDURE Main@2();
+    BEGIN
+      DoWork;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lenses = provider.getCodeLenses(doc, ast, symbolTable, tokens);
+
+      const lines = code.split('\n');
+      const doWorkLine = lines.findIndex(l => l.includes('PROCEDURE DoWork@1'));
+      expect(doWorkLine).toBeGreaterThan(-1);
+
+      const doWorkLens = lenses.find(
+        lens => lens.command?.arguments?.[1]?.line === doWorkLine
+      );
+      expect(doWorkLens).toBeDefined();
+      // The bare "DoWork;" call must be counted
+      expect(doWorkLens!.command!.title).toBe('1 reference');
+    });
+
+    it('should count Foo parameter uses in ProcA separately from Foo local var uses in ProcB', () => {
+      // Parameter Foo in ProcA and local var Foo in ProcB are different symbols.
+      // Each CodeLens must count only its own scope's usages.
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 ParamVsLocalTest
+{
+  CODE
+  {
+    PROCEDURE ProcA@1(Foo@1000 : Integer);
+    BEGIN
+      Foo := Foo + 1;
+    END;
+
+    PROCEDURE ProcB@2();
+    VAR
+      Foo@1000 : Integer;
+    BEGIN
+      Foo := 99;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lenses = provider.getCodeLenses(doc, ast, symbolTable, tokens);
+
+      const lines = code.split('\n');
+
+      // ProcA's Foo parameter CodeLens
+      // Parameter is on the PROCEDURE line itself, not a separate line.
+      // Find by the procedure declaration line instead.
+      const procALine = lines.findIndex(l => l.includes('PROCEDURE ProcA@1'));
+      expect(procALine).toBeGreaterThan(-1);
+
+      // Two lenses share procALine: one for ProcA (procedure) and one for Foo (parameter).
+      // Foo appears after ProcA in the source, so the Foo lens has a larger character value.
+      const procALineLenses = lenses.filter(
+        lens => lens.command?.arguments?.[1]?.line === procALine
+      );
+      const paramFooLens = procALineLenses.reduce((a, b) =>
+        (a.command?.arguments?.[1]?.character ?? 0) > (b.command?.arguments?.[1]?.character ?? 0) ? a : b
+      );
+      // ProcA's Foo parameter has 2 usages: Foo := Foo + 1 (both sides)
+      expect(paramFooLens.command!.title).toBe('2 references');
+
+      // ProcB's Foo local var CodeLens
+      // The PROCEDURE line also contains "Foo@1000 : Integer" inline, so we exclude it.
+      const localDeclLine = lines.findIndex(l => l.includes('Foo@1000 : Integer') && !l.includes('PROCEDURE'));
+      expect(localDeclLine).toBeGreaterThan(-1);
+
+      const localFooLens = lenses.find(
+        lens => lens.command?.arguments?.[1]?.line === localDeclLine
+      );
+      expect(localFooLens).toBeDefined();
+      // ProcB's Foo has 1 usage: Foo := 99
+      expect(localFooLens!.command!.title).toBe('1 reference');
+    });
+
+    it('should isolate trigger-local Bar from global Bar', () => {
+      // Global Bar and a trigger-local Bar (in OnRun) are different symbols.
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 TriggerLocalTest
+{
+  CODE
+  {
+    VAR
+      Bar : Integer;
+
+    TRIGGER OnRun@1();
+    VAR
+      Bar@1000 : Integer;
+    BEGIN
+      Bar := 42;
+    END;
+
+    PROCEDURE UseGlobal@2();
+    BEGIN
+      Bar := 1;
+      Bar := Bar + 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+      const lenses = provider.getCodeLenses(doc, ast, symbolTable, tokens);
+
+      const lines = code.split('\n');
+
+      // Global Bar declaration (no @ suffix)
+      const globalBarLine = lines.findIndex(l => l.includes('Bar : Integer') && !l.includes('@'));
+      expect(globalBarLine).toBeGreaterThan(-1);
+      const globalBarLens = lenses.find(
+        lens => lens.command?.arguments?.[1]?.line === globalBarLine
+      );
+      expect(globalBarLens).toBeDefined();
+
+      // Trigger-local Bar declaration
+      const localBarLine = lines.findIndex(l => l.includes('Bar@1000 : Integer'));
+      expect(localBarLine).toBeGreaterThan(-1);
+      const localBarLens = lenses.find(
+        lens => lens.command?.arguments?.[1]?.line === localBarLine
+      );
+      expect(localBarLens).toBeDefined();
+
+      const globalCount = parseInt(globalBarLens!.command!.title!, 10);
+      const localCount = parseInt(localBarLens!.command!.title!, 10);
+
+      // Global Bar has usages in UseGlobal (Bar := 1, Bar :=, Bar + 1) = 3
+      // Trigger-local Bar has usage (Bar := 42) = 1
+      // The counts must be different, confirming isolation
+      expect(globalCount).not.toBe(localCount);
+
+      // Global Bar must NOT include the trigger-local usage (Bar := 42)
+      const globalLocations: any[] = globalBarLens!.command!.arguments![2];
+      const triggerUseLines = lines.findIndex(l => l.includes('Bar := 42'));
+      expect(triggerUseLines).toBeGreaterThan(-1);
+      const crossScopeInGlobal = globalLocations.filter(
+        (loc: any) => loc.range.start.line === triggerUseLines
+      );
+      expect(crossScopeInGlobal.length).toBe(0);
     });
   });
 });

@@ -21,6 +21,8 @@ import { Token } from '../lexer/tokens';
 import { ProviderBase } from '../providers/providerBase';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { ASTWalker } from '../visitor/astWalker';
+import { SymbolTable } from '../symbols/symbolTable';
+import { resolveOriginIdentity, keepCandidate } from '../shared/scopeFilter';
 
 /**
  * Represents a reference to a symbol
@@ -225,6 +227,8 @@ export class ReferenceProvider extends ProviderBase {
     position: Position,
     ast: CALDocument,
     includeDeclaration: boolean = true,
+    symbolTable?: SymbolTable,
+    tokens?: readonly Token[],
     debugLog?: (msg: string) => void
   ): Location[] {
     // Get the word at cursor position
@@ -255,7 +259,20 @@ export class ReferenceProvider extends ProviderBase {
 
     debugLog?.(`[References] Matching refs: ${matchingRefs.length}`);
 
+    let scopedRefs = matchingRefs;
+    if (symbolTable && tokens) {
+      const originIdentity = resolveOriginIdentity(symbolTable, wordInfo.word, wordInfo.start);
+      if (originIdentity !== undefined) {
+        scopedRefs = matchingRefs.filter(ref =>
+          keepCandidate(ref.token.startOffset, originIdentity, symbolTable, tokens, { keepUnresolved: true }));
+      }
+      // else: the origin did not resolve to an in-scope symbol (e.g. a member-accessed
+      // field or cross-object name). Permissive by design: keep all name matches.
+      // Failing closed here would DROP legitimate references and be a WORSE regression
+      // than the residual over-count. Do NOT "harden" this branch. (#786)
+    }
+
     // Convert to locations
-    return matchingRefs.map(ref => this.tokenToLocation(ref.token, document.uri, ref.nameLength));
+    return scopedRefs.map(ref => this.tokenToLocation(ref.token, document.uri, ref.nameLength));
   }
 }
