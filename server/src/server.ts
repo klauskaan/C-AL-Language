@@ -484,7 +484,7 @@ connection.onReferences((params: ReferenceParams): Location[] => {
   }
 
   try {
-    const { ast } = parseDocument(document);
+    const { ast, symbolTable, lexer } = parseDocument(document);
     connection.console.log(`[References] AST parsed, object type: ${ast.object?.type || 'none'}`);
     if (ast.object) {
       connection.console.log(`[References] Fields: ${ast.object.fields?.fields?.length || 0}`);
@@ -501,6 +501,8 @@ connection.onReferences((params: ReferenceParams): Location[] => {
       params.position,
       ast,
       params.context.includeDeclaration,
+      symbolTable,
+      lexer.getTokens(),
       (msg) => connection.console.log(msg)
     );
     connection.console.log(`[References] Found ${results.length} references`);
@@ -519,8 +521,8 @@ connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
   }
 
   try {
-    const { ast } = parseDocument(document);
-    return codeLensProvider.getCodeLenses(document, ast);
+    const { ast, symbolTable, lexer } = parseDocument(document);
+    return codeLensProvider.getCodeLenses(document, ast, symbolTable, lexer.getTokens());
   } catch (error) {
     connection.console.error(`Error getting code lenses: ${formatError(error)}`);
     return [];

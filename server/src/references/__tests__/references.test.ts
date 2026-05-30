@@ -5,6 +5,7 @@
 import { ReferenceProvider } from '../referenceProvider';
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../../parser/parser';
+import { SymbolTable } from '../../symbols/symbolTable';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Position } from 'vscode-languageserver';
 
@@ -16,14 +17,16 @@ function createDocument(content: string, uri: string = 'file:///test.cal'): Text
 }
 
 /**
- * Helper to parse content into AST
+ * Helper to parse content into AST, symbolTable, and tokens.
+ * Existing callers that destructure only { ast } keep working — extra fields are ignored.
  */
-function parseContent(content: string): { ast: any } {
+function parseContent(content: string): { ast: any; symbolTable: SymbolTable; tokens: readonly any[] } {
   const lexer = new Lexer(content);
   const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
-  const ast = parser.parse();
-  return { ast };
+  const ast = new Parser(tokens).parse();
+  const symbolTable = new SymbolTable();
+  symbolTable.buildFromAST(ast);
+  return { ast, symbolTable, tokens };
 }
 
 describe('ReferenceProvider', () => {
@@ -638,7 +641,6 @@ describe('ReferenceProvider', () => {
     END.
   }
 }`;
-      const _doc = createDocument(code);
       const { ast } = parseContent(code);
 
       // Position cursor on 'Unknown' which doesn't exist
@@ -1250,6 +1252,522 @@ describe('ReferenceProvider', () => {
 
       // ValidateName: 1 definition + 1 in field trigger + 1 in procedure
       expect(result.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Scope-isolation tests (issue #786)
+  // All tests in this block MUST pass symbolTable and tokens to getReferences()
+  // to exercise the identity-aware filter path.
+  // ---------------------------------------------------------------------------
+  describe('Scope-Isolation (identity-aware, #786)', () => {
+    it('should return only ProcA occurrences when positioned on ProcA Counter', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 SiblingScopeTest
+{
+  CODE
+  {
+    PROCEDURE ProcA@1();
+    VAR
+      Counter@1000 : Integer;
+    BEGIN
+      Counter := 10;
+      Counter := Counter + 1;
+    END;
+
+    PROCEDURE ProcB@2();
+    VAR
+      Counter@1000 : Integer;
+    BEGIN
+      Counter := 20;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+
+      // Position on ProcA's local Counter declaration
+      const lines = code.split('\n');
+      const procADeclLine = lines.findIndex(l => l.includes('Counter@1000 : Integer'));
+      expect(procADeclLine).toBeGreaterThan(-1);
+      const col = lines[procADeclLine].indexOf('Counter');
+
+      const result = provider.getReferences(
+        doc, Position.create(procADeclLine, col + 3), ast, true, symbolTable, tokens
+      );
+
+      // Must include ProcA declaration + uses; must EXCLUDE ProcB Counter
+      expect(result.length).toBeGreaterThanOrEqual(1);
+
+      // ProcB's Counter := 20 is on the line after "Counter@1000" for ProcB
+      const procBUseLine = lines.findIndex(l => l.includes('Counter := 20'));
+      expect(procBUseLine).toBeGreaterThan(-1);
+      const procBUseResults = result.filter(loc => loc.range.start.line === procBUseLine);
+      expect(procBUseResults.length).toBe(0);
+    });
+
+    it('should return only ProcB occurrences when positioned on ProcB Counter', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 SiblingScopeTest
+{
+  CODE
+  {
+    PROCEDURE ProcA@1();
+    VAR
+      Counter@1000 : Integer;
+    BEGIN
+      Counter := 10;
+    END;
+
+    PROCEDURE ProcB@2();
+    VAR
+      Counter@1000 : Integer;
+    BEGIN
+      Counter := 20;
+      Counter := Counter + 5;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+
+      const lines = code.split('\n');
+      // The SECOND occurrence of "Counter@1000 : Integer" is ProcB's declaration
+      const allDeclLines = lines
+        .map((l, i) => ({ l, i }))
+        .filter(({ l }) => l.includes('Counter@1000 : Integer'));
+      expect(allDeclLines.length).toBe(2);
+      const procBDeclLine = allDeclLines[1].i;
+      const col = lines[procBDeclLine].indexOf('Counter');
+
+      const result = provider.getReferences(
+        doc, Position.create(procBDeclLine, col + 3), ast, true, symbolTable, tokens
+      );
+
+      // ProcA usage must NOT appear
+      const procAUseLine = lines.findIndex(l => l.includes('Counter := 10'));
+      expect(procAUseLine).toBeGreaterThan(-1);
+      const procAResults = result.filter(loc => loc.range.start.line === procAUseLine);
+      expect(procAResults.length).toBe(0);
+
+      // ProcB usage must appear
+      const procBUseLine = lines.findIndex(l => l.includes('Counter := 20'));
+      expect(procBUseLine).toBeGreaterThan(-1);
+      const procBResults = result.filter(loc => loc.range.start.line === procBUseLine);
+      expect(procBResults.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should return only local scope occurrences when positioned on shadowing local', () => {
+      // Local Counter in ProcA shadows the global Counter.
+      // References on the LOCAL returns only the local's scope occurrences.
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 ShadowTest
+{
+  CODE
+  {
+    VAR
+      Counter : Integer;
+
+    PROCEDURE ProcA@1();
+    VAR
+      Counter@1000 : Integer;
+    BEGIN
+      Counter := 99;
+    END;
+
+    PROCEDURE ProcB@2();
+    BEGIN
+      Counter := 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+
+      const lines = code.split('\n');
+      const localDeclLine = lines.findIndex(l => l.includes('Counter@1000 : Integer'));
+      expect(localDeclLine).toBeGreaterThan(-1);
+      const col = lines[localDeclLine].indexOf('Counter');
+
+      const result = provider.getReferences(
+        doc, Position.create(localDeclLine, col + 3), ast, true, symbolTable, tokens
+      );
+
+      // ProcB usage (global Counter := 1) must NOT appear
+      const procBUseLine = lines.findIndex(l => l.includes('Counter := 1'));
+      expect(procBUseLine).toBeGreaterThan(-1);
+      const globalInProcB = result.filter(loc => loc.range.start.line === procBUseLine);
+      expect(globalInProcB.length).toBe(0);
+
+      // The local usage (Counter := 99) must appear
+      const localUseLine = lines.findIndex(l => l.includes('Counter := 99'));
+      expect(localUseLine).toBeGreaterThan(-1);
+      const localUse = result.filter(loc => loc.range.start.line === localUseLine);
+      expect(localUse.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should exclude shadowed uses when positioned on global Counter (asymmetric)', () => {
+      // References on the GLOBAL Counter must EXCLUDE uses inside ProcA that are
+      // shadowed by the local. This is the direction most likely to be missed.
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 ShadowAsymTest
+{
+  CODE
+  {
+    VAR
+      Counter : Integer;
+
+    PROCEDURE ProcA@1();
+    VAR
+      Counter@1000 : Integer;
+    BEGIN
+      Counter := 99;
+    END;
+
+    PROCEDURE ProcB@2();
+    BEGIN
+      Counter := 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+
+      const lines = code.split('\n');
+      // Global Counter declaration: "Counter : Integer;" (no @ number)
+      const globalDeclLine = lines.findIndex(l => l.includes('Counter : Integer') && !l.includes('@'));
+      expect(globalDeclLine).toBeGreaterThan(-1);
+      const col = lines[globalDeclLine].indexOf('Counter');
+
+      const result = provider.getReferences(
+        doc, Position.create(globalDeclLine, col + 3), ast, true, symbolTable, tokens
+      );
+
+      // "Counter := 99" inside ProcA is the SHADOWED use — must be excluded
+      const shadowedUseLine = lines.findIndex(l => l.includes('Counter := 99'));
+      expect(shadowedUseLine).toBeGreaterThan(-1);
+      const shadowedResults = result.filter(loc => loc.range.start.line === shadowedUseLine);
+      expect(shadowedResults.length).toBe(0);
+
+      // "Counter := 1" inside ProcB references the GLOBAL — must be included
+      const globalUseLine = lines.findIndex(l => l.includes('Counter := 1'));
+      expect(globalUseLine).toBeGreaterThan(-1);
+      const globalResults = result.filter(loc => loc.range.start.line === globalUseLine);
+      expect(globalResults.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should return empty when includeDeclaration is false and local is never used', () => {
+      const code = `OBJECT Codeunit 50000 UnusedLocalTest
+{
+  CODE
+  {
+    PROCEDURE ProcB@2();
+    VAR
+      Employee@1000 : Record 18;
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+
+      const lines = code.split('\n');
+      const declLine = lines.findIndex(l => l.includes('Employee@1000 : Record 18'));
+      expect(declLine).toBeGreaterThan(-1);
+      const col = lines[declLine].indexOf('Employee');
+
+      const result = provider.getReferences(
+        doc, Position.create(declLine, col + 3), ast, false, symbolTable, tokens
+      );
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should keep member-access property occurrence for a Record variable', () => {
+      // An object with a Record variable Cust and a use Cust."No."
+      // References on Cust must keep the Cust."No." member occurrence (the object
+      // reference is not a property and must NOT be dropped).
+      const code = `OBJECT Codeunit 50000 MemberAccessTest
+{
+  CODE
+  {
+    VAR
+      Cust@1000 : Record 18;
+
+    PROCEDURE ProcA@1();
+    BEGIN
+      Cust.FIND;
+      IF Cust."No." = '' THEN
+        Cust.INIT;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+
+      const lines = code.split('\n');
+      const declLine = lines.findIndex(l => l.includes('Cust@1000 : Record 18'));
+      expect(declLine).toBeGreaterThan(-1);
+      const col = lines[declLine].indexOf('Cust');
+
+      const result = provider.getReferences(
+        doc, Position.create(declLine, col + 2), ast, true, symbolTable, tokens
+      );
+
+      // The "Cust" in "Cust."No."" must appear in the result set
+      const memberLine = lines.findIndex(l => l.includes('Cust."No."'));
+      expect(memberLine).toBeGreaterThan(-1);
+      const memberOccurrences = result.filter(loc => loc.range.start.line === memberLine);
+      expect(memberOccurrences.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should include bare procedure call in references for a PROCEDURE declaration', () => {
+      const code = `OBJECT Codeunit 50000 BareCallTest
+{
+  CODE
+  {
+    PROCEDURE DoWork@1();
+    BEGIN
+    END;
+
+    PROCEDURE Main@2();
+    BEGIN
+      DoWork;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+
+      const lines = code.split('\n');
+      const declLine = lines.findIndex(l => l.includes('PROCEDURE DoWork@1'));
+      expect(declLine).toBeGreaterThan(-1);
+      const col = lines[declLine].indexOf('DoWork');
+
+      const result = provider.getReferences(
+        doc, Position.create(declLine, col + 3), ast, true, symbolTable, tokens
+      );
+
+      // The bare "DoWork;" call must appear
+      const bareCallLine = lines.findIndex(l => l.trim() === 'DoWork;');
+      expect(bareCallLine).toBeGreaterThan(-1);
+      const bareCallResults = result.filter(loc => loc.range.start.line === bareCallLine);
+      expect(bareCallResults.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should include declaration occurrence when positioned on quoted declaration', () => {
+      // A quoted declaration with uses. References positioned on the quoted declaration
+      // must return a non-empty set INCLUDING the declaration's own occurrence.
+      // This proves the identity is compared as the resolved declaration-token offset,
+      // not the inside-quote cursor offset.
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 QuotedTest
+{
+  CODE
+  {
+    PROCEDURE "My Proc"@1();
+    BEGIN
+    END;
+
+    PROCEDURE Main@2();
+    BEGIN
+      "My Proc";
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+
+      const lines = code.split('\n');
+      const declLine = lines.findIndex(l => l.includes('PROCEDURE "My Proc"'));
+      expect(declLine).toBeGreaterThan(-1);
+      // Position cursor inside the quoted identifier (on the 'M')
+      const quoteStart = lines[declLine].indexOf('"My Proc"');
+      const col = quoteStart + 1; // inside the quotes
+
+      const result = provider.getReferences(
+        doc, Position.create(declLine, col), ast, true, symbolTable, tokens
+      );
+
+      // Must return at least the declaration and one usage
+      expect(result.length).toBeGreaterThanOrEqual(1);
+
+      // The declaration line must be in the result set
+      const declResults = result.filter(loc => loc.range.start.line === declLine);
+      expect(declResults.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('delta proof: WITH symbolTable result is strictly smaller than WITHOUT (name-only fallback)', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Codeunit 50000 DeltaProofTest
+{
+  CODE
+  {
+    PROCEDURE ProcA@1();
+    VAR
+      Counter@1000 : Integer;
+    BEGIN
+      Counter := 10;
+    END;
+
+    PROCEDURE ProcB@2();
+    VAR
+      Counter@1000 : Integer;
+    BEGIN
+      Counter := 20;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+
+      const lines = code.split('\n');
+      // Position on ProcB's Counter declaration
+      const allDeclLines = lines
+        .map((l, i) => ({ l, i }))
+        .filter(({ l }) => l.includes('Counter@1000 : Integer'));
+      expect(allDeclLines.length).toBe(2);
+      const procBDeclLine = allDeclLines[1].i;
+      const col = lines[procBDeclLine].indexOf('Counter');
+      const pos = Position.create(procBDeclLine, col + 3);
+
+      // Legacy name-only (no symbolTable)
+      const legacyResult = provider.getReferences(doc, pos, ast, false);
+
+      // Scope-aware (with symbolTable and tokens)
+      const scopedResult = provider.getReferences(doc, pos, ast, false, symbolTable, tokens);
+
+      // The scoped result must be strictly smaller than the legacy result
+      expect(scopedResult.length).toBeLessThan(legacyResult.length);
+    });
+
+    it('no-symbolTable fallback returns legacy name-only (over-count) result', () => {
+      // Characterizes the permissive fallback: when no symbolTable is passed,
+      // the provider returns ALL name-matches across the document.
+      // This intentionally asserts present legacy behavior.
+      const code = `OBJECT Codeunit 50000 FallbackTest
+{
+  CODE
+  {
+    PROCEDURE ProcA@1();
+    VAR
+      Counter@1000 : Integer;
+    BEGIN
+      Counter := 10;
+    END;
+
+    PROCEDURE ProcB@2();
+    VAR
+      Counter@1000 : Integer;
+    BEGIN
+      Counter := 20;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast } = parseContent(code);
+
+      const lines = code.split('\n');
+      const declLine = lines.findIndex(l => l.includes('Counter@1000 : Integer'));
+      const col = lines[declLine].indexOf('Counter');
+
+      // No symbolTable — legacy path
+      const result = provider.getReferences(
+        doc, Position.create(declLine, col + 3), ast, false
+      );
+
+      // Both procedures' Counter usages appear (over-count)
+      const procAUseLine = lines.findIndex(l => l.includes('Counter := 10'));
+      const procBUseLine = lines.findIndex(l => l.includes('Counter := 20'));
+      const procAResults = result.filter(loc => loc.range.start.line === procAUseLine);
+      const procBResults = result.filter(loc => loc.range.start.line === procBUseLine);
+      expect(procAResults.length).toBeGreaterThanOrEqual(1);
+      expect(procBResults.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('documents #791 limitation: member property of another record over-counts a same-named local', () => {
+      // INTENTIONALLY ASSERTS CURRENT KNOWN-WRONG BEHAVIOR.
+      // Issue #791 tracks the over-count. This test is the oracle for that fix:
+      // when #791 is resolved, this test should be updated to assert the correct count.
+      //
+      // Scenario: ProcA has a local Employee (unused) AND SomeRec.Employee (member access).
+      // Currently the member property "Employee" resolves to the local and is included.
+      // The correct behavior (after #791) would be to exclude the member property from
+      // the local's reference set, but that is out of scope for #786.
+      const code = `OBJECT Codeunit 50000 Residual791Test
+{
+  CODE
+  {
+    VAR
+      SomeRec@1000 : Record 50000;
+
+    PROCEDURE ProcA@1();
+    VAR
+      Employee@1000 : Record 18;
+    BEGIN
+      SomeRec.Employee := 0;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+
+      const lines = code.split('\n');
+      const declLine = lines.findIndex(l => l.includes('Employee@1000 : Record 18'));
+      expect(declLine).toBeGreaterThan(-1);
+      const col = lines[declLine].indexOf('Employee');
+
+      // includeDeclaration=true so declaration is counted
+      const result = provider.getReferences(
+        doc, Position.create(declLine, col + 3), ast, true, symbolTable, tokens
+      );
+
+      // The member property "SomeRec.Employee" currently over-counts: it is included.
+      // This assertion pins the current (wrong) behavior for #791 to fix later.
+      const memberLine = lines.findIndex(l => l.includes('SomeRec.Employee'));
+      expect(memberLine).toBeGreaterThan(-1);
+      const memberResults = result.filter(loc => loc.range.start.line === memberLine);
+      // Currently the member is included (over-count) — assert this known limitation
+      expect(memberResults.length).toBeGreaterThanOrEqual(1);
     });
   });
 });

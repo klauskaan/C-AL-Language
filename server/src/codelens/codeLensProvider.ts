@@ -17,6 +17,8 @@ import { ProviderBase } from '../providers/providerBase';
 import { ReferenceProvider } from '../references/referenceProvider';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { ASTWalker } from '../visitor/astWalker';
+import { SymbolTable } from '../symbols/symbolTable';
+import { Token } from '../lexer/tokens';
 
 /**
  * Represents a target for CodeLens display
@@ -115,7 +117,7 @@ export class CodeLensProvider extends ProviderBase {
    * @param ast - The parsed AST
    * @returns Array of CodeLens items
    */
-  public getCodeLenses(document: TextDocument, ast: CALDocument): CodeLens[] {
+  public getCodeLenses(document: TextDocument, ast: CALDocument, symbolTable?: SymbolTable, tokens?: readonly Token[]): CodeLens[] {
     // Collect all declaration targets
     const visitor = new CodeLensCollectorVisitor();
     this.walker.walk(ast, visitor);
@@ -175,7 +177,9 @@ export class CodeLensProvider extends ProviderBase {
         document,
         symbolPosition,
         ast,
-        false  // Don't include declaration in count
+        false,  // Don't include declaration in count
+        symbolTable,
+        tokens
       );
 
       const refCount = references.length;
