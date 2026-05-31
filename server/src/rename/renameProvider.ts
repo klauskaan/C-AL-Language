@@ -127,9 +127,22 @@ export class RenameProvider extends ProviderBase {
       // Validate symbol type
       symbolType = this.getSymbolType(token, symbolTable, offset, ast);
 
-      // Regular symbol: use ReferenceProvider
+      // Regular symbol: use ReferenceProvider.
+      // #794: symbolTable AND resolvedTokens are REQUIRED here, not optional. Without them,
+      // getReferences skips #791's member-property drop (referenceProvider.ts gate
+      // `if (symbolTable && tokens)`) and returns member-property occurrences such as the
+      // `Employee` in `SomeRec.Employee`. filterReferencesByScope below is member-BLIND, so it
+      // would then rewrite that occurrence when renaming a same-named local -> data corruption.
+      // The two filters are COMPLEMENTARY and BOTH load-bearing:
+      //   - getReferences (with symbolTable+tokens): member-property drop + PERMISSIVE scope
+      //     (keepUnresolved:true) — keeps name-matches that resolve to no in-scope symbol.
+      //   - filterReferencesByScope: FAIL-CLOSED narrowing — drops those unresolved keeps
+      //     (e.g. a WITH-block implicit field of the same name) so renaming a local never
+      //     rewrites a WITH-implicit field. Do NOT remove either filter or these two args.
       const referenceProvider = new ReferenceProvider();
-      const references = referenceProvider.getReferences(document, position, ast, true);
+      const references = referenceProvider.getReferences(
+        document, position, ast, true, symbolTable, resolvedTokens
+      );
 
       if (references.length === 0) {
         return null;
