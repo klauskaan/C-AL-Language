@@ -2615,4 +2615,383 @@ describe('RenameProvider', () => {
       });
     });
   });
+
+  describe('#794 rename is member-aware (anti-corruption)', () => {
+    // Helper: collect start-offsets of all rename edits, sorted ascending
+    function changeStartOffsets(edits: any, doc: any): number[] {
+      const list = edits?.changes?.[doc.uri] ?? [];
+      return list.map((e: any) => doc.offsetAt(e.range.start)).sort((a: number, b: number) => a - b);
+    }
+
+    // Helper: find the nth (1-based) occurrence of substr in code, return its start offset
+    function nthOffset(code: string, substr: string, n: number): number {
+      let idx = -1;
+      for (let i = 0; i < n; i++) idx = code.indexOf(substr, idx + 1);
+      if (idx < 0) throw new Error(`occurrence ${n} of '${substr}' not found`);
+      return idx;
+    }
+
+    // T1: Local variable shadows a same-named field-member — member-property edit must be absent
+    it('should not rename SomeRec.Employee when renaming local variable Employee (T1)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      SomeRec : Record 18;
+    PROCEDURE Foo();
+    VAR
+      Employee : Integer;
+    BEGIN
+      Employee := 1;
+      SomeRec.Employee := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+      // Cursor on local Employee declaration (occurrence 1)
+      const pos = findPosition(code, 'Employee', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'NewName', ast, symbolTable);
+      const offsets = changeStartOffsets(edits, doc);
+
+      // The member-property 'Employee' after 'SomeRec.' must NOT be renamed
+      const memberOffset = nthOffset(code, 'SomeRec.Employee', 1) + 'SomeRec.'.length;
+      expect(offsets).not.toContain(memberOffset);
+
+      // The local declaration and the bare use 'Employee := 1' MUST be renamed
+      const declOffset = nthOffset(code, 'Employee', 1);
+      const useOffset = nthOffset(code, 'Employee', 2); // 'Employee := 1'
+      expect(offsets).toContain(declOffset);
+      expect(offsets).toContain(useOffset);
+      expect(offsets.length).toBe(2);
+    });
+
+    // T2: Global variable with same name as a member-property — member-property edit must be absent
+    it('should not rename OtherRec.Foo when renaming global variable Foo (T2)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Foo : Integer;
+      OtherRec : Record 18;
+    PROCEDURE Bar();
+    BEGIN
+      Foo := 1;
+      OtherRec.Foo := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+      // Cursor on global Foo declaration (occurrence 1)
+      const pos = findPosition(code, 'Foo', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'NewName', ast, symbolTable);
+      const offsets = changeStartOffsets(edits, doc);
+
+      // The member-property 'Foo' after 'OtherRec.' must NOT be renamed
+      const memberOffset = nthOffset(code, 'OtherRec.Foo', 1) + 'OtherRec.'.length;
+      expect(offsets).not.toContain(memberOffset);
+
+      // The global declaration and the bare use 'Foo := 1' MUST be renamed
+      const declOffset = nthOffset(code, 'Foo', 1);
+      const useOffset = nthOffset(code, 'Foo := 1', 1);
+      expect(offsets).toContain(declOffset);
+      expect(offsets).toContain(useOffset);
+      expect(offsets.length).toBe(2);
+    });
+
+    // T3: Parameter with same name as a member-property — member-property edit must be absent
+    it('should not rename SomeRec.Employee when renaming parameter Employee (T3)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      SomeRec : Record 18;
+    PROCEDURE Foo(Employee : Integer);
+    BEGIN
+      Employee := 1;
+      SomeRec.Employee := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+      // Cursor on parameter Employee (occurrence 1 = the param decl in the signature)
+      const pos = findPosition(code, 'Employee', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'NewName', ast, symbolTable);
+      const offsets = changeStartOffsets(edits, doc);
+
+      // The member-property 'Employee' after 'SomeRec.' must NOT be renamed
+      const memberOffset = nthOffset(code, 'SomeRec.Employee', 1) + 'SomeRec.'.length;
+      expect(offsets).not.toContain(memberOffset);
+
+      // The param declaration and the bare use 'Employee := 1' MUST be renamed
+      const declOffset = nthOffset(code, 'Employee', 1);
+      const useOffset = nthOffset(code, 'Employee := 1', 1);
+      expect(offsets).toContain(declOffset);
+      expect(offsets).toContain(useOffset);
+      expect(offsets.length).toBe(2);
+    });
+
+    // T6: Option literal MyStatus::Open — the ::Open identifier must not be renamed when renaming local Open
+    it('should not rename MyStatus::Open when renaming local variable Open (T6)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      MyStatus : Option;
+    PROCEDURE Foo();
+    VAR
+      Open : Integer;
+    BEGIN
+      Open := 1;
+      IF MyStatus = MyStatus::Open THEN
+        Open := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+      // Cursor on local Open declaration (occurrence 1)
+      const pos = findPosition(code, 'Open', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'NewName', ast, symbolTable);
+      const offsets = changeStartOffsets(edits, doc);
+
+      // The 'Open' identifier inside 'MyStatus::Open' must NOT be renamed
+      const memberOffset = nthOffset(code, 'MyStatus::Open', 1) + 'MyStatus::'.length;
+      expect(offsets).not.toContain(memberOffset);
+
+      // The local declaration and the two 'Open :=' uses MUST be renamed
+      const declOffset = nthOffset(code, 'Open', 1);
+      const use1Offset = nthOffset(code, 'Open := 1', 1);
+      const use2Offset = nthOffset(code, 'Open := 2', 1);
+      expect(offsets).toContain(declOffset);
+      expect(offsets).toContain(use1Offset);
+      expect(offsets).toContain(use2Offset);
+      expect(offsets.length).toBe(3);
+    });
+
+    // T8: WITH-implicit field — renaming a local must not rewrite a WITH-implicit field with the same name
+    it('should not rename WITH-implicit Status when renaming local variable Status in different procedure (T8)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Rec : Record 18;
+    PROCEDURE Foo();
+    VAR
+      Status : Integer;
+    BEGIN
+      Status := 1;
+    END;
+
+    PROCEDURE Bar();
+    BEGIN
+      WITH Rec DO BEGIN
+        Status := 2;
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+      // Cursor on local Status declaration in Foo (occurrence 1)
+      const pos = findPosition(code, 'Status', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'NewName', ast, symbolTable);
+      const offsets = changeStartOffsets(edits, doc);
+
+      // The 'Status := 2' inside the WITH block must NOT be renamed (it is a WITH-implicit field)
+      const withStatusOffset = nthOffset(code, 'Status := 2', 1);
+      expect(offsets).not.toContain(withStatusOffset);
+
+      // The local declaration and 'Status := 1' use MUST be renamed
+      const declOffset = nthOffset(code, 'Status', 1);
+      const use1Offset = nthOffset(code, 'Status := 1', 1);
+      expect(offsets).toContain(declOffset);
+      expect(offsets).toContain(use1Offset);
+      expect(offsets.length).toBeGreaterThanOrEqual(2);
+    });
+
+    // T4: Field origin — renaming from the BARE field use keeps Rec.Field (inverse-keep, must PASS pre-fix)
+    it('should keep Rec.Amount when renaming table field Amount from its bare use (T4)', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Integer       }
+  }
+  CODE
+  {
+    VAR
+      Rec : Record 50000;
+    PROCEDURE Foo();
+    BEGIN
+      Amount := 1;
+      Rec.Amount := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+      // Cursor on the bare 'Amount := 1' use (occurrence 2: first is field decl, second is bare use)
+      const pos = findPosition(code, 'Amount', 2);
+
+      const edits = provider.getRenameEdits(doc, pos, 'TotalAmount', ast, symbolTable);
+      const offsets = changeStartOffsets(edits, doc);
+
+      // The bare Amount := 1 use
+      const bareOffset = nthOffset(code, 'Amount := 1', 1);
+      // The Rec.Amount qualified use
+      const qualifiedOffset = nthOffset(code, 'Rec.Amount', 1) + 'Rec.'.length;
+
+      expect(offsets).toContain(bareOffset);
+      expect(offsets).toContain(qualifiedOffset);
+    });
+
+    // T7: Procedure member-call — renaming a procedure keeps the SomeCdu.DoIt call (inverse-keep, must PASS pre-fix)
+    it('should keep SomeCdu.DoIt when renaming procedure DoIt from its definition (T7)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      SomeCdu : Codeunit 50001;
+    PROCEDURE DoIt();
+    BEGIN
+    END;
+
+    PROCEDURE Main();
+    BEGIN
+      SomeCdu.DoIt;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+      // Cursor on the PROCEDURE DoIt declaration (occurrence 1)
+      const pos = findPosition(code, 'DoIt', 1);
+
+      const edits = provider.getRenameEdits(doc, pos, 'Execute', ast, symbolTable);
+      const offsets = changeStartOffsets(edits, doc);
+
+      // The proc declaration MUST be renamed
+      const declOffset = nthOffset(code, 'DoIt', 1);
+      expect(offsets).toContain(declOffset);
+
+      // The SomeCdu.DoIt member-call MUST also be renamed
+      const memberCallOffset = nthOffset(code, 'SomeCdu.DoIt', 1) + 'SomeCdu.'.length;
+      expect(offsets).toContain(memberCallOffset);
+    });
+
+    // T5b: Quoted LOCAL variable — member-property with same quoted name must be excluded
+    it('should not rename SomeRec."My Status" when renaming quoted local "My Status" (T5b)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      SomeRec : Record 18;
+    PROCEDURE Foo();
+    VAR
+      "My Status" : Integer;
+    BEGIN
+      "My Status" := 1;
+      SomeRec."My Status" := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+      // Cursor inside the local declaration's quotes (occurrence 1 of '"My Status"')
+      const pos = doc.positionAt(nthOffset(code, '"My Status"', 1) + 5);
+
+      const edits = provider.getRenameEdits(doc, pos, 'NewName', ast, symbolTable);
+      const offsets = changeStartOffsets(edits, doc);
+
+      // The member-property '"My Status"' after 'SomeRec.' must NOT be renamed
+      const memberOffset = nthOffset(code, 'SomeRec."My Status"', 1) + 'SomeRec.'.length;
+      expect(offsets).not.toContain(memberOffset);
+
+      // The local declaration and the bare use '"My Status" := 1' MUST be renamed
+      const declOffset = nthOffset(code, '"My Status"', 1);
+      const useOffset = nthOffset(code, '"My Status"', 2);
+      expect(offsets).toContain(declOffset);
+      expect(offsets).toContain(useOffset);
+      expect(offsets.length).toBe(2);
+    });
+
+    // T5a: Quoted table FIELD — member-property access must be kept (guard test, passes pre and post fix)
+    it('should keep Rec."Total Amount" when renaming quoted field from its bare use (T5a)', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Total Amount        ; Integer       }
+  }
+  CODE
+  {
+    VAR
+      Rec : Record 50000;
+    PROCEDURE Foo();
+    BEGIN
+      "Total Amount" := 1;
+      Rec."Total Amount" := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseContent(code);
+      // Cursor inside the bare quoted use '"Total Amount" := 1' (inside the quotes)
+      const pos = doc.positionAt(nthOffset(code, '"Total Amount" := 1', 1) + 5);
+
+      const edits = provider.getRenameEdits(doc, pos, 'NewName', ast, symbolTable);
+      const offsets = changeStartOffsets(edits, doc);
+
+      // The member-property '"Total Amount"' after 'Rec.' MUST be kept (field member uses must be renamed too)
+      const memberOffset = nthOffset(code, 'Rec."Total Amount"', 1) + 'Rec.'.length;
+      expect(offsets).toContain(memberOffset);
+
+      // The bare use '"Total Amount" := 1' MUST be renamed
+      const bareUseOffset = nthOffset(code, '"Total Amount" := 1', 1);
+      expect(offsets).toContain(bareUseOffset);
+      expect(offsets.length).toBeGreaterThanOrEqual(2);
+    });
+  });
 });
