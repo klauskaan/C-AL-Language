@@ -2993,5 +2993,217 @@ describe('RenameProvider', () => {
       expect(offsets).toContain(bareUseOffset);
       expect(offsets.length).toBeGreaterThanOrEqual(2);
     });
+
+    describe('#797 cursor-on-member-property refuses unifying with a shadowing local', () => {
+      // T9: cursor on Rec.Amount property token — local Amount shadows the field, must refuse
+      it('should return null when cursor is on Rec.Amount member-property and a local Amount shadows the field (T9)', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Integer       }
+  }
+  CODE
+  {
+    VAR
+      Rec : Record 50000;
+    PROCEDURE Foo();
+    VAR
+      Amount : Integer;
+    BEGIN
+      Amount := 1;
+      Rec.Amount := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the 'Amount' token that is the property of 'Rec.Amount'
+        const memberOffset = nthOffset(code, 'Rec.Amount', 1) + 'Rec.'.length;
+        const pos = doc.positionAt(memberOffset);
+
+        const edits = provider.getRenameEdits(doc, pos, 'TotalAmount', ast, symbolTable);
+        expect(edits).toBeNull();
+      });
+
+      // T9b: cursor inside quoted member-property whose name is shadowed by a local
+      it('should return null when cursor is inside quoted member-property "My Status" and a local "My Status" shadows (T9b)', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      SomeRec : Record 18;
+    PROCEDURE Foo();
+    VAR
+      "My Status" : Integer;
+    BEGIN
+      "My Status" := 1;
+      SomeRec."My Status" := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor placed 3 characters inside the '"My Status"' token that is the property of SomeRec
+        const memberOffset = nthOffset(code, 'SomeRec."My Status"', 1) + 'SomeRec.'.length;
+        const pos = doc.positionAt(memberOffset + 3);
+
+        const edits = provider.getRenameEdits(doc, pos, 'TotalAmount', ast, symbolTable);
+        expect(edits).toBeNull();
+      });
+
+      // T9c: parameter shadow — cursor on Rec.Amount member-property, parameter Amount shadows
+      it('should return null when cursor is on Rec.Amount member-property and a parameter Amount shadows the field (T9c)', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Integer       }
+  }
+  CODE
+  {
+    VAR
+      Rec : Record 50000;
+    PROCEDURE Foo(Amount : Integer);
+    BEGIN
+      Amount := 1;
+      Rec.Amount := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the 'Amount' token that is the property of 'Rec.Amount'
+        const memberOffset = nthOffset(code, 'Rec.Amount', 1) + 'Rec.'.length;
+        const pos = doc.positionAt(memberOffset);
+
+        const edits = provider.getRenameEdits(doc, pos, 'TotalAmount', ast, symbolTable);
+        expect(edits).toBeNull();
+      });
+
+      // T9d: prepareRename should also return null for the same cursor position (UI greys out)
+      it('should return null from prepareRename when cursor is on Rec.Amount member-property and a local Amount shadows (T9d)', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Integer       }
+  }
+  CODE
+  {
+    VAR
+      Rec : Record 50000;
+    PROCEDURE Foo();
+    VAR
+      Amount : Integer;
+    BEGIN
+      Amount := 1;
+      Rec.Amount := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Same cursor position as T9
+        const memberOffset = nthOffset(code, 'Rec.Amount', 1) + 'Rec.'.length;
+        const pos = doc.positionAt(memberOffset);
+
+        const result = provider.prepareRename(doc, pos, ast, symbolTable);
+        expect(result).toBeNull();
+      });
+
+      // T9e: nested member expression — cursor on inner property segment shadowed by a local
+      // Uses a FOR loop with a.b.c which parses as nested MemberExpression (see for-member-expression.test.ts:573-617)
+      // Cursor is on 'b' (the inner property of a.b.c), and a local 'b' exists in the same scope.
+      // The guard must refuse: 'b' here is a property token, not the local variable.
+      it('should return null when cursor is on inner property b of a.b.c nested member and a local b shadows (T9e)', () => {
+        const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE Foo();
+    VAR
+      a : Record 50000;
+      b : Integer;
+    BEGIN
+      FOR a.b.c := 1 TO 10 DO
+        b := b + 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // The nested member expression is a.b.c; 'b' appears as the property of the inner MemberExpression a.b
+        // We want the 'b' inside 'a.b.c' (not the standalone 'b' uses)
+        // nthOffset finds the first 'a.b' occurrence inside 'FOR a.b.c', then add 'a.'.length to land on 'b'
+        const memberOffset = nthOffset(code, 'a.b.c', 1) + 'a.'.length;
+        const pos = doc.positionAt(memberOffset);
+
+        const edits = provider.getRenameEdits(doc, pos, 'NewName', ast, symbolTable);
+        expect(edits).toBeNull();
+      });
+
+      // T10: REGRESSION ANCHOR — no shadowing local, cursor on Rec.Amount member-property
+      // Must NOT be blocked: the field rename should include the member-property occurrence
+      it('should rename field Amount including Rec.Amount member-property when no local shadows it (T10)', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Integer       }
+  }
+  CODE
+  {
+    VAR
+      Rec : Record 50000;
+    PROCEDURE Foo();
+    BEGIN
+      Amount := 1;
+      Rec.Amount := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the 'Amount' token that is the property of 'Rec.Amount'
+        const memberOffset = nthOffset(code, 'Rec.Amount', 1) + 'Rec.'.length;
+        const pos = doc.positionAt(memberOffset);
+
+        const edits = provider.getRenameEdits(doc, pos, 'TotalAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // The field declaration (occurrence 1) must be included
+        const fieldDeclOffset = nthOffset(code, 'Amount', 1);
+        expect(offsets).toContain(fieldDeclOffset);
+
+        // The member-property usage Rec.Amount must be included
+        const qualifiedOffset = nthOffset(code, 'Rec.Amount', 1) + 'Rec.'.length;
+        expect(offsets).toContain(qualifiedOffset);
+
+        // At least 3 edits: field decl + bare 'Amount := 1' + Rec.Amount
+        expect(offsets.length).toBeGreaterThanOrEqual(3);
+      });
+    });
   });
 });
