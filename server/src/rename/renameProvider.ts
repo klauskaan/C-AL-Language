@@ -6,7 +6,8 @@
 import { ProviderBase } from '../providers/providerBase';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Position, Range, WorkspaceEdit, TextEdit } from 'vscode-languageserver';
-import { CALDocument, FieldDeclaration } from '../parser/ast';
+import { CALDocument, FieldDeclaration, MemberExpression } from '../parser/ast';
+import { ASTWalker } from '../visitor/astWalker';
 import { SymbolTable } from '../symbols/symbolTable';
 import { Lexer } from '../lexer/lexer';
 import { Token, TokenType, KEYWORDS } from '../lexer/tokens';
@@ -75,6 +76,11 @@ export class RenameProvider extends ProviderBase {
       }
     }
 
+    // #797: refuse renaming a member-property that resolves member-blind to a shadowing local/parameter.
+    if (this.refusesMemberPropertyRename(ast, symbolTable, token)) {
+      return null;
+    }
+
     // Get the identifier text and range
     return this.getIdentifierRangeAndText(document, token);
   }
@@ -121,6 +127,11 @@ export class RenameProvider extends ProviderBase {
       const resolvedTokens = tokens ?? new Lexer(document.getText()).tokenize();
       const token = findTokenAtOffset(resolvedTokens, offset);
       if (!token || !this.isRenameableToken(token)) {
+        return null;
+      }
+
+      // #797: refuse renaming a member-property that resolves member-blind to a shadowing local/parameter.
+      if (this.refusesMemberPropertyRename(ast, symbolTable, token)) {
         return null;
       }
 
@@ -405,6 +416,50 @@ export class RenameProvider extends ProviderBase {
     }
   }
 
+
+  /**
+   * True if the token starting at `tokenStartOffset` is the `property` of some MemberExpression
+   * (e.g. the `Amount` in `Rec.Amount`). Used to refuse renames that would otherwise unify a
+   * member-property with a same-named shadowing local/parameter (#797).
+   *
+   * The visitor returns void (NOT false) so ASTWalker auto-traverses object+property and nested
+   * member chains (A.B.C) are each visited at any depth.
+   */
+  private isCursorOnMemberProperty(ast: CALDocument, tokenStartOffset: number): boolean {
+    const walker = new ASTWalker();
+    let found = false;
+    walker.walk(ast, {
+      visitMemberExpression: (node: MemberExpression): void => {
+        if (node.property?.startToken?.startOffset === tokenStartOffset) {
+          found = true;
+        }
+      },
+    });
+    return found;
+  }
+
+  /**
+   * #797: A rename whose origin token is a member-property (e.g. `Rec.Amount`) must NOT be driven by a
+   * same-named shadowing local/parameter. The engine is member-blind (no cross-object receiver-type →
+   * field-list resolution; that gap is tracked by #798), so the safe, fail-closed behavior is to refuse:
+   * renaming via the member would otherwise corrupt the unrelated local. Keying on kind variable/parameter
+   * is what keeps the no-shadow field-via-member rename (kind 'field') and procedure member-calls
+   * (kind 'procedure') working.
+   *
+   * Note: this only fires when the cursor is on a MemberExpression.property. A WITH-implicit field used as
+   * a BARE identifier (e.g. `Status := 2` inside `WITH Rec DO`) is not a MemberExpression, so it is out of
+   * reach of this predicate by construction — that broader member-resolution case belongs to #798.
+   */
+  private refusesMemberPropertyRename(
+    ast: CALDocument | undefined,
+    symbolTable: SymbolTable | undefined,
+    token: Token
+  ): boolean {
+    if (!ast || !symbolTable) return false;
+    if (!this.isCursorOnMemberProperty(ast, token.startOffset)) return false;
+    const origin = symbolTable.getSymbolAtOffset(token.value, token.startOffset);
+    return !!origin && (origin.kind === 'variable' || origin.kind === 'parameter');
+  }
 
   /**
    * Find a field declaration that contains the given document offset.
