@@ -1130,4 +1130,124 @@ describe('CompletionProvider', () => {
       expect(messageItem?.insertText).toBe('MESSAGE');
     });
   });
+
+  describe('Issue #785: builtin/user-symbol de-duplication', () => {
+    it('A — local variable shadows same-named builtin (count + identity)', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'MESSAGE', kind: 'variable', token: createMockToken(), type: 'Text' });
+
+      const doc = createDocument('MES');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const msg = items.filter(i => i.label.toLowerCase() === 'message');
+      expect(msg).toHaveLength(1);
+      expect(msg[0].kind).toBe(CompletionItemKind.Variable);
+      expect(msg[0].labelDetails?.description).not.toBe('builtin');
+    });
+
+    it('B — procedure with different case shadows same-named builtin', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Message', kind: 'procedure', token: createMockToken() });
+
+      const doc = createDocument('Mes');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const msg = items.filter(i => i.label.toLowerCase() === 'message');
+      expect(msg).toHaveLength(1);
+      expect(msg[0].label).toBe('Message');
+      expect(msg[0].kind).toBe(CompletionItemKind.Method);
+      expect(msg[0].labelDetails?.description).not.toBe('builtin');
+    });
+
+    it('C — negative baseline: no user symbol means builtin survives (no over-suppression)', () => {
+      const symbolTable = new SymbolTable();
+
+      const doc = createDocument('MES');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const msg = items.filter(i => i.label.toLowerCase() === 'message');
+      expect(msg).toHaveLength(1);
+      expect(msg[0].kind).toBe(CompletionItemKind.Function);
+      expect(msg[0].labelDetails?.description).toBe('builtin');
+    });
+
+    it('D — non-colliding user symbol does not suppress unrelated builtin', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'MyVar', kind: 'variable', token: createMockToken(), type: 'Integer' });
+
+      const doc = createDocument('M');
+      const items = provider.getCompletions(doc, Position.create(0, 1), undefined, symbolTable);
+
+      const msg = items.filter(i => i.label.toLowerCase() === 'message');
+      expect(msg.some(i => i.labelDetails?.description === 'builtin')).toBe(true);
+      expect(msg).toHaveLength(1);
+      expect(items.some(i => i.label === 'MyVar')).toBe(true);
+    });
+
+    it('E — empty-prefix: variable still shadows builtin when no prefix is typed', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'MESSAGE', kind: 'variable', token: createMockToken(), type: 'Text' });
+
+      const doc = createDocument('');
+      const items = provider.getCompletions(doc, Position.create(0, 0), undefined, symbolTable);
+
+      const msg = items.filter(i => i.label.toLowerCase() === 'message');
+      expect(msg).toHaveLength(1);
+      expect(msg[0].kind).toBe(CompletionItemKind.Variable);
+      expect(msg[0].labelDetails?.description).not.toBe('builtin');
+    });
+
+    it('F — strict-prefix: user symbol MES does not suppress builtin MESSAGE', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'MES', kind: 'variable', token: createMockToken(), type: 'Text' });
+
+      const doc = createDocument('MES');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const msg = items.filter(i => i.label.toLowerCase() === 'message');
+      expect(msg).toHaveLength(1);
+      expect(msg[0].labelDetails?.description).toBe('builtin');
+      expect(items.some(i => i.label === 'MES')).toBe(true);
+    });
+
+    it('G — field collision suppresses builtin', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'MESSAGE', kind: 'field', token: createMockToken(), type: 'Text50' });
+
+      const doc = createDocument('MES');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const msg = items.filter(i => i.label.toLowerCase() === 'message');
+      expect(msg).toHaveLength(1);
+      expect(msg[0].kind).toBe(CompletionItemKind.Field);
+      expect(msg[0].labelDetails?.description).not.toBe('builtin');
+    });
+
+    it('H — action kind does NOT suppress builtin (kind-gate proof)', () => {
+      // Before the kind-gate fix this passes trivially (no suppression); after the fix it passes ONLY because actions are excluded from SHADOWS_BUILTIN. If the gate regresses to blanket suppression, H fails.
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'MESSAGE', kind: 'action', token: createMockToken() });
+
+      const doc = createDocument('MES');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const msg = items.filter(i => i.label.toLowerCase() === 'message');
+      expect(msg).toHaveLength(2);
+      expect(msg.some(i => i.labelDetails?.description === 'builtin')).toBe(true);
+      expect(msg.some(i => i.kind === CompletionItemKind.Event)).toBe(true);
+    });
+
+    it('I — parameter shadows same-named builtin (allow-list coverage)', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'MESSAGE', kind: 'parameter', token: createMockToken(), type: 'Text' });
+
+      const doc = createDocument('MES');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const msg = items.filter(i => i.label.toLowerCase() === 'message');
+      expect(msg).toHaveLength(1);
+      expect(msg[0].kind).toBe(CompletionItemKind.Variable);
+      expect(msg[0].labelDetails?.description).not.toBe('builtin');
+    });
+  });
 });
