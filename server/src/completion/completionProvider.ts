@@ -18,7 +18,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { KEYWORDS, TokenType } from '../lexer/tokens';
 import { SymbolTable, Symbol, Scope } from '../symbols/symbolTable';
 import { CALDocument, ActionSection, ControlDeclaration } from '../parser/ast';
-import { BUILTIN_FUNCTIONS, RECORD_METHODS, BuiltinFunction } from './builtins';
+import { BUILTIN_FUNCTIONS, RECORD_METHODS, SYSTEM_QUALIFIABLE, BuiltinFunction } from './builtins';
 import { ProviderBase } from '../providers/providerBase';
 import { getMetadataByTokenType } from '../shared/keywordMetadata';
 import { ACTION_TYPES, ACTION_PROPERTIES, ACTION_PROPERTY_VALUES } from './actionCompletions';
@@ -59,6 +59,17 @@ const SHADOWS_BUILTIN: ReadonlySet<Symbol['kind']> =
   new Set<Symbol['kind']>(['variable', 'parameter', 'field', 'procedure', 'function']);
 
 /**
+ * Apply deprecation tag and documentation annotation to a completion item if the
+ * builtin function is deprecated. Exported for use in tests (#809).
+ */
+export function applyDeprecation(item: CompletionItem, func: BuiltinFunction): void {
+  if (func.deprecated) {
+    item.tags = [CompletionItemTag.Deprecated];
+    item.documentation = `${func.documentation}\n\n**Deprecated:** ${func.deprecated}`;
+  }
+}
+
+/**
  * Build completion item from builtin function
  */
 function buildBuiltinItem(
@@ -81,12 +92,30 @@ function buildBuiltinItem(
     },
   };
 
-  // Add deprecation indicator if the function is deprecated
-  if (func.deprecated) {
-    item.tags = [CompletionItemTag.Deprecated];
-    item.documentation = `${func.documentation}\n\n**Deprecated:** ${func.deprecated}`;
-  }
+  applyDeprecation(item, func);
 
+  return item;
+}
+
+/**
+ * Build a SYSTEM.<name> qualified completion item for a builtin that is shadowed
+ * by a user symbol (#809). filterText is the bare name so the row surfaces when
+ * the user types what they expect (not "SYSTEM.").
+ */
+function buildSystemQualifiedItem(func: BuiltinFunction): CompletionItem {
+  const item: CompletionItem = {
+    label: `SYSTEM.${func.name}`,
+    kind: CompletionItemKind.Function,
+    detail: func.signature,
+    documentation: func.documentation,
+    insertText: `SYSTEM.${func.name}`,
+    // filterText = bare builtin name so the row surfaces when the user types the name they expect
+    filterText: func.name,
+    sortText: makeSortText(SortBucket.Builtin, func.name),
+    labelDetails: { detail: func.signature, description: 'SYSTEM-qualified builtin' },
+  };
+  // Future-proofing: no currently-qualifiable builtin is deprecated, but keep parity with the bare row.
+  applyDeprecation(item, func);
   return item;
 }
 
@@ -262,7 +291,13 @@ export class CompletionProvider extends ProviderBase {
     // Phase 3: Built-in functions
     for (const func of BUILTIN_FUNCTIONS) {
       if (emittedSymbolNames.has(func.name.toLowerCase())) {
-        continue; // a visible user symbol shadows this builtin (C/AL: user wins)
+        // #809: a user symbol shadows this builtin; offer SYSTEM.<name> if it is a System-qualifiable
+        // global function and the (bare-name) prefix matches.
+        if (SYSTEM_QUALIFIABLE.has(func.name.toUpperCase()) &&
+            (!prefix || func.name.toLowerCase().startsWith(prefix))) {
+          items.push(buildSystemQualifiedItem(func));
+        }
+        continue;
       }
       if (!prefix || func.name.toLowerCase().startsWith(prefix)) {
         items.push(buildBuiltinItem(func, CompletionItemKind.Function, makeSortText(SortBucket.Builtin, func.name)));

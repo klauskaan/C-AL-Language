@@ -11,6 +11,7 @@ import { CompletionItemKind, CompletionItemTag, Position } from 'vscode-language
 import { createMockToken, createDocument, parseAndBuildSymbols } from '../../__tests__/testUtils';
 import { Lexer } from '../../lexer/lexer';
 import { Parser } from '../../parser/parser';
+import { makeSortText, SortBucket } from '../sortText';
 
 describe('CompletionProvider', () => {
   let provider: CompletionProvider;
@@ -1248,6 +1249,194 @@ describe('CompletionProvider', () => {
       expect(msg).toHaveLength(1);
       expect(msg[0].kind).toBe(CompletionItemKind.Variable);
       expect(msg[0].labelDetails?.description).not.toBe('builtin');
+    });
+  });
+
+  describe('Issue #809: SYSTEM-qualified fallback rows', () => {
+    // Positive tests — these assert that a SYSTEM.EVALUATE row IS emitted when EVALUATE
+    // is shadowed. They fail before implementation because no such row is produced yet.
+
+    it('emits SYSTEM.EVALUATE when EVALUATE is shadowed by a variable', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'EVALUATE', kind: 'variable', token: createMockToken(), type: 'Text' });
+
+      const doc = createDocument('EVA');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const systemRow = items.find(i => i.label === 'SYSTEM.EVALUATE');
+      expect(systemRow).toBeDefined();
+    });
+
+    it('SYSTEM.EVALUATE row has Function kind and correct detail', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'EVALUATE', kind: 'variable', token: createMockToken(), type: 'Text' });
+
+      const doc = createDocument('EVA');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const systemRow = items.find(i => i.label === 'SYSTEM.EVALUATE');
+      expect(systemRow).toBeDefined();
+      expect(systemRow!.kind).toBe(CompletionItemKind.Function);
+      expect(systemRow!.detail).toBe('(Variable, String [, FormatNumber]): Boolean');
+      expect(systemRow!.labelDetails?.description).toBe('SYSTEM-qualified builtin');
+    });
+
+    it('SYSTEM.EVALUATE row has insertText === "SYSTEM.EVALUATE"', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'EVALUATE', kind: 'variable', token: createMockToken(), type: 'Text' });
+
+      const doc = createDocument('EVA');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const systemRow = items.find(i => i.label === 'SYSTEM.EVALUATE');
+      expect(systemRow).toBeDefined();
+      expect(systemRow!.insertText).toBe('SYSTEM.EVALUATE');
+    });
+
+    it('SYSTEM.EVALUATE row has filterText === "EVALUATE" (surfaces when user types the bare name)', () => {
+      // filterText is the bare name so the row surfaces when the user types what they expect.
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'EVALUATE', kind: 'variable', token: createMockToken(), type: 'Text' });
+
+      const doc = createDocument('EVA');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const systemRow = items.find(i => i.label === 'SYSTEM.EVALUATE');
+      expect(systemRow).toBeDefined();
+      expect(systemRow!.filterText).toBe('EVALUATE');
+    });
+
+    it('SYSTEM.EVALUATE row has sortText === makeSortText(SortBucket.Builtin, "EVALUATE")', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'EVALUATE', kind: 'variable', token: createMockToken(), type: 'Text' });
+
+      const doc = createDocument('EVA');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const systemRow = items.find(i => i.label === 'SYSTEM.EVALUATE');
+      expect(systemRow).toBeDefined();
+      expect(systemRow!.sortText).toBe(makeSortText(SortBucket.Builtin, 'EVALUATE'));
+    });
+
+    it('emits SYSTEM.EVALUATE on empty prefix when EVALUATE is shadowed', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'EVALUATE', kind: 'variable', token: createMockToken(), type: 'Text' });
+
+      const doc = createDocument('');
+      const items = provider.getCompletions(doc, Position.create(0, 0), undefined, symbolTable);
+
+      const systemRow = items.find(i => i.label === 'SYSTEM.EVALUATE');
+      expect(systemRow).toBeDefined();
+    });
+
+    it('coexists: user symbol row present, bare builtin gone, SYSTEM row present', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Evaluate', kind: 'procedure', token: createMockToken() });
+
+      const doc = createDocument('EVA');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const userRow = items.find(i => i.label === 'Evaluate');
+      expect(userRow).toBeDefined();
+      expect(userRow!.kind).toBe(CompletionItemKind.Method);
+
+      const systemRow = items.find(i => i.label === 'SYSTEM.EVALUATE');
+      expect(systemRow).toBeDefined();
+
+      const bareBuiltin = items.find(i => i.label === 'EVALUATE' && i.labelDetails?.description === 'builtin');
+      expect(bareBuiltin).toBeUndefined();
+    });
+
+    it('sort order: user symbol row sorts before SYSTEM.EVALUATE row (Member < Builtin bucket)', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Evaluate', kind: 'procedure', token: createMockToken() });
+
+      const doc = createDocument('EVA');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const userRow = items.find(i => i.label === 'Evaluate');
+      const systemRow = items.find(i => i.label === 'SYSTEM.EVALUATE');
+      expect(userRow).toBeDefined();
+      expect(systemRow).toBeDefined();
+      expect(userRow!.sortText! < systemRow!.sortText!).toBe(true);
+    });
+
+    // Negative tests — absence guards. Several of these pass pre-implementation
+    // because the feature does not yet exist; that is expected and is NOT a red flag.
+
+    it('no SYSTEM row when EVALUATE is NOT shadowed (bare builtin row is present)', () => {
+      const symbolTable = new SymbolTable();
+
+      const doc = createDocument('EVA');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const systemRow = items.find(i => i.label === 'SYSTEM.EVALUATE');
+      expect(systemRow).toBeUndefined();
+
+      const bareBuiltin = items.find(i => i.label === 'EVALUATE' && i.labelDetails?.description === 'builtin');
+      expect(bareBuiltin).toBeDefined();
+    });
+
+    it('no SYSTEM.MESSAGE row when MESSAGE is shadowed (MESSAGE is not in SYSTEM_QUALIFIABLE)', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'MESSAGE', kind: 'variable', token: createMockToken(), type: 'Text' });
+
+      const doc = createDocument('MES');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const systemRow = items.find(i => i.label === 'SYSTEM.MESSAGE');
+      expect(systemRow).toBeUndefined();
+
+      const userRow = items.find(i => i.label === 'MESSAGE');
+      expect(userRow).toBeDefined();
+    });
+
+    it('no SYSTEM.STRLEN row when STRLEN is shadowed (STRLEN is not in SYSTEM_QUALIFIABLE)', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'STRLEN', kind: 'variable', token: createMockToken(), type: 'Integer' });
+
+      const doc = createDocument('STR');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const systemRow = items.find(i => i.label === 'SYSTEM.STRLEN');
+      expect(systemRow).toBeUndefined();
+    });
+
+    it('no SYSTEM.* rows in member-access context (after dot)', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'Rec', kind: 'variable', token: createMockToken(), type: 'Record Customer' });
+
+      const doc = createDocument('Rec.');
+      const items = provider.getCompletions(doc, Position.create(0, 4), undefined, symbolTable, '.');
+
+      const systemItems = items.filter(i => i.label.startsWith('SYSTEM.'));
+      expect(systemItems).toHaveLength(0);
+    });
+
+    it('no duplicate SYSTEM.EVALUATE rows when EVALUATE is shadowed', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'EVALUATE', kind: 'variable', token: createMockToken(), type: 'Text' });
+
+      const doc = createDocument('EVA');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const systemRows = items.filter(i => i.label === 'SYSTEM.EVALUATE');
+      expect(systemRows).toHaveLength(1);
+    });
+
+    it('prefix "SYS" does not surface SYSTEM.EVALUATE (emission gates on the bare name, not "SYSTEM.")', () => {
+      // Server-side, the SYSTEM row is only emitted when the bare builtin name matches the prefix
+      // (func.name.toLowerCase().startsWith(prefix)). 'evaluate'.startsWith('sys') === false, so the
+      // row is never emitted for 'SYS'. (filterText='EVALUATE' additionally aligns VS Code's
+      // client-side filtering with the bare name.)
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'EVALUATE', kind: 'variable', token: createMockToken(), type: 'Text' });
+
+      const doc = createDocument('SYS');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const systemRow = items.find(i => i.label === 'SYSTEM.EVALUATE');
+      expect(systemRow).toBeUndefined();
     });
   });
 });
