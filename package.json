@@ -146,6 +146,12 @@
           "description": "Show warnings for invalid action nesting in ACTIONS sections (e.g., ActionContainer nested inside another action, or Action/Separator with children).",
           "scope": "resource"
         },
+        "cal.diagnostics.warnAdvisory": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show information-level advisories for builtins that are no-ops on the modern service tier (e.g. ISSERVICETIER always returns TRUE on NAV 2013+). Informational only — never an error or warning.",
+          "scope": "resource"
+        },
         "cal.workspaceIndexing.includeTxtFiles": {
           "type": "boolean",
           "default": true,

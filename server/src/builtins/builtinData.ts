@@ -18,6 +18,11 @@ export interface BuiltinFunction {
    * - Concise (1-2 sentences max)
    */
   deprecated?: string;
+  /**
+   * Informational advisory shown at call sites for builtins that are no-ops/constant on the modern
+   * service tier (NAV 2013+). Information severity — never an error/warning.
+   */
+  advisory?: string;
 }
 
 /**
@@ -505,7 +510,8 @@ const SYSTEM_FUNCTIONS: BuiltinFunction[] = [
     name: 'ISSERVICETIER',
     signature: '(): Boolean',
     documentation: 'Returns TRUE if the current code is executing on the server (service tier), FALSE on the client.',
-    category: 'system'
+    category: 'system',
+    advisory: 'ISSERVICETIER always returns TRUE on NAV 2013+ (RTC); the classic client is gone, so this call is a constant and any conditional logic on it is dead.'
   },
   {
     name: 'CURRENTCLIENTTYPE',

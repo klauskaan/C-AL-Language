@@ -102,4 +102,12 @@ export class BuiltinRegistry {
   public getRecordMethodDeprecation(name: string): string | undefined {
     return this.getRecordMethod(name)?.deprecated;
   }
+
+  /**
+   * Get advisory message for a global function specifically (case-insensitive)
+   * Returns undefined if the function has no advisory or is not found
+   */
+  public getGlobalFunctionAdvisory(name: string): string | undefined {
+    return this.getGlobalFunction(name)?.advisory;
+  }
 }

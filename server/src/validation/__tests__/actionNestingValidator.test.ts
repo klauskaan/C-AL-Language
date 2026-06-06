@@ -55,7 +55,8 @@ function validateActionNesting(
       diagnostics: {
         warnDeprecated: true,
         warnUnknownAttributes: true,
-        warnActionNesting
+        warnActionNesting,
+        warnAdvisory: true
       },
       workspaceIndexing: {
         includeTxtFiles: true
