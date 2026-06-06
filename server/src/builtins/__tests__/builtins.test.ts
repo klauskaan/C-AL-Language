@@ -13,7 +13,7 @@
  * 5. Known issues (CREATEGUID vs CREATEGUIDS typo, CALCTIME not in C/AL)
  */
 
-import { BUILTIN_FUNCTIONS, RECORD_METHODS, SYSTEM_TYPE_KEYWORDS } from '../builtinData';
+import { BUILTIN_FUNCTIONS, RECORD_METHODS, SYSTEM_TYPE_KEYWORDS, SYSTEM_QUALIFIABLE } from '../builtinData';
 import { BuiltinRegistry } from '../builtinRegistry';
 
 describe('Builtins Module', () => {
@@ -1088,6 +1088,46 @@ describe('Builtins Module', () => {
       it('SYSTEM_TYPE_KEYWORDS.size should be 21 after issue #687 addition of EXECUTIONMODE', () => {
         expect(SYSTEM_TYPE_KEYWORDS.size).toBe(21);
       });
+    });
+  });
+
+  describe('Issue #809 - SYSTEM_QUALIFIABLE set', () => {
+    // These tests fail to COMPILE until SYSTEM_QUALIFIABLE is exported from builtinData.ts.
+    // That compile failure is the intended red state.
+
+    it('should have exactly 62 entries', () => {
+      expect(SYSTEM_QUALIFIABLE.size).toBe(62);
+    });
+
+    it('should include EVALUATE (category: system, non-deprecated proof case)', () => {
+      expect(SYSTEM_QUALIFIABLE.has('EVALUATE')).toBe(true);
+    });
+
+    it('should include FORMAT (category: string, cross-category proof case)', () => {
+      expect(SYSTEM_QUALIFIABLE.has('FORMAT')).toBe(true);
+    });
+
+    it('should include COPYSTREAM (category: file, proof case)', () => {
+      expect(SYSTEM_QUALIFIABLE.has('COPYSTREAM')).toBe(true);
+    });
+
+    it('should NOT include MESSAGE (dialog category, not SYSTEM-qualifiable)', () => {
+      expect(SYSTEM_QUALIFIABLE.has('MESSAGE')).toBe(false);
+    });
+
+    it('should NOT include STRLEN (string utility, not SYSTEM-qualifiable)', () => {
+      expect(SYSTEM_QUALIFIABLE.has('STRLEN')).toBe(false);
+    });
+
+    it('should NOT include ISSERVICETIER (deliberately excluded)', () => {
+      expect(SYSTEM_QUALIFIABLE.has('ISSERVICETIER')).toBe(false);
+    });
+
+    it('every member of SYSTEM_QUALIFIABLE must exist in BUILTIN_FUNCTIONS', () => {
+      const allNames = new Set(BUILTIN_FUNCTIONS.map(f => f.name.toUpperCase()));
+      for (const name of SYSTEM_QUALIFIABLE) {
+        expect(allNames.has(name.toUpperCase())).toBe(true);
+      }
     });
   });
 });

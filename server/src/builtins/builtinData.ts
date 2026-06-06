@@ -1413,6 +1413,29 @@ export const SYSTEM_TYPE_KEYWORDS: Set<string> = new Set([
 ]);
 
 /**
+ * Builtins reachable via the SYSTEM.<name> qualified form (C/AL: SYSTEM.EVALUATE, etc.).
+ * Derived from Microsoft's documented "System data type" STATIC METHODS
+ * (learn.microsoft.com/.../methods-auto/system/system-data-type) ∩ BUILTIN_FUNCTIONS.
+ * Used to offer a SYSTEM.<name> completion when a user symbol shadows a global builtin (#809).
+ * NOTE: `category` is NOT a valid selector — COPYSTREAM/TEMPORARYPATH are category:'file' yet
+ * ARE System static methods; FORMAT is category:'string' yet qualifiable. Use this explicit set.
+ * ISSERVICETIER is intentionally EXCLUDED (deprecated at introduction), so this is 62, not 63.
+ */
+export const SYSTEM_QUALIFIABLE: ReadonlySet<string> = new Set([
+  'ABS', 'APPLICATIONPATH', 'ARRAYLEN', 'CALCDATE', 'CANLOADTYPE', 'CAPTIONCLASSTRANSLATE',
+  'CLEAR', 'CLEARALL', 'CLEARLASTERROR', 'CLOSINGDATE', 'CODECOVERAGEINCLUDE', 'CODECOVERAGELOAD',
+  'CODECOVERAGELOG', 'CODECOVERAGEREFRESH', 'COMPRESSARRAY', 'COPYARRAY', 'COPYSTREAM',
+  'CREATEDATETIME', 'CREATEENCRYPTIONKEY', 'CREATEGUID', 'CURRENTDATETIME', 'DATE2DMY', 'DATE2DWY',
+  'DECRYPT', 'DELETEENCRYPTIONKEY', 'DMY2DATE', 'DT2DATE', 'DT2TIME', 'DWY2DATE', 'ENCRYPT',
+  'ENCRYPTIONENABLED', 'ENCRYPTIONKEYEXISTS', 'EVALUATE', 'EXPORTENCRYPTIONKEY', 'FORMAT',
+  'GETDOCUMENTURL', 'GETDOTNETTYPE', 'GETLASTERRORCALLSTACK', 'GETLASTERRORCODE',
+  'GETLASTERROROBJECT', 'GETLASTERRORTEXT', 'GETURL', 'GLOBALLANGUAGE', 'GUIALLOWED', 'HYPERLINK',
+  'IMPORTENCRYPTIONKEY', 'IMPORTSTREAMWITHURLACCESS', 'ISNULL', 'ISNULLGUID', 'NORMALDATE',
+  'POWER', 'RANDOM', 'RANDOMIZE', 'ROUND', 'ROUNDDATETIME', 'SLEEP', 'TEMPORARYPATH', 'TIME',
+  'TODAY', 'VARIANT2DATE', 'WINDOWSLANGUAGE', 'WORKDATE'
+]);
+
+/**
  * All built-in functions combined
  */
 export const BUILTIN_FUNCTIONS: BuiltinFunction[] = [
