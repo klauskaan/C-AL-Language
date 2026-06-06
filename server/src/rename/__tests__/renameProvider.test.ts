@@ -3612,5 +3612,573 @@ describe('RenameProvider', () => {
         expect(offsets.length).toBe(2);
       });
     });
+
+    describe('#801 field–procedure name collision is discriminated by AST role', () => {
+      // Core shared fixture for T-801a / T-801b / T-801c / T-801d / T-801g / T-801l.
+      //
+      // Amount occurrences (all named 'Amount'):
+      //   occ 1  → FIELDS section field declaration           (field decl)
+      //   occ 2  → PROCEDURE Amount@1 declaration token       (proc decl)
+      //   occ 3  → Amount(5);  — standalone bare call         (proc call, parens)
+      //   occ 4  → Rec2.Amount := 1  — member field access    (field member access, no parens)
+      //   occ 5  → Rec2.Amount(5)    — member proc call       (proc member call, parens)
+      //   occ 6  → WITH Rec2 DO BEGIN Amount := 2             (WITH-block bare field use)
+      const coreFixture = `OBJECT Table 50000 CollisionTbl
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Decimal       }
+  }
+  CODE
+  {
+    PROCEDURE Amount@1(X : Decimal) : Decimal;
+    BEGIN
+    END;
+
+    PROCEDURE Foo@2();
+    VAR
+      Rec2 : Record 50000;
+    BEGIN
+      Amount(5);
+      Rec2.Amount := 1;
+      Rec2.Amount(5);
+      WITH Rec2 DO BEGIN
+        Amount := 2;
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+      // T-801a: FIELD rename must include field decl, Rec2.Amount member access, and WITH-block bare
+      // use; and EXCLUDE the procedure declaration token and the bare call Amount(5).
+      // EXPECTED: FAIL before fix (proc decl and bare call are over-renamed today).
+      it('should rename field decl + member access + WITH-bare but NOT proc decl or bare call when renaming field Amount (T-801a)', () => {
+        const doc = createDocument(coreFixture);
+        const { ast, symbolTable } = parseContent(coreFixture);
+        // Cursor on the FIELD declaration (occ 1)
+        const pos = doc.positionAt(nthOffset(coreFixture, 'Amount', 1));
+
+        const edits = provider.getRenameEdits(doc, pos, 'TotalAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // Field declaration (occ 1) MUST be in the edits
+        const fieldDeclOffset = nthOffset(coreFixture, 'Amount', 1);
+        expect(offsets).toContain(fieldDeclOffset);
+
+        // Rec2.Amount := 1 member ACCESS MUST be in the edits (occ 4)
+        const memberAccessOffset = nthOffset(coreFixture, 'Rec2.Amount := 1', 1) + 'Rec2.'.length;
+        expect(offsets).toContain(memberAccessOffset);
+
+        // WITH-block bare field use Amount := 2 MUST be in the edits (occ 6)
+        const withBareOffset = nthOffset(coreFixture, 'Amount := 2', 1);
+        expect(offsets).toContain(withBareOffset);
+
+        // Procedure declaration (occ 2) MUST NOT be in the edits
+        const procDeclOffset = nthOffset(coreFixture, 'Amount', 2);
+        expect(offsets).not.toContain(procDeclOffset);
+
+        // Bare call Amount(5) (occ 3) MUST NOT be in the edits
+        const bareCallOffset = nthOffset(coreFixture, 'Amount(5)', 1);
+        expect(offsets).not.toContain(bareCallOffset);
+      });
+
+      // T-801b: GUARDRAIL — WITH-block bare field use must NOT be dropped by the fix.
+      // The WITH Rec2 DO block makes Amount resolve as a field use.
+      // This guards against a naive fix that under-renames.
+      // EXPECTED: may PASS before fix (rename currently over-renames, not under-renames).
+      it('should keep WITH-block bare field use Amount := 2 in edits when renaming field Amount (T-801b)', () => {
+        const doc = createDocument(coreFixture);
+        const { ast, symbolTable } = parseContent(coreFixture);
+        // Cursor on the FIELD declaration (occ 1)
+        const pos = doc.positionAt(nthOffset(coreFixture, 'Amount', 1));
+
+        const edits = provider.getRenameEdits(doc, pos, 'TotalAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // WITH-block bare field use Amount := 2 MUST be in the edits
+        const withBareOffset = nthOffset(coreFixture, 'Amount := 2', 1);
+        expect(offsets).toContain(withBareOffset);
+      });
+
+      // T-801c: FIELD rename — Rec2.Amount(5) member CALL must be EXCLUDED (proc context),
+      // while Rec2.Amount := 1 member ACCESS must be INCLUDED (field context).
+      // EXPECTED: FAIL before fix (member call over-renamed today).
+      it('should exclude Rec2.Amount(5) member call but include Rec2.Amount member access when renaming field Amount (T-801c)', () => {
+        const doc = createDocument(coreFixture);
+        const { ast, symbolTable } = parseContent(coreFixture);
+        // Cursor on the FIELD declaration (occ 1)
+        const pos = doc.positionAt(nthOffset(coreFixture, 'Amount', 1));
+
+        const edits = provider.getRenameEdits(doc, pos, 'TotalAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // Rec2.Amount(5) member CALL MUST NOT be in the edits (proc reference via parens)
+        const memberCallOffset = nthOffset(coreFixture, 'Rec2.Amount(5)', 1) + 'Rec2.'.length;
+        expect(offsets).not.toContain(memberCallOffset);
+
+        // Rec2.Amount := 1 member ACCESS MUST be in the edits (field access)
+        const memberAccessOffset = nthOffset(coreFixture, 'Rec2.Amount := 1', 1) + 'Rec2.'.length;
+        expect(offsets).toContain(memberAccessOffset);
+      });
+
+      // T-801d: PROCEDURE rename must include proc decl + bare call Amount(5) + member call
+      // Rec2.Amount(5); and EXCLUDE the FIELDS-section field declaration.
+      // The member ACCESS Rec2.Amount := 1 is a documented residual (included, not excluded).
+      // EXPECTED: FAIL before fix (field decl over-renamed today).
+      it('should rename proc decl + bare call + member call but NOT field decl when renaming procedure Amount (T-801d)', () => {
+        const doc = createDocument(coreFixture);
+        const { ast, symbolTable } = parseContent(coreFixture);
+        // Cursor on the PROCEDURE Amount declaration (occ 2)
+        const pos = doc.positionAt(nthOffset(coreFixture, 'Amount', 2));
+
+        const edits = provider.getRenameEdits(doc, pos, 'CalcAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // Procedure declaration (occ 2) MUST be in the edits
+        const procDeclOffset = nthOffset(coreFixture, 'Amount', 2);
+        expect(offsets).toContain(procDeclOffset);
+
+        // Bare call Amount(5) MUST be in the edits (occ 3 — parenthesized → proc reference)
+        const bareCallOffset = nthOffset(coreFixture, 'Amount(5)', 1);
+        expect(offsets).toContain(bareCallOffset);
+
+        // Member call Rec2.Amount(5) MUST be in the edits (parens → proc reference)
+        const memberCallOffset = nthOffset(coreFixture, 'Rec2.Amount(5)', 1) + 'Rec2.'.length;
+        expect(offsets).toContain(memberCallOffset);
+
+        // Field declaration (occ 1) MUST NOT be in the edits
+        const fieldDeclOffset = nthOffset(coreFixture, 'Amount', 1);
+        expect(offsets).not.toContain(fieldDeclOffset);
+
+        // Rec2.Amount := 1 member access: documented residual — currently INCLUDED (known gap, tracked in #802)
+        const memberAccessOffset = nthOffset(coreFixture, 'Rec2.Amount := 1', 1) + 'Rec2.'.length;
+        expect(offsets).toContain(memberAccessOffset);
+      });
+
+      // T-801e: Quoted field "Total Amount" + PROCEDURE "Total Amount"@1().
+      // Renaming the FIELD must EXCLUDE the quoted procedure declaration and INCLUDE field decl
+      // and Rec2."Total Amount" member access.
+      // EXPECTED: FAIL before fix (proc decl over-renamed today).
+      it('should rename quoted field decl + member access but NOT quoted proc decl when renaming quoted field "Total Amount" (T-801e)', () => {
+        const code = `OBJECT Table 50000 TotalAmountTest
+{
+  FIELDS
+  {
+    { 1 ;   ; Total Amount        ; Decimal       }
+  }
+  CODE
+  {
+    PROCEDURE "Total Amount"@1() : Decimal;
+    BEGIN
+    END;
+
+    PROCEDURE Foo@2();
+    VAR
+      Rec2 : Record 50000;
+    BEGIN
+      Rec2."Total Amount" := 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the field declaration 'Total Amount' in FIELDS (occ 1 of 'Total Amount')
+        const pos = doc.positionAt(nthOffset(code, 'Total Amount', 1));
+
+        const edits = provider.getRenameEdits(doc, pos, 'GrandTotal', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // Field declaration 'Total Amount' in FIELDS MUST be in the edits
+        const fieldDeclOffset = nthOffset(code, 'Total Amount', 1);
+        expect(offsets).toContain(fieldDeclOffset);
+
+        // Rec2."Total Amount" member access MUST be in the edits (occ 2 of '"Total Amount"' with quotes)
+        const memberAccessOffset = nthOffset(code, 'Rec2."Total Amount"', 1) + 'Rec2.'.length;
+        expect(offsets).toContain(memberAccessOffset);
+
+        // Quoted PROCEDURE declaration '"Total Amount"' MUST NOT be in the edits
+        // The proc decl is occ 1 of '"Total Amount"' (with quotes); FIELDS uses unquoted 'Total Amount'
+        const procDeclOffset = nthOffset(code, '"Total Amount"', 1);
+        expect(offsets).not.toContain(procDeclOffset);
+      });
+
+      // T-801f: NEGATIVE CONTROL — field Amount with NO procedure or var collision.
+      // Rename the field; assert edits are exactly the field decl + its bare/member uses.
+      // Guards the new drop logic from over-firing when there is no collision.
+      // EXPECTED: PASS before and after fix.
+      it('should rename field decl + bare use + member use normally when no procedure collision exists (T-801f)', () => {
+        const code = `OBJECT Table 50000 NoCollisionTest
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Decimal       }
+  }
+  CODE
+  {
+    VAR
+      Rec2 : Record 50000;
+    PROCEDURE Foo@1();
+    BEGIN
+      Amount := 10;
+      Rec2.Amount := 20;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the field declaration (occ 1)
+        const pos = doc.positionAt(nthOffset(code, 'Amount', 1));
+
+        const edits = provider.getRenameEdits(doc, pos, 'TotalAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // Field declaration MUST be in the edits
+        const fieldDeclOffset = nthOffset(code, 'Amount', 1);
+        expect(offsets).toContain(fieldDeclOffset);
+
+        // Bare field use 'Amount := 10' MUST be in the edits
+        const bareUseOffset = nthOffset(code, 'Amount := 10', 1);
+        expect(offsets).toContain(bareUseOffset);
+
+        // Rec2.Amount member access MUST be in the edits
+        const memberOffset = nthOffset(code, 'Rec2.Amount', 1) + 'Rec2.'.length;
+        expect(offsets).toContain(memberOffset);
+
+        // Exactly 3 edits: field decl + bare use + member use
+        expect(offsets.length).toBe(3);
+      });
+
+      // T-801g (it.failing): Renaming the PROCEDURE should NOT rename the WITH-block bare field use.
+      // First asserts procedure decl and a real call ARE in the edits (parse sanity).
+      // Then asserts the WITH-block bare-field offset is NOT in the edits (desired behavior).
+      // Known residual (AC4 partial) — tracked in #802; remove .failing when #802 lands.
+      // EXPECTED: xfail (the second assertion fails today — WITH-block use is currently over-renamed).
+      it.failing('should NOT rename WITH-block bare field use Amount := 2 when renaming procedure Amount (T-801g)', () => {
+        const doc = createDocument(coreFixture);
+        const { ast, symbolTable } = parseContent(coreFixture);
+        // Cursor on the PROCEDURE Amount declaration (occ 2)
+        const pos = doc.positionAt(nthOffset(coreFixture, 'Amount', 2));
+
+        const edits = provider.getRenameEdits(doc, pos, 'CalcAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // Sanity: procedure decl MUST be in the edits
+        const procDeclOffset = nthOffset(coreFixture, 'Amount', 2);
+        expect(offsets).toContain(procDeclOffset);
+
+        // Sanity: bare call Amount(5) MUST be in the edits
+        const bareCallOffset = nthOffset(coreFixture, 'Amount(5)', 1);
+        expect(offsets).toContain(bareCallOffset);
+
+        // Known residual (AC4 partial) — tracked in #802; remove .failing when #802 lands.
+        // WITH-block bare field use MUST NOT be in the edits (it's a field use, not a proc call)
+        const withBareOffset = nthOffset(coreFixture, 'Amount := 2', 1);
+        expect(offsets).not.toContain(withBareOffset);
+      });
+
+      // T-801h: Triple collision — field Amount + LOCAL VAR Amount inside Foo + PROCEDURE Amount.
+      // Renaming the FIELD: proc decl + its call + local var decl + local var bare use MUST be
+      // excluded; field decl + field member access MUST be included.
+      // The local var resolves to kind:'variable' (child scope) → dropped by guard 4 (var/param
+      // kind drop). The proc decl + bare call are dropped by guard 2 (proc-ref set).
+      // EXPECTED: FAIL before fix (proc decl and local var tokens over-renamed today).
+      it('should rename only field decl + member access; exclude proc decl + call + local var when triple collision on Amount (T-801h)', () => {
+        // Amount occurrences in this fixture:
+        //   occ 1  → FIELDS section field declaration
+        //   occ 2  → PROCEDURE Amount@1 declaration
+        //   occ 3  → local VAR Amount : Integer declaration (inside Foo, above BEGIN)
+        //   occ 4  → Amount(5); bare call in Foo (proc call)
+        //   occ 5  → Rec2.Amount := 1; member field access
+        //   occ 6  → Amount := 99; local var bare use
+        const code = `OBJECT Table 50000 TripleCollisionTest
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Decimal       }
+  }
+  CODE
+  {
+    PROCEDURE Amount@1(X : Decimal) : Decimal;
+    BEGIN
+    END;
+
+    PROCEDURE Foo@2();
+    VAR
+      Amount : Integer;
+      Rec2 : Record 50000;
+    BEGIN
+      Amount(5);
+      Rec2.Amount := 1;
+      Amount := 99;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the FIELD declaration (occ 1)
+        const pos = doc.positionAt(nthOffset(code, 'Amount', 1));
+
+        const edits = provider.getRenameEdits(doc, pos, 'TotalAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // Field declaration (occ 1) MUST be in the edits
+        const fieldDeclOffset = nthOffset(code, 'Amount', 1);
+        expect(offsets).toContain(fieldDeclOffset);
+
+        // Rec2.Amount member access MUST be in the edits (occ 4)
+        const memberAccessOffset = nthOffset(code, 'Rec2.Amount := 1', 1) + 'Rec2.'.length;
+        expect(offsets).toContain(memberAccessOffset);
+
+        // Procedure declaration (occ 2) MUST NOT be in the edits
+        const procDeclOffset = nthOffset(code, 'Amount', 2);
+        expect(offsets).not.toContain(procDeclOffset);
+
+        // Bare call 'Amount(5)' (occ 3) MUST NOT be in the edits
+        const bareCallOffset = nthOffset(code, 'Amount(5)', 1);
+        expect(offsets).not.toContain(bareCallOffset);
+
+        // Local VAR declaration 'Amount : Integer' (occ 5) MUST NOT be in the edits
+        const localVarDeclOffset = nthOffset(code, 'Amount : Integer', 1);
+        expect(offsets).not.toContain(localVarDeclOffset);
+
+        // Local VAR bare use 'Amount := 99' (occ 6) MUST NOT be in the edits
+        const localVarUseOffset = nthOffset(code, 'Amount := 99', 1);
+        expect(offsets).not.toContain(localVarUseOffset);
+      });
+
+      // T-801i: Call before declaration — the bare call Amount(5) appears in source BEFORE the
+      // PROCEDURE Amount declaration. Rename the FIELD. Assert the early call is still EXCLUDED
+      // (proc-ref collection must be whole-AST, order-independent).
+      // EXPECTED: FAIL before fix (call over-renamed today regardless of source order).
+      it('should exclude a bare call Amount(5) that appears before the PROCEDURE declaration when renaming field Amount (T-801i)', () => {
+        // Amount occurrences:
+        //   occ 1  → FIELDS section field declaration
+        //   occ 2  → Amount(5); bare call in Foo (BEFORE the proc declaration)
+        //   occ 3  → PROCEDURE Amount@1 declaration (comes AFTER the call in source)
+        const code = `OBJECT Table 50000 CallBeforeDeclTest
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Decimal       }
+  }
+  CODE
+  {
+    PROCEDURE Foo@1();
+    BEGIN
+      Amount(5);
+    END;
+
+    PROCEDURE Amount@2(X : Decimal) : Decimal;
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the FIELD declaration (occ 1)
+        const pos = doc.positionAt(nthOffset(code, 'Amount', 1));
+
+        const edits = provider.getRenameEdits(doc, pos, 'TotalAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // Field declaration (occ 1) MUST be in the edits
+        const fieldDeclOffset = nthOffset(code, 'Amount', 1);
+        expect(offsets).toContain(fieldDeclOffset);
+
+        // Bare call Amount(5) appearing BEFORE the proc declaration MUST NOT be in the edits
+        const earlyCallOffset = nthOffset(code, 'Amount(5)', 1);
+        expect(offsets).not.toContain(earlyCallOffset);
+
+        // Procedure declaration MUST NOT be in the edits
+        const procDeclOffset = nthOffset(code, 'Amount', 3);
+        expect(offsets).not.toContain(procDeclOffset);
+      });
+
+      // T-801j: GUARDRAIL — parameterless member calls preserved on procedure rename.
+      // A procedure DoIt with a same-named FIELD DoIt present.
+      // Called parameterless as 'SomeRec.DoIt;' (statement) and 'X := SomeRec.DoIt;' (expression).
+      // Rename the PROCEDURE; assert both parameterless call offsets ARE in the edits (kept).
+      // Locks the T7-class behavior with a field collision present.
+      // EXPECTED: PASS before and after fix.
+      it('should keep both parameterless member calls SomeRec.DoIt in edits when renaming procedure DoIt with a same-named field (T-801j)', () => {
+        const code = `OBJECT Table 50000 ExecCollisionTbl
+{
+  FIELDS
+  {
+    { 1 ;   ; DoIt                ; Boolean       }
+  }
+  CODE
+  {
+    VAR
+      SomeRec : Record 50000;
+    PROCEDURE DoIt@1();
+    BEGIN
+    END;
+
+    PROCEDURE Main@2();
+    VAR
+      X : Boolean;
+    BEGIN
+      SomeRec.DoIt;
+      X := SomeRec.DoIt;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the PROCEDURE DoIt declaration (occ 2 of 'DoIt': occ 1 is field decl)
+        const pos = doc.positionAt(nthOffset(code, 'DoIt', 2));
+
+        const edits = provider.getRenameEdits(doc, pos, 'Execute', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // Procedure declaration (occ 2) MUST be in the edits
+        const procDeclOffset = nthOffset(code, 'DoIt', 2);
+        expect(offsets).toContain(procDeclOffset);
+
+        // First parameterless call 'SomeRec.DoIt;' MUST be in the edits
+        const call1Offset = nthOffset(code, 'SomeRec.DoIt', 1) + 'SomeRec.'.length;
+        expect(offsets).toContain(call1Offset);
+
+        // Second parameterless call 'X := SomeRec.DoIt' MUST be in the edits
+        const call2Offset = nthOffset(code, 'SomeRec.DoIt', 2) + 'SomeRec.'.length;
+        expect(offsets).toContain(call2Offset);
+      });
+
+      // T-801k (it.failing): Renaming the FIELD should NOT rename a parameterless procedure call.
+      // Cover BOTH Amount; (statement) and X := Amount; (expression, no parens).
+      // First asserts field decl + a real field use ARE in the edits (parse sanity).
+      // Then asserts the parameterless-call offsets are NOT in the edits (desired).
+      // Known residual (AC4 partial) — tracked in #802; remove .failing when #802 lands.
+      // EXPECTED: xfail (parameterless bare calls indistinguishable from field uses without parens today).
+      it.failing('should NOT rename parameterless call Amount; and X := Amount; when renaming field Amount (T-801k)', () => {
+        // Amount occurrences:
+        //   occ 1  → FIELDS section field declaration
+        //   occ 2  → PROCEDURE Amount@1 declaration (parameterless)
+        //   occ 3  → Amount; — parameterless call statement
+        //   occ 4  → X := Amount; — parameterless call in expression
+        //   occ 5  → Rec2.Amount := 1; — member field access (the real field use)
+        const code = `OBJECT Table 50000 ParamlessCallTest
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Decimal       }
+  }
+  CODE
+  {
+    PROCEDURE Amount@1() : Decimal;
+    BEGIN
+    END;
+
+    PROCEDURE Foo@2();
+    VAR
+      Rec2 : Record 50000;
+      X : Decimal;
+    BEGIN
+      Amount;
+      X := Amount;
+      Rec2.Amount := 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the FIELD declaration (occ 1)
+        const pos = doc.positionAt(nthOffset(code, 'Amount', 1));
+
+        const edits = provider.getRenameEdits(doc, pos, 'TotalAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // Sanity: field declaration MUST be in the edits
+        const fieldDeclOffset = nthOffset(code, 'Amount', 1);
+        expect(offsets).toContain(fieldDeclOffset);
+
+        // Sanity: Rec2.Amount member ACCESS MUST be in the edits (the real field use)
+        const memberAccessOffset = nthOffset(code, 'Rec2.Amount := 1', 1) + 'Rec2.'.length;
+        expect(offsets).toContain(memberAccessOffset);
+
+        // Known residual (AC4 partial) — tracked in #802; remove .failing when #802 lands.
+        // Parameterless call 'Amount;' (statement) MUST NOT be in the edits
+        const paramlessStmtOffset = nthOffset(code, 'Amount', 3);
+        expect(offsets).not.toContain(paramlessStmtOffset);
+
+        // Parameterless call 'X := Amount;' (expression) MUST NOT be in the edits
+        const paramlessExprOffset = nthOffset(code, 'Amount', 4);
+        expect(offsets).not.toContain(paramlessExprOffset);
+      });
+
+      // T-801l (it.failing): Renaming the PROCEDURE should NOT rename a Rec.Field member access.
+      // First asserts procedure decl + a real call ARE in the edits (parse sanity).
+      // Then asserts the Rec2.Amount member ACCESS offset is NOT in the edits (desired).
+      // Known residual (AC4 partial) — tracked in #802; remove .failing when #802 lands.
+      // EXPECTED: xfail (member access indistinguishable from member call without parens today).
+      it.failing('should NOT rename Rec2.Amount member access when renaming procedure Amount (T-801l)', () => {
+        const doc = createDocument(coreFixture);
+        const { ast, symbolTable } = parseContent(coreFixture);
+        // Cursor on the PROCEDURE Amount declaration (occ 2)
+        const pos = doc.positionAt(nthOffset(coreFixture, 'Amount', 2));
+
+        const edits = provider.getRenameEdits(doc, pos, 'CalcAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // Sanity: procedure decl MUST be in the edits
+        const procDeclOffset = nthOffset(coreFixture, 'Amount', 2);
+        expect(offsets).toContain(procDeclOffset);
+
+        // Sanity: bare call Amount(5) MUST be in the edits (real proc call)
+        const bareCallOffset = nthOffset(coreFixture, 'Amount(5)', 1);
+        expect(offsets).toContain(bareCallOffset);
+
+        // Known residual (AC4 partial) — tracked in #802; remove .failing when #802 lands.
+        // Rec2.Amount := 1 member ACCESS MUST NOT be in the edits (it's a field access, not a proc call)
+        const memberAccessOffset = nthOffset(coreFixture, 'Rec2.Amount := 1', 1) + 'Rec2.'.length;
+        expect(offsets).not.toContain(memberAccessOffset);
+      });
+    });
   });
 });
