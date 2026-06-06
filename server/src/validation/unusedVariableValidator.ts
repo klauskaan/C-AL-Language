@@ -220,8 +220,9 @@ class UsageTrackingVisitor implements Partial<ASTVisitor> {
    * Returns false to prevent automatic traversal
    */
   visitForStatement(node: ForStatement): false {
-    // Mark the control variable as read
-    if (node.variable.type === 'Identifier') {
+    // Mark the control variable as read — unless it resolves to a WITH-scoped
+    // field, in which case the same-named local is NOT read by the loop (#804).
+    if (node.variable.type === 'Identifier' && !this.resolvesToField(node.variable)) {
       const info = this.variables.get(node.variable.name.toLowerCase());
       if (info) {
         info.hasRead = true;
@@ -244,8 +245,9 @@ class UsageTrackingVisitor implements Partial<ASTVisitor> {
    * Returns false to prevent automatic traversal
    */
   visitForEachStatement(node: ForEachStatement): false {
-    // Mark the loop variable as read
-    if (node.variable.type === 'Identifier') {
+    // Mark the loop variable as read — unless it resolves to a WITH-scoped
+    // field, in which case the same-named local is NOT read by the loop (#804).
+    if (node.variable.type === 'Identifier' && !this.resolvesToField(node.variable)) {
       const info = this.variables.get(node.variable.name.toLowerCase());
       if (info) {
         info.hasRead = true;
@@ -271,6 +273,19 @@ class UsageTrackingVisitor implements Partial<ASTVisitor> {
   }
 
   /**
+   * WITH-field guard: returns true if the identifier resolves (via the WITH
+   * child-scope injection in the symbol table) to a record field at its source
+   * offset, rather than to a same-named local variable. Such a reference is a
+   * field read / field control-variable, not a read of the same-named local,
+   * so callers must not mark the local as read (#790 plain reads, #804 FOR/FOREACH).
+   */
+  private resolvesToField(id: Identifier): boolean {
+    return (
+      this.symbolTable?.getSymbolAtOffset(id.name, id.startToken.startOffset)?.kind === 'field'
+    );
+  }
+
+  /**
    * Visit Identifier - check if it matches a tracked variable and mark as read.
    * WITH-field guard: if the identifier resolves to a field (via WITH scope injection),
    * it is a field read, not a read of the same-named local variable.
@@ -281,7 +296,7 @@ class UsageTrackingVisitor implements Partial<ASTVisitor> {
     if (info) {
       // Guard: if the symbol at this offset resolves to a field, this is a WITH-bare
       // field read — do NOT count it as a read of the same-named local variable.
-      if (this.symbolTable?.getSymbolAtOffset(node.name, node.startToken.startOffset)?.kind === 'field') {
+      if (this.resolvesToField(node)) {
         return;
       }
       info.hasRead = true;
