@@ -3205,5 +3205,412 @@ describe('RenameProvider', () => {
         expect(offsets.length).toBeGreaterThanOrEqual(3);
       });
     });
+
+    describe('#800 field rename cursor-on-declaration drops shadowing locals/parameters', () => {
+      // T11: cursor on field declaration — local variable shadows the field.
+      // Pre-fix: collectFieldReferences is text-only, so the local decl and its bare use are
+      // both renamed → the two NOT-renamed assertions FAIL (demonstrating the bug).
+      it('should rename field declaration and Rec.Amount member use but NOT a same-named local variable and its uses (T11)', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Decimal       }
+  }
+  CODE
+  {
+    VAR
+      Rec : Record 50000;
+    PROCEDURE Foo@1();
+    VAR
+      Amount : Integer;
+    BEGIN
+      Amount := 1;
+      Rec.Amount := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the field declaration 'Amount' in FIELDS (occurrence 1)
+        const pos = doc.positionAt(nthOffset(code, 'Amount', 1));
+
+        const edits = provider.getRenameEdits(doc, pos, 'RenamedAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // The field declaration MUST be renamed
+        const fieldDeclOffset = nthOffset(code, 'Amount', 1);
+        expect(offsets).toContain(fieldDeclOffset);
+
+        // The member-property 'Rec.Amount' MUST be renamed
+        const memberOffset = nthOffset(code, 'Rec.Amount', 1) + 'Rec.'.length;
+        expect(offsets).toContain(memberOffset);
+
+        // The local variable DECLARATION 'Amount : Integer' must NOT be renamed
+        const localDeclOffset = nthOffset(code, 'Amount : Integer', 1);
+        expect(offsets).not.toContain(localDeclOffset);
+
+        // The bare local USE 'Amount := 1' must NOT be renamed
+        const localUseOffset = nthOffset(code, 'Amount := 1', 1);
+        expect(offsets).not.toContain(localUseOffset);
+
+        // Exactly 2 edits: field declaration + Rec.Amount member use
+        expect(offsets.length).toBe(2);
+      });
+
+      // T11b: cursor on field declaration — PARAMETER shadows the field.
+      // Pre-fix: the parameter declaration and its bare uses are also renamed → bug.
+      it('should rename field declaration and Rec.Amount member use but NOT a same-named parameter and its uses (T11b)', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Decimal       }
+  }
+  CODE
+  {
+    VAR
+      Rec : Record 50000;
+    PROCEDURE Foo@1(Amount : Integer);
+    BEGIN
+      Amount := Amount + 1;
+      Rec.Amount := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the field declaration 'Amount' in FIELDS (occurrence 1)
+        const pos = doc.positionAt(nthOffset(code, 'Amount', 1));
+
+        const edits = provider.getRenameEdits(doc, pos, 'RenamedAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // The field declaration MUST be renamed
+        const fieldDeclOffset = nthOffset(code, 'Amount', 1);
+        expect(offsets).toContain(fieldDeclOffset);
+
+        // The member-property 'Rec.Amount' MUST be renamed
+        const memberOffset = nthOffset(code, 'Rec.Amount', 1) + 'Rec.'.length;
+        expect(offsets).toContain(memberOffset);
+
+        // The parameter DECLARATION 'Amount : Integer' in the procedure signature must NOT be renamed
+        const paramDeclOffset = nthOffset(code, 'Amount : Integer', 1);
+        expect(offsets).not.toContain(paramDeclOffset);
+
+        // The parameter USES in the body must NOT be renamed: 'Amount := Amount + 1'
+        const paramUse1Offset = nthOffset(code, 'Amount := Amount + 1', 1);
+        expect(offsets).not.toContain(paramUse1Offset);
+        const paramUse2Offset = nthOffset(code, 'Amount + 1', 1);
+        expect(offsets).not.toContain(paramUse2Offset);
+
+        // Exactly 2 edits: field declaration + Rec.Amount member use
+        expect(offsets.length).toBe(2);
+      });
+
+      // T11c: case-insensitivity of the shadow drop.
+      // The local is declared as 'Amount' but used as 'AMOUNT := 1' (all-caps).
+      // C/AL identifiers are case-insensitive so this is the same local — must NOT be renamed.
+      // Pre-fix: the text scan matches case-insensitively but has no scope awareness, so
+      // 'AMOUNT := 1' is still renamed → the NOT-renamed assertion FAILS.
+      it('should not rename case-variant local use AMOUNT when field Amount is renamed (T11c)', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Decimal       }
+  }
+  CODE
+  {
+    VAR
+      Rec : Record 50000;
+    PROCEDURE Foo@1();
+    VAR
+      Amount : Integer;
+    BEGIN
+      AMOUNT := 1;
+      Rec.Amount := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the field declaration 'Amount' in FIELDS (occurrence 1)
+        const pos = doc.positionAt(nthOffset(code, 'Amount', 1));
+
+        const edits = provider.getRenameEdits(doc, pos, 'RenamedAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // The field declaration MUST be renamed
+        const fieldDeclOffset = nthOffset(code, 'Amount', 1);
+        expect(offsets).toContain(fieldDeclOffset);
+
+        // The member-property 'Rec.Amount' MUST be renamed
+        const memberOffset = nthOffset(code, 'Rec.Amount', 1) + 'Rec.'.length;
+        expect(offsets).toContain(memberOffset);
+
+        // The case-variant local use 'AMOUNT := 1' must NOT be renamed (same local, different case)
+        const caseVariantOffset = nthOffset(code, 'AMOUNT := 1', 1);
+        expect(offsets).not.toContain(caseVariantOffset);
+
+        // Exactly 2 edits: field declaration + Rec.Amount member use
+        expect(offsets.length).toBe(2);
+      });
+
+      // T11d: no-shadow positive control — field Amount, NO local of that name.
+      // All three tokens (field declaration, bare field use, Rec.Amount) MUST be renamed.
+      // This MUST pass both pre- and post-fix — it verifies the fix does not over-drop.
+      it('should rename field declaration, bare field use, and Rec.Amount when no local shadows (T11d)', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Decimal       }
+  }
+  CODE
+  {
+    VAR
+      Rec : Record 50000;
+    PROCEDURE Foo@1();
+    BEGIN
+      Amount := 100;
+      Rec.Amount := 200;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the field declaration 'Amount' in FIELDS (occurrence 1)
+        const pos = doc.positionAt(nthOffset(code, 'Amount', 1));
+
+        const edits = provider.getRenameEdits(doc, pos, 'RenamedAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // The field declaration MUST be renamed
+        const fieldDeclOffset = nthOffset(code, 'Amount', 1);
+        expect(offsets).toContain(fieldDeclOffset);
+
+        // The bare field use 'Amount := 100' MUST be renamed
+        const bareUseOffset = nthOffset(code, 'Amount := 100', 1);
+        expect(offsets).toContain(bareUseOffset);
+
+        // The member-property 'Rec.Amount' MUST be renamed
+        const memberOffset = nthOffset(code, 'Rec.Amount', 1) + 'Rec.'.length;
+        expect(offsets).toContain(memberOffset);
+
+        // Exactly 3 edits: field declaration + bare use + Rec.Amount member use
+        expect(offsets.length).toBe(3);
+      });
+
+      // T11e: shadow in one procedure, legitimate bare use in another.
+      // PROCEDURE A has a local Amount (must NOT rename its decl/use).
+      // PROCEDURE B has no local Amount (MUST rename its bare use + member use).
+      // Pre-fix: text-only scan renames all occurrences regardless of procedure → FAILS.
+      it('should rename bare field use in unshadowed procedure but not the shadowing local in another procedure (T11e)', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Decimal       }
+  }
+  CODE
+  {
+    VAR
+      Rec : Record 50000;
+    PROCEDURE ProcA@1();
+    VAR
+      Amount : Integer;
+    BEGIN
+      Amount := 1;
+    END;
+
+    PROCEDURE ProcB@2();
+    BEGIN
+      Amount := 2;
+      Rec.Amount := 3;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the field declaration 'Amount' in FIELDS (occurrence 1)
+        const pos = doc.positionAt(nthOffset(code, 'Amount', 1));
+
+        const edits = provider.getRenameEdits(doc, pos, 'RenamedAmount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // The field declaration MUST be renamed
+        const fieldDeclOffset = nthOffset(code, 'Amount', 1);
+        expect(offsets).toContain(fieldDeclOffset);
+
+        // ProcA's local declaration 'Amount : Integer' must NOT be renamed
+        const localDeclOffset = nthOffset(code, 'Amount : Integer', 1);
+        expect(offsets).not.toContain(localDeclOffset);
+
+        // ProcA's local use 'Amount := 1' must NOT be renamed
+        const localUseOffset = nthOffset(code, 'Amount := 1', 1);
+        expect(offsets).not.toContain(localUseOffset);
+
+        // ProcB's bare field use 'Amount := 2' MUST be renamed (no local shadows it there)
+        const procBBareOffset = nthOffset(code, 'Amount := 2', 1);
+        expect(offsets).toContain(procBBareOffset);
+
+        // ProcB's member use 'Rec.Amount' MUST be renamed
+        const memberOffset = nthOffset(code, 'Rec.Amount', 1) + 'Rec.'.length;
+        expect(offsets).toContain(memberOffset);
+
+        // Exactly 3 edits: field declaration + ProcB bare use + ProcB Rec.Amount
+        expect(offsets.length).toBe(3);
+      });
+
+      // T11f: unquoted multi-token field shadowed by a quoted local.
+      // Field 'Update Count' (Integer). A procedure has VAR "Update Count" : Integer; (the only
+      // legal way to shadow a multi-token field name). Cursor on field declaration.
+      // Pre-fix: collectFieldReferences matches all text occurrences of the name span/quoted token,
+      // so the local declaration and its use are also renamed → the NOT-renamed assertions FAIL.
+      // Location assertions depend on fixture structure - do not reformat
+      it('should rename multi-token field declaration and Rec."Update Count" but NOT the same-named quoted local (T11f)', () => {
+        // prettier-ignore
+        // Location assertions depend on fixture structure - do not reformat
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Update Count        ; Integer       }
+  }
+  CODE
+  {
+    VAR
+      Rec : Record 50000;
+    PROCEDURE Foo@1();
+    VAR
+      "Update Count" : Integer;
+    BEGIN
+      "Update Count" := 1;
+      Rec."Update Count" := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the first token of the field declaration 'Update Count' in FIELDS (occurrence 1)
+        const pos = doc.positionAt(nthOffset(code, 'Update Count', 1));
+
+        const edits = provider.getRenameEdits(doc, pos, 'RenamedUpdateCount', ast, symbolTable);
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // The field declaration 'Update Count' in FIELDS MUST be renamed
+        const fieldDeclOffset = nthOffset(code, 'Update Count', 1);
+        expect(offsets).toContain(fieldDeclOffset);
+
+        // The member-property 'Rec."Update Count"' MUST be renamed
+        const memberOffset = nthOffset(code, 'Rec."Update Count"', 1) + 'Rec.'.length;
+        expect(offsets).toContain(memberOffset);
+
+        // The quoted local DECLARATION '"Update Count" : Integer' must NOT be renamed
+        const localDeclOffset = nthOffset(code, '"Update Count" : Integer', 1);
+        expect(offsets).not.toContain(localDeclOffset);
+
+        // The quoted local USE '"Update Count" := 1' must NOT be renamed
+        const localUseOffset = nthOffset(code, '"Update Count" := 1', 1);
+        expect(offsets).not.toContain(localUseOffset);
+
+        // Exactly 2 edits: field declaration + Rec."Update Count" member use
+        expect(offsets.length).toBe(2);
+      });
+
+      // T11g: REGRESSION for #800 fix — global CODE-section VAR with same name as field.
+      // The symbol-table root scope is last-write-wins. FIELDS is traversed before CODE VAR, so
+      // a global VAR Amount overwrites the field (kind:'field') with kind:'variable' in root scope.
+      // At the field declaration offset, getSymbolAtOffset returns kind:'variable', so
+      // keepFieldReferenceToken returns false — DROPPING the field declaration itself → 0 edits.
+      // The declaration-rescue guard (`anchorOffset === field.nameToken?.startOffset → return true`)
+      // must fire BEFORE the kind check to prevent this silent no-op.
+      it('should rename field declaration (and Rec.Amount) even when a same-named global VAR overwrites field in root scope (T11g)', () => {
+        const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; Amount              ; Decimal       }
+  }
+  CODE
+  {
+    VAR
+      Amount : Integer;
+      Rec : Record 50000;
+    PROCEDURE Foo@1();
+    BEGIN
+      Amount := 1;
+      Rec.Amount := 2;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+        const doc = createDocument(code);
+        const { ast, symbolTable } = parseContent(code);
+        // Cursor on the field declaration 'Amount' in FIELDS (occurrence 1)
+        const pos = doc.positionAt(nthOffset(code, 'Amount', 1));
+
+        const edits = provider.getRenameEdits(doc, pos, 'RenamedAmount', ast, symbolTable);
+
+        // Pre-fix: the field declaration is DROPPED (kind='variable' from root-scope overwrite),
+        // so edits is null or has 0 edits. This assertion FAILS before the fix.
+        expect(edits).not.toBeNull();
+
+        const offsets = changeStartOffsets(edits, doc);
+
+        // The FIELD DECLARATION offset MUST be in the edits (the invariant being fixed)
+        const fieldDeclOffset = nthOffset(code, 'Amount', 1);
+        expect(offsets).toContain(fieldDeclOffset);
+
+        // The member-property 'Rec.Amount' MUST be in the edits (rescued by isCursorOnMemberProperty)
+        const memberOffset = nthOffset(code, 'Rec.Amount', 1) + 'Rec.'.length;
+        expect(offsets).toContain(memberOffset);
+
+        // The global VAR declaration 'Amount : Integer' must NOT be in the edits
+        const globalVarDeclOffset = nthOffset(code, 'Amount : Integer', 1);
+        expect(offsets).not.toContain(globalVarDeclOffset);
+
+        // The global bare use 'Amount := 1' must NOT be in the edits
+        // (global var shadows field for bare refs → a var use, not a field use)
+        const globalBareUseOffset = nthOffset(code, 'Amount := 1', 1);
+        expect(offsets).not.toContain(globalBareUseOffset);
+
+        // Exactly 2 edits: field declaration + Rec.Amount member use
+        expect(offsets.length).toBe(2);
+      });
+    });
   });
 });
