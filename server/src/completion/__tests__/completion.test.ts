@@ -1329,6 +1329,18 @@ describe('CompletionProvider', () => {
       expect(systemRow).toBeDefined();
     });
 
+    it('emits SYSTEM.ISSERVICETIER when ISSERVICETIER is shadowed (re-added #813)', () => {
+      const symbolTable = new SymbolTable();
+      symbolTable.getRootScope().addSymbol({ name: 'ISSERVICETIER', kind: 'variable', token: createMockToken(), type: 'Boolean' });
+
+      const doc = createDocument('ISS');
+      const items = provider.getCompletions(doc, Position.create(0, 3), undefined, symbolTable);
+
+      const systemRows = items.filter(i => i.label === 'SYSTEM.ISSERVICETIER');
+      expect(systemRows).toHaveLength(1);
+      expect(systemRows[0].insertText).toBe('SYSTEM.ISSERVICETIER');
+    });
+
     it('coexists: user symbol row present, bare builtin gone, SYSTEM row present', () => {
       const symbolTable = new SymbolTable();
       symbolTable.getRootScope().addSymbol({ name: 'Evaluate', kind: 'procedure', token: createMockToken() });

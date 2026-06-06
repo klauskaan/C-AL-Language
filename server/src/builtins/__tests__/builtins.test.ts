@@ -1095,8 +1095,8 @@ describe('Builtins Module', () => {
     // These tests fail to COMPILE until SYSTEM_QUALIFIABLE is exported from builtinData.ts.
     // That compile failure is the intended red state.
 
-    it('should have exactly 62 entries', () => {
-      expect(SYSTEM_QUALIFIABLE.size).toBe(62);
+    it('should have exactly 63 entries', () => {
+      expect(SYSTEM_QUALIFIABLE.size).toBe(63);
     });
 
     it('should include EVALUATE (category: system, non-deprecated proof case)', () => {
@@ -1119,8 +1119,8 @@ describe('Builtins Module', () => {
       expect(SYSTEM_QUALIFIABLE.has('STRLEN')).toBe(false);
     });
 
-    it('should NOT include ISSERVICETIER (deliberately excluded)', () => {
-      expect(SYSTEM_QUALIFIABLE.has('ISSERVICETIER')).toBe(false);
+    it('should include ISSERVICETIER (re-added in #813; valid C/AL, offered unqualified)', () => {
+      expect(SYSTEM_QUALIFIABLE.has('ISSERVICETIER')).toBe(true);
     });
 
     it('every member of SYSTEM_QUALIFIABLE must exist in BUILTIN_FUNCTIONS', () => {
