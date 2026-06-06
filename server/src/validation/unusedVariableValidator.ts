@@ -42,6 +42,7 @@ import { ASTWalker } from '../visitor/astWalker';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { Validator, ValidationContext } from '../semantic/types';
 import { Token } from '../lexer/tokens';
+import { SymbolTable } from '../symbols/symbolTable';
 
 /**
  * Tracks information about a local variable for unused detection
@@ -61,7 +62,10 @@ interface VariableInfo {
 class UnusedVariableVisitor implements Partial<ASTVisitor> {
   public readonly diagnostics: Diagnostic[] = [];
 
-  constructor(private readonly walker: ASTWalker) {}
+  constructor(
+    private readonly walker: ASTWalker,
+    private readonly symbolTable?: SymbolTable
+  ) {}
 
   /**
    * Visit ProcedureDeclaration - analyze local variable usage in this scope
@@ -124,7 +128,7 @@ class UnusedVariableVisitor implements Partial<ASTVisitor> {
     }
 
     // Walk the body to track variable reads
-    const usageVisitor = new UsageTrackingVisitor(variableMap, this.walker);
+    const usageVisitor = new UsageTrackingVisitor(variableMap, this.walker, this.symbolTable);
     for (const stmt of body) {
       this.walker.walk(stmt, usageVisitor);
     }
@@ -170,12 +174,13 @@ class UnusedVariableVisitor implements Partial<ASTVisitor> {
  * - visitMemberExpression: Walk only object, skip property
  * - visitAssignmentStatement: Skip simple Identifier LHS, walk everything else
  * - visitForStatement: Mark control variable as read (implicitly)
- * - visitIdentifier: Mark variable as read if it matches
+ * - visitIdentifier: Mark variable as read if it matches (WITH-field guard applied)
  */
 class UsageTrackingVisitor implements Partial<ASTVisitor> {
   constructor(
     private readonly variables: Map<string, VariableInfo>,
-    private readonly walker: ASTWalker
+    private readonly walker: ASTWalker,
+    private readonly symbolTable?: SymbolTable
   ) {}
 
   /**
@@ -266,12 +271,19 @@ class UsageTrackingVisitor implements Partial<ASTVisitor> {
   }
 
   /**
-   * Visit Identifier - check if it matches a tracked variable and mark as read
+   * Visit Identifier - check if it matches a tracked variable and mark as read.
+   * WITH-field guard: if the identifier resolves to a field (via WITH scope injection),
+   * it is a field read, not a read of the same-named local variable.
    */
   visitIdentifier(node: Identifier): void {
     const key = node.name.toLowerCase();
     const info = this.variables.get(key);
     if (info) {
+      // Guard: if the symbol at this offset resolves to a field, this is a WITH-bare
+      // field read — do NOT count it as a read of the same-named local variable.
+      if (this.symbolTable?.getSymbolAtOffset(node.name, node.startToken.startOffset)?.kind === 'field') {
+        return;
+      }
       info.hasRead = true;
     }
   }
@@ -293,7 +305,7 @@ export class UnusedVariableValidator implements Validator {
    */
   validate(context: ValidationContext): Diagnostic[] {
     const walker = new ASTWalker();
-    const visitor = new UnusedVariableVisitor(walker);
+    const visitor = new UnusedVariableVisitor(walker, context.symbolTable);
 
     walker.walk(context.ast, visitor);
 

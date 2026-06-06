@@ -9,6 +9,8 @@ import { ACTION_TYPES } from '../actionCompletions';
 import { SymbolTable } from '../../symbols/symbolTable';
 import { CompletionItemKind, CompletionItemTag, Position } from 'vscode-languageserver';
 import { createMockToken, createDocument, parseAndBuildSymbols } from '../../__tests__/testUtils';
+import { Lexer } from '../../lexer/lexer';
+import { Parser } from '../../parser/parser';
 
 describe('CompletionProvider', () => {
   let provider: CompletionProvider;
@@ -1021,6 +1023,67 @@ describe('CompletionProvider', () => {
       // Keyword IF sortText must be exactly '3if' after both calls
       const ifItem = items2.find(i => i.label === 'IF');
       expect(ifItem?.sortText).toBe('3if');
+    });
+  });
+
+  describe('WITH Statement — Scope Boundary Guard (Issue #790)', () => {
+    // Helper: parse and build symbols with a cross-object field registry.
+    // Returns ast, symbolTable, and document for use in tests.
+    // prettier-ignore
+    // Location assertions depend on fixture structure - do not reformat
+    const codeunitWithCode = `OBJECT Codeunit 99 CrossObjWith
+{
+  CODE
+  {
+    PROCEDURE TestWith@1();
+    VAR
+      Cust@1000 : Record 18;
+    BEGIN
+      WITH Cust DO BEGIN
+        Cust.INSERT;
+      END;
+      Cust.FIND('-');
+    END;
+  }
+}`;
+    // 'CustName' maps to table 18. It is NOT a root-scope symbol — only injected
+    // inside the WITH body. This lets the tests distinguish scope-leak from live access.
+    const fieldRegistry = new Map([[18, new Map([['CUSTNAME', { originalName: 'CustName', typeName: 'Text50' }]])]]);
+
+    it('cross-object WITH field is offered inside the WITH body (positive)', () => {
+      // Proves that injectWithScopes actually injects CustName at the right scope offset
+      const lexer = new Lexer(codeunitWithCode);
+      const tokens = lexer.tokenize();
+      const ast = new Parser(tokens).parse();
+      const symbolTable = new SymbolTable();
+      symbolTable.buildFromAST(ast, undefined, fieldRegistry);
+      const doc = createDocument(codeunitWithCode);
+
+      // Line 9 = '        Cust.INSERT;' — inside the WITH body
+      // Location assertions depend on fixture structure - do not reformat
+      const items = provider.getCompletions(doc, Position.create(9, 8), ast, symbolTable);
+
+      const custNameItems = items.filter(i => i.label === 'CustName');
+      expect(custNameItems).toHaveLength(1);
+      expect(custNameItems[0].kind).toBe(CompletionItemKind.Field);
+    });
+
+    it('cross-object WITH field is NOT leaked past the WITH END (no-leak)', () => {
+      // Proves that the WITH scope is bounded: CustName disappears after END.
+      // Without bounding, CustName would appear at line 11 (after WITH...END).
+      const lexer = new Lexer(codeunitWithCode);
+      const tokens = lexer.tokenize();
+      const ast = new Parser(tokens).parse();
+      const symbolTable = new SymbolTable();
+      symbolTable.buildFromAST(ast, undefined, fieldRegistry);
+      const doc = createDocument(codeunitWithCode);
+
+      // Line 11 = '      Cust.FIND(\'\');' — after the WITH...END block
+      // Location assertions depend on fixture structure - do not reformat
+      const items = provider.getCompletions(doc, Position.create(11, 6), ast, symbolTable);
+
+      const custNameItems = items.filter(i => i.label === 'CustName');
+      expect(custNameItems).toHaveLength(0);
     });
   });
 

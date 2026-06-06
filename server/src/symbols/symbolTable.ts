@@ -11,9 +11,10 @@ import {
   ActionDeclaration,
   type Property,
   type XMLportElement,
-  findProperty
+  findProperty,
+  WithStatement
 } from '../parser/ast';
-import { Type } from '../types/types';
+import { Type, isRecordType } from '../types/types';
 import { resolveType, resolveVariableType } from '../types/typeResolver';
 import { ASTVisitor } from '../visitor/astVisitor';
 import { ASTWalker } from '../visitor/astWalker';
@@ -742,6 +743,171 @@ export class SymbolTable {
         // If table not in registry, skip silently (graceful degradation)
       }
     }
+
+    // Second pass: inject WITH-statement field scopes
+    this.injectWithScopes(ast, fieldRegistry);
+  }
+
+  /**
+   * Second-pass: inject child scopes for each WITH statement found in the AST.
+   *
+   * The first pass (SymbolCollectorVisitor) returns false from visitProcedureDeclaration
+   * and similar handlers, so the walker never reaches WithStatements inside code bodies.
+   * This second pass uses a fresh walker that descends into all bodies to find them.
+   *
+   * For each WithStatement:
+   * - Determine the record variable and its table ID
+   * - Inject a child Scope bounded to the WITH body containing the table's fields
+   * - Field symbols use the real nameToken (same-object) or a cached synthetic token
+   *   (cross-object) so that references to the same field share a stable token identity
+   *
+   * Nested WITHs are handled naturally: the second WITH body's child scope has the
+   * first WITH body's child scope as parent, so innermost fields win via the scope chain.
+   *
+   * Graceful degradation: any WITH that cannot be resolved (undeclared variable, no
+   * table ID, empty body) is silently skipped. One broken WITH does not block others.
+   */
+  private injectWithScopes(
+    ast: CALDocument,
+    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>
+  ): void {
+    if (!ast.object) {
+      return;
+    }
+
+    // NOTE: cross-object WITH-field synthetic tokens all anchor at ast.object.startToken's
+    // offset → identical identity for distinct fields. Latent (only bites once cross-object
+    // forward find-references ships). Tracked: #803.
+    const xobjTokenCache = new Map<number, Map<string, Token>>();
+
+    const walker = new ASTWalker();
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this;
+    const objectDecl = ast.object;
+
+    const visitor: Partial<ASTVisitor> = {
+      visitWithStatement(node: WithStatement): void {
+        try {
+          // Only handle simple identifier records (e.g. WITH Rec DO)
+          if (node.record.type !== 'Identifier') {
+            return;
+          }
+
+          // Look up the record variable in the scope at the record's position
+          const sym = self.getSymbolAtOffset(node.record.name, node.record.startToken.startOffset);
+          if (!sym) {
+            return;
+          }
+
+          // Derive the table ID from the symbol's resolved or syntactic type
+          let tableId: number | undefined;
+          if (sym.resolvedType && isRecordType(sym.resolvedType)) {
+            tableId = sym.resolvedType.tableId;
+          } else if (sym.type) {
+            const match = sym.type.match(/^Record\s+(\d+)$/i);
+            if (match) {
+              tableId = parseInt(match[1], 10);
+            }
+          }
+          if (tableId === undefined || isNaN(tableId)) {
+            return;
+          }
+
+          // Determine the body bounds
+          const start = node.body.startToken.startOffset;
+          const end = node.body.endToken.endOffset;
+          if (end <= start) {
+            return;
+          }
+
+          // Build the list of (name, kind, token, type, resolvedType) entries to inject
+          const fieldEntries: Array<{ name: string; token: Token; type: string; resolvedType: Type | undefined }> = [];
+
+          if (
+            tableId === objectDecl.objectId &&
+            objectDecl.objectKind === ObjectKind.Table &&
+            objectDecl.fields !== null
+          ) {
+            // Same-object: use the real field nameTokens for stable reference identity,
+            // and resolve the type via resolveType for typeMismatch validation coverage
+            for (const fieldDecl of objectDecl.fields.fields) {
+              if (!fieldDecl.nameToken || !fieldDecl.fieldName) {
+                continue;
+              }
+              fieldEntries.push({
+                name: fieldDecl.fieldName,
+                token: fieldDecl.nameToken,
+                type: fieldDecl.dataType.typeName,
+                resolvedType: resolveType(fieldDecl.dataType)
+              });
+            }
+          } else {
+            // Cross-object: use the fieldRegistry and synthetic tokens cached per (tableId, upperKey).
+            // resolvedType is resolved from the FieldInfo typeName string via a synthetic DataType node.
+            // This covers simple field types (Integer, Decimal, Code20, Text50, etc.).
+            // Fields with Record/Array/unknown types will fall through to createUnknownType,
+            // causing typeMismatch to skip them gracefully (acceptable gap: cross-object fields).
+            const tableFields = fieldRegistry?.get(tableId);
+            if (!tableFields) {
+              return;
+            }
+            let tableCache = xobjTokenCache.get(tableId);
+            if (!tableCache) {
+              tableCache = new Map<string, Token>();
+              xobjTokenCache.set(tableId, tableCache);
+            }
+            for (const [upperKey, fieldInfo] of tableFields) {
+              let cachedToken = tableCache.get(upperKey);
+              if (!cachedToken) {
+                cachedToken = makeSyntheticToken(fieldInfo.originalName, objectDecl.startToken);
+                tableCache.set(upperKey, cachedToken);
+              }
+              const syntheticDataType = {
+                type: 'DataType' as const,
+                typeName: fieldInfo.typeName,
+                startToken: objectDecl.startToken,
+                endToken: objectDecl.startToken
+              };
+              fieldEntries.push({
+                name: fieldInfo.originalName,
+                token: cachedToken,
+                type: fieldInfo.typeName,
+                resolvedType: resolveType(syntheticDataType)
+              });
+            }
+          }
+
+          if (fieldEntries.length === 0) {
+            return;
+          }
+
+          // Create a child scope bounded to the WITH body
+          // getScopeAtOffset finds the innermost existing scope at 'start', which may be:
+          // - the proc/trigger scope (for the outermost WITH)
+          // - an outer WITH child scope (for nested WITHs)
+          const parent = self.getScopeAtOffset(start);
+          const withScope = new Scope(parent);
+          withScope.startOffset = start;
+          withScope.endOffset = end;
+
+          for (const entry of fieldEntries) {
+            withScope.addSymbol({
+              name: entry.name,
+              kind: 'field',
+              token: entry.token,
+              type: entry.type,
+              resolvedType: entry.resolvedType
+            });
+          }
+        } catch {
+          // Graceful degradation: skip this WITH if anything goes wrong
+        }
+        // Do NOT return false — walker must auto-descend into record and body
+        // so nested WITHs are also processed
+      }
+    };
+
+    walker.walk(ast, visitor);
   }
 
   /**

@@ -14,6 +14,7 @@ import { Parser } from '../../parser/parser';
 import { Scope, SymbolTable, Symbol } from '../symbolTable';
 import { Token, TokenType } from '../../lexer/tokens';
 import { CALDocument } from '../../parser/ast';
+import { FieldInfo } from '../../workspaceSymbol/workspaceIndex';
 
 /**
  * Helper to lex and parse C/AL code into an AST
@@ -2671,6 +2672,435 @@ describe('XMLport element symbols', () => {
     const dataExchColumnDef = symbolTable.getSymbol('DataExchColumnDef');
     expect(dataExchColumnDef).toBeDefined();
     expect(dataExchColumnDef?.kind).toBe('variable');
+  });
+});
+
+describe('WITH-statement field scope', () => {
+  /**
+   * Helper: lex, parse, and call buildFromAST with an optional fieldRegistry.
+   * tableRegistry and procedureRegistry are always undefined here.
+   */
+  function buildWithRegistry(
+    code: string,
+    fieldRegistry?: ReadonlyMap<number, ReadonlyMap<string, FieldInfo>>
+  ): SymbolTable {
+    const ast = parseCode(code);
+    const symbolTable = new SymbolTable();
+    symbolTable.buildFromAST(ast, undefined, fieldRegistry, undefined);
+    return symbolTable;
+  }
+
+  // ---------------------------------------------------------------------------
+  // T1: Same-object WITH-bare resolves to kind:'field' with stable identity
+  // ---------------------------------------------------------------------------
+  it('should resolve same-object WITH-bare identifier to kind:field anchored on field declaration token', () => {
+    // Location assertions depend on fixture structure - do not reformat
+    // Field 'Qty' declared in FIELDS; procedure has a LOCAL var 'Qty' of type Text
+    // so that without WITH scope, getSymbolAtOffset finds the local (kind:variable)
+    // and after the fix it finds the injected WITH-child field (kind:field).
+    const code = `OBJECT Table 75001 WthTable
+{
+  FIELDS
+  {
+    { 1   ;   ;Qty             ;Decimal       }
+  }
+  CODE
+  {
+    PROCEDURE DoWith@1()
+    VAR
+      Rec2@1000         : Record 75001;
+      Qty@1001          : Text;
+    BEGIN
+      WITH Rec2 DO BEGIN
+        Qty := 2;
+      END;
+    END;
+  }
+}`;
+    // Offset of 'Qty' in the FIELDS declaration (first and only occurrence before CODE)
+    const fieldDeclOffset = code.indexOf(';Qty             ;') + 1;
+    // Offset of 'Qty' in the WITH-bare assignment 'Qty := 2'
+    const withBareOffset = code.indexOf('Qty := 2');
+
+    const symbolTable = buildWithRegistry(code);
+    const sym = symbolTable.getSymbolAtOffset('Qty', withBareOffset);
+
+    expect(sym).toBeDefined();
+    expect(sym!.kind).toBe('field');
+    expect(sym!.token.startOffset).toBe(fieldDeclOffset);
+  });
+
+  // ---------------------------------------------------------------------------
+  // T2: Two WITH blocks on the same field unify identity
+  // ---------------------------------------------------------------------------
+  it('should return the same token.startOffset for the same field resolved in two separate WITH blocks', () => {
+    // Location assertions depend on fixture structure - do not reformat
+    // Two separate WITH Rec2 DO blocks each using bare 'Qty'.
+    // Both resolutions must anchor to the field declaration's nameToken.
+    // A local var 'Qty : Text' ensures the test would fail today (resolves to local)
+    // and passes only after WITH-scope injection.
+    const code = `OBJECT Table 75002 WthTable2
+{
+  FIELDS
+  {
+    { 1   ;   ;Qty             ;Decimal       }
+  }
+  CODE
+  {
+    PROCEDURE DoWith@1()
+    VAR
+      Rec2@1000         : Record 75002;
+      Qty@1001          : Text;
+    BEGIN
+      WITH Rec2 DO BEGIN
+        Qty := 1;
+      END;
+      WITH Rec2 DO BEGIN
+        Qty := 2;
+      END;
+    END;
+  }
+}`;
+    const fieldDeclOffset = code.indexOf(';Qty             ;') + 1;
+    // First WITH block: 'Qty := 1'
+    const firstWithBareOffset = code.indexOf('Qty := 1');
+    // Second WITH block: 'Qty := 2'
+    const secondWithBareOffset = code.indexOf('Qty := 2');
+
+    const symbolTable = buildWithRegistry(code);
+    const sym1 = symbolTable.getSymbolAtOffset('Qty', firstWithBareOffset);
+    const sym2 = symbolTable.getSymbolAtOffset('Qty', secondWithBareOffset);
+
+    expect(sym1).toBeDefined();
+    expect(sym2).toBeDefined();
+    expect(sym1!.kind).toBe('field');
+    expect(sym2!.kind).toBe('field');
+    expect(sym1!.token.startOffset).toBe(fieldDeclOffset);
+    expect(sym2!.token.startOffset).toBe(fieldDeclOffset);
+    expect(sym1!.token.startOffset).toBe(sym2!.token.startOffset);
+  });
+
+  // ---------------------------------------------------------------------------
+  // T3: WITH child scope is bounded to the WITH body — no leak past END
+  // ---------------------------------------------------------------------------
+  it('should bound the WITH child scope to the body: field not visible after END and scopes differ', () => {
+    // Location assertions depend on fixture structure - do not reformat
+    // 'Qty' resolves to kind:field inside the WITH body.
+    // After the WITH END, 'Qty' must NOT resolve to kind:field from a WITH child scope.
+    // Also the scope returned by getScopeAtOffset must differ between inside/outside.
+    // A local var 'Qty : Text' forces the outside resolution to be kind:variable today
+    // and kind:variable after the fix (no WITH scope outside).
+    const code = `OBJECT Table 75003 WthTable3
+{
+  FIELDS
+  {
+    { 1   ;   ;Qty             ;Decimal       }
+  }
+  CODE
+  {
+    PROCEDURE DoWith@1()
+    VAR
+      Rec2@1000         : Record 75003;
+      Qty@1001          : Text;
+    BEGIN
+      WITH Rec2 DO BEGIN
+        Qty := 1;
+      END;
+      Qty := 3;
+    END;
+  }
+}`;
+    // Inside WITH body
+    const withBareOffset = code.indexOf('Qty := 1');
+    // After the WITH END — 'Qty := 3' is outside the WITH
+    const afterWithOffset = code.indexOf('Qty := 3');
+
+    const symbolTable = buildWithRegistry(code);
+
+    // Inside WITH: must be kind:field
+    const symInside = symbolTable.getSymbolAtOffset('Qty', withBareOffset);
+    expect(symInside).toBeDefined();
+    expect(symInside!.kind).toBe('field');
+
+    // Outside WITH: must NOT be kind:field (no WITH scope leaking)
+    const symOutside = symbolTable.getSymbolAtOffset('Qty', afterWithOffset);
+    expect(symOutside?.kind).not.toBe('field');
+
+    // Scopes must differ
+    const scopeInside = symbolTable.getScopeAtOffset(withBareOffset);
+    const scopeOutside = symbolTable.getScopeAtOffset(afterWithOffset);
+    expect(scopeInside).not.toBe(scopeOutside);
+  });
+
+  // ---------------------------------------------------------------------------
+  // T4: Nested WITH innermost-wins; outer field reachable via parent chain
+  // ---------------------------------------------------------------------------
+  it('should resolve nested WITH innermost-first: inner field wins for Shared, outer field reachable for Grp', () => {
+    // Location assertions depend on fixture structure - do not reformat
+    // Table 75100 has fields Grp and Shared.
+    // Table 75200 has fields Bar and Shared.
+    // Procedure: WITH RecA DO BEGIN WITH RecB DO BEGIN ... END END
+    // Inside inner block: Shared → table 75200 (inner); Grp → table 75100 (outer via chain).
+    // Distinct non-substring names: 'Grp' does not appear in 'Bar', 'Shared', etc.
+    // No local vars with these names — the discriminator is which field registry table wins.
+    const fieldRegistryA: ReadonlyMap<string, FieldInfo> = new Map([
+      ['GRP',    { originalName: 'Grp',    typeName: 'Code10'   }],
+      ['SHARED', { originalName: 'Shared', typeName: 'Integer'  }],
+    ]);
+    const fieldRegistryB: ReadonlyMap<string, FieldInfo> = new Map([
+      ['BAR',    { originalName: 'Bar',    typeName: 'Text50'   }],
+      ['SHARED', { originalName: 'Shared', typeName: 'Boolean'  }],
+    ]);
+    const fieldRegistry = new Map<number, ReadonlyMap<string, FieldInfo>>([
+      [75100, fieldRegistryA],
+      [75200, fieldRegistryB],
+    ]);
+
+    const code = `OBJECT Codeunit 75300 WthNested
+{
+  CODE
+  {
+    PROCEDURE NestedWith@1()
+    VAR
+      RecA@1000 : Record 75100;
+      RecB@1001 : Record 75200;
+    BEGIN
+      WITH RecA DO BEGIN
+        WITH RecB DO BEGIN
+          Shared := TRUE;
+          Grp := 'X';
+        END;
+      END;
+    END;
+  }
+}`;
+
+    const symbolTable = buildWithRegistry(code, fieldRegistry);
+
+    // Inside INNER WITH (RecB) — 'Shared := TRUE' is in the inner body
+    const innerOffset = code.indexOf('Shared := TRUE');
+    const grpOffset   = code.indexOf("Grp := 'X'");
+
+    // Shared inside inner WITH → resolves to table 75200's field (typeName:'Boolean')
+    const sharedSym = symbolTable.getSymbolAtOffset('Shared', innerOffset);
+    expect(sharedSym).toBeDefined();
+    expect(sharedSym!.kind).toBe('field');
+    expect(sharedSym!.type).toBe('Boolean');
+
+    // Grp inside inner WITH → resolves to table 75100's field via outer WITH (typeName:'Code10')
+    const grpSym = symbolTable.getSymbolAtOffset('Grp', grpOffset);
+    expect(grpSym).toBeDefined();
+    expect(grpSym!.kind).toBe('field');
+    expect(grpSym!.type).toBe('Code10');
+  });
+
+  // ---------------------------------------------------------------------------
+  // T5: WITH-bare resolves inside a TRIGGER body
+  // ---------------------------------------------------------------------------
+  it('should resolve WITH-bare field inside a trigger body and create a child scope inside the trigger scope', () => {
+    // Location assertions depend on fixture structure - do not reformat
+    // Table 75400, field 'Cnt' (type Integer).
+    // OnInsert trigger contains: WITH Rec DO BEGIN Cnt := 5; END;
+    // 'Cnt' used bare inside WITH inside a trigger — must resolve to kind:field.
+    // A local var 'Cnt : Text' in the trigger forces fail-first.
+    const code = `OBJECT Table 75400 WthTrigTable
+{
+  FIELDS
+  {
+    { 1   ;   ;Cnt             ;Integer       }
+  }
+  CODE
+  {
+    TRIGGER OnInsert()
+    VAR
+      Cnt@1000 : Text;
+    BEGIN
+      WITH Rec DO BEGIN
+        Cnt := 5;
+      END;
+    END;
+  }
+}`;
+
+    const fieldDeclOffset = code.indexOf(';Cnt             ;') + 1;
+    const withBareOffset  = code.indexOf('Cnt := 5');
+
+    const symbolTable = buildWithRegistry(code);
+
+    // Inside WITH inside trigger: must be kind:field
+    const sym = symbolTable.getSymbolAtOffset('Cnt', withBareOffset);
+    expect(sym).toBeDefined();
+    expect(sym!.kind).toBe('field');
+    expect(sym!.token.startOffset).toBe(fieldDeclOffset);
+
+    // The WITH child scope's parent must be the trigger's scope, not root
+    const withScope    = symbolTable.getScopeAtOffset(withBareOffset);
+    const rootScope    = symbolTable.getRootScope();
+    // The WITH scope must not be root
+    expect(withScope).not.toBe(rootScope);
+    // The WITH scope's parent must also not be root (it should be the trigger scope)
+    expect(withScope.parent).not.toBe(rootScope);
+  });
+
+  // ---------------------------------------------------------------------------
+  // T6: Graceful degradation — various edge cases must not throw
+  // ---------------------------------------------------------------------------
+  it('should not throw when WITH record variable has no fieldRegistry entry for its table (graceful degradation)', () => {
+    // WITH Rec2:Record 75001 DO but fieldRegistry has no entry for table 75001.
+    // The fix must look up the registry, find nothing, and silently skip injection.
+    const fieldRegistry = new Map<number, ReadonlyMap<string, FieldInfo>>();  // empty — no entry for 75001
+    const code = `OBJECT Codeunit 75500 WthNoReg
+{
+  CODE
+  {
+    PROCEDURE DoWith@1()
+    VAR
+      Rec2@1000 : Record 75001;
+    BEGIN
+      WITH Rec2 DO BEGIN
+        EXIT;
+      END;
+    END;
+  }
+}`;
+    expect(() => buildWithRegistry(code, fieldRegistry)).not.toThrow();
+  });
+
+  it('should not throw when WITH references a variable with no table number in its type (graceful degradation)', () => {
+    // WITH Rec DO where Rec:Record (no explicit table number) — fix must degrade gracefully.
+    const code = `OBJECT Codeunit 75501 WthNoNum
+{
+  CODE
+  {
+    PROCEDURE DoWith@1()
+    VAR
+      Rec2@1000 : Record;
+    BEGIN
+      WITH Rec2 DO BEGIN
+        EXIT;
+      END;
+    END;
+  }
+}`;
+    expect(() => buildWithRegistry(code)).not.toThrow();
+  });
+
+  it('should not throw when WITH references an undeclared variable (graceful degradation)', () => {
+    // WITH UnknownVar DO — no declaration found; fix must degrade gracefully.
+    const code = `OBJECT Codeunit 75502 WthUnknown
+{
+  CODE
+  {
+    PROCEDURE DoWith@1()
+    BEGIN
+      WITH NoSuchVar DO BEGIN
+        EXIT;
+      END;
+    END;
+  }
+}`;
+    expect(() => buildWithRegistry(code)).not.toThrow();
+  });
+
+  it('should not throw when WITH body is empty (graceful degradation)', () => {
+    // WITH Rec2 DO BEGIN END — empty body; fix must degrade gracefully.
+    const code = `OBJECT Codeunit 75503 WthEmpty
+{
+  CODE
+  {
+    PROCEDURE DoWith@1()
+    VAR
+      Rec2@1000 : Record 75001;
+    BEGIN
+      WITH Rec2 DO BEGIN
+      END;
+    END;
+  }
+}`;
+    expect(() => buildWithRegistry(code)).not.toThrow();
+  });
+
+  it('should not throw for a Table with no FIELDS section when a procedure uses WITH (graceful degradation, null fields guard)', () => {
+    // Table 75600 has no FIELDS section at all (ast.object.fields === null).
+    // A procedure inside the table uses WITH on another record variable.
+    // The fix's second pass must null-guard before accessing ast.object.fields.fields.
+    // This test is a GUARDRAIL for the fix implementation: currently does not throw
+    // because the second pass does not exist yet, but will throw in a naive fix
+    // that omits the null check.
+    const code = `OBJECT Table 75600 WthNoFlds
+{
+  CODE
+  {
+    PROCEDURE DoWith@1()
+    VAR
+      Rec2@1000 : Record 75001;
+    BEGIN
+      WITH Rec2 DO BEGIN
+        EXIT;
+      END;
+    END;
+  }
+}`;
+    // Verify that ast.object.fields is indeed null for a table without FIELDS section
+    const ast = parseCode(code);
+    expect(ast.object).not.toBeNull();
+    expect(ast.object!.fields).toBeNull();
+
+    expect(() => buildWithRegistry(code)).not.toThrow();
+  });
+
+  // ---------------------------------------------------------------------------
+  // T14: Cross-object WITH via injected fieldRegistry
+  // ---------------------------------------------------------------------------
+  it('should resolve cross-object WITH-bare identifier to kind:field using fieldRegistry, with stable cross-block token identity', () => {
+    // Location assertions depend on fixture structure - do not reformat
+    // Codeunit 50100 has no own fields.
+    // VAR Cust:Record 18.
+    // Two separate WITH Cust DO blocks each using bare 'CustName'.
+    // fieldRegistry provides {18 → {CUSTNAME → {originalName:'CustName', typeName:'Text50'}}}.
+    // Without the fix: getSymbolAtOffset('CustName', ...) returns undefined (no field in scope).
+    // After the fix: returns kind:'field' in both blocks with the same token.startOffset.
+    const fieldRegistry18: ReadonlyMap<string, FieldInfo> = new Map([
+      ['CUSTNAME', { originalName: 'CustName', typeName: 'Text50' }],
+    ]);
+    const fieldRegistry = new Map<number, ReadonlyMap<string, FieldInfo>>([
+      [18, fieldRegistry18],
+    ]);
+
+    const code = `OBJECT Codeunit 50100 WthCrossObj
+{
+  CODE
+  {
+    PROCEDURE DoWith@1()
+    VAR
+      Cust@1000 : Record 18;
+    BEGIN
+      WITH Cust DO BEGIN
+        CustName := 'Alpha';
+      END;
+      WITH Cust DO BEGIN
+        CustName := 'Beta';
+      END;
+    END;
+  }
+}`;
+
+    const symbolTable = buildWithRegistry(code, fieldRegistry);
+
+    // First WITH block
+    const firstOffset  = code.indexOf("CustName := 'Alpha'");
+    // Second WITH block
+    const secondOffset = code.indexOf("CustName := 'Beta'");
+
+    const sym1 = symbolTable.getSymbolAtOffset('CustName', firstOffset);
+    const sym2 = symbolTable.getSymbolAtOffset('CustName', secondOffset);
+
+    expect(sym1).toBeDefined();
+    expect(sym2).toBeDefined();
+    expect(sym1!.kind).toBe('field');
+    expect(sym2!.kind).toBe('field');
+    // Both WITH blocks must resolve to the same token anchor (cross-block identity)
+    expect(sym1!.token.startOffset).toBe(sym2!.token.startOffset);
   });
 });
 
