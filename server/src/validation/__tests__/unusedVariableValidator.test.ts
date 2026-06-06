@@ -1328,3 +1328,100 @@ describe('UnusedVariableValidator - Real-World Patterns', () => {
     });
   });
 });
+
+describe('UnusedVariableValidator - WITH Statement Field Shadowing', () => {
+  describe('WITH-bare field reads must not suppress same-named local', () => {
+    it('should warn for same-named local when bare field read occurs inside WITH body', () => {
+      // T9: FAIL-FIRST
+      // Table 50100 has a field named Qty.
+      // Procedure declares a LOCAL Qty (Integer) that is never genuinely used outside the WITH.
+      // Inside WITH Rec2 DO BEGIN IF Qty > 0 THEN ; END;
+      // The bare 'Qty' in the IF condition is a read of the WITH-scoped TABLE FIELD, not the local.
+      // After the fix: WITH field injection causes the offset lookup to resolve to kind:'field',
+      // so hasRead on the local stays false → diagnostic IS produced.
+      // Before the fix: visitIdentifier fires on bare 'Qty', matches the local in variableMap,
+      // sets hasRead=true → diagnostic is suppressed → this assertion FAILS.
+      const code = `OBJECT Table 50100 "Stock Ledger" {
+        FIELDS {
+          { 1   ;   ;Qty             ;Integer       }
+        }
+        CODE {
+          PROCEDURE CheckQty();
+          VAR
+            Qty : Integer;
+            Rec2 : Record 50100;
+          BEGIN
+            WITH Rec2 DO BEGIN
+              IF Qty > 0 THEN ;
+            END;
+          END;
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const qtyLocalError = diagnostics.find(d => d.message.includes("'Qty'"));
+      expect(qtyLocalError).toBeDefined();
+      expect(qtyLocalError!.message).toBe("Variable 'Qty' is declared but never used");
+    });
+
+    it('should not warn for local when it is genuinely read outside any WITH', () => {
+      // T10: GUARDRAIL — must hold now and after the fix
+      // Table 50100 has a field named Qty.
+      // Procedure declares a LOCAL Qty (Integer) that IS read in an IF condition
+      // with NO WITH statement anywhere.
+      // The bare 'Qty' READ is the local — resolution at that offset returns the proc-scope
+      // local (kind variable), not the root field.
+      // Assert: NO unused-variable diagnostic for local Qty (it is read).
+      const code = `OBJECT Table 50100 "Stock Ledger" {
+        FIELDS {
+          { 1   ;   ;Qty             ;Integer       }
+        }
+        CODE {
+          PROCEDURE CheckQty();
+          VAR
+            Qty : Integer;
+          BEGIN
+            Qty := 5;
+            IF Qty > 0 THEN ;
+          END;
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const qtyError = diagnostics.find(d => d.message.includes("'Qty'"));
+      expect(qtyError).toBeUndefined();
+    });
+
+    it('should not warn for local with different name from WITH field when local is read inside WITH body', () => {
+      // T11: GUARDRAIL — must hold now and after the fix
+      // Table 50100 has field Qty but the local is named Counter (not a field of the table).
+      // Counter is both written and read (self-increment) inside WITH Rec2 DO BEGIN ... END.
+      // Counter is genuinely read → no unused diagnostic.
+      // Ensures the fix does not over-correct and flag locals that are legitimately read
+      // inside a WITH body when they don't share a name with any WITH-scoped field.
+      const code = `OBJECT Table 50100 "Stock Ledger" {
+        FIELDS {
+          { 1   ;   ;Qty             ;Integer       }
+        }
+        CODE {
+          PROCEDURE TallyItems();
+          VAR
+            Counter : Integer;
+            Rec2 : Record 50100;
+          BEGIN
+            WITH Rec2 DO BEGIN
+              Counter := Counter + 1;
+            END;
+          END;
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const counterError = diagnostics.find(d => d.message.includes("'Counter'"));
+      expect(counterError).toBeUndefined();
+    });
+  });
+});

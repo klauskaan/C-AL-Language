@@ -3869,12 +3869,11 @@ describe('RenameProvider', () => {
         expect(offsets.length).toBe(3);
       });
 
-      // T-801g (it.failing): Renaming the PROCEDURE should NOT rename the WITH-block bare field use.
+      // T-801g: Renaming the PROCEDURE should NOT rename the WITH-block bare field use.
       // First asserts procedure decl and a real call ARE in the edits (parse sanity).
       // Then asserts the WITH-block bare-field offset is NOT in the edits (desired behavior).
-      // Known residual (AC4 partial) — tracked in #802; remove .failing when #802 lands.
-      // EXPECTED: xfail (the second assertion fails today — WITH-block use is currently over-renamed).
-      it.failing('should NOT rename WITH-block bare field use Amount := 2 when renaming procedure Amount (T-801g)', () => {
+      // WITH-field resolution provided by #790 ensures Amount := 2 resolves to the field, not the proc.
+      it('should NOT rename WITH-block bare field use Amount := 2 when renaming procedure Amount (T-801g)', () => {
         const doc = createDocument(coreFixture);
         const { ast, symbolTable } = parseContent(coreFixture);
         // Cursor on the PROCEDURE Amount declaration (occ 2)
@@ -3893,7 +3892,6 @@ describe('RenameProvider', () => {
         const bareCallOffset = nthOffset(coreFixture, 'Amount(5)', 1);
         expect(offsets).toContain(bareCallOffset);
 
-        // Known residual (AC4 partial) — tracked in #802; remove .failing when #802 lands.
         // WITH-block bare field use MUST NOT be in the edits (it's a field use, not a proc call)
         const withBareOffset = nthOffset(coreFixture, 'Amount := 2', 1);
         expect(offsets).not.toContain(withBareOffset);

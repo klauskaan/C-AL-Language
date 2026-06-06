@@ -2362,4 +2362,136 @@ describe('ReferenceProvider', () => {
       expect(Array.isArray(result)).toBe(true);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // WITH-bare field reference isolation tests (issue #790)
+  // A WITH-bare identifier (e.g. "Qty" inside "WITH Rec DO BEGIN Qty := 2 END")
+  // resolves to the FIELD of the WITH'd record, not any same-named local/global.
+  // After the fix, getSymbolAtOffset returns kind:'field' for the WITH-bare use,
+  // so it is bound to the FIELD identity — not the local's identity.
+  // ---------------------------------------------------------------------------
+  describe('#790 WITH-bare field reference isolation', () => {
+    it('T7: clicking same-named LOCAL does not count the WITH-bare field use', () => {
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Table 50002 WithFieldLocal50002
+{
+  FIELDS
+  {
+    { 1   ;   ;Qty                 ;Integer       }
+    { 2   ;   ;LineNo              ;Integer       }
+  }
+  CODE
+  {
+    PROCEDURE CalcTotal@1();
+    VAR
+      Qty@1000 : Integer;
+      Rec2@1001 : Record 50002;
+    BEGIN
+      Qty := 99;
+      WITH Rec2 DO BEGIN
+        Qty := 2;
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+
+      const lines = code.split('\n');
+
+      // Position cursor on the LOCAL Qty declaration (unique: has @1000)
+      const localDeclLine = lines.findIndex(l => l.includes('Qty@1000 : Integer'));
+      expect(localDeclLine).toBeGreaterThan(-1);
+      const col = lines[localDeclLine].indexOf('Qty');
+
+      const result = provider.getReferences(
+        doc, Position.create(localDeclLine, col + 2), ast, true, symbolTable, tokens
+      );
+
+      // Anti-vacuous: the local's genuine use (Qty := 99) must appear
+      const genuineUseLine = lines.findIndex(l => l.includes('Qty := 99'));
+      expect(genuineUseLine).toBeGreaterThan(-1);
+      const genuineUseResults = result.filter(loc => loc.range.start.line === genuineUseLine);
+      expect(genuineUseResults.length).toBeGreaterThanOrEqual(1);
+
+      // The WITH-bare use (Qty := 2) must NOT appear — it resolves to the FIELD, not the local
+      const withBareLine = lines.findIndex(l => l.includes('Qty := 2'));
+      expect(withBareLine).toBeGreaterThan(-1);
+      const withBareResults = result.filter(loc => loc.range.start.line === withBareLine);
+      expect(withBareResults.length).toBe(0);
+    });
+
+    it('T8: clicking the FIELD unifies both WITH-bare uses under the field identity', () => {
+      // Same-named local Qty shadows the field inside the procedure.
+      // Without the fix, WITH-bare Qty resolves to the LOCAL (identity mismatch with field),
+      // so clicking the FIELD misses both WITH-bare uses.
+      // After the fix, WITH-bare Qty resolves to the FIELD (WITH scope injection),
+      // so clicking the FIELD includes both WITH-bare uses.
+      // prettier-ignore
+      // Location assertions depend on fixture structure - do not reformat
+      const code = `OBJECT Table 50003 WithFieldForward50003
+{
+  FIELDS
+  {
+    { 1   ;   ;Qty                 ;Integer       }
+    { 2   ;   ;LineNo              ;Integer       }
+  }
+  CODE
+  {
+    PROCEDURE SumUp@1();
+    VAR
+      Qty@1000 : Integer;
+      Rec2@1001 : Record 50003;
+    BEGIN
+      WITH Rec2 DO BEGIN
+        Qty := 3;
+      END;
+      WITH Rec2 DO BEGIN
+        Qty := 7;
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable, tokens } = parseContent(code);
+
+      const lines = code.split('\n');
+
+      // Position cursor on the FIELD declaration line (has spaces + ;Integer, no @)
+      const fieldDeclLine = lines.findIndex(l => l.includes('Qty                 ;Integer'));
+      expect(fieldDeclLine).toBeGreaterThan(-1);
+      const col = lines[fieldDeclLine].indexOf('Qty');
+
+      const result = provider.getReferences(
+        doc, Position.create(fieldDeclLine, col + 2), ast, true, symbolTable, tokens
+      );
+
+      // Anti-vacuous: the field declaration itself must be included
+      const fieldDeclResults = result.filter(loc => loc.range.start.line === fieldDeclLine);
+      expect(fieldDeclResults.length).toBeGreaterThanOrEqual(1);
+
+      // Both WITH-bare uses must be present in the result set
+      const firstWithBareLine = lines.findIndex(l => l.includes('Qty := 3'));
+      expect(firstWithBareLine).toBeGreaterThan(-1);
+      const firstWithBareResults = result.filter(loc => loc.range.start.line === firstWithBareLine);
+      expect(firstWithBareResults.length).toBeGreaterThanOrEqual(1);
+
+      const secondWithBareLine = lines.findIndex(l => l.includes('Qty := 7'));
+      expect(secondWithBareLine).toBeGreaterThan(-1);
+      const secondWithBareResults = result.filter(loc => loc.range.start.line === secondWithBareLine);
+      expect(secondWithBareResults.length).toBeGreaterThanOrEqual(1);
+
+      // Exact membership: result must contain exactly 3 locations
+      // (field decl + first WITH-bare use + second WITH-bare use).
+      // The local Qty@1000 declaration and any local uses must NOT appear.
+      expect(result.length).toBe(3);
+    });
+  });
 });

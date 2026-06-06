@@ -1122,3 +1122,78 @@ describe('TypeMismatchValidator - Report DataItem Integration (Issue #571)', () 
     });
   });
 });
+
+describe('TypeMismatchValidator - WITH Statement Field Type Checking (Issue #790)', () => {
+  describe('Same-object WITH field assignments', () => {
+    it('should detect type mismatch when Text is assigned to Integer field inside WITH block', () => {
+      // Regression guard for FIX 1: WITH-injected field symbols now carry resolvedType.
+      // Without FIX 1, ItemQty inside the WITH body had no resolvedType and the validator
+      // bailed early (line "if (!targetSymbol || !targetSymbol.resolvedType)"), silently
+      // skipping the mismatch. With FIX 1, resolvedType is populated from resolveType()
+      // and the mismatch is correctly reported.
+      const code = `OBJECT Table 50200 WithTypeCheckTable
+{
+  PROPERTIES {
+  }
+  FIELDS
+  {
+    { 1 ; ; ItemQty ; Integer }
+  }
+  CODE
+  {
+    PROCEDURE TestWithAssign@1();
+    VAR
+      SelfRec@1000 : Record 50200;
+    BEGIN
+      WITH SelfRec DO BEGIN
+        ItemQty := 'wrong';
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+      const diagnostics = validateTypeMismatch(code);
+
+      const mismatch = diagnostics.find(d => d.message.includes('Type mismatch'));
+      expect(mismatch).toBeDefined();
+      expect(mismatch!.message).toContain('Text');
+      expect(mismatch!.message).toContain('Integer');
+      expect(mismatch!.severity).toBe(DiagnosticSeverity.Warning);
+      expect(mismatch!.source).toBe('cal');
+    });
+
+    it('should allow compatible assignment to Integer field inside WITH block', () => {
+      const code = `OBJECT Table 50201 WithTypeCheckOkTable
+{
+  PROPERTIES {
+  }
+  FIELDS
+  {
+    { 1 ; ; ItemQty ; Integer }
+  }
+  CODE
+  {
+    PROCEDURE TestWithAssignOk@1();
+    VAR
+      SelfRec@1000 : Record 50201;
+    BEGIN
+      WITH SelfRec DO BEGIN
+        ItemQty := 42;
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+
+      const diagnostics = validateTypeMismatch(code);
+
+      const mismatch = diagnostics.find(d => d.message.includes('Type mismatch'));
+      expect(mismatch).toBeUndefined();
+    });
+  });
+});
