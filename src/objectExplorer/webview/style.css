@@ -193,6 +193,8 @@ table {
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
+  /* grid line — inherited by every cell (all consumers live inside <table>) */
+  --grid-border: 1px solid var(--vscode-widget-border, var(--vscode-panelSection-border, rgba(127,127,127,0.35)));
 }
 
 /* ── Column widths ── */
@@ -230,8 +232,8 @@ thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panelSection-border, rgba(127,127,127,0.35)));
-  border-right: 1px solid var(--vscode-widget-border, var(--vscode-panelSection-border, rgba(127,127,127,0.35)));
+  border-bottom: var(--grid-border);
+  border-right: var(--grid-border);
 }
 
 thead th .sort-indicator {
@@ -278,8 +280,8 @@ thead th.sortable:hover {
   position: sticky;
   top: var(--col-header-height, 28px);
   z-index: 1;
-  border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panelSection-border, rgba(127,127,127,0.35)));
-  border-right: 1px solid var(--vscode-widget-border, var(--vscode-panelSection-border, rgba(127,127,127,0.35)));
+  border-bottom: var(--grid-border);
+  border-right: var(--grid-border);
 }
 
 .filter-row td input {
@@ -329,8 +331,8 @@ tbody tr:not(.virtual-spacer) td {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panelSection-border, rgba(127,127,127,0.35)));
-  border-right: 1px solid var(--vscode-widget-border, var(--vscode-panelSection-border, rgba(127,127,127,0.35)));
+  border-bottom: var(--grid-border);
+  border-right: var(--grid-border);
 }
 
 /* Remove trailing right border on last column — inner separators only */
