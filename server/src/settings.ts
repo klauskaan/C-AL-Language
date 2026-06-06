@@ -9,6 +9,7 @@ export interface CALSettings {
     warnDeprecated: boolean;
     warnUnknownAttributes: boolean;
     warnActionNesting: boolean;
+    warnAdvisory: boolean;
   };
   workspaceIndexing: {
     includeTxtFiles: boolean;
@@ -19,7 +20,8 @@ export const defaultSettings: CALSettings = {
   diagnostics: {
     warnDeprecated: true,
     warnUnknownAttributes: true,
-    warnActionNesting: true
+    warnActionNesting: true,
+    warnAdvisory: true
   },
   workspaceIndexing: {
     includeTxtFiles: true

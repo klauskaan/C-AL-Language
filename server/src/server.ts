@@ -316,6 +316,11 @@ async function updateSettings(): Promise<void> {
       ? (diagnosticsConfig as { warnActionNesting: boolean }).warnActionNesting
       : defaultSettings.diagnostics.warnActionNesting;
 
+    const warnAdvisory = diagnosticsConfig !== null && typeof diagnosticsConfig === 'object' &&
+                         typeof (diagnosticsConfig as { warnAdvisory?: unknown }).warnAdvisory === 'boolean'
+      ? (diagnosticsConfig as { warnAdvisory: boolean }).warnAdvisory
+      : defaultSettings.diagnostics.warnAdvisory;
+
     // Extract workspaceIndexing settings with type safety
     const includeTxtFiles = workspaceIndexingConfig !== null && typeof workspaceIndexingConfig === 'object' &&
                             typeof (workspaceIndexingConfig as { includeTxtFiles?: unknown }).includeTxtFiles === 'boolean'
@@ -331,14 +336,15 @@ async function updateSettings(): Promise<void> {
       diagnostics: {
         warnDeprecated,
         warnUnknownAttributes,
-        warnActionNesting
+        warnActionNesting,
+        warnAdvisory
       },
       workspaceIndexing: {
         includeTxtFiles
       }
     };
 
-    connection.console.log(`Settings updated: warnDeprecated=${warnDeprecated}, warnUnknownAttributes=${warnUnknownAttributes}, warnActionNesting=${warnActionNesting}, includeTxtFiles=${includeTxtFiles}`);
+    connection.console.log(`Settings updated: warnDeprecated=${warnDeprecated}, warnUnknownAttributes=${warnUnknownAttributes}, warnActionNesting=${warnActionNesting}, warnAdvisory=${warnAdvisory}, includeTxtFiles=${includeTxtFiles}`);
 
     // Re-index workspace if includeTxtFiles setting changed
     if (settingChanged) {

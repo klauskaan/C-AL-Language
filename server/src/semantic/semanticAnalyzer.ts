@@ -17,6 +17,7 @@ import { UndefinedIdentifierValidator } from '../validation/undefinedIdentifierV
 import { UnusedVariableValidator } from '../validation/unusedVariableValidator';
 import { TypeMismatchValidator } from '../validation/typeMismatchValidator';
 import { DeprecatedFunctionValidator } from '../validation/deprecatedFunctionValidator';
+import { AdvisoryBuiltinValidator } from '../validation/advisoryBuiltinValidator';
 import { UnknownAttributeValidator } from '../validation/unknownAttributeValidator';
 import { ActionNestingValidator } from '../validation/actionNestingValidator';
 import { CALSettings } from '../settings';
@@ -77,6 +78,9 @@ export class SemanticAnalyzer {
 
     // Register DeprecatedFunctionValidator
     this.pipeline.registerValidator(new DeprecatedFunctionValidator());
+
+    // Register AdvisoryBuiltinValidator
+    this.pipeline.registerValidator(new AdvisoryBuiltinValidator());
 
     // Register UnknownAttributeValidator
     this.pipeline.registerValidator(new UnknownAttributeValidator());

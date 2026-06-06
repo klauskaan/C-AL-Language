@@ -1028,7 +1028,8 @@ describe('DeprecatedFunctionValidator - Configuration (warnDeprecated setting)',
         diagnostics: {
           warnDeprecated,
           warnUnknownAttributes: true,
-          warnActionNesting: true
+          warnActionNesting: true,
+          warnAdvisory: true
         },
         workspaceIndexing: {
           includeTxtFiles: true
