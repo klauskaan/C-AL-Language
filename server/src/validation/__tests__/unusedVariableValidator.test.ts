@@ -1425,3 +1425,274 @@ describe('UnusedVariableValidator - WITH Statement Field Shadowing', () => {
     });
   });
 });
+
+describe('UnusedVariableValidator - FOR/FOREACH WITH Field Shadowing (#804)', () => {
+  // Table 50100 "Stock Ledger" with a single Integer field named Qty.
+  // Used as the base fixture for all tests in this block (mirrors T9-T11 from #790).
+
+  describe('FOR control variable shadowed by WITH field', () => {
+    // FAIL-FIRST: FOR Qty := 1 TO 10 inside WITH Rec2 — Qty is a field of Record 50100.
+    // The current visitForStatement marks info.hasRead=true without the WITH-field guard,
+    // so the local Qty appears used and no diagnostic is emitted — wrong.
+    // After the fix: guard suppresses the mark; local Qty remains unused → diagnostic fires.
+    it('should warn for local when FOR control variable shares name with WITH field (T-804a)', () => {
+      const code = `OBJECT Table 50100 "Stock Ledger" {
+        FIELDS {
+          { 1   ;   ;Qty             ;Integer       }
+        }
+        CODE {
+          PROCEDURE LoopQty();
+          VAR
+            Qty : Integer;
+            Rec2 : Record 50100;
+          BEGIN
+            WITH Rec2 DO BEGIN
+              FOR Qty := 1 TO 10 DO ;
+            END;
+          END;
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const qtyDiag = diagnostics.find(d => d.message.includes("'Qty'"));
+      const rec2Diag = diagnostics.find(d => d.message.includes("'Rec2'"));
+
+      expect(qtyDiag).toBeDefined();
+      expect(qtyDiag!.message).toBe("Variable 'Qty' is declared but never used");
+      expect(rec2Diag).toBeUndefined();
+
+      const unusedCount = diagnostics.filter(d => d.code === 'unused-variable').length;
+      expect(unusedCount).toBe(1);
+    });
+  });
+
+  describe('FOREACH loop variable shadowed by WITH field', () => {
+    // FAIL-FIRST: FOREACH Qty IN Items inside WITH Rec2 — Qty is a field of Record 50100.
+    // The current visitForEachStatement marks info.hasRead=true without the WITH-field guard,
+    // so the local Qty appears used and no diagnostic is emitted — wrong.
+    // After the fix: guard suppresses the mark; local Qty remains unused → diagnostic fires.
+    it('should warn for local when FOREACH variable shares name with WITH field (T-804b)', () => {
+      const code = `OBJECT Table 50100 "Stock Ledger" {
+        FIELDS {
+          { 1   ;   ;Qty             ;Integer       }
+        }
+        CODE {
+          PROCEDURE ForeachQty();
+          VAR
+            Qty : Integer;
+            Rec2 : Record 50100;
+            Items : DotNet "'mscorlib'.System.Collections.IEnumerable";
+          BEGIN
+            WITH Rec2 DO BEGIN
+              FOREACH Qty IN Items DO ;
+            END;
+          END;
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const qtyDiag = diagnostics.find(d => d.message.includes("'Qty'"));
+      const rec2Diag = diagnostics.find(d => d.message.includes("'Rec2'"));
+      const itemsDiag = diagnostics.find(d => d.message.includes("'Items'"));
+
+      expect(qtyDiag).toBeDefined();
+      expect(rec2Diag).toBeUndefined();
+      expect(itemsDiag).toBeUndefined();
+
+      const unusedCount = diagnostics.filter(d => d.code === 'unused-variable').length;
+      expect(unusedCount).toBe(1);
+    });
+  });
+
+  describe('Guardrails — must pass before and after the fix', () => {
+    // GUARDRAIL: FOR Qty without any WITH — local is the only Qty in scope.
+    // visitForStatement marks local Qty as read. No diagnostic expected.
+    it('should not warn for FOR control variable local when no WITH is present (T-804c)', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE SimpleLoop();
+          VAR
+            Qty : Integer;
+          BEGIN
+            FOR Qty := 1 TO 10 DO ;
+          END;
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const qtyDiag = diagnostics.find(d => d.message.includes("'Qty'"));
+      expect(qtyDiag).toBeUndefined();
+
+      const unusedCount = diagnostics.filter(d => d.code === 'unused-variable').length;
+      expect(unusedCount).toBe(0);
+    });
+
+    // GUARDRAIL: FOREACH without any WITH — both locals are used by the loop.
+    // No diagnostic expected for either loop variable or collection.
+    it('should not warn for FOREACH variable or collection when no WITH is present (T-804d)', () => {
+      const code = `OBJECT Codeunit 50000 Test {
+        CODE {
+          PROCEDURE SimpleForEach();
+          VAR
+            Item : DotNet "'mscorlib'.System.Object";
+            Coll : DotNet "'mscorlib'.System.Collections.IEnumerable";
+          BEGIN
+            FOREACH Item IN Coll DO ;
+          END;
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const itemDiag = diagnostics.find(d => d.message.includes("'Item'"));
+      const collDiag = diagnostics.find(d => d.message.includes("'Coll'"));
+      expect(itemDiag).toBeUndefined();
+      expect(collDiag).toBeUndefined();
+
+      const unusedCount = diagnostics.filter(d => d.code === 'unused-variable').length;
+      expect(unusedCount).toBe(0);
+    });
+
+    // GUARDRAIL: FOR Idx := 1 TO 10 inside WITH Rec2 — Idx is NOT a field of Record 50100.
+    // The guard must not incorrectly block the mark for non-field locals.
+    // No diagnostic expected for either Idx or Rec2.
+    it('should not warn for FOR control variable when name does not match any WITH field (T-804e)', () => {
+      const code = `OBJECT Table 50100 "Stock Ledger" {
+        FIELDS {
+          { 1   ;   ;Qty             ;Integer       }
+        }
+        CODE {
+          PROCEDURE LoopIdx();
+          VAR
+            Idx : Integer;
+            Rec2 : Record 50100;
+          BEGIN
+            WITH Rec2 DO BEGIN
+              FOR Idx := 1 TO 10 DO ;
+            END;
+          END;
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const idxDiag = diagnostics.find(d => d.message.includes("'Idx'"));
+      const rec2Diag = diagnostics.find(d => d.message.includes("'Rec2'"));
+      expect(idxDiag).toBeUndefined();
+      expect(rec2Diag).toBeUndefined();
+
+      const unusedCount = diagnostics.filter(d => d.code === 'unused-variable').length;
+      expect(unusedCount).toBe(0);
+    });
+
+    // GUARDRAIL: Qty is used by a FOR loop inside WITH, but also read by MESSAGE() OUTSIDE the WITH.
+    // The read outside the WITH resolves to the local (not the field), so hasRead becomes true.
+    // No diagnostic expected for Qty.
+    it('should not warn for local Qty when it is genuinely read outside the WITH block (T-804f)', () => {
+      const code = `OBJECT Table 50100 "Stock Ledger" {
+        FIELDS {
+          { 1   ;   ;Qty             ;Integer       }
+        }
+        CODE {
+          PROCEDURE LoopThenRead();
+          VAR
+            Qty : Integer;
+            Rec2 : Record 50100;
+          BEGIN
+            WITH Rec2 DO BEGIN
+              FOR Qty := 1 TO 10 DO ;
+            END;
+            MESSAGE('%1', Qty);
+          END;
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const qtyDiag = diagnostics.find(d => d.message.includes("'Qty'"));
+      expect(qtyDiag).toBeUndefined();
+
+      const unusedCount = diagnostics.filter(d => d.code === 'unused-variable').length;
+      expect(unusedCount).toBe(0);
+    });
+
+    // GUARDRAIL: Control target is the MemberExpression Rec2.Qty (not a bare identifier).
+    // visitForStatement's guard only fires for Identifier-typed control variables;
+    // a MemberExpression target falls through to the object-walk path.
+    // Spare is an unrelated unused local → diagnostic expected for Spare, not Rec2.
+    it('should handle MemberExpression FOR control target and still warn for other unused locals (T-804g)', () => {
+      const code = `OBJECT Table 50100 "Stock Ledger" {
+        FIELDS {
+          { 1   ;   ;Qty             ;Integer       }
+        }
+        CODE {
+          PROCEDURE MemberForLoop();
+          VAR
+            Rec2 : Record 50100;
+            Spare : Integer;
+          BEGIN
+            WITH Rec2 DO BEGIN
+              FOR Rec2.Qty := 1 TO 10 DO ;
+            END;
+          END;
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const spareDiag = diagnostics.find(d => d.message.includes("'Spare'"));
+      const rec2Diag = diagnostics.find(d => d.message.includes("'Rec2'"));
+
+      expect(spareDiag).toBeDefined();
+      expect(rec2Diag).toBeUndefined();
+
+      const unusedCount = diagnostics.filter(d => d.code === 'unused-variable').length;
+      expect(unusedCount).toBe(1);
+    });
+  });
+
+  describe('Nested WITH — innermost field wins', () => {
+    // FAIL-FIRST: FOR Qty := inside nested WITH — both RecA and RecB have field Qty.
+    // FIELD-WINS rule: innermost WITH (RecB) shadows Qty; the local Qty is still unused.
+    // The current code marks local Qty as read → no diagnostic (wrong).
+    // After the fix: guard fires for the innermost scope lookup → diagnostic fires for Qty.
+    it('should warn for local when FOR control variable matches field of innermost nested WITH (T-804h)', () => {
+      const code = `OBJECT Table 50100 "Stock Ledger" {
+        FIELDS {
+          { 1   ;   ;Qty             ;Integer       }
+        }
+        CODE {
+          PROCEDURE NestedWith();
+          VAR
+            Qty : Integer;
+            RecA : Record 50100;
+            RecB : Record 50100;
+          BEGIN
+            WITH RecA DO BEGIN
+              WITH RecB DO BEGIN
+                FOR Qty := 1 TO 10 DO ;
+              END;
+            END;
+          END;
+        }
+      }`;
+
+      const diagnostics = validateUnusedVariables(code);
+
+      const qtyDiag = diagnostics.find(d => d.message.includes("'Qty'"));
+      const recADiag = diagnostics.find(d => d.message.includes("'RecA'"));
+      const recBDiag = diagnostics.find(d => d.message.includes("'RecB'"));
+
+      expect(qtyDiag).toBeDefined();
+      expect(qtyDiag!.message).toBe("Variable 'Qty' is declared but never used");
+      expect(recADiag).toBeUndefined();
+      expect(recBDiag).toBeUndefined();
+
+      const unusedCount = diagnostics.filter(d => d.code === 'unused-variable').length;
+      expect(unusedCount).toBe(1);
+    });
+  });
+});
