@@ -1419,7 +1419,7 @@ export const SYSTEM_TYPE_KEYWORDS: Set<string> = new Set([
  * Used to offer a SYSTEM.<name> completion when a user symbol shadows a global builtin (#809).
  * NOTE: `category` is NOT a valid selector — COPYSTREAM/TEMPORARYPATH are category:'file' yet
  * ARE System static methods; FORMAT is category:'string' yet qualifiable. Use this explicit set.
- * ISSERVICETIER is intentionally EXCLUDED (deprecated at introduction), so this is 62, not 63.
+ * This is the COMPLETE intersection (63 names) — no judgment-based exclusions (ISSERVICETIER re-added in #813: valid C/AL and offered unqualified, so the SYSTEM. form is offered too).
  */
 export const SYSTEM_QUALIFIABLE: ReadonlySet<string> = new Set([
   'ABS', 'APPLICATIONPATH', 'ARRAYLEN', 'CALCDATE', 'CANLOADTYPE', 'CAPTIONCLASSTRANSLATE',
@@ -1430,9 +1430,9 @@ export const SYSTEM_QUALIFIABLE: ReadonlySet<string> = new Set([
   'ENCRYPTIONENABLED', 'ENCRYPTIONKEYEXISTS', 'EVALUATE', 'EXPORTENCRYPTIONKEY', 'FORMAT',
   'GETDOCUMENTURL', 'GETDOTNETTYPE', 'GETLASTERRORCALLSTACK', 'GETLASTERRORCODE',
   'GETLASTERROROBJECT', 'GETLASTERRORTEXT', 'GETURL', 'GLOBALLANGUAGE', 'GUIALLOWED', 'HYPERLINK',
-  'IMPORTENCRYPTIONKEY', 'IMPORTSTREAMWITHURLACCESS', 'ISNULL', 'ISNULLGUID', 'NORMALDATE',
-  'POWER', 'RANDOM', 'RANDOMIZE', 'ROUND', 'ROUNDDATETIME', 'SLEEP', 'TEMPORARYPATH', 'TIME',
-  'TODAY', 'VARIANT2DATE', 'WINDOWSLANGUAGE', 'WORKDATE'
+  'IMPORTENCRYPTIONKEY', 'IMPORTSTREAMWITHURLACCESS', 'ISNULL', 'ISNULLGUID', 'ISSERVICETIER',
+  'NORMALDATE', 'POWER', 'RANDOM', 'RANDOMIZE', 'ROUND', 'ROUNDDATETIME', 'SLEEP', 'TEMPORARYPATH',
+  'TIME', 'TODAY', 'VARIANT2DATE', 'WINDOWSLANGUAGE', 'WORKDATE'
 ]);
 
 /**
