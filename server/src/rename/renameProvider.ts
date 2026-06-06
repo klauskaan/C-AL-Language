@@ -6,7 +6,7 @@
 import { ProviderBase } from '../providers/providerBase';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Position, Range, WorkspaceEdit, TextEdit } from 'vscode-languageserver';
-import { CALDocument, FieldDeclaration, MemberExpression } from '../parser/ast';
+import { CALDocument, CallExpression, FieldDeclaration, MemberExpression, ProcedureDeclaration } from '../parser/ast';
 import { ASTWalker } from '../visitor/astWalker';
 import { SymbolTable } from '../symbols/symbolTable';
 import { Lexer } from '../lexer/lexer';
@@ -390,6 +390,17 @@ export class RenameProvider extends ProviderBase {
         return false;
       }
 
+      // #801: when renaming a PROCEDURE/function, never rewrite a same-named FIELD's DECLARATION token.
+      // The field decl resolves member-blind to the procedure under last-write-wins root scope, so the
+      // identity test below would otherwise keep it. A FIELDS-section declaration is structurally never a
+      // procedure reference. (Field member accesses / bare field uses remain a tracked residual — #802.)
+      if (originSymbol.kind === 'procedure' || originSymbol.kind === 'function') {
+        const f = this.findFieldByPartialToken(ast, refToken.startOffset);
+        if (f && f.nameToken?.startOffset === refToken.startOffset) {
+          return false;
+        }
+      }
+
       // Use the token's startOffset for symbol resolution
       const refSymbol = symbolTable.getSymbolAtOffset(refToken.value, refToken.startOffset);
 
@@ -429,25 +440,34 @@ export class RenameProvider extends ProviderBase {
    *      global VAR has overwritten kind:'field' with kind:'variable' in the (last-write-wins) root
    *      scope symbol map. Without this, `getSymbolAtOffset` at the decl offset returns 'variable' and
    *      the kind check below drops the declaration → silent 0-edit no-op (#800 regression).
-   *   2. Member-property rescue SECOND: Rec.Field resolves member-blind to the shadowing local
+   *   2. Proc-ref drop (#801): tokens that are POSITIVE procedure-reference evidence (procedure
+   *      declaration nameTokens and CallExpression callees) are dropped BEFORE the member-property
+   *      rescue. This is required so that a member CALL `Rec.Amount(5)` (in the set) is dropped,
+   *      while a bare member ACCESS `Rec.Amount` (no parens, not in the set) still reaches the
+   *      member rescue below and is kept.
+   *   3. Member-property rescue: Rec.Field resolves member-blind to the shadowing local
    *      (the #798 gap), so a kind check would otherwise wrongly drop a legitimate Rec.Field use.
-   *   3. Kind check: drop tokens that resolve to 'variable' or 'parameter' (shadowing local/param).
+   *      MUST run before the var/param kind check (step 4).
+   *   4. Kind check: drop tokens that resolve to 'variable' or 'parameter' (shadowing local/param).
+   *   5. Keep: field-identity or unresolved token.
    */
   private keepFieldReferenceToken(
     ast: CALDocument,
     symbolTable: SymbolTable | undefined,
     field: FieldDeclaration,
-    anchorOffset: number
+    anchorOffset: number,
+    procRefOffsets: Set<number>
   ): boolean {
     if (!symbolTable) return true;                                   // fail-safe no-op (preserve current behavior)
     // #800: the field's own declaration must always be renamed, even if a same-named global VAR
     // overwrote the field in the (last-write-wins) root-scope symbol map. Without this, the decl
     // resolves to the global 'variable' and would be wrongly dropped -> silent 0-edit no-op.
-    if (anchorOffset === field.nameToken?.startOffset) return true;  // DECLARATION RESCUE (must be first)
-    if (this.isCursorOnMemberProperty(ast, anchorOffset)) return true; // rescue member-property SECOND
+    if (anchorOffset === field.nameToken?.startOffset) return true;  // 1. DECLARATION RESCUE (must be first)
+    if (procRefOffsets.has(anchorOffset)) return false;              // 2. proc-ref drop (#801)
+    if (this.isCursorOnMemberProperty(ast, anchorOffset)) return true; // 3. member-property rescue
     const sym = symbolTable.getSymbolAtOffset(field.fieldName, anchorOffset);
-    if (sym && (sym.kind === 'variable' || sym.kind === 'parameter')) return false; // DROP shadowing local/param
-    return true;                                                      // KEEP field-identity / procedure / unresolved
+    if (sym && (sym.kind === 'variable' || sym.kind === 'parameter')) return false; // 4. DROP shadowing local/param
+    return true;                                                      // 5. KEEP field-identity / unresolved
   }
 
   /**
@@ -469,6 +489,37 @@ export class RenameProvider extends ProviderBase {
       },
     });
     return found;
+  }
+
+  /**
+   * #801: Collect offsets of all tokens that are POSITIVE procedure-reference evidence via one
+   * ASTWalker pass. Returns the set of startOffsets that are:
+   *   - a ProcedureDeclaration's nameToken (the declaration site itself), or
+   *   - the callee of a CallExpression with parens (bare call `Amount(5)` or member call
+   *     `Rec.Amount(5)`).
+   *
+   * Returning void (not false) from visitCallExpression lets the walker auto-descend into call
+   * arguments so nested calls are also captured.
+   */
+  private collectProcedureReferenceOffsets(ast: CALDocument): Set<number> {
+    const offsets = new Set<number>();
+    const walker = new ASTWalker();
+    walker.walk(ast, {
+      visitProcedureDeclaration: (node: ProcedureDeclaration): void => {
+        if (node.nameToken) {
+          offsets.add(node.nameToken.startOffset);
+        }
+      },
+      visitCallExpression: (node: CallExpression): void => {
+        const callee = node.callee;
+        if (callee.type === 'Identifier') {
+          offsets.add(callee.startToken.startOffset);
+        } else if (callee.type === 'MemberExpression') {
+          offsets.add(callee.property.startToken.startOffset);
+        }
+      },
+    });
+    return offsets;
   }
 
   /**
@@ -586,13 +637,16 @@ export class RenameProvider extends ProviderBase {
     const text = document.getText();
     const resolvedTokens = tokens ?? new Lexer(text).tokenize();
 
+    // #801: collect all procedure-reference offsets once before iterating tokens
+    const procRefOffsets = this.collectProcedureReferenceOffsets(ast);
+
     for (let i = 0; i < resolvedTokens.length; i++) {
       const token = resolvedTokens[i];
 
       // For quoted identifiers, check if the token value matches the field name
       if (token.type === TokenType.QuotedIdentifier) {
         if (token.value.toLowerCase() === fieldName) {
-          if (this.keepFieldReferenceToken(ast, symbolTable, field, token.startOffset)) {
+          if (this.keepFieldReferenceToken(ast, symbolTable, field, token.startOffset, procRefOffsets)) {
             const start = document.positionAt(token.startOffset);
             const end = document.positionAt(token.endOffset);
             references.push({ uri: document.uri, range: { start, end } });
@@ -644,7 +698,7 @@ export class RenameProvider extends ProviderBase {
           }
 
           if (!isPrefixOfLongerField) {
-            if (this.keepFieldReferenceToken(ast, symbolTable, field, token.startOffset)) {
+            if (this.keepFieldReferenceToken(ast, symbolTable, field, token.startOffset, procRefOffsets)) {
               const start = document.positionAt(token.startOffset);
               const end = document.positionAt(token.startOffset + field.fieldName.length);
               references.push({ uri: document.uri, range: { start, end } });
