@@ -49,6 +49,15 @@ function mapSymbolKind(kind: Symbol['kind']): CompletionItemKind {
   }
 }
 
+// C/AL resolution order for an unqualified identifier: locals/parameters → globals →
+// object procedures → own-table fields → global builtins. So a user symbol of any of
+// those kinds shadows a same-named builtin (the builtin is then reachable only via
+// SYSTEM.<name>). Page/report ACTIONS are NOT in the code identifier namespace and do
+// NOT shadow, so a same-named builtin must stay offered. We suppress the duplicate
+// builtin completion row only for the shadowing kinds. (#785; #783 made the dup visible.)
+const SHADOWS_BUILTIN: ReadonlySet<Symbol['kind']> =
+  new Set<Symbol['kind']>(['variable', 'parameter', 'field', 'procedure', 'function']);
+
 /**
  * Build completion item from builtin function
  */
@@ -209,6 +218,10 @@ export class CompletionProvider extends ProviderBase {
       }
     }
 
+    // Names of visible user symbols that shadow a builtin (Phase 2); used to suppress the
+    // duplicate builtin row in Phase 3. Lowercased for case-insensitive collision.
+    const emittedSymbolNames = new Set<string>();
+
     // Phase 2: Symbol completion - scope-aware
     if (symbolTable) {
       // Get the offset from cursor position for scope-aware lookup
@@ -239,12 +252,18 @@ export class CompletionProvider extends ProviderBase {
             // NO labelDetails → kind word never appears twice, never on the row
           }
           items.push(item);
+          if (SHADOWS_BUILTIN.has(symbol.kind)) {
+            emittedSymbolNames.add(symbol.name.toLowerCase());
+          }
         }
       }
     }
 
     // Phase 3: Built-in functions
     for (const func of BUILTIN_FUNCTIONS) {
+      if (emittedSymbolNames.has(func.name.toLowerCase())) {
+        continue; // a visible user symbol shadows this builtin (C/AL: user wins)
+      }
       if (!prefix || func.name.toLowerCase().startsWith(prefix)) {
         items.push(buildBuiltinItem(func, CompletionItemKind.Function, makeSortText(SortBucket.Builtin, func.name)));
       }
