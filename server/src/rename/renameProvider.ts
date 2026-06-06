@@ -120,7 +120,7 @@ export class RenameProvider extends ProviderBase {
     if (field) {
       // Multi-token field: collect references manually using field name
       // No scope filtering needed - fields are global to the table
-      filteredReferences = this.collectFieldReferences(document, ast, field, tokens);
+      filteredReferences = this.collectFieldReferences(document, ast, field, symbolTable, tokens);
       symbolType = 'field';
     } else {
       // Not a multi-token field, get token at position for regular rename
@@ -418,6 +418,39 @@ export class RenameProvider extends ProviderBase {
 
 
   /**
+   * #800: decide whether a text-matched field-name token should be renamed when renaming a field
+   * from its FIELDS-section declaration. collectFieldReferences is text-based, so it also matches a
+   * same-named shadowing local/parameter. Drop tokens that resolve to a shadowing variable/parameter;
+   * keep the field declaration, bare field uses (kind 'field'), member-property uses (Rec.Field), and
+   * unresolved tokens (Policy A: strictly subset-removing — never under-renames a legitimate field ref).
+   *
+   * Guard order (MUST be preserved):
+   *   1. Declaration rescue: the field's own nameToken offset is always kept, even when a same-named
+   *      global VAR has overwritten kind:'field' with kind:'variable' in the (last-write-wins) root
+   *      scope symbol map. Without this, `getSymbolAtOffset` at the decl offset returns 'variable' and
+   *      the kind check below drops the declaration → silent 0-edit no-op (#800 regression).
+   *   2. Member-property rescue SECOND: Rec.Field resolves member-blind to the shadowing local
+   *      (the #798 gap), so a kind check would otherwise wrongly drop a legitimate Rec.Field use.
+   *   3. Kind check: drop tokens that resolve to 'variable' or 'parameter' (shadowing local/param).
+   */
+  private keepFieldReferenceToken(
+    ast: CALDocument,
+    symbolTable: SymbolTable | undefined,
+    field: FieldDeclaration,
+    anchorOffset: number
+  ): boolean {
+    if (!symbolTable) return true;                                   // fail-safe no-op (preserve current behavior)
+    // #800: the field's own declaration must always be renamed, even if a same-named global VAR
+    // overwrote the field in the (last-write-wins) root-scope symbol map. Without this, the decl
+    // resolves to the global 'variable' and would be wrongly dropped -> silent 0-edit no-op.
+    if (anchorOffset === field.nameToken?.startOffset) return true;  // DECLARATION RESCUE (must be first)
+    if (this.isCursorOnMemberProperty(ast, anchorOffset)) return true; // rescue member-property SECOND
+    const sym = symbolTable.getSymbolAtOffset(field.fieldName, anchorOffset);
+    if (sym && (sym.kind === 'variable' || sym.kind === 'parameter')) return false; // DROP shadowing local/param
+    return true;                                                      // KEEP field-identity / procedure / unresolved
+  }
+
+  /**
    * True if the token starting at `tokenStartOffset` is the `property` of some MemberExpression
    * (e.g. the `Amount` in `Rec.Amount`). Used to refuse renames that would otherwise unify a
    * member-property with a same-named shadowing local/parameter (#797).
@@ -537,6 +570,7 @@ export class RenameProvider extends ProviderBase {
     document: TextDocument,
     ast: CALDocument,
     field: FieldDeclaration,
+    symbolTable: SymbolTable | undefined,
     tokens?: readonly Token[]
   ): { uri: string; range: Range }[] {
     const references: { uri: string; range: Range }[] = [];
@@ -558,9 +592,11 @@ export class RenameProvider extends ProviderBase {
       // For quoted identifiers, check if the token value matches the field name
       if (token.type === TokenType.QuotedIdentifier) {
         if (token.value.toLowerCase() === fieldName) {
-          const start = document.positionAt(token.startOffset);
-          const end = document.positionAt(token.endOffset);
-          references.push({ uri: document.uri, range: { start, end } });
+          if (this.keepFieldReferenceToken(ast, symbolTable, field, token.startOffset)) {
+            const start = document.positionAt(token.startOffset);
+            const end = document.positionAt(token.endOffset);
+            references.push({ uri: document.uri, range: { start, end } });
+          }
         }
         continue;
       }
@@ -608,9 +644,11 @@ export class RenameProvider extends ProviderBase {
           }
 
           if (!isPrefixOfLongerField) {
-            const start = document.positionAt(token.startOffset);
-            const end = document.positionAt(token.startOffset + field.fieldName.length);
-            references.push({ uri: document.uri, range: { start, end } });
+            if (this.keepFieldReferenceToken(ast, symbolTable, field, token.startOffset)) {
+              const start = document.positionAt(token.startOffset);
+              const end = document.positionAt(token.startOffset + field.fieldName.length);
+              references.push({ uri: document.uri, range: { start, end } });
+            }
           }
         }
       }
