@@ -114,13 +114,16 @@ class AdvisoryBuiltinValidatorVisitor implements Partial<ASTVisitor> {
    * Visit Identifier.
    *
    * Emits an advisory if the name resolves to an advisory builtin AND is not
-   * shadowed by a user symbol. Root-scope symbol table lookup is used (same
-   * approach as deprecatedFunctionValidator's isActualBuiltin guard).
+   * shadowed by a user symbol. Position-aware symbol resolution
+   * (getSymbolAtOffset) is used so shadows declared as procedure-local variables
+   * or parameters are detected, not only root-scope globals (#815). Mirrors
+   * deprecatedFunctionValidator's isActualBuiltin guard.
    *
    * Note: This only catches bare references; SYSTEM.<name> is handled in
    * visitMemberExpression and must NOT reach here (the walker is told not to
-   * re-walk the property in that path). The limitation is that this guard only
-   * checks the root scope, not procedure-local scopes — tracking issue filed.
+   * re-walk the property in that path). The shadow guard is position-aware: a
+   * builtin name shadowed in any enclosing scope (procedure local/param or root
+   * global) resolves to the user symbol and is not flagged.
    */
   visitIdentifier(node: Identifier): void {
     const advisory = this.registry.getGlobalFunctionAdvisory(node.name);
@@ -128,9 +131,12 @@ class AdvisoryBuiltinValidatorVisitor implements Partial<ASTVisitor> {
       return;
     }
 
-    // Check whether a user symbol shadows the builtin. If symbolTable.getSymbol
-    // finds a match, this name is a user symbol, not the builtin — do not flag.
-    if (this.symbolTable.getSymbol(node.name) !== undefined) {
+    // Check whether a user symbol shadows the builtin at this position. Uses
+    // position-aware resolution (getSymbolAtOffset) so a shadow declared as a
+    // procedure-local variable or parameter is found, not just a root-scope global
+    // (#815). getScopeAtOffset descends to the innermost scope containing the
+    // reference; scope.getSymbol then walks up to root, so root globals still match.
+    if (this.symbolTable.getSymbolAtOffset(node.name, node.startToken.startOffset) !== undefined) {
       return;
     }
 
