@@ -53,13 +53,24 @@ class DeprecatedFunctionValidatorVisitor implements Partial<ASTVisitor> {
   }
 
   /**
-   * Check if an identifier refers to the builtin (not shadowed by local symbol)
+   * Check if an identifier refers to the builtin (not shadowed by a user symbol).
+   *
+   * Position-aware resolution (getSymbolAtOffset) matches AdvisoryBuiltinValidator
+   * so a shadow declared as a procedure-local variable or parameter is detected,
+   * not only a root-scope global (#815). Note: this branch is currently unreachable
+   * because all seeded deprecations are record methods (category: 'record') and
+   * there are no deprecated GLOBAL functions, so no test exercises it today. The fix
+   * is forward-looking parity — it prevents the same false-positive resurfacing if a
+   * deprecated global function is later seeded.
    */
   private isActualBuiltin(identifier: Identifier): boolean {
-    // Look up in symbol table - if found locally, it's shadowing the builtin
-    const symbol = this.context.symbolTable.getSymbol(identifier.name);
+    // If a user symbol resolves at this position, it shadows the builtin.
+    const symbol = this.context.symbolTable.getSymbolAtOffset(
+      identifier.name,
+      identifier.startToken.startOffset
+    );
 
-    // If not found in symbol table, it must be a builtin
+    // If not found in the scope chain, it must be a builtin.
     return symbol === undefined;
   }
 

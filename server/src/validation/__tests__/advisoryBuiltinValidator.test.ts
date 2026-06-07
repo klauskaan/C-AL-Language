@@ -575,6 +575,158 @@ describe('AdvisoryBuiltinValidator - Negative (must NOT flag)', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Local/parameter shadowing — targets #815; these tests FAIL before the
+// position-aware fix (getSymbolAtOffset replacing getSymbol in visitIdentifier).
+// ---------------------------------------------------------------------------
+
+describe('AdvisoryBuiltinValidator - Local/parameter shadowing (#815)', () => {
+  it('should NOT flag bare ISSERVICETIER when shadowed by a procedure-LOCAL variable (T1)', () => {
+    // The validator currently uses root-scope getSymbol, which misses locals.
+    // A local VAR ISSERVICETIER declared inside a procedure must suppress the advisory.
+    const code = `OBJECT Codeunit 50026 AdvisoryLocalShadowA
+{
+  CODE
+  {
+    PROCEDURE DoCheck();
+    VAR
+      ISSERVICETIER : Boolean;
+    BEGIN
+      IF ISSERVICETIER THEN
+        EXIT;
+    END;
+  }
+}`;
+
+    const diagnostics = validateAdvisory(code);
+
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should NOT flag bare ISSERVICETIER when shadowed by a PARAMETER (T2)', () => {
+    // A parameter ISSERVICETIER must suppress the advisory for bare refs in the same proc body.
+    const code = `OBJECT Codeunit 50027 AdvisoryLocalShadowB
+{
+  CODE
+  {
+    PROCEDURE Foo(ISSERVICETIER : Boolean);
+    BEGIN
+      IF ISSERVICETIER THEN
+        EXIT;
+    END;
+  }
+}`;
+
+    const diagnostics = validateAdvisory(code);
+
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should flag only the reference NOT covered by a local shadow — position discrimination (T3)', () => {
+    // ProcA declares local ISSERVICETIER → its reference must be suppressed.
+    // ProcB has no such local → its reference must still be flagged.
+    // Pre-fix: getSymbol (root-scope) misses locals → both refs flagged → length 2.
+    // Post-fix: getSymbolAtOffset (position-aware) → ProcA suppressed, ProcB flagged → length 1.
+    const code = `OBJECT Codeunit 50028 AdvisoryLocalShadowC
+{
+  CODE
+  {
+    PROCEDURE ProcA();
+    VAR
+      ISSERVICETIER : Boolean;
+    BEGIN
+      IF ISSERVICETIER THEN
+        EXIT;
+    END;
+
+    PROCEDURE ProcB();
+    BEGIN
+      IF ISSERVICETIER THEN
+        EXIT;
+    END;
+  }
+}`;
+
+    const diagnostics = validateAdvisory(code);
+
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].message).toContain('always returns TRUE on NAV 2013+');
+  });
+
+  it('should NOT flag parenthesized ISSERVICETIER() call when shadowed by a procedure-LOCAL variable (T4)', () => {
+    // Parenthesized form routes through visitCallExpression → visitIdentifier (the callee).
+    // The same shadow guard must suppress it when the local is in scope.
+    // Note: calling a Boolean local with () is invalid C/SIDE syntax, but the parser
+    // still produces a CallExpression(callee=Identifier). This fixture is intentional —
+    // it exercises the visitCallExpression -> visitIdentifier shadow-guard path, NOT
+    // C/AL runtime validity. Do not "simplify" the parens away (that collapses it into T1).
+    const code = `OBJECT Codeunit 50029 AdvisoryLocalShadowD
+{
+  CODE
+  {
+    PROCEDURE DoCheck();
+    VAR
+      ISSERVICETIER : Boolean;
+    BEGIN
+      IF ISSERVICETIER() THEN
+        EXIT;
+    END;
+  }
+}`;
+
+    const diagnostics = validateAdvisory(code);
+
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('should NOT flag bare ISSERVICETIER when shadowed by a LOWER-CASE local variable (T5 — case-insensitive shadow)', () => {
+    // C/AL is case-insensitive. A local declared as isservicetier (lowercase) must still
+    // suppress the advisory for any casing of bare ISSERVICETIER in the same proc body.
+    const code = `OBJECT Codeunit 50030 AdvisoryLocalShadowE
+{
+  CODE
+  {
+    PROCEDURE DoCheck();
+    VAR
+      isservicetier : Boolean;
+    BEGIN
+      IF isservicetier THEN
+        EXIT;
+    END;
+  }
+}`;
+
+    const diagnostics = validateAdvisory(code);
+
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it('SYSTEM.ISSERVICETIER still fires the advisory even when a procedure-LOCAL shadows the bare name (T6)', () => {
+    // SYSTEM.<name> is handled in visitMemberExpression unconditionally — it bypasses
+    // the position-aware shadow guard that suppresses bare references. This test locks
+    // the invariant: a procedure-local ISSERVICETIER must NOT prevent SYSTEM.ISSERVICETIER
+    // from producing an advisory. Future refactors of the SYSTEM. path must not break this.
+    const code = `OBJECT Codeunit 50031 AdvisorySystemLocalShadow
+{
+  CODE
+  {
+    PROCEDURE DoCheck();
+    VAR
+      ISSERVICETIER : Boolean;
+    BEGIN
+      IF SYSTEM.ISSERVICETIER THEN
+        EXIT;
+    END;
+  }
+}`;
+
+    const diagnostics = validateAdvisory(code);
+
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].message).toContain('always returns TRUE on NAV 2013+');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Settings — warnAdvisory flag
 // ---------------------------------------------------------------------------
 
