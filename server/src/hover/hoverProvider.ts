@@ -104,7 +104,12 @@ export class HoverProvider extends ProviderBase {
 
     // Check for symbol in symbol table
     if (symbolTable) {
-      const symbol = symbolTable.getSymbol(word);
+      // Position-aware lookup brings hover to parity with definitionProvider:
+      // a local/parameter shadowing a global, field, or builtin of the same name
+      // now resolves correctly at the cursor's scope. After-dot member access is
+      // unaffected here (handled above) and changes in lock-step with
+      // definitionProvider; the cross-object member-blindness gap (#798) is unchanged.
+      const symbol = symbolTable.getSymbolAtOffset(word, wordInfo.start);
       if (symbol) {
         return this.buildSymbolHover(symbol, ast);
       }
