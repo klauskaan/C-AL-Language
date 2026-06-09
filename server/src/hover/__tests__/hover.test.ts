@@ -1142,4 +1142,241 @@ describe('HoverProvider', () => {
       expect(content).toContain('2');
     });
   });
+
+  describe('Position-aware symbol hover (shadowing) (#818)', () => {
+    it('should show local variable type when local var shadows a global var (#818a)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      MyText@1000 : Integer;
+
+    PROCEDURE DoIt@1();
+    VAR
+      MyText@1001 : Text;
+    BEGIN
+      MyText := 'hello';
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const lines = code.split('\n');
+      const usageLineIndex = lines.findIndex(l => l.includes("MyText := 'hello'"));
+      const usageLine = lines[usageLineIndex];
+      const col = usageLine.indexOf('MyText');
+      const hover = provider.getHover(doc, Position.create(usageLineIndex, col + 1), ast, symbolTable);
+      const content = getHoverContent(hover);
+      expect(content).toContain('*Variable*');
+      expect(content).toContain('`Text`');
+      expect(content).not.toContain('Integer');
+    });
+
+    it('should show parameter type when parameter shadows a global var (#818b)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Amount@1000 : Integer;
+
+    PROCEDURE DoIt@1(Amount : Decimal);
+    BEGIN
+      Amount := 1.5;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const lines = code.split('\n');
+      const usageLineIndex = lines.findIndex(l => l.includes('Amount := 1.5'));
+      const usageLine = lines[usageLineIndex];
+      const col = usageLine.indexOf('Amount');
+      const hover = provider.getHover(doc, Position.create(usageLineIndex, col + 1), ast, symbolTable);
+      const content = getHoverContent(hover);
+      expect(content).toContain('*Parameter*');
+      expect(content).toContain('`Decimal`');
+      expect(content).not.toContain('Integer');
+    });
+
+    it('should show global variable type when no shadowing is present (#818c, regression guard)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Counter@1000 : Integer;
+
+    PROCEDURE DoIt@1();
+    BEGIN
+      Counter := 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const lines = code.split('\n');
+      const usageLineIndex = lines.findIndex(l => l.includes('Counter := 1'));
+      const usageLine = lines[usageLineIndex];
+      const col = usageLine.indexOf('Counter');
+      const hover = provider.getHover(doc, Position.create(usageLineIndex, col + 1), ast, symbolTable);
+      const content = getHoverContent(hover);
+      expect(content).toContain('*Variable*');
+      expect(content).toContain('`Integer`');
+    });
+
+    it('should discriminate by position: local Text in WithLocal, global Integer in NoLocal (#818d)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    VAR
+      Temp@1000 : Integer;
+
+    PROCEDURE WithLocal@1();
+    VAR
+      Temp@1001 : Text;
+    BEGIN
+      Temp := 'local';
+    END;
+
+    PROCEDURE NoLocal@2();
+    BEGIN
+      Temp := 99;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const lines = code.split('\n');
+
+      // Assertion 1: inside WithLocal where local Text shadows global Integer
+      const localUsageLineIndex = lines.findIndex(l => l.includes("Temp := 'local'"));
+      const localUsageLine = lines[localUsageLineIndex];
+      const localCol = localUsageLine.indexOf('Temp');
+      const hoverLocal = provider.getHover(doc, Position.create(localUsageLineIndex, localCol + 1), ast, symbolTable);
+      const contentLocal = getHoverContent(hoverLocal);
+      expect(contentLocal).toContain('*Variable*');
+      expect(contentLocal).toContain('`Text`');
+      expect(contentLocal).not.toContain('Integer');
+
+      // Assertion 2: inside NoLocal where only global Integer is in scope
+      const globalUsageLineIndex = lines.findIndex(l => l.includes('Temp := 99'));
+      const globalUsageLine = lines[globalUsageLineIndex];
+      const globalCol = globalUsageLine.indexOf('Temp');
+      const hoverGlobal = provider.getHover(doc, Position.create(globalUsageLineIndex, globalCol + 1), ast, symbolTable);
+      const contentGlobal = getHoverContent(hoverGlobal);
+      expect(contentGlobal).toContain('*Variable*');
+      expect(contentGlobal).toContain('`Integer`');
+      expect(contentGlobal).not.toContain('`Text`');
+    });
+
+    it('should show local variable when local var is named after builtin FORMAT (#818e)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE DoIt@1();
+    VAR
+      FORMAT@1000 : Integer;
+    BEGIN
+      FORMAT := 1;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const lines = code.split('\n');
+      const usageLineIndex = lines.findIndex(l => l.includes('FORMAT := 1'));
+      const usageLine = lines[usageLineIndex];
+      const col = usageLine.indexOf('FORMAT');
+      const hover = provider.getHover(doc, Position.create(usageLineIndex, col + 1), ast, symbolTable);
+      const content = getHoverContent(hover);
+      expect(content).toContain('*Variable*');
+      expect(content).toContain('`Integer`');
+      expect(content).not.toContain('(Value ');
+      expect(content).not.toContain('String Function');
+    });
+
+    it('should show proc-local variable when local var shadows a table field (#818f)', () => {
+      const code = `OBJECT Table 50000 Test
+{
+  FIELDS
+  {
+    { 1 ;   ; No ; Code10 }
+    { 2 ;   ; Description ; Text50 }
+  }
+  CODE
+  {
+    PROCEDURE DoIt@1();
+    VAR
+      Description@1000 : Integer;
+    BEGIN
+      Description := 5;
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const lines = code.split('\n');
+      const usageLineIndex = lines.findIndex(l => l.includes('Description := 5'));
+      const usageLine = lines[usageLineIndex];
+      const col = usageLine.indexOf('Description');
+      const hover = provider.getHover(doc, Position.create(usageLineIndex, col + 1), ast, symbolTable);
+      const content = getHoverContent(hover);
+      expect(content).toContain('*Variable*');
+      expect(content).toContain('`Integer`');
+      expect(content).not.toContain('*Field*');
+      expect(content).not.toContain('Text50');
+    });
+
+    it('should show builtin FORMAT when no local symbol shadows it (#818g, regression guard)', () => {
+      const code = `OBJECT Codeunit 50000 Test
+{
+  CODE
+  {
+    PROCEDURE DoIt@1();
+    VAR
+      Result@1000 : Text;
+    BEGIN
+      Result := FORMAT(123);
+    END;
+
+    BEGIN
+    END.
+  }
+}`;
+      const doc = createDocument(code);
+      const { ast, symbolTable } = parseAndBuildSymbols(code);
+      const lines = code.split('\n');
+      const usageLineIndex = lines.findIndex(l => l.includes('Result := FORMAT(123)'));
+      const usageLine = lines[usageLineIndex];
+      const col = usageLine.indexOf('FORMAT');
+      const hover = provider.getHover(doc, Position.create(usageLineIndex, col + 1), ast, symbolTable);
+      const content = getHoverContent(hover);
+      expect(content).toContain('**FORMAT**');
+      expect(content).toContain('*String Function*');
+      expect(content).toContain('(Value ');
+      expect(content).toContain('Converts a value to a formatted string');
+    });
+  });
 });
